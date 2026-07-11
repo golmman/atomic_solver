@@ -10,3 +10,16 @@ Ask for clarification if necessary.
 
 The plan should include a final task that documents the things learned during implementation (problems, surprises, workarounds etc.) in a file `plans/basics/report.md`.
 Write the plan to `plans/basics/plan.md`
+
+
+----
+
+dfpn? test positions
+* lose in 3
+* win in 3
+* open draw
+* forced draw
+
+what is bad in atomic-movegen?
+- `atomic_movegen::attacks::init()` must be called once before any move generation.
+- should it track rule50?
