@@ -42,6 +42,17 @@ Draw - only two kings remain:
 
 ---
 
+Look where we finished last time: `plans/dfpn/report2.md`.
+
+To me it looks like the implementation is not correct, e.g. starting with this FEN
+"rnbqkbnr/ppppp2p/5pp1/3Q4/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 3"
+shows a pv of "c7c5 d5d7".
+Black can offer more resistance though and a longer pv like this should be correct: "d7d6 d5f7 e8d7 f7e7"
+
+Please investigate this issue and write a report to `plans/dfpn/report_pv_issue.md`
+
+---
+
 We want to implement depth first proof number search as originally planned and replace the current minimax search.
 See `plans/basics/report.md` for the reasons this failed last time and use `plans/dfpn_parallel/research.md` to implement it with parallelity.
 Create an implementation plan and write it to `plans/dfpn_parallel/plan.md`.

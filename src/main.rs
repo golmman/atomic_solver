@@ -34,8 +34,15 @@ fn main() {
         atomic_solver::position::Outcome::Draw => "draw",
     };
 
-    if matches!(outcome, atomic_solver::position::Outcome::Win | atomic_solver::position::Outcome::Loss) {
-        let pv_str: String = pv.iter().map(|&m| move_to_uci(m)).collect::<Vec<_>>().join(" ");
+    if matches!(
+        outcome,
+        atomic_solver::position::Outcome::Win | atomic_solver::position::Outcome::Loss
+    ) {
+        let pv_str: String = pv
+            .iter()
+            .map(|&m| move_to_uci(m))
+            .collect::<Vec<_>>()
+            .join(" ");
         println!("outcome: {outcome_str}\npv: {pv_str}");
     } else {
         println!("outcome: {outcome_str}");

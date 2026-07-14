@@ -2,7 +2,7 @@
 
 use atomic_movegen::attacks;
 use atomic_movegen::board::{Board, StateInfo};
-use atomic_movegen::types::{Color, Move, MoveType, PieceType, Square, NO_PIECE};
+use atomic_movegen::types::{Color, Move, MoveType, NO_PIECE, PieceType, Square};
 
 pub trait MoveScorer {
     fn score(&self, board: &Board, m: Move, state: &StateInfo) -> i32;
@@ -93,9 +93,12 @@ impl MoveScorer for StaticAtomicScorer {
 
         // 1. Winning capture: blast removes the opponent's last commoner.
         if is_capture {
-            let blast_zone = attacks::king_attacks(to) | atomic_movegen::types::Bitboard::square_bb(to);
+            let blast_zone =
+                attacks::king_attacks(to) | atomic_movegen::types::Bitboard::square_bb(to);
             let them_commoners = board.commoners(them);
-            if them_commoners.count() == 1 && (them_commoners & blast_zone) != atomic_movegen::types::Bitboard::EMPTY {
+            if them_commoners.count() == 1
+                && (them_commoners & blast_zone) != atomic_movegen::types::Bitboard::EMPTY
+            {
                 return SCORE_WINNING_CAPTURE;
             }
         }
@@ -135,7 +138,8 @@ impl MoveScorer for StaticAtomicScorer {
 
         // 5. Blast-threaten capture: capture blast zone is near an enemy commoner.
         {
-            let blast_zone = attacks::king_attacks(to) | atomic_movegen::types::Bitboard::square_bb(to);
+            let blast_zone =
+                attacks::king_attacks(to) | atomic_movegen::types::Bitboard::square_bb(to);
             let mut near = blast_zone;
             let mut b = blast_zone;
             while !b.is_empty() {
@@ -150,9 +154,10 @@ impl MoveScorer for StaticAtomicScorer {
         // 6. Centralizing / attacking moves.
         if let Some(from_dist) = nearest_commoner_dist(board, them, from)
             && let Some(to_dist) = nearest_commoner_dist(board, them, to)
-                && to_dist < from_dist {
-                    score += SCORE_APPROACH + i32::from(from_dist - to_dist) * 10;
-                }
+            && to_dist < from_dist
+        {
+            score += SCORE_APPROACH + i32::from(from_dist - to_dist) * 10;
+        }
 
         let (f, r) = file_rank_of(to);
         let center = 3 - (f - 3).abs().max(r - 3).abs();

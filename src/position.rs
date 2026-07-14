@@ -18,7 +18,15 @@ impl Outcome {
         match self {
             Outcome::Win => (0, zobrist::INF),
             Outcome::Loss => (zobrist::INF, 0),
-            Outcome::Draw => (zobrist::INF, zobrist::INF),
+            Outcome::Draw => (zobrist::INF, 0),
+        }
+    }
+
+    pub fn pn_dn_for(self, is_or_node: bool) -> (u64, u64) {
+        if is_or_node {
+            self.to_pn_dn()
+        } else {
+            self.flip().to_pn_dn()
         }
     }
 
@@ -51,7 +59,7 @@ impl Position {
         } else {
             0
         };
-        let zobrist = zobrist::hash(&board);
+        let zobrist = zobrist::hash(&board, rule50);
         Ok(Self {
             board,
             rule50,
@@ -66,13 +74,18 @@ impl Position {
         let from_piece = self.board.piece_on(from);
         let is_pawn = from_piece.type_of() == PieceType::Pawn;
         let is_capture = m.move_type() == atomic_movegen::types::MoveType::EnPassant
-            || (m.move_type() != atomic_movegen::types::MoveType::Castling && !self.board.empty(to));
+            || (m.move_type() != atomic_movegen::types::MoveType::Castling
+                && !self.board.empty(to));
 
         let mut state = StateInfo::new();
         self.board.do_move(m, &mut state);
 
-        self.rule50 = if is_pawn || is_capture { 0 } else { state.rule50 + 1 };
-        self.zobrist = zobrist::hash(&self.board);
+        self.rule50 = if is_pawn || is_capture {
+            0
+        } else {
+            state.rule50 + 1
+        };
+        self.zobrist = zobrist::hash(&self.board, self.rule50);
         self.undo_stack.push(state);
     }
 
@@ -80,7 +93,7 @@ impl Position {
         let state = self.undo_stack.pop().expect("undo without move");
         self.board.undo_move(m, &state);
         self.rule50 = state.rule50;
-        self.zobrist = zobrist::hash(&self.board);
+        self.zobrist = zobrist::hash(&self.board, self.rule50);
     }
 
     pub fn legal_moves(&self, moves: &mut MoveList) {
@@ -106,6 +119,9 @@ impl Position {
         }
         if self.commoners(them).is_empty() {
             return Some(Outcome::Win);
+        }
+        if self.board.occupied().count() == 2 {
+            return Some(Outcome::Draw);
         }
         None
     }
