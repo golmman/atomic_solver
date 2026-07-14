@@ -71,6 +71,46 @@ Find the issue and propose a fix, write an implementation plan to `plans/dfpn/pl
 
 ---
 
+I don't understand your reasoning about "atomic chess a non-terminal Win root cannot be shorter than 3 plies".
+Instead of finding an atomic chess specific search rule (which i doubt there is) wouldn't the following reasoning be sound in the general case:
+
+* you found a 9 ply forced win
+  * you keep searching the siblings in the hope there is a shorter one
+  * you only need to search to depth 9 from now on
+* then you find a forced 3 ply win
+  * again you keep searching the siblings of this node
+  * now you only need to search to depth 3 from now on
+* and so on, until the tree is exhausted to the minimal reasonable depth (3 in this case)
+
+Please push back if my reasoning is unsound.
+
+
+---
+
+Get an overview of what has been implemented so far to get the df-pn+ running:
+* `plans/dfpn/report2.md`
+* `plans/dfpn/report3.md`
+* `plans/dfpn/report4.md`
+
+I found this issue:
+"6R1/3p1k2/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/7K b - - 3 27"
+has a relatively short solution: "f7e6 g8g7 c5c3 g7d7", explodes the black king
+Why is this not found inside the timeout of 60 seconds?
+
+Is this because of bad move ordering?
+Should we first finish implementing GHI properly?
+What should be done next?
+
+
+---
+
+"6R1/3p1k2/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/7K b - - 3 27"
+has a relatively short solution: "f7e6 g8g7 c5c3 g7d7", explodes the black king
+Why is this not found inside the timeout of 60 seconds?
+Is this because of bad move ordering?
+
+---
+
 buildin timeout of 5 seconds
 
 tests

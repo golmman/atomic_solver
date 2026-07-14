@@ -34,18 +34,19 @@ impl Default for TtEntry {
 }
 
 pub struct TranspositionTable {
-    table: Vec<TtEntry>,
+    table: Vec<[TtEntry; 2]>,
     mask: usize,
 }
 
 impl TranspositionTable {
     pub fn with_mb(mb: usize) -> Self {
         let bytes = mb.saturating_mul(1024 * 1024);
-        let size = (bytes / std::mem::size_of::<TtEntry>()).next_power_of_two();
-        let size = size.max(16);
+        let entries = (bytes / std::mem::size_of::<TtEntry>()).next_power_of_two();
+        let entries = entries.max(32);
+        let buckets = entries.max(2) / 2;
         Self {
-            table: vec![TtEntry::default(); size],
-            mask: size - 1,
+            table: vec![[TtEntry::default(); 2]; buckets],
+            mask: buckets - 1,
         }
     }
 
@@ -55,11 +56,14 @@ impl TranspositionTable {
     }
 
     pub fn probe(&self, key: u64) -> Option<&TtEntry> {
-        let e = &self.table[self.index(key)];
-        if e.valid && e.key == key {
-            Some(e)
-        } else {
-            None
+        self.table[self.index(key)]
+            .iter()
+            .find(|&&e| e.valid && e.key == key)
+    }
+
+    pub fn clear(&mut self) {
+        for bucket in &mut self.table {
+            *bucket = [TtEntry::default(); 2];
         }
     }
 
@@ -82,7 +86,28 @@ impl TranspositionTable {
             dn = 1;
         }
         let idx = self.index(key);
-        self.table[idx] = TtEntry {
+        let bucket = &mut self.table[idx];
+        // Update an exact match if present.
+        for slot in bucket.iter_mut() {
+            if slot.valid && slot.key == key {
+                *slot = TtEntry {
+                    key,
+                    best_move,
+                    outcome,
+                    pn,
+                    dn,
+                    depth,
+                    path_code,
+                    repetition_seen,
+                    valid: true,
+                };
+                return;
+            }
+        }
+        // Otherwise keep the previous primary entry in the secondary slot to
+        // reduce collisions, then write the new entry as primary.
+        let old = bucket[0];
+        bucket[0] = TtEntry {
             key,
             best_move,
             outcome,
@@ -93,5 +118,10 @@ impl TranspositionTable {
             repetition_seen,
             valid: true,
         };
+        // Keep the old entry if it was valid and is different; otherwise leave
+        // the secondary slot as-is.
+        if old.valid && old.key != key {
+            bucket[1] = old;
+        }
     }
 }

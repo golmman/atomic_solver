@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 
 use atomic_movegen::types::{Move, MoveList};
 
+use crate::notation::move_to_uci;
 use crate::position::{Outcome, Position};
 use crate::zobrist;
 
@@ -26,6 +27,9 @@ pub struct Search {
     deadline: Instant,
     epsilon: f64,
     scorer: Box<dyn MoveScorer>,
+    refine_shortest: bool,
+    timeout: Duration,
+    last_pv: Vec<Move>,
 }
 
 impl Search {
@@ -40,23 +44,112 @@ impl Search {
             deadline: Instant::now(),
             epsilon: EPSILON,
             scorer: Box::new(StaticAtomicScorer),
+            refine_shortest: false,
+            timeout: Duration::from_secs(TIMEOUT_SECS),
+            last_pv: Vec::new(),
         }
+    }
+
+    pub fn refine_shortest(&mut self, value: bool) {
+        self.refine_shortest = value;
+    }
+
+    pub fn set_timeout(&mut self, seconds: u64) {
+        self.timeout = Duration::from_secs(seconds);
     }
 
     pub fn solve(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
         self.nodes = 0;
         self.start = Instant::now();
-        self.deadline = self.start + Duration::from_secs(TIMEOUT_SECS);
+        self.deadline = self.start + self.timeout;
         self.path.clear();
         self.path_stack.clear();
         self.path_code = 0;
+        self.last_pv.clear();
 
-        let outcome = self.dfpn(pos, INF, INF, true);
-        let pv = self.extract_pv(pos);
-        (outcome, pv, self.nodes)
+        if self.refine_shortest {
+            self.solve_refined(pos)
+        } else {
+            let outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
+            let pv = self.extract_pv(pos);
+            (outcome, pv, self.nodes)
+        }
     }
 
-    fn dfpn(&mut self, pos: &mut Position, th_pn: u64, th_dn: u64, is_or_node: bool) -> Outcome {
+    fn solve_refined(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
+        // Depth-bounded refinement: first find any win/loss without a depth bound
+        // to get an initial PV, then binary search the smallest depth bound that
+        // still yields the same outcome.
+        let saved_refine = self.refine_shortest;
+        self.refine_shortest = false;
+
+        let outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
+        let best_outcome = outcome;
+        let best_depth = self
+            .tt
+            .probe(pos.hash())
+            .and_then(|e| e.outcome.map(|_| e.depth))
+            .unwrap_or(u32::MAX);
+
+        if let Some(first_pv) = self.extract_pv_checked(pos) {
+            self.print_pv_update(outcome, &first_pv);
+        }
+
+        if outcome != Outcome::Draw && best_depth > 1 {
+            for mid in 1..best_depth {
+                self.reset_search_state();
+                self.tt.clear();
+                let o = self.dfpn(pos, INF, INF, mid, true);
+                if o == outcome {
+                    if let Some(pv) = self.extract_pv_checked(pos) {
+                        self.print_pv_update(outcome, &pv);
+                    }
+                    break;
+                }
+            }
+        }
+
+        self.refine_shortest = saved_refine;
+
+        let pv = if !self.last_pv.is_empty() {
+            self.last_pv.clone()
+        } else {
+            self.extract_pv(pos)
+        };
+        (best_outcome, pv, self.nodes)
+    }
+
+    fn reset_search_state(&mut self) {
+        self.path.clear();
+        self.path_stack.clear();
+        self.path_code = 0;
+    }
+
+    fn extract_pv_checked(&self, pos: &Position) -> Option<Vec<Move>> {
+        let pv = self.extract_pv(pos);
+        if Self::validate_pv(&pv, pos) {
+            Some(pv)
+        } else {
+            None
+        }
+    }
+
+    fn validate_pv(pv: &[Move], pos: &Position) -> bool {
+        let mut current = pos.clone();
+        for &m in pv {
+            current.do_move(m);
+        }
+        current.outcome().is_some()
+    }
+
+    fn dfpn(
+        &mut self,
+        pos: &mut Position,
+        th_pn: u64,
+        th_dn: u64,
+        max_depth: u32,
+        is_or_node: bool,
+    ) -> Outcome {
         if Instant::now() >= self.deadline {
             return Outcome::Draw;
         }
@@ -80,8 +173,23 @@ impl Search {
             return outcome;
         }
 
+        if max_depth == 0 {
+            let (pn, dn) = Outcome::Draw.pn_dn_for(is_or_node);
+            self.tt.store(
+                key,
+                Move::NONE,
+                Some(Outcome::Draw),
+                pn,
+                dn,
+                0,
+                self.path_code,
+                false,
+            );
+            return Outcome::Draw;
+        }
+
         if let Some(entry) = self.tt.probe(key)
-            && let Some(outcome) = self.try_use_tt(entry, self.path_code)
+            && let Some(outcome) = self.try_use_tt(entry, max_depth, self.path_code)
         {
             return outcome;
         }
@@ -120,18 +228,24 @@ impl Search {
         let old_path_code = self.path_code;
 
         let mut outcome_to_store: Option<Outcome> = None;
+        let mut outcome_to_store_best_move = Move::NONE;
+        let mut outcome_to_store_pn = INF;
+        let mut outcome_to_store_dn = INF;
+        let mut outcome_to_store_depth = 0;
+        let mut outcome_to_store_repetition_seen = false;
         let mut best_move = Move::NONE;
         let mut pn = INF;
         let mut dn = INF;
         let mut depth = 0;
         let mut repetition_seen = false;
+        let mut last_printed: Option<(Outcome, u32)> = None;
 
         loop {
             if Instant::now() >= self.deadline {
                 break;
             }
 
-            let selection = self.select_children(pos, &moves, is_or_node);
+            let selection = self.select_children(pos, &moves, max_depth, is_or_node);
             best_move = selection.best_move;
             pn = selection.pn;
             dn = selection.dn;
@@ -140,14 +254,67 @@ impl Search {
 
             if let Some(solved) = selection.solved_outcome {
                 outcome_to_store = Some(solved);
-                break;
+                outcome_to_store_best_move = best_move;
+                outcome_to_store_pn = pn;
+                outcome_to_store_dn = dn;
+                outcome_to_store_depth = depth;
+                outcome_to_store_repetition_seen = repetition_seen;
+
+                if self.refine_shortest
+                    && self.path_stack.len() == 1
+                    && (solved == Outcome::Win || solved == Outcome::Loss)
+                    && self.should_print_update(solved, depth, last_printed)
+                {
+                    // Store the current best move so extract_pv can follow it.
+                    self.tt.store(
+                        key,
+                        best_move,
+                        Some(solved),
+                        pn,
+                        dn,
+                        depth,
+                        old_path_code,
+                        repetition_seen,
+                    );
+                    let pv = self.extract_pv(pos);
+                    self.print_pv_update(solved, &pv);
+                    last_printed = Some((solved, depth));
+                }
+
+                if selection.all_solved {
+                    break;
+                }
+
+                // When refinement is enabled at the root, keep refining own Win
+                // nodes to find the shortest win. For the opponent's Win nodes,
+                // non-root Win nodes, or when refinement is disabled, stop at
+                // the first winning line.
+                if selection.solved_outcome == Some(Outcome::Win)
+                    && (!self.refine_shortest || !is_or_node || self.path_stack.len() > 1)
+                {
+                    break;
+                }
+
+                // A Win with unresolved siblings: keep refining.
             }
 
             if (th_pn != INF && pn >= th_pn) || (th_dn != INF && dn >= th_dn) {
-                break;
+                // A pending Win for the side to move has pn = 0 / dn = INF;
+                // keep refining siblings. Otherwise, respect thresholds.
+                if selection.solved_outcome != Some(Outcome::Win)
+                    || !self.refine_shortest
+                    || !is_or_node
+                    || self.path_stack.len() > 1
+                    || selection.all_solved
+                {
+                    break;
+                }
             }
 
             let (mv, child_pn, child_dn, _vpn, _vdn) = selection.best_child;
+            if mv == Move::NONE {
+                break;
+            }
             let (second_pn, second_dn) = selection.second_child;
 
             let (np, nd) = if is_or_node {
@@ -170,7 +337,7 @@ impl Search {
 
             pos.do_move(mv);
             self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
-            let _ = self.dfpn(pos, np, nd, !is_or_node);
+            let _ = self.dfpn(pos, np, nd, max_depth.saturating_sub(1), !is_or_node);
             self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
             pos.undo_move(mv);
         }
@@ -179,23 +346,44 @@ impl Search {
         self.path.remove(&key);
         self.path_code = old_path_code;
 
-        self.tt.store(
-            key,
-            best_move,
-            outcome_to_store,
-            pn,
-            dn,
-            depth,
-            old_path_code,
-            repetition_seen,
-        );
+        if outcome_to_store.is_some() {
+            self.tt.store(
+                key,
+                outcome_to_store_best_move,
+                outcome_to_store,
+                outcome_to_store_pn,
+                outcome_to_store_dn,
+                outcome_to_store_depth,
+                old_path_code,
+                outcome_to_store_repetition_seen,
+            );
+        } else {
+            self.tt.store(
+                key,
+                best_move,
+                outcome_to_store,
+                pn,
+                dn,
+                depth,
+                old_path_code,
+                repetition_seen,
+            );
+        }
         outcome_to_store.unwrap_or(Outcome::Draw)
     }
 
-    fn try_use_tt(&self, entry: &super::tt::TtEntry, path_code: u64) -> Option<Outcome> {
-        entry.outcome?;
+    fn try_use_tt(
+        &self,
+        entry: &super::tt::TtEntry,
+        max_depth: u32,
+        path_code: u64,
+    ) -> Option<Outcome> {
+        let outcome = entry.outcome?;
+        if entry.depth > max_depth {
+            return None;
+        }
         if !entry.repetition_seen || entry.path_code == path_code {
-            entry.outcome
+            Some(outcome)
         } else {
             None
         }
@@ -213,12 +401,13 @@ impl Search {
         &mut self,
         pos: &mut Position,
         moves: &MoveList,
+        max_depth: u32,
         is_or_node: bool,
     ) -> ChildSelection {
         let mut children = Vec::with_capacity(moves.len());
         for i in 0..moves.len() {
             let mv = moves[i];
-            let info = self.evaluate_child(pos, mv, is_or_node);
+            let info = self.evaluate_child(pos, mv, max_depth, is_or_node);
             children.push(info);
         }
 
@@ -242,20 +431,28 @@ impl Search {
 
         let solved = Self::is_solved_by_children(&children, is_or_node);
 
-        let (best_idx, second_idx) = Self::best_and_second(&children, is_or_node);
-        let best = &children[best_idx];
+        // Choose the child to expand from the unsolved children only.
+        let (best_idx, second_idx) = Self::best_and_second_unsolved(&children, is_or_node);
+        let best = best_idx.map(|i| &children[i]);
         let second = second_idx.map(|i| &children[i]);
 
-        let best_child = (best.mv, best.pn, best.dn, best.vpn, best.vdn);
+        let best_child = best.map(|b| (b.mv, b.pn, b.dn, b.vpn, b.vdn)).unwrap_or((
+            Move::NONE,
+            INF,
+            INF,
+            INF,
+            INF,
+        ));
         let second_child = second.map(|s| (s.pn, s.dn)).unwrap_or((INF, INF));
 
-        let best_move = if let Some((_, _, mv)) = solved {
+        let best_move = if let Some((_, _, mv, _)) = solved {
             mv
         } else {
-            best.mv
+            best_idx.map(|i| children[i].mv).unwrap_or(Move::NONE)
         };
 
-        let depth = solved.map(|(_, d, _)| d).unwrap_or(0);
+        let depth = solved.map(|(_, d, _, _)| d).unwrap_or(0);
+        let all_solved = solved.map(|(_, _, _, all)| all).unwrap_or(false);
 
         let repetition_seen = children.iter().any(|c| c.repetition_seen);
 
@@ -266,12 +463,19 @@ impl Search {
             dn,
             depth,
             best_move,
-            solved_outcome: solved.map(|(o, _, _)| o),
+            solved_outcome: solved.map(|(o, _, _, _)| o),
+            all_solved,
             repetition_seen,
         }
     }
 
-    fn evaluate_child(&mut self, pos: &mut Position, mv: Move, is_or_node: bool) -> ChildInfo {
+    fn evaluate_child(
+        &mut self,
+        pos: &mut Position,
+        mv: Move,
+        max_depth: u32,
+        is_or_node: bool,
+    ) -> ChildInfo {
         pos.do_move(mv);
         let child_key = pos.hash();
         let child_is_or = !is_or_node;
@@ -302,7 +506,8 @@ impl Search {
                 repetition_seen: true,
             }
         } else if let Some(entry) = self.tt.probe(child_key) {
-            if let Some(outcome) = self.try_use_tt(entry, child_path_code) {
+            let child_max_depth = max_depth.saturating_sub(1);
+            if let Some(outcome) = self.try_use_tt(entry, child_max_depth, child_path_code) {
                 let (pn, dn) = outcome.pn_dn_for(child_is_or);
                 ChildInfo {
                     mv,
@@ -351,7 +556,7 @@ impl Search {
     fn is_solved_by_children(
         children: &[ChildInfo],
         _is_or_node: bool,
-    ) -> Option<(Outcome, u32, Move)> {
+    ) -> Option<(Outcome, u32, Move, bool)> {
         let mut all_solved = true;
         let mut win_depth = u32::MAX;
         let mut win_mv = Move::NONE;
@@ -374,7 +579,7 @@ impl Search {
                     }
                 }
                 Some(Outcome::Draw) => {
-                    if !found_draw || d > draw_depth {
+                    if d > draw_depth {
                         draw_depth = d;
                         draw_mv = c.mv;
                     }
@@ -389,43 +594,69 @@ impl Search {
             }
         }
 
-        // A win can be declared as soon as a losing child is found.
+        // A win can be declared as soon as a losing child is found, but the
+        // search must continue refining the shortest one until all siblings
+        // are resolved.
         if win_depth != u32::MAX {
-            return Some((Outcome::Win, win_depth, win_mv));
+            return Some((Outcome::Win, win_depth, win_mv, all_solved));
         }
 
         if all_solved {
             if found_draw {
-                return Some((Outcome::Draw, draw_depth, draw_mv));
+                return Some((Outcome::Draw, draw_depth, draw_mv, true));
             }
-            return Some((Outcome::Loss, loss_depth, loss_mv));
+            return Some((Outcome::Loss, loss_depth, loss_mv, true));
         }
 
         None
     }
 
-    fn best_and_second(children: &[ChildInfo], is_or_node: bool) -> (usize, Option<usize>) {
-        let mut best = 0;
+    fn best_and_second_unsolved(
+        children: &[ChildInfo],
+        is_or_node: bool,
+    ) -> (Option<usize>, Option<usize>) {
+        let mut best: Option<usize> = None;
         let mut second: Option<usize> = None;
-        for i in 1..children.len() {
-            let c = &children[i];
-            let best_c = &children[best];
-            let cmp_c = if is_or_node { c.vpn } else { c.vdn };
-            let cmp_best = if is_or_node { best_c.vpn } else { best_c.vdn };
-            if cmp_c < cmp_best {
-                second = Some(best);
-                best = i;
-            } else if second.is_none() {
-                second = Some(i);
+
+        for i in 0..children.len() {
+            if children[i].outcome.is_some() {
+                continue;
+            }
+            let cmp_c = if is_or_node {
+                children[i].vpn
             } else {
-                let second_c = &children[second.unwrap()];
-                let cmp_second = if is_or_node {
-                    second_c.vpn
-                } else {
-                    second_c.vdn
-                };
-                if cmp_c < cmp_second {
-                    second = Some(i);
+                children[i].vdn
+            };
+            match best {
+                None => {
+                    best = Some(i);
+                }
+                Some(b) => {
+                    let cmp_best = if is_or_node {
+                        children[b].vpn
+                    } else {
+                        children[b].vdn
+                    };
+                    if cmp_c < cmp_best {
+                        second = best;
+                        best = Some(i);
+                    } else {
+                        match second {
+                            None => {
+                                second = Some(i);
+                            }
+                            Some(s) => {
+                                let cmp_second = if is_or_node {
+                                    children[s].vpn
+                                } else {
+                                    children[s].vdn
+                                };
+                                if cmp_c < cmp_second {
+                                    second = Some(i);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -475,6 +706,42 @@ impl Search {
         }
         pv
     }
+
+    fn should_print_update(
+        &self,
+        outcome: Outcome,
+        depth: u32,
+        last_printed: Option<(Outcome, u32)>,
+    ) -> bool {
+        let Some((last_outcome, last_depth)) = last_printed else {
+            return true;
+        };
+        if outcome != last_outcome {
+            return true;
+        }
+        match outcome {
+            Outcome::Win => depth < last_depth,
+            Outcome::Loss => depth > last_depth,
+            Outcome::Draw => depth != last_depth,
+        }
+    }
+
+    fn print_pv_update(&mut self, outcome: Outcome, pv: &[Move]) {
+        self.last_pv = pv.to_vec();
+        let outcome_str = match outcome {
+            Outcome::Win => "win",
+            Outcome::Loss => "loss",
+            Outcome::Draw => "draw",
+        };
+        let pv_str: String = pv
+            .iter()
+            .map(|&m| move_to_uci(m))
+            .collect::<Vec<_>>()
+            .join(" ");
+        eprintln!("outcome: {outcome_str}");
+        eprintln!("pv: {pv_str}");
+        eprintln!("nodes: {}", self.nodes);
+    }
 }
 
 struct ChildInfo {
@@ -496,6 +763,7 @@ struct ChildSelection {
     depth: u32,
     best_move: Move,
     solved_outcome: Option<Outcome>,
+    all_solved: bool,
     repetition_seen: bool,
 }
 
@@ -534,10 +802,12 @@ mod tests {
             child(Some(Outcome::Loss), 2, Square::B1, Square::B2),
             child(Some(Outcome::Win), 0, Square::C1, Square::C2),
         ];
-        let (outcome, depth, mv) = Search::is_solved_by_children(&children, true).unwrap();
+        let (outcome, depth, mv, all_solved) =
+            Search::is_solved_by_children(&children, true).unwrap();
         assert_eq!(outcome, Outcome::Win);
         assert_eq!(depth, 3);
         assert_eq!(mv, Move::make_move(Square::B1, Square::B2));
+        assert!(all_solved);
     }
 
     #[test]
@@ -547,10 +817,12 @@ mod tests {
             child(Some(Outcome::Draw), 1, Square::B1, Square::B2),
             child(Some(Outcome::Draw), 7, Square::C1, Square::C2),
         ];
-        let (outcome, depth, mv) = Search::is_solved_by_children(&children, false).unwrap();
+        let (outcome, depth, mv, all_solved) =
+            Search::is_solved_by_children(&children, false).unwrap();
         assert_eq!(outcome, Outcome::Draw);
         assert_eq!(depth, 8);
         assert_eq!(mv, Move::make_move(Square::C1, Square::C2));
+        assert!(all_solved);
     }
 
     #[test]
@@ -559,10 +831,12 @@ mod tests {
             child(Some(Outcome::Win), 2, Square::A1, Square::A2),
             child(Some(Outcome::Win), 5, Square::B1, Square::B2),
         ];
-        let (outcome, depth, mv) = Search::is_solved_by_children(&children, true).unwrap();
+        let (outcome, depth, mv, all_solved) =
+            Search::is_solved_by_children(&children, true).unwrap();
         assert_eq!(outcome, Outcome::Loss);
         assert_eq!(depth, 6);
         assert_eq!(mv, Move::make_move(Square::B1, Square::B2));
+        assert!(all_solved);
     }
 
     #[test]
@@ -572,5 +846,19 @@ mod tests {
             child(None, 0, Square::B1, Square::B2),
         ];
         assert!(Search::is_solved_by_children(&children, true).is_none());
+    }
+
+    #[test]
+    fn win_with_unsolved_returns_not_all_solved() {
+        let children = vec![
+            child(Some(Outcome::Loss), 5, Square::A1, Square::A2),
+            child(None, 0, Square::B1, Square::B2),
+        ];
+        let (outcome, depth, mv, all_solved) =
+            Search::is_solved_by_children(&children, true).unwrap();
+        assert_eq!(outcome, Outcome::Win);
+        assert_eq!(depth, 6);
+        assert_eq!(mv, Move::make_move(Square::A1, Square::A2));
+        assert!(!all_solved);
     }
 }

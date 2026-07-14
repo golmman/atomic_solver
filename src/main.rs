@@ -26,6 +26,8 @@ fn main() {
     });
 
     let mut search = Search::new(64);
+    search.refine_shortest(true);
+    search.set_timeout(60);
     let (outcome, pv, _nodes) = search.solve(&mut pos);
 
     let outcome_str = match outcome {
