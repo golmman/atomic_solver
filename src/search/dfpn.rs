@@ -73,6 +73,7 @@ impl Search {
                 Some(outcome),
                 pn,
                 dn,
+                0,
                 self.path_code,
                 false,
             );
@@ -101,6 +102,7 @@ impl Search {
                 Some(Outcome::Draw),
                 pn,
                 dn,
+                0,
                 self.path_code,
                 false,
             );
@@ -121,6 +123,7 @@ impl Search {
         let mut best_move = Move::NONE;
         let mut pn = INF;
         let mut dn = INF;
+        let mut depth = 0;
         let mut repetition_seen = false;
 
         loop {
@@ -132,6 +135,7 @@ impl Search {
             best_move = selection.best_move;
             pn = selection.pn;
             dn = selection.dn;
+            depth = selection.depth;
             repetition_seen = selection.repetition_seen;
 
             if let Some(solved) = selection.solved_outcome {
@@ -181,6 +185,7 @@ impl Search {
             outcome_to_store,
             pn,
             dn,
+            depth,
             old_path_code,
             repetition_seen,
         );
@@ -235,7 +240,7 @@ impl Search {
             }
         }
 
-        let solved_outcome = Self::is_solved_by_children(&children, is_or_node);
+        let solved = Self::is_solved_by_children(&children, is_or_node);
 
         let (best_idx, second_idx) = Self::best_and_second(&children, is_or_node);
         let best = &children[best_idx];
@@ -244,7 +249,13 @@ impl Search {
         let best_child = (best.mv, best.pn, best.dn, best.vpn, best.vdn);
         let second_child = second.map(|s| (s.pn, s.dn)).unwrap_or((INF, INF));
 
-        let best_move = best.mv;
+        let best_move = if let Some((_, _, mv)) = solved {
+            mv
+        } else {
+            best.mv
+        };
+
+        let depth = solved.map(|(_, d, _)| d).unwrap_or(0);
 
         let repetition_seen = children.iter().any(|c| c.repetition_seen);
 
@@ -253,8 +264,9 @@ impl Search {
             second_child,
             pn,
             dn,
+            depth,
             best_move,
-            solved_outcome,
+            solved_outcome: solved.map(|(o, _, _)| o),
             repetition_seen,
         }
     }
@@ -274,6 +286,7 @@ impl Search {
                 vpn: pn,
                 vdn: dn,
                 outcome: Some(outcome),
+                depth: 0,
                 repetition_seen: false,
             }
         } else if self.path.contains(&child_key) {
@@ -285,6 +298,7 @@ impl Search {
                 vpn: pn,
                 vdn: dn,
                 outcome: Some(Outcome::Draw),
+                depth: 0,
                 repetition_seen: true,
             }
         } else if let Some(entry) = self.tt.probe(child_key) {
@@ -297,6 +311,7 @@ impl Search {
                     vpn: pn,
                     vdn: dn,
                     outcome: Some(outcome),
+                    depth: entry.depth,
                     repetition_seen: entry.repetition_seen,
                 }
             } else {
@@ -312,6 +327,7 @@ impl Search {
                     vpn: pn,
                     vdn: dn,
                     outcome: None,
+                    depth: 0,
                     repetition_seen: entry.repetition_seen,
                 }
             }
@@ -323,6 +339,7 @@ impl Search {
                 vpn: 1,
                 vdn: 1,
                 outcome: None,
+                depth: 0,
                 repetition_seen: false,
             }
         };
@@ -331,16 +348,59 @@ impl Search {
         info
     }
 
-    fn is_solved_by_children(children: &[ChildInfo], _is_or_node: bool) -> Option<Outcome> {
-        if children.iter().any(|c| c.outcome == Some(Outcome::Loss)) {
-            return Some(Outcome::Win);
-        }
-        if children.iter().all(|c| c.outcome.is_some()) {
-            if children.iter().all(|c| c.outcome == Some(Outcome::Draw)) {
-                return Some(Outcome::Draw);
+    fn is_solved_by_children(
+        children: &[ChildInfo],
+        _is_or_node: bool,
+    ) -> Option<(Outcome, u32, Move)> {
+        let mut all_solved = true;
+        let mut win_depth = u32::MAX;
+        let mut win_mv = Move::NONE;
+        let mut draw_depth = 0;
+        let mut draw_mv = Move::NONE;
+        let mut found_draw = false;
+        let mut loss_depth = 0;
+        let mut loss_mv = Move::NONE;
+
+        for c in children {
+            let d = c.depth.saturating_add(1);
+            match c.outcome {
+                None => {
+                    all_solved = false;
+                }
+                Some(Outcome::Loss) => {
+                    if d < win_depth {
+                        win_depth = d;
+                        win_mv = c.mv;
+                    }
+                }
+                Some(Outcome::Draw) => {
+                    if !found_draw || d > draw_depth {
+                        draw_depth = d;
+                        draw_mv = c.mv;
+                    }
+                    found_draw = true;
+                }
+                Some(Outcome::Win) => {
+                    if d > loss_depth {
+                        loss_depth = d;
+                        loss_mv = c.mv;
+                    }
+                }
             }
-            return Some(Outcome::Loss);
         }
+
+        // A win can be declared as soon as a losing child is found.
+        if win_depth != u32::MAX {
+            return Some((Outcome::Win, win_depth, win_mv));
+        }
+
+        if all_solved {
+            if found_draw {
+                return Some((Outcome::Draw, draw_depth, draw_mv));
+            }
+            return Some((Outcome::Loss, loss_depth, loss_mv));
+        }
+
         None
     }
 
@@ -424,6 +484,7 @@ struct ChildInfo {
     vpn: u64,
     vdn: u64,
     outcome: Option<Outcome>,
+    depth: u32,
     repetition_seen: bool,
 }
 
@@ -432,6 +493,7 @@ struct ChildSelection {
     second_child: (u64, u64),
     pn: u64,
     dn: u64,
+    depth: u32,
     best_move: Move,
     solved_outcome: Option<Outcome>,
     repetition_seen: bool,
@@ -444,5 +506,71 @@ pub fn outcome_from_pn_dn(pn: u64, dn: u64) -> Option<Outcome> {
         Some(Outcome::Loss)
     } else {
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use atomic_movegen::types::Square;
+
+    fn child(outcome: Option<Outcome>, depth: u32, from: Square, to: Square) -> ChildInfo {
+        ChildInfo {
+            mv: Move::make_move(from, to),
+            pn: 1,
+            dn: 1,
+            vpn: 1,
+            vdn: 1,
+            outcome,
+            depth,
+            repetition_seen: false,
+        }
+    }
+
+    #[test]
+    fn win_picks_shortest_loss_child() {
+        let children = vec![
+            child(Some(Outcome::Loss), 5, Square::A1, Square::A2),
+            child(Some(Outcome::Loss), 2, Square::B1, Square::B2),
+            child(Some(Outcome::Win), 0, Square::C1, Square::C2),
+        ];
+        let (outcome, depth, mv) = Search::is_solved_by_children(&children, true).unwrap();
+        assert_eq!(outcome, Outcome::Win);
+        assert_eq!(depth, 3);
+        assert_eq!(mv, Move::make_move(Square::B1, Square::B2));
+    }
+
+    #[test]
+    fn draw_picks_longest_draw_child() {
+        let children = vec![
+            child(Some(Outcome::Win), 4, Square::A1, Square::A2),
+            child(Some(Outcome::Draw), 1, Square::B1, Square::B2),
+            child(Some(Outcome::Draw), 7, Square::C1, Square::C2),
+        ];
+        let (outcome, depth, mv) = Search::is_solved_by_children(&children, false).unwrap();
+        assert_eq!(outcome, Outcome::Draw);
+        assert_eq!(depth, 8);
+        assert_eq!(mv, Move::make_move(Square::C1, Square::C2));
+    }
+
+    #[test]
+    fn loss_picks_longest_win_child() {
+        let children = vec![
+            child(Some(Outcome::Win), 2, Square::A1, Square::A2),
+            child(Some(Outcome::Win), 5, Square::B1, Square::B2),
+        ];
+        let (outcome, depth, mv) = Search::is_solved_by_children(&children, true).unwrap();
+        assert_eq!(outcome, Outcome::Loss);
+        assert_eq!(depth, 6);
+        assert_eq!(mv, Move::make_move(Square::B1, Square::B2));
+    }
+
+    #[test]
+    fn unsolved_returns_none() {
+        let children = vec![
+            child(Some(Outcome::Win), 0, Square::A1, Square::A2),
+            child(None, 0, Square::B1, Square::B2),
+        ];
+        assert!(Search::is_solved_by_children(&children, true).is_none());
     }
 }

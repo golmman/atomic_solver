@@ -4,6 +4,12 @@ Write the report to `plans/dfpn/research.md`.
 
 ---
 
+We want to implement depth first proof number search as originally planned and replace the current minimax search.
+See `plans/basics/report.md` for the reasons this failed last time and use `plans/dfpn_parallel/research.md` to implement it with parallelity.
+Create an implementation plan and write it to `plans/dfpn_parallel/plan.md`.
+
+---
+
 Use the pdf skill to extract the knowledge you find in `plans/dfpn/ghi.pdf`.
 Use it to create a report which details how to fix the problem of transposition-table reuse under repetition giving unsound results for df-pn.
 Write the report to `plans/dfpn/research_ghi.md`.
@@ -51,11 +57,17 @@ Black can offer more resistance though and a longer pv like this should be corre
 
 Please investigate this issue and write a report to `plans/dfpn/report_pv_issue.md`
 
+
 ---
 
-We want to implement depth first proof number search as originally planned and replace the current minimax search.
-See `plans/basics/report.md` for the reasons this failed last time and use `plans/dfpn_parallel/research.md` to implement it with parallelity.
-Create an implementation plan and write it to `plans/dfpn_parallel/plan.md`.
+Look where we finished last time: `plans/dfpn/report3.md`.
+
+Starting with this FEN
+"6R1/3p4/3Bk1p1/2p3Pp/7P/p1N2P2/P1PP4/7K w - - 4 28"
+the app shows "pv: g8f8 c5c4 c3d5 c4c3 f3f4 c3d2 d6c5 d7d6 c5d6"
+but there is a shorter forced line, e.g. "g8g7 c5c4 g7d7".
+
+Find the issue and propose a fix, write an implementation plan to `plans/dfpn/plan4.md`.
 
 ---
 
