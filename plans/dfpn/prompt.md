@@ -10,6 +10,38 @@ Write the report to `plans/dfpn/research_ghi.md`.
 
 ---
 
+* Use the pdf skill to read these papers about depth first proof number search: `plans/dfpn/parallel.pdf`, `plans/dfpn/ghi.pdf`, `plans/dfpn/epsilon.pdf`.
+* create a plan for a rust implementation of df-pn+ with the ghi fix and the epsilon trick
+  * the implementation replaces the currently implemented minimax search
+* don't include parallelization yet
+* the search has to stop after 5 seconds
+* store the plan in `plans/dfpn/plan2.md`
+* see test positions below
+
+
+mate in 4:
+rnbqkbnr/ppppp1pp/5p2/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 0 2
+
+mate in 3:
+rnbqkbnr/ppppp1pp/5p2/7Q/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 2
+rnbqkbnr/ppppp2p/5pp1/7Q/8/4P3/PPPP1PPP/RNB1KBNR w KQkq - 0 3
+
+mate in 2:
+rnbqkbnr/ppppp2p/5pp1/3Q4/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 3
+rnbqkbnr/ppp1p2p/3p1pp1/3Q4/8/4P3/PPPP1PPP/RNB1KBNR w KQkq - 0 4
+
+mate in 1:
+rnbqkbnr/ppp1pQ1p/3p1pp1/8/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 4
+rnbq1bnr/pppkpQ1p/3p1pp1/8/8/4P3/PPPP1PPP/RNB1KBNR w KQ - 2 5
+
+win for white with exploded black king:
+rnb3nr/ppp4p/3p1pp1/8/8/4P3/PPPP1PPP/RNB1KBNR b KQ - 0 5
+
+Draw - only two kings remain:
+4k3/8/8/8/8/8/8/4K3 w - - 0 1
+
+---
+
 We want to implement depth first proof number search as originally planned and replace the current minimax search.
 See `plans/basics/report.md` for the reasons this failed last time and use `plans/dfpn_parallel/research.md` to implement it with parallelity.
 Create an implementation plan and write it to `plans/dfpn_parallel/plan.md`.
