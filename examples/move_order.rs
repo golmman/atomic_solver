@@ -19,7 +19,7 @@ fn main() {
             (i, s)
         })
         .collect();
-    scored.sort_by(|a, b| b.1.cmp(&a.1));
+    scored.sort_by_key(|b| std::cmp::Reverse(b.1));
     for (i, s) in scored {
         let m = moves[i];
         println!("{} {}", move_to_uci(m), s);

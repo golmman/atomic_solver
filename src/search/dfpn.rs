@@ -16,6 +16,8 @@ pub const INF: u64 = zobrist::INF;
 
 const EPSILON: f64 = 0.25;
 const TIMEOUT_SECS: u64 = 5;
+const SIM_MAX_DEPTH: usize = 1000;
+const SIM_MAX_NODES: u64 = 1000;
 
 pub struct Search {
     tt: TranspositionTable,
@@ -88,7 +90,7 @@ impl Search {
         let best_depth = self
             .tt
             .probe(pos.hash())
-            .and_then(|e| e.outcome.map(|_| e.depth))
+            .and_then(|e| e.best_result_for_path(0).map(|(.., depth)| depth))
             .unwrap_or(u32::MAX);
 
         if let Some(first_pv) = self.extract_pv_checked(pos) {
@@ -188,10 +190,10 @@ impl Search {
             return Outcome::Draw;
         }
 
-        if let Some(entry) = self.tt.probe(key)
-            && let Some(outcome) = self.try_use_tt(entry, max_depth, self.path_code)
+        if let Some(entry) = self.tt.probe(key).copied()
+            && let Some(resolved) = self.try_use_tt(pos, &entry, max_depth, self.path_code)
         {
-            return outcome;
+            return resolved.outcome;
         }
 
         if !self.path.insert(key) {
@@ -220,7 +222,7 @@ impl Search {
         let best_from_tt = self
             .tt
             .probe(key)
-            .map(|e| e.best_move)
+            .and_then(|e| e.best_result_for_path(self.path_code).map(|(mv, ..)| mv))
             .unwrap_or(Move::NONE);
         self.sort_moves(pos, &mut moves, best_from_tt);
 
@@ -373,20 +375,172 @@ impl Search {
     }
 
     fn try_use_tt(
-        &self,
+        &mut self,
+        pos: &Position,
         entry: &super::tt::TtEntry,
         max_depth: u32,
         path_code: u64,
-    ) -> Option<Outcome> {
-        let outcome = entry.outcome?;
-        if entry.depth > max_depth {
-            return None;
+    ) -> Option<Resolved> {
+        // 1. Path-independent base result.
+        if let Some(outcome) = entry.outcome
+            && !entry.repetition_seen
+            && entry.depth <= max_depth
+        {
+            return Some(Resolved {
+                outcome,
+                depth: entry.depth,
+                repetition_seen: false,
+            });
         }
-        if !entry.repetition_seen || entry.path_code == path_code {
-            Some(outcome)
-        } else {
-            None
+
+        // 2. Try existing twins for the current path.
+        for twin in entry.twins.iter() {
+            if let Some(outcome) = twin.outcome
+                && twin.path_code == path_code
+                && twin.depth <= max_depth
+            {
+                return Some(Resolved {
+                    outcome,
+                    depth: twin.depth,
+                    repetition_seen: true,
+                });
+            }
         }
+
+        // 3. Kawano simulation: verify a twin from another path for the current path.
+        for twin in entry.twins.iter() {
+            let outcome = match twin.outcome {
+                Some(o) => o,
+                None => continue,
+            };
+            if twin.depth > max_depth {
+                continue;
+            }
+            let mut sim_pos = pos.clone();
+            let mut sim_path = HashSet::new();
+            let mut sim_stack = Vec::new();
+            let mut sim_nodes = 0u64;
+            if self.simulate(
+                &mut sim_pos,
+                twin.path_code,
+                outcome,
+                twin.best_move,
+                &mut sim_path,
+                &mut sim_stack,
+                &mut sim_nodes,
+            ) {
+                self.tt
+                    .store_twin(entry.key, path_code, outcome, twin.best_move, twin.depth);
+                return Some(Resolved {
+                    outcome,
+                    depth: twin.depth,
+                    repetition_seen: true,
+                });
+            }
+        }
+
+        None
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn simulate(
+        &self,
+        pos: &mut Position,
+        path_code: u64,
+        expected: Outcome,
+        best_move: Move,
+        sim_path: &mut HashSet<u64>,
+        sim_stack: &mut Vec<u64>,
+        sim_nodes: &mut u64,
+    ) -> bool {
+        if *sim_nodes >= SIM_MAX_NODES {
+            return false;
+        }
+        *sim_nodes += 1;
+
+        if let Some(outcome) = pos.outcome() {
+            return outcome == expected;
+        }
+
+        let key = pos.hash();
+        if !sim_path.insert(key) {
+            return false;
+        }
+        sim_stack.push(key);
+
+        if sim_stack.len() > SIM_MAX_DEPTH {
+            sim_stack.pop();
+            sim_path.remove(&key);
+            return false;
+        }
+
+        let ok = match expected {
+            Outcome::Win | Outcome::Draw => {
+                if best_move == Move::NONE {
+                    false
+                } else {
+                    pos.do_move(best_move);
+                    let child_path_code =
+                        path_code ^ zobrist::path_random(best_move, sim_stack.len());
+                    let child_expected = if expected == Outcome::Draw {
+                        Outcome::Draw
+                    } else {
+                        Outcome::Loss
+                    };
+                    let entry = self.tt.probe(pos.hash()).copied();
+                    let child_best =
+                        entry.and_then(|e| e.find_result_for_path(child_path_code, child_expected));
+                    let ok = child_best.is_some_and(|b| {
+                        self.simulate(
+                            pos,
+                            child_path_code,
+                            child_expected,
+                            b.best_move,
+                            sim_path,
+                            sim_stack,
+                            sim_nodes,
+                        )
+                    });
+                    pos.undo_move(best_move);
+                    ok
+                }
+            }
+            Outcome::Loss => {
+                let mut moves = MoveList::new();
+                pos.legal_moves(&mut moves);
+                let mut ok = true;
+                for i in 0..moves.len() {
+                    let mv = moves[i];
+                    pos.do_move(mv);
+                    let child_path_code = path_code ^ zobrist::path_random(mv, sim_stack.len());
+                    let entry = self.tt.probe(pos.hash()).copied();
+                    let child_best =
+                        entry.and_then(|e| e.find_result_for_path(child_path_code, Outcome::Win));
+                    if !child_best.is_some_and(|b| {
+                        self.simulate(
+                            pos,
+                            child_path_code,
+                            Outcome::Win,
+                            b.best_move,
+                            sim_path,
+                            sim_stack,
+                            sim_nodes,
+                        )
+                    }) {
+                        ok = false;
+                    }
+                    pos.undo_move(mv);
+                    if !ok {
+                        break;
+                    }
+                }
+                ok
+            }
+        };
+
+        sim_stack.pop();
+        sim_path.remove(&key);
+        ok
     }
 
     fn epsilon_ceil(&self, x: u64) -> u64 {
@@ -445,16 +599,23 @@ impl Search {
         ));
         let second_child = second.map(|s| (s.pn, s.dn)).unwrap_or((INF, INF));
 
-        let best_move = if let Some((_, _, mv, _)) = solved {
+        let best_move = if let Some((_, _, mv, _, _)) = solved {
             mv
         } else {
             best_idx.map(|i| children[i].mv).unwrap_or(Move::NONE)
         };
 
-        let depth = solved.map(|(_, d, _, _)| d).unwrap_or(0);
-        let all_solved = solved.map(|(_, _, _, all)| all).unwrap_or(false);
+        let depth = solved.map(|(_, d, _, _, _)| d).unwrap_or(0);
+        let all_solved = solved.map(|(_, _, _, all, _)| all).unwrap_or(false);
 
-        let repetition_seen = children.iter().any(|c| c.repetition_seen);
+        let repetition_seen = if let Some((outcome, _, _, _, idx)) = solved {
+            match outcome {
+                Outcome::Win | Outcome::Draw => children[idx].repetition_seen,
+                Outcome::Loss => children.iter().any(|c| c.repetition_seen),
+            }
+        } else {
+            children.iter().any(|c| c.repetition_seen)
+        };
 
         ChildSelection {
             best_child,
@@ -463,7 +624,7 @@ impl Search {
             dn,
             depth,
             best_move,
-            solved_outcome: solved.map(|(o, _, _, _)| o),
+            solved_outcome: solved.map(|(o, _, _, _, _)| o),
             all_solved,
             repetition_seen,
         }
@@ -505,25 +666,26 @@ impl Search {
                 depth: 0,
                 repetition_seen: true,
             }
-        } else if let Some(entry) = self.tt.probe(child_key) {
+        } else if let Some(entry) = self.tt.probe(child_key).copied() {
             let child_max_depth = max_depth.saturating_sub(1);
-            if let Some(outcome) = self.try_use_tt(entry, child_max_depth, child_path_code) {
-                let (pn, dn) = outcome.pn_dn_for(child_is_or);
+            if let Some(resolved) = self.try_use_tt(pos, &entry, child_max_depth, child_path_code) {
+                let (pn, dn) = resolved.outcome.pn_dn_for(child_is_or);
                 ChildInfo {
                     mv,
                     pn,
                     dn,
                     vpn: pn,
                     vdn: dn,
-                    outcome: Some(outcome),
-                    depth: entry.depth,
-                    repetition_seen: entry.repetition_seen,
+                    outcome: Some(resolved.outcome),
+                    depth: resolved.depth,
+                    repetition_seen: resolved.repetition_seen,
                 }
             } else {
-                let (pn, dn) = if entry.outcome.is_some() {
-                    (1, 1)
-                } else {
+                let use_as_unsolved = entry.outcome.is_none() && entry.depth <= child_max_depth;
+                let (pn, dn) = if use_as_unsolved {
                     (entry.pn, entry.dn)
+                } else {
+                    (1, 1)
                 };
                 ChildInfo {
                     mv,
@@ -556,56 +718,71 @@ impl Search {
     fn is_solved_by_children(
         children: &[ChildInfo],
         _is_or_node: bool,
-    ) -> Option<(Outcome, u32, Move, bool)> {
+    ) -> Option<(Outcome, u32, Move, bool, usize)> {
         let mut all_solved = true;
+        let mut win_idx: Option<usize> = None;
         let mut win_depth = u32::MAX;
-        let mut win_mv = Move::NONE;
+        let mut draw_idx: Option<usize> = None;
         let mut draw_depth = 0;
-        let mut draw_mv = Move::NONE;
         let mut found_draw = false;
+        let mut loss_idx: Option<usize> = None;
         let mut loss_depth = 0;
-        let mut loss_mv = Move::NONE;
 
-        for c in children {
+        for (i, c) in children.iter().enumerate() {
             let d = c.depth.saturating_add(1);
             match c.outcome {
                 None => {
                     all_solved = false;
                 }
                 Some(Outcome::Loss) => {
-                    if d < win_depth {
+                    // Prefer shortest loss, and among ties prefer path-independent.
+                    if d < win_depth
+                        || (d == win_depth
+                            && win_idx.is_some()
+                            && !c.repetition_seen
+                            && children[win_idx.unwrap()].repetition_seen)
+                    {
                         win_depth = d;
-                        win_mv = c.mv;
+                        win_idx = Some(i);
                     }
                 }
                 Some(Outcome::Draw) => {
-                    if d > draw_depth {
+                    if d > draw_depth
+                        || (d == draw_depth
+                            && draw_idx.is_some()
+                            && !c.repetition_seen
+                            && children[draw_idx.unwrap()].repetition_seen)
+                    {
                         draw_depth = d;
-                        draw_mv = c.mv;
+                        draw_idx = Some(i);
                     }
                     found_draw = true;
                 }
                 Some(Outcome::Win) => {
-                    if d > loss_depth {
+                    if d > loss_depth
+                        || (d == loss_depth
+                            && loss_idx.is_some()
+                            && !c.repetition_seen
+                            && children[loss_idx.unwrap()].repetition_seen)
+                    {
                         loss_depth = d;
-                        loss_mv = c.mv;
+                        loss_idx = Some(i);
                     }
                 }
             }
         }
 
-        // A win can be declared as soon as a losing child is found, but the
-        // search must continue refining the shortest one until all siblings
-        // are resolved.
-        if win_depth != u32::MAX {
-            return Some((Outcome::Win, win_depth, win_mv, all_solved));
+        if let Some(idx) = win_idx {
+            return Some((Outcome::Win, win_depth, children[idx].mv, all_solved, idx));
         }
 
         if all_solved {
             if found_draw {
-                return Some((Outcome::Draw, draw_depth, draw_mv, true));
+                let idx = draw_idx.unwrap_or(0);
+                return Some((Outcome::Draw, draw_depth, children[idx].mv, true, idx));
             }
-            return Some((Outcome::Loss, loss_depth, loss_mv, true));
+            let idx = loss_idx.unwrap_or(0);
+            return Some((Outcome::Loss, loss_depth, children[idx].mv, true, idx));
         }
 
         None
@@ -685,6 +862,7 @@ impl Search {
         let mut pv = Vec::new();
         let mut seen = HashSet::new();
         let mut current = pos.clone();
+        let mut path_code = 0u64;
         for _ in 0..1000 {
             let key = current.hash();
             if seen.contains(&key) {
@@ -694,12 +872,18 @@ impl Search {
                 break;
             }
             if let Some(entry) = self.tt.probe(key) {
-                if entry.best_move == Move::NONE {
+                let resolved = entry.best_result_for_path(path_code);
+                if let Some((mv, Some(_), _)) = resolved {
+                    if mv == Move::NONE {
+                        break;
+                    }
+                    seen.insert(key);
+                    pv.push(mv);
+                    current.do_move(mv);
+                    path_code ^= zobrist::path_random(mv, pv.len());
+                } else {
                     break;
                 }
-                seen.insert(key);
-                pv.push(entry.best_move);
-                current.do_move(entry.best_move);
             } else {
                 break;
             }
@@ -767,6 +951,12 @@ struct ChildSelection {
     repetition_seen: bool,
 }
 
+struct Resolved {
+    outcome: Outcome,
+    depth: u32,
+    repetition_seen: bool,
+}
+
 pub fn outcome_from_pn_dn(pn: u64, dn: u64) -> Option<Outcome> {
     if pn == 0 && dn == INF {
         Some(Outcome::Win)
@@ -802,7 +992,7 @@ mod tests {
             child(Some(Outcome::Loss), 2, Square::B1, Square::B2),
             child(Some(Outcome::Win), 0, Square::C1, Square::C2),
         ];
-        let (outcome, depth, mv, all_solved) =
+        let (outcome, depth, mv, all_solved, _idx) =
             Search::is_solved_by_children(&children, true).unwrap();
         assert_eq!(outcome, Outcome::Win);
         assert_eq!(depth, 3);
@@ -817,7 +1007,7 @@ mod tests {
             child(Some(Outcome::Draw), 1, Square::B1, Square::B2),
             child(Some(Outcome::Draw), 7, Square::C1, Square::C2),
         ];
-        let (outcome, depth, mv, all_solved) =
+        let (outcome, depth, mv, all_solved, _idx) =
             Search::is_solved_by_children(&children, false).unwrap();
         assert_eq!(outcome, Outcome::Draw);
         assert_eq!(depth, 8);
@@ -831,7 +1021,7 @@ mod tests {
             child(Some(Outcome::Win), 2, Square::A1, Square::A2),
             child(Some(Outcome::Win), 5, Square::B1, Square::B2),
         ];
-        let (outcome, depth, mv, all_solved) =
+        let (outcome, depth, mv, all_solved, _idx) =
             Search::is_solved_by_children(&children, true).unwrap();
         assert_eq!(outcome, Outcome::Loss);
         assert_eq!(depth, 6);
@@ -854,7 +1044,7 @@ mod tests {
             child(Some(Outcome::Loss), 5, Square::A1, Square::A2),
             child(None, 0, Square::B1, Square::B2),
         ];
-        let (outcome, depth, mv, all_solved) =
+        let (outcome, depth, mv, all_solved, _idx) =
             Search::is_solved_by_children(&children, true).unwrap();
         assert_eq!(outcome, Outcome::Win);
         assert_eq!(depth, 6);
