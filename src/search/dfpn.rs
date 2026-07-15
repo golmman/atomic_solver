@@ -3,7 +3,7 @@
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
 
-use atomic_movegen::types::{Move, MoveList};
+use atomic_movegen::types::{Color, Move, MoveList};
 
 use crate::notation::move_to_uci;
 use crate::position::{Outcome, Position};
@@ -18,6 +18,12 @@ const EPSILON: f64 = 0.25;
 const TIMEOUT_SECS: u64 = 5;
 const SIM_MAX_DEPTH: usize = 1000;
 const SIM_MAX_NODES: u64 = 1000;
+const HISTORY_MAX: i32 = 10_000;
+const HISTORY_BONUS: i32 = 100;
+const HISTORY_AGE_INTERVAL: u64 = 10_000;
+const SCORE_KILLER: i32 = 50_000;
+const KILLER_SLOTS: usize = 2;
+const MAX_KILLER_DEPTH: usize = 256;
 
 pub struct Search {
     tt: TranspositionTable,
@@ -32,6 +38,9 @@ pub struct Search {
     refine_shortest: bool,
     timeout: Duration,
     last_pv: Vec<Move>,
+    history: [[[i32; 64]; 64]; 2],
+    killers: [[Move; KILLER_SLOTS]; MAX_KILLER_DEPTH],
+    history_age_counter: u64,
 }
 
 impl Search {
@@ -49,6 +58,9 @@ impl Search {
             refine_shortest: false,
             timeout: Duration::from_secs(TIMEOUT_SECS),
             last_pv: Vec::new(),
+            history: [[[0; 64]; 64]; 2],
+            killers: [[Move::NONE; KILLER_SLOTS]; MAX_KILLER_DEPTH],
+            history_age_counter: 0,
         }
     }
 
@@ -58,6 +70,23 @@ impl Search {
 
     pub fn set_timeout(&mut self, seconds: u64) {
         self.timeout = Duration::from_secs(seconds);
+    }
+
+    pub fn search_depth(
+        &mut self,
+        pos: &mut Position,
+        max_depth: u32,
+    ) -> (Outcome, Vec<Move>, u64) {
+        self.nodes = 0;
+        self.start = Instant::now();
+        self.deadline = self.start + self.timeout;
+        self.path.clear();
+        self.path_stack.clear();
+        self.path_code = 0;
+        self.last_pv.clear();
+        let outcome = self.dfpn(pos, INF, INF, max_depth, true);
+        let pv = self.extract_pv(pos);
+        (outcome, pv, self.nodes)
     }
 
     pub fn solve(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
@@ -70,7 +99,31 @@ impl Search {
         self.last_pv.clear();
 
         if self.refine_shortest {
-            self.solve_refined(pos)
+            // Bootstrap: find any decisive result with a small depth budget,
+            // doubling the budget until the position is solved.
+            let mut bootstrap_outcome = Outcome::Draw;
+            let mut max_depth = 1u32;
+            while max_depth <= 64 {
+                self.reset_search_state();
+                self.tt.clear();
+                bootstrap_outcome = self.dfpn(pos, INF, INF, max_depth, true);
+                if bootstrap_outcome != Outcome::Draw || self.time_exceeded() {
+                    break;
+                }
+                max_depth = max_depth.saturating_mul(2);
+            }
+
+            if self.time_exceeded() {
+                let pv = self.last_pv.clone();
+                (bootstrap_outcome, pv, self.nodes)
+            } else {
+                let (outcome, pv, _) = self.solve_refined(pos);
+                if outcome == Outcome::Draw && bootstrap_outcome != Outcome::Draw {
+                    (bootstrap_outcome, self.last_pv.clone(), self.nodes)
+                } else {
+                    (outcome, pv, self.nodes)
+                }
+            }
         } else {
             let outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
             let pv = self.extract_pv(pos);
@@ -222,7 +275,17 @@ impl Search {
         let best_from_tt = self
             .tt
             .probe(key)
-            .and_then(|e| e.best_result_for_path(self.path_code).map(|(mv, ..)| mv))
+            .and_then(|e| {
+                e.best_result_for_path(self.path_code)
+                    .map(|(mv, ..)| mv)
+                    .or_else(|| {
+                        if e.best_move != Move::NONE && e.outcome.is_none() {
+                            Some(e.best_move)
+                        } else {
+                            None
+                        }
+                    })
+            })
             .unwrap_or(Move::NONE);
         self.sort_moves(pos, &mut moves, best_from_tt);
 
@@ -344,33 +407,53 @@ impl Search {
             pos.undo_move(mv);
         }
 
+        let store_best_move = if outcome_to_store.is_some() {
+            outcome_to_store_best_move
+        } else {
+            best_move
+        };
+        self.tt.store(
+            key,
+            store_best_move,
+            outcome_to_store,
+            if outcome_to_store.is_some() {
+                outcome_to_store_pn
+            } else {
+                pn
+            },
+            if outcome_to_store.is_some() {
+                outcome_to_store_dn
+            } else {
+                dn
+            },
+            if outcome_to_store.is_some() {
+                outcome_to_store_depth
+            } else {
+                depth
+            },
+            old_path_code,
+            if outcome_to_store.is_some() {
+                outcome_to_store_repetition_seen
+            } else {
+                repetition_seen
+            },
+        );
+
+        if let Some(outcome) = outcome_to_store
+            && outcome != Outcome::Draw
+            && store_best_move != Move::NONE
+        {
+            let us = pos.side_to_move();
+            self.update_history(store_best_move, us);
+            self.update_killers(store_best_move);
+        }
+
+        self.maybe_age_history();
+
         self.path_stack.pop();
         self.path.remove(&key);
         self.path_code = old_path_code;
 
-        if outcome_to_store.is_some() {
-            self.tt.store(
-                key,
-                outcome_to_store_best_move,
-                outcome_to_store,
-                outcome_to_store_pn,
-                outcome_to_store_dn,
-                outcome_to_store_depth,
-                old_path_code,
-                outcome_to_store_repetition_seen,
-            );
-        } else {
-            self.tt.store(
-                key,
-                best_move,
-                outcome_to_store,
-                pn,
-                dn,
-                depth,
-                old_path_code,
-                repetition_seen,
-            );
-        }
         outcome_to_store.unwrap_or(Outcome::Draw)
     }
 
@@ -844,18 +927,40 @@ impl Search {
         let mut state = atomic_movegen::board::StateInfo::new();
         pos.board.populate_state(&mut state);
 
+        let us = pos.side_to_move() as usize;
+        let depth = self.path_stack.len();
+
         let slice = moves.as_mut_slice();
+        slice.sort_by(|&a, &b| {
+            let sa = self.scorer.score(&pos.board, a, &state)
+                + self.history[us][a.from_sq() as usize][a.to_sq() as usize]
+                + self.killer_bonus(a, depth);
+            let sb = self.scorer.score(&pos.board, b, &state)
+                + self.history[us][b.from_sq() as usize][b.to_sq() as usize]
+                + self.killer_bonus(b, depth);
+            sb.cmp(&sa)
+        });
+
         if best_from_tt != Move::NONE
             && let Some(idx) = slice.iter().position(|&m| m == best_from_tt)
         {
-            slice.swap(0, idx);
+            let m = slice[idx];
+            for i in (0..idx).rev() {
+                slice[i + 1] = slice[i];
+            }
+            slice[0] = m;
         }
+    }
 
-        slice.sort_by(|&a, &b| {
-            let sa = self.scorer.score(&pos.board, a, &state);
-            let sb = self.scorer.score(&pos.board, b, &state);
-            sb.cmp(&sa)
-        });
+    fn killer_bonus(&self, m: Move, depth: usize) -> i32 {
+        if depth >= MAX_KILLER_DEPTH {
+            return 0;
+        }
+        if self.killers[depth].contains(&m) {
+            SCORE_KILLER
+        } else {
+            0
+        }
     }
 
     fn extract_pv(&self, pos: &Position) -> Vec<Move> {
@@ -925,6 +1030,47 @@ impl Search {
         eprintln!("outcome: {outcome_str}");
         eprintln!("pv: {pv_str}");
         eprintln!("nodes: {}", self.nodes);
+    }
+
+    fn update_history(&mut self, m: Move, side: Color) {
+        let from = m.from_sq() as usize;
+        let to = m.to_sq() as usize;
+        let entry = &mut self.history[side as usize][from][to];
+        *entry = (*entry + HISTORY_BONUS).min(HISTORY_MAX);
+    }
+
+    fn update_killers(&mut self, best_move: Move) {
+        if best_move == Move::NONE {
+            return;
+        }
+        let depth = self.path_stack.len();
+        if depth >= MAX_KILLER_DEPTH {
+            return;
+        }
+        let slot = &mut self.killers[depth];
+        if best_move != slot[0] {
+            slot[1] = slot[0];
+            slot[0] = best_move;
+        }
+    }
+
+    fn maybe_age_history(&mut self) {
+        self.history_age_counter += 1;
+        if self.history_age_counter < HISTORY_AGE_INTERVAL {
+            return;
+        }
+        self.history_age_counter = 0;
+        for side in &mut self.history {
+            for from in side {
+                for entry in from {
+                    *entry = (*entry / 2).min(HISTORY_MAX);
+                }
+            }
+        }
+    }
+
+    fn time_exceeded(&self) -> bool {
+        Instant::now() >= self.deadline
     }
 }
 

@@ -6,7 +6,7 @@ fn solve(fen: &str) -> (Outcome, Vec<String>) {
     let mut pos = Position::from_fen(fen).unwrap();
     let mut search = Search::new(64);
     search.refine_shortest(true);
-    search.set_timeout(10);
+    search.set_timeout(5);
     let (outcome, pv, _nodes) = search.solve(&mut pos);
     (outcome, pv.iter().map(|&m| move_to_uci(m)).collect())
 }

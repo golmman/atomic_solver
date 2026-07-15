@@ -13,4 +13,4 @@ I already built an independent atomic move generator library. Are there other pa
 
 movegen 2.0
 eval: win, not win
-
+ideas from https://github.com/nelhage/ultimattt
