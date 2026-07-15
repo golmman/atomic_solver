@@ -2,7 +2,7 @@
 
 use atomic_movegen::board::{Board, StateInfo};
 use atomic_movegen::movegen::generate_legal;
-use atomic_movegen::types::{Bitboard, Color, Move, MoveList, PieceType};
+use atomic_movegen::types::{Bitboard, Color, Move, MoveList};
 
 use crate::zobrist;
 
@@ -41,7 +41,6 @@ impl Outcome {
 
 pub struct Position {
     pub board: Board,
-    pub rule50: u16,
     pub zobrist: u64,
     undo_stack: Vec<StateInfo>,
 }
@@ -53,47 +52,26 @@ impl Position {
 
     pub fn from_fen(fen: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let board = Board::from_fen(fen)?;
-        let parts: Vec<&str> = fen.split_whitespace().collect();
-        let rule50 = if parts.len() > 4 {
-            parts[4].parse::<u16>()?
-        } else {
-            0
-        };
-        let zobrist = zobrist::hash(&board, rule50);
+        let zobrist = zobrist::hash(&board, board.rule50());
         Ok(Self {
             board,
-            rule50,
             zobrist,
             undo_stack: Vec::new(),
         })
     }
 
     pub fn do_move(&mut self, m: Move) {
-        let from = m.from_sq();
-        let to = m.to_sq();
-        let from_piece = self.board.piece_on(from);
-        let is_pawn = from_piece.type_of() == PieceType::Pawn;
-        let is_capture = m.move_type() == atomic_movegen::types::MoveType::EnPassant
-            || (m.move_type() != atomic_movegen::types::MoveType::Castling
-                && !self.board.empty(to));
-
         let mut state = StateInfo::new();
         self.board.do_move(m, &mut state);
 
-        self.rule50 = if is_pawn || is_capture {
-            0
-        } else {
-            state.rule50 + 1
-        };
-        self.zobrist = zobrist::hash(&self.board, self.rule50);
+        self.zobrist = zobrist::hash(&self.board, self.board.rule50());
         self.undo_stack.push(state);
     }
 
     pub fn undo_move(&mut self, m: Move) {
         let state = self.undo_stack.pop().expect("undo without move");
         self.board.undo_move(m, &state);
-        self.rule50 = state.rule50;
-        self.zobrist = zobrist::hash(&self.board, self.rule50);
+        self.zobrist = zobrist::hash(&self.board, self.board.rule50());
     }
 
     pub fn legal_moves(&self, moves: &mut MoveList) {
@@ -109,7 +87,7 @@ impl Position {
     }
 
     pub fn outcome(&self) -> Option<Outcome> {
-        if self.rule50 >= 100 {
+        if self.board.rule50() >= 100 {
             return Some(Outcome::Draw);
         }
         let us = self.side_to_move();
@@ -145,7 +123,6 @@ impl Clone for Position {
     fn clone(&self) -> Self {
         Self {
             board: self.board.clone(),
-            rule50: self.rule50,
             zobrist: self.zobrist,
             undo_stack: Vec::new(),
         }

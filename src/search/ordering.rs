@@ -2,7 +2,7 @@
 
 use atomic_movegen::attacks;
 use atomic_movegen::board::{Board, StateInfo};
-use atomic_movegen::types::{Color, Move, MoveType, NO_PIECE, PieceType, Square};
+use atomic_movegen::types::{Color, Move, NO_PIECE, PieceType, Square};
 
 pub trait MoveScorer {
     fn score(&self, board: &Board, m: Move, state: &StateInfo) -> i32;
@@ -83,13 +83,12 @@ impl MoveScorer for StaticAtomicScorer {
         if from_piece == NO_PIECE {
             return 0;
         }
-        let from_pt = from_piece.type_of();
+        let from_pt = from_piece.type_of().unwrap();
         let to_piece = board.piece_on(to);
         let us = board.side_to_move();
         let them = us.flip();
 
-        let is_capture = m.move_type() == MoveType::EnPassant
-            || (m.move_type() != MoveType::Castling && to_piece != NO_PIECE);
+        let is_capture = board.is_capture(m);
 
         // 1. Winning capture: blast removes the opponent's last commoner.
         if is_capture {
@@ -104,19 +103,18 @@ impl MoveScorer for StaticAtomicScorer {
         }
 
         // 2. Promotion.
-        if m.move_type() == MoveType::Promotion {
+        if m.is_promotion() {
             return SCORE_PROMOTION + piece_value(m.promotion_type());
         }
 
         // 3. Capture by MVV-LVA.
         if is_capture {
-            let victim = if m.move_type() == MoveType::EnPassant {
+            let victim = if m.is_en_passant() {
                 PieceType::Pawn
             } else {
-                to_piece.type_of()
+                to_piece.type_of().unwrap()
             };
-            let aggressor = from_pt;
-            return SCORE_CAPTURE + piece_value(victim) * 10 - piece_value(aggressor);
+            return SCORE_CAPTURE + piece_value(victim) * 10 - piece_value(from_pt);
         }
 
         let mut score = 0;

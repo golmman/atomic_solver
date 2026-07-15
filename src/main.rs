@@ -1,4 +1,3 @@
-use atomic_movegen::attacks;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::Position;
 use atomic_solver::search::dfpn::Search;
@@ -6,7 +5,6 @@ use atomic_solver::search::dfpn::Search;
 const DEFAULT_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 fn main() {
-    attacks::init();
 
     let args: Vec<String> = std::env::args().collect();
     let mut fen = DEFAULT_FEN.to_string();
