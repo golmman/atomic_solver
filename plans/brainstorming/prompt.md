@@ -8,3 +8,9 @@ Store the plan in `plans/brainstorming/plan_rough.md`.
 I want to build a solver for atomic chess with proof number search.
 
 I already built an independent atomic move generator library. Are there other parts of this projects that i can outsource as libraries without missing out on performance?
+
+-----
+
+movegen 2.0
+eval: win, not win
+

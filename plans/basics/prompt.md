@@ -23,3 +23,5 @@ dfpn? test positions
 what is bad in atomic-movegen?
 - `atomic_movegen::attacks::init()` must be called once before any move generation.
 - should it track rule50?
+
+
