@@ -19,3 +19,9 @@ Kings touching in atomic chess is indeed allowed by the rules. Please re-think a
 Based on the `plans/atomic_movegen_feedback/research.md` write feedback for the maintainer of the `atomic-movegen` library.
 Write your feedback to `plans/atomic_movegen_feedback/feedback.md`.
 
+---
+
+The maintainer of the `atomic-movegen` crate integrated our feedback (`plans/movegen/feedback.md`) into their library.
+Update to the most recent version and write a report to `plans/movegen/report_update_2.0.0`.
+
+
