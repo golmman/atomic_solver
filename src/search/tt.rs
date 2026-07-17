@@ -4,7 +4,7 @@ use crate::position::Outcome;
 use crate::zobrist;
 use atomic_movegen::types::Move;
 
-const MAX_TWINS: usize = 2;
+const MAX_TWINS: usize = 8;
 
 #[derive(Clone, Copy, Debug)]
 pub struct TwinEntry {
@@ -23,6 +23,13 @@ impl Default for TwinEntry {
             depth: 0,
         }
     }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum TwinAction {
+    Inserted,
+    Updated,
+    Evicted,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -93,27 +100,45 @@ impl TtEntry {
         None
     }
 
-    fn store_twin(&mut self, path_code: u64, outcome: Outcome, best_move: Move, depth: u32) {
-        // Replace an existing twin for the same path, or use the first empty
-        // or oldest slot.
-        let mut empty_or_old = 0;
-        for (i, twin) in self.twins.iter_mut().enumerate() {
+    fn store_twin(
+        &mut self,
+        path_code: u64,
+        outcome: Outcome,
+        best_move: Move,
+        depth: u32,
+    ) -> TwinAction {
+        // Update an existing twin for the same path.
+        for twin in self.twins.iter_mut() {
             if twin.outcome.is_some() && twin.path_code == path_code {
                 twin.outcome = Some(outcome);
                 twin.best_move = best_move;
                 twin.depth = depth;
-                return;
-            }
-            if twin.outcome.is_none() {
-                empty_or_old = i;
+                return TwinAction::Updated;
             }
         }
+
+        // Use the first empty slot, or evict slot 0 if all are full.
+        let mut empty_or_old = 0;
+        let mut found_empty = false;
+        for (i, twin) in self.twins.iter_mut().enumerate() {
+            if twin.outcome.is_none() {
+                empty_or_old = i;
+                found_empty = true;
+            }
+        }
+
         self.twins[empty_or_old] = TwinEntry {
             path_code,
             outcome: Some(outcome),
             best_move,
             depth,
         };
+
+        if found_empty {
+            TwinAction::Inserted
+        } else {
+            TwinAction::Evicted
+        }
     }
 
     fn clear_twins(&mut self) {
@@ -139,6 +164,8 @@ pub struct EntryResult {
 pub struct TranspositionTable {
     table: Vec<[TtEntry; 2]>,
     mask: usize,
+    twin_insertions: u64,
+    twin_evictions: u64,
 }
 
 impl TranspositionTable {
@@ -150,6 +177,8 @@ impl TranspositionTable {
         Self {
             table: vec![[TtEntry::default(); 2]; buckets],
             mask: buckets - 1,
+            twin_insertions: 0,
+            twin_evictions: 0,
         }
     }
 
@@ -167,6 +196,24 @@ impl TranspositionTable {
     pub fn clear(&mut self) {
         for bucket in &mut self.table {
             *bucket = [TtEntry::default(); 2];
+        }
+        self.twin_insertions = 0;
+        self.twin_evictions = 0;
+    }
+
+    pub fn twin_stats(&self) -> (u64, u64) {
+        (self.twin_insertions, self.twin_evictions)
+    }
+
+    #[inline]
+    fn record_twin_action(&mut self, action: TwinAction) {
+        match action {
+            TwinAction::Inserted => self.twin_insertions += 1,
+            TwinAction::Evicted => {
+                self.twin_insertions += 1;
+                self.twin_evictions += 1;
+            }
+            TwinAction::Updated => {}
         }
     }
 
@@ -190,41 +237,50 @@ impl TranspositionTable {
         }
 
         let idx = self.index(key);
-        let bucket = &mut self.table[idx];
+        let mut twin_action = None;
+        let mut existing = false;
 
-        for slot in bucket.iter_mut() {
-            if slot.valid && slot.key == key {
-                if let Some(o) = outcome {
-                    if repetition_seen {
-                        // Path-dependent result: keep as a twin and reset the base.
-                        slot.store_twin(path_code, o, best_move, depth);
-                        slot.reinit_base_for_twin();
+        {
+            let bucket = &mut self.table[idx];
+            for slot in bucket.iter_mut() {
+                if slot.valid && slot.key == key {
+                    existing = true;
+                    if let Some(o) = outcome {
+                        if repetition_seen {
+                            twin_action = Some(slot.store_twin(path_code, o, best_move, depth));
+                            slot.reinit_base_for_twin();
+                        } else {
+                            // Path-independent result: store in the base entry and clear twins.
+                            slot.best_move = best_move;
+                            slot.outcome = Some(o);
+                            slot.pn = pn;
+                            slot.dn = dn;
+                            slot.depth = depth;
+                            slot.repetition_seen = false;
+                            slot.clear_twins();
+                        }
                     } else {
-                        // Path-independent result: store in the base entry and clear twins.
+                        // Unsolved node: update base bounds and keep existing twins.
                         slot.best_move = best_move;
-                        slot.outcome = Some(o);
+                        slot.outcome = None;
                         slot.pn = pn;
                         slot.dn = dn;
                         slot.depth = depth;
-                        slot.repetition_seen = false;
-                        slot.clear_twins();
+                        slot.repetition_seen = repetition_seen;
                     }
-                } else {
-                    // Unsolved node: update base bounds and keep existing twins.
-                    slot.best_move = best_move;
-                    slot.outcome = None;
-                    slot.pn = pn;
-                    slot.dn = dn;
-                    slot.depth = depth;
-                    slot.repetition_seen = repetition_seen;
+                    break;
                 }
-                return;
             }
         }
 
-        // No exact match: create a new primary entry, keeping the old primary in
-        // the secondary slot to reduce collisions.
-        let old = bucket[0];
+        if let Some(action) = twin_action {
+            self.record_twin_action(action);
+        }
+
+        if existing {
+            return;
+        }
+
         let mut new = TtEntry {
             key,
             valid: true,
@@ -237,15 +293,24 @@ impl TranspositionTable {
             twins: [TwinEntry::default(); MAX_TWINS],
         };
 
-        if let Some(o) = outcome {
+        let new_twin_action = if let Some(o) = outcome {
             if repetition_seen {
                 new.reinit_base_for_twin();
-                new.store_twin(path_code, o, best_move, depth);
+                Some(new.store_twin(path_code, o, best_move, depth))
             } else {
                 new.clear_twins();
+                None
             }
+        } else {
+            None
+        };
+
+        if let Some(action) = new_twin_action {
+            self.record_twin_action(action);
         }
 
+        let bucket = &mut self.table[idx];
+        let old = bucket[0];
         bucket[0] = new;
         if old.valid && old.key != key {
             bucket[1] = old;
@@ -261,17 +326,24 @@ impl TranspositionTable {
         depth: u32,
     ) {
         let idx = self.index(key);
-        let bucket = &mut self.table[idx];
+        let mut twin_action = None;
 
-        for slot in bucket.iter_mut() {
-            if slot.valid && slot.key == key {
-                slot.store_twin(path_code, outcome, best_move, depth);
-                slot.reinit_base_for_twin();
-                return;
+        {
+            let bucket = &mut self.table[idx];
+            for slot in bucket.iter_mut() {
+                if slot.valid && slot.key == key {
+                    twin_action = Some(slot.store_twin(path_code, outcome, best_move, depth));
+                    slot.reinit_base_for_twin();
+                    break;
+                }
             }
         }
 
-        let old = bucket[0];
+        if let Some(action) = twin_action {
+            self.record_twin_action(action);
+            return;
+        }
+
         let mut new = TtEntry {
             key,
             valid: true,
@@ -283,10 +355,54 @@ impl TranspositionTable {
             repetition_seen: true,
             twins: [TwinEntry::default(); MAX_TWINS],
         };
-        new.store_twin(path_code, outcome, best_move, depth);
+        let action = new.store_twin(path_code, outcome, best_move, depth);
+        self.record_twin_action(action);
+
+        let bucket = &mut self.table[idx];
+        let old = bucket[0];
         bucket[0] = new;
         if old.valid && old.key != key {
             bucket[1] = old;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tt_entry_size_is_reasonable() {
+        // MAX_TWINS was raised to 8; keep the per-entry size bounded so the
+        // default 64 MB table still holds a useful number of entries.
+        let size = std::mem::size_of::<TtEntry>();
+        assert!(size <= 512, "TtEntry size {} exceeds 512 bytes", size);
+    }
+
+    #[test]
+    fn twin_metrics_track_insertions_and_evictions() {
+        let mut tt = TranspositionTable::with_mb(1);
+        let key = 12345u64;
+
+        for i in 0..MAX_TWINS as u64 {
+            tt.store_twin(key, i, Outcome::Draw, Move::NONE, 0);
+        }
+
+        assert_eq!(tt.twin_stats().0, MAX_TWINS as u64);
+        assert_eq!(tt.twin_stats().1, 0);
+
+        // One more twin evicts the oldest slot.
+        tt.store_twin(key, MAX_TWINS as u64, Outcome::Draw, Move::NONE, 0);
+        assert_eq!(tt.twin_stats().0, MAX_TWINS as u64 + 1);
+        assert_eq!(tt.twin_stats().1, 1);
+    }
+
+    #[test]
+    fn clear_resets_twin_stats() {
+        let mut tt = TranspositionTable::with_mb(1);
+        tt.store_twin(1, 0, Outcome::Draw, Move::NONE, 0);
+        tt.clear();
+        assert_eq!(tt.twin_stats().0, 0);
+        assert_eq!(tt.twin_stats().1, 0);
     }
 }
