@@ -92,6 +92,16 @@ impl Position {
     }
 
     pub fn outcome(&self) -> Option<Outcome> {
+        let mut moves = MoveList::new();
+        let mut state = StateInfo::new();
+        self.legal_moves_with_state(&mut moves, &mut state);
+        self.outcome_from_state(&state, &moves)
+    }
+
+    /// Terminal detector for callers that already have a move list and the
+    /// corresponding `StateInfo`. Returns `None` if the position is not
+    /// terminal, otherwise the `Outcome` from the side-to-move perspective.
+    pub fn outcome_from_state(&self, state: &StateInfo, moves: &MoveList) -> Option<Outcome> {
         let us = self.side_to_move();
         let them = us.flip();
         if self.commoners(us).is_empty() {
@@ -105,6 +115,13 @@ impl Position {
         }
         if self.board.occupied().count() == 2 {
             return Some(Outcome::Draw);
+        }
+        if moves.is_empty() {
+            if state.checkers.is_empty() {
+                return Some(Outcome::Draw);
+            } else {
+                return Some(Outcome::Loss);
+            }
         }
         None
     }
@@ -153,15 +170,25 @@ mod tests {
     }
 
     #[test]
-    fn no_legal_moves_is_not_decided_by_position_outcome() {
+    fn no_legal_moves_is_stalemate_draw() {
         // White commoner on a1 is stalemated: no legal moves and not in check.
-        // `Position::outcome()` does not consider move availability, so it
-        // returns None; the draw classification is handled by the solver.
         let pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
-        assert_eq!(pos.outcome(), None);
+        assert_eq!(pos.outcome(), Some(Outcome::Draw));
 
         let mut moves = MoveList::new();
         pos.legal_moves(&mut moves);
         assert_eq!(moves.len(), 0);
+    }
+
+    #[test]
+    fn no_legal_moves_in_check_is_checkmate_loss() {
+        let pos = Position::from_fen("7K/8/8/8/8/8/1Q6/k7 b - - 0 1").unwrap();
+        assert_eq!(pos.outcome(), Some(Outcome::Loss));
+    }
+
+    #[test]
+    fn position_with_legal_moves_is_not_terminal() {
+        let pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+        assert_eq!(pos.outcome(), None);
     }
 }

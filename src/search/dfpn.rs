@@ -3,6 +3,7 @@
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
 
+use atomic_movegen::board::StateInfo;
 use atomic_movegen::types::{Color, Move, MoveList};
 
 use crate::notation::move_to_uci;
@@ -272,26 +273,9 @@ impl Search {
             current.do_move(m);
         }
 
-        // Determine the terminal outcome of the final position.  `Position::outcome()`
-        // detects commoner extinction and rule50/two-piece draws, but it does not
-        // detect checkmate or stalemate, so we fall back to move-generation when
-        // the position is otherwise non-terminal.
-        let final_outcome = if let Some(o) = current.outcome() {
-            Some(o)
-        } else {
-            let mut moves = MoveList::new();
-            let mut state = atomic_movegen::board::StateInfo::new();
-            current.legal_moves_with_state(&mut moves, &mut state);
-            if moves.is_empty() {
-                if state.checkers.is_empty() {
-                    Some(Outcome::Draw)
-                } else {
-                    Some(Outcome::Loss)
-                }
-            } else {
-                None
-            }
-        };
+        // `Position::outcome()` is the canonical terminal detector, including
+        // commoner extinction, rule50, the two-piece draw, checkmate, and stalemate.
+        let final_outcome = current.outcome();
 
         // Outcome is from the side-to-move perspective.  After `pv.len()` plies,
         // the side to move is the original player on even lengths and the
@@ -320,7 +304,11 @@ impl Search {
 
         let key = pos.hash();
 
-        if let Some(outcome) = pos.outcome() {
+        let mut moves = MoveList::new();
+        let mut state = StateInfo::new();
+        pos.legal_moves_with_state(&mut moves, &mut state);
+
+        if let Some(outcome) = pos.outcome_from_state(&state, &moves) {
             let (pn, dn) = outcome.pn_dn_for(is_or_node);
             self.tt.store(
                 key,
@@ -358,31 +346,6 @@ impl Search {
 
         if !self.path.insert(key) {
             return Outcome::Draw;
-        }
-
-        let mut moves = MoveList::new();
-        let mut state = atomic_movegen::board::StateInfo::new();
-        pos.legal_moves_with_state(&mut moves, &mut state);
-
-        if moves.is_empty() {
-            self.path.remove(&key);
-            let outcome = if state.checkers.is_empty() {
-                Outcome::Draw
-            } else {
-                Outcome::Loss
-            };
-            let (pn, dn) = outcome.pn_dn_for(is_or_node);
-            self.tt.store(
-                key,
-                Move::NONE,
-                Some(outcome),
-                pn,
-                dn,
-                0,
-                self.path_code,
-                false,
-            );
-            return outcome;
         }
 
         let best_from_tt = self
@@ -654,7 +617,11 @@ impl Search {
         }
         *sim_nodes += 1;
 
-        if let Some(outcome) = pos.outcome() {
+        let mut moves = MoveList::new();
+        let mut state = StateInfo::new();
+        pos.legal_moves_with_state(&mut moves, &mut state);
+
+        if let Some(outcome) = pos.outcome_from_state(&state, &moves) {
             return outcome == expected;
         }
 
@@ -702,39 +669,33 @@ impl Search {
                 }
             }
             Outcome::Loss => {
-                let mut moves = MoveList::new();
-                pos.legal_moves(&mut moves);
-                if moves.is_empty() {
-                    pos.outcome() == Some(expected)
-                } else {
-                    let mut ok = true;
-                    for i in 0..moves.len() {
-                        let mv = moves[i];
-                        pos.do_move(mv);
-                        let child_path_code = path_code ^ zobrist::path_random(mv, sim_stack.len());
-                        let entry = self.tt.probe(pos.hash()).copied();
-                        let child_best = entry
-                            .and_then(|e| e.find_result_for_path(child_path_code, Outcome::Win));
-                        if !child_best.is_some_and(|b| {
-                            self.simulate(
-                                pos,
-                                child_path_code,
-                                Outcome::Win,
-                                b.best_move,
-                                sim_path,
-                                sim_stack,
-                                sim_nodes,
-                            )
-                        }) {
-                            ok = false;
-                        }
-                        pos.undo_move(mv);
-                        if !ok {
-                            break;
-                        }
+                let mut ok = true;
+                for i in 0..moves.len() {
+                    let mv = moves[i];
+                    pos.do_move(mv);
+                    let child_path_code = path_code ^ zobrist::path_random(mv, sim_stack.len());
+                    let entry = self.tt.probe(pos.hash()).copied();
+                    let child_best =
+                        entry.and_then(|e| e.find_result_for_path(child_path_code, Outcome::Win));
+                    if !child_best.is_some_and(|b| {
+                        self.simulate(
+                            pos,
+                            child_path_code,
+                            Outcome::Win,
+                            b.best_move,
+                            sim_path,
+                            sim_stack,
+                            sim_nodes,
+                        )
+                    }) {
+                        ok = false;
                     }
-                    ok
+                    pos.undo_move(mv);
+                    if !ok {
+                        break;
+                    }
                 }
+                ok
             }
         };
 
