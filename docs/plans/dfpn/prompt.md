@@ -16,6 +16,12 @@ Write the report to `plans/dfpn/research_ghi.md`.
 
 ---
 
+Use the pdf skill to extract the knowledge you find in `docs/plans/dfpn/epsilon.pdf`.
+Use it to create a report which details how to use it in a rust based dfpn implementation.
+Write the report to `docs/plans/dfpn/epsilon_ghi.md`.
+
+---
+
 * Use the pdf skill to read these papers about depth first proof number search: `plans/dfpn/parallel.pdf`, `plans/dfpn/ghi.pdf`, `plans/dfpn/epsilon.pdf`.
 * create a plan for a rust implementation of df-pn+ with the ghi fix and the epsilon trick
   * the implementation replaces the currently implemented minimax search
