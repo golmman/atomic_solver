@@ -160,7 +160,7 @@ impl TtEntry {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct EntryResult {
     pub best_move: Move,
     pub depth: u32,
@@ -413,5 +413,40 @@ mod tests {
         tt.clear();
         assert_eq!(tt.twin_stats().0, 0);
         assert_eq!(tt.twin_stats().1, 0);
+    }
+
+    #[test]
+    fn find_and_best_result_for_multiple_paths() {
+        let mut tt = TranspositionTable::with_mb(1);
+        let key = 123u64;
+
+        // Twins for two different path codes.  Storing a twin reinitialises the
+        // base entry, so the table is left with only path-dependent results.
+        tt.store_twin(key, 1, 0, Outcome::Loss, Move::NONE, 2);
+        tt.store_twin(key, 2, 0, Outcome::Draw, Move::NONE, 3);
+
+        let entry = *tt.probe(key).unwrap();
+
+        // A twin is found only for its own path code and expected outcome.
+        assert_eq!(
+            entry
+                .find_result_for_path(1, Outcome::Loss)
+                .map(|r| r.depth),
+            Some(2)
+        );
+        assert!(entry.find_result_for_path(1, Outcome::Win).is_none());
+
+        // best_result_for_path returns the twin for path code 2.
+        assert_eq!(
+            entry.best_result_for_path(2),
+            Some((Move::NONE, Some(Outcome::Draw), 3))
+        );
+
+        // The base result has been cleared because path-dependent twins are stored.
+        assert!(entry.find_result_for_path(0, Outcome::Win).is_none());
+
+        // Unknown path returns nothing.
+        assert!(entry.find_result_for_path(99, Outcome::Loss).is_none());
+        assert!(entry.best_result_for_path(99).is_none());
     }
 }

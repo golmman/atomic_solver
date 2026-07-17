@@ -98,3 +98,17 @@ fn epsilon_zero_solves_mate_in_two() {
         "expected a non-empty PV for the mate-in-two"
     );
 }
+
+#[test]
+#[cfg_attr(debug_assertions, ignore = "slow in debug builds")]
+fn epsilon_thresholds_do_not_claim_win_in_cyclic_position() {
+    let fen = "8/8/8/8/2k5/8/8/4KR2 w - - 0 1";
+    for epsilon in [0.0, 0.25, 0.5] {
+        let outcome = solve_with_epsilon(fen, epsilon);
+        assert_ne!(
+            outcome,
+            Outcome::Win,
+            "epsilon {epsilon} should not claim a win in a drawn cyclic position"
+        );
+    }
+}

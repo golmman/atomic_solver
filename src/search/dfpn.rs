@@ -73,6 +73,10 @@ impl Search {
         self.timeout = Duration::from_secs(seconds);
     }
 
+    pub fn twin_stats(&self) -> (u64, u64) {
+        self.tt.twin_stats()
+    }
+
     pub fn set_epsilon(&mut self, epsilon: f64) {
         assert!(
             (0.0..=1.0).contains(&epsilon),
