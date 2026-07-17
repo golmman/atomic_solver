@@ -9,6 +9,7 @@ const MAX_TWINS: usize = 8;
 #[derive(Clone, Copy, Debug)]
 pub struct TwinEntry {
     pub path_code: u64,
+    pub path_length: u32,
     pub outcome: Option<Outcome>, // None means empty
     pub best_move: Move,
     pub depth: u32,
@@ -18,6 +19,7 @@ impl Default for TwinEntry {
     fn default() -> Self {
         Self {
             path_code: 0,
+            path_length: 0,
             outcome: None,
             best_move: Move::NONE,
             depth: 0,
@@ -103,6 +105,7 @@ impl TtEntry {
     fn store_twin(
         &mut self,
         path_code: u64,
+        path_length: u32,
         outcome: Outcome,
         best_move: Move,
         depth: u32,
@@ -110,6 +113,7 @@ impl TtEntry {
         // Update an existing twin for the same path.
         for twin in self.twins.iter_mut() {
             if twin.outcome.is_some() && twin.path_code == path_code {
+                twin.path_length = path_length;
                 twin.outcome = Some(outcome);
                 twin.best_move = best_move;
                 twin.depth = depth;
@@ -129,6 +133,7 @@ impl TtEntry {
 
         self.twins[empty_or_old] = TwinEntry {
             path_code,
+            path_length,
             outcome: Some(outcome),
             best_move,
             depth,
@@ -227,6 +232,7 @@ impl TranspositionTable {
         dn: u64,
         depth: u32,
         path_code: u64,
+        path_length: u32,
         repetition_seen: bool,
     ) {
         let mut pn = pn.min(zobrist::INF);
@@ -247,7 +253,8 @@ impl TranspositionTable {
                     existing = true;
                     if let Some(o) = outcome {
                         if repetition_seen {
-                            twin_action = Some(slot.store_twin(path_code, o, best_move, depth));
+                            twin_action =
+                                Some(slot.store_twin(path_code, path_length, o, best_move, depth));
                             slot.reinit_base_for_twin();
                         } else {
                             // Path-independent result: store in the base entry and clear twins.
@@ -296,7 +303,7 @@ impl TranspositionTable {
         let new_twin_action = if let Some(o) = outcome {
             if repetition_seen {
                 new.reinit_base_for_twin();
-                Some(new.store_twin(path_code, o, best_move, depth))
+                Some(new.store_twin(path_code, path_length, o, best_move, depth))
             } else {
                 new.clear_twins();
                 None
@@ -321,6 +328,7 @@ impl TranspositionTable {
         &mut self,
         key: u64,
         path_code: u64,
+        path_length: u32,
         outcome: Outcome,
         best_move: Move,
         depth: u32,
@@ -332,7 +340,8 @@ impl TranspositionTable {
             let bucket = &mut self.table[idx];
             for slot in bucket.iter_mut() {
                 if slot.valid && slot.key == key {
-                    twin_action = Some(slot.store_twin(path_code, outcome, best_move, depth));
+                    twin_action =
+                        Some(slot.store_twin(path_code, path_length, outcome, best_move, depth));
                     slot.reinit_base_for_twin();
                     break;
                 }
@@ -355,7 +364,7 @@ impl TranspositionTable {
             repetition_seen: true,
             twins: [TwinEntry::default(); MAX_TWINS],
         };
-        let action = new.store_twin(path_code, outcome, best_move, depth);
+        let action = new.store_twin(path_code, path_length, outcome, best_move, depth);
         self.record_twin_action(action);
 
         let bucket = &mut self.table[idx];
@@ -385,14 +394,14 @@ mod tests {
         let key = 12345u64;
 
         for i in 0..MAX_TWINS as u64 {
-            tt.store_twin(key, i, Outcome::Draw, Move::NONE, 0);
+            tt.store_twin(key, i, 0, Outcome::Draw, Move::NONE, 0);
         }
 
         assert_eq!(tt.twin_stats().0, MAX_TWINS as u64);
         assert_eq!(tt.twin_stats().1, 0);
 
         // One more twin evicts the oldest slot.
-        tt.store_twin(key, MAX_TWINS as u64, Outcome::Draw, Move::NONE, 0);
+        tt.store_twin(key, MAX_TWINS as u64, 0, Outcome::Draw, Move::NONE, 0);
         assert_eq!(tt.twin_stats().0, MAX_TWINS as u64 + 1);
         assert_eq!(tt.twin_stats().1, 1);
     }
@@ -400,7 +409,7 @@ mod tests {
     #[test]
     fn clear_resets_twin_stats() {
         let mut tt = TranspositionTable::with_mb(1);
-        tt.store_twin(1, 0, Outcome::Draw, Move::NONE, 0);
+        tt.store_twin(1, 0, 0, Outcome::Draw, Move::NONE, 0);
         tt.clear();
         assert_eq!(tt.twin_stats().0, 0);
         assert_eq!(tt.twin_stats().1, 0);

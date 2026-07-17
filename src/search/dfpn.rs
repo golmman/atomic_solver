@@ -308,6 +308,8 @@ impl Search {
         let mut state = StateInfo::new();
         pos.legal_moves_with_state(&mut moves, &mut state);
 
+        let path_length = self.path_stack.len() as u32;
+
         if let Some(outcome) = pos.outcome_from_state(&state, &moves) {
             let (pn, dn) = outcome.pn_dn_for(is_or_node);
             self.tt.store(
@@ -318,6 +320,7 @@ impl Search {
                 dn,
                 0,
                 self.path_code,
+                path_length,
                 false,
             );
             return outcome;
@@ -333,13 +336,15 @@ impl Search {
                 dn,
                 0,
                 self.path_code,
+                path_length,
                 false,
             );
             return Outcome::Draw;
         }
 
         if let Some(entry) = self.tt.probe(key).copied()
-            && let Some(resolved) = self.try_use_tt(pos, &entry, max_depth, self.path_code)
+            && let Some(resolved) =
+                self.try_use_tt(pos, &entry, max_depth, self.path_code, path_length)
         {
             return resolved.outcome;
         }
@@ -415,6 +420,7 @@ impl Search {
                         dn,
                         depth,
                         old_path_code,
+                        (self.path_stack.len() - 1) as u32,
                         repetition_seen,
                     );
                     let pv = self.extract_pv(pos);
@@ -508,6 +514,7 @@ impl Search {
                 depth
             },
             old_path_code,
+            (self.path_stack.len() - 1) as u32,
             if outcome_to_store.is_some() {
                 outcome_to_store_repetition_seen
             } else {
@@ -539,6 +546,7 @@ impl Search {
         entry: &super::tt::TtEntry,
         max_depth: u32,
         path_code: u64,
+        path_length: u32,
     ) -> Option<Resolved> {
         // 1. Path-independent base result.
         if let Some(outcome) = entry.outcome
@@ -581,15 +589,23 @@ impl Search {
             let mut sim_nodes = 0u64;
             if self.simulate(
                 &mut sim_pos,
-                self.path_code,
+                twin.path_code,
+                twin.path_length,
                 outcome,
                 twin.best_move,
                 &mut sim_path,
                 &mut sim_stack,
                 &mut sim_nodes,
+                SIM_MAX_DEPTH,
             ) {
-                self.tt
-                    .store_twin(entry.key, path_code, outcome, twin.best_move, twin.depth);
+                self.tt.store_twin(
+                    entry.key,
+                    path_code,
+                    path_length,
+                    outcome,
+                    twin.best_move,
+                    twin.depth,
+                );
                 return Some(Resolved {
                     outcome,
                     depth: twin.depth,
@@ -606,16 +622,22 @@ impl Search {
         &self,
         pos: &mut Position,
         path_code: u64,
+        path_length: u32,
         expected: Outcome,
         best_move: Move,
         sim_path: &mut HashSet<u64>,
         sim_stack: &mut Vec<u64>,
         sim_nodes: &mut u64,
+        remaining_depth: usize,
     ) -> bool {
         if *sim_nodes >= SIM_MAX_NODES {
             return false;
         }
         *sim_nodes += 1;
+
+        if remaining_depth == 0 {
+            return false;
+        }
 
         let mut moves = MoveList::new();
         let mut state = StateInfo::new();
@@ -631,11 +653,7 @@ impl Search {
         }
         sim_stack.push(key);
 
-        if sim_stack.len() > SIM_MAX_DEPTH {
-            sim_stack.pop();
-            sim_path.remove(&key);
-            return false;
-        }
+        let child_depth = (path_length as usize).saturating_add(1);
 
         let ok = match expected {
             Outcome::Win | Outcome::Draw => {
@@ -643,27 +661,33 @@ impl Search {
                     false
                 } else {
                     pos.do_move(best_move);
-                    let child_path_code =
-                        path_code ^ zobrist::path_random(best_move, sim_stack.len());
+                    let child_path_code = path_code ^ zobrist::path_random(best_move, child_depth);
+                    let child_path_length = path_length.saturating_add(1);
                     let child_expected = if expected == Outcome::Draw {
                         Outcome::Draw
                     } else {
                         Outcome::Loss
                     };
-                    let entry = self.tt.probe(pos.hash()).copied();
-                    let child_best =
-                        entry.and_then(|e| e.find_result_for_path(child_path_code, child_expected));
-                    let ok = child_best.is_some_and(|b| {
-                        self.simulate(
-                            pos,
-                            child_path_code,
-                            child_expected,
-                            b.best_move,
-                            sim_path,
-                            sim_stack,
-                            sim_nodes,
-                        )
-                    });
+                    let ok = if let Some(outcome) = pos.outcome() {
+                        outcome == child_expected
+                    } else {
+                        let entry = self.tt.probe(pos.hash()).copied();
+                        let child_best = entry
+                            .and_then(|e| e.find_result_for_path(child_path_code, child_expected));
+                        child_best.is_some_and(|b| {
+                            self.simulate(
+                                pos,
+                                child_path_code,
+                                child_path_length,
+                                child_expected,
+                                b.best_move,
+                                sim_path,
+                                sim_stack,
+                                sim_nodes,
+                                remaining_depth - 1,
+                            )
+                        })
+                    };
                     pos.undo_move(best_move);
                     ok
                 }
@@ -673,21 +697,29 @@ impl Search {
                 for i in 0..moves.len() {
                     let mv = moves[i];
                     pos.do_move(mv);
-                    let child_path_code = path_code ^ zobrist::path_random(mv, sim_stack.len());
-                    let entry = self.tt.probe(pos.hash()).copied();
-                    let child_best =
-                        entry.and_then(|e| e.find_result_for_path(child_path_code, Outcome::Win));
-                    if !child_best.is_some_and(|b| {
-                        self.simulate(
-                            pos,
-                            child_path_code,
-                            Outcome::Win,
-                            b.best_move,
-                            sim_path,
-                            sim_stack,
-                            sim_nodes,
-                        )
-                    }) {
+                    let child_path_code = path_code ^ zobrist::path_random(mv, child_depth);
+                    let child_path_length = path_length.saturating_add(1);
+                    let child_ok = if let Some(outcome) = pos.outcome() {
+                        outcome == Outcome::Win
+                    } else {
+                        let entry = self.tt.probe(pos.hash()).copied();
+                        let child_best = entry
+                            .and_then(|e| e.find_result_for_path(child_path_code, Outcome::Win));
+                        child_best.is_some_and(|b| {
+                            self.simulate(
+                                pos,
+                                child_path_code,
+                                child_path_length,
+                                Outcome::Win,
+                                b.best_move,
+                                sim_path,
+                                sim_stack,
+                                sim_nodes,
+                                remaining_depth - 1,
+                            )
+                        })
+                    };
+                    if !child_ok {
                         ok = false;
                     }
                     pos.undo_move(mv);
@@ -829,7 +861,14 @@ impl Search {
             }
         } else if let Some(entry) = self.tt.probe(child_key).copied() {
             let child_max_depth = max_depth.saturating_sub(1);
-            if let Some(resolved) = self.try_use_tt(pos, &entry, child_max_depth, child_path_code) {
+            let child_path_length = self.path_stack.len() as u32;
+            if let Some(resolved) = self.try_use_tt(
+                pos,
+                &entry,
+                child_max_depth,
+                child_path_code,
+                child_path_length,
+            ) {
                 let (pn, dn) = resolved.outcome.pn_dn_for(child_is_or);
                 ChildInfo {
                     mv,
@@ -1294,29 +1333,35 @@ mod tests {
         assert!(search.simulate(
             &mut pos,
             0,
+            0,
             Outcome::Draw,
             Move::NONE,
             &mut sim_path,
             &mut sim_stack,
             &mut sim_nodes,
+            SIM_MAX_DEPTH,
         ));
         assert!(!search.simulate(
             &mut pos,
+            0,
             0,
             Outcome::Win,
             Move::NONE,
             &mut sim_path,
             &mut sim_stack,
             &mut sim_nodes,
+            SIM_MAX_DEPTH,
         ));
         assert!(!search.simulate(
             &mut pos,
+            0,
             0,
             Outcome::Loss,
             Move::NONE,
             &mut sim_path,
             &mut sim_stack,
             &mut sim_nodes,
+            SIM_MAX_DEPTH,
         ));
     }
 
@@ -1332,11 +1377,13 @@ mod tests {
         assert!(!search.simulate(
             &mut pos,
             0,
+            0,
             Outcome::Loss,
             Move::NONE,
             &mut sim_path,
             &mut sim_stack,
             &mut sim_nodes,
+            SIM_MAX_DEPTH,
         ));
     }
 
@@ -1353,10 +1400,10 @@ mod tests {
         let twin_path_code = 0xDEADBEEF;
         search
             .tt
-            .store_twin(key, twin_path_code, Outcome::Draw, Move::NONE, 0);
+            .store_twin(key, twin_path_code, 0, Outcome::Draw, Move::NONE, 0);
 
         let entry = *search.tt.probe(key).unwrap();
-        let resolved = search.try_use_tt(&pos, &entry, u32::MAX, 0);
+        let resolved = search.try_use_tt(&pos, &entry, u32::MAX, 0, 0);
         assert!(resolved.is_some());
         assert_eq!(resolved.unwrap().outcome, Outcome::Draw);
     }
@@ -1375,10 +1422,34 @@ mod tests {
         let twin_path_code = 0xDEADBEEF;
         search
             .tt
-            .store_twin(key, twin_path_code, Outcome::Win, Move::NONE, 0);
+            .store_twin(key, twin_path_code, 0, Outcome::Win, Move::NONE, 0);
 
         let entry = *search.tt.probe(key).unwrap();
-        assert!(search.try_use_tt(&pos, &entry, u32::MAX, 0).is_none());
+        assert!(search.try_use_tt(&pos, &entry, u32::MAX, 0, 0).is_none());
+    }
+
+    #[test]
+    fn try_use_tt_accepts_cross_path_win_twin() {
+        let mut search = Search::new(64);
+        let pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+        let key = pos.hash();
+        search.path_code = 0;
+
+        // Store a Win twin from a different path; the best move e1e8 mates.
+        let twin_path_code = 0xABC;
+        search.tt.store_twin(
+            key,
+            twin_path_code,
+            0,
+            Outcome::Win,
+            Move::make_move(Square::E1, Square::E8),
+            1,
+        );
+
+        let entry = *search.tt.probe(key).unwrap();
+        let resolved = search.try_use_tt(&pos, &entry, u32::MAX, 0, 0);
+        assert!(resolved.is_some());
+        assert_eq!(resolved.unwrap().outcome, Outcome::Win);
     }
 
     #[test]
