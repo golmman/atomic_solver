@@ -506,12 +506,12 @@ impl Search {
                 continue;
             }
             let mut sim_pos = pos.clone();
-            let mut sim_path = HashSet::new();
-            let mut sim_stack = Vec::new();
+            let mut sim_path = self.path.clone();
+            let mut sim_stack = self.path_stack.clone();
             let mut sim_nodes = 0u64;
             if self.simulate(
                 &mut sim_pos,
-                twin.path_code,
+                self.path_code,
                 outcome,
                 twin.best_move,
                 &mut sim_path,
@@ -553,7 +553,7 @@ impl Search {
 
         let key = pos.hash();
         if !sim_path.insert(key) {
-            return false;
+            return expected == Outcome::Draw;
         }
         sim_stack.push(key);
 
@@ -597,33 +597,37 @@ impl Search {
             Outcome::Loss => {
                 let mut moves = MoveList::new();
                 pos.legal_moves(&mut moves);
-                let mut ok = true;
-                for i in 0..moves.len() {
-                    let mv = moves[i];
-                    pos.do_move(mv);
-                    let child_path_code = path_code ^ zobrist::path_random(mv, sim_stack.len());
-                    let entry = self.tt.probe(pos.hash()).copied();
-                    let child_best =
-                        entry.and_then(|e| e.find_result_for_path(child_path_code, Outcome::Win));
-                    if !child_best.is_some_and(|b| {
-                        self.simulate(
-                            pos,
-                            child_path_code,
-                            Outcome::Win,
-                            b.best_move,
-                            sim_path,
-                            sim_stack,
-                            sim_nodes,
-                        )
-                    }) {
-                        ok = false;
+                if moves.is_empty() {
+                    pos.outcome() == Some(expected)
+                } else {
+                    let mut ok = true;
+                    for i in 0..moves.len() {
+                        let mv = moves[i];
+                        pos.do_move(mv);
+                        let child_path_code = path_code ^ zobrist::path_random(mv, sim_stack.len());
+                        let entry = self.tt.probe(pos.hash()).copied();
+                        let child_best = entry
+                            .and_then(|e| e.find_result_for_path(child_path_code, Outcome::Win));
+                        if !child_best.is_some_and(|b| {
+                            self.simulate(
+                                pos,
+                                child_path_code,
+                                Outcome::Win,
+                                b.best_move,
+                                sim_path,
+                                sim_stack,
+                                sim_nodes,
+                            )
+                        }) {
+                            ok = false;
+                        }
+                        pos.undo_move(mv);
+                        if !ok {
+                            break;
+                        }
                     }
-                    pos.undo_move(mv);
-                    if !ok {
-                        break;
-                    }
+                    ok
                 }
-                ok
             }
         };
 
@@ -1206,5 +1210,106 @@ mod tests {
         assert_eq!(depth, 6);
         assert_eq!(mv, Move::make_move(Square::A1, Square::A2));
         assert!(!all_solved);
+    }
+
+    #[test]
+    fn simulate_repeated_position_is_draw_only() {
+        let mut search = Search::new(64);
+        let mut pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
+        let key = pos.hash();
+        search.path.insert(key);
+
+        let mut sim_path = search.path.clone();
+        let mut sim_stack = search.path_stack.clone();
+        let mut sim_nodes = 0;
+
+        assert!(search.simulate(
+            &mut pos,
+            0,
+            Outcome::Draw,
+            Move::NONE,
+            &mut sim_path,
+            &mut sim_stack,
+            &mut sim_nodes,
+        ));
+        assert!(!search.simulate(
+            &mut pos,
+            0,
+            Outcome::Win,
+            Move::NONE,
+            &mut sim_path,
+            &mut sim_stack,
+            &mut sim_nodes,
+        ));
+        assert!(!search.simulate(
+            &mut pos,
+            0,
+            Outcome::Loss,
+            Move::NONE,
+            &mut sim_path,
+            &mut sim_stack,
+            &mut sim_nodes,
+        ));
+    }
+
+    #[test]
+    fn simulate_loss_branch_rejects_stalemate() {
+        let search = Search::new(64);
+        let mut pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
+
+        let mut sim_path = search.path.clone();
+        let mut sim_stack = search.path_stack.clone();
+        let mut sim_nodes = 0;
+
+        assert!(!search.simulate(
+            &mut pos,
+            0,
+            Outcome::Loss,
+            Move::NONE,
+            &mut sim_path,
+            &mut sim_stack,
+            &mut sim_nodes,
+        ));
+    }
+
+    #[test]
+    fn try_use_tt_simulation_uses_current_path() {
+        let mut search = Search::new(64);
+        let pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
+        let key = pos.hash();
+        search.path.insert(key);
+        search.path_stack.push(key);
+        search.path_code = 0;
+
+        // Store a Draw twin for a different path code.
+        let twin_path_code = 0xDEADBEEF;
+        search
+            .tt
+            .store_twin(key, twin_path_code, Outcome::Draw, Move::NONE, 0);
+
+        let entry = *search.tt.probe(key).unwrap();
+        let resolved = search.try_use_tt(&pos, &entry, u32::MAX, 0);
+        assert!(resolved.is_some());
+        assert_eq!(resolved.unwrap().outcome, Outcome::Draw);
+    }
+
+    #[test]
+    fn try_use_tt_rejects_win_twin_for_repeated_position() {
+        let mut search = Search::new(64);
+        let pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
+        let key = pos.hash();
+        search.path.insert(key);
+        search.path_stack.push(key);
+        search.path_code = 0;
+
+        // Store a Win twin for a different path code.  The current search prefix
+        // already contains this position, so the real outcome is Draw, not Win.
+        let twin_path_code = 0xDEADBEEF;
+        search
+            .tt
+            .store_twin(key, twin_path_code, Outcome::Win, Move::NONE, 0);
+
+        let entry = *search.tt.probe(key).unwrap();
+        assert!(search.try_use_tt(&pos, &entry, u32::MAX, 0).is_none());
     }
 }
