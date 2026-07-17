@@ -95,9 +95,13 @@ impl Search {
         }
     }
 
-    // Optional runtime setter
+    // Optional runtime setter; valid range is [0.0, 1.0]
     pub fn set_epsilon(&mut self, epsilon: f64) {
-        self.epsilon = epsilon.max(0.0);
+        assert!(
+            (0.0..=1.0).contains(&epsilon),
+            "epsilon must be in [0.0, 1.0], got {epsilon}"
+        );
+        self.epsilon = epsilon;
     }
 }
 ```
@@ -106,7 +110,7 @@ A `set_epsilon` method is not present in the current code, but it is the natural
 
 ### 2. Implement `epsilon_ceil`
 
-This helper converts a sibling bound into a threshold. It must be careful with `INF` to avoid overflow and must round up, because the threshold is an upper bound that must be strictly greater than the sibling value.
+This helper converts a sibling bound into a threshold. It must be careful with `INF` to avoid overflow and must round up, because the threshold is an upper bound that must be strictly greater than the sibling value. The implementation additionally enforces a minimum step of `x + 1`, which makes `ε = 0.0` behave exactly like the original `+1` DF-PN threshold and guarantees progress for all valid `ε`.
 
 ```rust
 fn epsilon_ceil(&self, x: u64) -> u64 {
@@ -114,11 +118,13 @@ fn epsilon_ceil(&self, x: u64) -> u64 {
         return INF;
     }
     let scaled = (x as f64 * (1.0 + self.epsilon)).ceil() as u64;
-    scaled.min(INF)
+    scaled.max(x.saturating_add(1)).min(INF)
 }
 ```
 
-The current implementation is in <ref_snippet file="/workspace/atomic_solver/src/search/dfpn.rs" lines="629-635" />.
+The current implementation is in <ref_snippet file="/workspace/atomic_solver/src/search/dfpn.rs" lines="746-752" />.
+
+`ε = 0.0` is therefore not a degenerate multiplicative scaling (`ceil(x * 1.0) = x`) but the strict `x + 1` threshold used by classic DF-PN. The valid range for `epsilon` remains `[0.0, 1.0]`; values outside this range are rejected by `set_epsilon`.
 
 ### 3. Update the recursive call thresholds
 
@@ -200,7 +206,7 @@ A useful addition is a command-line flag `--epsilon <f64>` that sets `Search::se
 
 To confirm the implementation works:
 
-1. **Correctness**: run the full test suite with `ε = 0.0` (which is equivalent to the original `+1` threshold) and with the chosen `ε > 0`. Outcomes should match. A small test harness can compare results on a suite of FENs.
+1. **Correctness**: run the full test suite with `ε = 0.0` (which, because `epsilon_ceil` enforces `x + 1`, reproduces the original `+1` threshold exactly) and with the chosen `ε > 0`. Outcomes should match. A small test harness can compare results on a suite of FENs.
 2. **Performance**: for each `(ε, tt_size)` pair, measure:
    - number of nodes searched,
    - wall-clock time,

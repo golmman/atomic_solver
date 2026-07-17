@@ -1,5 +1,6 @@
 use std::process::Command;
 
+use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
 
@@ -10,6 +11,15 @@ fn solve_with_epsilon(fen: &str, epsilon: f64) -> Outcome {
     search.set_epsilon(epsilon);
     let (outcome, _pv, _nodes) = search.solve(&mut pos);
     outcome
+}
+
+fn solve_with_epsilon_full(fen: &str, epsilon: f64) -> (Outcome, Vec<String>, u64) {
+    let mut pos = Position::from_fen(fen).unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    search.set_epsilon(epsilon);
+    let (outcome, pv, nodes) = search.solve(&mut pos);
+    (outcome, pv.iter().map(|&m| move_to_uci(m)).collect(), nodes)
 }
 
 #[test]
@@ -74,5 +84,17 @@ fn cli_rejects_out_of_range_epsilon() {
     assert!(
         stderr.contains("epsilon must be in [0.0, 1.0]"),
         "expected clear epsilon error, got: {stderr}"
+    );
+}
+
+#[test]
+#[cfg_attr(debug_assertions, ignore = "slow in debug builds")]
+fn epsilon_zero_solves_mate_in_two() {
+    let fen = "rnbqkbnr/ppppp2p/5pp1/7Q/8/4P3/PPPP1PPP/RNB1KBNR w KQkq - 0 3";
+    let (outcome, pv, _nodes) = solve_with_epsilon_full(fen, 0.0);
+    assert_eq!(outcome, Outcome::Win);
+    assert!(
+        !pv.is_empty(),
+        "expected a non-empty PV for the mate-in-two"
     );
 }

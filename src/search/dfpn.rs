@@ -748,7 +748,7 @@ impl Search {
             return INF;
         }
         let scaled = (x as f64 * (1.0 + self.epsilon)).ceil() as u64;
-        scaled.min(INF)
+        scaled.max(x.saturating_add(1)).min(INF)
     }
 
     fn select_children(
@@ -1451,22 +1451,24 @@ mod tests {
         let mut search = Search::new(64);
 
         search.set_epsilon(0.0);
-        assert_eq!(search.epsilon_ceil(0), 0);
-        assert_eq!(search.epsilon_ceil(1), 1);
-        assert_eq!(search.epsilon_ceil(10), 10);
+        assert_eq!(search.epsilon_ceil(0), 1);
+        assert_eq!(search.epsilon_ceil(1), 2);
+        assert_eq!(search.epsilon_ceil(5), 6);
+        assert_eq!(search.epsilon_ceil(100), 101);
         assert_eq!(search.epsilon_ceil(INF), INF);
 
         search.set_epsilon(0.25);
-        assert_eq!(search.epsilon_ceil(0), 0);
+        assert_eq!(search.epsilon_ceil(0), 1);
         assert_eq!(search.epsilon_ceil(1), 2);
         assert_eq!(search.epsilon_ceil(10), 13);
+        assert_eq!(search.epsilon_ceil(100), 125);
         assert_eq!(search.epsilon_ceil(INF), INF);
 
         search.set_epsilon(0.5);
         assert_eq!(search.epsilon_ceil(10), 15);
 
         search.set_epsilon(1.0);
-        assert_eq!(search.epsilon_ceil(0), 0);
+        assert_eq!(search.epsilon_ceil(0), 1);
         assert_eq!(search.epsilon_ceil(1), 2);
         assert_eq!(search.epsilon_ceil(10), 20);
     }
