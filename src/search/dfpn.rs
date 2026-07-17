@@ -126,7 +126,12 @@ impl Search {
             }
         } else {
             let outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
-            let pv = self.extract_pv(pos);
+            let pv = self
+                .extract_pv_checked(pos, outcome, None)
+                .unwrap_or_else(|| {
+                    eprintln!("warning: returning unvalidated PV");
+                    self.extract_pv(pos)
+                });
             (outcome, pv, self.nodes)
         }
     }
@@ -146,7 +151,13 @@ impl Search {
             .and_then(|e| e.best_result_for_path(0).map(|(.., depth)| depth))
             .unwrap_or(u32::MAX);
 
-        if let Some(first_pv) = self.extract_pv_checked(pos) {
+        let full_depth = if best_depth == u32::MAX {
+            None
+        } else {
+            Some(best_depth)
+        };
+
+        if let Some(first_pv) = self.extract_pv_checked(pos, outcome, full_depth) {
             self.print_pv_update(outcome, &first_pv);
         }
 
@@ -168,7 +179,7 @@ impl Search {
 
                 if o == outcome {
                     hi = mid;
-                    if let Some(pv) = self.extract_pv_checked(pos) {
+                    if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
                         self.print_pv_update(outcome, &pv);
                     }
                 } else {
@@ -183,7 +194,7 @@ impl Search {
             self.tt.clear();
             let o = self.dfpn(pos, INF, INF, lo, true);
             if o == outcome {
-                if let Some(pv) = self.extract_pv_checked(pos) {
+                if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
                     self.print_pv_update(outcome, &pv);
                 }
             } else {
@@ -207,21 +218,59 @@ impl Search {
         self.path_code = 0;
     }
 
-    fn extract_pv_checked(&self, pos: &Position) -> Option<Vec<Move>> {
+    fn extract_pv_checked(
+        &self,
+        pos: &Position,
+        expected: Outcome,
+        expected_depth: Option<u32>,
+    ) -> Option<Vec<Move>> {
         let pv = self.extract_pv(pos);
-        if Self::validate_pv(&pv, pos) {
+        if Self::validate_pv(&pv, pos, expected, expected_depth) {
             Some(pv)
         } else {
+            eprintln!("warning: PV validation failed for {:?}", expected);
             None
         }
     }
 
-    fn validate_pv(pv: &[Move], pos: &Position) -> bool {
+    fn validate_pv(
+        pv: &[Move],
+        pos: &Position,
+        expected: Outcome,
+        expected_depth: Option<u32>,
+    ) -> bool {
+        if let Some(d) = expected_depth && pv.len() as u32 != d {
+            return false;
+        }
+
         let mut current = pos.clone();
         for &m in pv {
+            let mut moves = MoveList::new();
+            current.legal_moves(&mut moves);
+
+            let mut legal = false;
+            for i in 0..moves.len() {
+                if moves[i] == m {
+                    legal = true;
+                    break;
+                }
+            }
+            if !legal {
+                return false;
+            }
+
             current.do_move(m);
         }
-        current.outcome().is_some()
+
+        // Outcome is from the side-to-move perspective.  After `pv.len()` plies,
+        // the side to move is the original player on even lengths and the
+        // opponent on odd lengths, so the terminal outcome must be adjusted.
+        let final_expected = if pv.len().is_multiple_of(2) {
+            expected
+        } else {
+            expected.flip()
+        };
+        current.outcome() == Some(final_expected)
     }
 
     fn dfpn(
@@ -1338,5 +1387,31 @@ mod tests {
 
         let entry = *search.tt.probe(key).unwrap();
         assert!(search.try_use_tt(&pos, &entry, u32::MAX, 0).is_none());
+    }
+
+    #[test]
+    fn validate_pv_accepts_valid_win() {
+        let pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+        let pv = vec![Move::make_move(Square::E1, Square::E8)];
+        assert!(Search::validate_pv(&pv, &pos, Outcome::Win, Some(1)));
+        // Depth mismatch should fail.
+        assert!(!Search::validate_pv(&pv, &pos, Outcome::Win, Some(2)));
+        // Wrong expected outcome should fail.
+        assert!(!Search::validate_pv(&pv, &pos, Outcome::Loss, Some(1)));
+    }
+
+    #[test]
+    fn validate_pv_rejects_illegal_move() {
+        let pos = Position::from_fen("4k3/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
+        let pv = vec![Move::make_move(Square::E1, Square::E8)];
+        assert!(!Search::validate_pv(&pv, &pos, Outcome::Win, None));
+    }
+
+    #[test]
+    fn validate_pv_rejects_wrong_terminal_outcome() {
+        let pos = Position::from_fen("4k3/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
+        let pv = vec![];
+        assert!(Search::validate_pv(&pv, &pos, Outcome::Draw, None));
+        assert!(!Search::validate_pv(&pv, &pos, Outcome::Win, None));
     }
 }
