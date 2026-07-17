@@ -14,7 +14,7 @@ use super::tt::TranspositionTable;
 
 pub const INF: u64 = zobrist::INF;
 
-const EPSILON: f64 = 0.25;
+const DEFAULT_EPSILON: f64 = 0.25;
 const TIMEOUT_SECS: u64 = 5;
 const SIM_MAX_DEPTH: usize = 1000;
 const SIM_MAX_NODES: u64 = 1000;
@@ -53,7 +53,7 @@ impl Search {
             nodes: 0,
             start: Instant::now(),
             deadline: Instant::now(),
-            epsilon: EPSILON,
+            epsilon: DEFAULT_EPSILON,
             scorer: Box::new(StaticAtomicScorer),
             refine_shortest: false,
             timeout: Duration::from_secs(TIMEOUT_SECS),
@@ -70,6 +70,14 @@ impl Search {
 
     pub fn set_timeout(&mut self, seconds: u64) {
         self.timeout = Duration::from_secs(seconds);
+    }
+
+    pub fn set_epsilon(&mut self, epsilon: f64) {
+        assert!(
+            (0.0..=1.0).contains(&epsilon),
+            "epsilon must be in [0.0, 1.0], got {epsilon}"
+        );
+        self.epsilon = epsilon;
     }
 
     pub fn search_depth(
@@ -1436,5 +1444,44 @@ mod tests {
         let pv = vec![];
         assert!(Search::validate_pv(&pv, &pos, Outcome::Draw, None));
         assert!(!Search::validate_pv(&pv, &pos, Outcome::Win, None));
+    }
+
+    #[test]
+    fn epsilon_ceil_scales_threshold() {
+        let mut search = Search::new(64);
+
+        search.set_epsilon(0.0);
+        assert_eq!(search.epsilon_ceil(0), 0);
+        assert_eq!(search.epsilon_ceil(1), 1);
+        assert_eq!(search.epsilon_ceil(10), 10);
+        assert_eq!(search.epsilon_ceil(INF), INF);
+
+        search.set_epsilon(0.25);
+        assert_eq!(search.epsilon_ceil(0), 0);
+        assert_eq!(search.epsilon_ceil(1), 2);
+        assert_eq!(search.epsilon_ceil(10), 13);
+        assert_eq!(search.epsilon_ceil(INF), INF);
+
+        search.set_epsilon(0.5);
+        assert_eq!(search.epsilon_ceil(10), 15);
+
+        search.set_epsilon(1.0);
+        assert_eq!(search.epsilon_ceil(0), 0);
+        assert_eq!(search.epsilon_ceil(1), 2);
+        assert_eq!(search.epsilon_ceil(10), 20);
+    }
+
+    #[test]
+    #[should_panic(expected = "epsilon must be in [0.0, 1.0]")]
+    fn set_epsilon_rejects_negative() {
+        let mut search = Search::new(64);
+        search.set_epsilon(-0.1);
+    }
+
+    #[test]
+    #[should_panic(expected = "epsilon must be in [0.0, 1.0]")]
+    fn set_epsilon_rejects_greater_than_one() {
+        let mut search = Search::new(64);
+        search.set_epsilon(1.1);
     }
 }

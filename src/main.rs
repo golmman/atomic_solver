@@ -7,10 +7,24 @@ const DEFAULT_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let mut fen = DEFAULT_FEN.to_string();
+    let mut epsilon = 0.25;
     let mut i = 1;
     while i < args.len() {
         if args[i] == "--fen" && i + 1 < args.len() {
             fen = args[i + 1].clone();
+            i += 2;
+        } else if args[i] == "--epsilon" && i + 1 < args.len() {
+            match args[i + 1].parse::<f64>() {
+                Ok(v) if (0.0..=1.0).contains(&v) => epsilon = v,
+                Ok(v) => {
+                    eprintln!("error: epsilon must be in [0.0, 1.0], got {v}");
+                    std::process::exit(1);
+                }
+                Err(e) => {
+                    eprintln!("error: invalid epsilon value: {e}");
+                    std::process::exit(1);
+                }
+            }
             i += 2;
         } else {
             i += 1;
@@ -25,6 +39,7 @@ fn main() {
     let mut search = Search::new(64);
     search.refine_shortest(true);
     search.set_timeout(5);
+    search.set_epsilon(epsilon);
     let (outcome, pv, _nodes) = search.solve(&mut pos);
 
     let outcome_str = match outcome {

@@ -1,0 +1,78 @@
+use std::process::Command;
+
+use atomic_solver::position::{Outcome, Position};
+use atomic_solver::search::dfpn::Search;
+
+fn solve_with_epsilon(fen: &str, epsilon: f64) -> Outcome {
+    let mut pos = Position::from_fen(fen).unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    search.set_epsilon(epsilon);
+    let (outcome, _pv, _nodes) = search.solve(&mut pos);
+    outcome
+}
+
+#[test]
+fn different_epsilon_values_solve_simple_mate() {
+    let fen = "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1";
+    let default_outcome = solve_with_epsilon(fen, 0.25);
+    assert_eq!(default_outcome, Outcome::Win);
+    assert_eq!(solve_with_epsilon(fen, 0.0), Outcome::Win);
+    assert_eq!(solve_with_epsilon(fen, 0.01), Outcome::Win);
+    assert_eq!(solve_with_epsilon(fen, 0.5), Outcome::Win);
+    assert_eq!(solve_with_epsilon(fen, 0.99), Outcome::Win);
+    assert_eq!(solve_with_epsilon(fen, 1.0), Outcome::Win);
+}
+
+fn cli_bin() -> String {
+    std::env::var("CARGO_BIN_EXE_atomic_solver")
+        .unwrap_or_else(|_| "target/debug/atomic_solver".to_string())
+}
+
+#[test]
+fn cli_epsilon_solves_simple_position() {
+    let output = Command::new(cli_bin())
+        .args([
+            "--epsilon",
+            "0.5",
+            "--fen",
+            "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1",
+        ])
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "binary failed: {stderr}");
+    assert!(
+        stdout.contains("outcome: win"),
+        "expected win output, got:\n{stdout}\n{stderr}"
+    );
+    assert!(
+        stdout.contains("pv:"),
+        "expected a PV in output, got:\n{stdout}"
+    );
+}
+
+#[test]
+fn cli_rejects_out_of_range_epsilon() {
+    let output = Command::new(cli_bin())
+        .args([
+            "--epsilon",
+            "1.1",
+            "--fen",
+            "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1",
+        ])
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        !output.status.success(),
+        "expected exit failure for epsilon=1.1"
+    );
+    assert!(
+        stderr.contains("epsilon must be in [0.0, 1.0]"),
+        "expected clear epsilon error, got: {stderr}"
+    );
+}
