@@ -24,3 +24,11 @@ Note that there is research for the used techniquest in these files:
 And note the implementation reports after the last review docs/plans/review/review1.md in docs/plans/review/ .
 
 Write a report to docs/plans/review/review2.md
+
+---
+
+Read the review docs/plans/review/review2.md and create implementation plans for the noted recommendations.
+Write the plans to docs/plans/review/plan<x>.md where <x> goes from 9 to 14.
+Each plan should start with reading the report of the last plan and have a final task which creates an implementation report docs/plans/review/report<x>.md where <x> goes from 9 to 14.
+
+
