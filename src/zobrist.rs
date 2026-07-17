@@ -10,7 +10,7 @@ use std::sync::OnceLock;
 pub const INF: u64 = 1 << 60;
 
 const MAX_PATH_DEPTH: usize = 4096;
-const PATH_MOVE_NB: usize = 64 * 64 * PieceType::NB;
+const PATH_MOVE_NB: usize = 64 * 64 * (PieceType::NB + 3);
 
 static ZOBRIST: OnceLock<Zobrist> = OnceLock::new();
 
@@ -58,10 +58,28 @@ impl Zobrist {
     fn path_random(&self, mv: Move, depth: usize) -> u64 {
         let from = mv.from_sq() as u8 as usize;
         let to = mv.to_sq() as u8 as usize;
-        let promotion = mv.promotion_type() as u8 as usize;
-        let move_index = from + to * 64 + promotion * 64 * 64;
+        let kind = move_kind(mv);
+        let move_index = from + to * 64 + kind * 64 * 64;
         let depth_index = depth % MAX_PATH_DEPTH;
         self.path_move_keys[move_index] ^ self.path_depth_keys[depth_index]
+    }
+}
+
+fn move_kind(mv: Move) -> usize {
+    if mv.is_promotion() {
+        match mv.promotion_type() {
+            PieceType::Queen => 3,
+            PieceType::Rook => 4,
+            PieceType::Bishop => 5,
+            PieceType::Knight => 6,
+            _ => 0,
+        }
+    } else if mv.is_castling() {
+        1
+    } else if mv.is_en_passant() {
+        2
+    } else {
+        0
     }
 }
 
@@ -72,4 +90,52 @@ pub fn hash(board: &Board, rule50: u16) -> u64 {
 
 pub fn path_random(mv: Move, depth: usize) -> u64 {
     Zobrist::get().path_random(mv, depth)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::path_random;
+    use atomic_movegen::types::{Move, PieceType, Square};
+
+    #[test]
+    fn normal_and_queen_promotion_differ() {
+        let normal = Move::make_move(Square::A7, Square::A8);
+        let promo = Move::make_promotion(Square::A7, Square::A8, PieceType::Queen);
+        assert_ne!(path_random(normal, 0), path_random(promo, 0));
+    }
+
+    #[test]
+    fn promotion_pieces_have_distinct_keys() {
+        let q = Move::make_promotion(Square::A7, Square::A8, PieceType::Queen);
+        let r = Move::make_promotion(Square::A7, Square::A8, PieceType::Rook);
+        let b = Move::make_promotion(Square::A7, Square::A8, PieceType::Bishop);
+        let n = Move::make_promotion(Square::A7, Square::A8, PieceType::Knight);
+
+        let keys: [u64; 4] = [
+            path_random(q, 0),
+            path_random(r, 0),
+            path_random(b, 0),
+            path_random(n, 0),
+        ];
+
+        for i in 0..keys.len() {
+            for j in (i + 1)..keys.len() {
+                assert_ne!(keys[i], keys[j]);
+            }
+        }
+    }
+
+    #[test]
+    fn normal_and_castling_differ() {
+        let normal = Move::make_move(Square::E1, Square::H1);
+        let castle = Move::make_castling(Square::E1, Square::H1);
+        assert_ne!(path_random(normal, 0), path_random(castle, 0));
+    }
+
+    #[test]
+    fn normal_and_en_passant_differ() {
+        let normal = Move::make_move(Square::D5, Square::E6);
+        let ep = Move::make_enpassant(Square::D5, Square::E6);
+        assert_ne!(path_random(normal, 0), path_random(ep, 0));
+    }
 }
