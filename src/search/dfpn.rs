@@ -150,17 +150,44 @@ impl Search {
             self.print_pv_update(outcome, &first_pv);
         }
 
-        if outcome != Outcome::Draw && best_depth > 1 {
-            for mid in 1..best_depth {
+        let full_depth_pv = self.last_pv.clone();
+
+        if outcome != Outcome::Draw && best_depth > 1 && best_depth != u32::MAX {
+            let mut lo = 1;
+            let mut hi = best_depth;
+
+            while lo < hi && !self.time_exceeded() {
+                let mid = (lo + hi) / 2;
                 self.reset_search_state();
                 self.tt.clear();
                 let o = self.dfpn(pos, INF, INF, mid, true);
+
+                if self.time_exceeded() {
+                    break;
+                }
+
                 if o == outcome {
+                    hi = mid;
                     if let Some(pv) = self.extract_pv_checked(pos) {
                         self.print_pv_update(outcome, &pv);
                     }
-                    break;
+                } else {
+                    lo = mid + 1;
                 }
+            }
+
+            // Validate the binary-search answer at the exact depth.  If it is
+            // inconsistent (e.g. due to timeout or TT noise), fall back to the
+            // full-depth PV instead of a possibly wrong shorter one.
+            self.reset_search_state();
+            self.tt.clear();
+            let o = self.dfpn(pos, INF, INF, lo, true);
+            if o == outcome {
+                if let Some(pv) = self.extract_pv_checked(pos) {
+                    self.print_pv_update(outcome, &pv);
+                }
+            } else {
+                self.last_pv = full_depth_pv;
             }
         }
 

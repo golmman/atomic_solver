@@ -32,3 +32,20 @@ fn white_child_f7e6_short_win() {
     assert_eq!(first, Move::make_move(Square::G8, Square::G7));
     assert_eq!(pv.len(), 3, "expected a 3-ply win");
 }
+
+#[test]
+fn two_rook_mate_refinement_stays_short() {
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.refine_shortest(true);
+    search.set_timeout(5);
+    let (outcome, pv, _nodes) = search.solve(&mut pos);
+    assert_eq!(outcome, Outcome::Win);
+    assert!(!pv.is_empty());
+    assert!(
+        pv.len() <= 3,
+        "expected a short win, got {} plies: {:?}",
+        pv.len(),
+        pv
+    );
+}
