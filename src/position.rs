@@ -130,6 +130,11 @@ impl Position {
         self.zobrist
     }
 
+    /// Board-only key for repetition detection, ignoring the halfmove clock.
+    pub fn repetition_key(&self) -> u64 {
+        zobrist::board_hash(&self.board)
+    }
+
     pub fn fen(&self) -> String {
         self.board.fen()
     }
@@ -190,5 +195,13 @@ mod tests {
     fn position_with_legal_moves_is_not_terminal() {
         let pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
         assert_eq!(pos.outcome(), None);
+    }
+
+    #[test]
+    fn repetition_key_ignores_rule50() {
+        let pos0 = Position::from_fen("4k3/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
+        let pos1 = Position::from_fen("4k3/8/8/8/8/8/8/4K3 w - - 25 1").unwrap();
+        assert_eq!(pos0.repetition_key(), pos1.repetition_key());
+        assert_ne!(pos0.hash(), pos1.hash());
     }
 }

@@ -104,6 +104,13 @@ pub fn path_random(mv: Move, depth: usize) -> u64 {
     Zobrist::get().path_random(mv, depth)
 }
 
+/// Board-only hash, ignoring the halfmove clock.  This is the same board
+/// representation for the purpose of repetition detection: a position reached
+/// by reversible moves with a higher `rule50` is a repetition.
+pub fn board_hash(board: &Board) -> u64 {
+    board.hash()
+}
+
 #[cfg(test)]
 mod tests {
     use super::path_random;

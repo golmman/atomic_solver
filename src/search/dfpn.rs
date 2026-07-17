@@ -302,7 +302,8 @@ impl Search {
 
         self.nodes += 1;
 
-        let key = pos.hash();
+        let tt_key = pos.hash();
+        let rep_key = pos.repetition_key();
 
         let mut moves = MoveList::new();
         let mut state = StateInfo::new();
@@ -313,7 +314,7 @@ impl Search {
         if let Some(outcome) = pos.outcome_from_state(&state, &moves) {
             let (pn, dn) = outcome.pn_dn_for(is_or_node);
             self.tt.store(
-                key,
+                tt_key,
                 Move::NONE,
                 Some(outcome),
                 pn,
@@ -329,7 +330,7 @@ impl Search {
         if max_depth == 0 {
             let (pn, dn) = Outcome::Draw.pn_dn_for(is_or_node);
             self.tt.store(
-                key,
+                tt_key,
                 Move::NONE,
                 Some(Outcome::Draw),
                 pn,
@@ -342,20 +343,20 @@ impl Search {
             return Outcome::Draw;
         }
 
-        if let Some(entry) = self.tt.probe(key).copied()
+        if let Some(entry) = self.tt.probe(tt_key).copied()
             && let Some(resolved) =
                 self.try_use_tt(pos, &entry, max_depth, self.path_code, path_length)
         {
             return resolved.outcome;
         }
 
-        if !self.path.insert(key) {
+        if !self.path.insert(rep_key) {
             return Outcome::Draw;
         }
 
         let best_from_tt = self
             .tt
-            .probe(key)
+            .probe(tt_key)
             .and_then(|e| {
                 e.best_result_for_path(self.path_code)
                     .map(|(mv, ..)| mv)
@@ -370,7 +371,7 @@ impl Search {
             .unwrap_or(Move::NONE);
         self.sort_moves(pos, &mut moves, best_from_tt);
 
-        self.path_stack.push(key);
+        self.path_stack.push(rep_key);
         let old_path_code = self.path_code;
 
         let mut outcome_to_store: Option<Outcome> = None;
@@ -413,7 +414,7 @@ impl Search {
                 {
                     // Store the current best move so extract_pv can follow it.
                     self.tt.store(
-                        key,
+                        tt_key,
                         best_move,
                         Some(solved),
                         pn,
@@ -495,7 +496,7 @@ impl Search {
             best_move
         };
         self.tt.store(
-            key,
+            tt_key,
             store_best_move,
             outcome_to_store,
             if outcome_to_store.is_some() {
@@ -534,7 +535,7 @@ impl Search {
         self.maybe_age_history();
 
         self.path_stack.pop();
-        self.path.remove(&key);
+        self.path.remove(&rep_key);
         self.path_code = old_path_code;
 
         outcome_to_store.unwrap_or(Outcome::Draw)
@@ -647,11 +648,11 @@ impl Search {
             return outcome == expected;
         }
 
-        let key = pos.hash();
-        if !sim_path.insert(key) {
+        let rep_key = pos.repetition_key();
+        if !sim_path.insert(rep_key) {
             return expected == Outcome::Draw;
         }
-        sim_stack.push(key);
+        sim_stack.push(rep_key);
 
         let child_depth = (path_length as usize).saturating_add(1);
 
@@ -661,6 +662,7 @@ impl Search {
                     false
                 } else {
                     pos.do_move(best_move);
+                    let child_tt_key = pos.hash();
                     let child_path_code = path_code ^ zobrist::path_random(best_move, child_depth);
                     let child_path_length = path_length.saturating_add(1);
                     let child_expected = if expected == Outcome::Draw {
@@ -671,7 +673,7 @@ impl Search {
                     let ok = if let Some(outcome) = pos.outcome() {
                         outcome == child_expected
                     } else {
-                        let entry = self.tt.probe(pos.hash()).copied();
+                        let entry = self.tt.probe(child_tt_key).copied();
                         let child_best = entry
                             .and_then(|e| e.find_result_for_path(child_path_code, child_expected));
                         child_best.is_some_and(|b| {
@@ -697,12 +699,13 @@ impl Search {
                 for i in 0..moves.len() {
                     let mv = moves[i];
                     pos.do_move(mv);
+                    let child_tt_key = pos.hash();
                     let child_path_code = path_code ^ zobrist::path_random(mv, child_depth);
                     let child_path_length = path_length.saturating_add(1);
                     let child_ok = if let Some(outcome) = pos.outcome() {
                         outcome == Outcome::Win
                     } else {
-                        let entry = self.tt.probe(pos.hash()).copied();
+                        let entry = self.tt.probe(child_tt_key).copied();
                         let child_best = entry
                             .and_then(|e| e.find_result_for_path(child_path_code, Outcome::Win));
                         child_best.is_some_and(|b| {
@@ -732,7 +735,7 @@ impl Search {
         };
 
         sim_stack.pop();
-        sim_path.remove(&key);
+        sim_path.remove(&rep_key);
         ok
     }
 
@@ -832,6 +835,7 @@ impl Search {
     ) -> ChildInfo {
         pos.do_move(mv);
         let child_key = pos.hash();
+        let child_rep_key = pos.repetition_key();
         let child_is_or = !is_or_node;
         let child_path_code = self.path_code ^ zobrist::path_random(mv, self.path_stack.len());
 
@@ -847,7 +851,7 @@ impl Search {
                 depth: 0,
                 repetition_seen: false,
             }
-        } else if self.path.contains(&child_key) {
+        } else if self.path.contains(&child_rep_key) {
             let (pn, dn) = Outcome::Draw.pn_dn_for(child_is_or);
             ChildInfo {
                 mv,
@@ -1086,20 +1090,21 @@ impl Search {
         let mut current = pos.clone();
         let mut path_code = 0u64;
         for _ in 0..1000 {
-            let key = current.hash();
-            if seen.contains(&key) {
+            let tt_key = current.hash();
+            let rep_key = current.repetition_key();
+            if seen.contains(&rep_key) {
                 break;
             }
             if current.outcome().is_some() {
                 break;
             }
-            if let Some(entry) = self.tt.probe(key) {
+            if let Some(entry) = self.tt.probe(tt_key) {
                 let resolved = entry.best_result_for_path(path_code);
                 if let Some((mv, Some(_), _)) = resolved {
                     if mv == Move::NONE {
                         break;
                     }
-                    seen.insert(key);
+                    seen.insert(rep_key);
                     pv.push(mv);
                     current.do_move(mv);
                     path_code ^= zobrist::path_random(mv, pv.len());
@@ -1323,8 +1328,8 @@ mod tests {
     fn simulate_repeated_position_is_draw_only() {
         let mut search = Search::new(64);
         let mut pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
-        let key = pos.hash();
-        search.path.insert(key);
+        let rep_key = pos.repetition_key();
+        search.path.insert(rep_key);
 
         let mut sim_path = search.path.clone();
         let mut sim_stack = search.path_stack.clone();
@@ -1392,8 +1397,9 @@ mod tests {
         let mut search = Search::new(64);
         let pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
         let key = pos.hash();
-        search.path.insert(key);
-        search.path_stack.push(key);
+        let rep_key = pos.repetition_key();
+        search.path.insert(rep_key);
+        search.path_stack.push(rep_key);
         search.path_code = 0;
 
         // Store a Draw twin for a different path code.
@@ -1413,8 +1419,9 @@ mod tests {
         let mut search = Search::new(64);
         let pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
         let key = pos.hash();
-        search.path.insert(key);
-        search.path_stack.push(key);
+        let rep_key = pos.repetition_key();
+        search.path.insert(rep_key);
+        search.path_stack.push(rep_key);
         search.path_code = 0;
 
         // Store a Win twin for a different path code.  The current search prefix
