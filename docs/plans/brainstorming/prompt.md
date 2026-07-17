@@ -14,7 +14,7 @@ I already built an independent atomic move generator library. Are there other pa
 * DONE: movegen 2.0
 * TODO: more test positions
 * TODO: review correctness
-* TODO: update docs
+* DONE: update docs
 * TODO: eval: win, not win
 * TODO: ideas from https://github.com/nelhage/ultimattt
   * DONE: extracted

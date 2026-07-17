@@ -44,3 +44,4 @@ A pure solver for atomic chess in Rust.
   - correctness, performance, maintainability, testability, consistency
 - Only use reading `git` commands, never writing ones (no `git add`,
   `git rm`, `git commit`, etc.).
+- ignore all `prompt.md` files
