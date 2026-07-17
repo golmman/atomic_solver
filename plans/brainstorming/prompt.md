@@ -11,6 +11,11 @@ I already built an independent atomic move generator library. Are there other pa
 
 -----
 
-movegen 2.0
-eval: win, not win
-ideas from https://github.com/nelhage/ultimattt
+* DONE: movegen 2.0
+* TODO: more test positions
+* TODO: review correctness
+* TODO: update docs
+* TODO: eval: win, not win
+* TODO: ideas from https://github.com/nelhage/ultimattt
+  * DONE: extracted
+  * TODO: apply
