@@ -77,6 +77,10 @@ impl Search {
         self.tt.twin_stats()
     }
 
+    pub fn peak_twins(&self) -> u8 {
+        self.tt.peak_twins()
+    }
+
     pub fn set_epsilon(&mut self, epsilon: f64) {
         assert!(
             (0.0..=1.0).contains(&epsilon),

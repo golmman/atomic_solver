@@ -158,6 +158,14 @@ impl TtEntry {
         self.depth = 0;
         self.repetition_seen = true;
     }
+
+    fn live_twin_count(&self) -> u8 {
+        self.twins
+            .iter()
+            .filter(|t| t.outcome.is_some())
+            .count()
+            .min(255) as u8
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -171,6 +179,7 @@ pub struct TranspositionTable {
     mask: usize,
     twin_insertions: u64,
     twin_evictions: u64,
+    peak_twins: u8,
 }
 
 impl TranspositionTable {
@@ -184,6 +193,7 @@ impl TranspositionTable {
             mask: buckets - 1,
             twin_insertions: 0,
             twin_evictions: 0,
+            peak_twins: 0,
         }
     }
 
@@ -204,10 +214,16 @@ impl TranspositionTable {
         }
         self.twin_insertions = 0;
         self.twin_evictions = 0;
+        self.peak_twins = 0;
     }
 
     pub fn twin_stats(&self) -> (u64, u64) {
         (self.twin_insertions, self.twin_evictions)
+    }
+
+    /// Maximum number of live twins observed in any single entry so far.
+    pub fn peak_twins(&self) -> u8 {
+        self.peak_twins
     }
 
     #[inline]
@@ -245,6 +261,7 @@ impl TranspositionTable {
         let idx = self.index(key);
         let mut twin_action = None;
         let mut existing = false;
+        let mut live_twins = 0;
 
         {
             let bucket = &mut self.table[idx];
@@ -255,6 +272,7 @@ impl TranspositionTable {
                         if repetition_seen {
                             twin_action =
                                 Some(slot.store_twin(path_code, path_length, o, best_move, depth));
+                            live_twins = slot.live_twin_count();
                             slot.reinit_base_for_twin();
                         } else {
                             // Path-independent result: store in the base entry and clear twins.
@@ -282,6 +300,7 @@ impl TranspositionTable {
 
         if let Some(action) = twin_action {
             self.record_twin_action(action);
+            self.peak_twins = self.peak_twins.max(live_twins);
         }
 
         if existing {
@@ -314,6 +333,7 @@ impl TranspositionTable {
 
         if let Some(action) = new_twin_action {
             self.record_twin_action(action);
+            self.peak_twins = self.peak_twins.max(new.live_twin_count());
         }
 
         let bucket = &mut self.table[idx];
@@ -335,6 +355,7 @@ impl TranspositionTable {
     ) {
         let idx = self.index(key);
         let mut twin_action = None;
+        let mut live_twins = 0;
 
         {
             let bucket = &mut self.table[idx];
@@ -342,6 +363,7 @@ impl TranspositionTable {
                 if slot.valid && slot.key == key {
                     twin_action =
                         Some(slot.store_twin(path_code, path_length, outcome, best_move, depth));
+                    live_twins = slot.live_twin_count();
                     slot.reinit_base_for_twin();
                     break;
                 }
@@ -350,6 +372,7 @@ impl TranspositionTable {
 
         if let Some(action) = twin_action {
             self.record_twin_action(action);
+            self.peak_twins = self.peak_twins.max(live_twins);
             return;
         }
 
@@ -366,6 +389,7 @@ impl TranspositionTable {
         };
         let action = new.store_twin(path_code, path_length, outcome, best_move, depth);
         self.record_twin_action(action);
+        self.peak_twins = self.peak_twins.max(new.live_twin_count());
 
         let bucket = &mut self.table[idx];
         let old = bucket[0];
@@ -413,6 +437,31 @@ mod tests {
         tt.clear();
         assert_eq!(tt.twin_stats().0, 0);
         assert_eq!(tt.twin_stats().1, 0);
+        assert_eq!(tt.peak_twins(), 0);
+    }
+
+    #[test]
+    fn peak_twins_tracked() {
+        let mut tt = TranspositionTable::with_mb(1);
+        let key = 12345u64;
+
+        for i in 0..4 {
+            tt.store_twin(key, i, 0, Outcome::Draw, Move::NONE, 0);
+        }
+        assert_eq!(tt.peak_twins(), 4);
+
+        // A second entry also has four twins; peak stays at 4.
+        let key2 = 54321u64;
+        for i in 0..2 {
+            tt.store_twin(key2, i, 0, Outcome::Draw, Move::NONE, 0);
+        }
+        assert_eq!(tt.peak_twins(), 4);
+
+        // Filling the first entry to capacity and evicting keeps the peak at 8.
+        for i in 4..8 {
+            tt.store_twin(key, i, 0, Outcome::Draw, Move::NONE, 0);
+        }
+        assert_eq!(tt.peak_twins(), 8);
     }
 
     #[test]
