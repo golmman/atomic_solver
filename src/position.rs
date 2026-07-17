@@ -1,7 +1,7 @@
 //! Position wrapper around `atomic_movegen::board::Board`.
 
 use atomic_movegen::board::{Board, StateInfo};
-use atomic_movegen::movegen::generate_legal;
+use atomic_movegen::movegen::{generate_legal, generate_legal_with_state};
 use atomic_movegen::types::{Bitboard, Color, Move, MoveList};
 
 use crate::zobrist;
@@ -78,6 +78,11 @@ impl Position {
         generate_legal(&self.board, moves);
     }
 
+    pub fn legal_moves_with_state(&self, moves: &mut MoveList, state: &mut StateInfo) {
+        self.board.populate_state(state);
+        generate_legal_with_state(&self.board, state, moves);
+    }
+
     pub fn side_to_move(&self) -> Color {
         self.board.side_to_move()
     }
@@ -87,9 +92,6 @@ impl Position {
     }
 
     pub fn outcome(&self) -> Option<Outcome> {
-        if self.board.rule50() >= 100 {
-            return Some(Outcome::Draw);
-        }
         let us = self.side_to_move();
         let them = us.flip();
         if self.commoners(us).is_empty() {
@@ -97,6 +99,9 @@ impl Position {
         }
         if self.commoners(them).is_empty() {
             return Some(Outcome::Win);
+        }
+        if self.board.rule50() >= 100 {
+            return Some(Outcome::Draw);
         }
         if self.board.occupied().count() == 2 {
             return Some(Outcome::Draw);

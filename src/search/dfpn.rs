@@ -254,22 +254,28 @@ impl Search {
         }
 
         let mut moves = MoveList::new();
-        pos.legal_moves(&mut moves);
+        let mut state = atomic_movegen::board::StateInfo::new();
+        pos.legal_moves_with_state(&mut moves, &mut state);
 
         if moves.is_empty() {
             self.path.remove(&key);
-            let (pn, dn) = Outcome::Draw.pn_dn_for(is_or_node);
+            let outcome = if state.checkers.is_empty() {
+                Outcome::Draw
+            } else {
+                Outcome::Loss
+            };
+            let (pn, dn) = outcome.pn_dn_for(is_or_node);
             self.tt.store(
                 key,
                 Move::NONE,
-                Some(Outcome::Draw),
+                Some(outcome),
                 pn,
                 dn,
                 0,
                 self.path_code,
                 false,
             );
-            return Outcome::Draw;
+            return outcome;
         }
 
         let best_from_tt = self
@@ -1103,11 +1109,15 @@ struct Resolved {
     repetition_seen: bool,
 }
 
+/// Convert solved `pn`/`dn` bounds back to an [`Outcome`].
+///
+/// This can only be done unambiguously for a Win (`pn == 0`, `dn == INF`).
+/// `Loss` and `Draw` both encode as `(INF, 0)`, so `(INF, 0)` returns `None`.
+/// The `outcome` field stored in the transposition table must be used as the
+/// source of truth when a distinction between `Loss` and `Draw` is required.
 pub fn outcome_from_pn_dn(pn: u64, dn: u64) -> Option<Outcome> {
     if pn == 0 && dn == INF {
         Some(Outcome::Win)
-    } else if pn == INF && dn == 0 {
-        Some(Outcome::Loss)
     } else {
         None
     }

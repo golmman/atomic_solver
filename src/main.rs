@@ -5,7 +5,6 @@ use atomic_solver::search::dfpn::Search;
 const DEFAULT_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 fn main() {
-
     let args: Vec<String> = std::env::args().collect();
     let mut fen = DEFAULT_FEN.to_string();
     let mut i = 1;
