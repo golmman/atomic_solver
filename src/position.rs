@@ -133,3 +133,35 @@ impl Clone for Position {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn outcome_prefers_own_commoner_extinction_over_rule50() {
+        // White has no commoners (only a pawn) and rule50 >= 100; should still be Loss.
+        let pos = Position::from_fen("4k3/8/8/8/8/8/8/4P3 w - - 100 1").unwrap();
+        assert_eq!(pos.outcome(), Some(Outcome::Loss));
+    }
+
+    #[test]
+    fn outcome_prefers_opponent_extinction_over_rule50() {
+        // Black to move, white has no commoners, rule50 >= 100; should be Win for Black.
+        let pos = Position::from_fen("4k3/8/8/8/8/8/8/8 b - - 100 1").unwrap();
+        assert_eq!(pos.outcome(), Some(Outcome::Win));
+    }
+
+    #[test]
+    fn no_legal_moves_is_not_decided_by_position_outcome() {
+        // White commoner on a1 is stalemated: no legal moves and not in check.
+        // `Position::outcome()` does not consider move availability, so it
+        // returns None; the draw classification is handled by the solver.
+        let pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
+        assert_eq!(pos.outcome(), None);
+
+        let mut moves = MoveList::new();
+        pos.legal_moves(&mut moves);
+        assert_eq!(moves.len(), 0);
+    }
+}

@@ -2,6 +2,10 @@
 //!
 //! Uses `Board::hash()` for the piece/side/castling/en-passant component and
 //! adds a rule50 key for transposition-table lookup.
+//!
+//! Path keys are generated on the fly from the pair `(move, depth)`.  This makes
+//! them order-sensitive: two move sequences that reach the same board state in
+//! different orders will almost always have different path codes.
 
 use atomic_movegen::board::Board;
 use atomic_movegen::types::{Move, PieceType};
@@ -10,7 +14,6 @@ use std::sync::OnceLock;
 pub const INF: u64 = 1 << 60;
 
 const MAX_PATH_DEPTH: usize = 4096;
-const PATH_MOVE_NB: usize = 64 * 64 * (PieceType::NB + 3);
 
 static ZOBRIST: OnceLock<Zobrist> = OnceLock::new();
 
@@ -26,10 +29,17 @@ impl SplitMix64 {
     }
 }
 
+/// A single 64-bit SplitMix64 round applied to `x`.
+/// This is a bijection on `u64`, so each distinct input maps to a distinct output.
+fn splitmix64(x: u64) -> u64 {
+    let mut z = x.wrapping_add(0x9e3779b97f4a7c15);
+    z = (z ^ (z >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94d049bb133111eb);
+    z ^ (z >> 31)
+}
+
 pub struct Zobrist {
     rule50_keys: [u64; 101],
-    path_move_keys: Vec<u64>,
-    path_depth_keys: Vec<u64>,
 }
 
 impl Zobrist {
@@ -41,14 +51,7 @@ impl Zobrist {
             *key = rng.next();
         }
 
-        let path_move_keys = (0..PATH_MOVE_NB).map(|_| rng.next()).collect();
-        let path_depth_keys = (0..MAX_PATH_DEPTH).map(|_| rng.next()).collect();
-
-        Self {
-            rule50_keys,
-            path_move_keys,
-            path_depth_keys,
-        }
+        Self { rule50_keys }
     }
 
     fn get() -> &'static Self {
@@ -61,7 +64,16 @@ impl Zobrist {
         let kind = move_kind(mv);
         let move_index = from + to * 64 + kind * 64 * 64;
         let depth_index = depth % MAX_PATH_DEPTH;
-        self.path_move_keys[move_index] ^ self.path_depth_keys[depth_index]
+
+        // Combine move and depth into a single index.  The multiplication by
+        // `MAX_PATH_DEPTH` is safe because `PATH_MOVE_NB * MAX_PATH_DEPTH` is
+        // far below `u64::MAX`, and it makes the mapping injective for the
+        // ranges we use.  Applying `splitmix64` then gives a distinct 64-bit key
+        // for every `(move, depth)` pair.
+        let combined = (move_index as u64)
+            .wrapping_mul(MAX_PATH_DEPTH as u64)
+            .wrapping_add(depth_index as u64);
+        splitmix64(combined)
     }
 }
 
@@ -137,5 +149,17 @@ mod tests {
         let normal = Move::make_move(Square::D5, Square::E6);
         let ep = Move::make_enpassant(Square::D5, Square::E6);
         assert_ne!(path_random(normal, 0), path_random(ep, 0));
+    }
+
+    #[test]
+    fn move_order_path_codes_differ_for_same_final_board() {
+        // Two promotion paths that lead to the same board state (queens on a8
+        // and b8) must have different path codes, otherwise twin entries for
+        // the two transpositions could collide.
+        let a = Move::make_promotion(Square::A7, Square::A8, PieceType::Queen);
+        let b = Move::make_promotion(Square::B7, Square::B8, PieceType::Queen);
+        let code_a_first = path_random(a, 0) ^ path_random(b, 1);
+        let code_b_first = path_random(b, 0) ^ path_random(a, 1);
+        assert_ne!(code_a_first, code_b_first);
     }
 }

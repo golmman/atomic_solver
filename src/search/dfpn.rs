@@ -239,7 +239,9 @@ impl Search {
         expected: Outcome,
         expected_depth: Option<u32>,
     ) -> bool {
-        if let Some(d) = expected_depth && pv.len() as u32 != d {
+        if let Some(d) = expected_depth
+            && pv.len() as u32 != d
+        {
             return false;
         }
 
@@ -262,6 +264,27 @@ impl Search {
             current.do_move(m);
         }
 
+        // Determine the terminal outcome of the final position.  `Position::outcome()`
+        // detects commoner extinction and rule50/two-piece draws, but it does not
+        // detect checkmate or stalemate, so we fall back to move-generation when
+        // the position is otherwise non-terminal.
+        let final_outcome = if let Some(o) = current.outcome() {
+            Some(o)
+        } else {
+            let mut moves = MoveList::new();
+            let mut state = atomic_movegen::board::StateInfo::new();
+            current.legal_moves_with_state(&mut moves, &mut state);
+            if moves.is_empty() {
+                if state.checkers.is_empty() {
+                    Some(Outcome::Draw)
+                } else {
+                    Some(Outcome::Loss)
+                }
+            } else {
+                None
+            }
+        };
+
         // Outcome is from the side-to-move perspective.  After `pv.len()` plies,
         // the side to move is the original player on even lengths and the
         // opponent on odd lengths, so the terminal outcome must be adjusted.
@@ -270,7 +293,7 @@ impl Search {
         } else {
             expected.flip()
         };
-        current.outcome() == Some(final_expected)
+        final_outcome == Some(final_expected)
     }
 
     fn dfpn(
