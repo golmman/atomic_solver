@@ -1533,4 +1533,53 @@ mod tests {
         let mut search = Search::new(64);
         search.set_epsilon(1.1);
     }
+
+    #[test]
+    fn extract_pv_follows_path_dependent_twin_entries() {
+        // Solve a short forced-mate position, then re-store every node along the
+        // principal variation as a path-dependent twin.  This exercises the
+        // exact 1-indexed path-code arithmetic that `extract_pv` must share with
+        // `dfpn`.
+        let fen = "rnbqkbnr/ppppp2p/5pp1/3Q4/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 3";
+        let mut pos = Position::from_fen(fen).unwrap();
+        let mut search = Search::new(64);
+        search.set_timeout(5);
+
+        let (outcome, pv, _nodes) = search.solve(&mut pos);
+        assert_eq!(outcome, Outcome::Loss, "expected a forced loss for black");
+        assert!(!pv.is_empty(), "expected a non-empty PV");
+
+        // Re-store each node as a twin keyed by the 1-indexed path code.
+        let mut current = Position::from_fen(fen).unwrap();
+        let mut path_code = 0u64;
+        for (i, &mv) in pv.iter().enumerate() {
+            let key = current.hash();
+            let expected = if i % 2 == 0 {
+                Outcome::Loss
+            } else {
+                Outcome::Win
+            };
+            let (pn, dn) = expected.to_pn_dn();
+            let remaining = (pv.len() - i) as u32;
+            search.tt.store(
+                key,
+                mv,
+                Some(expected),
+                pn,
+                dn,
+                remaining,
+                path_code,
+                i as u32,
+                true,
+            );
+            current.do_move(mv);
+            path_code ^= zobrist::path_random(mv, i + 1);
+        }
+
+        let extracted = search.extract_pv(&Position::from_fen(fen).unwrap());
+        assert_eq!(
+            extracted, pv,
+            "extract_pv must follow twin entries using 1-indexed path codes"
+        );
+    }
 }

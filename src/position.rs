@@ -110,18 +110,18 @@ impl Position {
         if self.commoners(them).is_empty() {
             return Some(Outcome::Win);
         }
-        if self.board.rule50() >= 100 {
-            return Some(Outcome::Draw);
-        }
-        if self.board.occupied().count() == 2 {
-            return Some(Outcome::Draw);
-        }
         if moves.is_empty() {
             if state.checkers.is_empty() {
                 return Some(Outcome::Draw);
             } else {
                 return Some(Outcome::Loss);
             }
+        }
+        if self.board.rule50() >= 100 {
+            return Some(Outcome::Draw);
+        }
+        if self.board.occupied().count() == 2 {
+            return Some(Outcome::Draw);
         }
         None
     }
@@ -189,6 +189,31 @@ mod tests {
     fn no_legal_moves_in_check_is_checkmate_loss() {
         let pos = Position::from_fen("7K/8/8/8/8/8/1Q6/k7 b - - 0 1").unwrap();
         assert_eq!(pos.outcome(), Some(Outcome::Loss));
+    }
+
+    #[test]
+    fn fifty_move_checkmate_is_loss_not_draw() {
+        // Black has no legal moves and is in check, but rule50 is 100.
+        // Checkmate ends the game before the 50-move draw can be claimed.
+        let pos = Position::from_fen("7K/8/8/8/8/8/1Q6/k7 b - - 100 1").unwrap();
+        assert_eq!(pos.outcome(), Some(Outcome::Loss));
+    }
+
+    #[test]
+    fn two_piece_touching_commoners_is_draw() {
+        // In standard atomic chess touching commoners (kings) are allowed and
+        // do not count as an attack, so the side to move has legal moves and
+        // the two-piece material heuristic is a draw.
+        let pos = Position::from_fen("8/8/8/8/8/8/1K6/k7 b - - 0 1").unwrap();
+        assert_eq!(pos.outcome(), Some(Outcome::Draw));
+    }
+
+    #[test]
+    fn fifty_move_stalemate_is_draw() {
+        // White has no legal moves and is not in check; with rule50 >= 100
+        // the result is still a draw because stalemate is terminal.
+        let pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 100 1").unwrap();
+        assert_eq!(pos.outcome(), Some(Outcome::Draw));
     }
 
     #[test]
