@@ -16,14 +16,14 @@ Each plan should start with reading the report of the last plan and have a final
 
 Review the correctness of this implementation.
 
-Note that there is research for the used techniquest in these files:
+Note that there is research for the used techniques in these files:
 * docs/plans/dfpn/research_epsilon.md
 * docs/plans/dfpn/research_ghi.md
 * docs/plans/dfpn/research_parallel.md
 
-And note the implementation reports after the last reviews of review1.md and review2.md in docs/plans/review/ .
+Also note past reviews and the implementation reports in docs/plans/review/ .
 
-Write a report to docs/plans/review/review3.md
+Write a new review to docs/plans/review/review4.md
 
 ---
 
