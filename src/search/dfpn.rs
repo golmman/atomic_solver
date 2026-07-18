@@ -328,6 +328,7 @@ impl Search {
                 pn,
                 dn,
                 0,
+                u32::MAX,
                 self.path_code,
                 path_length,
                 false,
@@ -343,6 +344,7 @@ impl Search {
                 Some(Outcome::Draw),
                 pn,
                 dn,
+                0,
                 0,
                 self.path_code,
                 path_length,
@@ -428,6 +430,7 @@ impl Search {
                         pn,
                         dn,
                         depth,
+                        u32::MAX,
                         old_path_code,
                         (self.path_stack.len() - 1) as u32,
                         repetition_seen,
@@ -503,6 +506,10 @@ impl Search {
         } else {
             best_move
         };
+        let store_remaining_depth = match outcome_to_store {
+            Some(Outcome::Win) | Some(Outcome::Loss) => u32::MAX,
+            _ => max_depth,
+        };
         self.tt.store(
             tt_key,
             store_best_move,
@@ -522,6 +529,7 @@ impl Search {
             } else {
                 depth
             },
+            store_remaining_depth,
             old_path_code,
             (self.path_stack.len() - 1) as u32,
             if outcome_to_store.is_some() {
@@ -560,26 +568,63 @@ impl Search {
         // 1. Path-independent base result.
         if let Some(outcome) = entry.outcome
             && !entry.repetition_seen
-            && entry.depth <= max_depth
+            && entry.remaining_depth >= max_depth
         {
-            return Some(Resolved {
-                outcome,
-                depth: entry.depth,
-                repetition_seen: false,
-            });
+            if outcome == Outcome::Draw {
+                // A stored draw is valid for any budget up to its recorded
+                // remaining_depth.  Report it with the queried budget so it is
+                // not accidentally reused beyond its validity.
+                return Some(Resolved {
+                    outcome,
+                    depth: 0,
+                    repetition_seen: false,
+                });
+            }
+            if entry.depth <= max_depth {
+                return Some(Resolved {
+                    outcome,
+                    depth: entry.depth,
+                    repetition_seen: false,
+                });
+            }
+            // A proven win/loss whose shortest line exceeds the current budget
+            // is a draw by cutoff under this budget.
+            if entry.remaining_depth == u32::MAX {
+                return Some(Resolved {
+                    outcome: Outcome::Draw,
+                    depth: 0,
+                    repetition_seen: false,
+                });
+            }
         }
 
         // 2. Try existing twins for the current path.
         for twin in entry.twins.iter() {
             if let Some(outcome) = twin.outcome
                 && twin.path_code == path_code
-                && twin.depth <= max_depth
+                && twin.remaining_depth >= max_depth
             {
-                return Some(Resolved {
-                    outcome,
-                    depth: twin.depth,
-                    repetition_seen: true,
-                });
+                if outcome == Outcome::Draw {
+                    return Some(Resolved {
+                        outcome,
+                        depth: 0,
+                        repetition_seen: true,
+                    });
+                }
+                if twin.depth <= max_depth {
+                    return Some(Resolved {
+                        outcome,
+                        depth: twin.depth,
+                        repetition_seen: true,
+                    });
+                }
+                if twin.remaining_depth == u32::MAX {
+                    return Some(Resolved {
+                        outcome: Outcome::Draw,
+                        depth: 0,
+                        repetition_seen: true,
+                    });
+                }
             }
         }
 
@@ -589,7 +634,7 @@ impl Search {
                 Some(o) => o,
                 None => continue,
             };
-            if twin.depth > max_depth {
+            if twin.remaining_depth < max_depth {
                 continue;
             }
             let mut sim_pos = pos.clone();
@@ -614,6 +659,7 @@ impl Search {
                     outcome,
                     twin.best_move,
                     twin.depth,
+                    twin.remaining_depth,
                 );
                 return Some(Resolved {
                     outcome,
@@ -1412,9 +1458,15 @@ mod tests {
 
         // Store a Draw twin for a different path code.
         let twin_path_code = 0xDEADBEEF;
-        search
-            .tt
-            .store_twin(key, twin_path_code, 0, Outcome::Draw, Move::NONE, 0);
+        search.tt.store_twin(
+            key,
+            twin_path_code,
+            0,
+            Outcome::Draw,
+            Move::NONE,
+            0,
+            u32::MAX,
+        );
 
         let entry = *search.tt.probe(key).unwrap();
         let resolved = search.try_use_tt(&pos, &entry, u32::MAX, 0, 0);
@@ -1435,9 +1487,15 @@ mod tests {
         // Store a Win twin for a different path code.  The current search prefix
         // already contains this position, so the real outcome is Draw, not Win.
         let twin_path_code = 0xDEADBEEF;
-        search
-            .tt
-            .store_twin(key, twin_path_code, 0, Outcome::Win, Move::NONE, 0);
+        search.tt.store_twin(
+            key,
+            twin_path_code,
+            0,
+            Outcome::Win,
+            Move::NONE,
+            0,
+            u32::MAX,
+        );
 
         let entry = *search.tt.probe(key).unwrap();
         assert!(search.try_use_tt(&pos, &entry, u32::MAX, 0, 0).is_none());
@@ -1459,6 +1517,7 @@ mod tests {
             Outcome::Win,
             Move::make_move(Square::E1, Square::E8),
             1,
+            u32::MAX,
         );
 
         let entry = *search.tt.probe(key).unwrap();
@@ -1568,6 +1627,7 @@ mod tests {
                 pn,
                 dn,
                 remaining,
+                u32::MAX,
                 path_code,
                 i as u32,
                 true,

@@ -71,3 +71,23 @@ fn promotion_transposition_still_wins() {
         nodes
     );
 }
+
+/// A depth-bound cutoff must not be stored as a proven draw. `search_depth(0)`
+/// should return `Draw` for a non-terminal winning position, but a follow-up
+/// `search_depth(3)` on the same `Search` (and therefore the same transposition
+/// table) must still discover the win.
+#[test]
+fn depth_zero_cutoff_is_not_reused_as_proven_draw() {
+    let fen = "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1";
+    let mut pos = Position::from_fen(fen).unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+
+    let (outcome, pv, _nodes) = search.search_depth(&mut pos, 0);
+    assert_eq!(outcome, Outcome::Draw, "depth 0 should be a cutoff");
+    assert!(pv.is_empty(), "depth 0 should have no PV");
+
+    let (outcome, pv, _nodes) = search.search_depth(&mut pos, 3);
+    assert_eq!(outcome, Outcome::Win, "depth 3 should find the win");
+    assert!(!pv.is_empty(), "winning PV should not be empty");
+}
