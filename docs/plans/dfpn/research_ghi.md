@@ -274,6 +274,31 @@ The atomic solver currently uses a simpler, safer baseline: it stores an explici
   - initialize the root threshold to `(1, 1)`.
 - The overhead is negligible and the correctness guarantee is strong: every returned proof or disproof is correct, both in first-player-loss and current-player-loss scenarios.
 
+## 9. Current implementation status
+
+The solver implements the base/twin split, path-code Zobrist encoding, base
+re-initialization for twins, and simulation as described in the paper.  It is
+sound for finite proof trees and for cycles that are also present in the
+current search prefix, because `simulate` seeds its path set with the current
+search prefix and treats any repeated board as a draw.
+
+It does **not** implement the full Kawano cross-path verification.  In
+particular:
+
+- `simulate` does not carry the twin's original ancestor set.  A twin whose
+  proof relies on a repetition that was legal in the original path but is not
+  an ancestor in the current prefix may be accepted or rejected depending only
+  on whether the stored proof tree can be followed with the current prefix.
+- When simulation cannot follow a twin from another path (missing child twin or
+  prefix mismatch), the solver falls back to the base `pn`/`dn` bounds instead
+  of running a bounded fresh search under the current prefix.
+
+A future improvement could implement Option A from the review plan: run a
+bounded fresh `dfpn` call with `max_depth = twin.depth` from the twin node
+under the current path and accept the twin only if the bounded search returns
+the same outcome.  This would strengthen cross-path guarantees without
+requiring the full ancestor-set tracking of Option B.
+
 ## References
 
 - A. Kishimoto and M. Müller, "A General Solution to the Graph History Interaction Problem," *Proceedings of the 19th National Conference on Artificial Intelligence (AAAI-04)*, 2004.

@@ -117,7 +117,11 @@ impl Search {
 
         if self.refine_shortest {
             // Bootstrap: find any decisive result with a small depth budget,
-            // doubling the budget until the position is solved.
+            // doubling the budget until the position is solved.  Do not refine
+            // during bootstrap; we only need a winning outcome to start from.
+            let saved_refine = self.refine_shortest;
+            self.refine_shortest = false;
+
             let mut bootstrap_outcome = Outcome::Draw;
             let mut max_depth = 1u32;
             while max_depth <= 64 {
@@ -129,6 +133,8 @@ impl Search {
                 }
                 max_depth = max_depth.saturating_mul(2);
             }
+
+            self.refine_shortest = saved_refine;
 
             if self.time_exceeded() {
                 let pv = self.last_pv.clone();
@@ -156,9 +162,14 @@ impl Search {
     fn solve_refined(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
         // Depth-bounded refinement: first find any win/loss without a depth bound
         // to get an initial PV, then binary search the smallest depth bound that
-        // still yields the same outcome.
+        // still yields the same outcome.  Start each probe with a clean search
+        // state so that stale history/killer data from the bootstrap or previous
+        // probes does not misdirect the depth-bounded search.
         let saved_refine = self.refine_shortest;
         self.refine_shortest = false;
+        self.reset_search_state();
+        self.tt.clear();
+        self.reset_history_and_killers();
 
         let outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
         let best_outcome = outcome;
@@ -175,7 +186,7 @@ impl Search {
         };
 
         if let Some(first_pv) = self.extract_pv_checked(pos, outcome, full_depth) {
-            self.print_pv_update(outcome, &first_pv);
+            self.last_pv = first_pv;
         }
 
         let full_depth_pv = self.last_pv.clone();
@@ -188,6 +199,7 @@ impl Search {
                 let mid = (lo + hi) / 2;
                 self.reset_search_state();
                 self.tt.clear();
+                self.reset_history_and_killers();
                 let o = self.dfpn(pos, INF, INF, mid, true);
 
                 if self.time_exceeded() {
@@ -197,7 +209,7 @@ impl Search {
                 if o == outcome {
                     hi = mid;
                     if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
-                        self.print_pv_update(outcome, &pv);
+                        self.last_pv = pv;
                     }
                 } else {
                     lo = mid + 1;
@@ -209,10 +221,13 @@ impl Search {
             // full-depth PV instead of a possibly wrong shorter one.
             self.reset_search_state();
             self.tt.clear();
+            self.reset_history_and_killers();
             let o = self.dfpn(pos, INF, INF, lo, true);
             if o == outcome {
                 if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
-                    self.print_pv_update(outcome, &pv);
+                    // The final result is printed by the CLI caller; just keep
+                    // the validated PV so it can be returned.
+                    self.last_pv = pv.to_vec();
                 }
             } else {
                 self.last_pv = full_depth_pv;
@@ -233,6 +248,12 @@ impl Search {
         self.path.clear();
         self.path_stack.clear();
         self.path_code = 0;
+    }
+
+    fn reset_history_and_killers(&mut self) {
+        self.history = [[[0; 64]; 64]; 2];
+        self.killers = [[Move::NONE; KILLER_SLOTS]; MAX_KILLER_DEPTH];
+        self.history_age_counter = 0;
     }
 
     fn extract_pv_checked(
@@ -1524,6 +1545,27 @@ mod tests {
         let resolved = search.try_use_tt(&pos, &entry, u32::MAX, 0, 0);
         assert!(resolved.is_some());
         assert_eq!(resolved.unwrap().outcome, Outcome::Win);
+    }
+
+    #[test]
+    fn try_use_tt_rejects_cross_path_win_twin_without_child_proof() {
+        // A Win twin from another path is only trustworthy if the stored proof
+        // tree can be simulated under the current prefix.  Here the twin's best
+        // move leads to a non-terminal position with no matching child twin, so
+        // simulation fails and the twin is rejected.
+        let mut search = Search::new(64);
+        let pos = Position::from_fen("4k3/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
+        let key = pos.hash();
+        search.path_code = 0;
+
+        let twin_path_code = 0xABC;
+        let best = Move::make_move(Square::E1, Square::D1);
+        search
+            .tt
+            .store_twin(key, twin_path_code, 0, Outcome::Win, best, 100, u32::MAX);
+
+        let entry = *search.tt.probe(key).unwrap();
+        assert!(search.try_use_tt(&pos, &entry, u32::MAX, 0, 0).is_none());
     }
 
     #[test]

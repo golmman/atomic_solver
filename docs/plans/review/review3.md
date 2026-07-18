@@ -224,7 +224,30 @@ Both should be `loss`.
 
 ---
 
-## 7. Conclusion
+## 8. Plan 17 follow-up notes
+
+The following updates were made in Plan 17:
+
+- Shortest-PV refinement was validated on transposition-heavy wins
+  (`4k3/8/8/8/8/8/8/4KRR1 w - - 0 1`, `4k3/PP6/8/8/8/8/8/4K3 w - - 0 1`,
+  and the mate-in-two position from `tests/test_epsilon.rs`).  The returned PV
+  lengths (3, 7, and 5 plies respectively) are the observed shortest wins.
+- `Position::outcome_from_state` remains public; existing examples do not call
+  `outcome()` while holding a precomputed `MoveList` and `StateInfo`, so no
+  example changes were required.
+- The duplicate final CLI `outcome:`/`pv:` output was removed by stopping
+  `solve_refined` from printing the final validated PV; `main.rs` now owns the
+  final output.
+- GHI simulation remains a pragmatic approximation.  A synthetic unit test
+  verifies that `try_use_tt` rejects cross-path Win twins whose proof tree
+  cannot be simulated.  The remaining limitation is documented in
+  `docs/plans/dfpn/research_ghi.md`: the solver does not implement full
+  Kawano cross-path ancestor-set tracking and does not fall back to a bounded
+  fresh `dfpn` when simulation fails.
+
+---
+
+## 9. Conclusion
 
 Plans 9–14 leave the solver in a much stronger state: the `ε = 0.0` threshold, centralized terminal detection, path-aware GHI simulation, separate TT/repetition keys, and twin instrumentation are all in place and tested. The remaining risks are concentrated in three areas:
 

@@ -1,3 +1,4 @@
+use atomic_movegen::types::{Move, Square};
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
 
@@ -57,7 +58,6 @@ fn cyclic_rook_position_does_not_claim_win() {
 #[ignore = "slow cyclic GHI regression; run with --ignored"]
 fn reversible_cycle_does_not_claim_win() {
     let mut pos = Position::from_fen("8/8/8/8/2k5/8/8/4KR2 w - - 0 1").unwrap();
-    use atomic_movegen::types::{Move, Square};
 
     // Rf1-g1, Kc4-b4, Rg1-f1, Kb4-c4 returns to the same board.
     let moves = [
@@ -79,3 +79,12 @@ fn reversible_cycle_does_not_claim_win() {
         "repeated board should not be declared a win"
     );
 }
+
+/// A cross-path twin whose winning move depends on a repetition that is only
+/// legal in the twin's original path is difficult to construct for atomic chess.
+/// When such a position is found, this test should be enabled with a concrete FEN
+/// and the solver should not incorrectly reuse a win proven along a different
+/// path.
+#[test]
+#[ignore = "TODO: construct a concrete atomic-chess cross-path repetition-dependent win"]
+fn cross_path_repetition_dependent_win_is_not_reused() {}
