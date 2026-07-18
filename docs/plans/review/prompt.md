@@ -21,9 +21,9 @@ Note that there is research for the used techniquest in these files:
 * docs/plans/dfpn/research_ghi.md
 * docs/plans/dfpn/research_parallel.md
 
-And note the implementation reports after the last review docs/plans/review/review1.md in docs/plans/review/ .
+And note the implementation reports after the last reviews of review1.md and review2.md in docs/plans/review/ .
 
-Write a report to docs/plans/review/review2.md
+Write a report to docs/plans/review/review3.md
 
 ---
 
