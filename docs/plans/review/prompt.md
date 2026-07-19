@@ -67,3 +67,7 @@ Same as 2.3/2.5? Could a two-outcome approach simplify things?
 src/search/dfpn.rs has a file size of 54kb
 It is to big and needs to be split it into smaller files.
 We should also add a convention in the AGENTS.md which mandates a max size of around 10kb per file, violations need documented justification.
+
+---
+
+Please describe in details what kind of position(s) we need to have a robust GHI test.
