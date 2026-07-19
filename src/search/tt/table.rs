@@ -1,0 +1,259 @@
+//! Transposition table storage, lookup, and twin accounting.
+
+use crate::position::Outcome;
+use crate::zobrist;
+use atomic_movegen::types::Move;
+
+use super::entry::{MAX_TWINS, TtEntry, TwinAction, TwinEntry};
+
+pub struct TranspositionTable {
+    table: Vec<[TtEntry; 2]>,
+    mask: usize,
+    twin_insertions: u64,
+    twin_evictions: u64,
+    peak_twins: u8,
+}
+
+impl TranspositionTable {
+    pub fn with_mb(mb: usize) -> Self {
+        let bytes = mb.saturating_mul(1024 * 1024);
+        let entries = (bytes / std::mem::size_of::<TtEntry>()).next_power_of_two();
+        let entries = entries.max(32);
+        let buckets = entries.max(2) / 2;
+        Self {
+            table: vec![[TtEntry::default(); 2]; buckets],
+            mask: buckets - 1,
+            twin_insertions: 0,
+            twin_evictions: 0,
+            peak_twins: 0,
+        }
+    }
+
+    #[inline]
+    fn index(&self, key: u64) -> usize {
+        (key as usize) & self.mask
+    }
+
+    pub fn probe(&self, key: u64) -> Option<&TtEntry> {
+        self.table[self.index(key)]
+            .iter()
+            .find(|&&e| e.valid && e.key == key)
+    }
+
+    pub fn clear(&mut self) {
+        for bucket in &mut self.table {
+            *bucket = [TtEntry::default(); 2];
+        }
+        self.twin_insertions = 0;
+        self.twin_evictions = 0;
+        self.peak_twins = 0;
+    }
+
+    pub fn twin_stats(&self) -> (u64, u64) {
+        (self.twin_insertions, self.twin_evictions)
+    }
+
+    /// Maximum number of live twins observed in any single entry so far.
+    pub fn peak_twins(&self) -> u8 {
+        self.peak_twins
+    }
+
+    #[inline]
+    fn record_twin_action(&mut self, action: TwinAction) {
+        match action {
+            TwinAction::Inserted => self.twin_insertions += 1,
+            TwinAction::Evicted => {
+                self.twin_insertions += 1;
+                self.twin_evictions += 1;
+            }
+            TwinAction::Updated => {}
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn store(
+        &mut self,
+        key: u64,
+        best_move: Move,
+        outcome: Option<Outcome>,
+        pn: u64,
+        dn: u64,
+        depth: u32,
+        remaining_depth: u32,
+        path_code: u64,
+        path_length: u32,
+        repetition_seen: bool,
+    ) {
+        let mut pn = pn.min(zobrist::INF);
+        let mut dn = dn.min(zobrist::INF);
+        if outcome.is_none() && pn == zobrist::INF && dn == zobrist::INF {
+            pn = 1;
+            dn = 1;
+        }
+
+        let idx = self.index(key);
+        let mut twin_action = None;
+        let mut existing = false;
+        let mut live_twins = 0;
+
+        {
+            let bucket = &mut self.table[idx];
+            for slot in bucket.iter_mut() {
+                if slot.valid && slot.key == key {
+                    existing = true;
+                    if let Some(o) = outcome {
+                        if repetition_seen {
+                            twin_action = Some(slot.store_twin(
+                                path_code,
+                                path_length,
+                                o,
+                                best_move,
+                                depth,
+                                remaining_depth,
+                            ));
+                            live_twins = slot.live_twin_count();
+                            slot.reinit_base_for_twin();
+                        } else {
+                            // Path-independent result: store in the base entry and clear twins.
+                            slot.best_move = best_move;
+                            slot.outcome = Some(o);
+                            slot.pn = pn;
+                            slot.dn = dn;
+                            slot.depth = depth;
+                            slot.remaining_depth = remaining_depth;
+                            slot.repetition_seen = false;
+                            slot.clear_twins();
+                        }
+                    } else {
+                        // Unsolved node: update base bounds and keep existing twins.
+                        slot.best_move = best_move;
+                        slot.outcome = None;
+                        slot.pn = pn;
+                        slot.dn = dn;
+                        slot.depth = depth;
+                        slot.remaining_depth = remaining_depth;
+                        slot.repetition_seen = repetition_seen;
+                    }
+                    break;
+                }
+            }
+        }
+
+        if let Some(action) = twin_action {
+            self.record_twin_action(action);
+            self.peak_twins = self.peak_twins.max(live_twins);
+        }
+
+        if existing {
+            return;
+        }
+
+        let mut new = TtEntry {
+            key,
+            valid: true,
+            best_move,
+            outcome,
+            pn,
+            dn,
+            depth,
+            remaining_depth,
+            repetition_seen,
+            twins: [TwinEntry::default(); MAX_TWINS],
+        };
+
+        let new_twin_action = if let Some(o) = outcome {
+            if repetition_seen {
+                new.reinit_base_for_twin();
+                Some(new.store_twin(path_code, path_length, o, best_move, depth, remaining_depth))
+            } else {
+                new.clear_twins();
+                None
+            }
+        } else {
+            None
+        };
+
+        if let Some(action) = new_twin_action {
+            self.record_twin_action(action);
+            self.peak_twins = self.peak_twins.max(new.live_twin_count());
+        }
+
+        let bucket = &mut self.table[idx];
+        let old = bucket[0];
+        bucket[0] = new;
+        if old.valid && old.key != key {
+            bucket[1] = old;
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn store_twin(
+        &mut self,
+        key: u64,
+        path_code: u64,
+        path_length: u32,
+        outcome: Outcome,
+        best_move: Move,
+        depth: u32,
+        remaining_depth: u32,
+    ) {
+        let idx = self.index(key);
+        let mut twin_action = None;
+        let mut live_twins = 0;
+
+        {
+            let bucket = &mut self.table[idx];
+            for slot in bucket.iter_mut() {
+                if slot.valid && slot.key == key {
+                    twin_action = Some(slot.store_twin(
+                        path_code,
+                        path_length,
+                        outcome,
+                        best_move,
+                        depth,
+                        remaining_depth,
+                    ));
+                    live_twins = slot.live_twin_count();
+                    slot.reinit_base_for_twin();
+                    break;
+                }
+            }
+        }
+
+        if let Some(action) = twin_action {
+            self.record_twin_action(action);
+            self.peak_twins = self.peak_twins.max(live_twins);
+            return;
+        }
+
+        let mut new = TtEntry {
+            key,
+            valid: true,
+            best_move: Move::NONE,
+            outcome: None,
+            pn: 1,
+            dn: 1,
+            depth: 0,
+            remaining_depth: 0,
+            repetition_seen: true,
+            twins: [TwinEntry::default(); MAX_TWINS],
+        };
+        let action = new.store_twin(
+            path_code,
+            path_length,
+            outcome,
+            best_move,
+            depth,
+            remaining_depth,
+        );
+        self.record_twin_action(action);
+        self.peak_twins = self.peak_twins.max(new.live_twin_count());
+
+        let bucket = &mut self.table[idx];
+        let old = bucket[0];
+        bucket[0] = new;
+        if old.valid && old.key != key {
+            bucket[1] = old;
+        }
+    }
+}

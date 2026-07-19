@@ -10,10 +10,10 @@ A pure solver for atomic chess in Rust.
 - `src/position.rs` wraps `atomic_movegen::board::Board` and tracks the
   `Outcome` (Win/Loss/Draw from the side-to-move perspective), undo state,
   and Zobrist hashing.
-- `src/search/dfpn.rs` implements the sequential DF-PN+ solver with optional
+- `src/search/dfpn/` implements the sequential DF-PN+ solver with optional
   shortest-PV refinement, history/killer heuristics, and a 5-second default
   timeout.
-- `src/search/tt.rs` holds the transposition table, including path-independent
+- `src/search/tt/` holds the transposition table, including path-independent
   base entries and path-dependent "twin" entries for repetition handling.
 - `src/search/ordering.rs` provides the `MoveScorer` trait and the
   `StaticAtomicScorer`.
@@ -37,6 +37,9 @@ A pure solver for atomic chess in Rust.
   such as `dfpn`, `tt`, and `zobrist`; prefer full words for new public API
   unless the abbreviation is domain-standard.
 - Example binaries go under `examples/`.
+- Keep source files under ~10 KB. Files larger than 10 KB must include a short
+  documented justification in the file header or in `AGENTS.md`. Files larger
+  than ~20 KB should normally be split into submodules.
 - Unit tests go in a `#[cfg(test)] mod tests` at the bottom of each module.
   Integration/regression tests go under `tests/`.
 - The most important quality attributes for this library are, from most to
