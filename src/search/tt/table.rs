@@ -37,7 +37,7 @@ impl TranspositionTable {
     pub fn probe(&self, key: u64) -> Option<&TtEntry> {
         self.table[self.index(key)]
             .iter()
-            .find(|&&e| e.valid && e.key == key)
+            .find(|e| e.valid && e.key == key)
     }
 
     pub fn clear(&mut self) {

@@ -1,22 +1,17 @@
+mod common;
+
 use atomic_movegen::types::{Move, Square};
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
-
-fn solve(fen: &str) -> (Outcome, Vec<atomic_movegen::types::Move>, u64) {
-    let mut pos = Position::from_fen(fen).unwrap();
-    let mut search = Search::new(64);
-    search.set_timeout(5);
-    search.solve(&mut pos)
-}
+use common::solve;
 
 /// A rook alone cannot force a win against a lone king that has a 2x2 safe area.
 /// This position can produce reversible checking cycles, so the solver must not
 /// claim a win from the cycle.
 #[test]
 fn rook_alone_does_not_claim_win_against_safe_king() {
-    let (outcome, _pv, _nodes) = solve("8/8/8/8/2k5/8/8/4KR2 w - - 0 1");
     assert_ne!(
-        outcome,
+        solve("8/8/8/8/2k5/8/8/4KR2 w - - 0 1"),
         Outcome::Win,
         "rook alone should not win in a 2x2 safe area"
     );

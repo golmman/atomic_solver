@@ -14,7 +14,6 @@ fn two_rooks_mate_with_transpositions() {
     assert!(!pv.is_empty());
     assert!(
         nodes < 10_000,
-        "node blow-up in transposition position: {}",
-        nodes
+        "node blow-up in transposition position: {nodes}"
     );
 }

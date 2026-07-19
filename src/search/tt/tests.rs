@@ -8,7 +8,7 @@ fn tt_entry_size_is_reasonable() {
     // MAX_TWINS was raised to 8; keep the per-entry size bounded so the
     // default 64 MB table still holds a useful number of entries.
     let size = std::mem::size_of::<TtEntry>();
-    assert!(size <= 512, "TtEntry size {} exceeds 512 bytes", size);
+    assert!(size <= 512, "TtEntry size {size} exceeds 512 bytes");
 }
 
 #[test]

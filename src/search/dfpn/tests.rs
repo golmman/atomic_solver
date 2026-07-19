@@ -90,7 +90,7 @@ fn try_use_tt_simulation_uses_current_path() {
     search.path_code = 0;
 
     // Store a Draw twin for a different path code.
-    let twin_path_code = 0xDEADBEEF;
+    let twin_path_code = 0xDEAD_BEEF;
     search.tt.store_twin(
         key,
         twin_path_code,
@@ -119,7 +119,7 @@ fn try_use_tt_rejects_win_twin_for_repeated_position() {
 
     // Store a Win twin for a different path code. The current search prefix
     // already contains this position, so the real outcome is Draw, not Win.
-    let twin_path_code = 0xDEADBEEF;
+    let twin_path_code = 0xDEAD_BEEF;
     search.tt.store_twin(
         key,
         twin_path_code,
@@ -142,7 +142,7 @@ fn try_use_tt_accepts_cross_path_win_twin() {
     search.path_code = 0;
 
     // Store a Win twin from a different path; the best move e1e8 mates.
-    let twin_path_code = 0xABC;
+    let twin_path_code = 0x0ABC;
     search.tt.store_twin(
         key,
         twin_path_code,
@@ -170,7 +170,7 @@ fn try_use_tt_rejects_cross_path_win_twin_without_child_proof() {
     let key = pos.hash();
     search.path_code = 0;
 
-    let twin_path_code = 0xABC;
+    let twin_path_code = 0x0ABC;
     let best = Move::make_move(Square::E1, Square::D1);
     search
         .tt

@@ -1,6 +1,6 @@
 //! Core DF-PN recursive search routine.
 
-use std::time::Instant;
+#![allow(clippy::similar_names)]
 
 use atomic_movegen::board::StateInfo;
 use atomic_movegen::types::{Move, MoveList};
@@ -25,7 +25,7 @@ impl Search {
         max_depth: u32,
         is_or_node: bool,
     ) -> Outcome {
-        if Instant::now() >= self.deadline {
+        if self.time_exceeded() {
             return Outcome::Draw;
         }
 
@@ -118,7 +118,7 @@ impl Search {
         let mut repetition_seen = false;
 
         loop {
-            if Instant::now() >= self.deadline {
+            if self.time_exceeded() {
                 break;
             }
 
@@ -152,7 +152,7 @@ impl Search {
                 break;
             }
 
-            let (mv, child_pn, child_dn, _vpn, _vdn) = selection.best_child;
+            let (mv, child_pn, child_dn) = selection.best_child;
             if mv == Move::NONE {
                 break;
             }
@@ -189,7 +189,7 @@ impl Search {
             best_move
         };
         let store_remaining_depth = match outcome_to_store {
-            Some(Outcome::Win) | Some(Outcome::Loss) => u32::MAX,
+            Some(Outcome::Win | Outcome::Loss) => u32::MAX,
             _ => max_depth,
         };
         self.tt.store(

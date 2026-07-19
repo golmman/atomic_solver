@@ -3,11 +3,11 @@
 //! This is useful for comparing the raw DF-PN+ result to the refined search
 //! and for measuring the overhead of the refinement bootstrap.
 //!
-//! Default: the m27 white-to-move FEN.
+//! Default: the `m27` white-to-move FEN.
 //!
 //! Usage:
-//!     cargo run --example solve_no_refinement
-//!     cargo run --example solve_no_refinement -- "<fen>"
+//!     cargo run --example `solve_no_refinement`
+//!     cargo run --example `solve_no_refinement` -- "<fen>"
 
 use atomic_solver::position::Position;
 use atomic_solver::search::dfpn::Search;
@@ -22,7 +22,7 @@ fn main() {
     let mut search = Search::new(256);
     search.set_timeout(5);
     let (outcome, pv, nodes) = search.solve(&mut pos);
-    eprintln!("outcome: {:?} nodes: {}", outcome, nodes);
+    eprintln!("outcome: {outcome:?} nodes: {nodes}");
     for m in pv {
         eprintln!("{}", atomic_solver::notation::move_to_uci(m));
     }

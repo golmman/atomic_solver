@@ -1,14 +1,9 @@
-use atomic_solver::position::{Outcome, Position};
-use atomic_solver::search::dfpn::{Search, outcome_from_pn_dn};
-use atomic_solver::zobrist::INF;
+mod common;
 
-fn solve(fen: &str) -> Outcome {
-    let mut pos = Position::from_fen(fen).unwrap();
-    let mut search = Search::new(64);
-    search.set_timeout(5);
-    let (outcome, _pv, _nodes) = search.solve(&mut pos);
-    outcome
-}
+use atomic_solver::position::{Outcome, Position};
+use atomic_solver::search::dfpn::outcome_from_pn_dn;
+use atomic_solver::zobrist::INF;
+use common::solve;
 
 #[test]
 fn lone_commoner_checkmate_is_loss_for_side_to_move() {

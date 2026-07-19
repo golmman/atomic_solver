@@ -1,12 +1,10 @@
 use atomic_solver::notation::move_to_uci;
-use atomic_solver::position::Position;
+use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
-
-const DEFAULT_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let mut fen = DEFAULT_FEN.to_string();
+    let mut fen = Position::STARTPOS_FEN.to_string();
     let mut epsilon = 0.25;
     let mut i = 1;
     while i < args.len() {
@@ -43,15 +41,12 @@ fn main() {
     let (outcome, pv, _nodes) = search.solve(&mut pos);
 
     let outcome_str = match outcome {
-        atomic_solver::position::Outcome::Win => "win",
-        atomic_solver::position::Outcome::Loss => "loss",
-        atomic_solver::position::Outcome::Draw => "draw",
+        Outcome::Win => "win",
+        Outcome::Loss => "loss",
+        Outcome::Draw => "draw",
     };
 
-    if matches!(
-        outcome,
-        atomic_solver::position::Outcome::Win | atomic_solver::position::Outcome::Loss
-    ) {
+    if matches!(outcome, Outcome::Win | Outcome::Loss) {
         let pv_str: String = pv
             .iter()
             .map(|&m| move_to_uci(m))

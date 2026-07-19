@@ -21,21 +21,24 @@ struct SplitMix64(u64);
 
 impl SplitMix64 {
     fn next(&mut self) -> u64 {
-        self.0 = self.0.wrapping_add(0x9e3779b97f4a7c15);
-        let mut z = self.0;
-        z = (z ^ (z >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94d049bb133111eb);
-        z ^ (z >> 31)
+        self.0 = self.0.wrapping_add(0x9e37_79b9_7f4a_7c15);
+        mix(self.0)
     }
+}
+
+/// A single 64-bit SplitMix64 mixing round.
+/// This is a bijection on `u64`, so each distinct input maps to a distinct output.
+fn mix(z: u64) -> u64 {
+    let z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+    let z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+    z ^ (z >> 31)
 }
 
 /// A single 64-bit SplitMix64 round applied to `x`.
 /// This is a bijection on `u64`, so each distinct input maps to a distinct output.
 fn splitmix64(x: u64) -> u64 {
-    let mut z = x.wrapping_add(0x9e3779b97f4a7c15);
-    z = (z ^ (z >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
-    z = (z ^ (z >> 27)).wrapping_mul(0x94d049bb133111eb);
-    z ^ (z >> 31)
+    let z = x.wrapping_add(0x9e37_79b9_7f4a_7c15);
+    mix(z)
 }
 
 pub struct Zobrist {
@@ -44,7 +47,7 @@ pub struct Zobrist {
 
 impl Zobrist {
     fn new() -> Self {
-        let mut rng = SplitMix64(0x9e3779b97f4a7c15);
+        let mut rng = SplitMix64(0x9e37_79b9_7f4a_7c15);
 
         let mut rule50_keys = [0u64; 101];
         for key in rule50_keys.iter_mut() {
@@ -65,11 +68,11 @@ impl Zobrist {
         let move_index = from + to * 64 + kind * 64 * 64;
         let depth_index = depth % MAX_PATH_DEPTH;
 
-        // Combine move and depth into a single index.  The multiplication by
-        // `MAX_PATH_DEPTH` is safe because `PATH_MOVE_NB * MAX_PATH_DEPTH` is
-        // far below `u64::MAX`, and it makes the mapping injective for the
-        // ranges we use.  Applying `splitmix64` then gives a distinct 64-bit key
-        // for every `(move, depth)` pair.
+        // Combine move and depth into a single index.  The product of the
+        // maximum `move_index` and `MAX_PATH_DEPTH` is far below `u64::MAX`,
+        // and the multiplication makes the mapping injective for the ranges we
+        // use.  Applying `splitmix64` then gives a distinct 64-bit key for
+        // every `(move, depth)` pair.
         let combined = (move_index as u64)
             .wrapping_mul(MAX_PATH_DEPTH as u64)
             .wrapping_add(depth_index as u64);
@@ -165,8 +168,8 @@ mod tests {
         // the two transpositions could collide.
         let a = Move::make_promotion(Square::A7, Square::A8, PieceType::Queen);
         let b = Move::make_promotion(Square::B7, Square::B8, PieceType::Queen);
-        let code_a_first = path_random(a, 0) ^ path_random(b, 1);
-        let code_b_first = path_random(b, 0) ^ path_random(a, 1);
-        assert_ne!(code_a_first, code_b_first);
+        let a_then_b = path_random(a, 0) ^ path_random(b, 1);
+        let b_then_a = path_random(b, 0) ^ path_random(a, 1);
+        assert_ne!(a_then_b, b_then_a);
     }
 }

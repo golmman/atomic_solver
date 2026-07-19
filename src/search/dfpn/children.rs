@@ -1,5 +1,7 @@
 //! DF-PN child evaluation and selection.
 
+#![allow(clippy::similar_names)]
+
 use atomic_movegen::types::{Move, MoveList};
 
 use crate::position::{Outcome, Position};
@@ -11,15 +13,13 @@ pub struct ChildInfo {
     pub mv: Move,
     pub pn: u64,
     pub dn: u64,
-    pub vpn: u64,
-    pub vdn: u64,
     pub outcome: Option<Outcome>,
     pub depth: u32,
     pub repetition_seen: bool,
 }
 
 pub struct ChildSelection {
-    pub best_child: (Move, u64, u64, u64, u64),
+    pub best_child: (Move, u64, u64),
     pub second_child: (u64, u64),
     pub pn: u64,
     pub dn: u64,
@@ -70,23 +70,17 @@ impl Search {
         let best = best_idx.map(|i| &children[i]);
         let second = second_idx.map(|i| &children[i]);
 
-        let best_child = best.map(|b| (b.mv, b.pn, b.dn, b.vpn, b.vdn)).unwrap_or((
-            Move::NONE,
-            INF,
-            INF,
-            INF,
-            INF,
-        ));
-        let second_child = second.map(|s| (s.pn, s.dn)).unwrap_or((INF, INF));
+        let best_child = best.map_or((Move::NONE, INF, INF), |b| (b.mv, b.pn, b.dn));
+        let second_child = second.map_or((INF, INF), |s| (s.pn, s.dn));
 
         let best_move = if let Some((_, _, mv, _, _)) = solved {
             mv
         } else {
-            best_idx.map(|i| children[i].mv).unwrap_or(Move::NONE)
+            best_idx.map_or(Move::NONE, |i| children[i].mv)
         };
 
-        let depth = solved.map(|(_, d, _, _, _)| d).unwrap_or(0);
-        let all_solved = solved.map(|(_, _, _, all, _)| all).unwrap_or(false);
+        let depth = solved.map_or(0, |(_, d, _, _, _)| d);
+        let all_solved = solved.is_some_and(|(_, _, _, all, _)| all);
 
         let repetition_seen = if let Some((outcome, _, _, _, idx)) = solved {
             match outcome {
@@ -129,8 +123,6 @@ impl Search {
                 mv,
                 pn,
                 dn,
-                vpn: pn,
-                vdn: dn,
                 outcome: Some(outcome),
                 depth: 0,
                 repetition_seen: false,
@@ -141,8 +133,6 @@ impl Search {
                 mv,
                 pn,
                 dn,
-                vpn: pn,
-                vdn: dn,
                 outcome: Some(Outcome::Draw),
                 depth: 0,
                 repetition_seen: true,
@@ -162,8 +152,6 @@ impl Search {
                     mv,
                     pn,
                     dn,
-                    vpn: pn,
-                    vdn: dn,
                     outcome: Some(resolved.outcome),
                     depth: resolved.depth,
                     repetition_seen: resolved.repetition_seen,
@@ -179,8 +167,6 @@ impl Search {
                     mv,
                     pn,
                     dn,
-                    vpn: pn,
-                    vdn: dn,
                     outcome: None,
                     depth: 0,
                     repetition_seen: entry.repetition_seen,
@@ -191,8 +177,6 @@ impl Search {
                 mv,
                 pn: 1,
                 dn: 1,
-                vpn: 1,
-                vdn: 1,
                 outcome: None,
                 depth: 0,
                 repetition_seen: false,

@@ -17,8 +17,7 @@ fn hash_changes_after_move() {
 
 #[test]
 fn do_undo_restores_fen() {
-    let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    let mut pos = Position::from_fen(fen).unwrap();
+    let mut pos = Position::from_fen(Position::STARTPOS_FEN).unwrap();
     let mut moves = atomic_movegen::types::MoveList::new();
     pos.legal_moves(&mut moves);
     let m = moves[0];

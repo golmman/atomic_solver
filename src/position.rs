@@ -6,7 +6,7 @@ use atomic_movegen::types::{Bitboard, Color, Move, MoveList};
 
 use crate::zobrist;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Outcome {
     Loss,
     Draw,
@@ -14,14 +14,15 @@ pub enum Outcome {
 }
 
 impl Outcome {
+    #[must_use]
     pub fn to_pn_dn(self) -> (u64, u64) {
         match self {
             Outcome::Win => (0, zobrist::INF),
-            Outcome::Loss => (zobrist::INF, 0),
-            Outcome::Draw => (zobrist::INF, 0),
+            Outcome::Loss | Outcome::Draw => (zobrist::INF, 0),
         }
     }
 
+    #[must_use]
     pub fn pn_dn_for(self, is_or_node: bool) -> (u64, u64) {
         if is_or_node {
             self.to_pn_dn()
@@ -30,6 +31,7 @@ impl Outcome {
         }
     }
 
+    #[must_use]
     pub fn flip(self) -> Self {
         match self {
             Outcome::Win => Outcome::Loss,
@@ -41,13 +43,15 @@ impl Outcome {
 
 pub struct Position {
     pub board: Board,
-    pub zobrist: u64,
+    zobrist: u64,
     undo_stack: Vec<StateInfo>,
 }
 
 impl Position {
+    pub const STARTPOS_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
     pub fn new() -> Self {
-        Self::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap()
+        Self::from_fen(Self::STARTPOS_FEN).unwrap()
     }
 
     pub fn from_fen(fen: &str) -> Result<Self, Box<dyn std::error::Error>> {
@@ -113,9 +117,8 @@ impl Position {
         if moves.is_empty() {
             if state.checkers.is_empty() {
                 return Some(Outcome::Draw);
-            } else {
-                return Some(Outcome::Loss);
             }
+            return Some(Outcome::Loss);
         }
         if self.board.rule50() >= 100 {
             return Some(Outcome::Draw);
@@ -126,11 +129,13 @@ impl Position {
         None
     }
 
+    #[must_use]
     pub fn hash(&self) -> u64 {
         self.zobrist
     }
 
     /// Board-only key for repetition detection, ignoring the halfmove clock.
+    #[must_use]
     pub fn repetition_key(&self) -> u64 {
         zobrist::board_hash(&self.board)
     }
@@ -147,6 +152,8 @@ impl Default for Position {
 }
 
 impl Clone for Position {
+    /// A clone is a snapshot of the current board and hash. The undo stack
+    /// starts empty because a clone is not a replayable history.
     fn clone(&self) -> Self {
         Self {
             board: self.board.clone(),

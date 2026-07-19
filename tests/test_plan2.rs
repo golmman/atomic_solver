@@ -1,12 +1,7 @@
-use atomic_solver::position::{Outcome, Position};
-use atomic_solver::search::dfpn::Search;
+mod common;
 
-fn solve(fen: &str) -> Outcome {
-    let mut pos = Position::from_fen(fen).unwrap();
-    let mut search = Search::new(64);
-    let (outcome, _pv, _nodes) = search.solve(&mut pos);
-    outcome
-}
+use atomic_solver::position::Outcome;
+use common::solve;
 
 #[test]
 fn mate_in_4_white_to_move() {

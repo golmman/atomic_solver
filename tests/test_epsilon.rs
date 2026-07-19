@@ -1,8 +1,10 @@
+mod common;
+
 use std::process::Command;
 
-use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
+use common::{cli_bin, pv_strings};
 
 fn solve_with_epsilon(fen: &str, epsilon: f64) -> Outcome {
     let mut pos = Position::from_fen(fen).unwrap();
@@ -19,7 +21,7 @@ fn solve_with_epsilon_full(fen: &str, epsilon: f64) -> (Outcome, Vec<String>, u6
     search.set_timeout(5);
     search.set_epsilon(epsilon);
     let (outcome, pv, nodes) = search.solve(&mut pos);
-    (outcome, pv.iter().map(|&m| move_to_uci(m)).collect(), nodes)
+    (outcome, pv_strings(&pv), nodes)
 }
 
 #[test]
@@ -32,11 +34,6 @@ fn different_epsilon_values_solve_simple_mate() {
     assert_eq!(solve_with_epsilon(fen, 0.5), Outcome::Win);
     assert_eq!(solve_with_epsilon(fen, 0.99), Outcome::Win);
     assert_eq!(solve_with_epsilon(fen, 1.0), Outcome::Win);
-}
-
-fn cli_bin() -> String {
-    std::env::var("CARGO_BIN_EXE_atomic_solver")
-        .unwrap_or_else(|_| "target/debug/atomic_solver".to_string())
 }
 
 #[test]

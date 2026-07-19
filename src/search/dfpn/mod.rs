@@ -10,6 +10,7 @@ mod simulate;
 #[cfg(test)]
 mod tests;
 
+pub use crate::zobrist::INF;
 pub use core::outcome_from_pn_dn;
 
 use std::collections::HashSet;
@@ -18,33 +19,31 @@ use std::time::{Duration, Instant};
 use atomic_movegen::types::Move;
 
 use crate::position::{Outcome, Position};
-use crate::zobrist;
 
 use super::ordering::{MoveScorer, StaticAtomicScorer};
 use super::tt::TranspositionTable;
 
-pub const INF: u64 = zobrist::INF;
 const DEFAULT_EPSILON: f64 = 0.25;
 const TIMEOUT_SECS: u64 = 5;
-pub(crate) const DEFAULT_MAX_PV_PLIES: usize = 1000;
+const DEFAULT_MAX_PV_PLIES: usize = 1000;
 
 pub struct Search {
-    pub(crate) tt: TranspositionTable,
-    pub(crate) path: HashSet<u64>,
-    pub(crate) path_stack: Vec<u64>,
-    pub(crate) path_code: u64,
-    pub(crate) nodes: u64,
-    pub(crate) start: Instant,
-    pub(crate) deadline: Instant,
-    pub(crate) epsilon: f64,
-    pub(crate) scorer: Box<dyn MoveScorer>,
-    pub(crate) refine_shortest: bool,
-    pub(crate) timeout: Duration,
-    pub(crate) last_pv: Vec<Move>,
-    pub(crate) history: [[[i32; 64]; 64]; 2],
-    pub(crate) killers: [[Move; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
-    pub(crate) history_age_counter: u64,
-    pub(crate) max_ply: usize,
+    tt: TranspositionTable,
+    path: HashSet<u64>,
+    path_stack: Vec<u64>,
+    path_code: u64,
+    nodes: u64,
+    start: Instant,
+    deadline: Instant,
+    epsilon: f64,
+    scorer: Box<dyn MoveScorer>,
+    refine_shortest: bool,
+    timeout: Duration,
+    last_pv: Vec<Move>,
+    history: [[[i32; 64]; 64]; 2],
+    killers: [[Move; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
+    history_age_counter: u64,
+    max_ply: usize,
 }
 
 impl Search {
@@ -102,26 +101,14 @@ impl Search {
         pos: &mut Position,
         max_depth: u32,
     ) -> (Outcome, Vec<Move>, u64) {
-        self.nodes = 0;
-        self.start = Instant::now();
-        self.deadline = self.start + self.timeout;
-        self.path.clear();
-        self.path_stack.clear();
-        self.path_code = 0;
-        self.last_pv.clear();
+        self.begin_run();
         let outcome = self.dfpn(pos, INF, INF, max_depth, true);
         let pv = self.extract_pv(pos);
         (outcome, pv, self.nodes)
     }
 
     pub fn solve(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
-        self.nodes = 0;
-        self.start = Instant::now();
-        self.deadline = self.start + self.timeout;
-        self.path.clear();
-        self.path_stack.clear();
-        self.path_code = 0;
-        self.last_pv.clear();
+        self.begin_run();
 
         if self.refine_shortest {
             // Bootstrap: find any decisive result with a small depth budget,
@@ -252,19 +239,29 @@ impl Search {
         (best_outcome, pv, self.nodes)
     }
 
-    pub(crate) fn reset_search_state(&mut self) {
+    fn begin_run(&mut self) {
+        self.nodes = 0;
+        self.start = Instant::now();
+        self.deadline = self.start + self.timeout;
+        self.path.clear();
+        self.path_stack.clear();
+        self.path_code = 0;
+        self.last_pv.clear();
+    }
+
+    fn reset_search_state(&mut self) {
         self.path.clear();
         self.path_stack.clear();
         self.path_code = 0;
     }
 
-    pub(crate) fn reset_history_and_killers(&mut self) {
+    fn reset_history_and_killers(&mut self) {
         self.history = [[[0; 64]; 64]; 2];
         self.killers = [[Move::NONE; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH];
         self.history_age_counter = 0;
     }
 
-    pub(crate) fn time_exceeded(&self) -> bool {
+    fn time_exceeded(&self) -> bool {
         Instant::now() >= self.deadline
     }
 }

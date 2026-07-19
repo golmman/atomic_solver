@@ -7,12 +7,12 @@ pub const MAX_TWINS: usize = 8;
 
 #[derive(Clone, Copy, Debug)]
 pub struct TwinEntry {
-    pub path_code: u64,
-    pub path_length: u32,
-    pub outcome: Option<Outcome>, // None means empty
-    pub best_move: Move,
-    pub depth: u32,
-    pub remaining_depth: u32,
+    pub(crate) path_code: u64,
+    pub(crate) path_length: u32,
+    pub(crate) outcome: Option<Outcome>, // None means empty
+    pub(crate) best_move: Move,
+    pub(crate) depth: u32,
+    pub(crate) remaining_depth: u32,
 }
 
 impl Default for TwinEntry {
@@ -37,20 +37,20 @@ pub(super) enum TwinAction {
 
 #[derive(Clone, Copy, Debug)]
 pub struct TtEntry {
-    pub key: u64,
-    pub valid: bool,
+    pub(crate) key: u64,
+    pub(crate) valid: bool,
 
     // Base entry: bounds for unsolved nodes, or path-independent solved results.
-    pub best_move: Move,
-    pub outcome: Option<Outcome>,
-    pub pn: u64,
-    pub dn: u64,
-    pub depth: u32,
-    pub remaining_depth: u32,
-    pub repetition_seen: bool,
+    pub(crate) best_move: Move,
+    pub(crate) outcome: Option<Outcome>,
+    pub(crate) pn: u64,
+    pub(crate) dn: u64,
+    pub(crate) depth: u32,
+    pub(crate) remaining_depth: u32,
+    pub(crate) repetition_seen: bool,
 
     // Twin entries: path-dependent solved results.
-    pub twins: [TwinEntry; MAX_TWINS],
+    pub(crate) twins: [TwinEntry; MAX_TWINS],
 }
 
 impl Default for TtEntry {

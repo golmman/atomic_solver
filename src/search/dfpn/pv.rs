@@ -22,17 +22,17 @@ impl Search {
     ) -> Option<Vec<Move>> {
         let (pv, truncated) = self.extract_pv_internal(pos);
         if truncated {
-            if Self::validate_pv_prefix(&pv, pos) {
+            if Self::validate_pv_prefix(&pv, pos).is_some() {
                 eprintln!("warning: PV truncated after {} plies", self.max_ply);
                 return Some(pv);
             }
-            eprintln!("warning: PV validation failed for {:?}", expected);
+            eprintln!("warning: PV validation failed for {expected:?}");
             return None;
         }
         if Self::validate_pv(&pv, pos, expected, expected_depth) {
             Some(pv)
         } else {
-            eprintln!("warning: PV validation failed for {:?}", expected);
+            eprintln!("warning: PV validation failed for {expected:?}");
             None
         }
     }
@@ -49,14 +49,10 @@ impl Search {
             return false;
         }
 
-        if !Self::validate_pv_prefix(pv, pos) {
-            return false;
-        }
-
-        let mut current = pos.clone();
-        for &m in pv {
-            current.do_move(m);
-        }
+        let current = match Self::validate_pv_prefix(pv, pos) {
+            Some(c) => c,
+            None => return false,
+        };
 
         // `Position::outcome()` is the canonical terminal detector, including
         // commoner extinction, rule50, the two-piece draw, checkmate, and stalemate.
@@ -73,7 +69,7 @@ impl Search {
         final_outcome == Some(final_expected)
     }
 
-    fn validate_pv_prefix(pv: &[Move], pos: &Position) -> bool {
+    fn validate_pv_prefix(pv: &[Move], pos: &Position) -> Option<Position> {
         let mut current = pos.clone();
         for &m in pv {
             let mut moves = MoveList::new();
@@ -87,11 +83,11 @@ impl Search {
                 }
             }
             if !legal {
-                return false;
+                return None;
             }
             current.do_move(m);
         }
-        true
+        Some(current)
     }
 
     fn extract_pv_internal(&self, pos: &Position) -> (Vec<Move>, bool) {

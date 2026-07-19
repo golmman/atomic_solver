@@ -1,8 +1,8 @@
 //! Instrument the twin table while solving GHI-sensitive positions.
 //!
 //! Usage:
-//!     cargo run --example twin_stats
-//!     cargo run --example twin_stats -- "<fen>"
+//!     cargo run --example `twin_stats`
+//!     cargo run --example `twin_stats` -- "<fen>"
 
 use atomic_movegen::types::{Move, Square};
 use atomic_solver::position::Position;

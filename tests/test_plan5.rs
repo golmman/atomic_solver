@@ -33,8 +33,7 @@ fn white_child_f7e6_short_win() {
     let g8f8 = Move::make_move(Square::G8, Square::F8);
     assert!(
         first == g8g7 || first == g8f8,
-        "expected first move g8g7 or g8f8, got {:?}",
-        first
+        "expected first move g8g7 or g8f8, got {first:?}"
     );
     assert_eq!(pv.len(), 3, "expected a 3-ply win");
 }

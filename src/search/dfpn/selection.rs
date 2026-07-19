@@ -1,5 +1,7 @@
 //! DF-PN solved-child detection and unsolved-child ordering.
 
+#![allow(clippy::similar_names)]
+
 use atomic_movegen::types::Move;
 
 use crate::position::Outcome;
@@ -8,18 +10,22 @@ use super::Search;
 use super::children::ChildInfo;
 
 impl Search {
+    /// Detect whether all children are solved, and if so return the parent's
+    /// outcome, the best child index, and the proof depth. The names below use
+    /// the parent-side perspective: a child `Loss` means the parent can force a
+    /// `Win`, and a child `Win` means the parent is forced to `Loss`.
     pub(super) fn is_solved_by_children(
         children: &[ChildInfo],
         _is_or_node: bool,
     ) -> Option<(Outcome, u32, Move, bool, usize)> {
         let mut all_solved = true;
-        let mut win_idx: Option<usize> = None;
-        let mut win_depth = u32::MAX;
-        let mut draw_idx: Option<usize> = None;
-        let mut draw_depth = 0;
+        let mut parent_win_child_idx: Option<usize> = None;
+        let mut parent_win_depth = u32::MAX;
+        let mut parent_draw_child_idx: Option<usize> = None;
+        let mut parent_draw_depth = 0;
         let mut found_draw = false;
-        let mut loss_idx: Option<usize> = None;
-        let mut loss_depth = 0;
+        let mut parent_loss_child_idx: Option<usize> = None;
+        let mut parent_loss_depth = 0;
 
         for (i, c) in children.iter().enumerate() {
             let d = c.depth.saturating_add(1);
@@ -28,54 +34,73 @@ impl Search {
                     all_solved = false;
                 }
                 Some(Outcome::Loss) => {
-                    // Prefer shortest loss, and among ties prefer path-independent.
-                    if d < win_depth
-                        || (d == win_depth
-                            && win_idx.is_some()
+                    // Prefer shortest loss for the child, which is the shortest
+                    // win for the parent. Among ties prefer path-independent.
+                    if d < parent_win_depth
+                        || (d == parent_win_depth
+                            && parent_win_child_idx.is_some()
                             && !c.repetition_seen
-                            && children[win_idx.unwrap()].repetition_seen)
+                            && children[parent_win_child_idx.unwrap()].repetition_seen)
                     {
-                        win_depth = d;
-                        win_idx = Some(i);
+                        parent_win_depth = d;
+                        parent_win_child_idx = Some(i);
                     }
                 }
                 Some(Outcome::Draw) => {
-                    if d > draw_depth
-                        || (d == draw_depth
-                            && draw_idx.is_some()
+                    if d > parent_draw_depth
+                        || (d == parent_draw_depth
+                            && parent_draw_child_idx.is_some()
                             && !c.repetition_seen
-                            && children[draw_idx.unwrap()].repetition_seen)
+                            && children[parent_draw_child_idx.unwrap()].repetition_seen)
                     {
-                        draw_depth = d;
-                        draw_idx = Some(i);
+                        parent_draw_depth = d;
+                        parent_draw_child_idx = Some(i);
                     }
                     found_draw = true;
                 }
                 Some(Outcome::Win) => {
-                    if d > loss_depth
-                        || (d == loss_depth
-                            && loss_idx.is_some()
+                    if d > parent_loss_depth
+                        || (d == parent_loss_depth
+                            && parent_loss_child_idx.is_some()
                             && !c.repetition_seen
-                            && children[loss_idx.unwrap()].repetition_seen)
+                            && children[parent_loss_child_idx.unwrap()].repetition_seen)
                     {
-                        loss_depth = d;
-                        loss_idx = Some(i);
+                        parent_loss_depth = d;
+                        parent_loss_child_idx = Some(i);
                     }
                 }
             }
         }
 
-        if let Some(idx) = win_idx {
-            return Some((Outcome::Win, win_depth, children[idx].mv, all_solved, idx));
+        if let Some(idx) = parent_win_child_idx {
+            return Some((
+                Outcome::Win,
+                parent_win_depth,
+                children[idx].mv,
+                all_solved,
+                idx,
+            ));
         }
 
         if all_solved {
             if found_draw {
-                let idx = draw_idx.unwrap_or(0);
-                return Some((Outcome::Draw, draw_depth, children[idx].mv, true, idx));
+                let idx = parent_draw_child_idx.unwrap_or(0);
+                return Some((
+                    Outcome::Draw,
+                    parent_draw_depth,
+                    children[idx].mv,
+                    true,
+                    idx,
+                ));
             }
-            let idx = loss_idx.unwrap_or(0);
-            return Some((Outcome::Loss, loss_depth, children[idx].mv, true, idx));
+            let idx = parent_loss_child_idx.unwrap_or(0);
+            return Some((
+                Outcome::Loss,
+                parent_loss_depth,
+                children[idx].mv,
+                true,
+                idx,
+            ));
         }
 
         None
@@ -93,9 +118,9 @@ impl Search {
                 continue;
             }
             let cmp_c = if is_or_node {
-                children[i].vpn
+                children[i].pn
             } else {
-                children[i].vdn
+                children[i].dn
             };
             match best {
                 None => {
@@ -103,9 +128,9 @@ impl Search {
                 }
                 Some(b) => {
                     let cmp_best = if is_or_node {
-                        children[b].vpn
+                        children[b].pn
                     } else {
-                        children[b].vdn
+                        children[b].dn
                     };
                     if cmp_c < cmp_best {
                         second = best;
@@ -117,9 +142,9 @@ impl Search {
                             }
                             Some(s) => {
                                 let cmp_second = if is_or_node {
-                                    children[s].vpn
+                                    children[s].pn
                                 } else {
-                                    children[s].vdn
+                                    children[s].dn
                                 };
                                 if cmp_c < cmp_second {
                                     second = Some(i);
@@ -146,8 +171,6 @@ mod tests {
             mv: Move::make_move(from, to),
             pn: 1,
             dn: 1,
-            vpn: 1,
-            vdn: 1,
             outcome,
             depth,
             repetition_seen: false,
