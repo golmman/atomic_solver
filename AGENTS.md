@@ -47,4 +47,7 @@ A pure solver for atomic chess in Rust.
   - correctness, performance, maintainability, testability, consistency
 - Only use reading `git` commands, never writing ones (no `git add`,
   `git rm`, `git commit`, etc.).
-- ignore all `prompt.md` files
+- `docs/plans/` contains prompts, implementation plans and reports
+  - ignore all `prompt.md` files
+  - implementation plans can be found via `find . -type f -name 'plan*.md'`
+  - implementation reports can be found via `find . -type f -name 'report*.md'`

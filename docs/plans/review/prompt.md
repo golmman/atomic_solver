@@ -20,6 +20,7 @@ Note that there is research for the used techniques in these files:
 * docs/plans/dfpn/research_epsilon.md
 * docs/plans/dfpn/research_ghi.md
 * docs/plans/dfpn/research_parallel.md
+* docs/plans/dfpn/ghi_test_theory.md
 
 Also note past reviews and the implementation reports in docs/plans/review/ .
 
