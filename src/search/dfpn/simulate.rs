@@ -43,13 +43,6 @@ impl Search {
                     repetition_seen: false,
                 });
             }
-            if entry.remaining_depth == u32::MAX {
-                return Some(Resolved {
-                    outcome: Outcome::Draw,
-                    depth: 0,
-                    repetition_seen: false,
-                });
-            }
         }
 
         // 2. Try existing twins for the current path.
@@ -72,13 +65,6 @@ impl Search {
                         repetition_seen: true,
                     });
                 }
-                if twin.remaining_depth == u32::MAX {
-                    return Some(Resolved {
-                        outcome: Outcome::Draw,
-                        depth: 0,
-                        repetition_seen: true,
-                    });
-                }
             }
         }
 
@@ -88,7 +74,7 @@ impl Search {
                 Some(o) => o,
                 None => continue,
             };
-            if twin.remaining_depth < max_depth {
+            if twin.remaining_depth < max_depth || twin.depth > max_depth {
                 continue;
             }
             let mut sim_pos = pos.clone();

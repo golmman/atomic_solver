@@ -14,6 +14,7 @@ const SCORE_WINNING_CAPTURE: i32 = 100_000_000;
 const SCORE_PROMOTION: i32 = 1_000_000;
 const SCORE_CAPTURE: i32 = 100_000;
 const SCORE_THREAT_LAST: i32 = 10_000;
+const SCORE_ATOMIC_CHECK: i32 = 9_000;
 const SCORE_THREAT: i32 = 1_000;
 const SCORE_BLAST: i32 = 500;
 const SCORE_APPROACH: i32 = 100;
@@ -130,6 +131,13 @@ impl MoveScorer for StaticAtomicScorer {
                     score += SCORE_THREAT_LAST;
                 } else {
                     score += SCORE_THREAT;
+                }
+            } else if state.them_commoners_count == 1 {
+                let mut them_commoners = board.commoners(them);
+                let enemy_king_sq = them_commoners.pop_lsb();
+                let near_king = attacks::king_attacks(enemy_king_sq);
+                if (attack_bb & near_king) != atomic_movegen::types::Bitboard::EMPTY {
+                    score += SCORE_ATOMIC_CHECK;
                 }
             }
         }

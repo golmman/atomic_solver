@@ -119,28 +119,43 @@ impl Search {
 
             let mut bootstrap_outcome = Outcome::Draw;
             let mut max_depth = 1u32;
+            let mut success_depth: Option<u32> = None;
+            let mut fail_depth = 0u32;
+
             while max_depth <= 64 {
                 self.reset_search_state();
                 self.tt.clear();
                 bootstrap_outcome = self.dfpn(pos, INF, INF, max_depth, true);
-                if bootstrap_outcome != Outcome::Draw || self.time_exceeded() {
+                if self.time_exceeded() {
                     break;
                 }
+                if bootstrap_outcome != Outcome::Draw {
+                    success_depth = Some(max_depth);
+                    break;
+                }
+                fail_depth = max_depth;
                 max_depth = max_depth.saturating_mul(2);
             }
 
             self.refine_shortest = saved_refine;
 
             if self.time_exceeded() {
-                let pv = self.last_pv.clone();
+                let pv = self.extract_pv(pos);
                 (bootstrap_outcome, pv, self.nodes)
-            } else {
-                let (outcome, pv, _) = self.solve_refined(pos);
-                if outcome == Outcome::Draw && bootstrap_outcome != Outcome::Draw {
-                    (bootstrap_outcome, self.last_pv.clone(), self.nodes)
+            } else if let Some(success) = success_depth {
+                if let Some(pv) = self.extract_pv_checked(pos, bootstrap_outcome, None) {
+                    self.last_pv = pv;
                 } else {
-                    (outcome, pv, self.nodes)
+                    self.last_pv = self.extract_pv(pos);
                 }
+                self.solve_refined(pos, bootstrap_outcome, success, fail_depth)
+            } else {
+                // Bootstrap did not find a decisive result; fall back to an
+                // unbounded search with binary refinement.
+                self.reset_search_state();
+                self.tt.clear();
+                self.reset_history_and_killers();
+                self.solve_refined_unbounded(pos)
             }
         } else {
             let outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
@@ -154,12 +169,52 @@ impl Search {
         }
     }
 
-    fn solve_refined(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
-        // Depth-bounded refinement: first find any win/loss without a depth bound
-        // to get an initial PV, then binary search the smallest depth bound that
-        // still yields the same outcome. Start each probe with a clean search
-        // state so that stale history/killer data from the bootstrap or previous
-        // probes does not misdirect the depth-bounded search.
+    fn solve_refined(
+        &mut self,
+        pos: &mut Position,
+        best_outcome: Outcome,
+        success_depth: u32,
+        fail_depth: u32,
+    ) -> (Outcome, Vec<Move>, u64) {
+        // Iterative deepening downward from the bootstrap success depth.
+        // Reuse the transposition table and move-ordering history between
+        // probes; clear only the path-dependent state.
+        let mut best_pv = self.last_pv.clone();
+        let mut lo = fail_depth;
+        let mut hi = success_depth;
+
+        while hi > lo + 1 && !self.time_exceeded() {
+            let probe = hi - 1;
+            self.reset_search_state();
+            let outcome = self.dfpn(pos, INF, INF, probe, true);
+
+            if self.time_exceeded() {
+                break;
+            }
+
+            if outcome == best_outcome {
+                hi = probe;
+                if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
+                    self.last_pv = pv;
+                    best_pv = self.last_pv.clone();
+                }
+            } else {
+                lo = probe;
+            }
+        }
+
+        let pv = if best_pv.is_empty() {
+            self.extract_pv(pos)
+        } else {
+            best_pv
+        };
+        (best_outcome, pv, self.nodes)
+    }
+
+    fn solve_refined_unbounded(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
+        // Fallback: first find any win/loss without a depth bound to get an
+        // initial PV, then binary search the smallest depth bound that still
+        // yields the same outcome. Start each probe with a clean search state.
         let saved_refine = self.refine_shortest;
         self.refine_shortest = false;
         self.reset_search_state();
@@ -211,17 +266,13 @@ impl Search {
                 }
             }
 
-            // Validate the binary-search answer at the exact depth. If it is
-            // inconsistent (e.g. due to timeout or TT noise), fall back to the
-            // full-depth PV instead of a possibly wrong shorter one.
+            // Validate the binary-search answer at the exact depth.
             self.reset_search_state();
             self.tt.clear();
             self.reset_history_and_killers();
             let o = self.dfpn(pos, INF, INF, lo, true);
             if o == outcome {
                 if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
-                    // The final result is printed by the CLI caller; just keep
-                    // the validated PV so it can be returned.
                     self.last_pv = pv.to_vec();
                 }
             } else {

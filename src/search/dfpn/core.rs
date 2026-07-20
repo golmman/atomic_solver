@@ -111,6 +111,8 @@ impl Search {
         let mut outcome_to_store_dn = INF;
         let mut outcome_to_store_depth = 0;
         let mut outcome_to_store_repetition_seen = false;
+        let mut best_win_depth = u32::MAX;
+        let mut best_loss_depth = 0u32;
         let mut best_move = Move::NONE;
         let mut pn = INF;
         let mut dn = INF;
@@ -130,22 +132,48 @@ impl Search {
             repetition_seen = selection.repetition_seen;
 
             if let Some(solved) = selection.solved_outcome {
-                outcome_to_store = Some(solved);
-                outcome_to_store_best_move = best_move;
-                outcome_to_store_pn = pn;
-                outcome_to_store_dn = dn;
-                outcome_to_store_depth = depth;
-                outcome_to_store_repetition_seen = repetition_seen;
-
-                if selection.all_solved {
-                    break;
-                }
-
                 if solved == Outcome::Win {
-                    break;
+                    // Keep the shortest known winning child.
+                    if selection.depth < best_win_depth {
+                        best_win_depth = selection.depth;
+                        outcome_to_store = Some(solved);
+                        outcome_to_store_best_move = selection.best_move;
+                        outcome_to_store_pn = selection.pn;
+                        outcome_to_store_dn = selection.dn;
+                        outcome_to_store_depth = best_win_depth;
+                        outcome_to_store_repetition_seen = selection.repetition_seen;
+                    }
+                    if selection.all_solved {
+                        break;
+                    }
+                    if !self.refine_shortest {
+                        break;
+                    }
+                } else if solved == Outcome::Loss {
+                    // Keep the longest known losing child (most resistant defense).
+                    if selection.depth > best_loss_depth {
+                        best_loss_depth = selection.depth;
+                        outcome_to_store = Some(solved);
+                        outcome_to_store_best_move = selection.best_move;
+                        outcome_to_store_pn = selection.pn;
+                        outcome_to_store_dn = selection.dn;
+                        outcome_to_store_depth = best_loss_depth;
+                        outcome_to_store_repetition_seen = selection.repetition_seen;
+                    }
+                    if selection.all_solved {
+                        break;
+                    }
+                } else {
+                    outcome_to_store = Some(solved);
+                    outcome_to_store_best_move = selection.best_move;
+                    outcome_to_store_pn = selection.pn;
+                    outcome_to_store_dn = selection.dn;
+                    outcome_to_store_depth = selection.depth;
+                    outcome_to_store_repetition_seen = selection.repetition_seen;
+                    if selection.all_solved {
+                        break;
+                    }
                 }
-
-                // Draw or Loss with unresolved siblings: keep refining.
             }
 
             if (th_pn != INF && pn >= th_pn) || (th_dn != INF && dn >= th_dn) {

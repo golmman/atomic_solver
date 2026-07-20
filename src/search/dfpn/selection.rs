@@ -243,4 +243,32 @@ mod tests {
         assert_eq!(mv, Move::make_move(Square::A1, Square::A2));
         assert!(!all_solved);
     }
+
+    #[test]
+    fn mixed_win_and_draw_children_is_draw() {
+        let children = vec![
+            child(Some(Outcome::Win), 2, Square::A1, Square::A2),
+            child(Some(Outcome::Draw), 4, Square::B1, Square::B2),
+        ];
+        let (outcome, depth, mv, all_solved, _idx) =
+            Search::is_solved_by_children(&children, true).unwrap();
+        assert_eq!(outcome, Outcome::Draw);
+        assert_eq!(depth, 5);
+        assert_eq!(mv, Move::make_move(Square::B1, Square::B2));
+        assert!(all_solved);
+    }
+
+    #[test]
+    fn mixed_win_depths_returns_longest_loss() {
+        let children = vec![
+            child(Some(Outcome::Win), 3, Square::A1, Square::A2),
+            child(Some(Outcome::Win), 6, Square::B1, Square::B2),
+        ];
+        let (outcome, depth, mv, all_solved, _idx) =
+            Search::is_solved_by_children(&children, true).unwrap();
+        assert_eq!(outcome, Outcome::Loss);
+        assert_eq!(depth, 7);
+        assert_eq!(mv, Move::make_move(Square::B1, Square::B2));
+        assert!(all_solved);
+    }
 }

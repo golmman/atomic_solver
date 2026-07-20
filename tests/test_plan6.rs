@@ -165,6 +165,31 @@ fn m27_white_wins() {
 }
 
 #[test]
+fn m27_shortest_pv() {
+    let (outcome, pv, _nodes) =
+        solve_refined_moves("6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 26");
+    assert_eq!(outcome, Outcome::Win);
+    assert_eq!(pv.len(), 7, "expected a 7-plies PV, got {pv:?}");
+    assert_eq!(pv[0], Move::make_move(Square::B1, Square::B8));
+    assert_eq!(pv[1], Move::make_move(Square::G8, Square::F7));
+}
+
+#[test]
+fn m27_kh7_fast_win() {
+    let (outcome, pv, _nodes) =
+        solve_refined_moves("1R6/3p3c/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/7C w - - 2 27");
+    assert_eq!(outcome, Outcome::Win);
+    assert_eq!(
+        pv,
+        vec![
+            Move::make_move(Square::B8, Square::G8),
+            Move::make_move(Square::C5, Square::C4),
+            Move::make_move(Square::G8, Square::G6),
+        ]
+    );
+}
+
+#[test]
 fn m27_black_loses() {
     assert_eq!(
         solve_refined_moves("6R1/3p1k2/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/7K b - - 3 27").0,

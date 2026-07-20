@@ -21,6 +21,14 @@ impl Search {
         expected_depth: Option<u32>,
     ) -> Option<Vec<Move>> {
         let (pv, truncated) = self.extract_pv_internal(pos);
+        if let Some(d) = expected_depth
+            && pv.len() as u32 != d
+        {
+            eprintln!(
+                "warning: extracted PV length {} does not match stored depth {d} for {expected:?}",
+                pv.len()
+            );
+        }
         if truncated {
             if Self::validate_pv_prefix(&pv, pos).is_some() {
                 eprintln!("warning: PV truncated after {} plies", self.max_ply);
