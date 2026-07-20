@@ -6,6 +6,7 @@ use atomic_movegen::types::{Color, Move, MoveList};
 use crate::position::Position;
 
 use super::Search;
+use crate::search::ordering::MoveScorer;
 
 pub(crate) const HISTORY_MAX: i32 = 10_000;
 pub(crate) const HISTORY_BONUS: i32 = 100;

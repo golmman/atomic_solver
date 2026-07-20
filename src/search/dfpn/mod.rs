@@ -20,7 +20,7 @@ use atomic_movegen::types::Move;
 
 use crate::position::{Outcome, Position};
 
-use super::ordering::{MoveScorer, StaticAtomicScorer};
+use super::ordering::StaticAtomicScorer;
 use super::tt::TranspositionTable;
 
 const DEFAULT_EPSILON: f64 = 0.25;
@@ -36,7 +36,7 @@ pub struct Search {
     start: Instant,
     deadline: Instant,
     epsilon: f64,
-    scorer: Box<dyn MoveScorer>,
+    scorer: StaticAtomicScorer,
     refine_shortest: bool,
     timeout: Duration,
     last_pv: Vec<Move>,
@@ -57,7 +57,7 @@ impl Search {
             start: Instant::now(),
             deadline: Instant::now(),
             epsilon: DEFAULT_EPSILON,
-            scorer: Box::new(StaticAtomicScorer),
+            scorer: StaticAtomicScorer,
             refine_shortest: false,
             timeout: Duration::from_secs(TIMEOUT_SECS),
             last_pv: Vec::new(),
