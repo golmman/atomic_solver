@@ -51,4 +51,4 @@ A pure solver for atomic chess in Rust.
   - ignore all `prompt.md` files
   - implementation plans can be found via `find . -type f -name 'plan*.md'`
   - implementation reports can be found via `find . -type f -name 'report*.md'`
-  - the final task of an implementation plan is creating the implementation report
+  - the final task of an implementation plan is creating the corresponding implementation report
