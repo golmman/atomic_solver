@@ -27,6 +27,38 @@ const DEFAULT_EPSILON: f64 = 0.25;
 const TIMEOUT_SECS: u64 = 5;
 const DEFAULT_MAX_PV_PLIES: usize = 1000;
 
+/// Convert the f64 value `1.0 + epsilon` into an exact reduced `num/den` fraction.
+///
+/// `epsilon` is constrained to `[0.0, 1.0]`, so `v` is in `[1.0, 2.0]` and is a
+/// normal dyadic rational.  The returned numerator and denominator fit in `u64`
+/// and are reduced by their greatest common divisor.
+fn epsilon_fraction(v: f64) -> (u64, u64) {
+    let bits = v.to_bits();
+    let exponent = ((bits >> 52) & 0x7ff) as i32;
+    let mantissa = bits & 0xfffffffffffff;
+    let mut num = (1u64 << 52) | mantissa;
+    let mut den = 1u64;
+
+    let exp = exponent - 1075; // 1023 (bias) + 52 (fraction bits)
+    if exp >= 0 {
+        num <<= exp as u32;
+    } else {
+        den = 1u64 << (-exp) as u32;
+    }
+
+    let g = gcd(num, den);
+    (num / g, den / g)
+}
+
+fn gcd(mut a: u64, mut b: u64) -> u64 {
+    while b != 0 {
+        let t = a % b;
+        a = b;
+        b = t;
+    }
+    a
+}
+
 pub struct Search {
     tt: TranspositionTable,
     path: HashSet<u64>,
@@ -35,7 +67,8 @@ pub struct Search {
     nodes: u64,
     start: Instant,
     deadline: Instant,
-    epsilon: f64,
+    epsilon_num: u64,
+    epsilon_den: u64,
     scorer: StaticAtomicScorer,
     refine_shortest: bool,
     timeout: Duration,
@@ -48,6 +81,7 @@ pub struct Search {
 
 impl Search {
     pub fn new(tt_mb: usize) -> Self {
+        let (epsilon_num, epsilon_den) = epsilon_fraction(1.0 + DEFAULT_EPSILON);
         Self {
             tt: TranspositionTable::with_mb(tt_mb),
             path: HashSet::new(),
@@ -56,7 +90,8 @@ impl Search {
             nodes: 0,
             start: Instant::now(),
             deadline: Instant::now(),
-            epsilon: DEFAULT_EPSILON,
+            epsilon_num,
+            epsilon_den,
             scorer: StaticAtomicScorer,
             refine_shortest: false,
             timeout: Duration::from_secs(TIMEOUT_SECS),
@@ -93,7 +128,9 @@ impl Search {
             (0.0..=1.0).contains(&epsilon),
             "epsilon must be in [0.0, 1.0], got {epsilon}"
         );
-        self.epsilon = epsilon;
+        let (num, den) = epsilon_fraction(1.0 + epsilon);
+        self.epsilon_num = num;
+        self.epsilon_den = den;
     }
 
     pub fn search_depth(

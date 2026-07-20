@@ -271,7 +271,8 @@ impl Search {
         if x >= INF {
             return INF;
         }
-        let scaled = (x as f64 * (1.0 + self.epsilon)).ceil() as u64;
+        let scaled =
+            (x as u128 * self.epsilon_num as u128).div_ceil(self.epsilon_den as u128) as u64;
         scaled.max(x.saturating_add(1)).min(INF)
     }
 }
@@ -303,6 +304,8 @@ mod tests {
         assert_eq!(search.epsilon_ceil(1), 2);
         assert_eq!(search.epsilon_ceil(5), 6);
         assert_eq!(search.epsilon_ceil(100), 101);
+        assert_eq!(search.epsilon_ceil(1_000_000), 1_000_001);
+        assert_eq!(search.epsilon_ceil(INF - 1), INF);
         assert_eq!(search.epsilon_ceil(INF), INF);
 
         search.set_epsilon(0.25);
@@ -310,15 +313,21 @@ mod tests {
         assert_eq!(search.epsilon_ceil(1), 2);
         assert_eq!(search.epsilon_ceil(10), 13);
         assert_eq!(search.epsilon_ceil(100), 125);
+        assert_eq!(search.epsilon_ceil(1_000_000), 1_250_000);
+        assert_eq!(search.epsilon_ceil(INF - 1), INF);
         assert_eq!(search.epsilon_ceil(INF), INF);
 
         search.set_epsilon(0.5);
         assert_eq!(search.epsilon_ceil(10), 15);
+        assert_eq!(search.epsilon_ceil(1_000_000), 1_500_000);
+        assert_eq!(search.epsilon_ceil(INF - 1), INF);
 
         search.set_epsilon(1.0);
         assert_eq!(search.epsilon_ceil(0), 1);
         assert_eq!(search.epsilon_ceil(1), 2);
         assert_eq!(search.epsilon_ceil(10), 20);
+        assert_eq!(search.epsilon_ceil(1_000_000), 2_000_000);
+        assert_eq!(search.epsilon_ceil(INF - 1), INF);
     }
 
     #[test]
