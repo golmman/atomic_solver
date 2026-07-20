@@ -11,11 +11,18 @@ I already built an independent atomic move generator library. Are there other pa
 
 -----
 
+* TOOD: restart search with limited depth
 * DONE: movegen 2.0
 * TODO: more test positions
-* TODO: review correctness
+* DONE: review correctness
 * DONE: update docs
-* TODO: eval: win, not win
+* DONE: eval: win, not win
 * TODO: ideas from https://github.com/nelhage/ultimattt
   * DONE: extracted
   * TODO: apply
+
+
+4b2k/P1Bp1p1P/3P1P2/8/8/1p1p4/bPpP4/2B4K w - - 0 1
+
+
+
