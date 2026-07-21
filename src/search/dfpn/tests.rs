@@ -8,7 +8,7 @@
 
 use crate::position::{Outcome, Position};
 use crate::search::dfpn::Search;
-use crate::search::dfpn::simulate::SIM_MAX_DEPTH;
+use crate::search::dfpn::simulate::{SIM_MAX_DEPTH, simulate};
 use atomic_movegen::types::{Move, Square};
 
 #[test]
@@ -21,7 +21,8 @@ fn simulate_repeated_position_is_draw_only() {
     let mut sim_stack = search.path_stack.clone();
     let mut sim_nodes = 0;
 
-    assert!(search.simulate(
+    assert!(simulate(
+        &search.tt,
         &mut pos,
         0,
         0,
@@ -31,7 +32,8 @@ fn simulate_repeated_position_is_draw_only() {
         &mut sim_nodes,
         SIM_MAX_DEPTH,
     ));
-    assert!(!search.simulate(
+    assert!(!simulate(
+        &search.tt,
         &mut pos,
         0,
         0,
@@ -41,7 +43,8 @@ fn simulate_repeated_position_is_draw_only() {
         &mut sim_nodes,
         SIM_MAX_DEPTH,
     ));
-    assert!(!search.simulate(
+    assert!(!simulate(
+        &search.tt,
         &mut pos,
         0,
         0,
@@ -61,7 +64,8 @@ fn simulate_loss_branch_rejects_stalemate() {
     let mut sim_stack = search.path_stack.clone();
     let mut sim_nodes = 0;
 
-    assert!(!search.simulate(
+    assert!(!simulate(
+        &search.tt,
         &mut pos,
         0,
         0,
