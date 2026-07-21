@@ -24,24 +24,31 @@ impl Search {
         let depth = self.path_stack.len();
 
         let slice = moves.as_mut_slice();
-        slice.sort_by(|&a, &b| {
-            let sa = self.scorer.score(&pos.board, a, &state)
-                + self.history[us][a.from_sq() as usize][a.to_sq() as usize]
-                + self.killer_bonus(a, depth);
-            let sb = self.scorer.score(&pos.board, b, &state)
-                + self.history[us][b.from_sq() as usize][b.to_sq() as usize]
-                + self.killer_bonus(b, depth);
-            sb.cmp(&sa)
-        });
+        let mut scored: Vec<(Move, i32)> = slice
+            .iter()
+            .copied()
+            .map(|m| {
+                let score = self.scorer.score(&pos.board, m, &state)
+                    + self.history[us][m.from_sq() as usize][m.to_sq() as usize]
+                    + self.killer_bonus(m, depth);
+                (m, score)
+            })
+            .collect();
+
+        scored.sort_by_key(|&(_, score)| std::cmp::Reverse(score));
 
         if best_from_tt != Move::NONE
-            && let Some(idx) = slice.iter().position(|&m| m == best_from_tt)
+            && let Some(idx) = scored.iter().position(|&(m, _)| m == best_from_tt)
         {
-            let m = slice[idx];
+            let entry = scored[idx];
             for i in (0..idx).rev() {
-                slice[i + 1] = slice[i];
+                scored[i + 1] = scored[i];
             }
-            slice[0] = m;
+            scored[0] = entry;
+        }
+
+        for (i, (m, _)) in scored.into_iter().enumerate() {
+            slice[i] = m;
         }
     }
 
