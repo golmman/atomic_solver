@@ -16,7 +16,7 @@ use atomic_movegen::board::StateInfo;
 use atomic_movegen::types::MoveList;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::Position;
-use atomic_solver::search::ordering::{MoveScorer, StaticAtomicScorer};
+use atomic_solver::search::ordering::{StaticAtomicScorer, nearest_commoner_map};
 
 fn main() {
     let fen = std::env::args()
@@ -30,10 +30,15 @@ fn main() {
     let mut state = StateInfo::new();
     pos.board.populate_state(&mut state);
 
+    let nearest = nearest_commoner_map(&pos.board, pos.side_to_move().flip());
+
     let mut scored: Vec<(usize, i32)> = (0..moves.len())
         .map(|i| {
             let m = moves[i];
-            (i, StaticAtomicScorer.score(&pos.board, m, &state))
+            (
+                i,
+                StaticAtomicScorer.score_with_map(&pos.board, m, &state, &nearest),
+            )
         })
         .collect();
     scored.sort_by_key(|b| std::cmp::Reverse(b.1));

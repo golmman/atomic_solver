@@ -43,20 +43,25 @@ fn chebyshev(a: Square, b: Square) -> i8 {
     (af - bf).abs().max((ar - br).abs())
 }
 
-fn nearest_commoner_dist(board: &Board, them: Color, sq: Square) -> Option<i8> {
+/// Precompute the nearest enemy commoner distance for every square.
+///
+/// If the opponent has no commoners, every entry is set to `i8::MAX`.
+pub fn nearest_commoner_map(board: &Board, them: Color) -> [i8; 64] {
+    let mut map = [i8::MAX; 64];
     let mut commoners = board.commoners(them);
     if commoners.is_empty() {
-        return None;
+        return map;
     }
-    let mut best = i8::MAX;
     while !commoners.is_empty() {
         let c = commoners.pop_lsb();
-        let d = chebyshev(sq, c);
-        if d < best {
-            best = d;
+        for sq in 0..64 {
+            let d = chebyshev(Square::from_u8(sq), c);
+            if d < map[sq as usize] {
+                map[sq as usize] = d;
+            }
         }
     }
-    Some(best)
+    map
 }
 
 fn attacks_from(
@@ -76,8 +81,18 @@ fn attacks_from(
     }
 }
 
-impl MoveScorer for StaticAtomicScorer {
-    fn score(&self, board: &Board, m: Move, state: &StateInfo) -> i32 {
+impl StaticAtomicScorer {
+    /// Score a move using a precomputed nearest-commoner distance map.
+    ///
+    /// This is the same logic as [`MoveScorer::score`] but avoids recomputing
+    /// the enemy commoner distance for every `from`/`to` pair.
+    pub fn score_with_map(
+        &self,
+        board: &Board,
+        m: Move,
+        state: &StateInfo,
+        nearest: &[i8; 64],
+    ) -> i32 {
         let from = m.from_sq();
         let to = m.to_sq();
         let from_piece = board.piece_on(from);
@@ -158,10 +173,9 @@ impl MoveScorer for StaticAtomicScorer {
         }
 
         // 6. Centralizing / attacking moves.
-        if let Some(from_dist) = nearest_commoner_dist(board, them, from)
-            && let Some(to_dist) = nearest_commoner_dist(board, them, to)
-            && to_dist < from_dist
-        {
+        let from_dist = nearest[from as usize];
+        let to_dist = nearest[to as usize];
+        if from_dist < i8::MAX && to_dist < i8::MAX && to_dist < from_dist {
             score += SCORE_APPROACH + i32::from(from_dist - to_dist) * 10;
         }
 
@@ -172,5 +186,19 @@ impl MoveScorer for StaticAtomicScorer {
         }
 
         score
+    }
+}
+
+impl MoveScorer for StaticAtomicScorer {
+    fn score(&self, board: &Board, m: Move, state: &StateInfo) -> i32 {
+        let from = m.from_sq();
+        let from_piece = board.piece_on(from);
+        if from_piece == NO_PIECE {
+            return 0;
+        }
+        let us = board.side_to_move();
+        let them = us.flip();
+        let nearest = nearest_commoner_map(board, them);
+        self.score_with_map(board, m, state, &nearest)
     }
 }

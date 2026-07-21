@@ -6,7 +6,7 @@ use atomic_movegen::types::{Color, Move, MoveList};
 use crate::position::Position;
 
 use super::Search;
-use crate::search::ordering::MoveScorer;
+use crate::search::ordering::nearest_commoner_map;
 
 pub(crate) const HISTORY_MAX: i32 = 10_000;
 pub(crate) const HISTORY_BONUS: i32 = 100;
@@ -21,14 +21,16 @@ impl Search {
         pos.board.populate_state(&mut state);
 
         let us = pos.side_to_move() as usize;
+        let them = pos.side_to_move().flip();
         let depth = self.path_stack.len();
+        let nearest = nearest_commoner_map(&pos.board, them);
 
         let slice = moves.as_mut_slice();
         let mut scored: Vec<(Move, i32)> = slice
             .iter()
             .copied()
             .map(|m| {
-                let score = self.scorer.score(&pos.board, m, &state)
+                let score = self.scorer.score_with_map(&pos.board, m, &state, &nearest)
                     + self.history[us][m.from_sq() as usize][m.to_sq() as usize]
                     + self.killer_bonus(m, depth);
                 (m, score)
