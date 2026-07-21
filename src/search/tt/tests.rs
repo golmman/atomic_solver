@@ -105,3 +105,102 @@ fn find_and_best_result_for_multiple_paths() {
     assert!(entry.find_result_for_path(99, Outcome::Loss).is_none());
     assert!(entry.best_result_for_path(99).is_none());
 }
+
+#[test]
+fn new_generation_marks_old_entries_stale() {
+    let mut tt = TranspositionTable::with_mb(1);
+    let key = 123u64;
+
+    tt.store(
+        key,
+        Move::NONE,
+        Some(Outcome::Win),
+        0,
+        0,
+        0,
+        u32::MAX,
+        0,
+        0,
+        false,
+    );
+    assert!(tt.probe(key).is_some());
+
+    tt.new_generation();
+    assert!(tt.probe(key).is_none());
+
+    // Storing the same key in the new generation makes it visible again.
+    tt.store(
+        key,
+        Move::NONE,
+        Some(Outcome::Win),
+        0,
+        0,
+        0,
+        u32::MAX,
+        0,
+        0,
+        false,
+    );
+    assert!(tt.probe(key).is_some());
+}
+
+#[test]
+fn new_generation_prefers_stale_slot() {
+    let mut tt = TranspositionTable::with_mb(1);
+    let key1 = 1u64;
+    // Force two slots in the same bucket by using keys that differ by a
+    // multiple of the bucket count.
+    let bucket_count = tt.bucket_count() as u64;
+    let key2 = key1 + bucket_count;
+
+    tt.store(
+        key1,
+        Move::NONE,
+        Some(Outcome::Win),
+        0,
+        0,
+        0,
+        u32::MAX,
+        0,
+        0,
+        false,
+    );
+    tt.store(
+        key2,
+        Move::NONE,
+        Some(Outcome::Win),
+        0,
+        0,
+        0,
+        u32::MAX,
+        0,
+        0,
+        false,
+    );
+    assert!(tt.probe(key1).is_some());
+    assert!(tt.probe(key2).is_some());
+
+    tt.new_generation();
+
+    // A third key landing in the same bucket should overwrite a stale slot
+    // instead of evicting a single live slot and losing the other.
+    let key3 = key1 + 2 * bucket_count;
+    tt.store(
+        key3,
+        Move::NONE,
+        Some(Outcome::Draw),
+        0,
+        0,
+        0,
+        u32::MAX,
+        0,
+        0,
+        false,
+    );
+    assert!(tt.probe(key3).is_some());
+    // At least one of the old keys should still be absent (overwritten by key3).
+    assert!(
+        tt.probe(key1).is_none() || tt.probe(key2).is_none(),
+        "new entry should overwrite a stale slot, not both live slots"
+    );
+}

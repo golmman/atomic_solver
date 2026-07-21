@@ -9,12 +9,18 @@ use super::entry::{MAX_TWINS, TtEntry, TtSummary, TwinAction, TwinEntry};
 pub struct TranspositionTable {
     table: Vec<[TtEntry; 2]>,
     mask: usize,
+    current_generation: u32,
     twin_insertions: u64,
     twin_evictions: u64,
     peak_twins: u8,
 }
 
 impl TranspositionTable {
+    #[cfg(test)]
+    pub(crate) fn bucket_count(&self) -> usize {
+        self.table.len()
+    }
+
     pub fn with_mb(mb: usize) -> Self {
         let bytes = mb.saturating_mul(1024 * 1024);
         let entries = (bytes / std::mem::size_of::<TtEntry>()).next_power_of_two();
@@ -23,6 +29,7 @@ impl TranspositionTable {
         Self {
             table: vec![[TtEntry::default(); 2]; buckets],
             mask: buckets - 1,
+            current_generation: 1,
             twin_insertions: 0,
             twin_evictions: 0,
             peak_twins: 0,
@@ -37,7 +44,7 @@ impl TranspositionTable {
     pub fn probe(&self, key: u64) -> Option<&TtEntry> {
         self.table[self.index(key)]
             .iter()
-            .find(|e| e.valid && e.key == key)
+            .find(|e| e.valid && e.key == key && e.generation == self.current_generation)
     }
 
     /// Return a small copy of the base fields for `key`.
@@ -79,9 +86,22 @@ impl TranspositionTable {
         for bucket in &mut self.table {
             *bucket = [TtEntry::default(); 2];
         }
+        self.current_generation = 1;
         self.twin_insertions = 0;
         self.twin_evictions = 0;
         self.peak_twins = 0;
+    }
+
+    /// Mark every existing table entry as belonging to an older generation.
+    ///
+    /// This is logically equivalent to clearing the table without zeroing any
+    /// buckets.  On the extremely rare `u32` wrap, the table is physically
+    /// cleared and the generation counter is reset.
+    pub fn new_generation(&mut self) {
+        self.current_generation = self.current_generation.wrapping_add(1);
+        if self.current_generation == 0 {
+            self.clear();
+        }
     }
 
     pub fn twin_stats(&self) -> (u64, u64) {
@@ -134,8 +154,9 @@ impl TranspositionTable {
         {
             let bucket = &mut self.table[idx];
             for slot in bucket.iter_mut() {
-                if slot.valid && slot.key == key {
+                if slot.valid && slot.key == key && slot.generation == self.current_generation {
                     existing = true;
+                    slot.generation = self.current_generation;
                     if let Some(o) = outcome {
                         if repetition_seen {
                             twin_action = Some(slot.store_twin(
@@ -186,6 +207,7 @@ impl TranspositionTable {
         let mut new = TtEntry {
             key,
             valid: true,
+            generation: self.current_generation,
             best_move,
             outcome,
             pn,
@@ -213,12 +235,7 @@ impl TranspositionTable {
             self.peak_twins = self.peak_twins.max(new.live_twin_count());
         }
 
-        let bucket = &mut self.table[idx];
-        let old = bucket[0];
-        bucket[0] = new;
-        if old.valid && old.key != key {
-            bucket[1] = old;
-        }
+        self.insert_new(idx, new);
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -239,7 +256,7 @@ impl TranspositionTable {
         {
             let bucket = &mut self.table[idx];
             for slot in bucket.iter_mut() {
-                if slot.valid && slot.key == key {
+                if slot.valid && slot.key == key && slot.generation == self.current_generation {
                     twin_action = Some(slot.store_twin(
                         path_code,
                         path_length,
@@ -248,6 +265,7 @@ impl TranspositionTable {
                         depth,
                         remaining_depth,
                     ));
+                    slot.generation = self.current_generation;
                     live_twins = slot.live_twin_count();
                     slot.reinit_base_for_twin();
                     break;
@@ -264,6 +282,7 @@ impl TranspositionTable {
         let mut new = TtEntry {
             key,
             valid: true,
+            generation: self.current_generation,
             best_move: Move::NONE,
             outcome: None,
             pn: 1,
@@ -284,11 +303,21 @@ impl TranspositionTable {
         self.record_twin_action(action);
         self.peak_twins = self.peak_twins.max(new.live_twin_count());
 
+        self.insert_new(idx, new);
+    }
+
+    /// Place a new entry into `idx`, preferring an empty or stale bucket slot.
+    fn insert_new(&mut self, idx: usize, new: TtEntry) {
         let bucket = &mut self.table[idx];
-        let old = bucket[0];
-        bucket[0] = new;
-        if old.valid && old.key != key {
-            bucket[1] = old;
+        for slot in bucket.iter_mut() {
+            if !slot.valid || slot.generation != self.current_generation {
+                *slot = new;
+                return;
+            }
         }
+
+        // Both slots are live in the current generation; evict slot 0.
+        bucket[1] = bucket[0];
+        bucket[0] = new;
     }
 }

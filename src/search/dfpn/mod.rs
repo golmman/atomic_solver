@@ -158,7 +158,7 @@ impl Search {
 
             while max_depth <= 64 {
                 self.reset_search_state();
-                self.tt.clear();
+                self.tt.new_generation();
                 bootstrap_outcome = self.dfpn(pos, INF, INF, max_depth, true);
                 if self.time_exceeded() {
                     break;
@@ -187,7 +187,7 @@ impl Search {
                 // Bootstrap did not find a decisive result; fall back to an
                 // unbounded search with binary refinement.
                 self.reset_search_state();
-                self.tt.clear();
+                self.tt.new_generation();
                 self.reset_history_and_killers();
                 self.solve_refined_unbounded(pos)
             }
@@ -252,7 +252,7 @@ impl Search {
         let saved_refine = self.refine_shortest;
         self.refine_shortest = false;
         self.reset_search_state();
-        self.tt.clear();
+        self.tt.new_generation();
         self.reset_history_and_killers();
 
         let outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
@@ -282,7 +282,7 @@ impl Search {
             while lo < hi && !self.time_exceeded() {
                 let mid = (lo + hi) / 2;
                 self.reset_search_state();
-                self.tt.clear();
+                self.tt.new_generation();
                 self.reset_history_and_killers();
                 let o = self.dfpn(pos, INF, INF, mid, true);
 
@@ -302,7 +302,7 @@ impl Search {
 
             // Validate the binary-search answer at the exact depth.
             self.reset_search_state();
-            self.tt.clear();
+            self.tt.new_generation();
             self.reset_history_and_killers();
             let o = self.dfpn(pos, INF, INF, lo, true);
             if o == outcome {

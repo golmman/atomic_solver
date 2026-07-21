@@ -9,76 +9,50 @@
 
 use atomic_movegen::board::Board;
 use atomic_movegen::types::{Move, PieceType};
-use std::sync::OnceLock;
 
 pub const INF: u64 = 1 << 60;
 
 const MAX_PATH_DEPTH: usize = 4096;
-
-static ZOBRIST: OnceLock<Zobrist> = OnceLock::new();
-
-struct SplitMix64(u64);
-
-impl SplitMix64 {
-    fn next(&mut self) -> u64 {
-        self.0 = self.0.wrapping_add(0x9e37_79b9_7f4a_7c15);
-        mix(self.0)
-    }
-}
+const RULE50_KEY_COUNT: usize = 101;
+const RULE50_KEY_SEED: u64 = 0x9e37_79b9_7f4a_7c15;
 
 /// A single 64-bit SplitMix64 mixing round.
 /// This is a bijection on `u64`, so each distinct input maps to a distinct output.
-fn mix(z: u64) -> u64 {
+const fn mix(z: u64) -> u64 {
     let z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
     let z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
     z ^ (z >> 31)
 }
 
+/// Advance the SplitMix64 state and return the next output.
+const fn splitmix64_next(state: &mut u64) -> u64 {
+    *state = state.wrapping_add(RULE50_KEY_SEED);
+    mix(*state)
+}
+
 /// A single 64-bit SplitMix64 round applied to `x`.
 /// This is a bijection on `u64`, so each distinct input maps to a distinct output.
-fn splitmix64(x: u64) -> u64 {
-    let z = x.wrapping_add(0x9e37_79b9_7f4a_7c15);
+const fn splitmix64(x: u64) -> u64 {
+    let z = x.wrapping_add(RULE50_KEY_SEED);
     mix(z)
 }
 
-pub struct Zobrist {
-    rule50_keys: [u64; 101],
+const fn generate_rule50_keys() -> [u64; RULE50_KEY_COUNT] {
+    let mut keys = [0u64; RULE50_KEY_COUNT];
+    let mut state = RULE50_KEY_SEED;
+    let mut i = 0;
+    while i < RULE50_KEY_COUNT {
+        keys[i] = splitmix64_next(&mut state);
+        i += 1;
+    }
+    keys
 }
 
-impl Zobrist {
-    fn new() -> Self {
-        let mut rng = SplitMix64(0x9e37_79b9_7f4a_7c15);
-
-        let mut rule50_keys = [0u64; 101];
-        for key in rule50_keys.iter_mut() {
-            *key = rng.next();
-        }
-
-        Self { rule50_keys }
-    }
-
-    fn get() -> &'static Self {
-        ZOBRIST.get_or_init(Zobrist::new)
-    }
-
-    fn path_random(&self, mv: Move, depth: usize) -> u64 {
-        let from = mv.from_sq() as u8 as usize;
-        let to = mv.to_sq() as u8 as usize;
-        let kind = move_kind(mv);
-        let move_index = from + to * 64 + kind * 64 * 64;
-        let depth_index = depth % MAX_PATH_DEPTH;
-
-        // Combine move and depth into a single index.  The product of the
-        // maximum `move_index` and `MAX_PATH_DEPTH` is far below `u64::MAX`,
-        // and the multiplication makes the mapping injective for the ranges we
-        // use.  Applying `splitmix64` then gives a distinct 64-bit key for
-        // every `(move, depth)` pair.
-        let combined = (move_index as u64)
-            .wrapping_mul(MAX_PATH_DEPTH as u64)
-            .wrapping_add(depth_index as u64);
-        splitmix64(combined)
-    }
-}
+/// Precomputed Zobrist keys for the halfmove clock.
+///
+/// Storing these in a `const` array removes the per-call `OnceLock` overhead
+/// that the previous runtime-initialized table required.
+pub const RULE50_KEYS: [u64; RULE50_KEY_COUNT] = generate_rule50_keys();
 
 fn move_kind(mv: Move) -> usize {
     if mv.is_promotion() {
@@ -98,13 +72,30 @@ fn move_kind(mv: Move) -> usize {
     }
 }
 
+pub fn rule50_key(rule50: u16) -> u64 {
+    RULE50_KEYS[rule50.min(100) as usize]
+}
+
 pub fn hash(board: &Board, rule50: u16) -> u64 {
-    let z = Zobrist::get();
-    board.hash() ^ z.rule50_keys[rule50.min(100) as usize]
+    board.hash() ^ rule50_key(rule50)
 }
 
 pub fn path_random(mv: Move, depth: usize) -> u64 {
-    Zobrist::get().path_random(mv, depth)
+    let from = mv.from_sq() as u8 as usize;
+    let to = mv.to_sq() as u8 as usize;
+    let kind = move_kind(mv);
+    let move_index = from + to * 64 + kind * 64 * 64;
+    let depth_index = depth % MAX_PATH_DEPTH;
+
+    // Combine move and depth into a single index.  The product of the
+    // maximum `move_index` and `MAX_PATH_DEPTH` is far below `u64::MAX`,
+    // and the multiplication makes the mapping injective for the ranges we
+    // use.  Applying `splitmix64` then gives a distinct 64-bit key for
+    // every `(move, depth)` pair.
+    let combined = (move_index as u64)
+        .wrapping_mul(MAX_PATH_DEPTH as u64)
+        .wrapping_add(depth_index as u64);
+    splitmix64(combined)
 }
 
 /// Board-only hash, ignoring the halfmove clock.  This is the same board

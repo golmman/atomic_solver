@@ -54,6 +54,7 @@ pub(super) enum TwinAction {
 pub struct TtEntry {
     pub(crate) key: u64,
     pub(crate) valid: bool,
+    pub(crate) generation: u32,
 
     // Base entry: bounds for unsolved nodes, or path-independent solved results.
     pub(crate) best_move: Move,
@@ -73,6 +74,7 @@ impl Default for TtEntry {
         Self {
             key: 0,
             valid: false,
+            generation: 0,
             best_move: Move::NONE,
             outcome: None,
             pn: 1,

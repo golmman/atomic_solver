@@ -68,14 +68,17 @@ impl Position {
         let mut state = StateInfo::new();
         self.board.do_move(m, &mut state);
 
-        self.zobrist = zobrist::hash(&self.board, self.board.rule50());
+        // `Board::hash()` is maintained incrementally; only the rule50 key changes.
+        self.zobrist = self.board.hash() ^ zobrist::rule50_key(self.board.rule50());
         self.undo_stack.push(state);
     }
 
     pub fn undo_move(&mut self, m: Move) {
         let state = self.undo_stack.pop().expect("undo without move");
         self.board.undo_move(m, &state);
-        self.zobrist = zobrist::hash(&self.board, self.board.rule50());
+
+        // `Board::hash()` is maintained incrementally; only the rule50 key changes.
+        self.zobrist = self.board.hash() ^ zobrist::rule50_key(self.board.rule50());
     }
 
     pub fn legal_moves(&self, moves: &mut MoveList) {

@@ -1,4 +1,22 @@
+use atomic_movegen::types::MoveList;
 use atomic_solver::position::Position;
+use atomic_solver::zobrist;
+
+struct Rng(u64);
+
+impl Rng {
+    fn next(&mut self) -> u64 {
+        self.0 = self
+            .0
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
+        self.0
+    }
+
+    fn range(&mut self, max: usize) -> usize {
+        (self.next() as usize) % max
+    }
+}
 
 #[test]
 fn hash_changes_after_move() {
@@ -25,4 +43,36 @@ fn do_undo_restores_fen() {
     pos.do_move(m);
     pos.undo_move(m);
     assert_eq!(pos.fen(), before);
+}
+
+#[test]
+fn incremental_hash_matches_full_hash_in_random_game() {
+    let mut pos = Position::from_fen(Position::STARTPOS_FEN).unwrap();
+    let mut rng = Rng(0x1234_5678_9abc_def0);
+    let mut played = Vec::new();
+
+    for _ in 0..100 {
+        let mut moves = MoveList::new();
+        pos.legal_moves(&mut moves);
+        if moves.is_empty() {
+            break;
+        }
+        let m = moves[rng.range(moves.len())];
+        pos.do_move(m);
+        played.push(m);
+        assert_eq!(
+            pos.hash(),
+            zobrist::hash(&pos.board, pos.board.rule50()),
+            "incremental Position hash must equal full zobrist hash after do_move"
+        );
+    }
+
+    for m in played.into_iter().rev() {
+        pos.undo_move(m);
+        assert_eq!(
+            pos.hash(),
+            zobrist::hash(&pos.board, pos.board.rule50()),
+            "incremental Position hash must equal full zobrist hash after undo_move"
+        );
+    }
 }
