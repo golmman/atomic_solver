@@ -11,6 +11,17 @@ I already built an independent atomic move generator library. Are there other pa
 
 -----
 
+Here is my idea for a rework of the --no-refine-shortest option.
+
+When a forced outcome is found print the outcome and the proof pv.
+Find the proof-pv like so:
+Among the AND-nodes choose those that result in the longest pv.
+If there are multiple valid OR-nodes chose that one that results in the shortest pv.
+
+Is this idea reasonable?
+
+----
+
 * TOOD: restart search with limited depth
 * DONE: movegen 2.0
 * TODO: more test positions
@@ -21,9 +32,7 @@ I already built an independent atomic move generator library. Are there other pa
   * DONE: extracted
   * TODO: apply
 
-* cli
-  * help
-  * docs
+* DONE: cli: help, docs
 * discrepancies 4 to 5 depth mate
 * always show outcome, then refine
 * benchmark
