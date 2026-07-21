@@ -127,7 +127,7 @@ impl Search {
                 depth: 0,
                 repetition_seen: false,
             }
-        } else if self.path.contains(&child_rep_key) {
+        } else if self.path_stack.contains(&child_rep_key) {
             let (pn, dn) = Outcome::Draw.pn_dn_for(child_is_or);
             ChildInfo {
                 mv,

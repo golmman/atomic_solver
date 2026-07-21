@@ -16,9 +16,8 @@ fn simulate_repeated_position_is_draw_only() {
     let mut search = Search::new(64);
     let mut pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
     let rep_key = pos.repetition_key();
-    search.path.insert(rep_key);
+    search.path_stack.push(rep_key);
 
-    let mut sim_path = search.path.clone();
     let mut sim_stack = search.path_stack.clone();
     let mut sim_nodes = 0;
 
@@ -28,7 +27,6 @@ fn simulate_repeated_position_is_draw_only() {
         0,
         Outcome::Draw,
         Move::NONE,
-        &mut sim_path,
         &mut sim_stack,
         &mut sim_nodes,
         SIM_MAX_DEPTH,
@@ -39,7 +37,6 @@ fn simulate_repeated_position_is_draw_only() {
         0,
         Outcome::Win,
         Move::NONE,
-        &mut sim_path,
         &mut sim_stack,
         &mut sim_nodes,
         SIM_MAX_DEPTH,
@@ -50,7 +47,6 @@ fn simulate_repeated_position_is_draw_only() {
         0,
         Outcome::Loss,
         Move::NONE,
-        &mut sim_path,
         &mut sim_stack,
         &mut sim_nodes,
         SIM_MAX_DEPTH,
@@ -62,7 +58,6 @@ fn simulate_loss_branch_rejects_stalemate() {
     let search = Search::new(64);
     let mut pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
 
-    let mut sim_path = search.path.clone();
     let mut sim_stack = search.path_stack.clone();
     let mut sim_nodes = 0;
 
@@ -72,7 +67,6 @@ fn simulate_loss_branch_rejects_stalemate() {
         0,
         Outcome::Loss,
         Move::NONE,
-        &mut sim_path,
         &mut sim_stack,
         &mut sim_nodes,
         SIM_MAX_DEPTH,
@@ -85,7 +79,6 @@ fn try_use_tt_simulation_uses_current_path() {
     let pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
     let key = pos.hash();
     let rep_key = pos.repetition_key();
-    search.path.insert(rep_key);
     search.path_stack.push(rep_key);
     search.path_code = 0;
 
@@ -113,7 +106,6 @@ fn try_use_tt_rejects_win_twin_for_repeated_position() {
     let pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
     let key = pos.hash();
     let rep_key = pos.repetition_key();
-    search.path.insert(rep_key);
     search.path_stack.push(rep_key);
     search.path_code = 0;
 

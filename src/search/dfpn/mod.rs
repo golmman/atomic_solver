@@ -13,7 +13,6 @@ mod tests;
 pub use crate::zobrist::INF;
 pub use core::outcome_from_pn_dn;
 
-use std::collections::HashSet;
 use std::time::{Duration, Instant};
 
 use atomic_movegen::types::Move;
@@ -61,7 +60,6 @@ fn gcd(mut a: u64, mut b: u64) -> u64 {
 
 pub struct Search {
     tt: TranspositionTable,
-    path: HashSet<u64>,
     path_stack: Vec<u64>,
     path_code: u64,
     nodes: u64,
@@ -84,7 +82,6 @@ impl Search {
         let (epsilon_num, epsilon_den) = epsilon_fraction(1.0 + DEFAULT_EPSILON);
         Self {
             tt: TranspositionTable::with_mb(tt_mb),
-            path: HashSet::new(),
             path_stack: Vec::new(),
             path_code: 0,
             nodes: 0,
@@ -331,16 +328,26 @@ impl Search {
         self.nodes = 0;
         self.start = Instant::now();
         self.deadline = self.start + self.timeout;
-        self.path.clear();
         self.path_stack.clear();
         self.path_code = 0;
         self.last_pv.clear();
     }
 
     fn reset_search_state(&mut self) {
-        self.path.clear();
         self.path_stack.clear();
         self.path_code = 0;
+    }
+
+    pub(super) fn path_contains(&self, key: u64) -> bool {
+        self.path_stack.contains(&key)
+    }
+
+    pub(super) fn path_push(&mut self, key: u64) {
+        self.path_stack.push(key);
+    }
+
+    pub(super) fn path_pop(&mut self) {
+        self.path_stack.pop();
     }
 
     fn reset_history_and_killers(&mut self) {

@@ -1,7 +1,5 @@
 //! Kawano-style simulation for verifying cross-path twin entries.
 
-use std::collections::HashSet;
-
 use atomic_movegen::board::StateInfo;
 use atomic_movegen::types::{Move, MoveList};
 
@@ -78,7 +76,6 @@ impl Search {
                 continue;
             }
             let mut sim_pos = pos.clone();
-            let mut sim_path = self.path.clone();
             let mut sim_stack = self.path_stack.clone();
             let mut sim_nodes = 0u64;
             if self.simulate(
@@ -87,7 +84,6 @@ impl Search {
                 twin.path_length,
                 outcome,
                 twin.best_move,
-                &mut sim_path,
                 &mut sim_stack,
                 &mut sim_nodes,
                 self.max_ply.max(SIM_MAX_DEPTH),
@@ -120,7 +116,6 @@ impl Search {
         path_length: u32,
         expected: Outcome,
         best_move: Move,
-        sim_path: &mut HashSet<u64>,
         sim_stack: &mut Vec<u64>,
         sim_nodes: &mut u64,
         remaining_depth: usize,
@@ -143,7 +138,7 @@ impl Search {
         }
 
         let rep_key = pos.repetition_key();
-        if !sim_path.insert(rep_key) {
+        if sim_stack.contains(&rep_key) {
             return expected == Outcome::Draw;
         }
         sim_stack.push(rep_key);
@@ -177,7 +172,6 @@ impl Search {
                                 child_path_length,
                                 child_expected,
                                 b.best_move,
-                                sim_path,
                                 sim_stack,
                                 sim_nodes,
                                 remaining_depth - 1,
@@ -209,7 +203,6 @@ impl Search {
                                 child_path_length,
                                 Outcome::Win,
                                 b.best_move,
-                                sim_path,
                                 sim_stack,
                                 sim_nodes,
                                 remaining_depth - 1,
@@ -229,7 +222,6 @@ impl Search {
         };
 
         sim_stack.pop();
-        sim_path.remove(&rep_key);
         ok
     }
 }

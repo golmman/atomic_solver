@@ -82,7 +82,7 @@ impl Search {
             return resolved.outcome;
         }
 
-        if !self.path.insert(rep_key) {
+        if self.path_contains(rep_key) {
             return Outcome::Draw;
         }
 
@@ -101,7 +101,7 @@ impl Search {
             .unwrap_or(Move::NONE);
         self.sort_moves(pos, &mut moves, best_from_tt);
 
-        self.path_stack.push(rep_key);
+        self.path_push(rep_key);
         let old_path_code = self.path_code;
 
         let mut outcome_to_store: Option<Outcome> = None;
@@ -259,8 +259,7 @@ impl Search {
 
         self.maybe_age_history();
 
-        self.path_stack.pop();
-        self.path.remove(&rep_key);
+        self.path_pop();
         self.path_code = old_path_code;
 
         outcome_to_store.unwrap_or(Outcome::Draw)
