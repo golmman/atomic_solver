@@ -63,6 +63,7 @@ pub struct Search {
     path_stack: Vec<u64>,
     path_code: u64,
     nodes: u64,
+    child_evals: u64,
     start: Instant,
     deadline: Instant,
     epsilon_num: u64,
@@ -85,6 +86,7 @@ impl Search {
             path_stack: Vec::new(),
             path_code: 0,
             nodes: 0,
+            child_evals: 0,
             start: Instant::now(),
             deadline: Instant::now(),
             epsilon_num,
@@ -326,11 +328,16 @@ impl Search {
 
     fn begin_run(&mut self) {
         self.nodes = 0;
+        self.child_evals = 0;
         self.start = Instant::now();
         self.deadline = self.start + self.timeout;
         self.path_stack.clear();
         self.path_code = 0;
         self.last_pv.clear();
+    }
+
+    pub fn child_evaluations(&self) -> u64 {
+        self.child_evals
     }
 
     fn reset_search_state(&mut self) {

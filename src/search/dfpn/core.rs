@@ -8,6 +8,7 @@ use atomic_movegen::types::{Move, MoveList};
 use crate::position::{Outcome, Position};
 use crate::zobrist;
 
+use super::children::{ChildInfo, ChildSelection};
 use super::{INF, Search};
 
 pub(super) struct Resolved {
@@ -106,12 +107,25 @@ impl Search {
         let mut depth = 0;
         let mut repetition_seen = false;
 
+        let mut children: Vec<ChildInfo> = Vec::new();
+        let mut selection: Option<ChildSelection> = None;
+
         loop {
             if self.time_exceeded() {
                 break;
             }
 
-            let selection = self.select_children(pos, &moves, max_depth, is_or_node);
+            if children.is_empty() {
+                children = self.evaluate_all_children(pos, &moves, max_depth, is_or_node);
+            } else if let Some(prev) = selection
+                && let Some(idx) = prev.best_child_index
+            {
+                let mv = children[idx].mv;
+                children[idx] = self.evaluate_child(pos, mv, max_depth, is_or_node);
+            }
+
+            selection = Some(Search::select_from_children(&children, is_or_node));
+            let selection = selection.as_ref().unwrap();
             best_move = selection.best_move;
             pn = selection.pn;
             dn = selection.dn;

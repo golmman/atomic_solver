@@ -18,9 +18,11 @@ pub struct ChildInfo {
     pub repetition_seen: bool,
 }
 
+#[derive(Clone, Copy)]
 pub struct ChildSelection {
     pub best_child: (Move, u64, u64),
     pub second_child: (u64, u64),
+    pub best_child_index: Option<usize>,
     pub pn: u64,
     pub dn: u64,
     pub depth: u32,
@@ -31,42 +33,48 @@ pub struct ChildSelection {
 }
 
 impl Search {
-    pub(super) fn select_children(
+    /// Evaluate every legal move and build a fresh `ChildInfo` table.
+    pub(super) fn evaluate_all_children(
         &mut self,
         pos: &mut Position,
         moves: &MoveList,
         max_depth: u32,
         is_or_node: bool,
-    ) -> ChildSelection {
+    ) -> Vec<ChildInfo> {
         let mut children = Vec::with_capacity(moves.len());
         for i in 0..moves.len() {
             let mv = moves[i];
             let info = self.evaluate_child(pos, mv, max_depth, is_or_node);
             children.push(info);
         }
+        children
+    }
 
+    /// Compute the parent's proof/disproof numbers and pick the best/second
+    /// unsolved child from a cached `ChildInfo` table.
+    pub(super) fn select_from_children(children: &[ChildInfo], is_or_node: bool) -> ChildSelection {
         let mut pn;
         let mut dn;
         if is_or_node {
             pn = INF;
             dn = 0;
-            for c in &children {
+            for c in children {
                 pn = std::cmp::min(pn, c.pn);
                 dn = std::cmp::min(INF, dn.saturating_add(c.dn));
             }
         } else {
             pn = 0;
             dn = INF;
-            for c in &children {
+            for c in children {
                 pn = std::cmp::min(INF, pn.saturating_add(c.pn));
                 dn = std::cmp::min(dn, c.dn);
             }
         }
 
-        let solved = Self::is_solved_by_children(&children, is_or_node);
+        let solved = Self::is_solved_by_children(children, is_or_node);
 
         // Choose the child to expand from the unsolved children only.
-        let (best_idx, second_idx) = Self::best_and_second_unsolved(&children, is_or_node);
+        let (best_idx, second_idx) = Self::best_and_second_unsolved(children, is_or_node);
         let best = best_idx.map(|i| &children[i]);
         let second = second_idx.map(|i| &children[i]);
 
@@ -94,6 +102,7 @@ impl Search {
         ChildSelection {
             best_child,
             second_child,
+            best_child_index: best_idx,
             pn,
             dn,
             depth,
@@ -104,13 +113,14 @@ impl Search {
         }
     }
 
-    fn evaluate_child(
+    pub(super) fn evaluate_child(
         &mut self,
         pos: &mut Position,
         mv: Move,
         max_depth: u32,
         is_or_node: bool,
     ) -> ChildInfo {
+        self.child_evals += 1;
         pos.do_move(mv);
         let child_key = pos.hash();
         let child_rep_key = pos.repetition_key();

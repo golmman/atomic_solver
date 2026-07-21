@@ -14,8 +14,9 @@ fn solve_and_report(label: &str, pos: &mut Position) {
     let (outcome, _pv, nodes) = search.solve(pos);
     let (insertions, evictions) = search.twin_stats();
     let peak = search.peak_twins();
+    let child_evals = search.child_evaluations();
     println!("{label}:");
-    println!("  outcome: {outcome:?}, nodes: {nodes}");
+    println!("  outcome: {outcome:?}, nodes: {nodes}, child_evals: {child_evals}");
     println!("  twin insertions: {insertions}, evictions: {evictions}");
     println!("  peak live twins in one entry: {peak}");
 }
