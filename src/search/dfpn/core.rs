@@ -74,7 +74,8 @@ impl Search {
             return Outcome::Draw;
         }
 
-        if let Some(entry) = self.tt.probe(tt_key).copied()
+        let tt_entry = self.tt.probe(tt_key).copied();
+        if let Some(entry) = tt_entry
             && let Some(resolved) =
                 self.try_use_tt(pos, &entry, max_depth, self.path_code, path_length)
         {
@@ -85,9 +86,7 @@ impl Search {
             return Outcome::Draw;
         }
 
-        let best_from_tt = self
-            .tt
-            .probe(tt_key)
+        let best_from_tt = tt_entry
             .and_then(|e| {
                 e.best_result_for_path(self.path_code)
                     .map(|(mv, ..)| mv)
