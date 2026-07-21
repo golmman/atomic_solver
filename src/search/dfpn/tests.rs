@@ -94,8 +94,7 @@ fn try_use_tt_simulation_uses_current_path() {
         u32::MAX,
     );
 
-    let entry = *search.tt.probe(key).unwrap();
-    let resolved = search.try_use_tt(&pos, &entry, u32::MAX, 0, 0);
+    let resolved = search.try_use_tt(&pos, key, u32::MAX, 0, 0);
     assert!(resolved.is_some());
     assert_eq!(resolved.unwrap().outcome, Outcome::Draw);
 }
@@ -122,8 +121,7 @@ fn try_use_tt_rejects_win_twin_for_repeated_position() {
         u32::MAX,
     );
 
-    let entry = *search.tt.probe(key).unwrap();
-    assert!(search.try_use_tt(&pos, &entry, u32::MAX, 0, 0).is_none());
+    assert!(search.try_use_tt(&pos, key, u32::MAX, 0, 0).is_none());
 }
 
 #[test]
@@ -145,8 +143,7 @@ fn try_use_tt_accepts_cross_path_win_twin() {
         u32::MAX,
     );
 
-    let entry = *search.tt.probe(key).unwrap();
-    let resolved = search.try_use_tt(&pos, &entry, u32::MAX, 0, 0);
+    let resolved = search.try_use_tt(&pos, key, u32::MAX, 0, 0);
     assert!(resolved.is_some());
     assert_eq!(resolved.unwrap().outcome, Outcome::Win);
 }
@@ -168,6 +165,5 @@ fn try_use_tt_rejects_cross_path_win_twin_without_child_proof() {
         .tt
         .store_twin(key, twin_path_code, 0, Outcome::Win, best, 100, u32::MAX);
 
-    let entry = *search.tt.probe(key).unwrap();
-    assert!(search.try_use_tt(&pos, &entry, u32::MAX, 0, 0).is_none());
+    assert!(search.try_use_tt(&pos, key, u32::MAX, 0, 0).is_none());
 }

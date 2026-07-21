@@ -4,7 +4,7 @@ use crate::position::Outcome;
 use crate::zobrist;
 use atomic_movegen::types::Move;
 
-use super::entry::{MAX_TWINS, TtEntry, TwinAction, TwinEntry};
+use super::entry::{MAX_TWINS, TtEntry, TtSummary, TwinAction, TwinEntry};
 
 pub struct TranspositionTable {
     table: Vec<[TtEntry; 2]>,
@@ -38,6 +38,41 @@ impl TranspositionTable {
         self.table[self.index(key)]
             .iter()
             .find(|e| e.valid && e.key == key)
+    }
+
+    /// Return a small copy of the base fields for `key`.
+    ///
+    /// This does not copy the twin array.
+    pub fn probe_summary(&self, key: u64) -> Option<TtSummary> {
+        self.probe(key).map(|e| TtSummary {
+            best_move: e.best_move,
+            outcome: e.outcome,
+            pn: e.pn,
+            dn: e.dn,
+            depth: e.depth,
+            remaining_depth: e.remaining_depth,
+            repetition_seen: e.repetition_seen,
+        })
+    }
+
+    /// Return the best move to use for `key` on `path_code`.
+    ///
+    /// Prefers a path-independent solved base result, then a twin for `path_code`,
+    /// then the unsolved base `best_move`.  This avoids copying the full entry.
+    pub fn probe_best_move(&self, key: u64, path_code: u64) -> Option<Move> {
+        let entry = self.probe(key)?;
+        if entry.outcome.is_some() && !entry.repetition_seen {
+            return Some(entry.best_move);
+        }
+        for twin in entry.twins.iter() {
+            if twin.outcome.is_some() && twin.path_code == path_code {
+                return Some(twin.best_move);
+            }
+        }
+        if entry.best_move != Move::NONE && entry.outcome.is_none() {
+            return Some(entry.best_move);
+        }
+        None
     }
 
     pub fn clear(&mut self) {

@@ -4,7 +4,7 @@ use atomic_movegen::board::StateInfo;
 use atomic_movegen::types::{Move, MoveList};
 
 use crate::position::{Outcome, Position};
-use crate::search::tt::TtEntry;
+use crate::search::tt::MAX_TWINS;
 use crate::zobrist;
 
 use super::Search;
@@ -17,12 +17,13 @@ impl Search {
     pub(super) fn try_use_tt(
         &mut self,
         pos: &Position,
-        entry: &TtEntry,
+        key: u64,
         max_depth: u32,
         path_code: u64,
         path_length: u32,
     ) -> Option<Resolved> {
         // 1. Path-independent base result.
+        let entry = self.tt.probe(key)?;
         if let Some(outcome) = entry.outcome
             && !entry.repetition_seen
             && entry.remaining_depth >= max_depth
@@ -67,14 +68,22 @@ impl Search {
         }
 
         // 3. Kawano simulation: verify a twin from another path for the current path.
-        for twin in entry.twins.iter() {
-            let outcome = match twin.outcome {
-                Some(o) => o,
-                None => continue,
+        // Probe the entry once per twin so that the mutable `store_twin` call is not
+        // blocked by an outstanding immutable borrow.
+        for i in 0..MAX_TWINS {
+            let (outcome, twin) = {
+                let entry = self.tt.probe(key)?;
+                let twin = entry.twins[i];
+                let outcome = match twin.outcome {
+                    Some(o) => o,
+                    None => continue,
+                };
+                if twin.remaining_depth < max_depth || twin.depth > max_depth {
+                    continue;
+                }
+                (outcome, twin)
             };
-            if twin.remaining_depth < max_depth || twin.depth > max_depth {
-                continue;
-            }
+
             let mut sim_pos = pos.clone();
             let mut sim_stack = self.path_stack.clone();
             let mut sim_nodes = 0u64;
@@ -89,7 +98,7 @@ impl Search {
                 self.max_ply.max(SIM_MAX_DEPTH),
             ) {
                 self.tt.store_twin(
-                    entry.key,
+                    key,
                     path_code,
                     path_length,
                     outcome,
@@ -162,8 +171,9 @@ impl Search {
                     let ok = if let Some(outcome) = pos.outcome() {
                         outcome == child_expected
                     } else {
-                        let entry = self.tt.probe(child_tt_key).copied();
-                        let child_best = entry
+                        let child_best = self
+                            .tt
+                            .probe(child_tt_key)
                             .and_then(|e| e.find_result_for_path(child_path_code, child_expected));
                         child_best.is_some_and(|b| {
                             self.simulate(
@@ -193,8 +203,9 @@ impl Search {
                     let child_ok = if let Some(outcome) = pos.outcome() {
                         outcome == Outcome::Win
                     } else {
-                        let entry = self.tt.probe(child_tt_key).copied();
-                        let child_best = entry
+                        let child_best = self
+                            .tt
+                            .probe(child_tt_key)
                             .and_then(|e| e.find_result_for_path(child_path_code, Outcome::Win));
                         child_best.is_some_and(|b| {
                             self.simulate(

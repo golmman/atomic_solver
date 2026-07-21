@@ -137,12 +137,12 @@ impl Search {
                 depth: 0,
                 repetition_seen: true,
             }
-        } else if let Some(entry) = self.tt.probe(child_key).copied() {
+        } else {
             let child_max_depth = max_depth.saturating_sub(1);
             let child_path_length = self.path_stack.len() as u32;
             if let Some(resolved) = self.try_use_tt(
                 pos,
-                &entry,
+                child_key,
                 child_max_depth,
                 child_path_code,
                 child_path_length,
@@ -156,10 +156,10 @@ impl Search {
                     depth: resolved.depth,
                     repetition_seen: resolved.repetition_seen,
                 }
-            } else {
-                let use_as_unsolved = entry.outcome.is_none() && entry.depth <= child_max_depth;
+            } else if let Some(summary) = self.tt.probe_summary(child_key) {
+                let use_as_unsolved = summary.outcome.is_none() && summary.depth <= child_max_depth;
                 let (pn, dn) = if use_as_unsolved {
-                    (entry.pn, entry.dn)
+                    (summary.pn, summary.dn)
                 } else {
                     (1, 1)
                 };
@@ -169,17 +169,17 @@ impl Search {
                     dn,
                     outcome: None,
                     depth: 0,
-                    repetition_seen: entry.repetition_seen,
+                    repetition_seen: summary.repetition_seen,
                 }
-            }
-        } else {
-            ChildInfo {
-                mv,
-                pn: 1,
-                dn: 1,
-                outcome: None,
-                depth: 0,
-                repetition_seen: false,
+            } else {
+                ChildInfo {
+                    mv,
+                    pn: 1,
+                    dn: 1,
+                    outcome: None,
+                    depth: 0,
+                    repetition_seen: false,
+                }
             }
         };
 

@@ -74,10 +74,7 @@ impl Search {
             return Outcome::Draw;
         }
 
-        let tt_entry = self.tt.probe(tt_key).copied();
-        if let Some(entry) = tt_entry
-            && let Some(resolved) =
-                self.try_use_tt(pos, &entry, max_depth, self.path_code, path_length)
+        if let Some(resolved) = self.try_use_tt(pos, tt_key, max_depth, self.path_code, path_length)
         {
             return resolved.outcome;
         }
@@ -86,18 +83,9 @@ impl Search {
             return Outcome::Draw;
         }
 
-        let best_from_tt = tt_entry
-            .and_then(|e| {
-                e.best_result_for_path(self.path_code)
-                    .map(|(mv, ..)| mv)
-                    .or_else(|| {
-                        if e.best_move != Move::NONE && e.outcome.is_none() {
-                            Some(e.best_move)
-                        } else {
-                            None
-                        }
-                    })
-            })
+        let best_from_tt = self
+            .tt
+            .probe_best_move(tt_key, self.path_code)
             .unwrap_or(Move::NONE);
         self.sort_moves(pos, &mut moves, best_from_tt);
 

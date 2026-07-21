@@ -28,6 +28,21 @@ impl Default for TwinEntry {
     }
 }
 
+/// A small, read-only summary of a base transposition-table entry.
+///
+/// This contains only the fields used by the search hot path so that probes
+/// do not have to copy the full `TtEntry` (including its twin slots).
+#[derive(Clone, Copy, Debug)]
+pub struct TtSummary {
+    pub best_move: Move,
+    pub outcome: Option<Outcome>,
+    pub pn: u64,
+    pub dn: u64,
+    pub depth: u32,
+    pub remaining_depth: u32,
+    pub repetition_seen: bool,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum TwinAction {
     Inserted,
