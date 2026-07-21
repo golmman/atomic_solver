@@ -20,8 +20,11 @@ A pure solver for atomic chess in Rust.
 - `src/zobrist.rs` generates deterministic Zobrist keys for positions and
   path-dependent move codes.
 - `src/notation.rs` provides UCI move helpers.
-- `src/main.rs` is the CLI entry point; it accepts `--fen <FEN>` and prints
-  the outcome plus a PV when the result is decisive.
+- `src/main.rs` is the CLI entry point. It accepts `--fen <FEN>` (default
+  standard start position), `--epsilon <VALUE>` (default 0.25), and
+  `--no-refine-shortest` (refinement is enabled by default), plus `-h`/`--help`.
+  Unknown options exit with an error. It prints the outcome and a PV when the
+  result is decisive.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
 
