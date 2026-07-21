@@ -21,6 +21,12 @@ I already built an independent atomic move generator library. Are there other pa
   * DONE: extracted
   * TODO: apply
 
+* cli
+  * help
+  * docs
+* discrepancies 4 to 5 depth mate
+* always show outcome, then refine
+* benchmark
 
 4b2k/P1Bp1p1P/3P1P2/8/8/1p1p4/bPpP4/2B4K w - - 0 1
 
