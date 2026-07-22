@@ -42,6 +42,26 @@ Don't implement anything yet, this is just a brainstorming session.
 
 ----
 
+Help me define what a "proof-pv" is. Here is my try:
+
+For outcomes "win" and "loss" (not "draw") we define a "proof-pv" as follows:
+The defenders AND-nodes are chosen such that they maximize the pv length.
+Attackers OR-nodes must result in a definitive outcome (win or loss), but must not be chosen optimally.
+
+
+---
+
+A "proof-pv" 
+
+
+
+Ideally this process:
+* run clean df-pn, highest performance, no extra work for nice PVs
+* print only the outcome, since the pv is no proof-pv yet
+* gradually improve the proof pv
+
+----
+
 * TOOD: restart search with limited depth
 * DONE: movegen 2.0
 * TODO: more test positions
