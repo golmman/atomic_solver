@@ -20,6 +20,26 @@ If there are multiple valid OR-nodes chose that one that results in the shortest
 
 Is this idea reasonable?
 
+
+----
+
+When i run `cargo run --release -- --no-refine-shortest --fen "6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 26"`
+the result is `pv: b1b8 g8h7 b8h8 h7g7 h8h7 g7g8 h7g7 g8h8 g7g8 h8h7 g8g6`
+and a win for white.
+
+In my understanding this pv is not proof of a forced win since black responds with the non-optimal g8h7
+which invites b8g8 c5c4 g8g6, which would be a forced win in 5 half-moves instead of the optimal 7 half-moves.
+
+Note that this was already analyzed in `docs/plans/pv/analysis.md`.
+
+For the given (not necessarily best) sequence of white moves
+a proof pv would include the strongest defence for black.
+
+When a definitive outcome is found a proof pv by the definition above should be available without additional search.
+
+Are my assumptions correct? Is my reasoning sound?
+Don't implement anything yet, this is just a brainstorming session.
+
 ----
 
 * TOOD: restart search with limited depth
@@ -31,11 +51,10 @@ Is this idea reasonable?
 * TODO: ideas from https://github.com/nelhage/ultimattt
   * DONE: extracted
   * TODO: apply
-
 * DONE: cli: help, docs
-* discrepancies 4 to 5 depth mate
-* always show outcome, then refine
-* benchmark
+* TODO: discrepancies 4 to 5 depth mate
+* TODO: always show outcome, then refine
+* TODO: benchmark
 
 4b2k/P1Bp1p1P/3P1P2/8/8/1p1p4/bPpP4/2B4K w - - 0 1
 
