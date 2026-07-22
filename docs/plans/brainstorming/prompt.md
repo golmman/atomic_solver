@@ -21,24 +21,6 @@ If there are multiple valid OR-nodes chose that one that results in the shortest
 Is this idea reasonable?
 
 
-----
-
-When i run `cargo run --release -- --no-refine-shortest --fen "6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 26"`
-the result is `pv: b1b8 g8h7 b8h8 h7g7 h8h7 g7g8 h7g7 g8h8 g7g8 h8h7 g8g6`
-and a win for white.
-
-In my understanding this pv is not proof of a forced win since black responds with the non-optimal g8h7
-which invites b8g8 c5c4 g8g6, which would be a forced win in 5 half-moves instead of the optimal 7 half-moves.
-
-Note that this was already analyzed in `docs/plans/pv/analysis.md`.
-
-For the given (not necessarily best) sequence of white moves
-a proof pv would include the strongest defence for black.
-
-When a definitive outcome is found a proof pv by the definition above should be available without additional search.
-
-Are my assumptions correct? Is my reasoning sound?
-Don't implement anything yet, this is just a brainstorming session.
 
 ----
 
@@ -48,6 +30,36 @@ For outcomes "win" and "loss" (not "draw") we define a "proof-pv" as follows:
 The defenders AND-nodes are chosen such that they maximize the pv length.
 Attackers OR-nodes must result in a definitive outcome (win or loss), but must not be chosen optimally.
 
+----
+
+When i run `cargo run --release -- --no-refine-shortest --fen "6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 26"`
+the result is
+```
+outcome: win
+pv: b1b8 g8h7 b8h8 h7g7 h8h7 g7g8 h7g7 g8h8 g7g8 h8h7 g8g6
+```
+
+This is not a PPV since black (defender) responds with the non-optimal g8h7
+which invites b8g8 c5c4 g8g6, which would be a forced win in 5 half-moves but the SPPV is 7 half-moves.
+
+----
+
+When running without additional options, e.g. `cargo run --release -- --fen "6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 26"`
+
+These steps should be taken:
+1. Search is started
+2. An outcome is found
+3. Inform about the outcome (not any pv yet, because it is not reliable)
+  * if the outcome is "draw", exit
+4. Find a PPV
+5. Print the PPV
+6. Search for a SPPV
+  * actively check for shorter PPVs and print them if found
+  * when the first SPPV is found print it and exit
+
+If at any point the timeout is reached, inform about it and exit
+
+Just brainstorming though. What do you think, is this sound?
 
 ---
 
@@ -62,6 +74,18 @@ Ideally this process:
 
 ----
 
+  1. Search for outcome → print it → exit on draw.
+  2. Run one refinement pass that:
+    • first finds a PPV,
+    • then keeps finding shorter PPVs,
+    • prints each improved line as it is proven,
+    • stops when the SPPV is reached.
+  3. On timeout, print a timeout notice and exit.
+
+This is clean, streams results as soon as they are known, and never prints an unverified PV.
+
+---
+
 * TOOD: restart search with limited depth
 * DONE: movegen 2.0
 * TODO: more test positions
@@ -72,6 +96,10 @@ Ideally this process:
   * DONE: extracted
   * TODO: apply
 * DONE: cli: help, docs
+* TODO: cli
+  * TODO: timeout option
+  * TODO: no-ppv option
+  * TODO: no-sppv option
 * TODO: discrepancies 4 to 5 depth mate
 * TODO: always show outcome, then refine
 * TODO: benchmark
