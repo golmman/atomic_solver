@@ -14,6 +14,18 @@ impl Search {
         self.extract_pv_internal(pos).0
     }
 
+    pub(super) fn extract_ppv(&self, pos: &Position, expected: Outcome) -> Option<Vec<Move>> {
+        let (pv, truncated) = self.extract_pv_internal(pos);
+        if truncated {
+            return None;
+        }
+        if Self::validate_pv(&pv, pos, expected, None) {
+            Some(pv)
+        } else {
+            None
+        }
+    }
+
     pub(super) fn extract_pv_checked(
         &self,
         pos: &Position,

@@ -76,6 +76,8 @@ pub struct Search {
     killers: [[Move; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
     history_age_counter: u64,
     max_ply: usize,
+    bootstrap_success_depth: Option<u32>,
+    bootstrap_fail_depth: u32,
 }
 
 impl Search {
@@ -99,6 +101,8 @@ impl Search {
             killers: [[Move::NONE; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
             history_age_counter: 0,
             max_ply: DEFAULT_MAX_PV_PLIES,
+            bootstrap_success_depth: None,
+            bootstrap_fail_depth: 0,
         }
     }
 
@@ -143,187 +147,184 @@ impl Search {
         (outcome, pv, self.nodes)
     }
 
-    pub fn solve(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
+    /// Run the solver to a decisive outcome or the configured timeout.
+    ///
+    /// Internally this bootstraps with an iteratively doubling depth bound and,
+    /// if necessary, falls back to an unbounded search.  The result and the
+    /// depth bounds found during the search are recorded for the follow-up
+    /// `find_ppv` and `refine_sppv` stages.
+    pub fn solve_outcome(&mut self, pos: &mut Position) -> Outcome {
         self.begin_run();
+        let saved_refine = self.refine_shortest;
+        self.refine_shortest = false;
 
-        if self.refine_shortest {
-            // Bootstrap: find any decisive result with a small depth budget,
-            // doubling the budget until the position is solved. Do not refine
-            // during bootstrap; we only need a winning outcome to start from.
-            let saved_refine = self.refine_shortest;
-            self.refine_shortest = false;
+        let mut outcome = Outcome::Draw;
+        let mut max_depth = 1u32;
+        let mut success_depth: Option<u32> = None;
+        let mut fail_depth = 0u32;
 
-            let mut bootstrap_outcome = Outcome::Draw;
-            let mut max_depth = 1u32;
-            let mut success_depth: Option<u32> = None;
-            let mut fail_depth = 0u32;
-
-            while max_depth <= 64 {
-                self.reset_search_state();
-                self.tt.new_generation();
-                bootstrap_outcome = self.dfpn(pos, INF, INF, max_depth, true);
-                if self.time_exceeded() {
-                    break;
-                }
-                if bootstrap_outcome != Outcome::Draw {
-                    success_depth = Some(max_depth);
-                    break;
-                }
-                fail_depth = max_depth;
-                max_depth = max_depth.saturating_mul(2);
-            }
-
-            self.refine_shortest = saved_refine;
-
+        while max_depth <= 64 {
+            self.reset_search_state();
+            outcome = self.dfpn(pos, INF, INF, max_depth, true);
             if self.time_exceeded() {
-                let pv = self.extract_pv(pos);
-                (bootstrap_outcome, pv, self.nodes)
-            } else if let Some(success) = success_depth {
-                if let Some(pv) = self.extract_pv_checked(pos, bootstrap_outcome, None) {
-                    self.last_pv = pv;
-                } else {
-                    self.last_pv = self.extract_pv(pos);
-                }
-                self.solve_refined(pos, bootstrap_outcome, success, fail_depth)
-            } else {
-                // Bootstrap did not find a decisive result; fall back to an
-                // unbounded search with binary refinement.
-                self.reset_search_state();
-                self.tt.new_generation();
-                self.reset_history_and_killers();
-                self.solve_refined_unbounded(pos)
+                break;
             }
-        } else {
-            let outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
-            let pv = self
-                .extract_pv_checked(pos, outcome, None)
-                .unwrap_or_else(|| {
-                    eprintln!("warning: returning unvalidated PV");
-                    self.extract_pv(pos)
-                });
-            (outcome, pv, self.nodes)
+            if outcome != Outcome::Draw {
+                success_depth = Some(max_depth);
+                break;
+            }
+            fail_depth = max_depth;
+            max_depth = max_depth.saturating_mul(2);
         }
+
+        if !self.time_exceeded() && success_depth.is_none() {
+            self.reset_search_state();
+            self.tt.new_generation();
+            self.reset_history_and_killers();
+            outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
+            if outcome != Outcome::Draw {
+                if let Some(depth) = self
+                    .tt
+                    .probe(pos.hash())
+                    .and_then(|e| e.best_result_for_path(0).map(|(.., d)| d))
+                {
+                    success_depth = Some(depth);
+                    fail_depth = depth.saturating_sub(1);
+                } else {
+                    success_depth = Some(u32::MAX);
+                    fail_depth = 0;
+                }
+            }
+        }
+
+        self.refine_shortest = saved_refine;
+        self.bootstrap_success_depth = success_depth;
+        self.bootstrap_fail_depth = fail_depth;
+        outcome
     }
 
-    fn solve_refined(
-        &mut self,
-        pos: &mut Position,
-        best_outcome: Outcome,
-        success_depth: u32,
-        fail_depth: u32,
-    ) -> (Outcome, Vec<Move>, u64) {
-        // Iterative deepening downward from the bootstrap success depth.
-        // Reuse the transposition table and move-ordering history between
-        // probes; clear only the path-dependent state.
-        let mut best_pv = self.last_pv.clone();
-        let mut lo = fail_depth;
-        let mut hi = success_depth;
+    /// Find and verify a Proof PV (PPV) for `outcome`.
+    ///
+    /// A PPV has winning attacker moves and defender replies that maximize the
+    /// length of the defense.  The returned PV is validated to reach the
+    /// expected terminal outcome.
+    pub fn find_ppv(&mut self, pos: &mut Position, outcome: Outcome) -> Option<Vec<Move>> {
+        if self.time_exceeded() {
+            return None;
+        }
+
+        if let Some(depth) = self.bootstrap_success_depth {
+            self.reset_search_state();
+            let saved_refine = self.refine_shortest;
+            self.refine_shortest = false;
+            self.dfpn(pos, INF, INF, depth, true);
+            self.refine_shortest = saved_refine;
+            if self.time_exceeded() {
+                return None;
+            }
+        }
+
+        let pv = self
+            .extract_ppv(pos, outcome)
+            .unwrap_or_else(|| self.extract_pv(pos));
+        if pv.is_empty() {
+            return None;
+        }
+        self.last_pv = pv;
+        Some(self.last_pv.clone())
+    }
+
+    /// Iteratively refine the PPV toward the Shortest PPV (SPPV).
+    ///
+    /// For each strictly shorter PPV discovered, `on_shorter` is called with
+    /// the new line.  The transposition table and move-ordering history from
+    /// the earlier stages are reused; only path-dependent state is reset between
+    /// probes.
+    pub fn refine_sppv<F>(&mut self, pos: &mut Position, outcome: Outcome, mut on_shorter: F)
+    where
+        F: FnMut(&[Move]),
+    {
+        let start_depth = self
+            .bootstrap_success_depth
+            .unwrap_or(self.last_pv.len() as u32);
+        let mut current_best_len = self.last_pv.len() as u32;
+        let mut lo = self.bootstrap_fail_depth;
+        let mut hi = start_depth;
 
         while hi > lo + 1 && !self.time_exceeded() {
             let probe = hi - 1;
             self.reset_search_state();
-            let outcome = self.dfpn(pos, INF, INF, probe, true);
+            let saved_refine = self.refine_shortest;
+            self.refine_shortest = true;
+            let o = self.dfpn(pos, INF, INF, probe, true);
+            self.refine_shortest = saved_refine;
 
             if self.time_exceeded() {
                 break;
             }
 
-            if outcome == best_outcome {
-                hi = probe;
+            if o == outcome {
                 if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
-                    self.last_pv = pv;
-                    best_pv = self.last_pv.clone();
+                    let pv_len = pv.len() as u32;
+                    if pv_len < current_best_len {
+                        self.last_pv = pv;
+                        current_best_len = pv_len;
+                        on_shorter(&self.last_pv);
+                    } else if pv_len == current_best_len {
+                        self.last_pv = pv;
+                    }
                 }
+                hi = probe;
             } else {
                 lo = probe;
             }
         }
-
-        let pv = if best_pv.is_empty() {
-            self.extract_pv(pos)
-        } else {
-            best_pv
-        };
-        (best_outcome, pv, self.nodes)
     }
 
-    fn solve_refined_unbounded(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
-        // Fallback: first find any win/loss without a depth bound to get an
-        // initial PV, then binary search the smallest depth bound that still
-        // yields the same outcome. Start each probe with a clean search state.
-        let saved_refine = self.refine_shortest;
-        self.refine_shortest = false;
-        self.reset_search_state();
-        self.tt.new_generation();
-        self.reset_history_and_killers();
-
-        let outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
-        let best_outcome = outcome;
-        let best_depth = self
-            .tt
-            .probe(pos.hash())
-            .and_then(|e| e.best_result_for_path(0).map(|(.., depth)| depth))
-            .unwrap_or(u32::MAX);
-
-        let full_depth = if best_depth == u32::MAX {
-            None
-        } else {
-            Some(best_depth)
-        };
-
-        if let Some(first_pv) = self.extract_pv_checked(pos, outcome, full_depth) {
-            self.last_pv = first_pv;
-        }
-
-        let full_depth_pv = self.last_pv.clone();
-
-        if outcome != Outcome::Draw && best_depth > 1 && best_depth != u32::MAX {
-            let mut lo = 1;
-            let mut hi = best_depth;
-
-            while lo < hi && !self.time_exceeded() {
-                let mid = (lo + hi) / 2;
-                self.reset_search_state();
-                self.tt.new_generation();
-                self.reset_history_and_killers();
-                let o = self.dfpn(pos, INF, INF, mid, true);
-
-                if self.time_exceeded() {
-                    break;
-                }
-
-                if o == outcome {
-                    hi = mid;
-                    if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
-                        self.last_pv = pv;
-                    }
+    /// Solve in a single call, returning the final outcome and PV.
+    ///
+    /// This is a convenience wrapper around the staged API.  When
+    /// `refine_shortest` is false, it performs a single unbounded search for
+    /// backward compatibility and speed on shallow positions.  When true, it
+    /// runs `solve_outcome`, `find_ppv`, and `refine_sppv`.
+    pub fn solve(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
+        if !self.refine_shortest {
+            self.begin_run();
+            let outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
+            if outcome != Outcome::Draw {
+                if let Some(depth) = self
+                    .tt
+                    .probe(pos.hash())
+                    .and_then(|e| e.best_result_for_path(0).map(|(.., d)| d))
+                {
+                    self.bootstrap_success_depth = Some(depth);
+                    self.bootstrap_fail_depth = depth.saturating_sub(1);
                 } else {
-                    lo = mid + 1;
+                    self.bootstrap_success_depth = Some(u32::MAX);
+                    self.bootstrap_fail_depth = 0;
                 }
             }
-
-            // Validate the binary-search answer at the exact depth.
-            self.reset_search_state();
-            self.tt.new_generation();
-            self.reset_history_and_killers();
-            let o = self.dfpn(pos, INF, INF, lo, true);
-            if o == outcome {
-                if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
-                    self.last_pv = pv.to_vec();
-                }
-            } else {
-                self.last_pv = full_depth_pv;
-            }
+            let pv = self
+                .extract_pv_checked(pos, outcome, None)
+                .unwrap_or_else(|| self.extract_pv(pos));
+            self.last_pv = pv.clone();
+            return (outcome, pv, self.nodes);
         }
 
-        self.refine_shortest = saved_refine;
+        let outcome = self.solve_outcome(pos);
+        if outcome == Outcome::Draw {
+            return (outcome, self.extract_pv(pos), self.nodes);
+        }
 
-        let pv = if !self.last_pv.is_empty() {
-            self.last_pv.clone()
-        } else {
+        let _ = self.find_ppv(pos, outcome);
+        self.refine_sppv(pos, outcome, |_| {});
+        let pv = if self.last_pv.is_empty() {
             self.extract_pv(pos)
+        } else {
+            self.last_pv.clone()
         };
-        (best_outcome, pv, self.nodes)
+
+        (outcome, pv, self.nodes)
     }
 
     fn begin_run(&mut self) {
@@ -363,7 +364,7 @@ impl Search {
         self.history_age_counter = 0;
     }
 
-    fn time_exceeded(&self) -> bool {
+    pub fn time_exceeded(&self) -> bool {
         Instant::now() >= self.deadline
     }
 }

@@ -1,8 +1,11 @@
 mod common;
 
+use std::process::Command;
+
 use atomic_movegen::types::{Move, Square};
-use atomic_solver::position::Outcome;
-use common::solve_refined_moves;
+use atomic_solver::position::{Outcome, Position};
+use atomic_solver::search::dfpn::Search;
+use common::{cli_bin, solve_refined_moves};
 
 #[test]
 fn black_root_report6_fen() {
@@ -227,5 +230,94 @@ fn m29_black_loses() {
     assert_eq!(
         solve_refined_moves("8/3p4/3BkRp1/6Pp/2p4P/p1N2P2/P1PP4/7K b - - 1 29").0,
         Outcome::Loss
+    );
+}
+
+#[test]
+fn m27_streaming_output() {
+    let fen = "6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 26";
+    let mut pos = Position::from_fen(fen).unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+
+    let outcome = search.solve_outcome(&mut pos);
+    assert_eq!(outcome, Outcome::Win, "expected a winning outcome");
+
+    let ppv = search.find_ppv(&mut pos, outcome);
+    assert!(ppv.is_some(), "expected a PPV to be found");
+    let ppv = ppv.unwrap();
+    assert_eq!(ppv.len(), 7, "expected a 7-plies PPV, got {ppv:?}");
+    assert_eq!(ppv[0], Move::make_move(Square::B1, Square::B8));
+    assert_eq!(ppv[1], Move::make_move(Square::G8, Square::F7));
+
+    let mut shorter_found = false;
+    search.refine_sppv(&mut pos, outcome, |shorter| {
+        if shorter.len() < ppv.len() {
+            shorter_found = true;
+        }
+    });
+    assert!(
+        !shorter_found,
+        "m27 PPV should already be the shortest proof PV"
+    );
+}
+
+#[test]
+fn m27_ppv_only() {
+    let output = Command::new(cli_bin())
+        .args([
+            "--no-refine-shortest",
+            "--fen",
+            "6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 26",
+        ])
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI exited with failure: {stdout}");
+
+    let lines: Vec<&str> = stdout.lines().collect();
+    assert_eq!(
+        lines.first(),
+        Some(&"outcome: win"),
+        "expected winning outcome, got:\n{stdout}"
+    );
+    assert_eq!(
+        lines.len(),
+        2,
+        "expected outcome + one pv line, got:\n{stdout}"
+    );
+    let pv_line = lines[1];
+    assert!(
+        pv_line.starts_with("pv: "),
+        "expected a pv line, got:\n{stdout}"
+    );
+    let pv = &pv_line[4..];
+    assert!(
+        pv.starts_with("b1b8 g8f7"),
+        "expected PV to start with b1b8 g8f7, got: {pv}"
+    );
+}
+
+#[test]
+fn timeout_message() {
+    let fen = "6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 26";
+    let mut pos = Position::from_fen(fen).unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(0);
+
+    let outcome = search.solve_outcome(&mut pos);
+    assert_eq!(
+        outcome,
+        Outcome::Draw,
+        "immediate timeout should return Draw"
+    );
+    assert!(
+        search.time_exceeded(),
+        "time should be exceeded after timeout"
+    );
+    assert!(
+        search.find_ppv(&mut pos, outcome).is_none(),
+        "no PPV should be returned after timeout"
     );
 }

@@ -14,7 +14,15 @@ use atomic_solver::search::dfpn::Search;
 ///                              ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").
 ///   --epsilon <VALUE>          DF-PN+ threshold parameter in the range [0.0, 1.0].
 ///                              Defaults to 0.25.
-///   --no-refine-shortest       Disable shortest-PV refinement (enabled by default).
+///   --no-refine-shortest       Find and print the outcome and the Proof PV (PPV),
+///                              but do not refine toward the Shortest PPV (SPPV).
+///
+/// Output:
+///   First the decisive outcome (`outcome: win`, `outcome: loss`, or
+///   `outcome: draw`) is printed. For wins/losses this is followed by a `pv:`
+///   line for the PPV, then additional `pv:` lines for each strictly shorter
+///   PPV discovered during SPPV refinement. If the timeout is reached after
+///   any result, `timeout` is printed on its own line.
 ///
 /// Examples:
 ///   atomic_solver --help
@@ -32,13 +40,28 @@ fn print_help(program: &str) {
     println!("                             (default: standard atomic start position)");
     println!("  --epsilon <VALUE>          DF-PN+ threshold parameter in [0.0, 1.0]");
     println!("                             (default: 0.25)");
-    println!("  --no-refine-shortest       Disable shortest-PV refinement");
-    println!("                             (default: enabled)");
+    println!("  --no-refine-shortest       Find and print the PPV but do not refine");
+    println!("                             toward the Shortest PPV (SPPV)");
     println!();
     println!("Examples:");
     println!("  {program} --help");
     println!("  {program} --fen \"4k3/8/8/8/8/8/8/4KRR1 w - - 0 1\"");
     println!("  {program} --epsilon 0.5 --no-refine-shortest");
+}
+
+fn outcome_str(outcome: Outcome) -> &'static str {
+    match outcome {
+        Outcome::Win => "win",
+        Outcome::Loss => "loss",
+        Outcome::Draw => "draw",
+    }
+}
+
+fn pv_str(pv: &[atomic_movegen::types::Move]) -> String {
+    pv.iter()
+        .map(|&m| move_to_uci(m))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 fn main() {
@@ -99,27 +122,31 @@ fn main() {
     });
 
     let mut search = Search::new(64);
-    if refine_shortest {
-        search.refine_shortest(true);
-    }
     search.set_timeout(5);
     search.set_epsilon(epsilon);
-    let (outcome, pv, _nodes) = search.solve(&mut pos);
 
-    let outcome_str = match outcome {
-        Outcome::Win => "win",
-        Outcome::Loss => "loss",
-        Outcome::Draw => "draw",
-    };
+    let outcome = search.solve_outcome(&mut pos);
+    if search.time_exceeded() {
+        println!("timeout");
+        return;
+    }
 
-    if matches!(outcome, Outcome::Win | Outcome::Loss) {
-        let pv_str: String = pv
-            .iter()
-            .map(|&m| move_to_uci(m))
-            .collect::<Vec<_>>()
-            .join(" ");
-        println!("outcome: {outcome_str}\npv: {pv_str}");
-    } else {
-        println!("outcome: {outcome_str}");
+    println!("outcome: {}", outcome_str(outcome));
+    if outcome == Outcome::Draw {
+        return;
+    }
+
+    if let Some(ppv) = search.find_ppv(&mut pos, outcome) {
+        println!("pv: {}", pv_str(&ppv));
+
+        if refine_shortest {
+            search.refine_sppv(&mut pos, outcome, |shorter| {
+                println!("pv: {}", pv_str(shorter));
+            });
+        }
+    }
+
+    if search.time_exceeded() {
+        println!("timeout");
     }
 }
