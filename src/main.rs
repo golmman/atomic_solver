@@ -16,6 +16,8 @@ use atomic_solver::search::dfpn::Search;
 ///                              Defaults to 0.25.
 ///   --no-refine-shortest       Find and print the outcome and the Proof PV (PPV),
 ///                              but do not refine toward the Shortest PPV (SPPV).
+///   --timeout <SECONDS>        Search time limit in seconds.
+///                              Defaults to 5.
 ///
 /// Output:
 ///   First the decisive outcome (`outcome: win`, `outcome: loss`, or
@@ -42,11 +44,14 @@ fn print_help(program: &str) {
     println!("                             (default: 0.25)");
     println!("  --no-refine-shortest       Find and print the PPV but do not refine");
     println!("                             toward the Shortest PPV (SPPV)");
+    println!("  --timeout <SECONDS>        Search time limit in seconds");
+    println!("                             (default: 5)");
     println!();
     println!("Examples:");
     println!("  {program} --help");
     println!("  {program} --fen \"4k3/8/8/8/8/8/8/4KRR1 w - - 0 1\"");
     println!("  {program} --epsilon 0.5 --no-refine-shortest");
+    println!("  {program} --timeout 10");
 }
 
 fn outcome_str(outcome: Outcome) -> &'static str {
@@ -70,6 +75,7 @@ fn main() {
     let mut fen = Position::STARTPOS_FEN.to_string();
     let mut epsilon = 0.25;
     let mut refine_shortest = true;
+    let mut timeout: u64 = 5;
     let mut i = 1;
     while i < args.len() {
         let arg = args[i].as_str();
@@ -108,6 +114,24 @@ fn main() {
                 refine_shortest = false;
                 i += 1;
             }
+            "--timeout" => {
+                if i + 1 >= args.len() {
+                    eprintln!("error: --timeout requires a value");
+                    std::process::exit(1);
+                }
+                match args[i + 1].parse::<u64>() {
+                    Ok(v) if v > 0 => timeout = v,
+                    Ok(v) => {
+                        eprintln!("error: timeout must be positive, got {v}");
+                        std::process::exit(1);
+                    }
+                    Err(e) => {
+                        eprintln!("error: invalid timeout value: {e}");
+                        std::process::exit(1);
+                    }
+                }
+                i += 2;
+            }
             _ => {
                 eprintln!("error: unknown option '{arg}'");
                 eprintln!("Run '{program} --help' for usage.");
@@ -122,7 +146,7 @@ fn main() {
     });
 
     let mut search = Search::new(64);
-    search.set_timeout(5);
+    search.set_timeout(timeout);
     search.set_epsilon(epsilon);
 
     let outcome = search.solve_outcome(&mut pos);
