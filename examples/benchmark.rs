@@ -73,7 +73,7 @@ struct BenchResult {
 fn main() {
     let mut runs = 10usize;
     let mut timeout = 5u64;
-    let mut epsilon = 0.25f64;
+    let mut epsilon = 0.125f64;
     let mut refine_shortest = false;
     let mut filter: Option<String> = None;
 

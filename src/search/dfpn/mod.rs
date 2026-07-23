@@ -22,7 +22,7 @@ use crate::position::{Outcome, Position};
 use super::ordering::StaticAtomicScorer;
 use super::tt::TranspositionTable;
 
-const DEFAULT_EPSILON: f64 = 0.25;
+const DEFAULT_EPSILON: f64 = 0.125;
 const TIMEOUT_SECS: u64 = 5;
 const DEFAULT_MAX_PV_PLIES: usize = 1000;
 

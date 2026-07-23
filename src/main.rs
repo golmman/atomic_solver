@@ -13,7 +13,7 @@ use atomic_solver::search::dfpn::Search;
 ///                              Defaults to the standard atomic start position
 ///                              ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").
 ///   --epsilon <VALUE>          DF-PN+ threshold parameter in the range [0.0, 1.0].
-///                              Defaults to 0.25.
+///                              Defaults to 0.125.
 ///   --no-refine-shortest       Find and print the outcome and the Proof PV (PPV),
 ///                              but do not refine toward the Shortest PPV (SPPV).
 ///   --timeout <SECONDS>        Search time limit in seconds.
@@ -41,7 +41,7 @@ fn print_help(program: &str) {
     println!("  --fen <FEN>                Position to solve in Forsyth-Edwards Notation");
     println!("                             (default: standard atomic start position)");
     println!("  --epsilon <VALUE>          DF-PN+ threshold parameter in [0.0, 1.0]");
-    println!("                             (default: 0.25)");
+    println!("                             (default: 0.125)");
     println!("  --no-refine-shortest       Find and print the PPV but do not refine");
     println!("                             toward the Shortest PPV (SPPV)");
     println!("  --timeout <SECONDS>        Search time limit in seconds");
@@ -73,7 +73,7 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     let program = args.first().map(String::as_str).unwrap_or("atomic_solver");
     let mut fen = Position::STARTPOS_FEN.to_string();
-    let mut epsilon = 0.25;
+    let mut epsilon = 0.125;
     let mut refine_shortest = true;
     let mut timeout: u64 = 5;
     let mut i = 1;
