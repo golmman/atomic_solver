@@ -116,7 +116,13 @@ impl Search {
             }
 
             if children.is_empty() {
-                children = self.evaluate_all_children(pos, &moves, max_depth, is_or_node);
+                children = self.evaluate_all_children(
+                    pos,
+                    &moves,
+                    max_depth,
+                    is_or_node,
+                    self.refine_shortest,
+                );
             } else if let Some(prev) = selection
                 && let Some(idx) = prev.best_child_index
             {
@@ -124,7 +130,11 @@ impl Search {
                 children[idx] = self.evaluate_child(pos, mv, max_depth, is_or_node);
             }
 
-            selection = Some(Search::select_from_children(&children, is_or_node));
+            selection = Some(Search::select_from_children(
+                &children,
+                is_or_node,
+                self.refine_shortest,
+            ));
             let selection = selection.as_ref().unwrap();
             best_move = selection.best_move;
             pn = selection.pn;

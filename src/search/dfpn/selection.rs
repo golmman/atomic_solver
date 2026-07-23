@@ -6,8 +6,8 @@ use atomic_movegen::types::Move;
 
 use crate::position::Outcome;
 
-use super::Search;
-use super::children::ChildInfo;
+use super::children::{ChildInfo, ChildSelection};
+use super::{INF, Search};
 
 impl Search {
     /// Detect whether all children are solved, and if so return the parent's
@@ -103,6 +103,33 @@ impl Search {
             ));
         }
 
+        None
+    }
+
+    /// If the children already prove the parent is a win and we are not
+    /// refining toward the shortest PV, return the decisive selection
+    /// immediately so the caller can skip ordering the unsolved siblings.
+    pub(super) fn select_child_with_early_exit(
+        children: &[ChildInfo],
+        solved: Option<(Outcome, u32, Move, bool, usize)>,
+        refine_shortest: bool,
+    ) -> Option<ChildSelection> {
+        if let Some((Outcome::Win, depth, mv, all_solved, idx)) = solved
+            && !refine_shortest
+        {
+            return Some(ChildSelection {
+                best_child: (Move::NONE, INF, INF),
+                second_child: (INF, INF),
+                best_child_index: None,
+                pn: 0,
+                dn: INF,
+                depth,
+                best_move: mv,
+                solved_outcome: Some(Outcome::Win),
+                all_solved,
+                repetition_seen: children[idx].repetition_seen,
+            });
+        }
         None
     }
 

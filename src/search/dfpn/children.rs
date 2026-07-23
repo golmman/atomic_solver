@@ -34,25 +34,58 @@ pub struct ChildSelection {
 
 impl Search {
     /// Evaluate every legal move and build a fresh `ChildInfo` table.
+    ///
+    /// When a child proves a win for the side to move and `refine_shortest` is
+    /// disabled, the remaining siblings are not evaluated. Their entries are
+    /// filled with neutral bounds so they do not affect the parent's numbers.
     pub(super) fn evaluate_all_children(
         &mut self,
         pos: &mut Position,
         moves: &MoveList,
         max_depth: u32,
         is_or_node: bool,
+        refine_shortest: bool,
     ) -> Vec<ChildInfo> {
         let mut children = Vec::with_capacity(moves.len());
         for i in 0..moves.len() {
             let mv = moves[i];
             let info = self.evaluate_child(pos, mv, max_depth, is_or_node);
+            let early_win = info.outcome == Some(Outcome::Loss);
             children.push(info);
+            if early_win && !refine_shortest {
+                for j in (i + 1)..moves.len() {
+                    children.push(ChildInfo {
+                        mv: moves[j],
+                        pn: INF,
+                        dn: 0,
+                        outcome: None,
+                        depth: 0,
+                        repetition_seen: false,
+                    });
+                }
+                break;
+            }
         }
         children
     }
 
     /// Compute the parent's proof/disproof numbers and pick the best/second
     /// unsolved child from a cached `ChildInfo` table.
-    pub(super) fn select_from_children(children: &[ChildInfo], is_or_node: bool) -> ChildSelection {
+    pub(super) fn select_from_children(
+        children: &[ChildInfo],
+        is_or_node: bool,
+        refine_shortest: bool,
+    ) -> ChildSelection {
+        let solved = Self::is_solved_by_children(children, is_or_node);
+
+        // If a win is already proven and we do not need the shortest PV,
+        // there is no reason to order or expand the remaining siblings.
+        if let Some(selection) =
+            Self::select_child_with_early_exit(children, solved, refine_shortest)
+        {
+            return selection;
+        }
+
         let mut pn;
         let mut dn;
         if is_or_node {
@@ -70,8 +103,6 @@ impl Search {
                 dn = std::cmp::min(dn, c.dn);
             }
         }
-
-        let solved = Self::is_solved_by_children(children, is_or_node);
 
         // Choose the child to expand from the unsolved children only.
         let (best_idx, second_idx) = Self::best_and_second_unsolved(children, is_or_node);
