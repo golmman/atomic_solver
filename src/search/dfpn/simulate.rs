@@ -105,6 +105,7 @@ impl Search {
                     twin.best_move,
                     twin.depth,
                     twin.remaining_depth,
+                    0,
                 );
                 return Some(Resolved {
                     outcome,

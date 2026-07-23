@@ -225,6 +225,8 @@ mod tests {
             search.tt.store(
                 key,
                 mv,
+                u8::MAX,
+                0,
                 Some(expected),
                 pn,
                 dn,

@@ -35,6 +35,10 @@ impl Search {
         let tt_key = pos.hash();
         let rep_key = pos.repetition_key();
 
+        // Track the effort spent in this subtree so the transposition table can
+        // prefer keeping hard-won entries.
+        let child_evals_start = self.child_evals;
+
         let mut moves = MoveList::new();
         let mut state = StateInfo::new();
         pos.legal_moves_with_state(&mut moves, &mut state);
@@ -46,6 +50,8 @@ impl Search {
             self.tt.store(
                 tt_key,
                 Move::NONE,
+                u8::MAX,
+                0,
                 Some(outcome),
                 pn,
                 dn,
@@ -63,6 +69,8 @@ impl Search {
             self.tt.store(
                 tt_key,
                 Move::NONE,
+                u8::MAX,
+                0,
                 Some(Outcome::Draw),
                 pn,
                 dn,
@@ -83,6 +91,8 @@ impl Search {
         if self.path_contains(rep_key) {
             return Outcome::Draw;
         }
+
+        let previous_summary = self.tt.probe_summary(tt_key);
 
         let best_from_tt = self
             .tt
@@ -130,10 +140,20 @@ impl Search {
                 children[idx] = self.evaluate_child(pos, mv, max_depth, is_or_node);
             }
 
+            let previous_best_move = previous_summary
+                .as_ref()
+                .filter(|s| s.best_move != Move::NONE)
+                .map(|s| s.best_move);
+            let previous_best_child = previous_summary
+                .as_ref()
+                .filter(|s| s.best_child != u8::MAX)
+                .map(|s| s.best_child);
             selection = Some(Search::select_from_children(
                 &children,
                 is_or_node,
                 self.refine_shortest,
+                previous_best_move,
+                previous_best_child,
             ));
             let selection = selection.as_ref().unwrap();
             best_move = selection.best_move;
@@ -227,6 +247,11 @@ impl Search {
         } else {
             best_move
         };
+        let store_best_child = children
+            .iter()
+            .position(|c| c.mv == store_best_move)
+            .map_or(u8::MAX, |i| i as u8);
+        let work = self.child_evals - child_evals_start;
         let store_remaining_depth = match outcome_to_store {
             Some(Outcome::Win | Outcome::Loss) => u32::MAX,
             _ => max_depth,
@@ -234,6 +259,8 @@ impl Search {
         self.tt.store(
             tt_key,
             store_best_move,
+            store_best_child,
+            work,
             outcome_to_store,
             if outcome_to_store.is_some() {
                 outcome_to_store_pn

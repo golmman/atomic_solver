@@ -71,10 +71,16 @@ impl Search {
 
     /// Compute the parent's proof/disproof numbers and pick the best/second
     /// unsolved child from a cached `ChildInfo` table.
+    ///
+    /// `previous_best_move` and `previous_best_child` are hints from the
+    /// transposition table. If the stored child is still valid and still the
+    /// most-proving child, it is reused without recomputing the full argmin.
     pub(super) fn select_from_children(
         children: &[ChildInfo],
         is_or_node: bool,
         refine_shortest: bool,
+        previous_best_move: Option<Move>,
+        previous_best_child: Option<u8>,
     ) -> ChildSelection {
         let solved = Self::is_solved_by_children(children, is_or_node);
 
@@ -84,6 +90,31 @@ impl Search {
             Self::select_child_with_early_exit(children, solved, refine_shortest)
         {
             return selection;
+        }
+
+        // Reuse the previous best child if it is still valid and still the best.
+        if let Some(prev_mv) = previous_best_move
+            && let Some(idx) = previous_best_child
+                .filter(|&c| (c as usize) < children.len())
+                .map(|c| c as usize)
+                .filter(|&i| children[i].mv == prev_mv)
+                .or_else(|| children.iter().position(|c| c.mv == prev_mv))
+            && children[idx].outcome.is_none()
+        {
+            let is_still_best = if is_or_node {
+                children
+                    .iter()
+                    .filter(|c| c.outcome.is_none())
+                    .all(|c| c.pn >= children[idx].pn)
+            } else {
+                children
+                    .iter()
+                    .filter(|c| c.outcome.is_none())
+                    .all(|c| c.dn >= children[idx].dn)
+            };
+            if is_still_best {
+                return Self::selection_for_child(children, is_or_node, idx);
+            }
         }
 
         let mut pn;
@@ -142,6 +173,68 @@ impl Search {
             all_solved,
             repetition_seen,
         }
+    }
+
+    fn selection_for_child(children: &[ChildInfo], is_or_node: bool, idx: usize) -> ChildSelection {
+        let (mut pn, mut dn) = if is_or_node { (INF, 0) } else { (0, INF) };
+        for c in children {
+            if is_or_node {
+                pn = std::cmp::min(pn, c.pn);
+                dn = std::cmp::min(INF, dn.saturating_add(c.dn));
+            } else {
+                pn = std::cmp::min(INF, pn.saturating_add(c.pn));
+                dn = std::cmp::min(dn, c.dn);
+            }
+        }
+
+        let second_idx = Self::second_best_unsolved_excluding(children, is_or_node, idx);
+        let best = &children[idx];
+        let second = second_idx.map(|i| &children[i]);
+
+        ChildSelection {
+            best_child: (best.mv, best.pn, best.dn),
+            second_child: second.map_or((INF, INF), |s| (s.pn, s.dn)),
+            best_child_index: Some(idx),
+            pn,
+            dn,
+            depth: 0,
+            best_move: best.mv,
+            solved_outcome: None,
+            all_solved: false,
+            repetition_seen: children.iter().any(|c| c.repetition_seen),
+        }
+    }
+
+    fn second_best_unsolved_excluding(
+        children: &[ChildInfo],
+        is_or_node: bool,
+        exclude: usize,
+    ) -> Option<usize> {
+        let mut best: Option<usize> = None;
+        for i in 0..children.len() {
+            if i == exclude || children[i].outcome.is_some() {
+                continue;
+            }
+            let cmp_c = if is_or_node {
+                children[i].pn
+            } else {
+                children[i].dn
+            };
+            match best {
+                None => best = Some(i),
+                Some(b) => {
+                    let cmp_best = if is_or_node {
+                        children[b].pn
+                    } else {
+                        children[b].dn
+                    };
+                    if cmp_c < cmp_best {
+                        best = Some(i);
+                    }
+                }
+            }
+        }
+        best
     }
 
     pub(super) fn evaluate_child(

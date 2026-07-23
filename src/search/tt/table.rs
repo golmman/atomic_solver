@@ -53,6 +53,8 @@ impl TranspositionTable {
     pub fn probe_summary(&self, key: u64) -> Option<TtSummary> {
         self.probe(key).map(|e| TtSummary {
             best_move: e.best_move,
+            best_child: e.best_child,
+            work: e.work,
             outcome: e.outcome,
             pn: e.pn,
             dn: e.dn,
@@ -130,6 +132,8 @@ impl TranspositionTable {
         &mut self,
         key: u64,
         best_move: Move,
+        best_child: u8,
+        work: u64,
         outcome: Option<Outcome>,
         pn: u64,
         dn: u64,
@@ -157,6 +161,7 @@ impl TranspositionTable {
                 if slot.valid && slot.key == key && slot.generation == self.current_generation {
                     existing = true;
                     slot.generation = self.current_generation;
+                    slot.work = slot.work.max(work);
                     if let Some(o) = outcome {
                         if repetition_seen {
                             twin_action = Some(slot.store_twin(
@@ -172,6 +177,7 @@ impl TranspositionTable {
                         } else {
                             // Path-independent result: store in the base entry and clear twins.
                             slot.best_move = best_move;
+                            slot.best_child = best_child;
                             slot.outcome = Some(o);
                             slot.pn = pn;
                             slot.dn = dn;
@@ -183,6 +189,7 @@ impl TranspositionTable {
                     } else {
                         // Unsolved node: update base bounds and keep existing twins.
                         slot.best_move = best_move;
+                        slot.best_child = best_child;
                         slot.outcome = None;
                         slot.pn = pn;
                         slot.dn = dn;
@@ -209,6 +216,8 @@ impl TranspositionTable {
             valid: true,
             generation: self.current_generation,
             best_move,
+            best_child,
+            work,
             outcome,
             pn,
             dn,
@@ -248,6 +257,7 @@ impl TranspositionTable {
         best_move: Move,
         depth: u32,
         remaining_depth: u32,
+        work: u64,
     ) {
         let idx = self.index(key);
         let mut twin_action = None;
@@ -257,6 +267,7 @@ impl TranspositionTable {
             let bucket = &mut self.table[idx];
             for slot in bucket.iter_mut() {
                 if slot.valid && slot.key == key && slot.generation == self.current_generation {
+                    slot.work = slot.work.max(work);
                     twin_action = Some(slot.store_twin(
                         path_code,
                         path_length,
@@ -284,6 +295,8 @@ impl TranspositionTable {
             valid: true,
             generation: self.current_generation,
             best_move: Move::NONE,
+            best_child: u8::MAX,
+            work,
             outcome: None,
             pn: 1,
             dn: 1,
@@ -306,18 +319,31 @@ impl TranspositionTable {
         self.insert_new(idx, new);
     }
 
-    /// Place a new entry into `idx`, preferring an empty or stale bucket slot.
+    /// Place a new entry into `idx`, preferring the two most valuable entries.
+    ///
+    /// Empty or stale slots are used first. If both slots are live, the lower-
+    /// priority existing entry is evicted. Preference order: live in the current
+    /// generation, then solved, then higher `work`, then newer generation.
     fn insert_new(&mut self, idx: usize, new: TtEntry) {
-        let bucket = &mut self.table[idx];
-        for slot in bucket.iter_mut() {
-            if !slot.valid || slot.generation != self.current_generation {
-                *slot = new;
-                return;
-            }
-        }
+        let current_generation = self.current_generation;
+        let score = |e: &TtEntry| {
+            let live = e.valid && e.generation == current_generation;
+            let solved = e.outcome.is_some() || e.twins.iter().any(|t| t.outcome.is_some());
+            (live as u8, solved as u8, e.work, e.generation)
+        };
 
-        // Both slots are live in the current generation; evict slot 0.
-        bucket[1] = bucket[0];
-        bucket[0] = new;
+        let bucket = &mut self.table[idx];
+        if !bucket[0].valid || bucket[0].generation != current_generation {
+            bucket[0] = new;
+        } else if !bucket[1].valid || bucket[1].generation != current_generation {
+            bucket[1] = new;
+        } else {
+            let evict = if score(&bucket[0]) < score(&bucket[1]) {
+                0
+            } else {
+                1
+            };
+            bucket[evict] = new;
+        }
     }
 }

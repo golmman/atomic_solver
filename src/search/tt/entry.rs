@@ -35,6 +35,8 @@ impl Default for TwinEntry {
 #[derive(Clone, Copy, Debug)]
 pub struct TtSummary {
     pub best_move: Move,
+    pub best_child: u8,
+    pub work: u64,
     pub outcome: Option<Outcome>,
     pub pn: u64,
     pub dn: u64,
@@ -58,6 +60,8 @@ pub struct TtEntry {
 
     // Base entry: bounds for unsolved nodes, or path-independent solved results.
     pub(crate) best_move: Move,
+    pub(crate) best_child: u8, // u8::MAX means "unknown / unset"
+    pub(crate) work: u64,      // cumulative child_evals spent under this subtree
     pub(crate) outcome: Option<Outcome>,
     pub(crate) pn: u64,
     pub(crate) dn: u64,
@@ -76,6 +80,8 @@ impl Default for TtEntry {
             valid: false,
             generation: 0,
             best_move: Move::NONE,
+            best_child: u8::MAX,
+            work: 0,
             outcome: None,
             pn: 1,
             dn: 1,
@@ -175,6 +181,9 @@ impl TtEntry {
 
     pub(super) fn reinit_base_for_twin(&mut self) {
         self.best_move = Move::NONE;
+        self.best_child = u8::MAX;
+        // Work is preserved: the entry still represents search effort spent in
+        // this subtree, even when only a path-dependent twin is stored.
         self.outcome = None;
         self.pn = 1;
         self.dn = 1;

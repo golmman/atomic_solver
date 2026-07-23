@@ -17,7 +17,7 @@ fn twin_metrics_track_insertions_and_evictions() {
     let key = 12345u64;
 
     for i in 0..MAX_TWINS as u64 {
-        tt.store_twin(key, i, 0, Outcome::Draw, Move::NONE, 0, u32::MAX);
+        tt.store_twin(key, i, 0, Outcome::Draw, Move::NONE, 0, u32::MAX, 0);
     }
 
     assert_eq!(tt.twin_stats().0, MAX_TWINS as u64);
@@ -32,6 +32,7 @@ fn twin_metrics_track_insertions_and_evictions() {
         Move::NONE,
         0,
         u32::MAX,
+        0,
     );
     assert_eq!(tt.twin_stats().0, MAX_TWINS as u64 + 1);
     assert_eq!(tt.twin_stats().1, 1);
@@ -40,7 +41,7 @@ fn twin_metrics_track_insertions_and_evictions() {
 #[test]
 fn clear_resets_twin_stats() {
     let mut tt = TranspositionTable::with_mb(1);
-    tt.store_twin(1, 0, 0, Outcome::Draw, Move::NONE, 0, u32::MAX);
+    tt.store_twin(1, 0, 0, Outcome::Draw, Move::NONE, 0, u32::MAX, 0);
     tt.clear();
     assert_eq!(tt.twin_stats().0, 0);
     assert_eq!(tt.twin_stats().1, 0);
@@ -53,20 +54,20 @@ fn peak_twins_tracked() {
     let key = 12345u64;
 
     for i in 0..4 {
-        tt.store_twin(key, i, 0, Outcome::Draw, Move::NONE, 0, u32::MAX);
+        tt.store_twin(key, i, 0, Outcome::Draw, Move::NONE, 0, u32::MAX, 0);
     }
     assert_eq!(tt.peak_twins(), 4);
 
     // A second entry also has four twins; peak stays at 4.
     let key2 = 54321u64;
     for i in 0..2 {
-        tt.store_twin(key2, i, 0, Outcome::Draw, Move::NONE, 0, u32::MAX);
+        tt.store_twin(key2, i, 0, Outcome::Draw, Move::NONE, 0, u32::MAX, 0);
     }
     assert_eq!(tt.peak_twins(), 4);
 
     // Filling the first entry to capacity and evicting keeps the peak at 8.
     for i in 4..8 {
-        tt.store_twin(key, i, 0, Outcome::Draw, Move::NONE, 0, u32::MAX);
+        tt.store_twin(key, i, 0, Outcome::Draw, Move::NONE, 0, u32::MAX, 0);
     }
     assert_eq!(tt.peak_twins(), 8);
 }
@@ -78,8 +79,8 @@ fn find_and_best_result_for_multiple_paths() {
 
     // Twins for two different path codes. Storing a twin reinitialises the
     // base entry, so the table is left with only path-dependent results.
-    tt.store_twin(key, 1, 0, Outcome::Loss, Move::NONE, 2, u32::MAX);
-    tt.store_twin(key, 2, 0, Outcome::Draw, Move::NONE, 3, u32::MAX);
+    tt.store_twin(key, 1, 0, Outcome::Loss, Move::NONE, 2, u32::MAX, 0);
+    tt.store_twin(key, 2, 0, Outcome::Draw, Move::NONE, 3, u32::MAX, 0);
 
     let entry = *tt.probe(key).unwrap();
 
@@ -114,6 +115,8 @@ fn new_generation_marks_old_entries_stale() {
     tt.store(
         key,
         Move::NONE,
+        u8::MAX,
+        0,
         Some(Outcome::Win),
         0,
         0,
@@ -132,6 +135,8 @@ fn new_generation_marks_old_entries_stale() {
     tt.store(
         key,
         Move::NONE,
+        u8::MAX,
+        0,
         Some(Outcome::Win),
         0,
         0,
@@ -156,6 +161,8 @@ fn new_generation_prefers_stale_slot() {
     tt.store(
         key1,
         Move::NONE,
+        u8::MAX,
+        0,
         Some(Outcome::Win),
         0,
         0,
@@ -168,6 +175,8 @@ fn new_generation_prefers_stale_slot() {
     tt.store(
         key2,
         Move::NONE,
+        u8::MAX,
+        0,
         Some(Outcome::Win),
         0,
         0,
@@ -188,6 +197,8 @@ fn new_generation_prefers_stale_slot() {
     tt.store(
         key3,
         Move::NONE,
+        u8::MAX,
+        0,
         Some(Outcome::Draw),
         0,
         0,

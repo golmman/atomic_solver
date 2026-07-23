@@ -96,6 +96,7 @@ fn try_use_tt_simulation_uses_current_path() {
         Move::NONE,
         0,
         u32::MAX,
+        0,
     );
 
     let resolved = search.try_use_tt(&pos, key, u32::MAX, 0, 0);
@@ -123,6 +124,7 @@ fn try_use_tt_rejects_win_twin_for_repeated_position() {
         Move::NONE,
         0,
         u32::MAX,
+        0,
     );
 
     assert!(search.try_use_tt(&pos, key, u32::MAX, 0, 0).is_none());
@@ -145,6 +147,7 @@ fn try_use_tt_accepts_cross_path_win_twin() {
         Move::make_move(Square::E1, Square::E8),
         1,
         u32::MAX,
+        0,
     );
 
     let resolved = search.try_use_tt(&pos, key, u32::MAX, 0, 0);
@@ -167,7 +170,7 @@ fn try_use_tt_rejects_cross_path_win_twin_without_child_proof() {
     let best = Move::make_move(Square::E1, Square::D1);
     search
         .tt
-        .store_twin(key, twin_path_code, 0, Outcome::Win, best, 100, u32::MAX);
+        .store_twin(key, twin_path_code, 0, Outcome::Win, best, 100, u32::MAX, 0);
 
     assert!(search.try_use_tt(&pos, key, u32::MAX, 0, 0).is_none());
 }
