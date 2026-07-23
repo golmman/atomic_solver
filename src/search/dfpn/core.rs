@@ -24,6 +24,7 @@ impl Search {
         th_pn: u64,
         th_dn: u64,
         max_depth: u32,
+        max_work: u64,
         is_or_node: bool,
     ) -> Outcome {
         if self.time_exceeded() {
@@ -122,6 +123,13 @@ impl Search {
 
         loop {
             if self.time_exceeded() {
+                break;
+            }
+
+            // Work-bounded search: stop this chunk once it has consumed its node
+            // budget.  The result is stored as an unsolved entry so the next chunk
+            // can resume from the same bounds.
+            if max_work != u64::MAX && self.child_evals - child_evals_start >= max_work {
                 break;
             }
 
@@ -237,7 +245,15 @@ impl Search {
 
             pos.do_move(mv);
             self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
-            let _ = self.dfpn(pos, np, nd, max_depth.saturating_sub(1), !is_or_node);
+            let child_max_work = max_work.saturating_sub(self.child_evals - child_evals_start);
+            let _ = self.dfpn(
+                pos,
+                np,
+                nd,
+                max_depth.saturating_sub(1),
+                child_max_work,
+                !is_or_node,
+            );
             self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
             pos.undo_move(mv);
         }

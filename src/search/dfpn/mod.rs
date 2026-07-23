@@ -142,17 +142,20 @@ impl Search {
         max_depth: u32,
     ) -> (Outcome, Vec<Move>, u64) {
         self.begin_run();
-        let outcome = self.dfpn(pos, INF, INF, max_depth, true);
+        let outcome = self.dfpn(pos, INF, INF, max_depth, u64::MAX, true);
         let pv = self.extract_pv(pos);
         (outcome, pv, self.nodes)
     }
 
     /// Run the solver to a decisive outcome or the configured timeout.
     ///
-    /// Internally this bootstraps with an iteratively doubling depth bound and,
-    /// if necessary, falls back to an unbounded search.  The result and the
-    /// depth bounds found during the search are recorded for the follow-up
-    /// `find_ppv` and `refine_sppv` stages.
+    /// Internally this bootstraps with an iteratively doubling depth bound, but
+    /// each depth probe is also work-bounded so that an over-expanded
+    /// `max_depth=8` probe cannot consume the entire time budget.  The
+    /// transposition table is reused between probes and across depths, so a
+    /// 12-ply mate found in a later probe is available to the next.  The
+    /// decisive PV depth is recorded for the follow-up `find_ppv` and
+    /// `refine_sppv` stages.
     pub fn solve_outcome(&mut self, pos: &mut Position) -> Outcome {
         self.begin_run();
         let saved_refine = self.refine_shortest;
@@ -160,40 +163,48 @@ impl Search {
 
         let mut outcome = Outcome::Draw;
         let mut max_depth = 1u32;
+        let mut chunk = 500_000u64;
         let mut success_depth: Option<u32> = None;
         let mut fail_depth = 0u32;
 
-        while max_depth <= 64 {
+        while max_depth <= 64 && !self.time_exceeded() {
             self.reset_search_state();
-            outcome = self.dfpn(pos, INF, INF, max_depth, true);
-            if self.time_exceeded() {
-                break;
-            }
+            outcome = self.dfpn(pos, INF, INF, max_depth, chunk, true);
             if outcome != Outcome::Draw {
-                success_depth = Some(max_depth);
+                // The root entry was just stored for the current path, so read
+                // its recorded depth directly (even if the result is path-
+                // dependent and marked repetition_seen).
+                if let Some(entry) = self.tt.probe(pos.hash())
+                    && entry.outcome.is_some()
+                {
+                    success_depth = Some(entry.depth);
+                }
+                if success_depth.is_none() {
+                    success_depth = Some(max_depth);
+                }
+                fail_depth = fail_depth.max(max_depth.saturating_sub(1));
                 break;
             }
             fail_depth = max_depth;
             max_depth = max_depth.saturating_mul(2);
+            chunk = chunk.saturating_mul(2);
         }
 
-        if !self.time_exceeded() && success_depth.is_none() {
+        if success_depth.is_none() && !self.time_exceeded() {
             self.reset_search_state();
             self.tt.new_generation();
             self.reset_history_and_killers();
-            outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
+            outcome = self.dfpn(pos, INF, INF, u32::MAX, u64::MAX, true);
             if outcome != Outcome::Draw {
-                if let Some(depth) = self
-                    .tt
-                    .probe(pos.hash())
-                    .and_then(|e| e.best_result_for_path(0).map(|(.., d)| d))
+                if let Some(entry) = self.tt.probe(pos.hash())
+                    && entry.outcome.is_some()
                 {
-                    success_depth = Some(depth);
-                    fail_depth = depth.saturating_sub(1);
-                } else {
-                    success_depth = Some(u32::MAX);
-                    fail_depth = 0;
+                    success_depth = Some(entry.depth);
                 }
+                if success_depth.is_none() {
+                    success_depth = Some(u32::MAX);
+                }
+                fail_depth = fail_depth.max(64);
             }
         }
 
@@ -217,7 +228,7 @@ impl Search {
             self.reset_search_state();
             let saved_refine = self.refine_shortest;
             self.refine_shortest = false;
-            self.dfpn(pos, INF, INF, depth, true);
+            self.dfpn(pos, INF, INF, depth, u64::MAX, true);
             self.refine_shortest = saved_refine;
             if self.time_exceeded() {
                 return None;
@@ -252,11 +263,14 @@ impl Search {
         let mut hi = start_depth;
 
         while hi > lo + 1 && !self.time_exceeded() {
-            let probe = hi - 1;
+            // Binary search the shortest winning depth.  A win at `d` is still a
+            // win at any larger depth, so the predicate "outcome == expected" is
+            // monotonic in the depth bound.
+            let probe = lo + (hi - lo) / 2;
             self.reset_search_state();
             let saved_refine = self.refine_shortest;
             self.refine_shortest = true;
-            let o = self.dfpn(pos, INF, INF, probe, true);
+            let o = self.dfpn(pos, INF, INF, probe, u64::MAX, true);
             self.refine_shortest = saved_refine;
 
             if self.time_exceeded() {
@@ -290,19 +304,17 @@ impl Search {
     pub fn solve(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
         if !self.refine_shortest {
             self.begin_run();
-            let outcome = self.dfpn(pos, INF, INF, u32::MAX, true);
+            let outcome = self.dfpn(pos, INF, INF, u32::MAX, u64::MAX, true);
             if outcome != Outcome::Draw {
-                if let Some(depth) = self
-                    .tt
-                    .probe(pos.hash())
-                    .and_then(|e| e.best_result_for_path(0).map(|(.., d)| d))
+                if let Some(entry) = self.tt.probe(pos.hash())
+                    && entry.outcome.is_some()
                 {
-                    self.bootstrap_success_depth = Some(depth);
-                    self.bootstrap_fail_depth = depth.saturating_sub(1);
-                } else {
-                    self.bootstrap_success_depth = Some(u32::MAX);
-                    self.bootstrap_fail_depth = 0;
+                    self.bootstrap_success_depth = Some(entry.depth);
                 }
+                if self.bootstrap_success_depth.is_none() {
+                    self.bootstrap_success_depth = Some(u32::MAX);
+                }
+                self.bootstrap_fail_depth = 0;
             }
             let pv = self
                 .extract_pv_checked(pos, outcome, None)
@@ -318,6 +330,7 @@ impl Search {
 
         let _ = self.find_ppv(pos, outcome);
         self.refine_sppv(pos, outcome, |_| {});
+
         let pv = if self.last_pv.is_empty() {
             self.extract_pv(pos)
         } else {

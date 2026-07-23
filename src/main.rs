@@ -148,6 +148,7 @@ fn main() {
     let mut search = Search::new(64);
     search.set_timeout(timeout);
     search.set_epsilon(epsilon);
+    search.refine_shortest(refine_shortest);
 
     let outcome = search.solve_outcome(&mut pos);
     if search.time_exceeded() {
