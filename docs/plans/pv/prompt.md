@@ -75,7 +75,7 @@ verify_ppv(fen, moves):
                 child = apply(positions[i], m)
                 if not proven_loss_within(child, bound, hint=refutation[i+1]):
                     return FAIL("AND-node not closed at ply", i, "via", m)
-            proven_depth[i] = bound  # or max over siblings if you want exact SPPV-style depth
+            proven_depth[i] = bound
     return SUCCESS
 ```
 
