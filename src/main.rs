@@ -168,6 +168,7 @@ fn main() {
             search.refine_sppv(&mut pos, outcome, |shorter| {
                 println!("pv: {}", pv_str(shorter));
             });
+            println!("sppv search finished");
         }
     }
 
