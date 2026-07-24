@@ -11,11 +11,11 @@ use super::Search;
 
 impl Search {
     pub(super) fn extract_pv(&self, pos: &Position) -> Vec<Move> {
-        self.extract_pv_internal(pos).0
+        self.extract_pv_internal(pos, None, None).0
     }
 
     pub(super) fn extract_ppv(&self, pos: &Position, expected: Outcome) -> Option<Vec<Move>> {
-        let (pv, truncated) = self.extract_pv_internal(pos);
+        let (pv, truncated) = self.extract_pv_internal(pos, Some(expected), None);
         if truncated {
             return None;
         }
@@ -32,7 +32,7 @@ impl Search {
         expected: Outcome,
         expected_depth: Option<u32>,
     ) -> Option<Vec<Move>> {
-        let (pv, truncated) = self.extract_pv_internal(pos);
+        let (pv, truncated) = self.extract_pv_internal(pos, Some(expected), expected_depth);
         if let Some(d) = expected_depth
             && pv.len() as u32 != d
         {
@@ -110,11 +110,18 @@ impl Search {
         Some(current)
     }
 
-    fn extract_pv_internal(&self, pos: &Position) -> (Vec<Move>, bool) {
+    fn extract_pv_internal(
+        &self,
+        pos: &Position,
+        mut expected: Option<Outcome>,
+        expected_depth: Option<u32>,
+    ) -> (Vec<Move>, bool) {
         let mut pv = Vec::new();
         let mut seen = HashSet::new();
         let mut current = pos.clone();
         let mut path_code = 0u64;
+        let mut remaining = expected_depth;
+
         for _ in 0..self.max_ply {
             let tt_key = current.hash();
             let rep_key = current.repetition_key();
@@ -124,23 +131,65 @@ impl Search {
             if current.outcome().is_some() {
                 break;
             }
-            if let Some(entry) = self.tt.probe(tt_key) {
-                let resolved = entry.best_result_for_path(path_code);
-                if let Some((mv, Some(_), _)) = resolved {
-                    if mv == Move::NONE {
+
+            let entry = match self.tt.probe(tt_key) {
+                Some(e) => e,
+                None => break,
+            };
+
+            let node_expected = match expected {
+                Some(e) => e,
+                None => {
+                    if let Some((_, Some(o), _)) = entry.best_result_for_path(path_code) {
+                        expected = Some(o);
+                        o
+                    } else {
                         break;
                     }
-                    seen.insert(rep_key);
-                    pv.push(mv);
-                    current.do_move(mv);
-                    path_code ^= zobrist::path_random(mv, pv.len());
+                }
+            };
+
+            let node_remaining = if let Some(r) = remaining {
+                r
+            } else if let Some(r) = entry.find_result_for_path(path_code, node_expected) {
+                r.depth
+            } else if let Some((_, Some(o), d)) = entry.best_result_for_path(path_code) {
+                if o == node_expected {
+                    d
                 } else {
                     break;
                 }
             } else {
                 break;
+            };
+
+            // Prefer an entry whose stored depth matches the remaining plies.
+            // Fall back to any entry with the expected outcome so extraction
+            // still succeeds when the depth-aware entry is missing.
+            let result = if let Some(r) =
+                entry.find_result_for_path_with_depth(path_code, node_expected, node_remaining)
+            {
+                Some(r)
+            } else {
+                entry.find_result_for_path(path_code, node_expected)
+            };
+
+            if let Some(r) = result {
+                let mv = r.best_move;
+                if mv == Move::NONE {
+                    break;
+                }
+                seen.insert(rep_key);
+                pv.push(mv);
+                current.do_move(mv);
+                path_code ^= zobrist::path_random(mv, pv.len());
+                expected = expected.map(Outcome::flip);
+                remaining = Some(r.depth.saturating_sub(1));
+            } else {
+                break;
             }
         }
+
         let truncated = pv.len() == self.max_ply && current.outcome().is_none();
         (pv, truncated)
     }

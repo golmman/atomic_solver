@@ -22,6 +22,16 @@ use crate::position::{Outcome, Position};
 use super::ordering::StaticAtomicScorer;
 use super::tt::TranspositionTable;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum ProofMode {
+    /// Stop as soon as the result is proven.
+    Outcome,
+    /// Defender replies are longest; attacker moves are any winning move.
+    Ppv,
+    /// Fully minimax: shortest attacker wins, longest defender replies.
+    Sppv,
+}
+
 const DEFAULT_EPSILON: f64 = 0.125;
 const TIMEOUT_SECS: u64 = 5;
 const DEFAULT_MAX_PV_PLIES: usize = 1000;
@@ -70,6 +80,7 @@ pub struct Search {
     epsilon_den: u64,
     scorer: StaticAtomicScorer,
     refine_shortest: bool,
+    proof_mode: ProofMode,
     timeout: Duration,
     last_pv: Vec<Move>,
     history: [[[i32; 64]; 64]; 2],
@@ -95,6 +106,7 @@ impl Search {
             epsilon_den,
             scorer: StaticAtomicScorer,
             refine_shortest: false,
+            proof_mode: ProofMode::Outcome,
             timeout: Duration::from_secs(TIMEOUT_SECS),
             last_pv: Vec::new(),
             history: [[[0; 64]; 64]; 2],
@@ -142,6 +154,7 @@ impl Search {
         max_depth: u32,
     ) -> (Outcome, Vec<Move>, u64) {
         self.begin_run();
+        self.proof_mode = ProofMode::Outcome;
         let outcome = self.dfpn(pos, INF, INF, max_depth, u64::MAX, true);
         let pv = self.extract_pv(pos);
         (outcome, pv, self.nodes)
@@ -158,22 +171,21 @@ impl Search {
     /// `refine_sppv` stages.
     pub fn solve_outcome(&mut self, pos: &mut Position) -> Outcome {
         self.begin_run();
-        let saved_refine = self.refine_shortest;
-        self.refine_shortest = false;
+        self.proof_mode = ProofMode::Outcome;
 
         let mut outcome = Outcome::Draw;
-        let mut max_depth = 1u32;
+        let schedule = [1u32, 2, 4, 8, 12, 16, 20, 24, 32, 48, 64];
         let mut chunk = 500_000u64;
         let mut success_depth: Option<u32> = None;
         let mut fail_depth = 0u32;
 
-        while max_depth <= 64 && !self.time_exceeded() {
+        for &max_depth in schedule.iter() {
+            if self.time_exceeded() {
+                break;
+            }
             self.reset_search_state();
             outcome = self.dfpn(pos, INF, INF, max_depth, chunk, true);
             if outcome != Outcome::Draw {
-                // The root entry was just stored for the current path, so read
-                // its recorded depth directly (even if the result is path-
-                // dependent and marked repetition_seen).
                 if let Some(entry) = self.tt.probe(pos.hash())
                     && entry.outcome.is_some()
                 {
@@ -182,14 +194,9 @@ impl Search {
                 if success_depth.is_none() {
                     success_depth = Some(max_depth);
                 }
-                // `fail_depth` is already the largest depth known to be a draw
-                // from the previous iteration.  Do not overwrite it with an
-                // unproven `max_depth - 1`; that would collapse the refinement
-                // interval and prevent `refine_sppv` from searching.
                 break;
             }
             fail_depth = max_depth;
-            max_depth = max_depth.saturating_mul(2);
             chunk = chunk.saturating_mul(2);
         }
 
@@ -211,7 +218,6 @@ impl Search {
             }
         }
 
-        self.refine_shortest = saved_refine;
         self.bootstrap_success_depth = success_depth;
         self.bootstrap_fail_depth = fail_depth;
         outcome
@@ -229,10 +235,13 @@ impl Search {
 
         if let Some(depth) = self.bootstrap_success_depth {
             self.reset_search_state();
-            let saved_refine = self.refine_shortest;
-            self.refine_shortest = false;
-            self.dfpn(pos, INF, INF, depth, u64::MAX, true);
-            self.refine_shortest = saved_refine;
+            self.proof_mode = ProofMode::Ppv;
+            // A PPV needs the longest defender replies, so the proof search is
+            // allowed to run until the timeout as long as a proven winning
+            // depth is known.
+            if !self.time_exceeded() {
+                self.dfpn(pos, INF, INF, depth, u64::MAX, true);
+            }
             if self.time_exceeded() {
                 return None;
             }
@@ -268,33 +277,54 @@ impl Search {
         while hi > lo + 1 && !self.time_exceeded() {
             // Search downward from the known winning depth.  Each successful
             // probe at `d` means a win exists in `d` plies, so try `d - 1`
-            // next.  This reuses the transposition table from the previous,
-            // deeper probe and finds the SPPV without expensive failed probes.
+            // next.  A failed probe is retried with a larger chunk before
+            // concluding `d` is impossible, so the remaining time budget is
+            // used productively.
             let probe = hi - 1;
-            self.reset_search_state();
-            let saved_refine = self.refine_shortest;
-            self.refine_shortest = true;
-            let o = self.dfpn(pos, INF, INF, probe, u64::MAX, true);
-            self.refine_shortest = saved_refine;
+            let mut chunk = 500_000u64;
+            let mut proved_at_probe = false;
+
+            for _ in 0..4 {
+                if self.time_exceeded() {
+                    break;
+                }
+                self.reset_search_state();
+                self.proof_mode = ProofMode::Sppv;
+                let o = self.dfpn(pos, INF, INF, probe, chunk, true);
+
+                if self.time_exceeded() {
+                    break;
+                }
+
+                if o == outcome {
+                    if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
+                        let pv_len = pv.len() as u32;
+                        if pv_len < current_best_len {
+                            self.last_pv = pv;
+                            current_best_len = pv_len;
+                            on_shorter(&self.last_pv);
+                        } else if pv_len == current_best_len {
+                            self.last_pv = pv;
+                        }
+                    }
+                    hi = probe;
+                    proved_at_probe = true;
+                    break;
+                }
+
+                chunk = chunk.saturating_mul(2);
+                if chunk == u64::MAX {
+                    break;
+                }
+            }
 
             if self.time_exceeded() {
                 break;
             }
 
-            if o == outcome {
-                if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
-                    let pv_len = pv.len() as u32;
-                    if pv_len < current_best_len {
-                        self.last_pv = pv;
-                        current_best_len = pv_len;
-                        on_shorter(&self.last_pv);
-                    } else if pv_len == current_best_len {
-                        self.last_pv = pv;
-                    }
-                }
-                hi = probe;
-            } else {
-                // `probe` cannot win; the shortest proven depth is `hi`.
+            if !proved_at_probe {
+                // `probe` cannot win with the available time; the shortest
+                // proven depth is `hi`.
                 break;
             }
         }
@@ -309,6 +339,7 @@ impl Search {
     pub fn solve(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
         if !self.refine_shortest {
             self.begin_run();
+            self.proof_mode = ProofMode::Outcome;
             let outcome = self.dfpn(pos, INF, INF, u32::MAX, u64::MAX, true);
             if outcome != Outcome::Draw {
                 if let Some(entry) = self.tt.probe(pos.hash())

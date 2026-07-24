@@ -7,7 +7,7 @@ use atomic_movegen::types::{Move, MoveList};
 use crate::position::{Outcome, Position};
 use crate::zobrist;
 
-use super::{INF, Search};
+use super::{INF, ProofMode, Search};
 
 pub struct ChildInfo {
     pub mv: Move,
@@ -16,6 +16,7 @@ pub struct ChildInfo {
     pub outcome: Option<Outcome>,
     pub depth: u32,
     pub repetition_seen: bool,
+    pub explored: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -35,24 +36,31 @@ pub struct ChildSelection {
 impl Search {
     /// Evaluate every legal move and build a fresh `ChildInfo` table.
     ///
-    /// When a child proves a win for the side to move and `refine_shortest` is
-    /// disabled, the remaining siblings are not evaluated. Their entries are
-    /// filled with neutral bounds so they do not affect the parent's numbers.
+    /// A single child `Loss` is enough to prove the parent is a win for the
+    /// side to move.  We early-exit in `Outcome` mode and in `Ppv` mode at OR
+    /// nodes (the attacker only needs any winning move).  For `Sppv` and for
+    /// `Ppv` at AND nodes we evaluate all children so the defender's longest
+    /// resistance can be discovered.
     pub(super) fn evaluate_all_children(
         &mut self,
         pos: &mut Position,
         moves: &MoveList,
         max_depth: u32,
         is_or_node: bool,
-        refine_shortest: bool,
+        proof_mode: ProofMode,
     ) -> Vec<ChildInfo> {
         let mut children = Vec::with_capacity(moves.len());
         for i in 0..moves.len() {
             let mv = moves[i];
             let info = self.evaluate_child(pos, mv, max_depth, is_or_node);
-            let early_win = info.outcome == Some(Outcome::Loss);
+            let decisive = match (proof_mode, is_or_node) {
+                (ProofMode::Outcome, _) => info.outcome == Some(Outcome::Loss),
+                (ProofMode::Ppv, true) => info.outcome == Some(Outcome::Loss),
+                (ProofMode::Ppv, false) => false,
+                (ProofMode::Sppv, _) => false,
+            };
             children.push(info);
-            if early_win && !refine_shortest {
+            if decisive {
                 for j in (i + 1)..moves.len() {
                     children.push(ChildInfo {
                         mv: moves[j],
@@ -61,6 +69,7 @@ impl Search {
                         outcome: None,
                         depth: 0,
                         repetition_seen: false,
+                        explored: false,
                     });
                 }
                 break;
@@ -78,16 +87,16 @@ impl Search {
     pub(super) fn select_from_children(
         children: &[ChildInfo],
         is_or_node: bool,
-        refine_shortest: bool,
+        proof_mode: ProofMode,
         previous_best_move: Option<Move>,
         previous_best_child: Option<u8>,
     ) -> ChildSelection {
         let solved = Self::is_solved_by_children(children, is_or_node);
 
-        // If a win is already proven and we do not need the shortest PV,
-        // there is no reason to order or expand the remaining siblings.
+        // If a win is already proven and we do not need a fully minimax
+        // refinement, there is no reason to order or expand remaining siblings.
         if let Some(selection) =
-            Self::select_child_with_early_exit(children, solved, refine_shortest)
+            Self::select_child_with_early_exit(children, is_or_node, proof_mode, solved)
         {
             return selection;
         }
@@ -100,6 +109,7 @@ impl Search {
                 .filter(|&i| children[i].mv == prev_mv)
                 .or_else(|| children.iter().position(|c| c.mv == prev_mv))
             && children[idx].outcome.is_none()
+            && !children[idx].explored
         {
             let is_still_best = if is_or_node {
                 children
@@ -212,7 +222,7 @@ impl Search {
     ) -> Option<usize> {
         let mut best: Option<usize> = None;
         for i in 0..children.len() {
-            if i == exclude || children[i].outcome.is_some() {
+            if i == exclude || children[i].outcome.is_some() || children[i].explored {
                 continue;
             }
             let cmp_c = if is_or_node {
@@ -260,6 +270,7 @@ impl Search {
                 outcome: Some(outcome),
                 depth: 0,
                 repetition_seen: false,
+                explored: false,
             }
         } else if self.path_stack.contains(&child_rep_key) {
             let (pn, dn) = Outcome::Draw.pn_dn_for(child_is_or);
@@ -270,6 +281,7 @@ impl Search {
                 outcome: Some(Outcome::Draw),
                 depth: 0,
                 repetition_seen: true,
+                explored: false,
             }
         } else {
             let child_max_depth = max_depth.saturating_sub(1);
@@ -289,6 +301,7 @@ impl Search {
                     outcome: Some(resolved.outcome),
                     depth: resolved.depth,
                     repetition_seen: resolved.repetition_seen,
+                    explored: false,
                 }
             } else if let Some(summary) = self.tt.probe_summary(child_key) {
                 // Only reuse unsolved bounds when they are non-degenerate.  A
@@ -314,6 +327,7 @@ impl Search {
                     outcome: None,
                     depth: 0,
                     repetition_seen: summary.repetition_seen,
+                    explored: false,
                 }
             } else {
                 ChildInfo {
@@ -323,6 +337,7 @@ impl Search {
                     outcome: None,
                     depth: 0,
                     repetition_seen: false,
+                    explored: false,
                 }
             }
         };

@@ -9,7 +9,7 @@ use crate::position::{Outcome, Position};
 use crate::zobrist;
 
 use super::children::{ChildInfo, ChildSelection};
-use super::{INF, Search};
+use super::{INF, ProofMode, Search};
 
 pub(super) struct Resolved {
     pub outcome: Outcome,
@@ -66,15 +66,17 @@ impl Search {
         }
 
         if max_depth == 0 {
-            let (pn, dn) = Outcome::Draw.pn_dn_for(is_or_node);
+            // A non-terminal leaf is an unsolved frontier, not a proven draw.
+            // Store cheap (1, 1) bounds so the next deeper probe can grow past
+            // the horizon without re-expanding the entire subtree.
             self.tt.store(
                 tt_key,
                 Move::NONE,
                 u8::MAX,
                 0,
-                Some(Outcome::Draw),
-                pn,
-                dn,
+                None,
+                1,
+                1,
                 0,
                 0,
                 self.path_code,
@@ -134,18 +136,22 @@ impl Search {
             }
 
             if children.is_empty() {
-                children = self.evaluate_all_children(
-                    pos,
-                    &moves,
-                    max_depth,
-                    is_or_node,
-                    self.refine_shortest,
-                );
+                children =
+                    self.evaluate_all_children(pos, &moves, max_depth, is_or_node, self.proof_mode);
             } else if let Some(prev) = selection
                 && let Some(idx) = prev.best_child_index
             {
                 let mv = children[idx].mv;
+                let old_pn = children[idx].pn;
+                let old_dn = children[idx].dn;
                 children[idx] = self.evaluate_child(pos, mv, max_depth, is_or_node);
+                // In a work-bounded call, if the child came back with exactly the
+                // same (pn, dn) bounds re-expanding it cannot make progress. Mark
+                // it explored so the search moves on to other children.
+                if max_work != u64::MAX && children[idx].pn == old_pn && children[idx].dn == old_dn
+                {
+                    children[idx].explored = true;
+                }
             }
 
             let previous_best_move = previous_summary
@@ -159,7 +165,7 @@ impl Search {
             selection = Some(Search::select_from_children(
                 &children,
                 is_or_node,
-                self.refine_shortest,
+                self.proof_mode,
                 previous_best_move,
                 previous_best_child,
             ));
@@ -172,7 +178,8 @@ impl Search {
 
             if let Some(solved) = selection.solved_outcome {
                 if solved == Outcome::Win {
-                    // Keep the shortest known winning child.
+                    // A side-to-move Win requires the shortest decisive child
+                    // (shortest mate from the winning player's perspective).
                     if selection.depth < best_win_depth {
                         best_win_depth = selection.depth;
                         outcome_to_store = Some(solved);
@@ -182,14 +189,12 @@ impl Search {
                         outcome_to_store_depth = best_win_depth;
                         outcome_to_store_repetition_seen = selection.repetition_seen;
                     }
-                    if selection.all_solved {
-                        break;
-                    }
-                    if !self.refine_shortest {
+                    if selection.all_solved || self.proof_mode != ProofMode::Sppv {
                         break;
                     }
                 } else if solved == Outcome::Loss {
-                    // Keep the longest known losing child (most resistant defense).
+                    // A side-to-move Loss requires the longest decisive child
+                    // (most resistance from the losing player).
                     if selection.depth > best_loss_depth {
                         best_loss_depth = selection.depth;
                         outcome_to_store = Some(solved);

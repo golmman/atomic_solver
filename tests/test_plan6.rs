@@ -2,7 +2,7 @@ mod common;
 
 use std::process::Command;
 
-use atomic_movegen::types::{Move, Square};
+use atomic_movegen::types::{Move, MoveList, Square};
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
 use common::{cli_bin, solve_refined_moves};
@@ -230,6 +230,36 @@ fn m29_black_loses() {
     assert_eq!(
         solve_refined_moves("8/3p4/3BkRp1/6Pp/2p4P/p1N2P2/P1PP4/7K b - - 1 29").0,
         Outcome::Loss
+    );
+}
+
+#[test]
+#[ignore = "60 second search"]
+fn m24_ppv() {
+    let fen = "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R2R2K w - - 0 24";
+    let mut pos = Position::from_fen(fen).unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(60);
+
+    let outcome = search.solve_outcome(&mut pos);
+    assert_eq!(outcome, Outcome::Win, "expected white to win at m24");
+
+    let ppv = search.find_ppv(&mut pos, outcome);
+    assert!(ppv.is_some(), "expected a PPV for m24");
+    let ppv = ppv.unwrap();
+    assert!(
+        ppv.len() >= 2,
+        "expected PPV to have at least a first attacker move and a defender reply, got {ppv:?}"
+    );
+
+    // The returned line must be legal and validated as a win.
+    let mut current = Position::from_fen(fen).unwrap();
+    current.do_move(ppv[0]);
+    let mut legal = MoveList::new();
+    current.legal_moves(&mut legal);
+    assert!(
+        (0..legal.len()).any(|i| legal[i] == ppv[1]),
+        "second move of m24 PPV should be a legal defender reply, got {ppv:?}"
     );
 }
 

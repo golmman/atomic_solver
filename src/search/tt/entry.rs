@@ -114,6 +114,36 @@ impl TtEntry {
         None
     }
 
+    /// Find a cached result for `path_code` whose stored depth matches
+    /// `remaining` plies.  This is used to extract PVs whose length is known
+    /// from a bounded solve: each followed entry must have a depth consistent
+    /// with the remaining plies in the line.
+    pub fn find_result_for_path_with_depth(
+        &self,
+        path_code: u64,
+        expected: Outcome,
+        remaining: u32,
+    ) -> Option<EntryResult> {
+        if self.outcome == Some(expected) && !self.repetition_seen && self.depth == remaining {
+            return Some(EntryResult {
+                best_move: self.best_move,
+                depth: self.depth,
+            });
+        }
+        for twin in self.twins.iter() {
+            if twin.outcome == Some(expected)
+                && twin.path_code == path_code
+                && twin.depth == remaining
+            {
+                return Some(EntryResult {
+                    best_move: twin.best_move,
+                    depth: twin.depth,
+                });
+            }
+        }
+        None
+    }
+
     /// Return the best move and outcome for `path_code`, preferring a
     /// path-independent base result.
     pub fn best_result_for_path(&self, path_code: u64) -> Option<(Move, Option<Outcome>, u32)> {
