@@ -30,3 +30,28 @@ After that we implemented the 4 plans of `docs/plans/ultimattt/`.
 
 So either the PPV implementation was wrong in the first place or we introduced a regression later.
 Please investigate.
+
+---
+
+```
+cargo run --release -- --fen "4r1k1/3p4/2pB2p1/6Pp/p4p1P/2N1PP2/P1PP4/1R2R2K w - - 0 24" --timeout 60 --no-refine-shortest
+```
+produces
+```
+outcome: win
+pv: e3f4 e8e1 b1b4 c6c5 b4b8 g8f7 a2a3 c5c4 b8g8 f7e6 g8g7 e6f5 g7g6
+```
+
+e8e1 is not the strongest reponse by black, the better move a4a1 delays the forced white win by 1 mov.
+So the printed pv is still not a PPV.
+That means the last implementation (`docs/plans/pv/report3.md`) has not completely fixed the underlying issues.
+
+What we want:
+* the PPV/SPPV logic from `docs/plans/pv/report2.md`
+* a fix of the problems analyzed in `docs/plans/speed/checkpoint1.md`
+  * which resulted in the improvements from ultimattt, see reports of `docs/plans/ultimattt/`
+
+Analyze the issue and come up with an implementation plan in `docs/plans/pv/plan4.md`.
+
+
+

@@ -291,13 +291,17 @@ impl Search {
                     repetition_seen: resolved.repetition_seen,
                 }
             } else if let Some(summary) = self.tt.probe_summary(child_key) {
-                // Only reuse unsolved bounds from a search that was bounded by at
-                // most `child_max_depth` plies.  Bounds from a deeper or work-
-                // bounded search may be inconsistent for this shallower probe, so
-                // start with the neutral (1, 1) values instead.
+                // Only reuse unsolved bounds when they are non-degenerate.  A
+                // previous work-bounded search may have stored a candidate
+                // terminal-like bound (pn == 0 or dn == 0) without an outcome,
+                // and propagating such values can trick the parent search into
+                // treating an unproven node as solved.  Fall back to neutral
+                // (1, 1) in those cases.
                 let use_as_unsolved = summary.outcome.is_none()
                     && summary.remaining_depth != u32::MAX
-                    && summary.remaining_depth <= child_max_depth;
+                    && summary.remaining_depth <= child_max_depth
+                    && summary.pn > 0
+                    && summary.dn > 0;
                 let (pn, dn) = if use_as_unsolved {
                     (summary.pn, summary.dn)
                 } else {

@@ -100,9 +100,12 @@ This is clean, streams results as soon as they are known, and never prints an un
   * TODO: timeout option
   * TODO: no-ppv option
   * TODO: no-sppv option
+  * TODO: after ppv has been found: limit max-depth for remaining search
 * TODO: discrepancies 4 to 5 depth mate
 * TODO: always show outcome, then refine
 * TODO: benchmark
+* TODO: endgame tablebases
+
 
 4b2k/P1Bp1p1P/3P1P2/8/8/1p1p4/bPpP4/2B4K w - - 0 1
 

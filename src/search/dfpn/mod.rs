@@ -182,7 +182,10 @@ impl Search {
                 if success_depth.is_none() {
                     success_depth = Some(max_depth);
                 }
-                fail_depth = fail_depth.max(max_depth.saturating_sub(1));
+                // `fail_depth` is already the largest depth known to be a draw
+                // from the previous iteration.  Do not overwrite it with an
+                // unproven `max_depth - 1`; that would collapse the refinement
+                // interval and prevent `refine_sppv` from searching.
                 break;
             }
             fail_depth = max_depth;
@@ -259,14 +262,15 @@ impl Search {
             .bootstrap_success_depth
             .unwrap_or(self.last_pv.len() as u32);
         let mut current_best_len = self.last_pv.len() as u32;
-        let mut lo = self.bootstrap_fail_depth;
+        let lo = self.bootstrap_fail_depth;
         let mut hi = start_depth;
 
         while hi > lo + 1 && !self.time_exceeded() {
-            // Binary search the shortest winning depth.  A win at `d` is still a
-            // win at any larger depth, so the predicate "outcome == expected" is
-            // monotonic in the depth bound.
-            let probe = lo + (hi - lo) / 2;
+            // Search downward from the known winning depth.  Each successful
+            // probe at `d` means a win exists in `d` plies, so try `d - 1`
+            // next.  This reuses the transposition table from the previous,
+            // deeper probe and finds the SPPV without expensive failed probes.
+            let probe = hi - 1;
             self.reset_search_state();
             let saved_refine = self.refine_shortest;
             self.refine_shortest = true;
@@ -290,7 +294,8 @@ impl Search {
                 }
                 hi = probe;
             } else {
-                lo = probe;
+                // `probe` cannot win; the shortest proven depth is `hi`.
+                break;
             }
         }
     }

@@ -272,22 +272,24 @@ impl Search {
             Some(Outcome::Win | Outcome::Loss) => u32::MAX,
             _ => max_depth,
         };
+
+        // Unsolved bounds must be positive; a stored (0, INF) or (INF, 0) with no
+        // outcome looks like a solved terminal and can trick a later search into
+        // treating an unproven node as decided.
+        let (store_pn, store_dn) = if outcome_to_store.is_some() {
+            (outcome_to_store_pn, outcome_to_store_dn)
+        } else {
+            (pn.max(1), dn.max(1))
+        };
+
         self.tt.store(
             tt_key,
             store_best_move,
             store_best_child,
             work,
             outcome_to_store,
-            if outcome_to_store.is_some() {
-                outcome_to_store_pn
-            } else {
-                pn
-            },
-            if outcome_to_store.is_some() {
-                outcome_to_store_dn
-            } else {
-                dn
-            },
+            store_pn,
+            store_dn,
             if outcome_to_store.is_some() {
                 outcome_to_store_depth
             } else {
