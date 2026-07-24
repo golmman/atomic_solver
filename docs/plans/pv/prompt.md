@@ -53,5 +53,32 @@ What we want:
 
 Analyze the issue until fully understood, then come up with an implementation plan in `docs/plans/pv/plan4.md`.
 
+---
 
+Given a FEN and a list of moves i want an example which verifies that the list is a PPV in that position.
 
+Here is a proposed pseudocode implementation:
+
+```
+verify_ppv(fen, moves):
+    positions = replay(fen, moves)          # legality-checked
+    n = len(positions) - 1
+    assert is_terminal(positions[n]) and outcome matches claim
+    proven_depth[n] = 0                     # terminal, depth 0
+    for i from n-1 downto 0:
+        if attacker_to_move(positions[i]):
+            proven_depth[i] = 1 + proven_depth[i+1]
+            # OR-node: trivially proven via this one child
+        else:  # defender to move — AND-node, needs closure
+            bound = 1 + proven_depth[i+1]
+            for each legal move m at positions[i], m != moves[i]:
+                child = apply(positions[i], m)
+                if not proven_loss_within(child, bound, hint=refutation[i+1]):
+                    return FAIL("AND-node not closed at ply", i, "via", m)
+            proven_depth[i] = bound  # or max over siblings if you want exact SPPV-style depth
+    return SUCCESS
+```
+
+Where `proven_loss_within(pos, bound, hint)` is a bounded mate/win search (e.g., a df-pn subroutine seeded with the known refutation) rather than a full unbounded search.
+
+Challenge my idea if necessary then create an implementation plan in `docs/plans/pv/plan5.md`.
