@@ -51,7 +51,7 @@ What we want:
 * a fix of the problems analyzed in `docs/plans/speed/checkpoint1.md`
   * which resulted in the improvements from ultimattt, see reports of `docs/plans/ultimattt/`
 
-Analyze the issue and come up with an implementation plan in `docs/plans/pv/plan4.md`.
+Analyze the issue until fully understood, then come up with an implementation plan in `docs/plans/pv/plan4.md`.
 
 
 
