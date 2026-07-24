@@ -7,12 +7,18 @@ iterative-deepening loop, similar to `ultimattt`'s sequential `dfpn`.  During th
 bootstrap `max_depth` is effectively unbounded; the search is stopped and resumed
 by doubling work chunks, reusing the transposition table between chunks.
 
+This prioritizes **proving decisive outcomes for deep positions** (roughly 30
+full moves / 60 plies or more).  `find_ppv` and PPV extraction remain important,
+but `refine_sppv` and SPPV refinement are secondary; the plan does not optimize
+SPPV at the expense of outcome correctness or PPV validity.
+
 The current hybrid (`docs/plans/ultimattt/report4.md`) already added a
 `max_work` parameter and capped each depth probe with a work budget.  Removing
 the fixed `max_depth` schedule entirely should eliminate the last horizon cliff:
-a 12-ply mate no longer has to wait for the `max_depth=16` probe, because a
-work chunk can naturally grow past any fixed depth once the winning line is
-found inside it.
+a deep forced win no longer has to wait for the `max_depth=64` probe (or the
+unbounded fallback that currently wipes the transposition table), because a work
+chunk can naturally grow past any fixed depth once the winning line is found
+inside it.
 
 ## Concrete changes
 
@@ -337,7 +343,8 @@ cargo test --release --test test_plan6 m24_ppv --ignored
 ```
 
 `m27_shortest_pv` must still report a 7-plies win.  `m24_ppv` must still pass
-within 60 seconds.
+within 60 seconds.  Failures in SPPV-only assertions are lower priority than
+outcome or PPV failures.
 
 ### Benchmark
 
@@ -356,15 +363,22 @@ existing benchmark suite.
   the explicit `max_work` short-circuit stops each chunk cleanly, the
   `explored` flag prevents re-expanding exhausted children within a chunk, and
   DF-PN's threshold propagation focuses later chunks on the most-proving lines.
-- **Binary search may waste time on probes below the shortest win/loss.** A
-  probe `d` smaller than the true shortest distance returns `Draw` regardless of
-  work.  The retry loop is capped at three attempts; after that the probe is
-  treated as a failure and `lo` moves up.  The wall-clock timeout bounds total
-  work.
+- **Binary search may waste time on SPPV probes below the shortest win/loss.**
+  A probe `d` smaller than the true shortest distance returns `Draw` regardless
+  of work.  The retry loop is capped at three attempts; after that the probe is
+  treated as a failure and `lo` moves up.  This is acceptable because SPPV is
+  the lowest priority; if refinement runs out of time, the already-found PPV
+  remains valid.
 - **`bootstrap_success_depth` must be concrete.** If the decisive root TT entry
   and `extract_pv_checked` both fail, the fallback to `self.max_ply` is safe but
   may make `find_ppv` / `refine_sppv` slow.  The plan explicitly avoids the
   `u32::MAX` sentinel that would make the follow-up stages run unbounded.
+- **PPV extraction for deep wins may consume the remaining time budget.**
+  `find_ppv` uses `max_work = u64::MAX` and runs until the configured timeout,
+  sharing whatever time `solve_outcome` left.  This is acceptable because PPV
+  is the medium-high priority and the outcome is already proven, but very deep
+  wins may time out before a PPV is produced.  Use `--no-refine-shortest` to
+  skip the SPPV stage and leave more time for `find_ppv`.
 - **`bootstrap_fail_depth = 0` starts binary search from scratch.** This is
   correct and adds at most `log2(hi)` probes.  A future improvement could track
   the deepest fully searched ply from the root TT, but with `max_depth =
@@ -394,7 +408,8 @@ existing benchmark suite.
 5. Preserve the existing `find_ppv` / `extract_pv` depth-aware extraction and
    the `evaluate_child` unsolved-summary guard.
 6. Verify on the `fen1` / `fen2` regression, the `m24` / `m27` tests, and the
-   benchmark suite.
+   benchmark suite.  Outcome correctness and PPV validity are the primary
+   success criteria; SPPV refinement is secondary.
 
 After implementation, write `docs/plans/ultimattt/report5.md` documenting the
 changes and the verification results.

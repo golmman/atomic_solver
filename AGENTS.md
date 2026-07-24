@@ -21,12 +21,27 @@ A pure solver for atomic chess in Rust.
   path-dependent move codes.
 - `src/notation.rs` provides UCI move helpers.
 - `src/main.rs` is the CLI entry point. It accepts `--fen <FEN>` (default
-  standard start position), `--epsilon <VALUE>` (default 0.25), and
+  standard start position), `--epsilon <VALUE>` (default 0.125), and
   `--no-refine-shortest` (refinement is enabled by default), plus `-h`/`--help`.
   Unknown options exit with an error. It prints the outcome and a PV when the
   result is decisive.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
+
+## Output priorities
+
+When the solver must trade off result quality against time or implementation
+complexity, prefer them in this order:
+
+1. **Decisive outcome** for deep positions (roughly 30 full moves / 60 plies or
+   more).
+2. **Proof Principal Variation (PPV)** once the outcome is known.
+3. **Shortest PPV (SPPV)** refinement only when time and correctness allow.
+
+This means `solve_outcome` may use the majority of the time budget,
+`find_ppv` should return a valid PPV if possible, and `refine_sppv` is the
+lowest-priority stage.  `--no-refine-shortest` is a normal, well-supported
+mode.
 
 ## Conventions
 
