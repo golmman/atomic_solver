@@ -105,6 +105,8 @@ This is clean, streams results as soon as they are known, and never prints an un
 * TODO: always show outcome, then refine
 * TODO: benchmark
 * TODO: endgame tablebases
+* TODO: example which tests if a list of moves is a PPV
+* TODO: docs/plans/ultimattt/plan5.md
 
 
 4b2k/P1Bp1p1P/3P1P2/8/8/1p1p4/bPpP4/2B4K w - - 0 1
