@@ -55,9 +55,11 @@ Analyze the issue until fully understood, then come up with an implementation pl
 
 ---
 
-Given a FEN and a list of moves i want an example which verifies that the list is a PPV in that position.
+**Summary**
 
-Here is a proposed pseudocode implementation:
+Given a FEN and a list of moves i want a cargo example which independently verifies that the list is a PPV in that position.
+
+**Proposed pseudocode implementation**
 
 ```
 verify_ppv(fen, moves):
@@ -79,6 +81,46 @@ verify_ppv(fen, moves):
     return SUCCESS
 ```
 
-Where `proven_loss_within(pos, bound, hint)` is a bounded mate/win search (e.g., a df-pn subroutine seeded with the known refutation) rather than a full unbounded search.
+Where `proven_loss_within(pos, bound, hint)` is a bounded mate/win search (i.e. a df-pn subroutine seeded with the known refutation) rather than a full unbounded search.
+
+**Hints/Ideas**
+
+* We should reuse existing code where possible
+* Don't add things to the application (i.e. `src/`) unless absolutely necessary
+* Add a new example in `examples/verify_ppv`
+* bounded search is a necessity in my opinion
+* hint/refutation search is not necessary, if too complicated
+
+**CLI example**
+
+```
+cargo run --release --example verify_ppv -- --timeout 60 --fen "4r1k1/3p4/2pB2p1/6Pp/p4p1P/2N1PP2/P1PP4/1R2R2K w - - 0 24" --moves "e3f4 e8e1 b1b4 c6c5 b4b8 g8f7 a2a3 c5c4 b8g8 f7e6 g8g7 e6f5 g7g6"
+```
+
+Output should include:
+* timings
+* errors logs e.g. like invalid moves, fail-depth, actual best move
+* progress logs: current depth / max depth
+* outcome: win / not-win
+
+**Tests**
+
+Given the FEN `6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 26`:
+
+* Moves `a1a2`: not a valid move, not a PPV
+* Moves `b1b8 g8h7`: does not result in a decisive outcome, so not a PPV
+* Moves `b1b8 g8h7 b8h8 h7g7 h8h7 g7g8 h7g7 g8h8 g7g8 h8h7 g8g6`: proper pv, results in white win, but g8h7 is not optimal for black (stronger move is g8f7), so not a PPV
+* Moves `b1b8 g8f7 c3e2 c5c4 e2f4 c4c3 f4g6`: is a verified PPV
+* Moves `b1b8 g8f7 c3e2 c5c4 c2c3 f7e6 e2f4 e6f5 f4g6`: is another verified PPV, even if fastest win for white
+
+Add additional simple tests as needed.
+
+**Not-Goals**
+
+* SPPV-Verification/Search is NOT a goal.
+
+**Task**
 
 Challenge my idea if necessary then create an implementation plan in `docs/plans/pv/plan5.md`.
+
+
