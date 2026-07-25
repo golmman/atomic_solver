@@ -59,6 +59,8 @@ Analyze the issue until fully understood, then come up with an implementation pl
 
 Given a FEN and a list of moves i want a cargo example which independently verifies that the list is a PPV in that position.
 
+See `docs/theory/definitions.md` for the definitions of PV, PPV, SPPV.
+
 **Proposed pseudocode implementation**
 
 ```
