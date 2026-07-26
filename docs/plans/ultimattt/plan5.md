@@ -103,10 +103,15 @@ pub fn solve_outcome(&mut self, pos: &mut Position) -> Outcome {
 Notes:
 
 - `bootstrap_success_depth` must always be concrete after a decisive outcome.
-  The decisive root TT entry already records the correct depth (`shortest win`
-  for a `Win`, `longest loss` for a `Loss`).  If for any reason the root entry
-  lacks a depth, fall back to a validated PV length, then to `max_ply`.  Never
-  pass `u32::MAX` to `find_ppv` / `refine_sppv`.
+  The decisive root TT entry records a concrete depth (`shortest win` for a
+  `Win`, `longest loss` for a `Loss`).  For a `Win` in `Outcome` mode this is an
+  upper bound on the shortest mate: the search breaks as soon as any winning
+  child is proven, so the stored depth is the depth of the first proven winning
+  line.  `find_ppv` may therefore return a non-shortest PPV for `Win` before
+  `refine_sppv` tightens it; for a `Loss` the depth is exact because all
+  children must be solved.  If for any reason the root entry lacks a depth, fall
+  back to a validated PV length, then to `max_ply`.  Never pass `u32::MAX` to
+  `find_ppv` / `refine_sppv`.
 - Do **not** call `self.tt.new_generation()` or `self.reset_history_and_killers()`
   in the unbounded fallback.  The work chunks have built useful bounds and
   ordering; discarding them would restart the search from scratch.
@@ -170,7 +175,6 @@ where
                         self.last_pv = pv;
                     }
                 }
-                hi = probe;
                 proved_at_probe = true;
                 break;
             }
@@ -194,8 +198,12 @@ where
 }
 ```
 
-The predicate "`outcome` is decisive in `d` plies" is monotonic in `d` for both
-`Win` and `Loss`, so binary search on `[lo, hi]` is sound.
+For an exact depth-bounded search the predicate "`outcome` is decisive in `d`
+plies" is monotonic in `d` for both `Win` and `Loss`, so binary search on
+`[lo, hi]` would be sound.  With a finite `max_work` budget a probe can return
+`Draw` because it ran out of work rather than because the depth is too low; the
+retry loop mitigates this but does not eliminate it.  The binary search is
+therefore best-effort for SPPV, and PPV validity is not affected.
 
 #### 1.3 `Search::solve()` unbounded branch
 
@@ -395,6 +403,29 @@ existing benchmark suite.
   are still reused via `try_use_tt` when `entry.depth <= probe`, and previous
   `refine_sppv` probes with smaller `max_depth` can be reused by later, deeper
   probes.
+
+## Resolved open questions
+
+The following decisions were reached during review and are reflected in this
+plan:
+
+1. **`bootstrap_success_depth` for `Win` is an upper bound.**  The depth comes
+   from the first winning child proven by `solve_outcome`, not a guaranteed
+   shortest mate.  `refine_sppv` is responsible for tightening it.
+2. **SPPV binary search is best-effort.**  The 3-retry loop stays; a work-limited
+   `Draw` can still be misclassified as a depth-limited `Draw`, so refinement
+   may not always reach the true shortest PV.
+3. **Strict `evaluate_child` unsolved-summary guard is kept.**  `find_ppv` does
+   not reuse bootstrap unsolved bounds with huge `remaining_depth`; it
+   recomputes inside its finite bound.
+4. **No recursion-depth cap.**  Search recursion is limited by the work budget
+   and the timeout only.
+5. **Unbounded `solve_outcome` fallback is kept.**  It remains a safety net for
+   the case where the work chunk doubles to `u64::MAX` before the timeout.
+6. **`evaluate_all_children` is left budget-unaware.**  The 500k initial chunk is
+   assumed to exceed the legal-move count at any node.
+7. **Redundant `hi = probe` in `refine_sppv` is removed.**  The post-loop
+   `hi`/`lo` update remains.
 
 ## Summary
 
