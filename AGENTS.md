@@ -28,6 +28,33 @@ A pure solver for atomic chess in Rust.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
 
+## Examples
+
+`examples/common.rs` provides shared helpers for the example binaries; it is
+not itself a runnable example.
+
+The runnable examples are:
+
+- `benchmark` — Reproducible benchmark harness over a fixed suite of positions.
+  Supports `--runs`, `--timeout`, `--epsilon`, `--refine-shortest`, and an
+  optional positional name filter. Prints a table with outcome, nodes, child
+  evaluations, mean/min/max time, and PV length.
+- `find_winning_child` — Enumerates every legal first move, solves the resulting
+  child with a short timeout, and reports the first move that is winning for
+  the root side (a child `Loss`).
+- `play_and_solve` — Plays a user-specified move and then solves the resulting
+  position. Useful for inspecting a particular line.
+- `solve_depth_limited` — Runs `Search::search_depth` with a fixed
+  `max_depth` and no iterative-deepening bootstrap.
+- `solve_no_refinement` — Solves a position with the full staged solver but
+  with shortest-PV refinement disabled.
+- `static_move_scores` — Prints the `StaticAtomicScorer` values for all legal
+  moves, sorted from highest to lowest.
+- `twin_stats` — Solves GHI-sensitive positions and reports twin-table
+  insertion, eviction, and peak-live-twin statistics.
+- `verify_ppv` — Verifies that a supplied UCI move list is a Proof Principal
+  Variation for a given FEN.
+
 ## Output priorities
 
 When the solver must trade off result quality against time or implementation
