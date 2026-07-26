@@ -87,6 +87,7 @@ pub struct Search {
     killers: [[Move; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
     history_age_counter: u64,
     max_ply: usize,
+    max_depth_reached: u32,
     bootstrap_success_depth: Option<u32>,
     bootstrap_fail_depth: u32,
     // Optional repetition-path prefix for bounded searches that are run in the
@@ -116,6 +117,7 @@ impl Search {
             killers: [[Move::NONE; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
             history_age_counter: 0,
             max_ply: DEFAULT_MAX_PV_PLIES,
+            max_depth_reached: 0,
             bootstrap_success_depth: None,
             bootstrap_fail_depth: 0,
             prefix_path: None,
@@ -215,9 +217,11 @@ impl Search {
         let mut outcome = Outcome::Draw;
         let mut chunk = 500_000u64;
         let mut success_depth: Option<u32> = None;
+        let mut last_child_evals_before = 0u64;
 
         while !self.time_exceeded() {
             self.reset_search_state();
+            last_child_evals_before = self.child_evals;
             outcome = self.dfpn(pos, INF, INF, u32::MAX, chunk, true);
 
             if outcome != Outcome::Draw {
@@ -238,7 +242,9 @@ impl Search {
                 break;
             }
 
+            let work_done = self.child_evals - last_child_evals_before;
             chunk = chunk.saturating_mul(2);
+            self.log_chunk(work_done, chunk, "solve_outcome");
             if chunk == u64::MAX {
                 break;
             }
@@ -249,6 +255,8 @@ impl Search {
         // and history from the work chunks; only reset path state.
         if outcome == Outcome::Draw && !self.time_exceeded() {
             self.reset_search_state();
+            let work_done = self.child_evals - last_child_evals_before;
+            self.log_chunk(work_done, u64::MAX, "solve_outcome_fallback");
             outcome = self.dfpn(pos, INF, INF, u32::MAX, u64::MAX, true);
 
             if outcome != Outcome::Draw {
@@ -342,12 +350,13 @@ impl Search {
             // A few retries with doubling work avoid false negatives caused by a
             // tight budget; if the depth bound itself is too low, the retries are
             // cheap because the tree is shallow.
-            for _ in 0..3 {
+            for _retry in 0..3 {
                 if self.time_exceeded() {
                     break;
                 }
                 self.reset_search_state();
                 self.proof_mode = ProofMode::Sppv;
+                let child_evals_before = self.child_evals;
                 let o = self.dfpn(pos, INF, INF, probe, chunk, true);
 
                 if self.time_exceeded() {
@@ -369,7 +378,9 @@ impl Search {
                     break;
                 }
 
+                let work_done = self.child_evals - child_evals_before;
                 chunk = chunk.saturating_mul(2);
+                self.log_chunk(work_done, chunk, "refine_sppv");
                 if chunk == u64::MAX {
                     break;
                 }
@@ -446,6 +457,7 @@ impl Search {
         self.path_stack.clear();
         self.path_code = 0;
         self.last_pv.clear();
+        self.max_depth_reached = 0;
         if let Some((keys, code)) = &self.prefix_path {
             self.path_stack = keys.clone();
             self.path_code = *code;
@@ -459,10 +471,25 @@ impl Search {
     fn reset_search_state(&mut self) {
         self.path_stack.clear();
         self.path_code = 0;
+        self.max_depth_reached = 0;
         if let Some((keys, code)) = &self.prefix_path {
             self.path_stack = keys.clone();
             self.path_code = *code;
         }
+    }
+
+    fn log_chunk(&self, work_done: u64, next_chunk: u64, label: &str) {
+        let elapsed = self.start.elapsed();
+        let secs = elapsed.as_secs_f64();
+        let nps = if secs > 0.0 {
+            self.nodes as f64 / secs
+        } else {
+            0.0
+        };
+        eprintln!(
+            "[{label}] chunk done: work_done={work_done} next_chunk={next_chunk} elapsed={secs:.3}s max_depth={} nodes={} nps={nps:.0}",
+            self.max_depth_reached, self.nodes
+        );
     }
 
     pub(super) fn path_contains(&self, key: u64) -> bool {
@@ -471,6 +498,7 @@ impl Search {
 
     pub(super) fn path_push(&mut self, key: u64) {
         self.path_stack.push(key);
+        self.max_depth_reached = self.max_depth_reached.max(self.path_stack.len() as u32);
     }
 
     pub(super) fn path_pop(&mut self) {

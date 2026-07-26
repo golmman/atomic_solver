@@ -40,6 +40,10 @@ because a pure work-bounded loop has no reliable deepest-searched depth.
   `bootstrap_success_depth` using the same precedence as `solve_outcome`
   instead of defaulting to `u32::MAX`.
 - Removed the now-unused `reset_history_and_killers` helper.
+- Added per-chunk logging before `max_work` is increased in `solve_outcome`
+  and `refine_sppv`, including work done, elapsed time, deepest ply reached,
+  total nodes, and nodes per second.
+- Added `max_depth_reached` tracking via `path_push` and `reset_search_state`.
 
 ### `src/search/dfpn/core.rs`
 
