@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 
 use atomic_movegen::types::{Move, MoveList, MoveType, PieceType, parse_sq};
+use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::Position;
 
 pub const M19_FEN: &str = "4r1k1/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R4R1K w - - 2 19";
@@ -34,6 +35,18 @@ pub fn parse_move(pos: &Position, from: &str, to: &str, promo: Option<&str>) -> 
                 }
                 None => return Some(m),
             }
+        }
+    }
+    None
+}
+
+pub fn parse_uci(pos: &Position, uci: &str) -> Option<Move> {
+    let mut moves = MoveList::new();
+    pos.legal_moves(&mut moves);
+    for i in 0..moves.len() {
+        let m = moves[i];
+        if move_to_uci(m) == uci {
+            return Some(m);
         }
     }
     None

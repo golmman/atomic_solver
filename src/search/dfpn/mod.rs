@@ -89,6 +89,9 @@ pub struct Search {
     max_ply: usize,
     bootstrap_success_depth: Option<u32>,
     bootstrap_fail_depth: u32,
+    // Optional repetition-path prefix for bounded searches that are run in the
+    // context of a longer line (e.g. verifying a defender reply against a PPV).
+    prefix_path: Option<(Vec<u64>, u64)>,
 }
 
 impl Search {
@@ -115,6 +118,7 @@ impl Search {
             max_ply: DEFAULT_MAX_PV_PLIES,
             bootstrap_success_depth: None,
             bootstrap_fail_depth: 0,
+            prefix_path: None,
         }
     }
 
@@ -158,6 +162,42 @@ impl Search {
         let outcome = self.dfpn(pos, INF, INF, max_depth, u64::MAX, true);
         let pv = self.extract_pv(pos);
         (outcome, pv, self.nodes)
+    }
+
+    /// Run a bounded OR-node win search with a pre-populated repetition path.
+    ///
+    /// This is used by the `verify_ppv` example to check defender replies while
+    /// preserving the history of the supplied PPV prefix. The repetition keys
+    /// `prefix_keys` are the positions *before* `pos` is pushed onto the path
+    /// stack; `prefix_path_code` is the XOR of `zobrist::path_random(...)` for
+    /// the prefix moves using the same 1-indexed depths as `dfpn`.
+    ///
+    /// Internally this runs the staged solver (with shortest-PV refinement) on
+    /// the child position and returns a Win only if the shortest proven win is
+    /// within `max_depth` plies.
+    pub fn search_depth_with_prefix(
+        &mut self,
+        pos: &mut Position,
+        max_depth: u32,
+        prefix_keys: &[u64],
+        prefix_path_code: u64,
+    ) -> (Outcome, u32, u64) {
+        let saved_prefix = self.prefix_path.take();
+        let saved_refine = self.refine_shortest;
+        self.prefix_path = Some((prefix_keys.to_vec(), prefix_path_code));
+        self.refine_shortest = true;
+
+        let (outcome, pv, nodes) = self.solve(pos);
+
+        self.prefix_path = saved_prefix;
+        self.refine_shortest = saved_refine;
+
+        let depth = pv.len() as u32;
+        if outcome == Outcome::Win && depth <= max_depth {
+            (Outcome::Win, depth, nodes)
+        } else {
+            (Outcome::Draw, 0, nodes)
+        }
     }
 
     /// Run the solver to a decisive outcome or the configured timeout.
@@ -384,6 +424,10 @@ impl Search {
         self.path_stack.clear();
         self.path_code = 0;
         self.last_pv.clear();
+        if let Some((keys, code)) = &self.prefix_path {
+            self.path_stack = keys.clone();
+            self.path_code = *code;
+        }
     }
 
     pub fn child_evaluations(&self) -> u64 {
@@ -393,6 +437,10 @@ impl Search {
     fn reset_search_state(&mut self) {
         self.path_stack.clear();
         self.path_code = 0;
+        if let Some((keys, code)) = &self.prefix_path {
+            self.path_stack = keys.clone();
+            self.path_code = *code;
+        }
     }
 
     pub(super) fn path_contains(&self, key: u64) -> bool {
