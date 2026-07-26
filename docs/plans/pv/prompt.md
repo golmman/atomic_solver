@@ -103,7 +103,7 @@ Output should include:
 * timings
 * errors logs e.g. like invalid moves, fail-depth, actual best move
 * progress logs: current depth / max depth
-* outcome: win / not-win
+* outcome: is-ppv, not-ppv
 
 **Tests**
 
@@ -125,4 +125,22 @@ Add additional simple tests as needed.
 
 Challenge my idea if necessary then create an implementation plan in `docs/plans/pv/plan5.md`.
 
+----
+
+Let's say the full move tree from the attackers perspective looks like this:
+
+* ABCDE
+* F
+* AGH
+* AGIJKLM
+
+I.e. the attacker 
+
+E, F, H, M are the terminal nodes and are all wins for the attacker.
+I.e. the attacker could choose to end it immediately with move F, or could choose for longer play with move A.
+
+I want that the lines ending with M, E, F are by definition PPVs and the one ending with H is not.
+H is not a PPV because the defender chose move G over B which would result in a longer defense.
+
+Does this make sense? Help me with the reformulation of the definition.
 
