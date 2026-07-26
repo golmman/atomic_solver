@@ -202,64 +202,77 @@ impl Search {
 
     /// Run the solver to a decisive outcome or the configured timeout.
     ///
-    /// Internally this bootstraps with an iteratively doubling depth bound, but
-    /// each depth probe is also work-bounded so that an over-expanded
-    /// `max_depth=8` probe cannot consume the entire time budget.  The
-    /// transposition table is reused between probes and across depths, so a
-    /// 12-ply mate found in a later probe is available to the next.  The
-    /// decisive PV depth is recorded for the follow-up `find_ppv` and
-    /// `refine_sppv` stages.
+    /// Internally this uses a pure work-bounded iterative-deepening loop.  The
+    /// depth bound is effectively unbounded (`u32::MAX`); the search is stopped
+    /// and resumed by doubling work chunks, reusing the transposition table
+    /// between chunks.  This prioritizes proving decisive outcomes for deep
+    /// positions.  A concrete decisive PV depth is recorded for the follow-up
+    /// `find_ppv` and `refine_sppv` stages.
     pub fn solve_outcome(&mut self, pos: &mut Position) -> Outcome {
         self.begin_run();
         self.proof_mode = ProofMode::Outcome;
 
         let mut outcome = Outcome::Draw;
-        let schedule = [1u32, 2, 4, 8, 12, 16, 20, 24, 32, 48, 64];
         let mut chunk = 500_000u64;
         let mut success_depth: Option<u32> = None;
-        let mut fail_depth = 0u32;
 
-        for &max_depth in schedule.iter() {
-            if self.time_exceeded() {
-                break;
-            }
+        while !self.time_exceeded() {
             self.reset_search_state();
-            outcome = self.dfpn(pos, INF, INF, max_depth, chunk, true);
+            outcome = self.dfpn(pos, INF, INF, u32::MAX, chunk, true);
+
             if outcome != Outcome::Draw {
                 if let Some(entry) = self.tt.probe(pos.hash())
                     && entry.outcome.is_some()
                 {
                     success_depth = Some(entry.depth);
                 }
+                if success_depth.is_none()
+                    && let Some(pv) = self.extract_pv_checked(pos, outcome, None)
+                {
+                    success_depth = Some(pv.len() as u32);
+                }
                 if success_depth.is_none() {
-                    success_depth = Some(max_depth);
+                    // Last-resort cap so the follow-up stages have a finite bound.
+                    success_depth = Some(self.max_ply as u32);
                 }
                 break;
             }
-            fail_depth = max_depth;
+
             chunk = chunk.saturating_mul(2);
+            if chunk == u64::MAX {
+                break;
+            }
         }
 
-        if success_depth.is_none() && !self.time_exceeded() {
+        // If the work loop ran out of budget without a decisive result, spend the
+        // remaining wall-clock time on a single unbounded search.  Keep the table
+        // and history from the work chunks; only reset path state.
+        if outcome == Outcome::Draw && !self.time_exceeded() {
             self.reset_search_state();
-            self.tt.new_generation();
-            self.reset_history_and_killers();
             outcome = self.dfpn(pos, INF, INF, u32::MAX, u64::MAX, true);
+
             if outcome != Outcome::Draw {
                 if let Some(entry) = self.tt.probe(pos.hash())
                     && entry.outcome.is_some()
                 {
                     success_depth = Some(entry.depth);
                 }
-                if success_depth.is_none() {
-                    success_depth = Some(u32::MAX);
+                if success_depth.is_none()
+                    && let Some(pv) = self.extract_pv_checked(pos, outcome, None)
+                {
+                    success_depth = Some(pv.len() as u32);
                 }
-                fail_depth = fail_depth.max(64);
+                if success_depth.is_none() {
+                    success_depth = Some(self.max_ply as u32);
+                }
             }
         }
 
         self.bootstrap_success_depth = success_depth;
-        self.bootstrap_fail_depth = fail_depth;
+        // A pure work-bounded loop has no reliable "deepest searched depth".
+        // Zero is a safe lower bound: a non-terminal position cannot win or lose
+        // in zero plies, so refinement starts from there.
+        self.bootstrap_fail_depth = 0;
         outcome
     }
 
@@ -310,21 +323,26 @@ impl Search {
         let start_depth = self
             .bootstrap_success_depth
             .unwrap_or(self.last_pv.len() as u32);
-        let mut current_best_len = self.last_pv.len() as u32;
-        let lo = self.bootstrap_fail_depth;
         let mut hi = start_depth;
+        let mut lo = self.bootstrap_fail_depth;
+
+        // If last_pv is empty, use hi as the initial best length so any proven PV
+        // at a probe below hi is reported as shorter.
+        let mut current_best_len = if self.last_pv.is_empty() {
+            hi
+        } else {
+            self.last_pv.len() as u32
+        };
 
         while hi > lo + 1 && !self.time_exceeded() {
-            // Search downward from the known winning depth.  Each successful
-            // probe at `d` means a win exists in `d` plies, so try `d - 1`
-            // next.  A failed probe is retried with a larger chunk before
-            // concluding `d` is impossible, so the remaining time budget is
-            // used productively.
-            let probe = hi - 1;
+            let probe = lo + (hi - lo) / 2;
             let mut chunk = 500_000u64;
             let mut proved_at_probe = false;
 
-            for _ in 0..4 {
+            // A few retries with doubling work avoid false negatives caused by a
+            // tight budget; if the depth bound itself is too low, the retries are
+            // cheap because the tree is shallow.
+            for _ in 0..3 {
                 if self.time_exceeded() {
                     break;
                 }
@@ -347,7 +365,6 @@ impl Search {
                             self.last_pv = pv;
                         }
                     }
-                    hi = probe;
                     proved_at_probe = true;
                     break;
                 }
@@ -362,10 +379,10 @@ impl Search {
                 break;
             }
 
-            if !proved_at_probe {
-                // `probe` cannot win with the available time; the shortest
-                // proven depth is `hi`.
-                break;
+            if proved_at_probe {
+                hi = probe;
+            } else {
+                lo = probe;
             }
         }
     }
@@ -387,8 +404,13 @@ impl Search {
                 {
                     self.bootstrap_success_depth = Some(entry.depth);
                 }
+                if self.bootstrap_success_depth.is_none()
+                    && let Some(pv) = self.extract_pv_checked(pos, outcome, None)
+                {
+                    self.bootstrap_success_depth = Some(pv.len() as u32);
+                }
                 if self.bootstrap_success_depth.is_none() {
-                    self.bootstrap_success_depth = Some(u32::MAX);
+                    self.bootstrap_success_depth = Some(self.max_ply as u32);
                 }
                 self.bootstrap_fail_depth = 0;
             }
@@ -453,12 +475,6 @@ impl Search {
 
     pub(super) fn path_pop(&mut self) {
         self.path_stack.pop();
-    }
-
-    fn reset_history_and_killers(&mut self) {
-        self.history = [[[0; 64]; 64]; 2];
-        self.killers = [[Move::NONE; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH];
-        self.history_age_counter = 0;
     }
 
     pub fn time_exceeded(&self) -> bool {

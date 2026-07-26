@@ -67,7 +67,7 @@ complexity, prefer them in this order:
 
 This means `solve_outcome` may use the majority of the time budget,
 `find_ppv` should return a valid PPV if possible, and `refine_sppv` is the
-lowest-priority stage.  `--no-refine-shortest` is a normal, well-supported
+lowest-priority stage. `--no-refine-shortest` is a normal, well-supported
 mode.
 
 ## Conventions
@@ -97,3 +97,4 @@ mode.
   - implementation plans can be found via `find . -type f -name 'plan*.md'`
   - implementation reports can be found via `find . -type f -name 'report*.md'`
   - the final task of an implementation plan is creating the corresponding implementation report
+    - the report should include additional tools/examples used, problems encountered, open ends, next steps

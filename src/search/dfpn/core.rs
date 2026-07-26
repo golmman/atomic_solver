@@ -230,6 +230,12 @@ impl Search {
             }
             let (second_pn, second_dn) = selection.second_child;
 
+            let work_spent = self.child_evals - child_evals_start;
+            if max_work != u64::MAX && work_spent >= max_work {
+                break;
+            }
+            let child_max_work = max_work.saturating_sub(work_spent);
+
             let (np, nd) = if is_or_node {
                 let new_th_pn = std::cmp::min(th_pn, self.epsilon_ceil(second_pn));
                 let new_th_dn = if th_dn == INF {
@@ -250,7 +256,6 @@ impl Search {
 
             pos.do_move(mv);
             self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
-            let child_max_work = max_work.saturating_sub(self.child_evals - child_evals_start);
             let _ = self.dfpn(
                 pos,
                 np,

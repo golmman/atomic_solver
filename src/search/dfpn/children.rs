@@ -310,6 +310,14 @@ impl Search {
                 // and propagating such values can trick the parent search into
                 // treating an unproven node as solved.  Fall back to neutral
                 // (1, 1) in those cases.
+                //
+                // `remaining_depth == u32::MAX` on an unsolved entry means an
+                // unbounded work cutoff.  With `max_depth == u32::MAX` during the
+                // bootstrap this only applies to the root, which is never
+                // evaluated here; deeper unsolved entries carry
+                // `u32::MAX - ply`, matching `child_max_depth` on reuse.  When
+                // `child_max_depth` is finite (e.g. `refine_sppv` probes), the
+                // `<=` guard rejects over-deep summaries as intended.
                 let use_as_unsolved = summary.outcome.is_none()
                     && summary.remaining_depth != u32::MAX
                     && summary.remaining_depth <= child_max_depth
