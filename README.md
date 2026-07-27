@@ -16,7 +16,7 @@ The solver is built on top of [`atomic-movegen`](https://crates.io/crates/atomic
 cargo run -- --fen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 ```
 
-The default CLI search uses a 64 MB transposition table and a 5-second timeout.
+The default CLI search uses a 64 MB transposition table and a 5-second timeout. Use `--tt-size <MB>` to change the table size.
 
 ## Library usage
 
