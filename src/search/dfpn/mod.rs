@@ -93,6 +93,10 @@ pub struct Search {
     // Optional repetition-path prefix for bounded searches that are run in the
     // context of a longer line (e.g. verifying a defender reply against a PPV).
     prefix_path: Option<(Vec<u64>, u64)>,
+    linear_chunks: bool,
+    chunk_increment: u64,
+    chunk_multiplier_num: u64,
+    chunk_multiplier_den: u64,
 }
 
 impl Search {
@@ -121,6 +125,10 @@ impl Search {
             bootstrap_success_depth: None,
             bootstrap_fail_depth: 0,
             prefix_path: None,
+            linear_chunks: false,
+            chunk_increment: 500_000,
+            chunk_multiplier_num: 2,
+            chunk_multiplier_den: 1,
         }
     }
 
@@ -134,6 +142,22 @@ impl Search {
 
     pub fn set_max_ply(&mut self, max_ply: usize) {
         self.max_ply = max_ply.max(1);
+    }
+
+    pub fn set_linear_chunks(&mut self, linear: bool) {
+        self.linear_chunks = linear;
+    }
+
+    pub fn set_chunk_increment(&mut self, increment: u64) {
+        self.chunk_increment = increment.max(1);
+    }
+
+    pub fn set_chunk_multiplier(&mut self, num: u64, den: u64) {
+        assert!(den > 0, "chunk multiplier denominator must be positive");
+        assert!(num > 0, "chunk multiplier numerator must be positive");
+        let g = gcd(num, den);
+        self.chunk_multiplier_num = num / g;
+        self.chunk_multiplier_den = den / g;
     }
 
     pub fn twin_stats(&self) -> (u64, u64) {
@@ -243,7 +267,12 @@ impl Search {
             }
 
             let work_done = self.child_evals - last_child_evals_before;
-            chunk = chunk.saturating_mul(2);
+            if self.linear_chunks {
+                chunk = chunk.saturating_add(self.chunk_increment);
+            } else {
+                chunk = ((chunk as u128 * self.chunk_multiplier_num as u128)
+                    / self.chunk_multiplier_den as u128) as u64;
+            }
             self.log_chunk(work_done, chunk, "solve_outcome");
             if chunk == u64::MAX {
                 break;
@@ -379,7 +408,12 @@ impl Search {
                 }
 
                 let work_done = self.child_evals - child_evals_before;
-                chunk = chunk.saturating_mul(2);
+                if self.linear_chunks {
+                    chunk = chunk.saturating_add(self.chunk_increment);
+                } else {
+                    chunk = ((chunk as u128 * self.chunk_multiplier_num as u128)
+                        / self.chunk_multiplier_den as u128) as u64;
+                }
                 self.log_chunk(work_done, chunk, "refine_sppv");
                 if chunk == u64::MAX {
                     break;
@@ -462,6 +496,10 @@ impl Search {
             self.path_stack = keys.clone();
             self.path_code = *code;
         }
+    }
+
+    pub fn nodes(&self) -> u64 {
+        self.nodes
     }
 
     pub fn child_evaluations(&self) -> u64 {
