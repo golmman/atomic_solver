@@ -85,6 +85,7 @@ mode.
 - Keep source files under ~10 KB. Files larger than 10 KB must include a short
   documented justification in the file header or in `AGENTS.md`. Files larger
   than ~20 KB should normally be split into submodules.
+  - this limit does not hold for `docs/`
 - Unit tests go in a `#[cfg(test)] mod tests` at the bottom of each module.
   Integration/regression tests go under `tests/`.
 - The most important quality attributes for this library are, from most to
