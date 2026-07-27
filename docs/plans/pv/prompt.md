@@ -144,3 +144,9 @@ H is not a PPV because the defender chose move G over B which would result in a 
 
 Does this make sense? Help me with the reformulation of the definition.
 
+----
+
+When we find an outcome the TT entries are usually already updated such that the strongest defender responses are lost already. To restore them we shoud run a separate PV-extraction pass.
+Once the root is proven, don't trust the live TT - run a second, dedicated search (or plain recursive expansion) that only walks the already-proven substree. At each OR-node (defender to move), among children, pick the one that's hardest to disprove (largest dn among still-pn=0 children) as the "strongest defense". Since this second pass only touches the proof-relevant subtree, it's much cheaper than the original search and doesn't depend on the bulk of the TT surviving.
+
+Do implement this via the `find_ppv` function already?
