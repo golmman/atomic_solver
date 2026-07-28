@@ -97,10 +97,16 @@ impl Search {
 
         let previous_summary = self.tt.probe_summary(tt_key);
 
-        let best_from_tt = self
-            .tt
-            .probe_best_move(tt_key, self.path_code)
-            .unwrap_or(Move::NONE);
+        // Only use the stored best move to order OR-node expansions.  At AND
+        // nodes the defender is trying to delay, and stale best_move hints can
+        // affect tie-breaking when multiple replies are equally optimal.
+        let best_from_tt = if is_or_node {
+            self.tt
+                .probe_best_move(tt_key, self.path_code)
+                .unwrap_or(Move::NONE)
+        } else {
+            Move::NONE
+        };
         self.sort_moves(pos, &mut moves, best_from_tt);
 
         self.path_push(rep_key);

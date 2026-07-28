@@ -13,6 +13,7 @@ mod tests;
 pub use crate::zobrist::INF;
 pub use core::outcome_from_pn_dn;
 
+use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 use atomic_movegen::types::Move;
@@ -22,11 +23,14 @@ use crate::position::{Outcome, Position};
 use super::ordering::StaticAtomicScorer;
 use super::tt::TranspositionTable;
 
+type PpvCache = HashMap<(u64, u64, Outcome), (Vec<Move>, u32)>;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum ProofMode {
     /// Stop as soon as the result is proven.
     Outcome,
     /// Defender replies are longest; attacker moves are any winning move.
+    #[allow(dead_code)]
     Ppv,
     /// Fully minimax: shortest attacker wins, longest defender replies.
     Sppv,
@@ -90,6 +94,7 @@ pub struct Search {
     max_depth_reached: u32,
     bootstrap_success_depth: Option<u32>,
     bootstrap_fail_depth: u32,
+    ppv_cache: PpvCache,
     // Optional repetition-path prefix for bounded searches that are run in the
     // context of a longer line (e.g. verifying a defender reply against a PPV).
     prefix_path: Option<(Vec<u64>, u64)>,
@@ -124,6 +129,7 @@ impl Search {
             max_depth_reached: 0,
             bootstrap_success_depth: None,
             bootstrap_fail_depth: 0,
+            ppv_cache: HashMap::new(),
             prefix_path: None,
             linear_chunks: false,
             chunk_increment: 500_000,
@@ -323,18 +329,55 @@ impl Search {
             return None;
         }
 
-        if let Some(depth) = self.bootstrap_success_depth {
+        let mut bound = self.bootstrap_success_depth;
+        if bound.is_none() || bound == Some(self.max_ply as u32) {
             self.reset_search_state();
-            self.proof_mode = ProofMode::Ppv;
-            // A PPV needs the longest defender replies, so the proof search is
-            // allowed to run until the timeout as long as a proven winning
-            // depth is known.
-            if !self.time_exceeded() {
-                self.dfpn(pos, INF, INF, depth, u64::MAX, true);
+            if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
+                bound = Some(pv.len() as u32);
             }
-            if self.time_exceeded() {
-                return None;
-            }
+        }
+        if bound.is_none() {
+            bound = Some(self.max_ply as u32);
+        }
+
+        // Try the exact SPPV extraction from the proven subtree first; it is
+        // cheap when the tree is narrow and gives the exact shortest line.
+        self.reset_search_state();
+        self.ppv_cache.clear();
+        if let Some((pv, depth)) =
+            self.extract_ppv_from_proven_subtree(pos, outcome, bound.unwrap())
+        {
+            self.last_pv = pv.clone();
+            self.bootstrap_success_depth = Some(depth);
+            self.bootstrap_fail_depth = depth.saturating_sub(1);
+            return Some(pv);
+        }
+
+        if self.time_exceeded() {
+            return None;
+        }
+
+        // Fall back to the staged SPPV refinement using the existing TT.
+        let mut current_best = Vec::new();
+        if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
+            self.last_pv = pv.clone();
+            self.bootstrap_success_depth = Some(pv.len() as u32);
+            current_best = pv;
+        }
+
+        self.refine_sppv(pos, outcome, |shorter| {
+            current_best = shorter.to_vec();
+        });
+
+        if !current_best.is_empty() {
+            self.last_pv = current_best.clone();
+            self.bootstrap_success_depth = Some(current_best.len() as u32);
+            self.bootstrap_fail_depth = current_best.len().saturating_sub(1) as u32;
+            return Some(current_best);
+        }
+
+        if self.time_exceeded() {
+            return None;
         }
 
         let pv = self
@@ -343,8 +386,9 @@ impl Search {
         if pv.is_empty() {
             return None;
         }
-        self.last_pv = pv;
-        Some(self.last_pv.clone())
+        self.last_pv = pv.clone();
+        self.bootstrap_success_depth = Some(pv.len() as u32);
+        Some(pv)
     }
 
     /// Iteratively refine the PPV toward the Shortest PPV (SPPV).
@@ -492,6 +536,7 @@ impl Search {
         self.path_code = 0;
         self.last_pv.clear();
         self.max_depth_reached = 0;
+        self.ppv_cache.clear();
         if let Some((keys, code)) = &self.prefix_path {
             self.path_stack = keys.clone();
             self.path_code = *code;

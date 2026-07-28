@@ -193,6 +193,146 @@ impl Search {
         let truncated = pv.len() == self.max_ply && current.outcome().is_none();
         (pv, truncated)
     }
+
+    /// Reconstruct a PPV by walking the proven subtree itself.
+    ///
+    /// This pass does not read the transposition table or trust stored
+    /// `best_move` hints.  It evaluates every legal child, selects the child
+    /// that matches the minimax PPV rule (shortest attacker win, longest
+    /// defender resistance), and recurses.  Repetitions are detected with the
+    /// same `path_stack` convention as `dfpn`.
+    pub(super) fn extract_ppv_from_proven_subtree(
+        &mut self,
+        pos: &mut Position,
+        expected: Outcome,
+        remaining: u32,
+    ) -> Option<(Vec<Move>, u32)> {
+        let key = (pos.hash(), self.path_code, expected);
+        if let Some((cached_pv, cached_depth)) = self.ppv_cache.get(&key) {
+            if *cached_depth <= remaining {
+                return Some((cached_pv.clone(), *cached_depth));
+            }
+            return None;
+        }
+
+        if self.time_exceeded() {
+            return None;
+        }
+
+        if let Some(outcome) = pos.outcome() {
+            if outcome == expected {
+                return Some((Vec::new(), 0));
+            }
+            return None;
+        }
+
+        if remaining == 0 {
+            return None;
+        }
+
+        let rep_key = pos.repetition_key();
+        if self.path_contains(rep_key) {
+            return None;
+        }
+
+        self.path_push(rep_key);
+
+        let mut moves = MoveList::new();
+        pos.legal_moves(&mut moves);
+
+        let best_from_tt = if expected == Outcome::Win {
+            self.tt
+                .probe_best_move(pos.hash(), self.path_code)
+                .unwrap_or(Move::NONE)
+        } else {
+            Move::NONE
+        };
+        self.sort_moves(pos, &mut moves, best_from_tt);
+
+        let mut best: Option<(Move, Vec<Move>, u32)> = None;
+
+        for i in 0..moves.len() {
+            let mv = moves[i];
+
+            // Alpha-beta bound for the attacker: to beat the current best
+            // the child must win in strictly fewer plies.  For the defender
+            // every reply must be checked, so use the full remaining budget.
+            let child_bound = if expected == Outcome::Win {
+                best.as_ref()
+                    .map_or(remaining.saturating_sub(1), |(_, _, total)| {
+                        total.saturating_sub(2)
+                    })
+            } else {
+                remaining.saturating_sub(1)
+            };
+            if child_bound == 0 && best.is_some() && expected == Outcome::Win {
+                // Can't improve on a 1-ply win.
+                break;
+            }
+
+            pos.do_move(mv);
+            self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
+
+            let child_result = if let Some(outcome) = pos.outcome() {
+                if outcome == expected.flip() {
+                    Some((Vec::new(), 0))
+                } else {
+                    None
+                }
+            } else if child_bound > 0 {
+                self.extract_ppv_from_proven_subtree(pos, expected.flip(), child_bound)
+            } else {
+                None
+            };
+
+            self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
+            pos.undo_move(mv);
+
+            match (expected, child_result) {
+                (Outcome::Win, Some((child_pv, child_depth))) => {
+                    let total = 1 + child_depth;
+                    if best.is_none() || total < 1 + best.as_ref().unwrap().2 {
+                        let mut pv = Vec::with_capacity(1 + child_pv.len());
+                        pv.push(mv);
+                        pv.extend(child_pv);
+                        best = Some((mv, pv, child_depth));
+                    }
+                    if total == 1 {
+                        break;
+                    }
+                }
+                (Outcome::Loss, None) => {
+                    self.path_pop();
+                    return None;
+                }
+                (Outcome::Loss, Some((child_pv, child_depth))) => {
+                    let total = 1 + child_depth;
+                    if best.is_none() || total > 1 + best.as_ref().unwrap().2 {
+                        let mut pv = Vec::with_capacity(1 + child_pv.len());
+                        pv.push(mv);
+                        pv.extend(child_pv);
+                        best = Some((mv, pv, child_depth));
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        self.path_pop();
+
+        if let Some((_, pv, child_depth)) = best {
+            let result = (pv, 1 + child_depth);
+            if result.1 <= remaining {
+                self.ppv_cache.insert(key, result.clone());
+                Some(result)
+            } else {
+                // Should not happen because child_bound kept us within remaining.
+                None
+            }
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg(test)]
