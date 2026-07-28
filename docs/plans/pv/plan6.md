@@ -1,5 +1,7 @@
 # Plan 6: Proven-subtree PPV extraction in `find_ppv`
 
+HINT: This plan has been realized in branch `pv_plan6`.
+
 ## Summary
 
 Rewrite `Search::find_ppv` so that, once `solve_outcome` has proven a decisive
