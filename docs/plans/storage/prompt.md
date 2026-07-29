@@ -80,3 +80,22 @@ Answers to the open questions:
 Again, push back if necessary.
 
 With these clarifications, are there any open questions that need answers before we go into implementation plan creation stage?
+
+---
+
+Another idea.
+Here is my simple, generic implementation of a tree in rust (not adapted to our use case yet):
+
+```rust
+struct Graph {
+    nodes: Vec<Node>,
+}
+
+struct Node {
+    parent: Option<usize>,
+    value: String,
+    children: Vec<usize>,
+}
+```
+
+Maybe this saves some overhead in the `ProofTree` structure? What would be the tradeoffs compared to your structure?

@@ -34,7 +34,7 @@ using an `ltree` path of UCI moves.
 | Event payload | `path, uci_move, outcome, depth`. |
 | FEN in event | No. The worker does not need the position; it only records events. |
 | PPV extraction | From the in-memory proof tree; external `verify_ppv` for validation. |
-| Memory | Keep the whole proof tree in memory for the MVP. |
+| Memory | Keep the whole proof tree in memory for the MVP; bounded by `--pt-size`. |
 | `--outcome-only` | Optional flag that disables the entire pre-exit hook (no proof-tree output, no dump, no `q`-triggered action, no extra log). |
 
 ## Node semantics: attacker/defender, OR/AND
@@ -59,19 +59,27 @@ be proven/disproven".
    * Maintains a `move_stack` parallel to `path_stack` and an incremental
      `proof_path` string (e.g. `root.e2e4.e7e5`).
    * Carries an `in_proof_tree` flag through `dfpn` calls.
-   * Emits a `ProofEvent::NodeProven { path, uci_move, outcome, depth }` for
+   * Sends `ProofMessage::NodeProven { path, uci_move, outcome, depth }` for
      every node on the proof subtree.
 
-2. **Proof-tree worker thread** (`src/search/proof_tree/`)
+2. **Proof-tree worker thread** (`src/proof_tree/`)
    * Receives `NodeProven` events on an `mpsc` receiver.
-   * Stores nodes in a `HashMap<String, ProofNode>` keyed by the full ltree path.
-   * Builds child adjacency by deriving `parent_path` from each path.
-   * Can be queried by the main thread / `pre_exit_hook` for statistics or the
-     full `ProofTree`.
+   * Stores nodes in a `Vec<ProofNode>`; maintains a `HashMap<String, usize>`
+     mapping `path -> node id`.
+   * Buffers child events whose parent has not arrived yet (`pending` map keyed
+     by `parent_path`). When the parent event arrives, all buffered children are
+     linked in.
+   * Updates existing nodes when a `path` is seen again (e.g. a re-proven node or
+     a new best child for a `Win` parent). For `Win` nodes the child list is
+     replaced by the latest emitted child.
+   * Answers query messages (e.g. `GetStats`, `GetTree`) from the main thread /
+     `pre_exit_hook` via a reply channel.
 
 3. **Input thread**
    * Reads line-buffered stdin. When it sees `q` it sets an `Arc<AtomicBool>`
      stop flag; the `pre_exit_hook` handles the actual dump/export.
+   * If stdin is closed or piped, the thread exits gracefully; the search still
+     runs until timeout or completion.
 
 ### Search integration
 
@@ -92,23 +100,34 @@ When a node is proven with `in_proof_tree == true`, the solver emits
 
 ### In-memory proof tree
 
+Use a `Vec`-backed tree with `usize` indices and a separate `HashMap` for
+path-to-id lookup:
+
 ```rust
 pub struct ProofNode {
+    pub parent: Option<usize>,
     pub uci_move: String,
     pub outcome: Outcome,
     pub depth: u32,
-    pub children: Vec<String>, // child paths
+    pub children: Vec<usize>, // child node ids
 }
 
 pub struct ProofTree {
     pub root_fen: String,
-    pub nodes: HashMap<String, ProofNode>,
+    pub nodes: Vec<ProofNode>,
+    pub index: HashMap<String, usize>, // ltree path -> node id
 }
 ```
 
-`path` is the primary key. `parent_path` is computed by removing the last ltree
-label. The worker inserts nodes as they arrive, creating parent placeholders if
-necessary.
+`index` maps the incoming event `path` to a node id so the worker can attach
+each child to its parent in `O(1)`. Because DF-PN proves a child before its
+parent, child `NodeProven` events can arrive first; the worker keeps a
+`pending: HashMap<String, Vec<NodeProven>>` buffer keyed by `parent_path` and
+links the children once the parent is inserted.
+
+The full ltree path for a node is reconstructed during a DFS from the root
+(used for dumping and PPV extraction). This avoids storing a full `String` path
+for every edge, which is the main memory saving over `HashMap<String, ProofNode>`.
 
 ### Event payload
 
@@ -131,6 +150,7 @@ after the search ends, no matter why it ended. The `reason` is one of:
 
 * `Timeout` — the configured deadline was reached.
 * `Quit` — the user pressed `q` + Enter.
+* `MemoryLimit` — the proof tree reached `--pt-size`.
 * `Complete` — the solver finished on its own.
 
 Each MVP phase installs a different hook body:
@@ -144,12 +164,43 @@ Each MVP phase installs a different hook body:
 `--outcome-only` sets the hook to `None`, so the solver exits exactly as it did
 before this feature existed.
 
+### Worker query protocol
+
+The main thread and search thread send messages to the worker on the same
+`mpsc` channel. Queries carry a reply sender:
+
+```rust
+pub enum ProofMessage {
+    NodeProven(NodeProven),
+    GetStats(Sender<ProofResponse>),
+    GetTree(Sender<ProofResponse>),
+}
+
+pub enum ProofResponse {
+    Stats(ProofStats),
+    Tree(ProofTree),
+}
+
+pub struct ProofStats {
+    pub nodes: usize,
+    pub win_nodes: usize,
+    pub loss_nodes: usize,
+    pub root_depth: u32,
+}
+```
+
+`NodeProven` events are sent from the search thread; `GetStats` / `GetTree` are
+sent by the `pre_exit_hook`. The worker keeps a `pending` buffer and replies on
+the provided sender.
+
 ### Stop handling
 
 An `Arc<AtomicBool>` stop flag is checked alongside `time_exceeded` inside
-`dfpn`. When the input thread sets it, `dfpn` returns as soon as the current
-recursion unwinds and the search thread stops. The main thread then invokes the
-configured `pre_exit_hook`, waits for the worker if needed, and exits.
+`dfpn`. The input thread is only spawned when the proof-tree feature is enabled
+(not `--outcome-only`). When it sees `q` it sets the flag, `dfpn` returns as
+soon as the current recursion unwinds, and the search thread stops. The main
+thread then invokes the configured `pre_exit_hook`, waits for the worker if
+needed, and exits.
 
 ## SQL / `ltree` dump
 
@@ -181,9 +232,9 @@ INSERT INTO proof_meta (key, value) VALUES ('root_fen', '<FEN>');
 
 COPY proof_nodes (path, parent_path, uci_move, outcome, depth, terminal)
 FROM STDIN;
-root			Win	7	false
-root.e2e4	e2e4	Loss	6	false
-root.e2e4.e7e5	e7e5	Win	5	false
+root	\N		Win	7	false
+root.e2e4	root	e2e4	Loss	6	false
+root.e2e4.e7e5	root.e2e4	e7e5	Win	5	false
 ...\.
 ```
 
@@ -219,9 +270,12 @@ confidence, with the existing `verify_ppv` example.
   dump, and no `q` handling.
 * New optional flag `--dump-path <FILE>` (default `proof_tree.sql`). Used by
   phases that write a `.sql` dump.
+* New optional flag `--pt-size <MB>` (default `256`). Hard limit on the
+  in-memory proof-tree size. When exceeded, the worker sets the stop flag with
+  reason `MemoryLimit`, the search unwinds, and the pre-exit hook is invoked.
 * A background stdin reader watches for `q` + Enter and sets the stop flag.
-* When the search ends for any reason (timeout, `q`, or completion) the main
-  thread calls the configured `pre_exit_hook`.
+* When the search ends for any reason (timeout, `q`, `MemoryLimit`, or
+  completion) the main thread calls the configured `pre_exit_hook`.
 * The hook prints/log its result, then the program exits.
 
 ## MVP roadmap: sub-features in order
@@ -246,15 +300,19 @@ phase swaps in a more capable hook body.
   paths; this validates the `ltree` encoding and `COPY` format before the real
   tree is wired up.
 
-### Phase 3: worker thread and proof-tree statistics
+### Phase 3: worker thread, proof-tree statistics, and `--pt-size`
 * Add the dedicated worker thread and `mpsc` queue.
 * Instrument `dfpn` with `move_stack`, `proof_path`, and `in_proof_tree` event
   emission (`NodeProven { path, uci_move, outcome, depth }`).
 * The worker builds the real `ProofTree`.
+* Add `--pt-size <MB>` (default `256`). When the worker estimates the tree has
+  exceeded this budget, it sets the stop flag with reason `MemoryLimit` and the
+  pre-exit hook runs.
 * The pre-exit hook requests statistics from the worker and logs them:
   `proof_tree: nodes=... win=... loss=... root_depth=...`.
 * **Test:** run to timeout or press `q` and compare the logged stats to the
-  expected proof-tree size for known FENs; check that no events are lost.
+  expected proof-tree size for known FENs; check that no events are lost; test
+  `--pt-size` with a small value and verify `MemoryLimit` is logged.
 
 ### Phase 4: real dump + PPV extraction
 * Reuse the Phase-2 serializer to dump the real `ProofTree` on timeout/q.
@@ -293,25 +351,37 @@ phase swaps in a more capable hook body.
 
 * **Minimal event, no FEN.** External consumers replay the UCI path from the
   root FEN. If per-node FEN becomes necessary, add `fen` to the event.
-* **Unbounded memory.** The MVP keeps all proof-tree nodes in RAM. Deep or
-  highly transpositional positions may require a cap or spill-to-disk later.
+* **Memory cap.** `--pt-size` bounds the proof tree, but the measurement is
+  approximate (Rust `Vec`/`HashMap` heap overhead is not exact). The cap does
+  not cover the `mpsc` channel backlog, the transposition table, or the search
+  stack.
 * **Line-buffered `q`.** The MVP needs `Enter`; true raw single-key support is a
   Phase-5 extension.
 * **Partial dumps on `q`.** A stopped search may leave some `Loss` nodes with
-  incomplete children. Add a `complete` boolean column to make this explicit.
+  incomplete children. Child events whose parent was never proven stay in the
+  worker's `pending` buffer and are not linked into the dumped tree. For the MVP
+  this is accepted; post-MVP can add a `complete` flag or orphan-node handling
+  if external tools need it.
 * **OR child quality.** Building the tree during `solve_outcome` may store an
   arbitrary first winning child. Finalize the tree during `find_ppv` /
   `refine_sppv` for a PPV/SPPV-aligned dump.
 * **Duplicate-per-path blowup.** Transpositions are duplicated. This keeps the
   `ltree` model simple but can grow large; the post-MVP can merge by
   `(hash, path_code)` if needed.
+* **Multiple positions in one database.** The `root` sentinel path is the same
+  for every dumped position. Loading several dumps into the same table will
+  collide unless a run/session id is added. Post-MVP.
 
-## Open questions for implementation
+## Open questions / resolved
 
-1. Should the `q` dump stop the program or only write a snapshot and let the
-   search continue? This concept assumes stop for the MVP.
-2. Is `std::sync::mpsc` sufficient, or should `crossbeam-channel` be evaluated
-   once profiling data is available?
-3. Should the new code live in `src/search/proof_tree/` or as a top-level
-   module?
-4. Should the dump include a `complete` boolean per node for partial trees?
+1. `q` runs the pre-exit hook and then the program exits.
+2. `std::sync::mpsc` is sufficient for the MVP; evaluate other channels after.
+3. New code lives in `src/proof_tree/` (top-level module) to reflect the
+   dedicated-thread decoupling.
+4. Partial trees are fine for the MVP; no `complete` boolean.
+5. `--pt-size` uses an **approximate byte budget**: `size_of(ProofNode)` +
+   stored string capacities + the `index` `HashMap` + the `pending` buffer,
+   plus a small safety factor.
+6. Out-of-order events: the worker buffers child `NodeProven` events until the
+   matching parent event arrives. No placeholder nodes; `ProofNode` stays
+   `outcome: Outcome` and `depth: u32`.
