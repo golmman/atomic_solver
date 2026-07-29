@@ -62,3 +62,20 @@ Proposal where each phase has a testable result:
 * Phase 5: timeout / q -> export proof tree to db
 
 What do you think?
+
+
+---
+
+Adressing the unbounded memory risk:
+* new option --pt-size (pt = proof tree) with a default of 1G
+* execute pre-exit hook and exit when exceeded
+* add this to phase 3
+
+Answers to the open questions:
+1. on `q` the pre-exit hook is executed, then the program quits
+2. `mpsc` should be sufficient for now, evaluation for more sophisticated techniques comes after the mvp
+3. i'd prefer `src/proof_tree/`, since it runs in another thread and this decoupling should be reflected in the directory structure
+4. partial trees are fine for the mvp, no `complete` boolean for now
+
+We are preparing the creation of implementation plans with this concept.
+With these clarifications, are there any open questions that need answers before we go into plan creation stage?

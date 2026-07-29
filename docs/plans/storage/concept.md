@@ -23,9 +23,9 @@ using an `ltree` path of UCI moves.
 
 | Topic | Decision |
 |---|---|
-| Trigger | Interactive `q` + Enter in the CLI; dumps immediately with whatever tree exists so far and then stops. |
+| Trigger | A pluggable `pre_exit_hook` runs whenever the search ends (timeout, `q` + Enter, or normal completion). |
 | Build timing | During search, via events from `dfpn`. |
-| Concurrency | Dedicated worker thread + `mpsc` queue from the start of the MVP. |
+| Concurrency | Dedicated worker thread + `mpsc` queue added in Phase 3 of the testable roadmap. |
 | OR-node contents | One selected winning child per Win node (attacker/OR). |
 | AND-node contents | All legal replies per Loss node (defender/AND). |
 | Duplicate handling | Duplicate per path; each path from the root is a distinct node. |
@@ -35,7 +35,7 @@ using an `ltree` path of UCI moves.
 | FEN in event | No. The worker does not need the position; it only records events. |
 | PPV extraction | From the in-memory proof tree; external `verify_ppv` for validation. |
 | Memory | Keep the whole proof tree in memory for the MVP. |
-| `--outcome-only` | Optional flag that disables the entire proof-tree feature (no worker, no dump, no `q` handling, no PPV/SPPV dump logic). |
+| `--outcome-only` | Optional flag that disables the entire pre-exit hook (no proof-tree output, no dump, no `q`-triggered action, no extra log). |
 
 ## Node semantics: attacker/defender, OR/AND
 
@@ -63,14 +63,15 @@ be proven/disproven".
      every node on the proof subtree.
 
 2. **Proof-tree worker thread** (`src/search/proof_tree/`)
-   * Receives events on an `mpsc` receiver.
+   * Receives `NodeProven` events on an `mpsc` receiver.
    * Stores nodes in a `HashMap<String, ProofNode>` keyed by the full ltree path.
    * Builds child adjacency by deriving `parent_path` from each path.
-   * On a `Dump(path)` command, serializes the tree to `.sql`.
+   * Can be queried by the main thread / `pre_exit_hook` for statistics or the
+     full `ProofTree`.
 
 3. **Input thread**
-   * Reads line-buffered stdin. When it sees `q` it sets an `AtomicBool` stop
-     flag and sends `Dump` to the worker.
+   * Reads line-buffered stdin. When it sees `q` it sets an `Arc<AtomicBool>`
+     stop flag; the `pre_exit_hook` handles the actual dump/export.
 
 ### Search integration
 
@@ -123,12 +124,32 @@ pub struct NodeProven {
 No FEN is sent. The worker records; external tools replay the UCI path from the
 root FEN (stored separately in `proof_meta`) when they need a board.
 
+### Pre-exit hook
+
+The CLI uses a single pluggable `pre_exit_hook(reason, ...)` that is invoked
+after the search ends, no matter why it ended. The `reason` is one of:
+
+* `Timeout` — the configured deadline was reached.
+* `Quit` — the user pressed `q` + Enter.
+* `Complete` — the solver finished on its own.
+
+Each MVP phase installs a different hook body:
+
+* Phase 1: log a simple summary.
+* Phase 2: dump a small dummy/test tree to a `.sql` file.
+* Phase 3: ask the worker for proof-tree statistics and log them.
+* Phase 4: dump the real proof tree and extract/log its PPV.
+* Phase 5: export the proof tree to Postgres.
+
+`--outcome-only` sets the hook to `None`, so the solver exits exactly as it did
+before this feature existed.
+
 ### Stop handling
 
-A `Arc<AtomicBool>` is checked alongside `time_exceeded` inside `dfpn`. When the
-input thread sets it, `dfpn` returns as soon as the current recursion unwinds,
-the search thread stops sending events, and the main thread tells the worker to
-dump and exit.
+An `Arc<AtomicBool>` stop flag is checked alongside `time_exceeded` inside
+`dfpn`. When the input thread sets it, `dfpn` returns as soon as the current
+recursion unwinds and the search thread stops. The main thread then invokes the
+configured `pre_exit_hook`, waits for the worker if needed, and exits.
 
 ## SQL / `ltree` dump
 
@@ -192,59 +213,70 @@ confidence, with the existing `verify_ppv` example.
 
 ## CLI integration
 
-* New optional flag `--outcome-only`. When present, the solver behaves exactly
-  as it did before the proof-tree feature existed: it runs `solve_outcome`,
-  prints the outcome, and exits. No proof tree is built, no worker thread is
-  started, `q` does nothing, and no dump is produced. It takes precedence over
-  `--dump-path` and implies `--no-refine-shortest` for the dump-related PPV
-  logic.
-* New optional flag `--dump-path <FILE>` (default `proof_tree.sql`).
-* When `--dump-path` is present and `--outcome-only` is absent, the solver
-  starts the worker thread and the stdin reader before solving.
-* Press `q` + Enter to stop the search and write the dump.
-* The program prints the dump path and exits.
+* New optional flag `--outcome-only`. When present, the pre-exit hook is
+  disabled entirely: the solver runs `solve_outcome`, prints the outcome (and
+  PV if not `--no-refine-shortest`), and exits. No proof tree, no worker, no
+  dump, and no `q` handling.
+* New optional flag `--dump-path <FILE>` (default `proof_tree.sql`). Used by
+  phases that write a `.sql` dump.
+* A background stdin reader watches for `q` + Enter and sets the stop flag.
+* When the search ends for any reason (timeout, `q`, or completion) the main
+  thread calls the configured `pre_exit_hook`.
+* The hook prints/log its result, then the program exits.
 
 ## MVP roadmap: sub-features in order
 
-### Phase 1: core proof-tree emission (synchronous)
-* Add `ProofEvent`, `ProofNode`, `ProofTree`.
-* Add `move_stack` and incremental `proof_path` to `Search`.
-* Add `in_proof_tree` propagation to `dfpn` and emit `NodeProven` events into a
-  temporary in-memory collector.
-* Implement basic shape checks:
-  * `Win` nodes have exactly one child with `outcome == Loss`.
-  * `Loss` nodes have children for every legal reply, all with `outcome == Win`.
-  * Depths satisfy `parent.depth == 1 + max(child.depth)` for `Loss` and
-    `parent.depth == 1 + min(child.depth)` for `Win`.
+The roadmap is designed so that every phase has a runnable, testable CLI result.
+The same `pre_exit_hook` is invoked for `Timeout`, `Quit`, and `Complete`; each
+phase swaps in a more capable hook body.
 
-### Phase 2: dedicated worker thread and `mpsc` queue
-* Move `ProofTree` into a worker thread.
-* `Search` sends `NodeProven` events over `std::sync::mpsc`.
-* Add `Dump` command handling.
-* Test that no events are lost, that partial trees after a timeout are
-  consistent, and that the search thread is not blocked by the worker.
+### Phase 1: `--outcome-only` flag and simple pre-exit log
+* Add the `--outcome-only` flag and the `pre_exit_hook` machinery.
+* The default hook logs a one-line summary when the search ends:
+  `pre_exit: reason=Timeout|Quit|Complete outcome=... nodes=...`.
+* `--outcome-only` disables the hook completely, restoring the legacy behavior.
+* **Test:** run with a short timeout and see the log; press `q` + Enter and see
+  the log; run with `--outcome-only` and confirm the log is absent.
 
-### Phase 3: `q` trigger and SQL/`ltree` dump
-* Spawn a stdin-reading thread that reacts to `q` + Enter.
-* Wire the stop flag into `dfpn`.
-* Serialize the tree to a `.sql` dump with `COPY`.
-* Test by loading the dump into Postgres and running simple `ltree` queries.
+### Phase 2: dummy/test SQL `ltree` dump
+* Implement the `ProofTree -> .sql` serializer independently of the search.
+* The pre-exit hook builds a small hard-coded test `ProofTree` and writes it to
+  `--dump-path` (default `proof_tree.sql`).
+* **Test:** load the generated `.sql` into Postgres and query the root and a few
+  paths; this validates the `ltree` encoding and `COPY` format before the real
+  tree is wired up.
 
-### Phase 4: PPV extraction and plausibility tests
-* Implement `extract_ppv_from_proof_tree`.
-* Compare its output to `Search::find_ppv` and `refine_sppv`.
-* Run `verify_ppv` on extracted PPVs for a regression suite of FENs.
-* Add plausibility checks for depth consistency and AND-node completeness.
+### Phase 3: worker thread and proof-tree statistics
+* Add the dedicated worker thread and `mpsc` queue.
+* Instrument `dfpn` with `move_stack`, `proof_path`, and `in_proof_tree` event
+  emission (`NodeProven { path, uci_move, outcome, depth }`).
+* The worker builds the real `ProofTree`.
+* The pre-exit hook requests statistics from the worker and logs them:
+  `proof_tree: nodes=... win=... loss=... root_depth=...`.
+* **Test:** run to timeout or press `q` and compare the logged stats to the
+  expected proof-tree size for known FENs; check that no events are lost.
 
-### Phase 5: extensions (post-MVP)
-* Bounded `mpsc`, backpressure, and optional memory cap / spill-to-disk.
-* Richer schema: per-node FEN, `work`, generation, `is_principal` edge flag.
-* Direct PostgreSQL export behind a Cargo feature.
-* True single-key `q` (e.g. via `crossterm`) or signal triggers.
-* Repeated snapshots without stopping the search.
+### Phase 4: real dump + PPV extraction
+* Reuse the Phase-2 serializer to dump the real `ProofTree` on timeout/q.
+* Implement `extract_ppv_from_proof_tree` and have the hook log the extracted
+  PPV alongside the statistics.
+* Validate the PPV with `Search::validate_pv` and the `verify_ppv` example.
+* **Test:** regression FENs; load the dumped `.sql` into Postgres; compare the
+  extracted PPV to `Search::find_ppv`/`refine_sppv`.
+
+### Phase 5: direct Postgres export
+* Add optional direct export of the proof tree to a live Postgres database
+  (behind a feature flag or a separate `--pg-url` flag).
+* The pre-exit hook inserts nodes into the DB instead of (or in addition to)
+  writing a `.sql` file.
+* **Test:** run with a Postgres connection string, then query the DB for the
+  root, the PPV, and child counts of `Loss` nodes.
 
 ## Testability
 
+* **Phase-by-phase CLI tests** that rely on timeout and `q` + Enter to trigger
+  the same `pre_exit_hook`. A coding agent can wait for `--timeout` to fire and
+  inspect the hook output without driving interactive input.
 * **Unit tests** for `ProofTree` insertion, path parsing, and PPV extraction on
   small forced-mate positions.
 * **Integration tests** solving known FENs, dumping, loading into Postgres, and
