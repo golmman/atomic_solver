@@ -46,3 +46,19 @@ Propose a rough roadmap: which sub-features need to be build in what order?
 Ask questions until ambiguity is at an acceptable level. Questions should come with options and their tradeoffs and should be numerated like 1a, 1b, 1c, 2a, 2b, ... .
 Push back where necessary.
 Write the results to `docs/plans/storage/concept.md`.
+
+---
+
+I feel we need to increase the Testability of the mvp phases.
+
+Core idea: not only hitting q+return but also the timeout triggers the pre-exit hook.
+That way a coding agent can easily verify the trigger functionality by waiting for the timeout.
+
+Proposal where each phase has a testable result:
+* Phase 1: --outcome-only flag and timeout/q-trigger -> simple log
+* Phase 2: timeout / q -> dump dummy/test postgres ltree
+* Phase 3: add worker thread and proof tree creation, on timeout / q -> log simple proof-tree statistics
+* Phase 4: timeout / q -> extract PPV from proof-tree and add to the logged statistics
+* Phase 5: timeout / q -> export proof tree to db
+
+What do you think?
