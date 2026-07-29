@@ -99,3 +99,7 @@ struct Node {
 ```
 
 Maybe this saves some overhead in the `ProofTree` structure? What would be the tradeoffs compared to your structure?
+
+---
+
+Create implementation plans for the 5 phases of `docs/plans/storage/concept.md`. Store them in `docs/plans/storage/` as `plan1.md`, `plan2.md`, etc. .
