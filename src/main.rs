@@ -1,6 +1,9 @@
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
-use atomic_solver::search::dfpn::Search;
+use atomic_solver::search::dfpn::{ExitReason, Search};
+use std::io::BufRead;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Command-line solver for atomic chess.
 ///
@@ -20,6 +23,8 @@ use atomic_solver::search::dfpn::Search;
 ///                              but do not refine toward the Shortest PPV (SPPV).
 ///   --timeout <SECONDS>        Search time limit in seconds.
 ///                              Defaults to 5.
+///   --outcome-only             Print only the outcome/PV and skip the pre-exit
+///                              summary. No stdin reader is spawned.
 ///
 /// Output:
 ///   First the decisive outcome (`outcome: win`, `outcome: loss`, or
@@ -32,6 +37,7 @@ use atomic_solver::search::dfpn::Search;
 ///   atomic_solver --help
 ///   atomic_solver --fen "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1"
 ///   atomic_solver --epsilon 0.5 --no-refine-shortest
+///   atomic_solver --timeout 10
 fn print_help(program: &str) {
     println!("atomic chess solver");
     println!();
@@ -50,6 +56,8 @@ fn print_help(program: &str) {
     println!("                             toward the Shortest PPV (SPPV)");
     println!("  --timeout <SECONDS>        Search time limit in seconds");
     println!("                             (default: 5)");
+    println!("  --outcome-only             Print only the outcome/PV;");
+    println!("                             do not spawn stdin reader or pre-exit hook");
     println!();
     println!("Examples:");
     println!("  {program} --help");
@@ -73,6 +81,8 @@ fn pv_str(pv: &[atomic_movegen::types::Move]) -> String {
         .join(" ")
 }
 
+type PreExitHook = Box<dyn FnOnce(ExitReason, Outcome, u64) + Send>;
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let program = args.first().map(String::as_str).unwrap_or("atomic_solver");
@@ -81,6 +91,7 @@ fn main() {
     let mut epsilon = 0.125;
     let mut refine_shortest = true;
     let mut timeout: u64 = 5;
+    let mut outcome_only = false;
     let mut i = 1;
     while i < args.len() {
         let arg = args[i].as_str();
@@ -155,6 +166,10 @@ fn main() {
                 }
                 i += 2;
             }
+            "--outcome-only" => {
+                outcome_only = true;
+                i += 1;
+            }
             _ => {
                 eprintln!("error: unknown option '{arg}'");
                 eprintln!("Run '{program} --help' for usage.");
@@ -173,29 +188,74 @@ fn main() {
     search.set_epsilon(epsilon);
     search.refine_shortest(refine_shortest);
 
-    let outcome = search.solve_outcome(&mut pos);
-    if search.time_exceeded() {
-        println!("timeout");
-        return;
-    }
+    let stop_flag = Arc::new(AtomicBool::new(false));
 
-    println!("outcome: {}", outcome_str(outcome));
-    if outcome == Outcome::Draw {
-        return;
-    }
+    let hook: Option<PreExitHook> = if outcome_only {
+        None
+    } else {
+        let flag = Arc::clone(&stop_flag);
+        std::thread::spawn(move || {
+            let stdin = std::io::stdin();
+            for line in stdin.lock().lines() {
+                match line {
+                    Ok(l) if l.trim() == "q" => {
+                        flag.store(true, Ordering::Release);
+                        break;
+                    }
+                    Ok(_) => continue,
+                    Err(_) => break,
+                }
+            }
+        });
 
-    if let Some(ppv) = search.find_ppv(&mut pos, outcome) {
-        println!("pv: {}", pv_str(&ppv));
+        Some(Box::new(|reason, outcome, nodes| {
+            println!("pre_exit: reason={reason} outcome={outcome} nodes={nodes}");
+        }))
+    };
 
-        if refine_shortest {
-            search.refine_sppv(&mut pos, outcome, |shorter| {
-                println!("pv: {}", pv_str(shorter));
-            });
-            println!("sppv search finished");
+    search.set_stop_flag(if outcome_only {
+        None
+    } else {
+        Some(Arc::clone(&stop_flag))
+    });
+
+    let run_search = |pos: &mut Position, search: &mut Search| -> (Outcome, bool) {
+        let outcome = search.solve_outcome(pos);
+        if search.time_exceeded() {
+            return (outcome, true);
         }
+
+        println!("outcome: {}", outcome_str(outcome));
+        if outcome == Outcome::Draw {
+            return (outcome, false);
+        }
+
+        if let Some(ppv) = search.find_ppv(pos, outcome) {
+            println!("pv: {}", pv_str(&ppv));
+
+            if refine_shortest {
+                search.refine_sppv(pos, outcome, |shorter| {
+                    println!("pv: {}", pv_str(shorter));
+                });
+                if !search.time_exceeded() {
+                    println!("sppv search finished");
+                }
+            }
+        }
+
+        (outcome, search.time_exceeded())
+    };
+
+    let (outcome, timed_out) = run_search(&mut pos, &mut search);
+    if timed_out {
+        let msg = match search.exit_reason() {
+            ExitReason::Quit => "quit",
+            _ => "timeout",
+        };
+        println!("{msg}");
     }
 
-    if search.time_exceeded() {
-        println!("timeout");
+    if let Some(hook) = hook {
+        hook(search.exit_reason(), outcome, search.nodes());
     }
 }

@@ -13,6 +13,8 @@ mod tests;
 pub use crate::zobrist::INF;
 pub use core::outcome_from_pn_dn;
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
 use atomic_movegen::types::Move;
@@ -35,6 +37,24 @@ pub(super) enum ProofMode {
 const DEFAULT_EPSILON: f64 = 0.125;
 const TIMEOUT_SECS: u64 = 5;
 const DEFAULT_MAX_PV_PLIES: usize = 1000;
+
+/// Reason the search stopped, recorded for the pre-exit hook.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ExitReason {
+    Timeout,
+    Quit,
+    Complete,
+}
+
+impl std::fmt::Display for ExitReason {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ExitReason::Timeout => write!(f, "Timeout"),
+            ExitReason::Quit => write!(f, "Quit"),
+            ExitReason::Complete => write!(f, "Complete"),
+        }
+    }
+}
 
 /// Convert the f64 value `1.0 + epsilon` into an exact reduced `num/den` fraction.
 ///
@@ -97,6 +117,7 @@ pub struct Search {
     chunk_increment: u64,
     chunk_multiplier_num: u64,
     chunk_multiplier_den: u64,
+    stop_flag: Option<Arc<AtomicBool>>,
 }
 
 impl Search {
@@ -129,6 +150,7 @@ impl Search {
             chunk_increment: 500_000,
             chunk_multiplier_num: 2,
             chunk_multiplier_den: 1,
+            stop_flag: None,
         }
     }
 
@@ -176,6 +198,24 @@ impl Search {
         let (num, den) = epsilon_fraction(1.0 + epsilon);
         self.epsilon_num = num;
         self.epsilon_den = den;
+    }
+
+    pub fn set_stop_flag(&mut self, stop_flag: Option<Arc<AtomicBool>>) {
+        self.stop_flag = stop_flag;
+    }
+
+    pub fn exit_reason(&self) -> ExitReason {
+        if self
+            .stop_flag
+            .as_ref()
+            .is_some_and(|f| f.load(Ordering::Acquire))
+        {
+            ExitReason::Quit
+        } else if Instant::now() >= self.deadline {
+            ExitReason::Timeout
+        } else {
+            ExitReason::Complete
+        }
     }
 
     pub fn search_depth(
@@ -483,6 +523,20 @@ impl Search {
         (outcome, pv, self.nodes)
     }
 
+    /// Convenience entry point that accepts an external stop flag and writes the
+    /// final exit reason to `exit_reason`.
+    pub fn search_with_settings(
+        &mut self,
+        pos: &mut Position,
+        stop_flag: Option<Arc<AtomicBool>>,
+        exit_reason: &mut ExitReason,
+    ) -> (Outcome, Vec<Move>, u64) {
+        self.set_stop_flag(stop_flag);
+        let result = self.solve(pos);
+        *exit_reason = self.exit_reason();
+        result
+    }
+
     fn begin_run(&mut self) {
         self.nodes = 0;
         self.child_evals = 0;
@@ -544,6 +598,11 @@ impl Search {
     }
 
     pub fn time_exceeded(&self) -> bool {
+        if let Some(flag) = &self.stop_flag
+            && flag.load(Ordering::Acquire)
+        {
+            return true;
+        }
         Instant::now() >= self.deadline
     }
 }

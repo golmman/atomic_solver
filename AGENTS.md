@@ -21,10 +21,11 @@ A pure solver for atomic chess in Rust.
   path-dependent move codes.
 - `src/notation.rs` provides UCI move helpers.
 - `src/main.rs` is the CLI entry point. It accepts `--fen <FEN>` (default
-  standard start position), `--epsilon <VALUE>` (default 0.125), and
-  `--no-refine-shortest` (refinement is enabled by default), plus `-h`/`--help`.
-  Unknown options exit with an error. It prints the outcome and a PV when the
-  result is decisive.
+  standard start position), `--tt-size <MB>` (default 64), `--epsilon <VALUE>`
+  (default 0.125), `--timeout <SECONDS>` (default 5), `--no-refine-shortest`
+  (refinement is enabled by default), `--outcome-only` (disables the pre-exit
+  hook and stdin reader), plus `-h`/`--help`. Unknown options exit with an error.
+  It prints the outcome and a PV when the result is decisive.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
 

@@ -13,6 +13,17 @@ pub enum Outcome {
     Win,
 }
 
+impl std::fmt::Display for Outcome {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Outcome::Win => "win",
+            Outcome::Loss => "loss",
+            Outcome::Draw => "draw",
+        };
+        write!(f, "{s}")
+    }
+}
+
 impl Outcome {
     #[must_use]
     pub fn to_pn_dn(self) -> (u64, u64) {

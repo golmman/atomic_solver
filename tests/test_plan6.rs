@@ -314,8 +314,12 @@ fn m27_ppv_only() {
     );
     assert_eq!(
         lines.len(),
-        2,
-        "expected outcome + one pv line, got:\n{stdout}"
+        3,
+        "expected outcome + one pv line + pre_exit summary, got:\n{stdout}"
+    );
+    assert!(
+        lines[2].starts_with("pre_exit:"),
+        "expected a pre_exit summary line, got:\n{stdout}"
     );
     let pv_line = lines[1];
     assert!(
