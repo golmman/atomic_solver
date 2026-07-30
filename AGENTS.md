@@ -32,9 +32,11 @@ A pure solver for atomic chess in Rust.
   (default 0.125), `--timeout <SECONDS>` (default 5), `--no-refine-shortest`
   (refinement is enabled by default), `--outcome-only` (disables the pre-exit
   hook and stdin reader), `--pt-size <MB>` (default 256, max in-memory
-  proof-tree size), plus `-h`/`--help`. Unknown options exit with an error. It
+  proof-tree size), `--dump-path <FILE>` (default `proof_tree.sql`, SQL dump
+  of the proof tree), plus `-h`/`--help`. Unknown options exit with an error. It
   prints the outcome and a PV when the result is decisive and, by default, logs
-  proof-tree statistics before exit.
+  proof-tree statistics, the extracted PPV, its validity, and writes the SQL
+  dump before exit.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
 

@@ -117,7 +117,10 @@ impl ProofTree {
         )?;
         writeln!(writer, "CREATE TABLE proof_nodes (")?;
         writeln!(writer, "    path ltree PRIMARY KEY,")?;
-        writeln!(writer, "    parent_path ltree,")?;
+        writeln!(
+            writer,
+            "    parent_path ltree GENERATED ALWAYS AS (CASE WHEN nlevels(path) > 1 THEN subpath(path, 0, nlevels(path) - 1) END) STORED,"
+        )?;
         writeln!(writer, "    uci_move text,")?;
         writeln!(
             writer,
@@ -143,20 +146,14 @@ impl ProofTree {
         writeln!(writer)?;
         writeln!(
             writer,
-            "COPY proof_nodes (path, parent_path, uci_move, outcome, depth, terminal) FROM STDIN;"
+            "COPY proof_nodes (path, uci_move, outcome, depth, terminal) FROM STDIN;"
         )?;
-        self.write_node_sql(writer, 0, "root", "\\N")?;
+        self.write_node_sql(writer, 0, "root")?;
         writeln!(writer, "\\.")?;
         Ok(())
     }
 
-    fn write_node_sql<W: Write>(
-        &self,
-        writer: &mut W,
-        id: usize,
-        path: &str,
-        parent_path: &str,
-    ) -> io::Result<()> {
+    fn write_node_sql<W: Write>(&self, writer: &mut W, id: usize, path: &str) -> io::Result<()> {
         let node = &self.nodes[id];
         let outcome = match node.outcome {
             Outcome::Win => "Win",
@@ -171,12 +168,12 @@ impl ProofTree {
         let terminal = if node.depth == 0 { "true" } else { "false" };
         writeln!(
             writer,
-            "{path}\t{parent_path}\t{}\t{outcome}\t{}\t{terminal}",
+            "{path}\t{}\t{outcome}\t{}\t{terminal}",
             node.uci_move, node.depth
         )?;
         for &child in &node.children {
             let child_path = format!("{path}.{}", sanitize_label(&self.nodes[child].uci_move));
-            self.write_node_sql(writer, child, &child_path, path)?;
+            self.write_node_sql(writer, child, &child_path)?;
         }
         Ok(())
     }
@@ -187,6 +184,67 @@ impl ProofTree {
             .find(|&(_, &v)| v == id)
             .map(|(k, _)| k.as_str())
             .unwrap_or("root")
+    }
+
+    /// Return true if the node is a terminal leaf (proven at depth 0).
+    pub fn is_terminal(&self, node_id: usize) -> bool {
+        self.nodes
+            .get(node_id)
+            .is_some_and(|n| n.depth == 0 || n.children.is_empty())
+    }
+
+    /// Extract a principal variation from the proof tree.
+    ///
+    /// * `Win` (OR) nodes pick the proven winning child with the smallest depth.
+    /// * `Loss` (AND) nodes pick the defender reply with the largest depth.
+    /// * The walk stops at a terminal node.
+    pub fn extract_ppv(&self) -> Vec<String> {
+        let mut pv = Vec::new();
+        let mut id = 0usize;
+        while !self.is_terminal(id) {
+            let node = &self.nodes[id];
+            let children = node.children.iter().copied().filter(|&c| {
+                let child = &self.nodes[c];
+                match node.outcome {
+                    Outcome::Win => child.outcome == Outcome::Loss,
+                    Outcome::Loss => child.outcome == Outcome::Win,
+                    Outcome::Draw => false,
+                }
+            });
+            let next = match node.outcome {
+                Outcome::Win => children.min_by_key(|&c| self.nodes[c].depth),
+                Outcome::Loss => children.max_by_key(|&c| self.nodes[c].depth),
+                Outcome::Draw => None,
+            };
+            let Some(next_id) = next else {
+                break;
+            };
+            pv.push(self.nodes[next_id].uci_move.clone());
+            id = next_id;
+        }
+        pv
+    }
+
+    /// Validate that `pv` is a path from the root to a terminal node in the
+    /// proof tree.  This does not replay the moves on a chess board; it only
+    /// checks that the sequence of `uci_move`s exists in the tree.
+    pub fn validate_ppv(&self, pv: &[String]) -> bool {
+        let mut id = 0usize;
+        for uci in pv {
+            if self.is_terminal(id) {
+                return false;
+            }
+            let node = &self.nodes[id];
+            let Some(&next_id) = node
+                .children
+                .iter()
+                .find(|&&c| self.nodes[c].uci_move == *uci)
+            else {
+                return false;
+            };
+            id = next_id;
+        }
+        self.is_terminal(id)
     }
 }
 
@@ -459,9 +517,9 @@ mod tests {
         assert!(sql.contains("CREATE INDEX idx_proof_nodes_path"));
         assert!(sql.contains("COPY proof_nodes"));
         assert!(sql.contains("\\."));
-        assert!(sql.contains("root\t\\N\t\tWin\t2\tfalse"));
-        assert!(sql.contains("root.e2e4\troot\te2e4\tLoss\t1\tfalse"));
-        assert!(sql.contains("root.e2e4.e7e5\troot.e2e4\te7e5\tWin\t0\ttrue"));
+        assert!(sql.contains("root\t\tWin\t2\tfalse"));
+        assert!(sql.contains("root.e2e4\te2e4\tLoss\t1\tfalse"));
+        assert!(sql.contains("root.e2e4.e7e5\te7e5\tWin\t0\ttrue"));
     }
 
     #[test]

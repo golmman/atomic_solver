@@ -1,4 +1,4 @@
-use atomic_solver::notation::move_to_uci;
+use atomic_solver::notation::{move_to_uci, uci_to_move};
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::proof_tree::{ProofMessage, ProofResponse, ProofTreeWorker};
 use atomic_solver::search::dfpn::{ExitReason, Search};
@@ -28,6 +28,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 ///                              summary. No stdin reader is spawned.
 ///   --pt-size <MB>             Maximum in-memory proof-tree size in megabytes.
 ///                              Defaults to 256.
+///   --dump-path <FILE>         Path to write the PostgreSQL `ltree` proof-tree
+///                              SQL dump before exit. Defaults to `proof_tree.sql`.
 ///
 /// Output:
 ///   First the decisive outcome (`outcome: win`, `outcome: loss`, or
@@ -63,6 +65,8 @@ fn print_help(program: &str) {
     println!("                             do not spawn stdin reader or pre-exit hook");
     println!("  --pt-size <MB>             Maximum in-memory proof-tree size in megabytes");
     println!("                             (default: 256)");
+    println!("  --dump-path <FILE>         Path for the proof-tree SQL dump");
+    println!("                             (default: proof_tree.sql)");
     println!();
     println!("Examples:");
     println!("  {program} --help");
@@ -98,6 +102,7 @@ fn main() {
     let mut timeout: u64 = 5;
     let mut outcome_only = false;
     let mut pt_size: usize = 256;
+    let mut dump_path = "proof_tree.sql".to_string();
     let mut i = 1;
     while i < args.len() {
         let arg = args[i].as_str();
@@ -190,6 +195,14 @@ fn main() {
                 }
                 i += 2;
             }
+            "--dump-path" => {
+                if i + 1 >= args.len() {
+                    eprintln!("error: --dump-path requires a value");
+                    std::process::exit(1);
+                }
+                dump_path = args[i + 1].clone();
+                i += 2;
+            }
             _ => {
                 eprintln!("error: unknown option '{arg}'");
                 eprintln!("Run '{program} --help' for usage.");
@@ -237,6 +250,8 @@ fn main() {
         });
 
         let hook_tx = proof_tx.as_ref().unwrap().clone();
+        let hook_fen = fen.clone();
+        let hook_dump_path = dump_path;
         Some(Box::new(move |reason, outcome, nodes| {
             println!("pre_exit: reason={reason} outcome={outcome} nodes={nodes}");
 
@@ -250,6 +265,46 @@ fn main() {
                     "proof_tree: nodes={} win={} loss={} root_depth={}",
                     stats.nodes, stats.win_nodes, stats.loss_nodes, stats.root_depth
                 );
+            }
+
+            let (tree_tx, tree_rx) = std::sync::mpsc::channel();
+            if let Err(e) = hook_tx.send(ProofMessage::GetTree(tree_tx)) {
+                eprintln!("failed to request proof tree: {e}");
+                return;
+            }
+            if let Ok(ProofResponse::Tree(tree)) = tree_rx.recv() {
+                let ppv = tree.extract_ppv();
+                println!("proof_tree_ppv: {}", ppv.join(" "));
+
+                let mut valid = tree.validate_ppv(&ppv);
+                if valid {
+                    let fresh = Position::from_fen(&hook_fen).unwrap_or_else(|_| {
+                        Position::from_fen(Position::STARTPOS_FEN).expect("valid startpos fen")
+                    });
+                    let mut replay = fresh.clone();
+                    let mut moves = Vec::with_capacity(ppv.len());
+                    for uci in &ppv {
+                        if let Some(mv) = uci_to_move(uci, &replay) {
+                            replay.do_move(mv);
+                            moves.push(mv);
+                        } else {
+                            valid = false;
+                            break;
+                        }
+                    }
+                    if valid {
+                        valid = Search::validate_pv(&moves, &fresh, outcome, None);
+                    }
+                }
+                println!("ppv_valid: {valid}");
+
+                if let Err(e) = std::fs::File::create(&hook_dump_path)
+                    .and_then(|mut file| tree.to_sql(&mut file))
+                {
+                    eprintln!("failed to write proof-tree dump to {hook_dump_path}: {e}");
+                } else {
+                    println!("proof_tree_dump: {hook_dump_path}");
+                }
             }
         }))
     };

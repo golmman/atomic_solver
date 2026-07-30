@@ -57,7 +57,7 @@ impl Search {
         }
     }
 
-    pub(super) fn validate_pv(
+    pub fn validate_pv(
         pv: &[Move],
         pos: &Position,
         expected: Outcome,
@@ -452,5 +452,21 @@ mod tests {
         let (pv, depth) = result.unwrap();
         assert_eq!(depth, 3, "expected the 3-plies mate depth, got {pv:?}");
         assert_eq!(pv.len(), 3, "expected PV of length 3, got {pv:?}");
+    }
+
+    #[test]
+    fn validate_pv_accepts_three_ply_mate() {
+        use crate::notation::uci_to_move;
+        let fen = "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1";
+        let pos = Position::from_fen(fen).unwrap();
+        let mut replay = pos.clone();
+        let uci = ["f1f7", "e8d8", "g1g8"];
+        let mut pv = Vec::with_capacity(uci.len());
+        for &s in &uci {
+            let mv = uci_to_move(s, &replay).expect("legal move");
+            replay.do_move(mv);
+            pv.push(mv);
+        }
+        assert!(Search::validate_pv(&pv, &pos, Outcome::Win, None));
     }
 }

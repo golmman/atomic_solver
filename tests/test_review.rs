@@ -132,12 +132,12 @@ fn cli_does_not_duplicate_final_output() {
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(output.status.success(), "binary failed: {stderr}");
     assert_eq!(
-        stdout.matches("outcome:").count(),
+        stdout.lines().filter(|l| l.starts_with("outcome:")).count(),
         1,
         "expected one outcome block in stdout, got:\n{stdout}"
     );
     assert_eq!(
-        stdout.matches("pv:").count(),
+        stdout.lines().filter(|l| l.starts_with("pv:")).count(),
         1,
         "expected one pv block in stdout, got:\n{stdout}"
     );
