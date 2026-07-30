@@ -1,7 +1,9 @@
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
+use atomic_solver::proof_tree::ProofTree;
 use atomic_solver::search::dfpn::{ExitReason, Search};
 use std::io::BufRead;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -25,6 +27,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 ///                              Defaults to 5.
 ///   --outcome-only             Print only the outcome/PV and skip the pre-exit
 ///                              summary. No stdin reader is spawned.
+///   --dump-path <FILE>         Path for the test proof-tree SQL dump.
+///                              Defaults to "proof_tree.sql".
 ///
 /// Output:
 ///   First the decisive outcome (`outcome: win`, `outcome: loss`, or
@@ -58,6 +62,8 @@ fn print_help(program: &str) {
     println!("                             (default: 5)");
     println!("  --outcome-only             Print only the outcome/PV;");
     println!("                             do not spawn stdin reader or pre-exit hook");
+    println!("  --dump-path <FILE>         Path for the test proof-tree SQL dump");
+    println!("                             (default: proof_tree.sql)");
     println!();
     println!("Examples:");
     println!("  {program} --help");
@@ -81,6 +87,13 @@ fn pv_str(pv: &[atomic_movegen::types::Move]) -> String {
         .join(" ")
 }
 
+fn make_test_proof_tree(root_fen: &str) -> ProofTree {
+    let mut tree = ProofTree::new(root_fen.to_string(), Outcome::Win, 2);
+    let child = tree.add_node(0, "e2e4".to_string(), Outcome::Loss, 1);
+    tree.add_node(child, "e7e5".to_string(), Outcome::Win, 0);
+    tree
+}
+
 type PreExitHook = Box<dyn FnOnce(ExitReason, Outcome, u64) + Send>;
 
 fn main() {
@@ -92,6 +105,7 @@ fn main() {
     let mut refine_shortest = true;
     let mut timeout: u64 = 5;
     let mut outcome_only = false;
+    let mut dump_path = PathBuf::from("proof_tree.sql");
     let mut i = 1;
     while i < args.len() {
         let arg = args[i].as_str();
@@ -170,6 +184,14 @@ fn main() {
                 outcome_only = true;
                 i += 1;
             }
+            "--dump-path" => {
+                if i + 1 >= args.len() {
+                    eprintln!("error: --dump-path requires a value");
+                    std::process::exit(1);
+                }
+                dump_path = PathBuf::from(&args[i + 1]);
+                i += 2;
+            }
             _ => {
                 eprintln!("error: unknown option '{arg}'");
                 eprintln!("Run '{program} --help' for usage.");
@@ -208,8 +230,20 @@ fn main() {
             }
         });
 
-        Some(Box::new(|reason, outcome, nodes| {
+        let fen_for_tree = fen.clone();
+        Some(Box::new(move |reason, outcome, nodes| {
             println!("pre_exit: reason={reason} outcome={outcome} nodes={nodes}");
+            let tree = make_test_proof_tree(&fen_for_tree);
+            match std::fs::File::create(&dump_path) {
+                Ok(mut file) => {
+                    if let Err(e) = tree.to_sql(&mut file) {
+                        eprintln!("failed to write SQL dump to {}: {e}", dump_path.display());
+                    }
+                }
+                Err(e) => {
+                    eprintln!("failed to create dump file {}: {e}", dump_path.display());
+                }
+            }
         }))
     };
 

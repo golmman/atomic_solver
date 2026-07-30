@@ -6,7 +6,8 @@ A pure solver for atomic chess in Rust.
 
 ## Architecture
 
-- `src/lib.rs` re-exports `notation`, `position`, `search`, and `zobrist`.
+- `src/lib.rs` re-exports `notation`, `position`, `proof_tree`, `search`, and
+  `zobrist`.
 - `src/position.rs` wraps `atomic_movegen::board::Board` and tracks the
   `Outcome` (Win/Loss/Draw from the side-to-move perspective), undo state,
   and Zobrist hashing.
@@ -24,8 +25,10 @@ A pure solver for atomic chess in Rust.
   standard start position), `--tt-size <MB>` (default 64), `--epsilon <VALUE>`
   (default 0.125), `--timeout <SECONDS>` (default 5), `--no-refine-shortest`
   (refinement is enabled by default), `--outcome-only` (disables the pre-exit
-  hook and stdin reader), plus `-h`/`--help`. Unknown options exit with an error.
-  It prints the outcome and a PV when the result is decisive.
+  hook and stdin reader), `--dump-path <FILE>` (default `proof_tree.sql`), plus
+  `-h`/`--help`. Unknown options exit with an error. It prints the outcome and a
+  PV when the result is decisive and, by default, writes a test SQL proof-tree
+  dump before exit.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
 
