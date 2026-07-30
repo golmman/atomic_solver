@@ -6,7 +6,7 @@ use atomic_movegen::types::{Bitboard, Color, Move, MoveList};
 
 use crate::zobrist;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Outcome {
     Loss,
     Draw,

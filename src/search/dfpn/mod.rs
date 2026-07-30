@@ -13,6 +13,7 @@ mod tests;
 pub use crate::zobrist::INF;
 pub use core::outcome_from_pn_dn;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
@@ -20,9 +21,12 @@ use std::time::{Duration, Instant};
 use atomic_movegen::types::Move;
 
 use crate::position::{Outcome, Position};
+use crate::proof_tree::{NodeProven, ProofMessage};
 
 use super::ordering::StaticAtomicScorer;
 use super::tt::TranspositionTable;
+
+type PpvCache = HashMap<(u64, u64, Outcome), (Vec<Move>, u32)>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum ProofMode {
@@ -43,6 +47,7 @@ const DEFAULT_MAX_PV_PLIES: usize = 1000;
 pub enum ExitReason {
     Timeout,
     Quit,
+    MemoryLimit,
     Complete,
 }
 
@@ -51,6 +56,7 @@ impl std::fmt::Display for ExitReason {
         match self {
             ExitReason::Timeout => write!(f, "Timeout"),
             ExitReason::Quit => write!(f, "Quit"),
+            ExitReason::MemoryLimit => write!(f, "MemoryLimit"),
             ExitReason::Complete => write!(f, "Complete"),
         }
     }
@@ -110,6 +116,7 @@ pub struct Search {
     max_depth_reached: u32,
     bootstrap_success_depth: Option<u32>,
     bootstrap_fail_depth: u32,
+    ppv_cache: PpvCache,
     // Optional repetition-path prefix for bounded searches that are run in the
     // context of a longer line (e.g. verifying a defender reply against a PPV).
     prefix_path: Option<(Vec<u64>, u64)>,
@@ -118,6 +125,10 @@ pub struct Search {
     chunk_multiplier_num: u64,
     chunk_multiplier_den: u64,
     stop_flag: Option<Arc<AtomicBool>>,
+    memory_limited: Option<Arc<AtomicBool>>,
+    proof_tree_sender: Option<std::sync::mpsc::Sender<crate::proof_tree::ProofMessage>>,
+    move_stack: Vec<String>,
+    proof_path: String,
 }
 
 impl Search {
@@ -145,12 +156,17 @@ impl Search {
             max_depth_reached: 0,
             bootstrap_success_depth: None,
             bootstrap_fail_depth: 0,
+            ppv_cache: HashMap::new(),
             prefix_path: None,
             linear_chunks: false,
             chunk_increment: 500_000,
             chunk_multiplier_num: 2,
             chunk_multiplier_den: 1,
             stop_flag: None,
+            memory_limited: None,
+            proof_tree_sender: None,
+            move_stack: Vec::new(),
+            proof_path: "root".to_string(),
         }
     }
 
@@ -204,8 +220,77 @@ impl Search {
         self.stop_flag = stop_flag;
     }
 
+    pub fn set_memory_limited(&mut self, memory_limited: Option<Arc<AtomicBool>>) {
+        self.memory_limited = memory_limited;
+    }
+
+    pub fn set_proof_tree_sender(
+        &mut self,
+        sender: Option<std::sync::mpsc::Sender<crate::proof_tree::ProofMessage>>,
+    ) {
+        self.proof_tree_sender = sender;
+    }
+
+    fn clear_proof_tree(&self) {
+        if let Some(sender) = &self.proof_tree_sender {
+            let _ = sender.send(crate::proof_tree::ProofMessage::Clear);
+        }
+    }
+
+    fn emit_proof_node(&self, in_proof_tree: bool, outcome: Outcome, depth: u32) {
+        if !in_proof_tree || outcome == Outcome::Draw {
+            return;
+        }
+        if let Some(sender) = &self.proof_tree_sender {
+            let uci_move = self.move_stack.last().cloned().unwrap_or_default();
+            let _ = sender.send(ProofMessage::NodeProven(NodeProven {
+                path: self.proof_path.clone(),
+                uci_move,
+                outcome,
+                depth,
+            }));
+        }
+    }
+
+    fn emit_pv_events(&self, pv: &[Move], root_outcome: Outcome, root_depth: u32) {
+        if self.proof_tree_sender.is_none() {
+            return;
+        }
+        let Some(sender) = &self.proof_tree_sender else {
+            return;
+        };
+        let _ = sender.send(ProofMessage::NodeProven(NodeProven {
+            path: "root".to_string(),
+            uci_move: String::new(),
+            outcome: root_outcome,
+            depth: root_depth,
+        }));
+        let mut path = "root".to_string();
+        let mut outcome = root_outcome;
+        let mut depth = root_depth;
+        for &mv in pv {
+            let uci = crate::notation::move_to_uci(mv);
+            path.push('.');
+            path.push_str(&uci);
+            outcome = outcome.flip();
+            depth = depth.saturating_sub(1);
+            let _ = sender.send(ProofMessage::NodeProven(NodeProven {
+                path: path.clone(),
+                uci_move: uci,
+                outcome,
+                depth,
+            }));
+        }
+    }
+
     pub fn exit_reason(&self) -> ExitReason {
         if self
+            .memory_limited
+            .as_ref()
+            .is_some_and(|f| f.load(Ordering::Acquire))
+        {
+            ExitReason::MemoryLimit
+        } else if self
             .stop_flag
             .as_ref()
             .is_some_and(|f| f.load(Ordering::Acquire))
@@ -225,7 +310,7 @@ impl Search {
     ) -> (Outcome, Vec<Move>, u64) {
         self.begin_run();
         self.proof_mode = ProofMode::Outcome;
-        let outcome = self.dfpn(pos, INF, INF, max_depth, u64::MAX, true);
+        let outcome = self.dfpn(pos, INF, INF, max_depth, u64::MAX, true, false);
         let pv = self.extract_pv(pos);
         (outcome, pv, self.nodes)
     }
@@ -286,7 +371,7 @@ impl Search {
         while !self.time_exceeded() {
             self.reset_search_state();
             last_child_evals_before = self.child_evals;
-            outcome = self.dfpn(pos, INF, INF, u32::MAX, chunk, true);
+            outcome = self.dfpn(pos, INF, INF, u32::MAX, chunk, true, false);
 
             if outcome != Outcome::Draw {
                 if let Some(entry) = self.tt.probe(pos.hash())
@@ -326,7 +411,7 @@ impl Search {
             self.reset_search_state();
             let work_done = self.child_evals - last_child_evals_before;
             self.log_chunk(work_done, u64::MAX, "solve_outcome_fallback");
-            outcome = self.dfpn(pos, INF, INF, u32::MAX, u64::MAX, true);
+            outcome = self.dfpn(pos, INF, INF, u32::MAX, u64::MAX, true, false);
 
             if outcome != Outcome::Draw {
                 if let Some(entry) = self.tt.probe(pos.hash())
@@ -363,20 +448,50 @@ impl Search {
             return None;
         }
 
-        if let Some(depth) = self.bootstrap_success_depth {
-            self.reset_search_state();
-            self.proof_mode = ProofMode::Ppv;
-            // A PPV needs the longest defender replies, so the proof search is
-            // allowed to run until the timeout as long as a proven winning
-            // depth is known.
-            if !self.time_exceeded() {
-                self.dfpn(pos, INF, INF, depth, u64::MAX, true);
-            }
+        // Tighten the depth bound if solve_outcome only stored a loose value, and
+        // keep a TT-based PV as a fallback in case the full proven-subtree pass
+        // cannot finish.
+        let mut bound = self.bootstrap_success_depth;
+        self.reset_search_state();
+        let fallback_pv = self.extract_pv_checked(pos, outcome, None);
+        if let Some(pv) = &fallback_pv {
+            bound = Some(pv.len() as u32);
+        }
+        if bound.is_none() {
+            bound = Some(self.max_ply as u32);
+        }
+
+        self.reset_search_state();
+        self.clear_proof_tree();
+        self.ppv_cache.clear();
+        self.proof_mode = ProofMode::Ppv;
+        if !self.time_exceeded()
+            && let Some((pv, proven_depth)) =
+                self.extract_ppv_from_proven_subtree(pos, outcome, bound.unwrap())
+        {
+            self.last_pv = pv;
+            self.bootstrap_success_depth = Some(proven_depth);
+            self.emit_pv_events(&self.last_pv.clone(), outcome, self.last_pv.len() as u32);
             if self.time_exceeded() {
                 return None;
             }
+            return Some(self.last_pv.clone());
         }
 
+        if self.time_exceeded() {
+            // Even if the minimax pass ran out of time, we usually already have a
+            // proven PV in the TT; emit it so the proof tree is not just the empty
+            // root.
+            if let Some(pv) = fallback_pv {
+                self.last_pv = pv;
+                self.bootstrap_success_depth = Some(self.last_pv.len() as u32);
+                self.emit_pv_events(&self.last_pv.clone(), outcome, self.last_pv.len() as u32);
+                return Some(self.last_pv.clone());
+            }
+            return None;
+        }
+
+        // Fallback: follow the TT best_move chain.
         let pv = self
             .extract_ppv(pos, outcome)
             .unwrap_or_else(|| self.extract_pv(pos));
@@ -384,6 +499,11 @@ impl Search {
             return None;
         }
         self.last_pv = pv;
+        self.bootstrap_success_depth = Some(self.last_pv.len() as u32);
+        self.emit_pv_events(&self.last_pv.clone(), outcome, self.last_pv.len() as u32);
+        if self.time_exceeded() {
+            return None;
+        }
         Some(self.last_pv.clone())
     }
 
@@ -426,7 +546,7 @@ impl Search {
                 self.reset_search_state();
                 self.proof_mode = ProofMode::Sppv;
                 let child_evals_before = self.child_evals;
-                let o = self.dfpn(pos, INF, INF, probe, chunk, true);
+                let o = self.dfpn(pos, INF, INF, probe, chunk, true, true);
 
                 if self.time_exceeded() {
                     break;
@@ -470,6 +590,10 @@ impl Search {
                 lo = probe;
             }
         }
+
+        if !self.last_pv.is_empty() {
+            self.emit_pv_events(&self.last_pv.clone(), outcome, self.last_pv.len() as u32);
+        }
     }
 
     /// Solve in a single call, returning the final outcome and PV.
@@ -482,7 +606,7 @@ impl Search {
         if !self.refine_shortest {
             self.begin_run();
             self.proof_mode = ProofMode::Outcome;
-            let outcome = self.dfpn(pos, INF, INF, u32::MAX, u64::MAX, true);
+            let outcome = self.dfpn(pos, INF, INF, u32::MAX, u64::MAX, true, false);
             if outcome != Outcome::Draw {
                 if let Some(entry) = self.tt.probe(pos.hash())
                     && entry.outcome.is_some()
@@ -544,6 +668,8 @@ impl Search {
         self.deadline = self.start + self.timeout;
         self.path_stack.clear();
         self.path_code = 0;
+        self.move_stack.clear();
+        self.proof_path = "root".to_string();
         self.last_pv.clear();
         self.max_depth_reached = 0;
         if let Some((keys, code)) = &self.prefix_path {
@@ -563,6 +689,8 @@ impl Search {
     fn reset_search_state(&mut self) {
         self.path_stack.clear();
         self.path_code = 0;
+        self.move_stack.clear();
+        self.proof_path = "root".to_string();
         self.max_depth_reached = 0;
         if let Some((keys, code)) = &self.prefix_path {
             self.path_stack = keys.clone();
@@ -599,6 +727,11 @@ impl Search {
 
     pub fn time_exceeded(&self) -> bool {
         if let Some(flag) = &self.stop_flag
+            && flag.load(Ordering::Acquire)
+        {
+            return true;
+        }
+        if let Some(flag) = &self.memory_limited
             && flag.load(Ordering::Acquire)
         {
             return true;

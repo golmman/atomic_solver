@@ -13,11 +13,17 @@ A pure solver for atomic chess in Rust.
   and Zobrist hashing.
 - `src/search/dfpn/` implements the sequential DF-PN+ solver with optional
   shortest-PV refinement, history/killer heuristics, and a 5-second default
-  timeout.
+  timeout. It now also emits `NodeProven` events and includes a
+  `extract_ppv_from_proven_subtree` pass in `pv.rs` that minimaxes the proven
+  subtree without trusting stale TT `best_move` hints.
 - `src/search/tt/` holds the transposition table, including path-independent
   base entries and path-dependent "twin" entries for repetition handling.
 - `src/search/ordering.rs` provides the `MoveScorer` trait and the
   `StaticAtomicScorer`.
+- `src/proof_tree/mod.rs` provides an in-memory proof tree and a background
+  worker that collects `NodeProven` events from the search, maintains the
+  tree, enforces a memory budget, and serializes the tree to a PostgreSQL
+  `ltree` SQL dump.
 - `src/zobrist.rs` generates deterministic Zobrist keys for positions and
   path-dependent move codes.
 - `src/notation.rs` provides UCI move helpers.
@@ -25,10 +31,10 @@ A pure solver for atomic chess in Rust.
   standard start position), `--tt-size <MB>` (default 64), `--epsilon <VALUE>`
   (default 0.125), `--timeout <SECONDS>` (default 5), `--no-refine-shortest`
   (refinement is enabled by default), `--outcome-only` (disables the pre-exit
-  hook and stdin reader), `--dump-path <FILE>` (default `proof_tree.sql`), plus
-  `-h`/`--help`. Unknown options exit with an error. It prints the outcome and a
-  PV when the result is decisive and, by default, writes a test SQL proof-tree
-  dump before exit.
+  hook and stdin reader), `--pt-size <MB>` (default 256, max in-memory
+  proof-tree size), plus `-h`/`--help`. Unknown options exit with an error. It
+  prints the outcome and a PV when the result is decisive and, by default, logs
+  proof-tree statistics before exit.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
 

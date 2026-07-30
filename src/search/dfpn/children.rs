@@ -4,7 +4,9 @@
 
 use atomic_movegen::types::{Move, MoveList};
 
+use crate::notation::move_to_uci;
 use crate::position::{Outcome, Position};
+use crate::proof_tree::{NodeProven, ProofMessage};
 use crate::zobrist;
 
 use super::{INF, ProofMode, Search};
@@ -48,11 +50,12 @@ impl Search {
         max_depth: u32,
         is_or_node: bool,
         proof_mode: ProofMode,
+        in_proof_tree: bool,
     ) -> Vec<ChildInfo> {
         let mut children = Vec::with_capacity(moves.len());
         for i in 0..moves.len() {
             let mv = moves[i];
-            let info = self.evaluate_child(pos, mv, max_depth, is_or_node);
+            let info = self.evaluate_child(pos, mv, max_depth, is_or_node, in_proof_tree);
             let decisive = match (proof_mode, is_or_node) {
                 (ProofMode::Outcome, _) => info.outcome == Some(Outcome::Loss),
                 (ProofMode::Ppv, true) => info.outcome == Some(Outcome::Loss),
@@ -253,6 +256,7 @@ impl Search {
         mv: Move,
         max_depth: u32,
         is_or_node: bool,
+        in_proof_tree: bool,
     ) -> ChildInfo {
         self.child_evals += 1;
         pos.do_move(mv);
@@ -349,6 +353,22 @@ impl Search {
                 }
             }
         };
+
+        if in_proof_tree
+            && let Some(outcome) = info.outcome
+            && outcome != Outcome::Draw
+        {
+            let uci = move_to_uci(mv);
+            let path = format!("{}.{}", self.proof_path, uci);
+            if let Some(sender) = &self.proof_tree_sender {
+                let _ = sender.send(ProofMessage::NodeProven(NodeProven {
+                    path,
+                    uci_move: uci,
+                    outcome,
+                    depth: info.depth,
+                }));
+            }
+        }
 
         pos.undo_move(mv);
         info

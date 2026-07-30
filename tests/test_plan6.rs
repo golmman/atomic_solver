@@ -314,8 +314,8 @@ fn m27_ppv_only() {
     );
     assert_eq!(
         lines.len(),
-        3,
-        "expected outcome + one pv line + pre_exit summary, got:\n{stdout}"
+        4,
+        "expected outcome + one pv line + pre_exit summary + proof_tree stats, got:\n{stdout}"
     );
     assert!(
         lines[2].starts_with("pre_exit:"),
