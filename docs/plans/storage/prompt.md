@@ -103,3 +103,14 @@ Maybe this saves some overhead in the `ProofTree` structure? What would be the t
 ---
 
 Create implementation plans for the 5 phases of `docs/plans/storage/concept.md`. Store them in `docs/plans/storage/` as `plan1.md`, `plan2.md`, etc. .
+
+---
+
+We just implemented `docs/plans/storage/plan4.md` (see `docs/plans/storage/report4.md`).
+
+The size of the output `proof_tree.sql` is exploding and doesn't scale well.
+We need to address this before we continue with `docs/plans/storage/plan5.md`
+
+One idea is to simply dump an adjacency list (id, parent_id, label) and build the ltree path in PostgreSQL on import with a recursive CTE externally.
+
+No implementation here, let's discuss this. What options do we have here?
