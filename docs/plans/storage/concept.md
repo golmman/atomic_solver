@@ -213,8 +213,9 @@ needed, and exits.
 
 ### File contents
 
-A compact binary file (default `proof_tree.bin`). External tools load it and
-can rebuild an `ltree` path on import if desired.
+A compact binary file (default `proof_tree.bin`). The encoder/decoder lives in
+`src/proof_tree/binary.rs`. External tools load it and can rebuild an `ltree`
+path on import if desired.
 
 ```
 <8-byte magic> "ATOMTREE"

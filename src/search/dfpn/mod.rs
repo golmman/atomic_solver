@@ -127,7 +127,7 @@ pub struct Search {
     stop_flag: Option<Arc<AtomicBool>>,
     memory_limited: Option<Arc<AtomicBool>>,
     proof_tree_sender: Option<std::sync::mpsc::Sender<crate::proof_tree::ProofMessage>>,
-    move_stack: Vec<String>,
+    move_stack: Vec<Move>,
     proof_path: String,
 }
 
@@ -242,10 +242,10 @@ impl Search {
             return;
         }
         if let Some(sender) = &self.proof_tree_sender {
-            let uci_move = self.move_stack.last().cloned().unwrap_or_default();
+            let mv = self.move_stack.last().copied().unwrap_or(Move::NONE);
             let _ = sender.send(ProofMessage::NodeProven(NodeProven {
                 path: self.proof_path.clone(),
-                uci_move,
+                mv,
                 outcome,
                 depth,
             }));
@@ -261,7 +261,7 @@ impl Search {
         };
         let _ = sender.send(ProofMessage::NodeProven(NodeProven {
             path: "root".to_string(),
-            uci_move: String::new(),
+            mv: Move::NONE,
             outcome: root_outcome,
             depth: root_depth,
         }));
@@ -276,7 +276,7 @@ impl Search {
             depth = depth.saturating_sub(1);
             let _ = sender.send(ProofMessage::NodeProven(NodeProven {
                 path: path.clone(),
-                uci_move: uci,
+                mv,
                 outcome,
                 depth,
             }));

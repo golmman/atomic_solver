@@ -1,28 +1,37 @@
-//! In-memory proof tree and PostgreSQL `ltree` dump serializer.
+//! In-memory proof tree and compact binary dump serializer.
 //!
 //! The proof tree records the nodes that belong to the final proof subtree.
 //! It is intentionally separate from the transposition table so that it can be
-//! dumped to a `.sql` file and inspected independently of the search state.
+//! dumped to a `.bin` file and inspected independently of the search state.
+//!
+//! This module is larger than 10 KiB because the proof-tree data model,
+//! worker thread, and unit tests are closely related; the serialization format
+//! and round-trip tests live in `binary.rs`.
 
 use std::collections::HashMap;
-use std::io::{self, Write};
+use std::io::{self, Read, Write};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, Sender, channel};
 
+use atomic_movegen::types::Move;
+
+use crate::notation::move_to_uci;
 use crate::position::Outcome;
+
+pub mod binary;
 
 /// A single node in the proof tree.
 #[derive(Debug, Clone)]
 pub struct ProofNode {
     pub parent: Option<usize>,
-    pub uci_move: String,
+    pub mv: Move,
     pub outcome: Outcome,
     pub depth: u32,
     pub children: Vec<usize>,
 }
 
-/// Proof tree indexed by `ltree` path.
+/// Proof tree indexed by path string for event ordering.
 #[derive(Debug, Clone)]
 pub struct ProofTree {
     pub root_fen: String,
@@ -35,7 +44,7 @@ pub struct ProofTree {
 #[derive(Debug, Clone)]
 pub struct NodeProven {
     pub path: String,
-    pub uci_move: String,
+    pub mv: Move,
     pub outcome: Outcome,
     pub depth: u32,
 }
@@ -74,7 +83,7 @@ impl ProofTree {
             root_fen,
             nodes: vec![ProofNode {
                 parent: None,
-                uci_move: String::new(),
+                mv: Move::NONE,
                 outcome: root_outcome,
                 depth: root_depth,
                 children: Vec::new(),
@@ -84,21 +93,15 @@ impl ProofTree {
     }
 
     /// Add a child node under `parent` and return its id.
-    pub fn add_node(
-        &mut self,
-        parent: usize,
-        uci_move: String,
-        outcome: Outcome,
-        depth: u32,
-    ) -> usize {
+    pub fn add_node(&mut self, parent: usize, mv: Move, outcome: Outcome, depth: u32) -> usize {
         let parent_path = self.path_for(parent).to_string();
-        let label = sanitize_label(&uci_move);
-        let path = format!("{parent_path}.{label}");
+        let uci = move_to_uci(mv);
+        let path = format!("{parent_path}.{uci}");
         let id = self.nodes.len();
         self.nodes[parent].children.push(id);
         self.nodes.push(ProofNode {
             parent: Some(parent),
-            uci_move,
+            mv,
             outcome,
             depth,
             children: Vec::new(),
@@ -107,75 +110,14 @@ impl ProofTree {
         id
     }
 
-    /// Serialize the tree to a PostgreSQL `.sql` dump.
-    pub fn to_sql<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-        writeln!(writer, "CREATE EXTENSION IF NOT EXISTS ltree;")?;
-        writeln!(writer)?;
-        writeln!(
-            writer,
-            "CREATE TABLE proof_meta (key text PRIMARY KEY, value text);"
-        )?;
-        writeln!(writer, "CREATE TABLE proof_nodes (")?;
-        writeln!(writer, "    path ltree PRIMARY KEY,")?;
-        writeln!(
-            writer,
-            "    parent_path ltree GENERATED ALWAYS AS (CASE WHEN nlevels(path) > 1 THEN subpath(path, 0, nlevels(path) - 1) END) STORED,"
-        )?;
-        writeln!(writer, "    uci_move text,")?;
-        writeln!(
-            writer,
-            "    outcome text CHECK (outcome IN ('Win', 'Loss')),"
-        )?;
-        writeln!(writer, "    depth int,")?;
-        writeln!(writer, "    terminal boolean")?;
-        writeln!(writer, ");")?;
-        writeln!(
-            writer,
-            "CREATE INDEX idx_proof_nodes_parent ON proof_nodes USING btree (parent_path);"
-        )?;
-        writeln!(
-            writer,
-            "CREATE INDEX idx_proof_nodes_path ON proof_nodes USING gist (path);"
-        )?;
-        writeln!(writer)?;
-        let fen = self.root_fen.replace('\'', "''");
-        writeln!(
-            writer,
-            "INSERT INTO proof_meta (key, value) VALUES ('root_fen', '{fen}');"
-        )?;
-        writeln!(writer)?;
-        writeln!(
-            writer,
-            "COPY proof_nodes (path, uci_move, outcome, depth, terminal) FROM STDIN;"
-        )?;
-        self.write_node_sql(writer, 0, "root")?;
-        writeln!(writer, "\\.")?;
-        Ok(())
+    /// Serialize the tree to the compact binary adjacency format.
+    pub fn to_bin<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+        binary::write_proof_tree(self, writer)
     }
 
-    fn write_node_sql<W: Write>(&self, writer: &mut W, id: usize, path: &str) -> io::Result<()> {
-        let node = &self.nodes[id];
-        let outcome = match node.outcome {
-            Outcome::Win => "Win",
-            Outcome::Loss => "Loss",
-            Outcome::Draw => {
-                return Err(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    "ProofTree SQL supports only Win/Loss nodes",
-                ));
-            }
-        };
-        let terminal = if node.depth == 0 { "true" } else { "false" };
-        writeln!(
-            writer,
-            "{path}\t{}\t{outcome}\t{}\t{terminal}",
-            node.uci_move, node.depth
-        )?;
-        for &child in &node.children {
-            let child_path = format!("{path}.{}", sanitize_label(&self.nodes[child].uci_move));
-            self.write_node_sql(writer, child, &child_path)?;
-        }
-        Ok(())
+    /// Load a tree from the compact binary adjacency format.
+    pub fn from_bin<R: Read>(reader: &mut R) -> io::Result<Self> {
+        binary::read_proof_tree(reader)
     }
 
     fn path_for(&self, id: usize) -> &str {
@@ -198,7 +140,7 @@ impl ProofTree {
     /// * `Win` (OR) nodes pick the proven winning child with the smallest depth.
     /// * `Loss` (AND) nodes pick the defender reply with the largest depth.
     /// * The walk stops at a terminal node.
-    pub fn extract_ppv(&self) -> Vec<String> {
+    pub fn extract_ppv(&self) -> Vec<Move> {
         let mut pv = Vec::new();
         let mut id = 0usize;
         while !self.is_terminal(id) {
@@ -219,7 +161,7 @@ impl ProofTree {
             let Some(next_id) = next else {
                 break;
             };
-            pv.push(self.nodes[next_id].uci_move.clone());
+            pv.push(self.nodes[next_id].mv);
             id = next_id;
         }
         pv
@@ -227,19 +169,15 @@ impl ProofTree {
 
     /// Validate that `pv` is a path from the root to a terminal node in the
     /// proof tree.  This does not replay the moves on a chess board; it only
-    /// checks that the sequence of `uci_move`s exists in the tree.
-    pub fn validate_ppv(&self, pv: &[String]) -> bool {
+    /// checks that the sequence of moves exists in the tree.
+    pub fn validate_ppv(&self, pv: &[Move]) -> bool {
         let mut id = 0usize;
-        for uci in pv {
+        for mv in pv {
             if self.is_terminal(id) {
                 return false;
             }
             let node = &self.nodes[id];
-            let Some(&next_id) = node
-                .children
-                .iter()
-                .find(|&&c| self.nodes[c].uci_move == *uci)
-            else {
+            let Some(&next_id) = node.children.iter().find(|&&c| self.nodes[c].mv == *mv) else {
                 return false;
             };
             id = next_id;
@@ -306,7 +244,7 @@ impl ProofTreeWorker {
 
     fn insert_event(&mut self, event: NodeProven) {
         if event.path == "root" {
-            self.tree.nodes[0].uci_move = event.uci_move;
+            self.tree.nodes[0].mv = event.mv;
             self.tree.nodes[0].outcome = event.outcome;
             self.tree.nodes[0].depth = event.depth;
             self.process_pending("root");
@@ -354,7 +292,7 @@ impl ProofTreeWorker {
         }
 
         let id = if let Some(&id) = self.tree.index.get(&event.path) {
-            self.tree.nodes[id].uci_move = event.uci_move;
+            self.tree.nodes[id].mv = event.mv;
             self.tree.nodes[id].outcome = event.outcome;
             self.tree.nodes[id].depth = event.depth;
             id
@@ -362,7 +300,7 @@ impl ProofTreeWorker {
             let id = self.tree.nodes.len();
             self.tree.nodes.push(ProofNode {
                 parent: Some(parent_id),
-                uci_move: event.uci_move,
+                mv: event.mv,
                 outcome: event.outcome,
                 depth: event.depth,
                 children: Vec::new(),
@@ -391,12 +329,6 @@ impl ProofTreeWorker {
     fn estimate_memory(&self) -> usize {
         let node_size = std::mem::size_of::<ProofNode>();
         let nodes_mem = self.tree.nodes.len() * node_size;
-        let strings_mem: usize = self
-            .tree
-            .nodes
-            .iter()
-            .map(|n| n.uci_move.capacity() + std::mem::size_of::<String>())
-            .sum();
         let index_overhead = self.tree.index.capacity()
             * (std::mem::size_of::<String>() + std::mem::size_of::<usize>() + 8);
         let pending_overhead: usize = self
@@ -407,12 +339,10 @@ impl ProofTreeWorker {
                     + std::mem::size_of::<String>()
                     + std::mem::size_of::<Vec<NodeProven>>()
                     + v.capacity() * std::mem::size_of::<NodeProven>()
-                    + v.iter()
-                        .map(|e| e.path.capacity() + e.uci_move.capacity())
-                        .sum::<usize>()
+                    + v.iter().map(|e| e.path.capacity()).sum::<usize>()
             })
             .sum();
-        let total = nodes_mem + strings_mem + index_overhead + pending_overhead;
+        let total = nodes_mem + index_overhead + pending_overhead;
         (total as f64 * 1.5) as usize
     }
 
@@ -440,95 +370,65 @@ impl ProofTreeWorker {
     }
 }
 
-/// Sanitize a UCI move into a valid `ltree` label.
-///
-/// Labels must consist of alphanumeric ASCII characters, underscores, or
-/// hyphens, be at most 1000 bytes long, and not start with a digit.
-fn sanitize_label(s: &str) -> String {
-    let mut label: String = s
-        .to_lowercase()
-        .chars()
-        .map(|c| {
-            if c.is_ascii_alphanumeric() || c == '_' || c == '-' {
-                c
-            } else {
-                '_'
-            }
-        })
-        .collect();
-    if label.is_empty() {
-        label.push('_');
-    }
-    if label.as_bytes()[0].is_ascii_digit() {
-        label.insert(0, '_');
-    }
-    if label.len() > 1000 {
-        label.truncate(1000);
-    }
-    label
-}
-
 #[cfg(test)]
 mod tests {
+    use atomic_movegen::types::{Move, Square};
+
     use super::*;
 
     #[test]
-    fn sanitize_label_lowercases_and_replaces_invalid_chars() {
-        assert_eq!(sanitize_label("e7e8Q"), "e7e8q");
-        assert_eq!(sanitize_label("E7E8Q"), "e7e8q");
-        assert_eq!(sanitize_label("e1!g1"), "e1_g1");
-        assert_eq!(sanitize_label("bad move"), "bad_move");
-    }
-
-    #[test]
-    fn sanitize_label_handles_empty_and_leading_digit() {
-        assert_eq!(sanitize_label(""), "_");
-        assert_eq!(sanitize_label("0-0"), "_0-0");
-    }
-
-    #[test]
-    fn add_node_reconstructs_ltree_path() {
+    fn add_node_reconstructs_path() {
         let mut tree = ProofTree::new("fen".to_string(), Outcome::Win, 2);
-        let child = tree.add_node(0, "e2e4".to_string(), Outcome::Loss, 1);
-        let grandchild = tree.add_node(child, "e7e5".to_string(), Outcome::Win, 0);
+        let child = tree.add_node(0, Move::make_move(Square::E2, Square::E4), Outcome::Loss, 1);
+        let grandchild = tree.add_node(
+            child,
+            Move::make_move(Square::E7, Square::E5),
+            Outcome::Win,
+            0,
+        );
         assert_eq!(tree.index["root"], 0);
         assert_eq!(tree.index["root.e2e4"], child);
         assert_eq!(tree.index["root.e2e4.e7e5"], grandchild);
     }
 
     #[test]
-    fn to_sql_serializes_small_tree() {
+    fn to_bin_round_trips_small_tree() {
         let mut tree = ProofTree::new(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1".to_string(),
             Outcome::Win,
             2,
         );
-        let child = tree.add_node(0, "e2e4".to_string(), Outcome::Loss, 1);
-        tree.add_node(child, "e7e5".to_string(), Outcome::Win, 0);
+        let child = tree.add_node(0, Move::make_move(Square::E2, Square::E4), Outcome::Loss, 1);
+        tree.add_node(
+            child,
+            Move::make_move(Square::E7, Square::E5),
+            Outcome::Win,
+            0,
+        );
 
         let mut buf = Vec::new();
-        tree.to_sql(&mut buf).unwrap();
-        let sql = String::from_utf8(buf).unwrap();
+        tree.to_bin(&mut buf).unwrap();
 
-        assert!(sql.contains("CREATE EXTENSION IF NOT EXISTS ltree;"));
-        assert!(sql.contains("CREATE TABLE proof_meta"));
-        assert!(sql.contains("CREATE TABLE proof_nodes"));
-        assert!(sql.contains("CREATE INDEX idx_proof_nodes_parent"));
-        assert!(sql.contains("CREATE INDEX idx_proof_nodes_path"));
-        assert!(sql.contains("COPY proof_nodes"));
-        assert!(sql.contains("\\."));
-        assert!(sql.contains("root\t\tWin\t2\tfalse"));
-        assert!(sql.contains("root.e2e4\te2e4\tLoss\t1\tfalse"));
-        assert!(sql.contains("root.e2e4.e7e5\te7e5\tWin\t0\ttrue"));
-    }
+        let loaded = ProofTree::from_bin(&mut &buf[..]).unwrap();
+        assert_eq!(loaded.nodes.len(), 3);
+        assert_eq!(loaded.nodes[0].outcome, Outcome::Win);
+        assert_eq!(loaded.nodes[0].depth, 2);
+        assert_eq!(loaded.nodes[1].outcome, Outcome::Loss);
+        assert_eq!(loaded.nodes[1].depth, 1);
+        assert_eq!(loaded.nodes[2].outcome, Outcome::Win);
+        assert_eq!(loaded.nodes[2].depth, 0);
+        assert_eq!(loaded.nodes[1].mv, Move::make_move(Square::E2, Square::E4));
+        assert_eq!(loaded.nodes[2].mv, Move::make_move(Square::E7, Square::E5));
 
-    #[test]
-    fn to_sql_escapes_fen_single_quotes() {
-        let tree = ProofTree::new("f'en with quote".to_string(), Outcome::Win, 0);
-        let mut buf = Vec::new();
-        tree.to_sql(&mut buf).unwrap();
-        let sql = String::from_utf8(buf).unwrap();
-        assert!(sql.contains("'f''en with quote'"));
+        let ppv = loaded.extract_ppv();
+        assert_eq!(
+            ppv,
+            vec![
+                Move::make_move(Square::E2, Square::E4),
+                Move::make_move(Square::E7, Square::E5),
+            ]
+        );
+        assert!(loaded.validate_ppv(&ppv));
     }
 
     #[test]
@@ -537,21 +437,21 @@ mod tests {
             ProofTreeWorker::spawn("fen".to_string(), 256, Arc::new(AtomicBool::new(false)));
         tx.send(ProofMessage::NodeProven(NodeProven {
             path: "root.e2e4.e7e5".to_string(),
-            uci_move: "e7e5".to_string(),
+            mv: Move::make_move(Square::E7, Square::E5),
             outcome: Outcome::Win,
             depth: 0,
         }))
         .unwrap();
         tx.send(ProofMessage::NodeProven(NodeProven {
             path: "root.e2e4".to_string(),
-            uci_move: "e2e4".to_string(),
+            mv: Move::make_move(Square::E2, Square::E4),
             outcome: Outcome::Loss,
             depth: 1,
         }))
         .unwrap();
         tx.send(ProofMessage::NodeProven(NodeProven {
             path: "root".to_string(),
-            uci_move: String::new(),
+            mv: Move::NONE,
             outcome: Outcome::Win,
             depth: 2,
         }))
@@ -586,21 +486,21 @@ mod tests {
             ProofTreeWorker::spawn("fen".to_string(), 256, Arc::new(AtomicBool::new(false)));
         tx.send(ProofMessage::NodeProven(NodeProven {
             path: "root".to_string(),
-            uci_move: String::new(),
+            mv: Move::NONE,
             outcome: Outcome::Win,
             depth: 5,
         }))
         .unwrap();
         tx.send(ProofMessage::NodeProven(NodeProven {
             path: "root.e2e4".to_string(),
-            uci_move: "e2e4".to_string(),
+            mv: Move::make_move(Square::E2, Square::E4),
             outcome: Outcome::Loss,
             depth: 4,
         }))
         .unwrap();
         tx.send(ProofMessage::NodeProven(NodeProven {
             path: "root.d2d4".to_string(),
-            uci_move: "d2d4".to_string(),
+            mv: Move::make_move(Square::D2, Square::D4),
             outcome: Outcome::Loss,
             depth: 2,
         }))
@@ -612,7 +512,10 @@ mod tests {
             panic!("expected Tree response");
         };
         assert_eq!(tree.nodes[0].children.len(), 1);
-        assert_eq!(tree.nodes[tree.nodes[0].children[0]].uci_move, "d2d4");
+        assert_eq!(
+            tree.nodes[tree.nodes[0].children[0]].mv,
+            Move::make_move(Square::D2, Square::D4)
+        );
         assert_eq!(tree.nodes[tree.nodes[0].children[0]].depth, 2);
 
         drop(tx);
@@ -625,21 +528,21 @@ mod tests {
             ProofTreeWorker::spawn("fen".to_string(), 256, Arc::new(AtomicBool::new(false)));
         tx.send(ProofMessage::NodeProven(NodeProven {
             path: "root".to_string(),
-            uci_move: String::new(),
+            mv: Move::NONE,
             outcome: Outcome::Loss,
             depth: 3,
         }))
         .unwrap();
         tx.send(ProofMessage::NodeProven(NodeProven {
             path: "root.e2e4".to_string(),
-            uci_move: "e2e4".to_string(),
+            mv: Move::make_move(Square::E2, Square::E4),
             outcome: Outcome::Win,
             depth: 2,
         }))
         .unwrap();
         tx.send(ProofMessage::NodeProven(NodeProven {
             path: "root.d2d4".to_string(),
-            uci_move: "d2d4".to_string(),
+            mv: Move::make_move(Square::D2, Square::D4),
             outcome: Outcome::Win,
             depth: 2,
         }))
@@ -662,7 +565,7 @@ mod tests {
         let (tx, handle) = ProofTreeWorker::spawn("fen".to_string(), 0, Arc::clone(&flag));
         tx.send(ProofMessage::NodeProven(NodeProven {
             path: "root".to_string(),
-            uci_move: String::new(),
+            mv: Move::NONE,
             outcome: Outcome::Win,
             depth: 0,
         }))

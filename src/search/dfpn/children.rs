@@ -363,7 +363,7 @@ impl Search {
             if let Some(sender) = &self.proof_tree_sender {
                 let _ = sender.send(ProofMessage::NodeProven(NodeProven {
                     path,
-                    uci_move: uci,
+                    mv,
                     outcome,
                     depth: info.depth,
                 }));

@@ -273,7 +273,7 @@ impl Search {
                 let proof_len = self.proof_path.len();
                 self.proof_path.push('.');
                 self.proof_path.push_str(&uci);
-                self.move_stack.push(uci);
+                self.move_stack.push(mv);
                 let _ = self.dfpn(
                     pos,
                     np,

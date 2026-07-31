@@ -20,10 +20,11 @@ A pure solver for atomic chess in Rust.
   base entries and path-dependent "twin" entries for repetition handling.
 - `src/search/ordering.rs` provides the `MoveScorer` trait and the
   `StaticAtomicScorer`.
-- `src/proof_tree/mod.rs` provides an in-memory proof tree and a background
-  worker that collects `NodeProven` events from the search, maintains the
-  tree, enforces a memory budget, and serializes the tree to a compact binary
-  adjacency dump. External tools can import the binary dump into PostgreSQL.
+- `src/proof_tree/mod.rs` provides a `Move`-based in-memory proof tree and a
+  background worker that collects `NodeProven` events from the search,
+  maintains the tree, enforces a memory budget, and serializes the tree to a
+  compact binary adjacency dump (`src/proof_tree/binary.rs`). External tools
+  can import the binary dump into PostgreSQL.
 - `src/zobrist.rs` generates deterministic Zobrist keys for positions and
   path-dependent move codes.
 - `src/notation.rs` provides UCI move helpers.

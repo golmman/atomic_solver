@@ -2,12 +2,13 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::mpsc::channel;
 
+use atomic_movegen::types::Move;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::Position;
 use atomic_solver::proof_tree::{ProofMessage, ProofResponse, ProofTreeWorker};
 use atomic_solver::search::dfpn::Search;
 
-fn solve_and_extract_ppv(fen: &str) -> (String, Vec<String>, Vec<String>) {
+fn solve_and_extract_ppv(fen: &str) -> (String, Vec<Move>, Vec<Move>) {
     let mut pos = Position::from_fen(fen).expect("valid fen");
     let mut search = Search::new(64);
     search.set_timeout(10);
@@ -33,15 +34,18 @@ fn solve_and_extract_ppv(fen: &str) -> (String, Vec<String>, Vec<String>) {
     handle.join().expect("worker thread");
 
     let tree_ppv = tree.extract_ppv();
-    let expected = pv.iter().map(|&m| move_to_uci(m)).collect();
-    (fen.to_string(), tree_ppv, expected)
+    (fen.to_string(), tree_ppv, pv)
 }
 
 #[test]
 fn proof_tree_ppv_matches_two_rook_mate() {
     let fen = "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1";
     let (_fen, tree_ppv, expected) = solve_and_extract_ppv(fen);
-    assert_eq!(tree_ppv, expected, "proof-tree PPV should match solver PV");
+    assert_eq!(
+        tree_ppv.iter().map(|&m| move_to_uci(m)).collect::<Vec<_>>(),
+        expected.iter().map(|&m| move_to_uci(m)).collect::<Vec<_>>(),
+        "proof-tree PPV should match solver PV"
+    );
     assert_eq!(tree_ppv.len(), 3, "expected a 3-plies mate");
 }
 
@@ -49,7 +53,11 @@ fn proof_tree_ppv_matches_two_rook_mate() {
 fn proof_tree_ppv_matches_m27() {
     let fen = "6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 26";
     let (_fen, tree_ppv, expected) = solve_and_extract_ppv(fen);
-    assert_eq!(tree_ppv, expected, "proof-tree PPV should match solver PV");
+    assert_eq!(
+        tree_ppv.iter().map(|&m| move_to_uci(m)).collect::<Vec<_>>(),
+        expected.iter().map(|&m| move_to_uci(m)).collect::<Vec<_>>(),
+        "proof-tree PPV should match solver PV"
+    );
     assert_eq!(tree_ppv.len(), 7, "expected a 7-plies mate");
 }
 
