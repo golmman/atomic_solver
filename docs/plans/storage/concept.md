@@ -16,8 +16,9 @@ persist it on demand, and use it for proof extraction and external analysis.
 
 During the search the solver emits only the nodes that belong to the final proof
 subtree; a background worker thread collects them into an in-memory proof tree
-and, on `q` + Enter, writes the tree to a PostgreSQL-compatible `.sql` dump
-using an `ltree` path of UCI moves.
+and, on `q` + Enter or completion, writes the tree to a compact binary adjacency
+dump. External tools can import the binary dump into PostgreSQL (with or without
+an `ltree` path) for analysis.
 
 ## Decisions made
 
@@ -29,9 +30,9 @@ using an `ltree` path of UCI moves.
 | OR-node contents | One selected winning child per Win node (attacker/OR). |
 | AND-node contents | All legal replies per Loss node (defender/AND). |
 | Duplicate handling | Duplicate per path; each path from the root is a distinct node. |
-| Path representation | `ltree` path = `root.<uci1>.<uci2>...` (root sentinel + UCI moves). |
-| Dump format | PostgreSQL `.sql` file with `ltree` `COPY` load. No DB driver in the solver. |
-| Event payload | `path, uci_move, outcome, depth`. |
+| Path representation | In the worker, `path` strings (`root.<uci1>.<uci2>...`) are used only to attach out-of-order events. The dump stores parent indices, not materialized paths. |
+| Dump format | Compact binary adjacency list (`parent_id: u32`, `move_code: u16`). No DB driver in the solver; an external loader can import to Postgres. |
+| Event payload | `path, mv, outcome, depth` (`mv` is `atomic_movegen::types::Move`). |
 | FEN in event | No. The worker does not need the position; it only records events. |
 | PPV extraction | From the in-memory proof tree; external `verify_ppv` for validation. |
 | Memory | Keep the whole proof tree in memory for the MVP; bounded by `--pt-size`. |
@@ -59,8 +60,9 @@ be proven/disproven".
    * Maintains a `move_stack` parallel to `path_stack` and an incremental
      `proof_path` string (e.g. `root.e2e4.e7e5`).
    * Carries an `in_proof_tree` flag through `dfpn` calls.
-   * Sends `ProofMessage::NodeProven { path, uci_move, outcome, depth }` for
-     every node on the proof subtree.
+   * Sends `ProofMessage::NodeProven { path, mv, outcome, depth }` for every
+     node on the proof subtree. The `path` string is still built from UCI move
+     labels for event ordering, but the stored node carries `mv: Move`.
 
 2. **Proof-tree worker thread** (`src/proof_tree/`)
    * Receives `NodeProven` events on an `mpsc` receiver.
@@ -101,12 +103,15 @@ When a node is proven with `in_proof_tree == true`, the solver emits
 ### In-memory proof tree
 
 Use a `Vec`-backed tree with `usize` indices and a separate `HashMap` for
-path-to-id lookup:
+path-to-id lookup. `ProofNode` stores the actual `Move` value, not a UCI
+string:
 
 ```rust
+use atomic_movegen::types::Move;
+
 pub struct ProofNode {
     pub parent: Option<usize>,
-    pub uci_move: String,
+    pub mv: Move,          // move from parent; Move::NONE for root
     pub outcome: Outcome,
     pub depth: u32,
     pub children: Vec<usize>, // child node ids
@@ -115,7 +120,7 @@ pub struct ProofNode {
 pub struct ProofTree {
     pub root_fen: String,
     pub nodes: Vec<ProofNode>,
-    pub index: HashMap<String, usize>, // ltree path -> node id
+    pub index: HashMap<String, usize>, // event path -> node id
 }
 ```
 
@@ -125,23 +130,24 @@ parent, child `NodeProven` events can arrive first; the worker keeps a
 `pending: HashMap<String, Vec<NodeProven>>` buffer keyed by `parent_path` and
 links the children once the parent is inserted.
 
-The full ltree path for a node is reconstructed during a DFS from the root
-(used for dumping and PPV extraction). This avoids storing a full `String` path
-for every edge, which is the main memory saving over `HashMap<String, ProofNode>`.
+The `path` strings and the `index` are used only for event ordering. The dump
+itself writes `parent` indices and `Move` codes, so no materialized path string
+is repeated.
 
 ### Event payload
 
 ```rust
 pub struct NodeProven {
     pub path: String,      // e.g. "root.e2e4.e7e5"
-    pub uci_move: String,  // move from parent; empty for root
+    pub mv: Move,          // move from parent; Move::NONE for root
     pub outcome: Outcome,  // Win or Loss from side to move
     pub depth: u32,        // proven mate/loss distance from this node
 }
 ```
 
-No FEN is sent. The worker records; external tools replay the UCI path from the
-root FEN (stored separately in `proof_meta`) when they need a board.
+No FEN is sent. The worker records moves; external tools replay the move path
+from the root FEN (stored separately in the binary header) when they need a
+board.
 
 ### Pre-exit hook
 
@@ -156,9 +162,10 @@ after the search ends, no matter why it ended. The `reason` is one of:
 Each MVP phase installs a different hook body:
 
 * Phase 1: log a simple summary.
-* Phase 2: dump a small dummy/test tree to a `.sql` file.
+* Phase 2: dump a small dummy/test tree (prototype serializer).
 * Phase 3: ask the worker for proof-tree statistics and log them.
 * Phase 4: dump the real proof tree and extract/log its PPV.
+* Phase 4.1: replace the dump format with the compact binary adjacency format.
 * Phase 5: export the proof tree to Postgres.
 
 `--outcome-only` sets the hook to `None`, so the solver exits exactly as it did
@@ -202,51 +209,47 @@ soon as the current recursion unwinds, and the search thread stops. The main
 thread then invokes the configured `pre_exit_hook`, waits for the worker if
 needed, and exits.
 
-## SQL / `ltree` dump
+## Binary adjacency dump
 
 ### File contents
 
-A plain `.sql` file that can be loaded with `psql < proof_tree.sql`:
+A compact binary file (default `proof_tree.bin`). External tools load it and
+can rebuild an `ltree` path on import if desired.
 
-```sql
-CREATE EXTENSION IF NOT EXISTS ltree;
+```
+<8-byte magic> "ATOMTREE"
+<1-byte version> 1
+<FEN>\n
+<root_outcome: u8>    // 0 Draw, 1 Win, 2 Loss
+<root_depth: u32 LE>
 
-CREATE TABLE proof_meta (
-    key text PRIMARY KEY,
-    value text
-);
-
-CREATE TABLE proof_nodes (
-    path ltree PRIMARY KEY,
-    parent_path ltree,
-    uci_move text,
-    outcome text CHECK (outcome IN ('Win', 'Loss')),
-    depth int,
-    terminal boolean
-);
-
-CREATE INDEX idx_proof_nodes_parent ON proof_nodes USING btree (parent_path);
-CREATE INDEX idx_proof_nodes_path ON proof_nodes USING gist (path);
-
-INSERT INTO proof_meta (key, value) VALUES ('root_fen', '<FEN>');
-
-COPY proof_nodes (path, parent_path, uci_move, outcome, depth, terminal)
-FROM STDIN;
-root	\N		Win	7	false
-root.e2e4	root	e2e4	Loss	6	false
-root.e2e4.e7e5	root.e2e4	e7e5	Win	5	false
-...\.
+for each node (root first, topological order):
+    parent_id: u32 LE   // u32::MAX for the root
+    move_code: u16 LE   // Move::NONE == 0 for the root
 ```
 
-### Path encoding
+### Move encoding
 
-* Root uses the sentinel label `root` because `ltree` does not allow empty paths.
-* Each subsequent label is one UCI move, lowercased.
-* PostgreSQL `ltree` labels allow alphanumeric characters, underscores, and
-  hyphens and are at most 1000 bytes long. A UCI move such as `e7e8q` satisfies
-  this; any unexpected character is sanitized or rejected during export.
-* A single ltree path can contain up to 65,535 labels, far above any realistic
-  atomic-chess PPV.
+`move_code` mirrors `atomic_movegen::types::Move`'s documented bit layout:
+
+* bits 0-5: `to_sq`
+* bits 6-11: `from_sq`
+* bits 12-13: move type (0 Normal, 1 Promotion, 2 EnPassant, 3 Castling)
+* bits 14-15: promotion piece index (0 Queen, 1 Rook, 2 Bishop, 3 Knight)
+
+The `Move` value is encoded and decoded using only public API
+(`from_sq`, `to_sq`, `move_type`, `promotion_type`, `Square::from_u8`, and the
+`make_*` constructors), so the private `u16` field is never accessed and no
+`unsafe` is needed.
+
+### Deriving node metadata
+
+* `outcome` is obtained by parity from the root outcome.
+* `depth` is obtained by post-order traversal: terminal nodes have `depth == 0`;
+  `Win` nodes are `1 + min(child depths)`; `Loss` nodes are
+  `1 + max(child depths)`.
+* `uci_move` for display can be produced with `move_to_uci` when the binary is
+  loaded.
 
 ## PPV extraction from the proof tree
 
@@ -257,7 +260,8 @@ node, a PPV can be extracted without an explicit `is_principal` flag:
 2. If the node is `Win` (OR), take its only child.
 3. If the node is `Loss` (AND), take the child with the largest `depth`
    (longest defense).
-4. Append the child's `uci_move` to the PPV and repeat until `depth == 0`.
+4. Append the child's `Move` to the PPV and repeat until `depth == 0`.
+5. Convert the collected `Move`s to UCI strings for display or external tools.
 
 The extracted line is validated with `Search::validate_pv` and, for full
 confidence, with the existing `verify_ppv` example.
@@ -268,8 +272,8 @@ confidence, with the existing `verify_ppv` example.
   disabled entirely: the solver runs `solve_outcome`, prints the outcome (and
   PV if not `--no-refine-shortest`), and exits. No proof tree, no worker, no
   dump, and no `q` handling.
-* New optional flag `--dump-path <FILE>` (default `proof_tree.sql`). Used by
-  phases that write a `.sql` dump.
+* New optional flag `--dump-path <FILE>` (default `proof_tree.bin`). Used by
+  phases that write a binary proof-tree dump.
 * New optional flag `--pt-size <MB>` (default `256`). Hard limit on the
   in-memory proof-tree size. When exceeded, the worker sets the stop flag with
   reason `MemoryLimit`, the search unwinds, and the pre-exit hook is invoked.
@@ -292,18 +296,17 @@ phase swaps in a more capable hook body.
 * **Test:** run with a short timeout and see the log; press `q` + Enter and see
   the log; run with `--outcome-only` and confirm the log is absent.
 
-### Phase 2: dummy/test SQL `ltree` dump
-* Implement the `ProofTree -> .sql` serializer independently of the search.
+### Phase 2: prototype proof-tree serializer
+* Implement a first standalone `ProofTree` serializer independently of the search.
 * The pre-exit hook builds a small hard-coded test `ProofTree` and writes it to
-  `--dump-path` (default `proof_tree.sql`).
-* **Test:** load the generated `.sql` into Postgres and query the root and a few
-  paths; this validates the `ltree` encoding and `COPY` format before the real
-  tree is wired up.
+  a dump file to validate serialization before the live worker is wired.
+* In `report2.md` this was a PostgreSQL `ltree` `.sql` serializer (`proof_tree.sql`).
+  It was later superseded by the compact binary format from Phase 4.1.
 
 ### Phase 3: worker thread, proof-tree statistics, and `--pt-size`
 * Add the dedicated worker thread and `mpsc` queue.
 * Instrument `dfpn` with `move_stack`, `proof_path`, and `in_proof_tree` event
-  emission (`NodeProven { path, uci_move, outcome, depth }`).
+  emission (`NodeProven { path, mv, outcome, depth }`).
 * The worker builds the real `ProofTree`.
 * Add `--pt-size <MB>` (default `256`). When the worker estimates the tree has
   exceeded this budget, it sets the stop flag with reason `MemoryLimit` and the
@@ -315,18 +318,26 @@ phase swaps in a more capable hook body.
   `--pt-size` with a small value and verify `MemoryLimit` is logged.
 
 ### Phase 4: real dump + PPV extraction
-* Reuse the Phase-2 serializer to dump the real `ProofTree` on timeout/q.
+* Dump the real `ProofTree` on timeout/q.
 * Implement `extract_ppv_from_proof_tree` and have the hook log the extracted
   PPV alongside the statistics.
 * Validate the PPV with `Search::validate_pv` and the `verify_ppv` example.
-* **Test:** regression FENs; load the dumped `.sql` into Postgres; compare the
-  extracted PPV to `Search::find_ppv`/`refine_sppv`.
+* **Test:** regression FENs; compare the extracted PPV to `Search::find_ppv` /
+  `refine_sppv`.
+
+### Phase 4.1: compact binary dump
+* Replace the `ltree` `.sql` serializer with a compact binary adjacency dump
+  (`parent_id: u32`, `move_code: u16`). See `plan4-1.md` for the full format.
+* Store `Move` values in `ProofNode` and `NodeProven` instead of UCI strings.
+* Update `--dump-path` default to `proof_tree.bin`.
+* **Test:** confirm file sizes are far smaller, round-trip tests pass, and the
+  extracted PPV is still valid.
 
 ### Phase 5: direct Postgres export
 * Add optional direct export of the proof tree to a live Postgres database
   (behind a feature flag or a separate `--pg-url` flag).
 * The pre-exit hook inserts nodes into the DB instead of (or in addition to)
-  writing a `.sql` file.
+  writing the binary file.
 * **Test:** run with a Postgres connection string, then query the DB for the
   root, the PPV, and child counts of `Loss` nodes.
 
@@ -335,10 +346,10 @@ phase swaps in a more capable hook body.
 * **Phase-by-phase CLI tests** that rely on timeout and `q` + Enter to trigger
   the same `pre_exit_hook`. A coding agent can wait for `--timeout` to fire and
   inspect the hook output without driving interactive input.
-* **Unit tests** for `ProofTree` insertion, path parsing, and PPV extraction on
-  small forced-mate positions.
-* **Integration tests** solving known FENs, dumping, loading into Postgres, and
-  verifying the PPV with `verify_ppv`.
+* **Unit tests** for `ProofTree` insertion, `Move` encoding/decoding, and PPV
+  extraction on small forced-mate positions.
+* **Integration tests** solving known FENs, dumping to `.bin`, loading the binary
+  with an external loader, and verifying the PPV with `verify_ppv`.
 * **Property checks** on the in-memory tree:
   * terminal nodes have `depth == 0`,
   * internal `Win` nodes have exactly one `Loss` child,
@@ -349,7 +360,7 @@ phase swaps in a more capable hook body.
 
 ## Risks and pushbacks
 
-* **Minimal event, no FEN.** External consumers replay the UCI path from the
+* **Minimal event, no FEN.** External consumers replay the move path from the
   root FEN. If per-node FEN becomes necessary, add `fen` to the event.
 * **Memory cap.** `--pt-size` bounds the proof tree, but the measurement is
   approximate (Rust `Vec`/`HashMap` heap overhead is not exact). The cap does
@@ -365,12 +376,12 @@ phase swaps in a more capable hook body.
 * **OR child quality.** Building the tree during `solve_outcome` may store an
   arbitrary first winning child. Finalize the tree during `find_ppv` /
   `refine_sppv` for a PPV/SPPV-aligned dump.
-* **Duplicate-per-path blowup.** Transpositions are duplicated. This keeps the
-  `ltree` model simple but can grow large; the post-MVP can merge by
-  `(hash, path_code)` if needed.
-* **Multiple positions in one database.** The `root` sentinel path is the same
-  for every dumped position. Loading several dumps into the same table will
-  collide unless a run/session id is added. Post-MVP.
+* **Duplicate-per-path blowup.** Transpositions are duplicated per tree path.
+  This keeps the data model simple but can grow large; the post-MVP can merge
+  repeated positions by `(hash, path_code)` if needed.
+* **Multiple positions in one database.** The binary file contains one root per
+  file. A loader that imports many dumps into a single table must add a
+  run/session id to avoid collisions. Post-MVP.
 
 ## Open questions / resolved
 
@@ -380,8 +391,8 @@ phase swaps in a more capable hook body.
    dedicated-thread decoupling.
 4. Partial trees are fine for the MVP; no `complete` boolean.
 5. `--pt-size` uses an **approximate byte budget**: `size_of(ProofNode)` +
-   stored string capacities + the `index` `HashMap` + the `pending` buffer,
-   plus a small safety factor.
+   the `index` `HashMap` (still keyed by `path` strings) + the `pending` buffer,
+   plus a small safety factor. `ProofNode` no longer stores a UCI string.
 6. Out-of-order events: the worker buffers child `NodeProven` events until the
    matching parent event arrives. No placeholder nodes; `ProofNode` stays
-   `outcome: Outcome` and `depth: u32`.
+   `outcome: Outcome` and `depth: u32`, and `NodeProven` carries `mv: Move`.

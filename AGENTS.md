@@ -22,8 +22,8 @@ A pure solver for atomic chess in Rust.
   `StaticAtomicScorer`.
 - `src/proof_tree/mod.rs` provides an in-memory proof tree and a background
   worker that collects `NodeProven` events from the search, maintains the
-  tree, enforces a memory budget, and serializes the tree to a PostgreSQL
-  `ltree` SQL dump.
+  tree, enforces a memory budget, and serializes the tree to a compact binary
+  adjacency dump. External tools can import the binary dump into PostgreSQL.
 - `src/zobrist.rs` generates deterministic Zobrist keys for positions and
   path-dependent move codes.
 - `src/notation.rs` provides UCI move helpers.
@@ -32,10 +32,10 @@ A pure solver for atomic chess in Rust.
   (default 0.125), `--timeout <SECONDS>` (default 5), `--no-refine-shortest`
   (refinement is enabled by default), `--outcome-only` (disables the pre-exit
   hook and stdin reader), `--pt-size <MB>` (default 256, max in-memory
-  proof-tree size), `--dump-path <FILE>` (default `proof_tree.sql`, SQL dump
+  proof-tree size), `--dump-path <FILE>` (default `proof_tree.bin`, binary dump
   of the proof tree), plus `-h`/`--help`. Unknown options exit with an error. It
   prints the outcome and a PV when the result is decisive and, by default, logs
-  proof-tree statistics, the extracted PPV, its validity, and writes the SQL
+  proof-tree statistics, the extracted PPV, its validity, and writes the binary
   dump before exit.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
