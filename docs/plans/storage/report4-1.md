@@ -61,11 +61,6 @@ never appear in the dump.
   - Updated to describe the `Move`-based proof tree, `src/proof_tree/binary.rs`,
     and the binary adjacency dump.
 
-- **`scripts/load_proof_tree.py` (new, optional reference loader)**
-  - Reads `proof_tree.bin`, derives `outcome`, `depth`, `terminal`, and
-    `uci_move`, and either prints a CSV or inserts rows into PostgreSQL when
-    given `--db-url`.
-
 ## Verification
 
 - `cargo fmt --check` passed.
@@ -79,8 +74,6 @@ never appear in the dump.
   - `ppv_valid: true`
   - `proof_tree_dump: proof_tree.bin`
   - `proof_tree.bin` size: 70 bytes for a 4-node proof tree.
-- `python3 scripts/load_proof_tree.py proof_tree.bin` correctly decoded the
-  dump and derived `outcome`/`depth`/`terminal` for each node.
 
 ## Problems encountered
 
@@ -92,14 +85,10 @@ never appear in the dump.
 
 ## Open ends and next steps
 
-- The reference loader (`scripts/load_proof_tree.py`) currently reconstructs
-  UCI for castling by mapping the standard king/rook-square pairs to the
-  canonical `e1g1`/`e1c1`/`e8g8`/`e8c8` form. If `atomic_movegen` ever emits
-  castling moves with a different `to_sq`, the loader may need to match more
-  cases.
 - `read_proof_tree` validates that the derived `root_depth` matches the header.
   A future version could also validate parity consistency across the whole tree
   or surface warnings for partial trees produced by an interrupted search.
-- Phase 5 can now build on the binary dump: a `--pg-url` flag or feature-gated
+- Phase 5 can build on the binary dump: a `--pg-url` flag or feature-gated
   export can read the in-memory `ProofTree` and insert rows directly, reusing the
-  same adjacency records rather than `ltree` labels.
+  same adjacency records rather than `ltree` labels. The format spec in
+  `docs/spec/proof_tree_dump.md` is sufficient for an external loader.
