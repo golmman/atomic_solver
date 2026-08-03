@@ -277,16 +277,17 @@ impl ProofTreeWorker {
         }
 
         if parent_outcome == Outcome::Win {
-            let keep = if let Some(&existing_id) = self.tree.nodes[parent_id].children.first() {
-                event.depth < self.tree.nodes[existing_id].depth
-            } else {
-                true
-            };
-            if !keep {
-                if let Some(&id) = self.tree.index.get(&event.path) {
-                    self.tree.nodes[id].depth = event.depth;
+            if let Some(&existing_id) = self.tree.nodes[parent_id].children.first() {
+                let same_path = self.tree.index.get(&event.path) == Some(&existing_id);
+                if same_path {
+                    if event.depth < self.tree.nodes[existing_id].depth {
+                        self.tree.nodes[existing_id].depth = event.depth;
+                    }
+                    return;
                 }
-                return;
+                if event.depth >= self.tree.nodes[existing_id].depth {
+                    return;
+                }
             }
             self.tree.nodes[parent_id].children.clear();
         }
@@ -294,7 +295,9 @@ impl ProofTreeWorker {
         let id = if let Some(&id) = self.tree.index.get(&event.path) {
             self.tree.nodes[id].mv = event.mv;
             self.tree.nodes[id].outcome = event.outcome;
-            self.tree.nodes[id].depth = event.depth;
+            if event.depth < self.tree.nodes[id].depth {
+                self.tree.nodes[id].depth = event.depth;
+            }
             id
         } else {
             let id = self.tree.nodes.len();
@@ -505,6 +508,14 @@ mod tests {
             depth: 2,
         }))
         .unwrap();
+        // A deeper duplicate of the selected child must be ignored, not appended.
+        tx.send(ProofMessage::NodeProven(NodeProven {
+            path: "root.d2d4".to_string(),
+            mv: Move::make_move(Square::D2, Square::D4),
+            outcome: Outcome::Loss,
+            depth: 6,
+        }))
+        .unwrap();
 
         let (reply_tx, reply_rx) = channel();
         tx.send(ProofMessage::GetTree(reply_tx)).unwrap();
@@ -523,21 +534,21 @@ mod tests {
     }
 
     #[test]
-    fn worker_loss_parent_keeps_all_win_children() {
+    fn worker_loss_parent_keeps_all_distinct_win_children() {
         let (tx, handle) =
             ProofTreeWorker::spawn("fen".to_string(), 256, Arc::new(AtomicBool::new(false)));
         tx.send(ProofMessage::NodeProven(NodeProven {
             path: "root".to_string(),
             mv: Move::NONE,
             outcome: Outcome::Loss,
-            depth: 3,
+            depth: 5,
         }))
         .unwrap();
         tx.send(ProofMessage::NodeProven(NodeProven {
             path: "root.e2e4".to_string(),
             mv: Move::make_move(Square::E2, Square::E4),
             outcome: Outcome::Win,
-            depth: 2,
+            depth: 4,
         }))
         .unwrap();
         tx.send(ProofMessage::NodeProven(NodeProven {
@@ -554,6 +565,24 @@ mod tests {
             panic!("expected Tree response");
         };
         assert_eq!(tree.nodes[0].children.len(), 2);
+
+        // A duplicate with a shorter depth updates the existing child.
+        tx.send(ProofMessage::NodeProven(NodeProven {
+            path: "root.e2e4".to_string(),
+            mv: Move::make_move(Square::E2, Square::E4),
+            outcome: Outcome::Win,
+            depth: 1,
+        }))
+        .unwrap();
+
+        let (reply_tx2, reply_rx2) = channel();
+        tx.send(ProofMessage::GetTree(reply_tx2)).unwrap();
+        let ProofResponse::Tree(tree2) = reply_rx2.recv().unwrap() else {
+            panic!("expected Tree response");
+        };
+        assert_eq!(tree2.nodes[0].children.len(), 2);
+        let e2e4_id = tree2.index["root.e2e4"];
+        assert_eq!(tree2.nodes[e2e4_id].depth, 1);
 
         drop(tx);
         handle.join().unwrap();

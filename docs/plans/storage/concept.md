@@ -334,13 +334,17 @@ phase swaps in a more capable hook body.
 * **Test:** confirm file sizes are far smaller, round-trip tests pass, and the
   extracted PPV is still valid.
 
-### Phase 5: direct Postgres export
-* Add optional direct export of the proof tree to a live Postgres database
-  (behind a feature flag or a separate `--pg-url` flag).
-* The pre-exit hook inserts nodes into the DB instead of (or in addition to)
-  writing the binary file.
-* **Test:** run with a Postgres connection string, then query the DB for the
-  root, the PPV, and child counts of `Loss` nodes.
+### Phase 5: full proof-tree dump
+* Emit the entire proven subtree as `NodeProven` events during the
+  `extract_ppv_from_proven_subtree` pass, so the compact binary dump contains
+  the complete OR-AND proof tree, not just the PPV line.
+* `ProofTreeWorker` keeps the shortest child for `Win`/OR parents and all
+  distinct children for `Loss`/AND parents.
+* PostgreSQL import remains an external-loader/post-MVP option; the binary
+  adjacency dump is the stable solver output.
+* **Test:** existing PPV-match tests still pass; `proof_tree_contains_defender_replies`
+  checks that `Loss` nodes contain all defender replies; manual CLI checks show
+  `proof_tree.bin` contains more nodes than `pv.len() + 1`.
 
 ## Testability
 

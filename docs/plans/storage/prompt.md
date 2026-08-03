@@ -114,3 +114,14 @@ We need to address this before we continue with `docs/plans/storage/plan5.md`
 One idea is to simply dump an adjacency list (id, parent_id, label) and build the ltree path in PostgreSQL on import with a recursive CTE externally.
 
 No implementation here, let's discuss this. What options do we have here?
+
+
+---
+
+cargo run --release -- --fen "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R4RK w - - 1 23" --timeout 10
+
+Given the proof-tree has N nodes, with `docs/plans/storage/plan5.md` implemented what would be the complexity of the proof-tree export in O-notation?
+
+clarifications
+* pre-exit hook is not time bound
+* before dump

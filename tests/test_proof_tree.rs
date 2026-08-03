@@ -4,7 +4,7 @@ use std::sync::mpsc::channel;
 
 use atomic_movegen::types::Move;
 use atomic_solver::notation::move_to_uci;
-use atomic_solver::position::Position;
+use atomic_solver::position::{Outcome, Position};
 use atomic_solver::proof_tree::{ProofMessage, ProofResponse, ProofTreeWorker};
 use atomic_solver::search::dfpn::Search;
 
@@ -94,4 +94,82 @@ fn proof_tree_validate_ppv_accepts_extracted_line() {
         "extracted PPV must validate against the tree"
     );
     assert!(ppv.len() <= 3, "mate should be at most 3 plies");
+}
+
+fn solve_and_get_tree(fen: &str) -> atomic_solver::proof_tree::ProofTree {
+    let mut pos = Position::from_fen(fen).expect("valid fen");
+    let mut search = Search::new(64);
+    search.set_timeout(10);
+    search.refine_shortest(true);
+
+    let memory_limited = Arc::new(AtomicBool::new(false));
+    let (tx, handle) = ProofTreeWorker::spawn(fen.to_string(), 256, Arc::clone(&memory_limited));
+    search.set_memory_limited(Some(memory_limited));
+    search.set_proof_tree_sender(Some(tx.clone()));
+
+    let _ = search.solve(&mut pos);
+
+    let (reply_tx, reply_rx) = channel();
+    tx.send(ProofMessage::GetTree(reply_tx))
+        .expect("send GetTree");
+    let tree = match reply_rx.recv().expect("recv tree") {
+        ProofResponse::Tree(t) => t,
+        _ => panic!("expected Tree response"),
+    };
+
+    drop(search);
+    drop(tx);
+    handle.join().expect("worker thread");
+
+    tree
+}
+
+#[test]
+fn proof_tree_contains_defender_replies() {
+    // Black to move is lost; the root Loss node must have more than one
+    // distinct Win child (one for every legal defender reply that loses).
+    let fen = "rnbqkbnr/ppppp2p/5pp1/3Q4/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 3";
+    let tree = solve_and_get_tree(fen);
+
+    let defender_branching = tree.nodes.iter().any(|n| {
+        n.outcome == Outcome::Loss
+            && n.children
+                .iter()
+                .filter(|&&c| tree.nodes[c].outcome == Outcome::Win)
+                .count()
+                > 1
+    });
+    assert!(
+        defender_branching,
+        "expected a Loss node with more than one Win child in the proof tree"
+    );
+
+    let ppv = tree.extract_ppv();
+    assert!(tree.validate_ppv(&ppv));
+    let pos = Position::from_fen(fen).expect("valid fen");
+    assert!(Search::validate_pv(&ppv, &pos, Outcome::Loss, None));
+}
+
+#[test]
+fn proof_tree_bin_round_trips_full_tree() {
+    let fen = "rnbqkbnr/ppppp2p/5pp1/3Q4/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 3";
+    let tree = solve_and_get_tree(fen);
+    let ppv = tree.extract_ppv();
+    assert!(tree.validate_ppv(&ppv));
+
+    let mut buf = Vec::new();
+    tree.to_bin(&mut buf).expect("serialize tree");
+    let loaded =
+        atomic_solver::proof_tree::ProofTree::from_bin(&mut &buf[..]).expect("deserialize tree");
+
+    let loaded_ppv = loaded.extract_ppv();
+    assert_eq!(
+        loaded_ppv
+            .iter()
+            .map(|&m| move_to_uci(m))
+            .collect::<Vec<_>>(),
+        ppv.iter().map(|&m| move_to_uci(m)).collect::<Vec<_>>(),
+        "round-tripped PPV must match"
+    );
+    assert!(loaded.validate_ppv(&loaded_ppv));
 }

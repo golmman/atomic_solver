@@ -467,11 +467,10 @@ impl Search {
         self.proof_mode = ProofMode::Ppv;
         if !self.time_exceeded()
             && let Some((pv, proven_depth)) =
-                self.extract_ppv_from_proven_subtree(pos, outcome, bound.unwrap())
+                self.extract_ppv_from_proven_subtree_emit(pos, outcome, bound.unwrap())
         {
             self.last_pv = pv;
             self.bootstrap_success_depth = Some(proven_depth);
-            self.emit_pv_events(&self.last_pv.clone(), outcome, self.last_pv.len() as u32);
             if self.time_exceeded() {
                 return None;
             }
@@ -524,11 +523,18 @@ impl Search {
         let mut lo = self.bootstrap_fail_depth;
 
         // If last_pv is empty, use hi as the initial best length so any proven PV
-        // at a probe below hi is reported as shorter.
+        // at a probe below hi is reported as shorter.  Record MAX as the initial
+        // length when no PPV is known yet, so any found PV triggers a full tree
+        // rebuild.
         let mut current_best_len = if self.last_pv.is_empty() {
             hi
         } else {
             self.last_pv.len() as u32
+        };
+        let initial_best_len = if self.last_pv.is_empty() {
+            u32::MAX
+        } else {
+            current_best_len
         };
 
         while hi > lo + 1 && !self.time_exceeded() {
@@ -546,7 +552,7 @@ impl Search {
                 self.reset_search_state();
                 self.proof_mode = ProofMode::Sppv;
                 let child_evals_before = self.child_evals;
-                let o = self.dfpn(pos, INF, INF, probe, chunk, true, true);
+                let o = self.dfpn(pos, INF, INF, probe, chunk, true, false);
 
                 if self.time_exceeded() {
                     break;
@@ -559,7 +565,7 @@ impl Search {
                             self.last_pv = pv;
                             current_best_len = pv_len;
                             on_shorter(&self.last_pv);
-                        } else if pv_len == current_best_len {
+                        } else if pv_len == current_best_len && self.last_pv.is_empty() {
                             self.last_pv = pv;
                         }
                     }
@@ -591,8 +597,19 @@ impl Search {
             }
         }
 
-        if !self.last_pv.is_empty() {
-            self.emit_pv_events(&self.last_pv.clone(), outcome, self.last_pv.len() as u32);
+        if current_best_len < initial_best_len && !self.time_exceeded() && !self.last_pv.is_empty()
+        {
+            self.clear_proof_tree();
+            self.ppv_cache.clear();
+            self.reset_search_state();
+            if let Some((pv, proven_depth)) =
+                self.extract_ppv_from_proven_subtree_emit(pos, outcome, current_best_len)
+            {
+                self.last_pv = pv;
+                self.bootstrap_success_depth = Some(proven_depth);
+            } else if !self.last_pv.is_empty() {
+                self.emit_pv_events(&self.last_pv.clone(), outcome, self.last_pv.len() as u32);
+            }
         }
     }
 

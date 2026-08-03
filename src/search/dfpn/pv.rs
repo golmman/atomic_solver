@@ -202,11 +202,31 @@ impl Search {
     /// defender resistance), and recurses.  Repetitions are detected with the
     /// same `path_stack` convention as `dfpn`.  Results are memoized in
     /// `Search::ppv_cache`.
+    #[cfg(test)]
     pub(super) fn extract_ppv_from_proven_subtree(
         &mut self,
         pos: &mut Position,
         expected: Outcome,
         remaining: u32,
+    ) -> Option<(Vec<Move>, u32)> {
+        self.extract_ppv_from_proven_subtree_impl(pos, expected, remaining, false)
+    }
+
+    pub(super) fn extract_ppv_from_proven_subtree_emit(
+        &mut self,
+        pos: &mut Position,
+        expected: Outcome,
+        remaining: u32,
+    ) -> Option<(Vec<Move>, u32)> {
+        self.extract_ppv_from_proven_subtree_impl(pos, expected, remaining, true)
+    }
+
+    fn extract_ppv_from_proven_subtree_impl(
+        &mut self,
+        pos: &mut Position,
+        expected: Outcome,
+        remaining: u32,
+        emit: bool,
     ) -> Option<(Vec<Move>, u32)> {
         let key = (pos.hash(), self.path_code, expected);
         if let Some((cached_pv, cached_depth)) = self.ppv_cache.get(&key) {
@@ -221,13 +241,18 @@ impl Search {
         }
 
         if let Some(outcome) = pos.outcome() {
+            self.path_pop();
             if outcome == expected {
+                if emit {
+                    self.emit_proof_node(true, expected, 0);
+                }
                 return Some((Vec::new(), 0));
             }
             return None;
         }
 
         if remaining == 0 {
+            self.path_pop();
             return None;
         }
 
@@ -271,23 +296,35 @@ impl Search {
                 break;
             }
 
+            let proof_len = self.proof_path.len();
+            let uci = crate::notation::move_to_uci(mv);
+            self.proof_path.push('.');
+            self.proof_path.push_str(&uci);
+            self.move_stack.push(mv);
+
             pos.do_move(mv);
             self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
 
             let child_result = if let Some(outcome) = pos.outcome() {
                 if outcome == expected.flip() {
+                    if emit {
+                        self.emit_proof_node(true, outcome, 0);
+                    }
                     Some((Vec::new(), 0))
                 } else {
                     None
                 }
             } else if child_bound > 0 {
-                self.extract_ppv_from_proven_subtree(pos, expected.flip(), child_bound)
+                self.extract_ppv_from_proven_subtree_impl(pos, expected.flip(), child_bound, emit)
             } else {
                 None
             };
 
             self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
             pos.undo_move(mv);
+
+            self.move_stack.pop();
+            self.proof_path.truncate(proof_len);
 
             match (expected, child_result) {
                 (Outcome::Win, Some((child_pv, child_depth))) => {
@@ -324,6 +361,9 @@ impl Search {
         if let Some((_, pv, child_depth)) = best {
             let result = (pv, 1 + child_depth);
             if result.1 <= remaining {
+                if emit {
+                    self.emit_proof_node(true, expected, result.1);
+                }
                 self.ppv_cache.insert(key, result.clone());
                 Some(result)
             } else {
