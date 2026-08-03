@@ -111,4 +111,4 @@ mode.
   - implementation plans can be found via `find . -type f -name 'plan*.md'`
   - implementation reports can be found via `find . -type f -name 'report*.md'`
   - the final task of an implementation plan is creating the corresponding implementation report
-    - the report should include additional tools/examples used, problems encountered, open ends, next steps
+    - the report should include additional tools/examples used, problems encountered, unresolved parts, next steps
