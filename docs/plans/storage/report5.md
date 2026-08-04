@@ -78,6 +78,20 @@ dump from Phase 4.1 is the stable output.
     - `ppv_valid: true`
     - The dump contains far more nodes than `pv.len() + 1`.
 
+## Performance regression and fix
+
+After the full-tree dump landed, a deep position (`4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R4RK w - - 1 23`) was observed to spend roughly 90s in the `pre_exit` hook producing `proof_tree.bin`, even though the search itself finished in a few seconds. Profiling showed the delay was inside `ProofTreeWorker::run`, not the binary serializer.
+
+Root cause: `ProofTreeWorker::estimate_memory()` iterated over the entire `pending` `HashMap` on every `NodeProven` event. With ~200k events and a pending queue that grew to ~150k entries, this made event handling quadratic. The same pending vectors were re-summarized on every call. The `NodeProven` volume is a consequence of the full proven-subtree extractor exploring deep defender lines; the worker should not make each event costlier as the pending queue grows.
+
+Fix:
+- `src/proof_tree/mod.rs`: `ProofTreeWorker` now maintains `index_path_bytes`, `pending_path_bytes`, and `pending_event_count` incrementally. `estimate_memory()` is O(1) and just multiplies the maintained lengths/capacities.
+- `src/search/dfpn/pv.rs`: `extract_ppv_from_proven_subtree_impl` now caches proven-subtree results in `ppv_cache` even when the discovered depth exceeds the current `remaining` bound, so the same `(hash, path_code, expected)` triple is not re-proved as the bound grows.
+
+Verification after the fix:
+- `cargo test --lib --tests`, `cargo clippy -- -D warnings`, `cargo fmt --check`, and `cargo doc --no-deps` all pass.
+- `cargo run --release -- --fen "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R4RK w - - 1 23"` finishes inside the default 5s timeout and the binary dump is effectively instant (previously ~90s).
+
 ## Problems encountered
 
 - The original `extract_ppv_from_proven_subtree` returned from terminal and

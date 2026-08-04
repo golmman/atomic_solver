@@ -193,6 +193,10 @@ pub struct ProofTreeWorker {
     pending: HashMap<String, Vec<NodeProven>>,
     budget: usize,
     memory_limited: Arc<AtomicBool>,
+    // Memory-accounting totals updated incrementally so `estimate_memory` is O(1).
+    index_path_bytes: usize,
+    pending_path_bytes: usize,
+    pending_event_count: usize,
 }
 
 impl ProofTreeWorker {
@@ -203,11 +207,16 @@ impl ProofTreeWorker {
         memory_limited: Arc<AtomicBool>,
     ) -> (Sender<ProofMessage>, std::thread::JoinHandle<()>) {
         let (tx, rx) = channel();
+        let tree = ProofTree::new(root_fen, Outcome::Draw, 0);
+        let index_path_bytes = tree.index.keys().map(|k| k.len()).sum();
         let mut worker = Self {
-            tree: ProofTree::new(root_fen, Outcome::Draw, 0),
+            tree,
             pending: HashMap::new(),
             budget: pt_size_mb.saturating_mul(1024 * 1024),
             memory_limited,
+            index_path_bytes,
+            pending_path_bytes: 0,
+            pending_event_count: 0,
         };
         let handle = std::thread::spawn(move || worker.run(rx));
         (tx, handle)
@@ -219,6 +228,9 @@ impl ProofTreeWorker {
                 ProofMessage::Clear => {
                     self.tree = ProofTree::new(self.tree.root_fen.clone(), Outcome::Draw, 0);
                     self.pending.clear();
+                    self.index_path_bytes = self.tree.index.keys().map(|k| k.len()).sum();
+                    self.pending_path_bytes = 0;
+                    self.pending_event_count = 0;
                 }
                 ProofMessage::NodeProven(event) => self.process_event(event),
                 ProofMessage::GetStats(tx) => {
@@ -235,11 +247,10 @@ impl ProofTreeWorker {
         if self.memory_limited.load(Ordering::Acquire) {
             return;
         }
+        self.insert_event(event);
         if self.estimate_memory() > self.budget {
             self.memory_limited.store(true, Ordering::Release);
-            return;
         }
-        self.insert_event(event);
     }
 
     fn insert_event(&mut self, event: NodeProven) {
@@ -257,6 +268,8 @@ impl ProofTreeWorker {
             {
                 self.attach_child(parent_id, event);
             } else {
+                self.pending_path_bytes += event.path.len();
+                self.pending_event_count += 1;
                 self.pending
                     .entry(parent_path.to_string())
                     .or_default()
@@ -308,8 +321,14 @@ impl ProofTreeWorker {
                 depth: event.depth,
                 children: Vec::new(),
             });
-            self.tree.index.insert(event.path.clone(), id);
-            id
+            self.index_path_bytes += event.path.len();
+            let path = event.path.clone();
+            self.tree.index.insert(event.path, id);
+            if !self.tree.nodes[parent_id].children.contains(&id) {
+                self.tree.nodes[parent_id].children.push(id);
+            }
+            self.process_pending(&path);
+            return;
         };
 
         if !self.tree.nodes[parent_id].children.contains(&id) {
@@ -323,6 +342,10 @@ impl ProofTreeWorker {
         if let Some(children) = self.pending.remove(path)
             && let Some(&parent_id) = self.tree.index.get(path)
         {
+            for child in &children {
+                self.pending_path_bytes -= child.path.len();
+                self.pending_event_count -= 1;
+            }
             for child in children {
                 self.attach_child(parent_id, child);
             }
@@ -331,21 +354,13 @@ impl ProofTreeWorker {
 
     fn estimate_memory(&self) -> usize {
         let node_size = std::mem::size_of::<ProofNode>();
-        let nodes_mem = self.tree.nodes.len() * node_size;
+        let nodes_mem = self.tree.nodes.capacity() * node_size;
         let index_overhead = self.tree.index.capacity()
             * (std::mem::size_of::<String>() + std::mem::size_of::<usize>() + 8);
-        let pending_overhead: usize = self
-            .pending
-            .iter()
-            .map(|(k, v)| {
-                k.capacity()
-                    + std::mem::size_of::<String>()
-                    + std::mem::size_of::<Vec<NodeProven>>()
-                    + v.capacity() * std::mem::size_of::<NodeProven>()
-                    + v.iter().map(|e| e.path.capacity()).sum::<usize>()
-            })
-            .sum();
-        let total = nodes_mem + index_overhead + pending_overhead;
+        let pending_overhead = self.pending.len() * std::mem::size_of::<Vec<NodeProven>>()
+            + self.pending_event_count * std::mem::size_of::<NodeProven>()
+            + self.pending_path_bytes;
+        let total = nodes_mem + index_overhead + self.index_path_bytes + pending_overhead;
         (total as f64 * 1.5) as usize
     }
 

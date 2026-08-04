@@ -360,11 +360,11 @@ impl Search {
 
         if let Some((_, pv, child_depth)) = best {
             let result = (pv, 1 + child_depth);
+            self.ppv_cache.insert(key, result.clone());
             if result.1 <= remaining {
                 if emit {
                     self.emit_proof_node(true, expected, result.1);
                 }
-                self.ppv_cache.insert(key, result.clone());
                 Some(result)
             } else {
                 None
