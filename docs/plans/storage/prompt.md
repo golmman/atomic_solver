@@ -125,3 +125,19 @@ Given the proof-tree has N nodes, with `docs/plans/storage/plan5.md` implemented
 clarifications
 * pre-exit hook is not time bound
 * before dump
+
+
+---
+
+
+When i run
+```
+cargo run --release -- --fen "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R4RK w - - 1 23" --timeout 10
+```
+an outcome is found and a proof tree with 6040 nodes is exported.
+
+The only exported move from the starting position is e3f4 for white, which is fine.
+After that i expected ALL black (defender) moves in the dump but i only see c6c5.
+Since all defender AND nodes were proven/disproven in this position why were they not available for the export?
+
+Do i have a misconception here or does this point to an issue that needs fixing?
