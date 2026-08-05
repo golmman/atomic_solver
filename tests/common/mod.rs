@@ -32,10 +32,14 @@ pub fn solve_with_pv(fen: &str) -> (Outcome, Vec<String>, u64) {
 }
 
 pub fn solve_refined(fen: &str) -> (Outcome, Vec<String>, u64) {
+    solve_with_pv(fen)
+}
+
+pub fn solve_first_outcome(fen: &str) -> (Outcome, Vec<String>, u64) {
     let mut pos = Position::from_fen(fen).unwrap();
     let mut search = Search::new(64);
-    search.refine_shortest(true);
     search.set_timeout(5);
+    search.set_first_outcome_only(true);
     let (outcome, pv, nodes) = search.solve(&mut pos);
     (outcome, pv_strings(&pv), nodes)
 }
@@ -43,7 +47,6 @@ pub fn solve_refined(fen: &str) -> (Outcome, Vec<String>, u64) {
 pub fn solve_refined_moves(fen: &str) -> (Outcome, Vec<Move>, u64) {
     let mut pos = Position::from_fen(fen).unwrap();
     let mut search = Search::new(64);
-    search.refine_shortest(true);
     search.set_timeout(5);
     search.solve(&mut pos)
 }

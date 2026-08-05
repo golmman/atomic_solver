@@ -3,7 +3,7 @@ mod common;
 use std::process::Command;
 
 use atomic_solver::position::Outcome;
-use common::{cli_bin, solve_refined, solve_with_pv};
+use common::{cli_bin, solve_first_outcome, solve_refined, solve_with_pv};
 
 /// Single-commoner checkmates: the losing side has exactly one commoner (the
 /// king) and the winning side has a line piece and a king.  These cases were
@@ -57,7 +57,7 @@ fn two_rook_transposition_still_wins() {
 /// path-code handling for promotion moves.
 #[test]
 fn promotion_transposition_still_wins() {
-    let (outcome, pv, nodes) = solve_with_pv("4k3/PP6/8/8/8/8/8/4K3 w - - 0 1");
+    let (outcome, pv, nodes) = solve_first_outcome("4k3/PP6/8/8/8/8/8/4K3 w - - 0 1");
     assert_eq!(outcome, Outcome::Win);
     assert!(!pv.is_empty());
     assert!(

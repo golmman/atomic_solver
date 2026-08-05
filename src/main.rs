@@ -1,3 +1,4 @@
+use atomic_movegen::types::Move;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::proof_tree::{ProofMessage, ProofResponse, ProofTreeWorker};
@@ -20,10 +21,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 ///                              Defaults to 64.
 ///   --epsilon <VALUE>          DF-PN+ threshold parameter in the range [0.0, 1.0].
 ///                              Defaults to 0.125.
-///   --no-refine-shortest       Find and print the outcome and the Proof PV (PPV),
-///                              but do not refine toward the Shortest PPV (SPPV).
 ///   --timeout <SECONDS>        Search time limit in seconds.
 ///                              Defaults to 5.
+///   --first-outcome             Stop after the first decisive outcome and skip
+///                              the iterative shortest-PV refinement.
 ///   --outcome-only             Print only the outcome/PV and skip the pre-exit
 ///                              summary. No stdin reader is spawned.
 ///   --pt-size <MB>             Maximum in-memory proof-tree size in megabytes.
@@ -32,16 +33,16 @@ use std::sync::atomic::{AtomicBool, Ordering};
 ///                              Defaults to `proof_tree.bin`.
 ///
 /// Output:
-///   First the decisive outcome (`outcome: win`, `outcome: loss`, or
-///   `outcome: draw`) is printed. For wins/losses this is followed by a `pv:`
-///   line for the PPV, then additional `pv:` lines for each strictly shorter
-///   PPV discovered during SPPV refinement. If the timeout is reached after
-///   any result, `timeout` is printed on its own line.
+///   Each newly discovered decisive line is logged as
+///   `outcome: <win|loss|draw> length: <plies>`. For wins and losses the final
+///   line is followed by `pv: <UCI moves>`. If the timeout is reached after any
+///   result, `timeout` is printed on its own line. The pre-exit hook writes the
+///   accumulated proof tree to `proof_tree.bin` and prints `ppv_valid: true/false`.
 ///
 /// Examples:
 ///   atomic_solver --help
 ///   atomic_solver --fen "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1"
-///   atomic_solver --epsilon 0.5 --no-refine-shortest
+///   atomic_solver --epsilon 0.5 --first-outcome
 ///   atomic_solver --timeout 10
 fn print_help(program: &str) {
     println!("atomic chess solver");
@@ -51,16 +52,16 @@ fn print_help(program: &str) {
     println!();
     println!("Options:");
     println!("  -h, --help                 Show this help message and exit");
-    println!("  --fen <FEN>                Position to solve in Forsyth-Edwards Notation");
+    println!("  --fen <FEN>                Position in Forsyth-Edwards Notation");
     println!("                             (default: standard atomic start position)");
     println!("  --tt-size <MB>             Transposition-table size in megabytes");
     println!("                             (default: 64)");
     println!("  --epsilon <VALUE>          DF-PN+ threshold parameter in [0.0, 1.0]");
     println!("                             (default: 0.125)");
-    println!("  --no-refine-shortest       Find and print the PPV but do not refine");
-    println!("                             toward the Shortest PPV (SPPV)");
     println!("  --timeout <SECONDS>        Search time limit in seconds");
     println!("                             (default: 5)");
+    println!("  --first-outcome            Stop after the first decisive outcome");
+    println!("                             and skip shortest-PV refinement");
     println!("  --outcome-only             Print only the outcome/PV;");
     println!("                             do not spawn stdin reader or pre-exit hook");
     println!("  --pt-size <MB>             Maximum in-memory proof-tree size in megabytes");
@@ -71,7 +72,7 @@ fn print_help(program: &str) {
     println!("Examples:");
     println!("  {program} --help");
     println!("  {program} --fen \"4k3/8/8/8/8/8/8/4KRR1 w - - 0 1\"");
-    println!("  {program} --epsilon 0.5 --no-refine-shortest");
+    println!("  {program} --epsilon 0.5 --first-outcome");
     println!("  {program} --timeout 10");
 }
 
@@ -90,7 +91,7 @@ fn pv_str(pv: &[atomic_movegen::types::Move]) -> String {
         .join(" ")
 }
 
-type PreExitHook = Box<dyn FnOnce(ExitReason, Outcome, u64) + Send>;
+type PreExitHook = Box<dyn FnOnce(ExitReason, Outcome, u64, &[Move]) + Send>;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -98,8 +99,8 @@ fn main() {
     let mut fen = Position::STARTPOS_FEN.to_string();
     let mut tt_size: usize = 64;
     let mut epsilon = 0.125;
-    let mut refine_shortest = true;
     let mut timeout: u64 = 5;
+    let mut first_outcome_only = false;
     let mut outcome_only = false;
     let mut pt_size: usize = 256;
     let mut dump_path = "proof_tree.bin".to_string();
@@ -155,10 +156,6 @@ fn main() {
                 }
                 i += 2;
             }
-            "--no-refine-shortest" => {
-                refine_shortest = false;
-                i += 1;
-            }
             "--timeout" => {
                 if i + 1 >= args.len() {
                     eprintln!("error: --timeout requires a value");
@@ -176,6 +173,10 @@ fn main() {
                     }
                 }
                 i += 2;
+            }
+            "--first-outcome" => {
+                first_outcome_only = true;
+                i += 1;
             }
             "--outcome-only" => {
                 outcome_only = true;
@@ -219,7 +220,7 @@ fn main() {
     let mut search = Search::new(tt_size);
     search.set_timeout(timeout);
     search.set_epsilon(epsilon);
-    search.refine_shortest(refine_shortest);
+    search.set_first_outcome_only(first_outcome_only);
 
     let stop_flag = Arc::new(AtomicBool::new(false));
     let memory_limited = Arc::new(AtomicBool::new(false));
@@ -252,7 +253,7 @@ fn main() {
         let hook_tx = proof_tx.as_ref().unwrap().clone();
         let hook_fen = fen.clone();
         let hook_dump_path = dump_path;
-        Some(Box::new(move |reason, outcome, nodes| {
+        Some(Box::new(move |reason, outcome, nodes, pv: &[Move]| {
             println!("pre_exit: reason={reason} outcome={outcome} nodes={nodes}");
 
             let (stats_tx, stats_rx) = std::sync::mpsc::channel();
@@ -273,14 +274,12 @@ fn main() {
                 return;
             }
             if let Ok(ProofResponse::Tree(tree)) = tree_rx.recv() {
-                let ppv = tree.extract_ppv();
-                println!("proof_tree_ppv: {}", pv_str(&ppv));
+                println!("proof_tree_ppv: {}", pv_str(pv));
 
                 let fresh = Position::from_fen(&hook_fen).unwrap_or_else(|_| {
                     Position::from_fen(Position::STARTPOS_FEN).expect("valid startpos fen")
                 });
-                let valid =
-                    tree.validate_ppv(&ppv) && Search::validate_pv(&ppv, &fresh, outcome, None);
+                let valid = tree.validate_ppv(pv) && Search::validate_pv(pv, &fresh, outcome, None);
                 println!("ppv_valid: {valid}");
 
                 if let Err(e) = std::fs::File::create(&hook_dump_path)
@@ -306,34 +305,18 @@ fn main() {
     });
     search.set_proof_tree_sender(proof_tx.clone());
 
-    let run_search = |pos: &mut Position, search: &mut Search| -> (Outcome, bool) {
-        let outcome = search.solve_outcome(pos);
-        if search.time_exceeded() {
-            return (outcome, true);
+    let (outcome, pv, timed_out) = {
+        let (outcome, pv, _nodes) = search.solve_with_progress(&mut pos, |o, line| {
+            println!("outcome: {} length: {}", outcome_str(o), line.len());
+        });
+
+        if outcome != Outcome::Draw {
+            println!("pv: {}", pv_str(&pv));
         }
 
-        println!("outcome: {}", outcome_str(outcome));
-        if outcome == Outcome::Draw {
-            return (outcome, false);
-        }
-
-        if let Some(ppv) = search.find_ppv(pos, outcome) {
-            println!("pv: {}", pv_str(&ppv));
-
-            if refine_shortest {
-                search.refine_sppv(pos, outcome, |shorter| {
-                    println!("pv: {}", pv_str(shorter));
-                });
-                if !search.time_exceeded() {
-                    println!("sppv search finished");
-                }
-            }
-        }
-
-        (outcome, search.time_exceeded())
+        (outcome, pv, search.time_exceeded())
     };
 
-    let (outcome, timed_out) = run_search(&mut pos, &mut search);
     if timed_out {
         let msg = match search.exit_reason() {
             ExitReason::Quit => "quit",
@@ -344,7 +327,7 @@ fn main() {
     }
 
     if let Some(hook) = hook {
-        hook(search.exit_reason(), outcome, search.nodes());
+        hook(search.exit_reason(), outcome, search.nodes(), &pv);
     }
 
     drop(search);

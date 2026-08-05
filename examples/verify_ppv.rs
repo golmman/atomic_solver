@@ -217,7 +217,7 @@ fn main() {
                 .iter()
                 .map(|p| p.repetition_key())
                 .collect();
-            let prefix_path_code = path_codes[i];
+            let prefix_path_code = path_codes[i] ^ zobrist::path_random(m, i + 1);
 
             let wall_remaining = global_deadline.saturating_duration_since(Instant::now());
             if wall_remaining.is_zero() {

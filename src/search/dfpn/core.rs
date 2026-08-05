@@ -9,7 +9,7 @@ use crate::position::{Outcome, Position};
 use crate::zobrist;
 
 use super::children::{ChildInfo, ChildSelection};
-use super::{INF, ProofMode, Search};
+use super::{INF, Search};
 
 pub(super) struct Resolved {
     pub outcome: Outcome,
@@ -27,9 +27,8 @@ impl Search {
         max_depth: u32,
         max_work: u64,
         is_or_node: bool,
-        in_proof_tree: bool,
     ) -> Outcome {
-        let in_proof_tree = in_proof_tree && self.proof_tree_sender.is_some();
+        let emit = self.proof_tree_sender.is_some();
 
         if self.time_exceeded() {
             return Outcome::Draw;
@@ -66,7 +65,7 @@ impl Search {
                 path_length,
                 false,
             );
-            self.emit_proof_node(in_proof_tree, outcome, 0);
+            self.emit_proof_node(outcome, 0);
             return outcome;
         }
 
@@ -93,7 +92,7 @@ impl Search {
 
         if let Some(resolved) = self.try_use_tt(pos, tt_key, max_depth, self.path_code, path_length)
         {
-            self.emit_proof_node(in_proof_tree, resolved.outcome, resolved.depth);
+            self.emit_proof_node(resolved.outcome, resolved.depth);
             return resolved.outcome;
         }
 
@@ -118,8 +117,6 @@ impl Search {
         let mut outcome_to_store_dn = INF;
         let mut outcome_to_store_depth = 0;
         let mut outcome_to_store_repetition_seen = false;
-        let mut best_win_depth = u32::MAX;
-        let mut best_loss_depth = 0u32;
         let mut best_move = Move::NONE;
         let mut pn = INF;
         let mut dn = INF;
@@ -142,21 +139,14 @@ impl Search {
             }
 
             if children.is_empty() {
-                children = self.evaluate_all_children(
-                    pos,
-                    &moves,
-                    max_depth,
-                    is_or_node,
-                    self.proof_mode,
-                    in_proof_tree,
-                );
+                children = self.evaluate_all_children(pos, &moves, max_depth, is_or_node);
             } else if let Some(prev) = selection
                 && let Some(idx) = prev.best_child_index
             {
                 let mv = children[idx].mv;
                 let old_pn = children[idx].pn;
                 let old_dn = children[idx].dn;
-                children[idx] = self.evaluate_child(pos, mv, max_depth, is_or_node, in_proof_tree);
+                children[idx] = self.evaluate_child(pos, mv, max_depth, is_or_node);
                 // In a work-bounded call, if the child came back with exactly the
                 // same (pn, dn) bounds re-expanding it cannot make progress. Mark
                 // it explored so the search moves on to other children.
@@ -177,7 +167,6 @@ impl Search {
             selection = Some(Search::select_from_children(
                 &children,
                 is_or_node,
-                self.proof_mode,
                 previous_best_move,
                 previous_best_child,
             ));
@@ -189,47 +178,15 @@ impl Search {
             repetition_seen = selection.repetition_seen;
 
             if let Some(solved) = selection.solved_outcome {
-                if solved == Outcome::Win {
-                    // A side-to-move Win requires the shortest decisive child
-                    // (shortest mate from the winning player's perspective).
-                    if selection.depth < best_win_depth {
-                        best_win_depth = selection.depth;
-                        outcome_to_store = Some(solved);
-                        outcome_to_store_best_move = selection.best_move;
-                        outcome_to_store_pn = selection.pn;
-                        outcome_to_store_dn = selection.dn;
-                        outcome_to_store_depth = best_win_depth;
-                        outcome_to_store_repetition_seen = selection.repetition_seen;
-                    }
-                    if selection.all_solved || self.proof_mode != ProofMode::Sppv {
-                        break;
-                    }
-                } else if solved == Outcome::Loss {
-                    // A side-to-move Loss requires the longest decisive child
-                    // (most resistance from the losing player).
-                    if selection.depth > best_loss_depth {
-                        best_loss_depth = selection.depth;
-                        outcome_to_store = Some(solved);
-                        outcome_to_store_best_move = selection.best_move;
-                        outcome_to_store_pn = selection.pn;
-                        outcome_to_store_dn = selection.dn;
-                        outcome_to_store_depth = best_loss_depth;
-                        outcome_to_store_repetition_seen = selection.repetition_seen;
-                    }
-                    if selection.all_solved {
-                        break;
-                    }
-                } else {
-                    outcome_to_store = Some(solved);
-                    outcome_to_store_best_move = selection.best_move;
-                    outcome_to_store_pn = selection.pn;
-                    outcome_to_store_dn = selection.dn;
-                    outcome_to_store_depth = selection.depth;
-                    outcome_to_store_repetition_seen = selection.repetition_seen;
-                    if selection.all_solved {
-                        break;
-                    }
-                }
+                // Win: one winning child is enough. Loss and Draw require all
+                // children to be solved.
+                outcome_to_store = Some(solved);
+                outcome_to_store_best_move = selection.best_move;
+                outcome_to_store_pn = selection.pn;
+                outcome_to_store_dn = selection.dn;
+                outcome_to_store_depth = selection.depth;
+                outcome_to_store_repetition_seen = selection.repetition_seen;
+                break;
             }
 
             if (th_pn != INF && pn >= th_pn) || (th_dn != INF && dn >= th_dn) {
@@ -268,7 +225,7 @@ impl Search {
 
             pos.do_move(mv);
             self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
-            if in_proof_tree {
+            if emit {
                 let uci = crate::notation::move_to_uci(mv);
                 let proof_len = self.proof_path.len();
                 self.proof_path.push('.');
@@ -281,7 +238,6 @@ impl Search {
                     max_depth.saturating_sub(1),
                     child_max_work,
                     !is_or_node,
-                    true,
                 );
                 self.move_stack.pop();
                 self.proof_path.truncate(proof_len);
@@ -293,7 +249,6 @@ impl Search {
                     max_depth.saturating_sub(1),
                     child_max_work,
                     !is_or_node,
-                    false,
                 );
             }
             self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
@@ -362,7 +317,7 @@ impl Search {
         self.path_code = old_path_code;
 
         if let Some(outcome) = outcome_to_store {
-            self.emit_proof_node(in_proof_tree, outcome, outcome_to_store_depth);
+            self.emit_proof_node(outcome, outcome_to_store_depth);
             outcome
         } else {
             Outcome::Draw

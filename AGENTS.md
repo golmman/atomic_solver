@@ -11,11 +11,11 @@ A pure solver for atomic chess in Rust.
 - `src/position.rs` wraps `atomic_movegen::board::Board` and tracks the
   `Outcome` (Win/Loss/Draw from the side-to-move perspective), undo state,
   and Zobrist hashing.
-- `src/search/dfpn/` implements the sequential DF-PN+ solver with optional
-  shortest-PV refinement, history/killer heuristics, and a 5-second default
-  timeout. It now also emits `NodeProven` events and includes a
-  `extract_ppv_from_proven_subtree` pass in `pv.rs` that minimaxes the proven
-  subtree without trusting stale TT `best_move` hints.
+- `src/search/dfpn/` implements the sequential DF-PN+ solver with iterative
+  bounded shortest-PV refinement, history/killer heuristics, and a 5-second
+  default timeout. `dfpn` emits `NodeProven` events for every node it proves
+  or disproves; the returned PV is the shortest decisive line found before the
+  timeout or a bounded-search failure.
 - `src/search/tt/` holds the transposition table, including path-independent
   base entries and path-dependent "twin" entries for repetition handling.
 - `src/search/ordering.rs` provides the `MoveScorer` trait and the
@@ -30,14 +30,14 @@ A pure solver for atomic chess in Rust.
 - `src/notation.rs` provides UCI move helpers.
 - `src/main.rs` is the CLI entry point. It accepts `--fen <FEN>` (default
   standard start position), `--tt-size <MB>` (default 64), `--epsilon <VALUE>`
-  (default 0.125), `--timeout <SECONDS>` (default 5), `--no-refine-shortest`
-  (refinement is enabled by default), `--outcome-only` (disables the pre-exit
-  hook and stdin reader), `--pt-size <MB>` (default 256, max in-memory
-  proof-tree size), `--dump-path <FILE>` (default `proof_tree.bin`, binary dump
-  of the full proven subtree), plus `-h`/`--help`. Unknown options exit with an
-  error. It prints the outcome and a PV when the result is decisive and, by
-  default, logs proof-tree statistics, the extracted PPV, its validity, and
-  writes the binary dump before exit.
+  (default 0.125), `--timeout <SECONDS>` (default 5), `--first-outcome`
+  (stop after the first decisive line without iterative shortest-PV refinement),
+  `--outcome-only` (disables the pre-exit hook and stdin reader), `--pt-size <MB>`
+  (default 256, max in-memory proof-tree size), `--dump-path <FILE>`
+  (default `proof_tree.bin`, binary dump of the full proven subtree), plus
+  `-h`/`--help`. Unknown options exit with an error. It prints the outcome and
+  a PV when the result is decisive and, by default, logs proof-tree statistics,
+  the returned PV, its validity, and writes the binary dump before exit.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
 
@@ -49,7 +49,7 @@ not itself a runnable example.
 The runnable examples are:
 
 - `benchmark` — Reproducible benchmark harness over a fixed suite of positions.
-  Supports `--runs`, `--timeout`, `--epsilon`, `--refine-shortest`, and an
+  Supports `--runs`, `--timeout`, `--epsilon`, `--first-outcome`, and an
   optional positional name filter. Prints a table with outcome, nodes, child
   evaluations, mean/min/max time, and PV length.
 - `find_winning_child` — Enumerates every legal first move, solves the resulting
@@ -59,8 +59,6 @@ The runnable examples are:
   position. Useful for inspecting a particular line.
 - `solve_depth_limited` — Runs `Search::search_depth` with a fixed
   `max_depth` and no iterative-deepening bootstrap.
-- `solve_no_refinement` — Solves a position with the full staged solver but
-  with shortest-PV refinement disabled.
 - `static_move_scores` — Prints the `StaticAtomicScorer` values for all legal
   moves, sorted from highest to lowest.
 - `twin_stats` — Solves GHI-sensitive positions and reports twin-table
@@ -75,13 +73,15 @@ complexity, prefer them in this order:
 
 1. **Decisive outcome** for deep positions (roughly 30 full moves / 60 plies or
    more).
-2. **Proof Principal Variation (PPV)** once the outcome is known.
-3. **Shortest PPV (SPPV)** refinement only when time and correctness allow.
+2. **Shortest decisive PV** returned by `Search::solve` by iterative bounded
+   refinement.
+3. **Proof tree dump** (`proof_tree.bin`) that records every node proven or
+   disproven during the search.
 
-This means `solve_outcome` may use the majority of the time budget,
-`find_ppv` should return a valid PPV if possible, and `refine_sppv` is the
-lowest-priority stage. `--no-refine-shortest` is a normal, well-supported
-mode.
+`Search::solve` returns the first decisive line quickly, then uses the
+remaining time budget to iteratively shorten it. Use `Search::first_outcome_only`
+(or the CLI `--first-outcome` flag) to skip refinement when only a decisive
+outcome is needed.
 
 ## Conventions
 

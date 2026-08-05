@@ -85,20 +85,15 @@ be proven/disproven".
 
 ### Search integration
 
-`dfpn` is extended with an `in_proof_tree` indication. A recursive child call is
-in the proof tree when:
+`dfpn` emits a `NodeProven` event for every node it proves or disproves whenever
+a proof-tree sender is configured. The event carries the move that led to the
+node, the node's outcome, and the current search depth. Events are sent during
+the normal DF-PN search, not in a separate extraction pass.
 
-* the parent is a `Loss` node (all children belong to the proof), or
-* the parent is a `Win` node and this child is the selected `best_move`.
-
-When a node is proven with `in_proof_tree == true`, the solver emits
-`NodeProven` using the current incremental path.
-
-> **Important:** `solve_outcome` often stops at the first winning child, so its
-> OR edges may be arbitrary. For a meaningful PPV, the proof tree should be
-> built or finalized during `find_ppv` / `refine_sppv`, where `best_move` reflects
-> the chosen principal variation. If the tree is accumulated across all stages,
-> reset it before the final PPV/SPPV pass.
+> **Important:** The first decisive line found by `solve` may not be the shortest
+> one. The proof tree accumulates all proven/disproven nodes encountered during
+> the iterative bounded search; the shortest line is extracted from the returned
+> PV, not from the tree.
 
 ### In-memory proof tree
 
@@ -270,9 +265,8 @@ confidence, with the existing `verify_ppv` example.
 ## CLI integration
 
 * New optional flag `--outcome-only`. When present, the pre-exit hook is
-  disabled entirely: the solver runs `solve_outcome`, prints the outcome (and
-  PV if not `--no-refine-shortest`), and exits. No proof tree, no worker, no
-  dump, and no `q` handling.
+  disabled entirely: the solver runs `solve`, prints the outcome and PV, and
+  exits. No proof tree worker, no dump, and no `q` handling.
 * New optional flag `--dump-path <FILE>` (default `proof_tree.bin`). Used by
   phases that write a binary proof-tree dump.
 * New optional flag `--pt-size <MB>` (default `256`). Hard limit on the
@@ -320,11 +314,10 @@ phase swaps in a more capable hook body.
 
 ### Phase 4: real dump + PPV extraction
 * Dump the real `ProofTree` on timeout/q.
-* Implement `extract_ppv_from_proof_tree` and have the hook log the extracted
-  PPV alongside the statistics.
-* Validate the PPV with `Search::validate_pv` and the `verify_ppv` example.
-* **Test:** regression FENs; compare the extracted PPV to `Search::find_ppv` /
-  `refine_sppv`.
+* The pre-exit hook logs the `solve` PV and validates it against the proof
+  tree with `tree.validate_ppv` and `Search::validate_pv`.
+* Validate the returned PV with the `verify_ppv` example.
+* **Test:** regression FENs; compare the returned PV length and first moves.
 
 ### Phase 4.1: compact binary dump
 * Replace the `ltree` `.sql` serializer with a compact binary adjacency dump
@@ -360,8 +353,7 @@ phase swaps in a more capable hook body.
   * internal `Win` nodes have exactly one `Loss` child,
   * internal `Loss` nodes contain a child for every legal defender reply,
   * depths are monotonically consistent.
-* **Regression tests** comparing `extract_ppv_from_proof_tree` to the existing
-  `find_ppv` / `refine_sppv` output.
+* **Regression tests** comparing the returned PV to previous known-good lines.
 
 ## Risks and pushbacks
 
@@ -378,9 +370,10 @@ phase swaps in a more capable hook body.
   worker's `pending` buffer and are not linked into the dumped tree. For the MVP
   this is accepted; post-MVP can add a `complete` flag or orphan-node handling
   if external tools need it.
-* **OR child quality.** Building the tree during `solve_outcome` may store an
-  arbitrary first winning child. Finalize the tree during `find_ppv` /
-  `refine_sppv` for a PPV/SPPV-aligned dump.
+* **OR child quality.** The proof tree accumulates every proven node visited by
+  `dfpn`, so it may contain arbitrary first winning children alongside the
+  shortest line. Consumers should use the `solve` PV as the authoritative
+  shortest line and treat the tree as a collection of valid proofs.
 * **Duplicate-per-path blowup.** Transpositions are duplicated per tree path.
   This keeps the data model simple but can grow large; the post-MVP can merge
   repeated positions by `(hash, path_code)` if needed.

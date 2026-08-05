@@ -143,7 +143,7 @@ fn run_once(fen: &str, timeout: u64, factor: Option<(u64, u64)>) -> Run {
     }
 
     let start = Instant::now();
-    let outcome = search.solve_outcome(&mut pos);
+    let (outcome, _pv, _nodes) = search.search_depth(&mut pos, u32::MAX);
     let elapsed = start.elapsed();
 
     Run {

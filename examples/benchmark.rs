@@ -1,7 +1,7 @@
 //! Reproducible benchmark harness for the atomic-chess solver.
 //!
 //! Run with:
-//!     cargo run --release --example benchmark -- --runs 10 --refine-shortest
+//!     cargo run --release --example benchmark -- --runs 10
 
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
@@ -74,7 +74,6 @@ fn main() {
     let mut runs = 10usize;
     let mut timeout = 5u64;
     let mut epsilon = 0.125f64;
-    let mut refine_shortest = false;
     let mut filter: Option<String> = None;
 
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -102,10 +101,6 @@ fn main() {
                     .expect("--epsilon needs a number in [0,1]");
                 i += 2;
             }
-            "--refine-shortest" => {
-                refine_shortest = true;
-                i += 1;
-            }
             other => {
                 filter = Some(other.to_string());
                 i += 1;
@@ -113,7 +108,7 @@ fn main() {
         }
     }
 
-    println!("runs={runs} timeout={timeout}s epsilon={epsilon} refine_shortest={refine_shortest}");
+    println!("runs={runs} timeout={timeout}s epsilon={epsilon}");
     println!();
 
     let mut results = Vec::new();
@@ -124,10 +119,7 @@ fn main() {
             continue;
         }
         println!("benchmarking {} ...", case.name);
-        results.push((
-            case.name,
-            bench_case(case, runs, timeout, epsilon, refine_shortest),
-        ));
+        results.push((case.name, bench_case(case, runs, timeout, epsilon)));
     }
 
     println!();
@@ -146,15 +138,15 @@ fn main() {
     }
 }
 
-fn bench_case(case: &Case, runs: usize, timeout: u64, epsilon: f64, refine: bool) -> BenchResult {
+fn bench_case(case: &Case, runs: usize, timeout: u64, epsilon: f64) -> BenchResult {
     // Warm-up run, excluded from statistics (matching the report style).
-    let _ = run_once(case.fen, timeout, epsilon, refine);
+    let _ = run_once(case.fen, timeout, epsilon);
 
     let mut times = Vec::with_capacity(runs);
     let mut first: Option<Run> = None;
 
     for _ in 0..runs {
-        let run = run_once(case.fen, timeout, epsilon, refine);
+        let run = run_once(case.fen, timeout, epsilon);
         times.push(run.elapsed);
         if first.is_none() {
             first = Some(run);
@@ -179,12 +171,11 @@ fn bench_case(case: &Case, runs: usize, timeout: u64, epsilon: f64, refine: bool
     }
 }
 
-fn run_once(fen: &str, timeout: u64, epsilon: f64, refine: bool) -> Run {
+fn run_once(fen: &str, timeout: u64, epsilon: f64) -> Run {
     let mut pos = Position::from_fen(fen).expect("valid FEN");
     let mut search = Search::new(64);
     search.set_timeout(timeout);
     search.set_epsilon(epsilon);
-    search.refine_shortest(refine);
 
     let start = Instant::now();
     let (outcome, pv, nodes) = search.solve(&mut pos);

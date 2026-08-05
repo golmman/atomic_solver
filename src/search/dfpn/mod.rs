@@ -13,7 +13,6 @@ mod tests;
 pub use crate::zobrist::INF;
 pub use core::outcome_from_pn_dn;
 
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
@@ -25,18 +24,6 @@ use crate::proof_tree::{NodeProven, ProofMessage};
 
 use super::ordering::StaticAtomicScorer;
 use super::tt::TranspositionTable;
-
-type PpvCache = HashMap<(u64, u64, Outcome), (Vec<Move>, u32)>;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum ProofMode {
-    /// Stop as soon as the result is proven.
-    Outcome,
-    /// Defender replies are longest; attacker moves are any winning move.
-    Ppv,
-    /// Fully minimax: shortest attacker wins, longest defender replies.
-    Sppv,
-}
 
 const DEFAULT_EPSILON: f64 = 0.125;
 const TIMEOUT_SECS: u64 = 5;
@@ -105,20 +92,13 @@ pub struct Search {
     epsilon_num: u64,
     epsilon_den: u64,
     scorer: StaticAtomicScorer,
-    refine_shortest: bool,
-    proof_mode: ProofMode,
+    first_outcome_only: bool,
     timeout: Duration,
-    last_pv: Vec<Move>,
     history: [[[i32; 64]; 64]; 2],
     killers: [[Move; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
     history_age_counter: u64,
     max_ply: usize,
     max_depth_reached: u32,
-    bootstrap_success_depth: Option<u32>,
-    bootstrap_fail_depth: u32,
-    ppv_cache: PpvCache,
-    // Optional repetition-path prefix for bounded searches that are run in the
-    // context of a longer line (e.g. verifying a defender reply against a PPV).
     prefix_path: Option<(Vec<u64>, u64)>,
     linear_chunks: bool,
     chunk_increment: u64,
@@ -145,18 +125,13 @@ impl Search {
             epsilon_num,
             epsilon_den,
             scorer: StaticAtomicScorer,
-            refine_shortest: false,
-            proof_mode: ProofMode::Outcome,
+            first_outcome_only: false,
             timeout: Duration::from_secs(TIMEOUT_SECS),
-            last_pv: Vec::new(),
             history: [[[0; 64]; 64]; 2],
             killers: [[Move::NONE; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
             history_age_counter: 0,
             max_ply: DEFAULT_MAX_PV_PLIES,
             max_depth_reached: 0,
-            bootstrap_success_depth: None,
-            bootstrap_fail_depth: 0,
-            ppv_cache: HashMap::new(),
             prefix_path: None,
             linear_chunks: false,
             chunk_increment: 500_000,
@@ -170,8 +145,8 @@ impl Search {
         }
     }
 
-    pub fn refine_shortest(&mut self, value: bool) {
-        self.refine_shortest = value;
+    pub fn set_first_outcome_only(&mut self, value: bool) {
+        self.first_outcome_only = value;
     }
 
     pub fn set_timeout(&mut self, seconds: u64) {
@@ -237,45 +212,14 @@ impl Search {
         }
     }
 
-    fn emit_proof_node(&self, in_proof_tree: bool, outcome: Outcome, depth: u32) {
-        if !in_proof_tree || outcome == Outcome::Draw {
+    fn emit_proof_node(&self, outcome: Outcome, depth: u32) {
+        if outcome == Outcome::Draw {
             return;
         }
         if let Some(sender) = &self.proof_tree_sender {
             let mv = self.move_stack.last().copied().unwrap_or(Move::NONE);
             let _ = sender.send(ProofMessage::NodeProven(NodeProven {
                 path: self.proof_path.clone(),
-                mv,
-                outcome,
-                depth,
-            }));
-        }
-    }
-
-    fn emit_pv_events(&self, pv: &[Move], root_outcome: Outcome, root_depth: u32) {
-        if self.proof_tree_sender.is_none() {
-            return;
-        }
-        let Some(sender) = &self.proof_tree_sender else {
-            return;
-        };
-        let _ = sender.send(ProofMessage::NodeProven(NodeProven {
-            path: "root".to_string(),
-            mv: Move::NONE,
-            outcome: root_outcome,
-            depth: root_depth,
-        }));
-        let mut path = "root".to_string();
-        let mut outcome = root_outcome;
-        let mut depth = root_depth;
-        for &mv in pv {
-            let uci = crate::notation::move_to_uci(mv);
-            path.push('.');
-            path.push_str(&uci);
-            outcome = outcome.flip();
-            depth = depth.saturating_sub(1);
-            let _ = sender.send(ProofMessage::NodeProven(NodeProven {
-                path: path.clone(),
                 mv,
                 outcome,
                 depth,
@@ -303,15 +247,59 @@ impl Search {
         }
     }
 
+    /// Run a single bounded, work-chunked `dfpn` search for `max_depth` plies.
+    ///
+    /// For finite `max_depth` this stops as soon as the bounded tree is exhausted
+    /// (the search cannot consume its full work budget). For `max_depth =
+    /// u32::MAX` it keeps increasing the work budget until a decisive outcome is
+    /// found, time expires, or the budget saturates.
+    fn bounded_search(&mut self, pos: &mut Position, max_depth: u32) -> (Outcome, Vec<Move>) {
+        let mut outcome = Outcome::Draw;
+        let mut chunk = 500_000u64;
+        let mut last_child_evals_before;
+
+        while !self.time_exceeded() && chunk > 0 {
+            self.reset_search_state();
+            last_child_evals_before = self.child_evals;
+            outcome = self.dfpn(pos, INF, INF, max_depth, chunk, true);
+            if outcome != Outcome::Draw {
+                break;
+            }
+
+            let work_done = self.child_evals - last_child_evals_before;
+            if work_done < chunk {
+                // The search did not use its full work budget, so the bounded
+                // tree was exhausted without finding a decisive line. More work
+                // cannot change the outcome at this depth.
+                break;
+            }
+
+            chunk = if self.linear_chunks {
+                chunk.saturating_add(self.chunk_increment)
+            } else {
+                ((chunk as u128 * self.chunk_multiplier_num as u128)
+                    / self.chunk_multiplier_den as u128) as u64
+            };
+            self.log_chunk(work_done, chunk, "bounded_search");
+        }
+
+        let pv = if outcome == Outcome::Draw {
+            self.extract_pv(pos)
+        } else {
+            self.extract_pv_checked(pos, outcome, None)
+                .unwrap_or_else(|| self.extract_pv(pos))
+        };
+        (outcome, pv)
+    }
+
     pub fn search_depth(
         &mut self,
         pos: &mut Position,
         max_depth: u32,
     ) -> (Outcome, Vec<Move>, u64) {
         self.begin_run();
-        self.proof_mode = ProofMode::Outcome;
-        let outcome = self.dfpn(pos, INF, INF, max_depth, u64::MAX, true, false);
-        let pv = self.extract_pv(pos);
+        self.clear_proof_tree();
+        let (outcome, pv) = self.bounded_search(pos, max_depth);
         (outcome, pv, self.nodes)
     }
 
@@ -321,11 +309,8 @@ impl Search {
     /// preserving the history of the supplied PPV prefix. The repetition keys
     /// `prefix_keys` are the positions *before* `pos` is pushed onto the path
     /// stack; `prefix_path_code` is the XOR of `zobrist::path_random(...)` for
-    /// the prefix moves using the same 1-indexed depths as `dfpn`.
-    ///
-    /// Internally this runs the staged solver (with shortest-PV refinement) on
-    /// the child position and returns a Win only if the shortest proven win is
-    /// within `max_depth` plies.
+    /// all moves that led to `pos` (including the final move into `pos`), using
+    /// the same 1-indexed depths as `dfpn`.
     pub fn search_depth_with_prefix(
         &mut self,
         pos: &mut Position,
@@ -334,332 +319,61 @@ impl Search {
         prefix_path_code: u64,
     ) -> (Outcome, u32, u64) {
         let saved_prefix = self.prefix_path.take();
-        let saved_refine = self.refine_shortest;
         self.prefix_path = Some((prefix_keys.to_vec(), prefix_path_code));
-        self.refine_shortest = true;
+        self.begin_run();
 
-        let (outcome, pv, nodes) = self.solve(pos);
+        let (outcome, pv) = self.bounded_search(pos, max_depth);
+        let depth = if outcome == Outcome::Win {
+            pv.len() as u32
+        } else {
+            0
+        };
 
         self.prefix_path = saved_prefix;
-        self.refine_shortest = saved_refine;
-
-        let depth = pv.len() as u32;
-        if outcome == Outcome::Win && depth <= max_depth {
-            (Outcome::Win, depth, nodes)
-        } else {
-            (Outcome::Draw, 0, nodes)
-        }
+        (outcome, depth, self.nodes)
     }
 
-    /// Run the solver to a decisive outcome or the configured timeout.
-    ///
-    /// Internally this uses a pure work-bounded iterative-deepening loop.  The
-    /// depth bound is effectively unbounded (`u32::MAX`); the search is stopped
-    /// and resumed by doubling work chunks, reusing the transposition table
-    /// between chunks.  This prioritizes proving decisive outcomes for deep
-    /// positions.  A concrete decisive PV depth is recorded for the follow-up
-    /// `find_ppv` and `refine_sppv` stages.
-    pub fn solve_outcome(&mut self, pos: &mut Position) -> Outcome {
-        self.begin_run();
-        self.proof_mode = ProofMode::Outcome;
-
-        let mut outcome = Outcome::Draw;
-        let mut chunk = 500_000u64;
-        let mut success_depth: Option<u32> = None;
-        let mut last_child_evals_before = 0u64;
-
-        while !self.time_exceeded() {
-            self.reset_search_state();
-            last_child_evals_before = self.child_evals;
-            outcome = self.dfpn(pos, INF, INF, u32::MAX, chunk, true, false);
-
-            if outcome != Outcome::Draw {
-                if let Some(entry) = self.tt.probe(pos.hash())
-                    && entry.outcome.is_some()
-                {
-                    success_depth = Some(entry.depth);
-                }
-                if success_depth.is_none()
-                    && let Some(pv) = self.extract_pv_checked(pos, outcome, None)
-                {
-                    success_depth = Some(pv.len() as u32);
-                }
-                if success_depth.is_none() {
-                    // Last-resort cap so the follow-up stages have a finite bound.
-                    success_depth = Some(self.max_ply as u32);
-                }
-                break;
-            }
-
-            let work_done = self.child_evals - last_child_evals_before;
-            if self.linear_chunks {
-                chunk = chunk.saturating_add(self.chunk_increment);
-            } else {
-                chunk = ((chunk as u128 * self.chunk_multiplier_num as u128)
-                    / self.chunk_multiplier_den as u128) as u64;
-            }
-            self.log_chunk(work_done, chunk, "solve_outcome");
-            if chunk == u64::MAX {
-                break;
-            }
-        }
-
-        // If the work loop ran out of budget without a decisive result, spend the
-        // remaining wall-clock time on a single unbounded search.  Keep the table
-        // and history from the work chunks; only reset path state.
-        if outcome == Outcome::Draw && !self.time_exceeded() {
-            self.reset_search_state();
-            let work_done = self.child_evals - last_child_evals_before;
-            self.log_chunk(work_done, u64::MAX, "solve_outcome_fallback");
-            outcome = self.dfpn(pos, INF, INF, u32::MAX, u64::MAX, true, false);
-
-            if outcome != Outcome::Draw {
-                if let Some(entry) = self.tt.probe(pos.hash())
-                    && entry.outcome.is_some()
-                {
-                    success_depth = Some(entry.depth);
-                }
-                if success_depth.is_none()
-                    && let Some(pv) = self.extract_pv_checked(pos, outcome, None)
-                {
-                    success_depth = Some(pv.len() as u32);
-                }
-                if success_depth.is_none() {
-                    success_depth = Some(self.max_ply as u32);
-                }
-            }
-        }
-
-        self.bootstrap_success_depth = success_depth;
-        // A pure work-bounded loop has no reliable "deepest searched depth".
-        // Zero is a safe lower bound: a non-terminal position cannot win or lose
-        // in zero plies, so refinement starts from there.
-        self.bootstrap_fail_depth = 0;
-        outcome
-    }
-
-    /// Find and verify a Proof PV (PPV) for `outcome`.
-    ///
-    /// A PPV has winning attacker moves and defender replies that maximize the
-    /// length of the defense.  The returned PV is validated to reach the
-    /// expected terminal outcome.
-    pub fn find_ppv(&mut self, pos: &mut Position, outcome: Outcome) -> Option<Vec<Move>> {
-        if self.time_exceeded() {
-            return None;
-        }
-
-        // Tighten the depth bound if solve_outcome only stored a loose value, and
-        // keep a TT-based PV as a fallback in case the full proven-subtree pass
-        // cannot finish.
-        let mut bound = self.bootstrap_success_depth;
-        self.reset_search_state();
-        let fallback_pv = self.extract_pv_checked(pos, outcome, None);
-        if let Some(pv) = &fallback_pv {
-            bound = Some(pv.len() as u32);
-        }
-        if bound.is_none() {
-            bound = Some(self.max_ply as u32);
-        }
-
-        self.reset_search_state();
-        self.clear_proof_tree();
-        self.ppv_cache.clear();
-        self.proof_mode = ProofMode::Ppv;
-        if !self.time_exceeded()
-            && let Some((pv, proven_depth)) =
-                self.extract_ppv_from_proven_subtree_emit(pos, outcome, bound.unwrap())
-        {
-            self.last_pv = pv;
-            self.bootstrap_success_depth = Some(proven_depth);
-            if self.time_exceeded() {
-                return None;
-            }
-            return Some(self.last_pv.clone());
-        }
-
-        if self.time_exceeded() {
-            // Even if the minimax pass ran out of time, we usually already have a
-            // proven PV in the TT; emit it so the proof tree is not just the empty
-            // root.
-            if let Some(pv) = fallback_pv {
-                self.last_pv = pv;
-                self.bootstrap_success_depth = Some(self.last_pv.len() as u32);
-                self.emit_pv_events(&self.last_pv.clone(), outcome, self.last_pv.len() as u32);
-                return Some(self.last_pv.clone());
-            }
-            return None;
-        }
-
-        // Fallback: follow the TT best_move chain.
-        let pv = self
-            .extract_ppv(pos, outcome)
-            .unwrap_or_else(|| self.extract_pv(pos));
-        if pv.is_empty() {
-            return None;
-        }
-        self.last_pv = pv;
-        self.bootstrap_success_depth = Some(self.last_pv.len() as u32);
-        self.emit_pv_events(&self.last_pv.clone(), outcome, self.last_pv.len() as u32);
-        if self.time_exceeded() {
-            return None;
-        }
-        Some(self.last_pv.clone())
-    }
-
-    /// Iteratively refine the PPV toward the Shortest PPV (SPPV).
-    ///
-    /// For each strictly shorter PPV discovered, `on_shorter` is called with
-    /// the new line.  The transposition table and move-ordering history from
-    /// the earlier stages are reused; only path-dependent state is reset between
-    /// probes.
-    pub fn refine_sppv<F>(&mut self, pos: &mut Position, outcome: Outcome, mut on_shorter: F)
-    where
-        F: FnMut(&[Move]),
-    {
-        let start_depth = self
-            .bootstrap_success_depth
-            .unwrap_or(self.last_pv.len() as u32);
-        let mut hi = start_depth;
-        let mut lo = self.bootstrap_fail_depth;
-
-        // If last_pv is empty, use hi as the initial best length so any proven PV
-        // at a probe below hi is reported as shorter.  Record MAX as the initial
-        // length when no PPV is known yet, so any found PV triggers a full tree
-        // rebuild.
-        let mut current_best_len = if self.last_pv.is_empty() {
-            hi
-        } else {
-            self.last_pv.len() as u32
-        };
-        let initial_best_len = if self.last_pv.is_empty() {
-            u32::MAX
-        } else {
-            current_best_len
-        };
-
-        while hi > lo + 1 && !self.time_exceeded() {
-            let probe = lo + (hi - lo) / 2;
-            let mut chunk = 500_000u64;
-            let mut proved_at_probe = false;
-
-            // A few retries with doubling work avoid false negatives caused by a
-            // tight budget; if the depth bound itself is too low, the retries are
-            // cheap because the tree is shallow.
-            for _retry in 0..3 {
-                if self.time_exceeded() {
-                    break;
-                }
-                self.reset_search_state();
-                self.proof_mode = ProofMode::Sppv;
-                let child_evals_before = self.child_evals;
-                let o = self.dfpn(pos, INF, INF, probe, chunk, true, false);
-
-                if self.time_exceeded() {
-                    break;
-                }
-
-                if o == outcome {
-                    if let Some(pv) = self.extract_pv_checked(pos, outcome, None) {
-                        let pv_len = pv.len() as u32;
-                        if pv_len < current_best_len {
-                            self.last_pv = pv;
-                            current_best_len = pv_len;
-                            on_shorter(&self.last_pv);
-                        } else if pv_len == current_best_len && self.last_pv.is_empty() {
-                            self.last_pv = pv;
-                        }
-                    }
-                    proved_at_probe = true;
-                    break;
-                }
-
-                let work_done = self.child_evals - child_evals_before;
-                if self.linear_chunks {
-                    chunk = chunk.saturating_add(self.chunk_increment);
-                } else {
-                    chunk = ((chunk as u128 * self.chunk_multiplier_num as u128)
-                        / self.chunk_multiplier_den as u128) as u64;
-                }
-                self.log_chunk(work_done, chunk, "refine_sppv");
-                if chunk == u64::MAX {
-                    break;
-                }
-            }
-
-            if self.time_exceeded() {
-                break;
-            }
-
-            if proved_at_probe {
-                hi = probe;
-            } else {
-                lo = probe;
-            }
-        }
-
-        if current_best_len < initial_best_len && !self.time_exceeded() && !self.last_pv.is_empty()
-        {
-            self.clear_proof_tree();
-            self.ppv_cache.clear();
-            self.reset_search_state();
-            if let Some((pv, proven_depth)) =
-                self.extract_ppv_from_proven_subtree_emit(pos, outcome, current_best_len)
-            {
-                self.last_pv = pv;
-                self.bootstrap_success_depth = Some(proven_depth);
-            } else if !self.last_pv.is_empty() {
-                self.emit_pv_events(&self.last_pv.clone(), outcome, self.last_pv.len() as u32);
-            }
-        }
-    }
-
-    /// Solve in a single call, returning the final outcome and PV.
-    ///
-    /// This is a convenience wrapper around the staged API.  When
-    /// `refine_shortest` is false, it performs a single unbounded search for
-    /// backward compatibility and speed on shallow positions.  When true, it
-    /// runs `solve_outcome`, `find_ppv`, and `refine_sppv`.
+    /// Solve a position, returning the decisive outcome and the shortest PV
+    /// found within the configured timeout.
     pub fn solve(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
-        if !self.refine_shortest {
-            self.begin_run();
-            self.proof_mode = ProofMode::Outcome;
-            let outcome = self.dfpn(pos, INF, INF, u32::MAX, u64::MAX, true, false);
-            if outcome != Outcome::Draw {
-                if let Some(entry) = self.tt.probe(pos.hash())
-                    && entry.outcome.is_some()
-                {
-                    self.bootstrap_success_depth = Some(entry.depth);
-                }
-                if self.bootstrap_success_depth.is_none()
-                    && let Some(pv) = self.extract_pv_checked(pos, outcome, None)
-                {
-                    self.bootstrap_success_depth = Some(pv.len() as u32);
-                }
-                if self.bootstrap_success_depth.is_none() {
-                    self.bootstrap_success_depth = Some(self.max_ply as u32);
-                }
-                self.bootstrap_fail_depth = 0;
+        self.solve_with_progress(pos, |_, _| {})
+    }
+
+    /// Solve a position and call `on_progress` for every newly found decisive
+    /// line. The final returned PV is the shortest line discovered before the
+    /// timeout or the first outcome if `first_outcome_only` is set.
+    pub fn solve_with_progress<F>(
+        &mut self,
+        pos: &mut Position,
+        mut on_progress: F,
+    ) -> (Outcome, Vec<Move>, u64)
+    where
+        F: FnMut(Outcome, &[Move]),
+    {
+        self.begin_run();
+        self.clear_proof_tree();
+
+        // 1. First decisive outcome (work-chunked, unbounded depth).
+        let (mut outcome, mut pv) = self.bounded_search(pos, u32::MAX);
+        if outcome != Outcome::Draw || !pv.is_empty() {
+            on_progress(outcome, &pv);
+        }
+
+        // 2. Iteratively tighten the bound by two plies, unless the user asked
+        //    for the first outcome only.
+        let mut n = pv.len() as u32;
+        while !self.first_outcome_only && outcome != Outcome::Draw && n > 2 && !self.time_exceeded()
+        {
+            let bound = n - 2;
+            let (new_outcome, new_pv) = self.bounded_search(pos, bound);
+            if new_outcome == Outcome::Draw || new_pv.len() as u32 >= n {
+                break;
             }
-            let pv = self
-                .extract_pv_checked(pos, outcome, None)
-                .unwrap_or_else(|| self.extract_pv(pos));
-            self.last_pv = pv.clone();
-            return (outcome, pv, self.nodes);
+            outcome = new_outcome;
+            pv = new_pv;
+            n = pv.len() as u32;
+            on_progress(outcome, &pv);
         }
-
-        let outcome = self.solve_outcome(pos);
-        if outcome == Outcome::Draw {
-            return (outcome, self.extract_pv(pos), self.nodes);
-        }
-
-        let _ = self.find_ppv(pos, outcome);
-        self.refine_sppv(pos, outcome, |_| {});
-
-        let pv = if self.last_pv.is_empty() {
-            self.extract_pv(pos)
-        } else {
-            self.last_pv.clone()
-        };
 
         (outcome, pv, self.nodes)
     }
@@ -687,7 +401,6 @@ impl Search {
         self.path_code = 0;
         self.move_stack.clear();
         self.proof_path = "root".to_string();
-        self.last_pv.clear();
         self.max_depth_reached = 0;
         if let Some((keys, code)) = &self.prefix_path {
             self.path_stack = keys.clone();

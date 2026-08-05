@@ -9,7 +9,7 @@ use crate::position::{Outcome, Position};
 use crate::proof_tree::{NodeProven, ProofMessage};
 use crate::zobrist;
 
-use super::{INF, ProofMode, Search};
+use super::{INF, Search};
 
 pub struct ChildInfo {
     pub mv: Move,
@@ -31,7 +31,6 @@ pub struct ChildSelection {
     pub depth: u32,
     pub best_move: Move,
     pub solved_outcome: Option<Outcome>,
-    pub all_solved: bool,
     pub repetition_seen: bool,
 }
 
@@ -39,29 +38,20 @@ impl Search {
     /// Evaluate every legal move and build a fresh `ChildInfo` table.
     ///
     /// A single child `Loss` is enough to prove the parent is a win for the
-    /// side to move.  We early-exit in `Outcome` mode and in `Ppv` mode at OR
-    /// nodes (the attacker only needs any winning move).  For `Sppv` and for
-    /// `Ppv` at AND nodes we evaluate all children so the defender's longest
-    /// resistance can be discovered.
+    /// side to move, so we can stop evaluating the remaining children once a
+    /// winning child is found. A Loss parent requires all children to be solved.
     pub(super) fn evaluate_all_children(
         &mut self,
         pos: &mut Position,
         moves: &MoveList,
         max_depth: u32,
         is_or_node: bool,
-        proof_mode: ProofMode,
-        in_proof_tree: bool,
     ) -> Vec<ChildInfo> {
         let mut children = Vec::with_capacity(moves.len());
         for i in 0..moves.len() {
             let mv = moves[i];
-            let info = self.evaluate_child(pos, mv, max_depth, is_or_node, in_proof_tree);
-            let decisive = match (proof_mode, is_or_node) {
-                (ProofMode::Outcome, _) => info.outcome == Some(Outcome::Loss),
-                (ProofMode::Ppv, true) => info.outcome == Some(Outcome::Loss),
-                (ProofMode::Ppv, false) => false,
-                (ProofMode::Sppv, _) => false,
-            };
+            let info = self.evaluate_child(pos, mv, max_depth, is_or_node);
+            let decisive = info.outcome == Some(Outcome::Loss);
             children.push(info);
             if decisive {
                 for j in (i + 1)..moves.len() {
@@ -90,17 +80,14 @@ impl Search {
     pub(super) fn select_from_children(
         children: &[ChildInfo],
         is_or_node: bool,
-        proof_mode: ProofMode,
         previous_best_move: Option<Move>,
         previous_best_child: Option<u8>,
     ) -> ChildSelection {
         let solved = Self::is_solved_by_children(children, is_or_node);
 
-        // If a win is already proven and we do not need a fully minimax
-        // refinement, there is no reason to order or expand remaining siblings.
-        if let Some(selection) =
-            Self::select_child_with_early_exit(children, is_or_node, proof_mode, solved)
-        {
+        // A single winning child is enough to prove a Win. For Loss and Draw
+        // we need all children to be solved.
+        if let Some(selection) = Self::select_child_with_early_exit(children, solved) {
             return selection;
         }
 
@@ -163,7 +150,6 @@ impl Search {
         };
 
         let depth = solved.map_or(0, |(_, d, _, _, _)| d);
-        let all_solved = solved.is_some_and(|(_, _, _, all, _)| all);
 
         let repetition_seen = if let Some((outcome, _, _, _, idx)) = solved {
             match outcome {
@@ -183,7 +169,6 @@ impl Search {
             depth,
             best_move,
             solved_outcome: solved.map(|(o, _, _, _, _)| o),
-            all_solved,
             repetition_seen,
         }
     }
@@ -213,7 +198,6 @@ impl Search {
             depth: 0,
             best_move: best.mv,
             solved_outcome: None,
-            all_solved: false,
             repetition_seen: children.iter().any(|c| c.repetition_seen),
         }
     }
@@ -256,7 +240,6 @@ impl Search {
         mv: Move,
         max_depth: u32,
         is_or_node: bool,
-        in_proof_tree: bool,
     ) -> ChildInfo {
         self.child_evals += 1;
         pos.do_move(mv);
@@ -320,8 +303,9 @@ impl Search {
                 // bootstrap this only applies to the root, which is never
                 // evaluated here; deeper unsolved entries carry
                 // `u32::MAX - ply`, matching `child_max_depth` on reuse.  When
-                // `child_max_depth` is finite (e.g. `refine_sppv` probes), the
-                // `<=` guard rejects over-deep summaries as intended.
+                // `child_max_depth` is finite (e.g. during iterative
+                // refinement), the `<=` guard rejects over-deep summaries as
+                // intended.
                 let use_as_unsolved = summary.outcome.is_none()
                     && summary.remaining_depth != u32::MAX
                     && summary.remaining_depth <= child_max_depth
@@ -354,7 +338,7 @@ impl Search {
             }
         };
 
-        if in_proof_tree
+        if self.proof_tree_sender.is_some()
             && let Some(outcome) = info.outcome
             && outcome != Outcome::Draw
         {

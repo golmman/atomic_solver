@@ -27,15 +27,15 @@ use atomic_solver::search::dfpn::Search;
 let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
 let mut search = Search::new(64);          // TT size in MB
 search.set_timeout(10);                    // seconds
-search.refine_shortest(true);              // find a shortest decisive PV
 let (outcome, pv, nodes) = search.solve(&mut pos);
 ```
 
 - `Outcome::Win` / `Outcome::Loss` / `Outcome::Draw` are always from the
   perspective of the side to move.
 - `Search::search_depth` solves to a fixed maximum depth without refinement.
-- `Search::refine_shortest(true)` runs the full staged solver: it proves the
-  outcome, extracts a PPV, and then refines to a Shortest PPV.
+- `Search::solve` iteratively refines the PV to find the shortest decisive
+  line within the configured timeout. Call `search.first_outcome_only(true)`
+  (or use `--first-outcome` in the CLI) to stop after the first decisive line.
 
 ## Features and techniques
 
@@ -45,16 +45,13 @@ let (outcome, pv, nodes) = search.solve(&mut pos);
   thresholds (`1 + epsilon`, default `epsilon = 0.125`) to reduce re-searches.
 - **OR/AND tree search** — Alternating proof/disproof number aggregation:
   OR nodes use `min(pn)` / sum `dn`; AND nodes use sum `pn` / `min(dn)`.
-- **Staged solving** — `solve()` runs three stages in order:
-  1. `solve_outcome` — prove Win / Loss / Draw.
-  2. `find_ppv` — extract a Proof Principal Variation (winning attacker moves,
-     longest defender replies).
-  3. `refine_sppv` — binary-search the depth to find a Shortest PPV when
-     `refine_shortest` is enabled.
-- **Work-bounded iterative deepening** — `solve_outcome` probes the tree with
-  budgets that double (or grow linearly) between attempts, reusing the
-  transposition table and heuristics across chunks. A final unbounded search
-  uses any remaining time if no result was found.
+- **Iterative bounded solving** — `solve()` first finds any decisive outcome and
+  then repeatedly runs `dfpn` with `max_depth = current_pv_len - 2` to find a
+  shorter decisive line. Each probe is work-bounded, reusing the transposition
+  table and heuristics across chunks, and the search terminates when a shorter
+  line cannot be found or the timeout is reached.
+- **Proof-tree emission** — `dfpn` emits a `NodeProven` event for every node it
+  proves or disproves whenever a proof-tree sender is configured.
 
 ### Transposition table and repetition
 
@@ -84,12 +81,12 @@ let (outcome, pv, nodes) = search.solve(&mut pos);
 
 ### Principal variation handling
 
-- **PV extraction** — walks the transposition table from the root following
-  best moves, including path-dependent twin entries.
-- **PPV verification** — validates that an extracted line reaches the expected
+- **PV extraction** — walks the transposition table from the root following best
+  moves, including path-dependent twin entries.
+- **PV validation** — validates that an extracted line reaches the expected
   terminal outcome.
-- **SPPV refinement** — binary-searches the depth bound and retries with
-  doubled work to find progressively shorter winning lines.
+- **Iterative shortest-PV refinement** — repeatedly searches with a tighter
+  depth bound to find progressively shorter decisive lines.
 
 ### Terminal detection
 
@@ -127,7 +124,6 @@ Run with `cargo run --example <name> -- [args]`:
 - `find_winning_child` — try every first move and report one that wins.
 - `play_and_solve` — play a given move, then solve the resulting position.
 - `solve_depth_limited` — solve with a fixed depth bound.
-- `solve_no_refinement` — solve without shortest-PV refinement.
 - `static_move_scores` — print static move-ordering scores for a position.
 - `twin_stats` — report twin-table statistics for GHI-sensitive positions.
 - `verify_ppv` — verify that a supplied UCI move list is a PPV for a FEN.

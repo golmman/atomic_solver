@@ -7,7 +7,7 @@ use atomic_movegen::types::Move;
 use crate::position::Outcome;
 
 use super::children::{ChildInfo, ChildSelection};
-use super::{INF, ProofMode, Search};
+use super::{INF, Search};
 
 impl Search {
     /// Detect whether the children already determine the parent's outcome.
@@ -99,21 +99,13 @@ impl Search {
         None
     }
 
-    /// If the children already prove the parent is a win and we do not need a
-    /// fully minimax refinement, return the decisive selection immediately.
-    ///
-    /// For `Outcome` and `Ppv` a single winning child is enough; for `Sppv`
-    /// we wait until all children are solved (or a losing parent outcome is
-    /// fully proven, which is always `all_solved`).
+    /// If the children already prove the parent is a win, return the decisive
+    /// selection immediately. For Loss and Draw we need all children solved.
     pub(super) fn select_child_with_early_exit(
         children: &[ChildInfo],
-        _is_or_node: bool,
-        proof_mode: ProofMode,
         solved: Option<(Outcome, u32, Move, bool, usize)>,
     ) -> Option<ChildSelection> {
-        if let Some((Outcome::Win, depth, mv, all_solved, idx)) = solved
-            && (all_solved || proof_mode != ProofMode::Sppv)
-        {
+        if let Some((Outcome::Win, depth, mv, _, idx)) = solved {
             return Some(ChildSelection {
                 best_child: (Move::NONE, INF, INF),
                 second_child: (INF, INF),
@@ -123,7 +115,6 @@ impl Search {
                 depth,
                 best_move: mv,
                 solved_outcome: Some(Outcome::Win),
-                all_solved,
                 repetition_seen: children[idx].repetition_seen,
             });
         }
@@ -139,7 +130,6 @@ impl Search {
                 depth,
                 best_move: mv,
                 solved_outcome: Some(outcome),
-                all_solved,
                 repetition_seen: children[idx].repetition_seen,
             });
         }
@@ -201,8 +191,8 @@ impl Search {
 
 #[cfg(test)]
 mod tests {
+    use super::super::Search;
     use super::super::children::ChildInfo;
-    use super::super::{ProofMode, Search};
     use crate::position::Outcome;
     use atomic_movegen::types::{Move, Square};
 
@@ -353,21 +343,8 @@ mod tests {
             child(None, 0, Square::B1, Square::B2),
         ];
         let solved = Search::is_solved_by_children(&children, true);
-        let selection =
-            Search::select_child_with_early_exit(&children, true, ProofMode::Ppv, solved);
+        let selection = Search::select_child_with_early_exit(&children, solved);
         assert!(selection.is_some());
         assert_eq!(selection.unwrap().solved_outcome, Some(Outcome::Win));
-    }
-
-    #[test]
-    fn sppv_does_not_early_exit_on_partial_win() {
-        let children = vec![
-            child(Some(Outcome::Loss), 5, Square::A1, Square::A2),
-            child(None, 0, Square::B1, Square::B2),
-        ];
-        let solved = Search::is_solved_by_children(&children, true);
-        let selection =
-            Search::select_child_with_early_exit(&children, true, ProofMode::Sppv, solved);
-        assert!(selection.is_none());
     }
 }
