@@ -155,3 +155,22 @@ Instead i want this process:
 * the proof tree is exported via the pre-exit hook
 
 Create a plan for these changes in `docs/plans/storage/plan6.md`.
+
+
+---
+
+When i run
+```
+cargo run --release -- --fen "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R4RK w - - 1 23" --timeout 10
+```
+an outcome is found and a proof tree with 5737 nodes is exported.
+
+One line of exported half move is this:
+1. e3f4 a5a4
+2. g1e1 a4a3
+3. e1e7 c6c5
+
+The line stops there but does not prove the attackers win, it is incomplete.
+One simple verification check is that the last move must be an attacker move, i.e. the number of half moves must be odd in each line.
+
+Please investigate what went wrong.
