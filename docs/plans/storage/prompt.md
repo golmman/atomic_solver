@@ -141,3 +141,17 @@ After that i expected ALL black (defender) moves in the dump but i only see c6c5
 Since all defender AND nodes were proven/disproven in this position why were they not available for the export?
 
 Do i have a misconception here or does this point to an issue that needs fixing?
+
+---
+
+I want the search for an PPV or SPPV removed and cleaned up.
+
+Instead i want this process:
+* search for an outcome
+* when an outcome of length N was found, switch to a bounded search of depth N-2
+* when a shorter outcome line of length M is found, switch to a bounded search of depth M-2 
+* each new found outcome is logged with its line length
+* all proven/disproven nodes are pumped to the proof tree
+* the proof tree is exported via the pre-exit hook
+
+Create a plan for these changes in `docs/plans/storage/plan6.md`.
