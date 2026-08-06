@@ -130,9 +130,7 @@ impl ProofTree {
 
     /// Return true if the node is a terminal leaf (proven at depth 0).
     pub fn is_terminal(&self, node_id: usize) -> bool {
-        self.nodes
-            .get(node_id)
-            .is_some_and(|n| n.depth == 0 || n.children.is_empty())
+        self.nodes.get(node_id).is_some_and(|n| n.depth == 0)
     }
 
     /// Extract a principal variation from the proof tree.

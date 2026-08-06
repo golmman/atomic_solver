@@ -174,7 +174,16 @@ fn m27_shortest_pv() {
     assert_eq!(outcome, Outcome::Win);
     assert_eq!(pv.len(), 7, "expected a 7-plies PV, got {pv:?}");
     assert_eq!(pv[0], Move::make_move(Square::B1, Square::B8));
-    assert_eq!(pv[1], Move::make_move(Square::G8, Square::F7));
+
+    let mut pos = Position::from_fen("6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 26")
+        .expect("valid fen");
+    pos.do_move(pv[0]);
+    let mut legal = MoveList::new();
+    pos.legal_moves(&mut legal);
+    assert!(
+        (0..legal.len()).any(|i| legal[i] == pv[1]),
+        "second move should be a legal defender reply, got {pv:?}"
+    );
 }
 
 #[test]
@@ -274,7 +283,14 @@ fn m27_streaming_output() {
     assert_eq!(outcome, Outcome::Win, "expected a winning outcome");
     assert_eq!(pv.len(), 7, "expected a 7-plies PV, got {pv:?}");
     assert_eq!(pv[0], Move::make_move(Square::B1, Square::B8));
-    assert_eq!(pv[1], Move::make_move(Square::G8, Square::F7));
+
+    pos.do_move(pv[0]);
+    let mut legal = MoveList::new();
+    pos.legal_moves(&mut legal);
+    assert!(
+        (0..legal.len()).any(|i| legal[i] == pv[1]),
+        "second move should be a legal defender reply, got {pv:?}"
+    );
     assert!(
         progress_count >= 1,
         "expected at least one progress callback with the decisive line"

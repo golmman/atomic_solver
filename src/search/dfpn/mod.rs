@@ -375,6 +375,10 @@ impl Search {
             on_progress(outcome, &pv);
         }
 
+        if outcome != Outcome::Draw {
+            self.emit_proof_tree(pos, outcome, &pv);
+        }
+
         (outcome, pv, self.nodes)
     }
 

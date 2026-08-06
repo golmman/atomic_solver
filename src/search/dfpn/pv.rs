@@ -4,7 +4,9 @@ use std::collections::HashSet;
 
 use atomic_movegen::types::{Move, MoveList};
 
+use crate::notation::move_to_uci;
 use crate::position::{Outcome, Position};
+use crate::proof_tree::{NodeProven, ProofMessage};
 use crate::zobrist;
 
 use super::Search;
@@ -180,6 +182,130 @@ impl Search {
 
         let truncated = pv.len() == self.max_ply && current.outcome().is_none();
         (pv, truncated)
+    }
+
+    /// Rebuild the proof tree from the transposition table and emit it to the
+    /// configured proof-tree sender.
+    ///
+    /// During iterative refinement many nodes are resolved from the TT without
+    /// re-searching their descendants, so the incremental `NodeProven` events
+    /// may leave the in-memory proof tree with non-terminal leaves.  This method
+    /// clears the existing tree and re-emits a complete proven subtree by
+    /// walking the TT directly.  The supplied `pv` is used as the principal
+    /// variation so that the returned line is guaranteed to be present in the
+    /// tree; other branches are expanded using the winning reply from the TT.
+    pub(super) fn emit_proof_tree(
+        &mut self,
+        pos: &mut Position,
+        root_outcome: Outcome,
+        pv: &[Move],
+    ) {
+        if self.proof_tree_sender.is_none() || root_outcome == Outcome::Draw {
+            return;
+        }
+        self.clear_proof_tree();
+        self.emit_proof_subtree(pos, "root", Move::NONE, 0, 0usize, root_outcome, pv);
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn emit_proof_subtree(
+        &mut self,
+        pos: &mut Position,
+        path: &str,
+        mv: Move,
+        path_code: u64,
+        path_length: usize,
+        expected: Outcome,
+        pv_tail: &[Move],
+    ) -> Option<u32> {
+        if let Some(terminal) = pos.outcome() {
+            if terminal == expected {
+                self.send_proof_node(path, mv, expected, 0);
+                return Some(0);
+            }
+            return None;
+        }
+
+        let entry = self.tt.probe(pos.hash())?;
+        let result = entry.find_result_for_path(path_code, expected)?;
+        let depth = result.depth;
+        self.send_proof_node(path, mv, expected, depth);
+
+        if depth == 0 {
+            return Some(0);
+        }
+
+        if expected == Outcome::Win {
+            let (best_move, tail) = if let Some((&m, rest)) = pv_tail.split_first() {
+                (m, rest)
+            } else {
+                (result.best_move, &[][..])
+            };
+            if best_move == Move::NONE {
+                return None;
+            }
+            let uci = move_to_uci(best_move);
+            let child_path = format!("{path}.{uci}");
+            let child_path_code = path_code ^ zobrist::path_random(best_move, path_length + 1);
+            pos.do_move(best_move);
+            let child_depth_opt = self.emit_proof_subtree(
+                pos,
+                &child_path,
+                best_move,
+                child_path_code,
+                path_length + 1,
+                Outcome::Loss,
+                tail,
+            );
+            pos.undo_move(best_move);
+            let child_depth = child_depth_opt?;
+            Some(child_depth + 1)
+        } else {
+            let mut moves = MoveList::new();
+            pos.legal_moves(&mut moves);
+            let mut max_child_depth = 0u32;
+            let (pv_head, pv_rest) = if let Some((&m, rest)) = pv_tail.split_first() {
+                (Some(m), rest)
+            } else {
+                (None, &[][..])
+            };
+            for i in 0..moves.len() {
+                let mv = moves[i];
+                let uci = move_to_uci(mv);
+                let child_path = format!("{path}.{uci}");
+                let child_path_code = path_code ^ zobrist::path_random(mv, path_length + 1);
+                let child_tail = if pv_head == Some(mv) {
+                    pv_rest
+                } else {
+                    &[][..]
+                };
+                pos.do_move(mv);
+                if let Some(child_depth) = self.emit_proof_subtree(
+                    pos,
+                    &child_path,
+                    mv,
+                    child_path_code,
+                    path_length + 1,
+                    Outcome::Win,
+                    child_tail,
+                ) {
+                    max_child_depth = max_child_depth.max(child_depth);
+                }
+                pos.undo_move(mv);
+            }
+            Some(max_child_depth + 1)
+        }
+    }
+
+    fn send_proof_node(&self, path: &str, mv: Move, outcome: Outcome, depth: u32) {
+        if let Some(sender) = &self.proof_tree_sender {
+            let _ = sender.send(ProofMessage::NodeProven(NodeProven {
+                path: path.to_string(),
+                mv,
+                outcome,
+                depth,
+            }));
+        }
     }
 }
 

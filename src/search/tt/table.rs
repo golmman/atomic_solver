@@ -186,7 +186,7 @@ impl TranspositionTable {
                             slot.repetition_seen = false;
                             slot.clear_twins();
                         }
-                    } else {
+                    } else if slot.outcome.is_none() {
                         // Unsolved node: update base bounds and keep existing twins.
                         slot.best_move = best_move;
                         slot.best_child = best_child;
@@ -196,6 +196,10 @@ impl TranspositionTable {
                         slot.depth = depth;
                         slot.remaining_depth = remaining_depth;
                         slot.repetition_seen = repetition_seen;
+                    } else {
+                        // Do not overwrite a solved base entry with unsolved bounds;
+                        // the solved result is still valid and will be preferred by
+                        // proof-tree reconstruction.  `work` was already updated above.
                     }
                     break;
                 }
