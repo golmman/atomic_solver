@@ -100,9 +100,12 @@ outcome is needed.
   - this limit does not hold for `docs/`
 - Unit tests go in a `#[cfg(test)] mod tests` at the bottom of each module.
   Integration/regression tests go under `tests/`.
-- The most important quality attributes for this library are, from most to
-  least important:
-  - correctness, performance, maintainability, testability, consistency
+- The most important quality attributes for this project are (highest priority first):
+  - correctness
+  - performance
+  - maintainability
+  - testability
+  - consistency
 - Only use reading `git` commands, never writing ones (no `git add`,
   `git rm`, `git commit`, etc.).
 - `docs/plans/` contains prompts, implementation plans and reports
