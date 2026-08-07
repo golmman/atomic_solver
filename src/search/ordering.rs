@@ -202,3 +202,97 @@ impl MoveScorer for StaticAtomicScorer {
         self.score_with_map(board, m, state, &nearest)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use atomic_movegen::board::{Board, StateInfo};
+    use atomic_movegen::movegen::generate_legal;
+    use atomic_movegen::types::MoveList;
+
+    fn legal_moves_and_state(fen: &str) -> (Board, StateInfo, MoveList) {
+        let board = Board::from_fen(fen).unwrap();
+        let mut state = StateInfo::new();
+        board.populate_state(&mut state);
+        let mut moves = MoveList::new();
+        generate_legal(&board, &mut moves);
+        (board, state, moves)
+    }
+
+    fn find_move(moves: &MoveList, uci: &str) -> Move {
+        for i in 0..moves.len() {
+            if moves[i].to_uci() == uci {
+                return moves[i];
+            }
+        }
+        panic!("move {uci} not found");
+    }
+
+    #[test]
+    fn winning_capture_scores_highest() {
+        // White queen on f7 captures the e7 pawn; the blast removes the lone
+        // black commoner on d7.
+        let (board, state, moves) =
+            legal_moves_and_state("rnbq1bnr/pppkpQ1p/3p1pp1/8/8/4P3/PPPP1PPP/RNB1KBNR w KQ - 2 5");
+        let f7e7 = find_move(&moves, "f7e7");
+        let scorer = StaticAtomicScorer;
+        assert_eq!(scorer.score(&board, f7e7, &state), SCORE_WINNING_CAPTURE);
+    }
+
+    #[test]
+    fn promotion_scores_above_threat_and_center() {
+        let (board, state, moves) = legal_moves_and_state("4k3/1P6/8/8/8/8/8/4K3 w - - 0 1");
+        let scorer = StaticAtomicScorer;
+        let b7b8q = find_move(&moves, "b7b8q");
+        let promotion = scorer.score(&board, b7b8q, &state);
+
+        // A quiet king move should be scored far below a promotion.
+        let e1d1 = moves
+            .as_slice()
+            .iter()
+            .find(|m| m.to_uci() == "e1d1")
+            .copied()
+            .unwrap();
+        let quiet = scorer.score(&board, e1d1, &state);
+        assert!(
+            promotion > quiet,
+            "promotion should be preferred to a quiet king move"
+        );
+    }
+
+    #[test]
+    fn capture_scores_above_quiet_moves() {
+        // White knight on f3 can capture e5 or move to a quiet square.
+        let (board, state, moves) =
+            legal_moves_and_state("rnbqkbnr/pppp1ppp/8/4p3/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 3");
+        let scorer = StaticAtomicScorer;
+        let f3e5 = find_move(&moves, "f3e5");
+        let capture = scorer.score(&board, f3e5, &state);
+
+        let f3d4 = find_move(&moves, "f3d4");
+        let quiet = scorer.score(&board, f3d4, &state);
+        assert!(
+            capture > quiet,
+            "capture should score above quiet development"
+        );
+    }
+
+    #[test]
+    fn score_is_deterministic() {
+        let (board, state, moves) =
+            legal_moves_and_state("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        let scorer = StaticAtomicScorer;
+        for i in 0..moves.len() {
+            let a = scorer.score(&board, moves[i], &state);
+            let b = scorer.score(&board, moves[i], &state);
+            assert_eq!(a, b, "score should be deterministic");
+        }
+    }
+
+    #[test]
+    fn score_with_no_commoners_is_max_distance() {
+        let board = Board::from_fen("8/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
+        let map = nearest_commoner_map(&board, Color::Black);
+        assert!(map.iter().all(|&d| d == i8::MAX));
+    }
+}

@@ -353,7 +353,8 @@ pub fn outcome_from_pn_dn(pn: u64, dn: u64) -> Option<Outcome> {
 
 #[cfg(test)]
 mod tests {
-    use crate::search::dfpn::{INF, Search};
+    use crate::position::Outcome;
+    use crate::search::dfpn::{INF, Search, outcome_from_pn_dn};
 
     #[test]
     fn epsilon_ceil_scales_threshold() {
@@ -402,5 +403,12 @@ mod tests {
     fn set_epsilon_rejects_greater_than_one() {
         let mut search = Search::new(64);
         search.set_epsilon(1.1);
+    }
+
+    #[test]
+    fn outcome_from_pn_dn_only_recognizes_win() {
+        assert_eq!(outcome_from_pn_dn(0, INF), Some(Outcome::Win));
+        assert_eq!(outcome_from_pn_dn(INF, 0), None);
+        assert_eq!(outcome_from_pn_dn(1, 1), None);
     }
 }

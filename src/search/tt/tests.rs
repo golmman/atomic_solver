@@ -1,6 +1,66 @@
 use super::{TranspositionTable, TtEntry};
 use crate::position::Outcome;
-use atomic_movegen::types::Move;
+use atomic_movegen::types::{Move, Square};
+
+#[test]
+fn empty_table_probe_returns_none() {
+    let tt = TranspositionTable::with_mb(1);
+    assert!(tt.probe(0x1234).is_none());
+    assert!(tt.probe_summary(0x1234).is_none());
+    assert!(tt.probe_best_move(0x1234).is_none());
+}
+
+#[test]
+fn table_size_is_power_of_two_and_at_least_minimum() {
+    let tt = TranspositionTable::with_mb(1);
+    assert!(tt.bucket_count().is_power_of_two());
+    assert!(tt.bucket_count() >= 16);
+}
+
+#[test]
+fn clear_removes_all_entries_and_resets_generation() {
+    let mut tt = TranspositionTable::with_mb(1);
+    let key = 0x222u64;
+    tt.store(
+        key,
+        Move::make_move(Square::E2, Square::E4),
+        u8::MAX,
+        1,
+        Some(Outcome::Win),
+        0,
+        crate::zobrist::INF,
+        1,
+        u32::MAX,
+    );
+    tt.clear();
+    assert!(tt.probe(key).is_none());
+    assert!(tt.bucket_count().is_power_of_two());
+}
+
+#[test]
+fn probe_summary_and_best_move_match_stored_entry() {
+    let mut tt = TranspositionTable::with_mb(1);
+    let key = 0xdead_beefu64;
+    let mv = Move::make_move(Square::E2, Square::E4);
+    tt.store(
+        key,
+        mv,
+        u8::MAX,
+        42,
+        Some(Outcome::Win),
+        0,
+        crate::zobrist::INF,
+        5,
+        3,
+    );
+
+    let summary = tt.probe_summary(key).expect("summary should be present");
+    assert_eq!(summary.outcome, Some(Outcome::Win));
+    assert_eq!(summary.best_move, mv);
+    assert_eq!(summary.work, 42);
+
+    assert_eq!(tt.probe_best_move(key), Some(mv));
+}
 
 #[test]
 fn tt_entry_size_is_reasonable() {

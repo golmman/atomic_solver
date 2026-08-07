@@ -191,6 +191,20 @@ impl Search {
         self.proof_tree_sender = sender;
     }
 
+    /// Aggregate transposition-table statistics after a search.
+    ///
+    /// Tuple fields are: `(buckets, live_entries, solved_entries, unsolved_entries, generation)`.
+    pub fn tt_stats(&self) -> (usize, usize, usize, usize, u32) {
+        self.tt.stats()
+    }
+
+    /// Distribution of stored `best_child` values among live TT entries.
+    ///
+    /// Useful for debugging proof-tree/GHI path-code usage.
+    pub fn tt_best_child_counts(&self) -> Vec<(u8, usize)> {
+        self.tt.best_child_counts()
+    }
+
     fn clear_proof_tree(&self) {
         if let Some(sender) = &self.proof_tree_sender {
             let _ = sender.send(crate::proof_tree::ProofMessage::Clear);

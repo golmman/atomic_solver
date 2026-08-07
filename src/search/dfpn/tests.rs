@@ -65,3 +65,69 @@ fn try_use_tt_rejects_win_when_best_move_repeats() {
     assert_eq!(resolved.outcome, Outcome::Win);
     assert_eq!(resolved.depth, 1);
 }
+
+#[test]
+fn set_timeout_zero_causes_immediate_exit() {
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(0);
+    let (outcome, _pv, _nodes) = search.solve(&mut pos);
+    assert_eq!(outcome, Outcome::Draw, "timeout 0 should return Draw");
+    assert!(
+        search.time_exceeded(),
+        "time should be exceeded after timeout 0"
+    );
+    assert!(
+        matches!(
+            search.exit_reason(),
+            crate::search::dfpn::ExitReason::Timeout
+        ),
+        "exit reason should be Timeout"
+    );
+}
+
+#[test]
+fn first_outcome_only_skips_refinement() {
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    search.set_first_outcome_only(true);
+    let (outcome, pv, _nodes) = search.solve(&mut pos);
+    assert_eq!(outcome, Outcome::Win);
+    assert!(
+        !pv.is_empty(),
+        "first-outcome mode should still return a winning PV"
+    );
+}
+
+#[test]
+fn solve_with_progress_calls_closure() {
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+
+    let mut calls = 0;
+    let (outcome, _pv, _nodes) = search.solve_with_progress(&mut pos, |_o, _pv| {
+        calls += 1;
+    });
+    assert_eq!(outcome, Outcome::Win);
+    assert!(
+        calls > 0,
+        "progress closure should be invoked at least once"
+    );
+}
+
+#[test]
+fn exit_reason_reports_complete() {
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    let _ = search.solve(&mut pos);
+    assert!(
+        matches!(
+            search.exit_reason(),
+            crate::search::dfpn::ExitReason::Complete
+        ),
+        "a solved position should report Complete"
+    );
+}

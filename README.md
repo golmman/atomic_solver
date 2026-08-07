@@ -121,13 +121,17 @@ let (outcome, pv, nodes) = search.solve(&mut pos);
 Run with `cargo run --example <name> -- [args]`:
 
 - `benchmark` — reproducible benchmark over a fixed suite of positions.
+- `chunk_growth` — explore work-chunk growth settings.
 - `find_winning_child` — try every first move and report one that wins.
+- `inspect_pt` — dump a binary proof tree to human-readable JSON.
+- `list_legal` — list all legal UCI moves and the terminal outcome for a FEN.
+- `move_order_debug` — print static, history, killer and total move-ordering scores.
 - `play_and_solve` — play a given move, then solve the resulting position.
+- `replay` — replay a UCI line from a FEN and solve the resulting position.
 - `solve_depth_limited` — solve with a fixed depth bound.
 - `static_move_scores` — print static move-ordering scores for a position.
-- `twin_stats` — report twin-table statistics for GHI-sensitive positions.
+- `twin_stats` — report transposition-table statistics for GHI-sensitive positions.
 - `verify_ppv` — verify that a supplied UCI move list is a PPV for a FEN.
-- `chunk_growth` — explore work-chunk growth settings.
 
 ## Development
 

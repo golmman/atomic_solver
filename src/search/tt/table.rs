@@ -161,6 +161,53 @@ impl TranspositionTable {
         self.insert_new(idx, new);
     }
 
+    /// Return a distribution of stored `best_child` values among live entries.
+    ///
+    /// `u8::MAX` (the "unknown" sentinel) is excluded. This is useful for
+    /// debugging proof-tree and GHI path-code usage.
+    pub fn best_child_counts(&self) -> Vec<(u8, usize)> {
+        let mut counts = std::collections::HashMap::new();
+        for bucket in &self.table {
+            for entry in bucket {
+                if entry.valid
+                    && entry.generation == self.current_generation
+                    && entry.best_child != u8::MAX
+                {
+                    *counts.entry(entry.best_child).or_insert(0) += 1;
+                }
+            }
+        }
+        let mut v: Vec<_> = counts.into_iter().collect();
+        v.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
+        v
+    }
+
+    /// Return aggregate statistics about the current transposition table contents.
+    ///
+    /// Tuple fields are: `(buckets, live_entries, solved_entries, unsolved_entries, generation)`.
+    pub fn stats(&self) -> (usize, usize, usize, usize, u32) {
+        let mut live = 0;
+        let mut solved = 0;
+        for bucket in &self.table {
+            for entry in bucket {
+                if entry.valid && entry.generation == self.current_generation {
+                    live += 1;
+                    if entry.outcome.is_some() {
+                        solved += 1;
+                    }
+                }
+            }
+        }
+        let unsolved = live - solved;
+        (
+            self.table.len(),
+            live,
+            solved,
+            unsolved,
+            self.current_generation,
+        )
+    }
+
     /// Place a new entry into `idx`, preferring the two most valuable entries.
     fn insert_new(&mut self, idx: usize, new: TtEntry) {
         let current_generation = self.current_generation;

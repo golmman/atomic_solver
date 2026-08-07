@@ -3,23 +3,27 @@ mod common;
 use atomic_movegen::types::{Move, Square};
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
-use common::solve;
+use common::assert_solves_to;
 
 /// A rook alone cannot force a win against a lone king that has a 2x2 safe area.
 /// This position can produce reversible checking cycles, so the solver must not
 /// claim a win from the cycle.
+#[cfg_attr(
+    debug_assertions,
+    ignore = "slow cyclic GHI regression; run with --ignored"
+)]
 #[test]
 fn rook_alone_does_not_claim_win_against_safe_king() {
-    assert_ne!(
-        solve("8/8/8/8/2k5/8/8/4KR2 w - - 0 1"),
-        Outcome::Win,
-        "rook alone should not win in a 2x2 safe area"
-    );
+    assert_solves_to("8/8/8/8/2k5/8/8/4KR2 w - - 0 1", Outcome::Draw, None);
 }
 
 /// A reversible king/rook shuffle returns the same board with a different
 /// rule50 counter. The repetition key must stay equal while the full hash
 /// changes, and solving the repeated board must still not be declared a win.
+#[cfg_attr(
+    debug_assertions,
+    ignore = "slow cyclic GHI regression; run with --ignored"
+)]
 #[test]
 fn reversible_cycle_keeps_repetition_key_and_stays_draw() {
     let mut pos = Position::from_fen("8/8/8/8/2k5/8/8/4KR2 w - - 0 1").unwrap();
@@ -37,11 +41,19 @@ fn reversible_cycle_keeps_repetition_key_and_stays_draw() {
     pos.do_move(gr);
     pos.do_move(bc);
 
-    assert_eq!(pos.repetition_key(), start_rep);
-    assert_ne!(pos.hash(), start_hash);
+    assert_eq!(
+        pos.repetition_key(),
+        start_rep,
+        "repetition key must ignore the halfmove clock"
+    );
+    assert_ne!(pos.hash(), start_hash, "full hash must include rule50");
 
     let mut search = Search::new(64);
     search.set_timeout(5);
     let (outcome, _pv, _nodes) = search.solve(&mut pos);
-    assert_ne!(outcome, Outcome::Win, "repeated board should not be a win");
+    assert_ne!(
+        outcome,
+        Outcome::Win,
+        "repeated board should not be declared a win"
+    );
 }

@@ -307,9 +307,10 @@ fn main() {
 
     let (outcome, pv, timed_out) = {
         let (outcome, pv, _nodes) = search.solve_with_progress(&mut pos, |o, line| {
-            println!("outcome: {} length: {}", outcome_str(o), line.len());
+            eprintln!("outcome: {} length: {}", outcome_str(o), line.len());
         });
 
+        println!("outcome: {} length: {}", outcome_str(outcome), pv.len());
         if outcome != Outcome::Draw {
             println!("pv: {}", pv_str(&pv));
         }

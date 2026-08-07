@@ -1,53 +1,38 @@
-use atomic_movegen::types::{Move, Square};
-use atomic_solver::position::{Outcome, Position};
-use atomic_solver::search::dfpn::Search;
+mod common;
+
+use atomic_solver::position::Outcome;
+use common::{assert_pv_valid, assert_solves_to, assert_solves_with_first_move, solve_with_pv};
 
 #[test]
 fn black_root_report4_fen() {
-    let mut pos =
-        Position::from_fen("6R1/3p1k2/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/7K b - - 3 27").unwrap();
-    let mut search = Search::new(64);
-    search.set_timeout(5);
-    let (outcome, pv, _nodes) = search.solve(&mut pos);
     // After f7e6, White has a forced win, so Black is lost.
-    assert_eq!(
-        outcome,
+    assert_solves_with_first_move(
+        "6R1/3p1k2/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/7K b - - 3 27",
         Outcome::Loss,
-        "expected black to lose, got {outcome:?}"
+        "f7e6",
     );
-    let first = pv.first().copied().unwrap();
-    assert_eq!(first, Move::make_move(Square::F7, Square::E6));
 }
 
 #[test]
 fn white_child_f7e6_short_win() {
-    let mut pos = Position::from_fen("6R1/3p4/3Bk1p1/2p3Pp/7P/p1N2P2/P1PP4/7K w - - 4 28").unwrap();
-    let mut search = Search::new(64);
-    search.set_timeout(5);
-    let (outcome, pv, _nodes) = search.solve(&mut pos);
-    assert_eq!(outcome, Outcome::Win);
-    let first = pv.first().copied().unwrap();
-    let g8g7 = Move::make_move(Square::G8, Square::G7);
-    let g8f8 = Move::make_move(Square::G8, Square::F8);
+    let fen = "6R1/3p4/3Bk1p1/2p3Pp/7P/p1N2P2/P1PP4/7K w - - 4 28";
+    let (outcome, pv, _nodes) = solve_with_pv(fen);
+    assert_eq!(outcome, Outcome::Win, "expected white to win after f7e6");
+    assert!(!pv.is_empty(), "expected a non-empty PV");
     assert!(
-        first == g8g7 || first == g8f8,
-        "expected first move g8g7 or g8f8, got {first:?}"
+        pv[0] == "g8g7" || pv[0] == "g8f8",
+        "expected first move g8g7 or g8f8, got {}",
+        pv[0]
     );
-    assert_eq!(pv.len(), 3, "expected a 3-ply win");
+    assert!(
+        pv.len() <= 3,
+        "expected a short win, got {} plies: {pv:?}",
+        pv.len()
+    );
+    assert_pv_valid(fen, Outcome::Win, &pv);
 }
 
 #[test]
 fn two_rook_mate_refinement_stays_short() {
-    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
-    let mut search = Search::new(64);
-    search.set_timeout(5);
-    let (outcome, pv, _nodes) = search.solve(&mut pos);
-    assert_eq!(outcome, Outcome::Win);
-    assert!(!pv.is_empty());
-    assert!(
-        pv.len() <= 3,
-        "expected a short win, got {} plies: {:?}",
-        pv.len(),
-        pv
-    );
+    assert_solves_to("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1", Outcome::Win, Some(3));
 }

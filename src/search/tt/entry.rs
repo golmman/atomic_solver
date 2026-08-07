@@ -53,6 +53,57 @@ impl Default for TtEntry {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::position::Outcome;
+    use atomic_movegen::types::{Move, Square};
+
+    #[test]
+    fn result_for_matches_expected_outcome() {
+        let entry = TtEntry {
+            best_move: Move::make_move(Square::E2, Square::E4),
+            outcome: Some(Outcome::Win),
+            depth: 5,
+            ..TtEntry::default()
+        };
+
+        assert!(entry.result_for(Outcome::Win).is_some());
+        assert_eq!(entry.result_for(Outcome::Win).unwrap().depth, 5);
+        assert!(entry.result_for(Outcome::Loss).is_none());
+    }
+
+    #[test]
+    fn result_for_depth_requires_exact_depth() {
+        let entry = TtEntry {
+            best_move: Move::make_move(Square::E2, Square::E4),
+            outcome: Some(Outcome::Win),
+            depth: 5,
+            ..TtEntry::default()
+        };
+
+        assert!(entry.result_for_depth(Outcome::Win, 5).is_some());
+        assert!(entry.result_for_depth(Outcome::Win, 3).is_none());
+        assert!(entry.result_for_depth(Outcome::Loss, 5).is_none());
+    }
+
+    #[test]
+    fn best_result_returns_outcome_move_and_depth() {
+        let mv = Move::make_move(Square::E2, Square::E4);
+        let entry = TtEntry {
+            best_move: mv,
+            outcome: Some(Outcome::Win),
+            depth: 7,
+            ..TtEntry::default()
+        };
+
+        assert_eq!(entry.best_result(), Some((mv, Outcome::Win, 7)));
+
+        let empty = TtEntry::default();
+        assert_eq!(empty.best_result(), None);
+    }
+}
+
 impl TtEntry {
     /// Return the cached result for `expected` if the base entry stores one.
     pub fn result_for(&self, expected: Outcome) -> Option<EntryResult> {

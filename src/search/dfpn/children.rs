@@ -334,3 +334,164 @@ impl Search {
         best
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::position::Position;
+    use atomic_movegen::types::Square;
+
+    #[test]
+    fn evaluate_child_terminal_win_for_parent() {
+        // White rook can capture the black commoner on e8.
+        let mut search = Search::new(1);
+        let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+        let mv = Move::make_move(Square::E1, Square::E8);
+        let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+
+        assert_eq!(
+            info.outcome,
+            Some(Outcome::Loss),
+            "capturing the commoner ends the game"
+        );
+        assert_eq!(
+            info.pn, 0,
+            "terminal winning child has pn 0 at the AND side"
+        );
+        assert_eq!(
+            info.dn, INF,
+            "terminal winning child has dn INF at the AND side"
+        );
+    }
+
+    #[test]
+    fn evaluate_child_repetition_is_draw() {
+        let mut search = Search::new(1);
+        // Build a non-terminal position whose move leads to a position that is
+        // already on the search path by pushing the child's repetition key before
+        // evaluating it.
+        let mut pos = Position::from_fen("4k3/8/8/4K3/8/8/8/4R3 w - - 0 1").unwrap();
+
+        // Move the white king from e5 to d5; it is quiet and non-terminal.
+        let mv = Move::make_move(Square::E5, Square::D5);
+        pos.do_move(mv);
+        let child_rep_key = pos.repetition_key();
+        pos.undo_move(mv);
+        search.path_stack.push(child_rep_key);
+
+        let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+
+        assert_eq!(
+            info.outcome,
+            Some(Outcome::Draw),
+            "repeating position is a draw"
+        );
+        assert!(info.repetition_seen, "repetition flag should be set");
+    }
+
+    #[test]
+    fn evaluate_child_uses_solved_tt_entry() {
+        let mut search = Search::new(1);
+        let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+        // g1h1 is a quiet rook move to a non-terminal child.
+        let mv = Move::make_move(Square::G1, Square::H1);
+        pos.do_move(mv);
+        let child_key = pos.hash();
+        pos.undo_move(mv);
+
+        // Store a solved Loss for the child position. The remaining-depth guard
+        // requires remaining_depth == u32::MAX for an unbounded max_depth.
+        search.tt.store(
+            child_key,
+            Move::NONE,
+            u8::MAX,
+            0,
+            Some(Outcome::Loss),
+            INF,
+            0,
+            1,
+            u32::MAX,
+        );
+
+        // Force the TT lookup without any legal-move generation at the child.
+        let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+        assert_eq!(
+            info.outcome,
+            Some(Outcome::Loss),
+            "TT-solved Loss should be reused"
+        );
+        assert_eq!(info.depth, 1, "TT depth should be preserved");
+    }
+
+    #[test]
+    fn evaluate_all_children_stops_at_winning_child() {
+        let mut search = Search::new(1);
+        let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+        let mut moves = MoveList::new();
+        pos.legal_moves(&mut moves);
+
+        // Sort so the winning capture e1e8 is tried first.
+        search.sort_moves(&pos, &mut moves, Move::NONE);
+        let children = search.evaluate_all_children(&mut pos, &moves, u32::MAX, true);
+
+        assert_eq!(children.len(), moves.len());
+        assert!(
+            children[0].outcome == Some(Outcome::Loss),
+            "first child should be the winning capture"
+        );
+
+        // Remaining children were filled with dummy unexplored entries.
+        for c in &children[1..] {
+            assert_eq!(c.pn, INF);
+            assert_eq!(c.dn, 0);
+            assert_eq!(c.outcome, None);
+            assert!(!c.explored);
+        }
+    }
+
+    #[test]
+    fn evaluate_child_unsolved_tt_bounds_used_when_non_degenerate() {
+        let mut search = Search::new(1);
+        let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+        // g1h1 is a quiet rook move to a non-terminal child.
+        let mv = Move::make_move(Square::G1, Square::H1);
+        pos.do_move(mv);
+        let child_key = pos.hash();
+        pos.undo_move(mv);
+
+        // Store non-degenerate unsolved bounds with enough remaining depth.
+        // max_depth=11 gives child_max_depth=10, so remaining_depth=10 is usable.
+        search
+            .tt
+            .store(child_key, Move::NONE, u8::MAX, 1, None, 5, 5, 0, 10);
+
+        let info = search.evaluate_child(&mut pos, mv, 11, true);
+        assert_eq!(
+            info.outcome, None,
+            "unsolved bounds should not report an outcome"
+        );
+        assert_eq!(info.pn, 5);
+        assert_eq!(info.dn, 5);
+    }
+
+    #[test]
+    fn evaluate_child_degenerate_tt_bounds_fall_back_to_neutral() {
+        let mut search = Search::new(1);
+        let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+        // g1h1 is a quiet rook move to a non-terminal child.
+        let mv = Move::make_move(Square::G1, Square::H1);
+        pos.do_move(mv);
+        let child_key = pos.hash();
+        pos.undo_move(mv);
+
+        // pn == 0 is degenerate and should not be reused as an unsolved bound.
+        search
+            .tt
+            .store(child_key, Move::NONE, u8::MAX, 1, None, 0, 5, 0, 10);
+
+        let info = search.evaluate_child(&mut pos, mv, 11, true);
+        assert_eq!(info.outcome, None);
+        assert_eq!(info.pn, 1);
+        assert_eq!(info.dn, 1);
+    }
+}

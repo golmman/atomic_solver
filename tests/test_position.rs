@@ -2,6 +2,10 @@ use atomic_movegen::types::MoveList;
 use atomic_solver::position::Position;
 use atomic_solver::zobrist;
 
+mod common;
+use atomic_solver::position::Outcome;
+use common::assert_solves_to;
+
 struct Rng(u64);
 
 impl Rng {
@@ -42,7 +46,7 @@ fn do_undo_restores_fen() {
     let before = pos.fen();
     pos.do_move(m);
     pos.undo_move(m);
-    assert_eq!(pos.fen(), before);
+    assert_eq!(pos.fen(), before, "do/undo should restore the FEN");
 }
 
 #[test]
@@ -75,4 +79,27 @@ fn incremental_hash_matches_full_hash_in_random_game() {
             "incremental Position hash must equal full zobrist hash after undo_move"
         );
     }
+}
+
+/// A 50-move checkmate must be reported as a loss for the side to move,
+/// not as a draw. The no-legal-moves checkmate/stalemate check has priority
+/// over the 50-move draw rule.
+#[test]
+fn fifty_move_checkmate_is_loss() {
+    assert_solves_to("7K/8/8/8/8/8/1Q6/k7 b - - 100 1", Outcome::Loss, None);
+}
+
+/// A 50-move stalemate is a draw: the side to move has no legal moves and is
+/// not in check, which is terminal before the 50-move draw rule.
+#[test]
+fn fifty_move_stalemate_is_draw() {
+    assert_solves_to("7k/8/8/8/8/8/2q5/K7 w - - 100 1", Outcome::Draw, None);
+}
+
+/// In standard atomic chess touching commoners (kings) are allowed and do not
+/// count as an attack, so this two-king position is a draw by insufficient
+/// material, not a checkmate.
+#[test]
+fn touching_commoners_with_two_pieces_is_draw() {
+    assert_solves_to("8/8/8/8/8/8/1K6/k7 b - - 0 1", Outcome::Draw, None);
 }

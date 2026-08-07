@@ -620,4 +620,70 @@ mod tests {
         drop(tx);
         handle.join().unwrap();
     }
+
+    #[test]
+    fn extract_ppv_returns_empty_for_drawn_root() {
+        let tree = ProofTree::new("fen".to_string(), Outcome::Draw, 0);
+        assert!(tree.extract_ppv().is_empty());
+    }
+
+    #[test]
+    fn validate_ppv_rejects_wrong_path() {
+        let mut tree = ProofTree::new("fen".to_string(), Outcome::Win, 2);
+        let child = tree.add_node(0, Move::make_move(Square::E2, Square::E4), Outcome::Loss, 1);
+        tree.add_node(
+            child,
+            Move::make_move(Square::E7, Square::E5),
+            Outcome::Win,
+            0,
+        );
+
+        assert!(tree.validate_ppv(&[
+            Move::make_move(Square::E2, Square::E4),
+            Move::make_move(Square::E7, Square::E5),
+        ]));
+        assert!(!tree.validate_ppv(&[
+            Move::make_move(Square::E2, Square::E4),
+            Move::make_move(Square::D2, Square::D4),
+        ]));
+    }
+
+    #[test]
+    fn validate_ppv_rejects_premature_termination() {
+        let mut tree = ProofTree::new("fen".to_string(), Outcome::Win, 2);
+        let _ = tree.add_node(0, Move::make_move(Square::E2, Square::E4), Outcome::Loss, 1);
+        // The child node at depth 1 is not terminal, so a one-move PV is invalid.
+        assert!(!tree.validate_ppv(&[Move::make_move(Square::E2, Square::E4)]));
+    }
+
+    #[test]
+    fn solve_populates_proof_tree_with_nodes() {
+        use crate::position::Position;
+        use crate::search::dfpn::Search;
+
+        let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+        let (tx, handle) = ProofTreeWorker::spawn(pos.fen(), 64, Arc::new(AtomicBool::new(false)));
+        let mut search = Search::new(64);
+        search.set_timeout(5);
+        search.set_proof_tree_sender(Some(tx.clone()));
+        let (outcome, _pv, _nodes) = search.solve(&mut pos);
+
+        let (reply_tx, reply_rx) = channel();
+        tx.send(ProofMessage::GetStats(reply_tx)).unwrap();
+        let ProofResponse::Stats(stats) = reply_rx.recv().unwrap() else {
+            panic!("expected Stats response");
+        };
+
+        assert_eq!(outcome, Outcome::Win);
+        assert!(
+            stats.nodes > 0,
+            "proof tree should contain at least the root node and proven children"
+        );
+
+        // Drop the search (and the sender clone it holds) so the worker channel
+        // closes and the worker can exit.
+        drop(search);
+        drop(tx);
+        handle.join().unwrap();
+    }
 }

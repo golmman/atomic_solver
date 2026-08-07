@@ -335,4 +335,159 @@ mod tests {
         }
         assert!(Search::validate_pv(&pv, &pos, Outcome::Win, None));
     }
+
+    #[test]
+    fn extract_pv_follows_tt_entries() {
+        use crate::zobrist::INF;
+
+        let mut search = Search::new(1);
+        let pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+        let mv = Move::make_move(Square::E1, Square::E8);
+
+        // Store a win at the root with the mating move as the best move.
+        search.tt.store(
+            pos.hash(),
+            mv,
+            0,
+            0,
+            Some(Outcome::Win),
+            0,
+            INF,
+            1,
+            u32::MAX,
+        );
+
+        // Store the terminal child.
+        let mut child = pos.clone();
+        child.do_move(mv);
+        search.tt.store(
+            child.hash(),
+            Move::NONE,
+            u8::MAX,
+            0,
+            Some(Outcome::Loss),
+            INF,
+            0,
+            0,
+            u32::MAX,
+        );
+
+        let pv = search.extract_pv(&pos);
+        assert_eq!(
+            pv,
+            vec![mv],
+            "extract_pv should follow the TT to the terminal"
+        );
+    }
+
+    #[test]
+    fn extract_pv_checked_rejects_wrong_depth() {
+        use crate::zobrist::INF;
+
+        let mut search = Search::new(1);
+        let pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+        let mv = Move::make_move(Square::E1, Square::E8);
+
+        search.tt.store(
+            pos.hash(),
+            mv,
+            0,
+            0,
+            Some(Outcome::Win),
+            0,
+            INF,
+            1,
+            u32::MAX,
+        );
+
+        let mut child = pos.clone();
+        child.do_move(mv);
+        search.tt.store(
+            child.hash(),
+            Move::NONE,
+            u8::MAX,
+            0,
+            Some(Outcome::Loss),
+            INF,
+            0,
+            0,
+            u32::MAX,
+        );
+
+        assert!(
+            search
+                .extract_pv_checked(&pos, Outcome::Win, Some(1))
+                .is_some(),
+            "depth 1 should match the stored PV"
+        );
+        assert!(
+            search
+                .extract_pv_checked(&pos, Outcome::Win, Some(2))
+                .is_none(),
+            "depth 2 should not match the stored PV"
+        );
+    }
+
+    #[test]
+    fn emit_proof_tree_populates_validate_ppv() {
+        use crate::proof_tree::{ProofMessage, ProofResponse, ProofTreeWorker};
+        use crate::zobrist::INF;
+        use std::sync::Arc;
+        use std::sync::atomic::AtomicBool;
+
+        let mut search = Search::new(1);
+        let (tx, handle) = ProofTreeWorker::spawn(
+            "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1".to_string(),
+            64,
+            Arc::new(AtomicBool::new(false)),
+        );
+        search.set_proof_tree_sender(Some(tx.clone()));
+
+        let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+        let pv = vec![Move::make_move(Square::E1, Square::E8)];
+        let mv = pv[0];
+
+        // Seed the TT so emit_proof_tree can walk to the terminal child.
+        search.tt.store(
+            pos.hash(),
+            mv,
+            0,
+            0,
+            Some(Outcome::Win),
+            0,
+            INF,
+            1,
+            u32::MAX,
+        );
+        pos.do_move(mv);
+        search.tt.store(
+            pos.hash(),
+            Move::NONE,
+            u8::MAX,
+            0,
+            Some(Outcome::Loss),
+            INF,
+            0,
+            0,
+            u32::MAX,
+        );
+        pos.undo_move(mv);
+
+        search.emit_proof_tree(&mut pos, Outcome::Win, &pv);
+
+        let (reply_tx, reply_rx) = std::sync::mpsc::channel();
+        tx.send(ProofMessage::GetTree(reply_tx)).unwrap();
+        let ProofResponse::Tree(tree) = reply_rx.recv().unwrap() else {
+            panic!("expected Tree response");
+        };
+
+        assert!(
+            tree.validate_ppv(&pv),
+            "emitted proof tree should validate the supplied PV"
+        );
+
+        drop(search);
+        drop(tx);
+        handle.join().unwrap();
+    }
 }

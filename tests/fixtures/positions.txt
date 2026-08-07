@@ -1,0 +1,10 @@
+# Regression corpus for the CLI / solver.
+# Format: fen;expected;max_pv_plies
+# All positions should be solved within the timeout configured by the corpus test.
+4k3/8/8/8/8/8/8/4R1K1 w - - 0 1;Win;3
+7K/8/8/8/8/8/1Q6/k7 b - - 0 1;Loss;3
+8/8/8/8/8/8/8/4K3 w - - 0 1;Win;3
+8/8/8/8/8/8/8/4k3 b - - 0 1;Win;3
+4k3/PP6/8/8/8/8/8/4K3 w - - 0 1;Win;7
+4k3/8/8/8/8/8/8/4KRR1 w - - 0 1;Win;5
+7k/8/8/8/8/8/2q5/K7 w - - 0 1;Draw;1
