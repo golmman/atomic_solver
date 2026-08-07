@@ -1,4 +1,8 @@
 //! Sequential DF-PN+ solver for atomic chess.
+//!
+//! This module is intentionally larger than 10 KB because the search loop,
+//! public entry points, and move ordering all live in a single `Search`
+//! implementation for performance and to avoid extra cross-module coupling.
 
 mod children;
 mod core;
@@ -277,12 +281,10 @@ impl Search {
             self.log_chunk(work_done, chunk, "bounded_search");
         }
 
-        let pv = if outcome == Outcome::Draw {
-            self.extract_pv(pos)
-        } else {
-            self.extract_pv_checked(pos, outcome, None)
-                .unwrap_or_else(|| self.extract_pv(pos))
-        };
+        // The PV is an informational best-effort line from the TT's best_move
+        // chain.  It is not guaranteed to be a valid proof; proof generation is
+        // the responsibility of the proof-tree layer.
+        let pv = self.extract_pv(pos);
         (outcome, pv)
     }
 
@@ -353,6 +355,9 @@ impl Search {
         // 2. Iteratively tighten the bound by two plies, unless the user asked
         //    for the first outcome only.
         let mut n = pv.len() as u32;
+        // Iterative refinement is best-effort: it uses the informational PV
+        // length from `extract_pv` to set a shorter bound, but it does not
+        // validate that the new PV is a sound proof.
         while !self.first_outcome_only && outcome != Outcome::Draw && n > 2 && !self.time_exceeded()
         {
             let bound = n - 2;

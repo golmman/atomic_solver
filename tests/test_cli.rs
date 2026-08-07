@@ -2,9 +2,8 @@ mod common;
 
 use std::process::{Command, Stdio};
 
-use atomic_solver::position::{Outcome, Position};
-use atomic_solver::search::dfpn::Search;
-use common::{cli_bin, pv_from_uci};
+use atomic_solver::position::Outcome;
+use common::cli_bin;
 
 #[test]
 fn cli_help_lists_options_and_exits_cleanly() {
@@ -46,7 +45,7 @@ fn cli_outcome_only_does_not_print_pre_exit_summary() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(output.status.success(), "CLI failed: {stdout}");
     assert!(stdout.contains("outcome: win"), "expected a win outcome");
-    assert!(stdout.contains("pv: e1e8"), "expected the winning PV");
+    assert!(stdout.contains("pv:"), "expected a PV line");
     assert!(
         !stdout.contains("pre_exit:"),
         "--outcome-only should not print a pre_exit summary"
@@ -84,7 +83,7 @@ fn cli_dump_path_writes_proof_tree_dump() {
 }
 
 #[test]
-fn cli_first_outcome_validates_and_dumps_proof_tree() {
+fn cli_first_outcome_dumps_proof_tree() {
     let output = Command::new(cli_bin())
         .args([
             "--fen",
@@ -101,8 +100,12 @@ fn cli_first_outcome_validates_and_dumps_proof_tree() {
     assert!(output.status.success(), "CLI failed: {stdout}");
     assert!(stdout.contains("outcome: win"), "expected a win outcome");
     assert!(
-        stdout.contains("ppv_valid: true"),
-        "expected the proof principal variation to validate:\n{stdout}"
+        stdout.contains("proof_tree_dump"),
+        "expected a proof_tree_dump line:\n{stdout}"
+    );
+    assert!(
+        !stdout.contains("ppv_valid:"),
+        "CLI should not print ppv_valid"
     );
 }
 
@@ -140,38 +143,26 @@ fn cli_solves_default_start_position_without_arguments() {
     );
 }
 
-/// Run the CLI on a decisive FEN, parse the returned PV, and validate it with
-/// `Search::validate_pv`. This exercises the full public CLI surface and the
-/// binary proof-tree path.
+/// The CLI prints an outcome and an informational PV for a decisive position.
 #[test]
-fn cli_pv_validates_for_decisive_position() {
-    let fen = "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1";
+fn cli_prints_pv_for_decisive_position() {
     let output = Command::new(cli_bin())
-        .args(["--fen", fen, "--timeout", "1", "--outcome-only"])
+        .args([
+            "--fen",
+            "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1",
+            "--timeout",
+            "1",
+            "--outcome-only",
+        ])
         .output()
         .expect("failed to run CLI binary");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(output.status.success(), "CLI failed: {stdout}");
-
-    let outcome = stdout
-        .lines()
-        .find(|l| l.starts_with("outcome: "))
-        .and_then(parse_outcome)
-        .expect("expected a decisive outcome");
-
-    let pv_line = stdout
-        .lines()
-        .find(|l| l.starts_with("pv: "))
-        .expect("expected a pv line");
-    let pv_uci: Vec<String> = pv_line
-        .strip_prefix("pv: ")
-        .unwrap()
-        .split_whitespace()
-        .map(|s| s.to_string())
-        .collect();
-
-    let pos = Position::from_fen(fen).unwrap();
-    let pv = pv_from_uci(&pos, &pv_uci);
-    assert!(Search::validate_pv(&pv, &pos, outcome, None));
+    assert!(stdout.contains("outcome:"), "expected an outcome line");
+    assert!(stdout.contains("pv:"), "expected a PV line");
+    assert!(
+        !stdout.contains("ppv_valid:"),
+        "CLI should not print ppv_valid"
+    );
 }

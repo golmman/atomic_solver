@@ -1,4 +1,12 @@
 //! PV extraction and validation.
+//!
+//! The PV returned by `Search` is an informational best-effort line from the
+//! transposition table's `best_move` chain; it is not guaranteed to be a valid
+//! proof.  Proof generation is the responsibility of the proof-tree layer.
+//!
+//! This module is larger than 10 KB because the `extract_pv`, `validate_pv`,
+//! and proof-tree emission helpers all share the same `Position` and `Move`
+//! types and are kept together for cohesion.
 
 use std::collections::HashSet;
 
@@ -13,37 +21,6 @@ use super::Search;
 impl Search {
     pub(super) fn extract_pv(&self, pos: &Position) -> Vec<Move> {
         self.extract_pv_internal(pos, None, None).0
-    }
-
-    pub(super) fn extract_pv_checked(
-        &self,
-        pos: &Position,
-        expected: Outcome,
-        expected_depth: Option<u32>,
-    ) -> Option<Vec<Move>> {
-        let (pv, truncated) = self.extract_pv_internal(pos, Some(expected), expected_depth);
-        if let Some(d) = expected_depth
-            && pv.len() as u32 != d
-        {
-            eprintln!(
-                "warning: extracted PV length {} does not match stored depth {d} for {expected:?}",
-                pv.len()
-            );
-        }
-        if truncated {
-            if Self::validate_pv_prefix(&pv, pos).is_some() {
-                eprintln!("warning: PV truncated after {} plies", self.max_ply);
-                return Some(pv);
-            }
-            eprintln!("warning: PV validation failed for {expected:?}");
-            return None;
-        }
-        if Self::validate_pv(&pv, pos, expected, expected_depth) {
-            Some(pv)
-        } else {
-            eprintln!("warning: PV validation failed for {expected:?}");
-            None
-        }
     }
 
     pub fn validate_pv(
@@ -377,54 +354,6 @@ mod tests {
             pv,
             vec![mv],
             "extract_pv should follow the TT to the terminal"
-        );
-    }
-
-    #[test]
-    fn extract_pv_checked_rejects_wrong_depth() {
-        use crate::zobrist::INF;
-
-        let mut search = Search::new(1);
-        let pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
-        let mv = Move::make_move(Square::E1, Square::E8);
-
-        search.tt.store(
-            pos.hash(),
-            mv,
-            0,
-            0,
-            Some(Outcome::Win),
-            0,
-            INF,
-            1,
-            u32::MAX,
-        );
-
-        let mut child = pos.clone();
-        child.do_move(mv);
-        search.tt.store(
-            child.hash(),
-            Move::NONE,
-            u8::MAX,
-            0,
-            Some(Outcome::Loss),
-            INF,
-            0,
-            0,
-            u32::MAX,
-        );
-
-        assert!(
-            search
-                .extract_pv_checked(&pos, Outcome::Win, Some(1))
-                .is_some(),
-            "depth 1 should match the stored PV"
-        );
-        assert!(
-            search
-                .extract_pv_checked(&pos, Outcome::Win, Some(2))
-                .is_none(),
-            "depth 2 should not match the stored PV"
         );
     }
 

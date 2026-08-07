@@ -24,7 +24,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 ///   --timeout <SECONDS>        Search time limit in seconds.
 ///                              Defaults to 5.
 ///   --first-outcome             Stop after the first decisive outcome and skip
-///                              the iterative shortest-PV refinement.
+///                              the iterative PV refinement.
 ///   --outcome-only             Print only the outcome/PV and skip the pre-exit
 ///                              summary. No stdin reader is spawned.
 ///   --pt-size <MB>             Maximum in-memory proof-tree size in megabytes.
@@ -35,9 +35,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 /// Output:
 ///   Each newly discovered decisive line is logged as
 ///   `outcome: <win|loss|draw> length: <plies>`. For wins and losses the final
-///   line is followed by `pv: <UCI moves>`. If the timeout is reached after any
-///   result, `timeout` is printed on its own line. The pre-exit hook writes the
-///   accumulated proof tree to `proof_tree.bin` and prints `ppv_valid: true/false`.
+///   line is followed by `pv: <UCI moves>`, an informational best-effort line
+///   from the transposition table. If the timeout is reached after any result,
+///   `timeout` is printed on its own line. The pre-exit hook writes the
+///   accumulated proof tree to `proof_tree.bin`.
 ///
 /// Examples:
 ///   atomic_solver --help
@@ -61,7 +62,7 @@ fn print_help(program: &str) {
     println!("  --timeout <SECONDS>        Search time limit in seconds");
     println!("                             (default: 5)");
     println!("  --first-outcome            Stop after the first decisive outcome");
-    println!("                             and skip shortest-PV refinement");
+    println!("                             and skip iterative PV refinement");
     println!("  --outcome-only             Print only the outcome/PV;");
     println!("                             do not spawn stdin reader or pre-exit hook");
     println!("  --pt-size <MB>             Maximum in-memory proof-tree size in megabytes");
@@ -251,9 +252,8 @@ fn main() {
         });
 
         let hook_tx = proof_tx.as_ref().unwrap().clone();
-        let hook_fen = fen.clone();
         let hook_dump_path = dump_path;
-        Some(Box::new(move |reason, outcome, nodes, pv: &[Move]| {
+        Some(Box::new(move |reason, outcome, nodes, _pv: &[Move]| {
             println!("pre_exit: reason={reason} outcome={outcome} nodes={nodes}");
 
             let (stats_tx, stats_rx) = std::sync::mpsc::channel();
@@ -274,14 +274,6 @@ fn main() {
                 return;
             }
             if let Ok(ProofResponse::Tree(tree)) = tree_rx.recv() {
-                println!("proof_tree_ppv: {}", pv_str(pv));
-
-                let fresh = Position::from_fen(&hook_fen).unwrap_or_else(|_| {
-                    Position::from_fen(Position::STARTPOS_FEN).expect("valid startpos fen")
-                });
-                let valid = tree.validate_ppv(pv) && Search::validate_pv(pv, &fresh, outcome, None);
-                println!("ppv_valid: {valid}");
-
                 if let Err(e) = std::fs::File::create(&hook_dump_path)
                     .and_then(|mut file| tree.to_bin(&mut file))
                 {

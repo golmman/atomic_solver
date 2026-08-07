@@ -12,10 +12,11 @@ A pure solver for atomic chess in Rust.
   `Outcome` (Win/Loss/Draw from the side-to-move perspective), undo state,
   and Zobrist hashing.
 - `src/search/dfpn/` implements the sequential DF-PN+ solver with iterative
-  bounded shortest-PV refinement, history/killer heuristics, and a 5-second
-  default timeout. `dfpn` emits `NodeProven` events for every node it proves
-  or disproves; the returned PV is the shortest decisive line found before the
-  timeout or a bounded-search failure.
+  bounded refinement, history/killer heuristics, and a 5-second default
+  timeout. `dfpn` emits `NodeProven` events for every node it proves or
+  disproves; the returned PV is an informational best-effort line from the
+  transposition table and is not guaranteed to be a valid proof. Proof
+  generation is the responsibility of the proof-tree layer.
 - `src/search/tt/` holds the transposition table with path-independent base
   entries. Repetition-dependent results are not cached, following the
   first-player-loss GHI shortcut.
@@ -37,8 +38,8 @@ A pure solver for atomic chess in Rust.
   (default 256, max in-memory proof-tree size), `--dump-path <FILE>`
   (default `proof_tree.bin`, binary dump of the full proven subtree), plus
   `-h`/`--help`. Unknown options exit with an error. It prints the outcome and
-  a PV when the result is decisive and, by default, logs proof-tree statistics,
-  the returned PV, its validity, and writes the binary dump before exit.
+  an informational PV when the result is decisive and, by default, logs
+  proof-tree statistics and writes the binary dump before exit.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
 
@@ -81,15 +82,16 @@ complexity, prefer them in this order:
 
 1. **Decisive outcome** for deep positions (roughly 30 full moves / 60 plies or
    more).
-2. **Shortest decisive PV** returned by `Search::solve` by iterative bounded
-   refinement.
-3. **Proof tree dump** (`proof_tree.bin`) that records every node proven or
-   disproven during the search.
+2. **Informational PV** returned by `Search::solve` as a best-effort line from
+   the transposition table. It is not validated as a proof.
+3. **Proof tree dump** (`proof_tree.bin`) that records nodes proven or disproven
+   during the search. Its PPV extraction and validation are handled separately by
+   the proof-tree layer.
 
 `Search::solve` returns the first decisive line quickly, then uses the
-remaining time budget to iteratively shorten it. Use `Search::first_outcome_only`
-(or the CLI `--first-outcome` flag) to skip refinement when only a decisive
-outcome is needed.
+remaining time budget to iteratively improve the informational PV. Use
+`Search::first_outcome_only` (or the CLI `--first-outcome` flag) to skip
+refinement when only a decisive outcome is needed.
 
 ## Conventions
 
