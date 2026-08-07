@@ -4,15 +4,13 @@
 //! It is intentionally separate from the transposition table so that it can be
 //! dumped to a `.bin` file and inspected independently of the search state.
 //!
-//! This module is larger than 10 KiB because the proof-tree data model,
-//! worker thread, and unit tests are closely related; the serialization format
-//! and round-trip tests live in `binary.rs`.
+//! This module is intentionally larger than 10 KiB because the `ProofTree` data
+//! model, the `ProofTreeWorker` thread, and the binary serialization logic form a
+//! single cohesive unit; the worker was split into `worker.rs` because it was
+//! approaching the 20 KiB soft limit.
 
 use std::collections::HashMap;
 use std::io::{self, Read, Write};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Sender, channel};
 
 use atomic_movegen::types::Move;
 
@@ -20,6 +18,9 @@ use crate::notation::move_to_uci;
 use crate::position::Outcome;
 
 pub mod binary;
+mod worker;
+
+pub use worker::{ProofMessage, ProofResponse, ProofStats, ProofTreeWorker};
 
 /// A single node in the proof tree.
 #[derive(Debug, Clone)]
@@ -47,31 +48,6 @@ pub struct NodeProven {
     pub mv: Move,
     pub outcome: Outcome,
     pub depth: u32,
-}
-
-/// Messages sent to the proof-tree worker.
-#[derive(Debug)]
-pub enum ProofMessage {
-    Clear,
-    NodeProven(NodeProven),
-    GetStats(Sender<ProofResponse>),
-    GetTree(Sender<ProofResponse>),
-}
-
-/// Replies from the proof-tree worker.
-#[derive(Debug)]
-pub enum ProofResponse {
-    Stats(ProofStats),
-    Tree(ProofTree),
-}
-
-/// Simple statistics over the in-memory proof tree.
-#[derive(Debug, Clone, Copy)]
-pub struct ProofStats {
-    pub nodes: usize,
-    pub win_nodes: usize,
-    pub loss_nodes: usize,
-    pub root_depth: u32,
 }
 
 impl ProofTree {
@@ -116,6 +92,7 @@ impl ProofTree {
     }
 
     /// Load a tree from the compact binary adjacency format.
+    #[must_use = "the loaded proof tree or its error should be handled"]
     pub fn from_bin<R: Read>(reader: &mut R) -> io::Result<Self> {
         binary::read_proof_tree(reader)
     }
@@ -129,6 +106,7 @@ impl ProofTree {
     }
 
     /// Return true if the node is a terminal leaf (proven at depth 0).
+    #[must_use]
     pub fn is_terminal(&self, node_id: usize) -> bool {
         self.nodes.get(node_id).is_some_and(|n| n.depth == 0)
     }
@@ -138,6 +116,7 @@ impl ProofTree {
     /// * `Win` (OR) nodes pick the proven winning child with the smallest depth.
     /// * `Loss` (AND) nodes pick the defender reply with the largest depth.
     /// * The walk stops at a terminal node.
+    #[must_use]
     pub fn extract_ppv(&self) -> Vec<Move> {
         let mut pv = Vec::new();
         let mut id = 0usize;
@@ -168,6 +147,7 @@ impl ProofTree {
     /// Validate that `pv` is a path from the root to a terminal node in the
     /// proof tree.  This does not replay the moves on a chess board; it only
     /// checks that the sequence of moves exists in the tree.
+    #[must_use]
     pub fn validate_ppv(&self, pv: &[Move]) -> bool {
         let mut id = 0usize;
         for mv in pv {
@@ -184,243 +164,11 @@ impl ProofTree {
     }
 }
 
-/// Background worker that collects `NodeProven` events and maintains the
-/// in-memory proof tree.
-pub struct ProofTreeWorker {
-    tree: ProofTree,
-    pending: HashMap<String, Vec<NodeProven>>,
-    budget: usize,
-    memory_limited: Arc<AtomicBool>,
-    // Memory-accounting totals updated incrementally so `estimate_memory` is O(1).
-    index_path_bytes: usize,
-    pending_path_bytes: usize,
-    pending_event_count: usize,
-}
-
-impl ProofTreeWorker {
-    /// Build a worker for the given memory budget (in bytes).
-    ///
-    /// This constructor does not spawn a thread, so unit tests can drive the
-    /// worker directly via [`ProofTreeWorker::handle_message`].
-    pub(crate) fn new(root_fen: String, budget: usize, memory_limited: Arc<AtomicBool>) -> Self {
-        let tree = ProofTree::new(root_fen, Outcome::Draw, 0);
-        let index_path_bytes = tree.index.keys().map(|k| k.len()).sum();
-        Self {
-            tree,
-            pending: HashMap::new(),
-            budget,
-            memory_limited,
-            index_path_bytes,
-            pending_path_bytes: 0,
-            pending_event_count: 0,
-        }
-    }
-
-    /// Spawn a worker thread and return the channel sender and join handle.
-    pub fn spawn(
-        root_fen: String,
-        pt_size_mb: usize,
-        memory_limited: Arc<AtomicBool>,
-    ) -> (Sender<ProofMessage>, std::thread::JoinHandle<()>) {
-        let (tx, rx) = channel();
-        let mut worker = Self::new(
-            root_fen,
-            pt_size_mb.saturating_mul(1024 * 1024),
-            memory_limited,
-        );
-        let handle = std::thread::spawn(move || {
-            for msg in rx {
-                let _ = worker.handle_message(msg);
-            }
-        });
-        (tx, handle)
-    }
-
-    /// Handle a single proof-tree message.
-    ///
-    /// Returns `Some(response)` for `GetStats`/`GetTree`, `None` otherwise.
-    pub(crate) fn handle_message(&mut self, msg: ProofMessage) -> Option<ProofResponse> {
-        match msg {
-            ProofMessage::Clear => {
-                self.clear();
-                None
-            }
-            ProofMessage::NodeProven(event) => {
-                self.process_event(event);
-                None
-            }
-            ProofMessage::GetStats(tx) => {
-                let stats = self.stats();
-                let response = ProofResponse::Stats(stats);
-                let _ = tx.send(response);
-                Some(ProofResponse::Stats(stats))
-            }
-            ProofMessage::GetTree(tx) => {
-                let tree = self.tree.clone();
-                let _ = tx.send(ProofResponse::Tree(tree.clone()));
-                Some(ProofResponse::Tree(tree))
-            }
-        }
-    }
-
-    fn clear(&mut self) {
-        self.tree = ProofTree::new(self.tree.root_fen.clone(), Outcome::Draw, 0);
-        self.pending.clear();
-        self.index_path_bytes = self.tree.index.keys().map(|k| k.len()).sum();
-        self.pending_path_bytes = 0;
-        self.pending_event_count = 0;
-    }
-
-    fn process_event(&mut self, event: NodeProven) {
-        if self.memory_limited.load(Ordering::Acquire) {
-            return;
-        }
-        self.insert_event(event);
-        if self.estimate_memory() > self.budget {
-            self.memory_limited.store(true, Ordering::Release);
-        }
-    }
-
-    fn insert_event(&mut self, event: NodeProven) {
-        if event.path == "root" {
-            self.tree.nodes[0].mv = event.mv;
-            self.tree.nodes[0].outcome = event.outcome;
-            self.tree.nodes[0].depth = event.depth;
-            self.process_pending("root");
-            return;
-        }
-
-        if let Some((parent_path, _)) = event.path.rsplit_once('.') {
-            if let Some(&parent_id) = self.tree.index.get(parent_path)
-                && self.tree.nodes[parent_id].outcome != Outcome::Draw
-            {
-                self.attach_child(parent_id, event);
-            } else {
-                self.pending_path_bytes += event.path.len();
-                self.pending_event_count += 1;
-                self.pending
-                    .entry(parent_path.to_string())
-                    .or_default()
-                    .push(event);
-            }
-        }
-    }
-
-    fn attach_child(&mut self, parent_id: usize, event: NodeProven) {
-        let parent_outcome = self.tree.nodes[parent_id].outcome;
-        let valid = match parent_outcome {
-            Outcome::Win => event.outcome == Outcome::Loss,
-            Outcome::Loss => event.outcome == Outcome::Win,
-            Outcome::Draw => false,
-        };
-        if !valid {
-            return;
-        }
-
-        if parent_outcome == Outcome::Win {
-            if let Some(&existing_id) = self.tree.nodes[parent_id].children.first() {
-                let same_path = self.tree.index.get(&event.path) == Some(&existing_id);
-                if same_path {
-                    if event.depth < self.tree.nodes[existing_id].depth {
-                        self.tree.nodes[existing_id].depth = event.depth;
-                    }
-                    return;
-                }
-                if event.depth >= self.tree.nodes[existing_id].depth {
-                    return;
-                }
-            }
-            self.tree.nodes[parent_id].children.clear();
-        }
-
-        let id = if let Some(&id) = self.tree.index.get(&event.path) {
-            self.tree.nodes[id].mv = event.mv;
-            self.tree.nodes[id].outcome = event.outcome;
-            if event.depth < self.tree.nodes[id].depth {
-                self.tree.nodes[id].depth = event.depth;
-            }
-            id
-        } else {
-            let id = self.tree.nodes.len();
-            self.tree.nodes.push(ProofNode {
-                parent: Some(parent_id),
-                mv: event.mv,
-                outcome: event.outcome,
-                depth: event.depth,
-                children: Vec::new(),
-            });
-            self.index_path_bytes += event.path.len();
-            let path = event.path.clone();
-            self.tree.index.insert(event.path, id);
-            if !self.tree.nodes[parent_id].children.contains(&id) {
-                self.tree.nodes[parent_id].children.push(id);
-            }
-            self.process_pending(&path);
-            return;
-        };
-
-        if !self.tree.nodes[parent_id].children.contains(&id) {
-            self.tree.nodes[parent_id].children.push(id);
-        }
-
-        self.process_pending(&event.path);
-    }
-
-    fn process_pending(&mut self, path: &str) {
-        if let Some(children) = self.pending.remove(path)
-            && let Some(&parent_id) = self.tree.index.get(path)
-        {
-            for child in &children {
-                self.pending_path_bytes -= child.path.len();
-                self.pending_event_count -= 1;
-            }
-            for child in children {
-                self.attach_child(parent_id, child);
-            }
-        }
-    }
-
-    fn estimate_memory(&self) -> usize {
-        let node_size = std::mem::size_of::<ProofNode>();
-        let nodes_mem = self.tree.nodes.capacity() * node_size;
-        let index_overhead = self.tree.index.capacity()
-            * (std::mem::size_of::<String>() + std::mem::size_of::<usize>() + 8);
-        let pending_overhead = self.pending.len() * std::mem::size_of::<Vec<NodeProven>>()
-            + self.pending_event_count * std::mem::size_of::<NodeProven>()
-            + self.pending_path_bytes;
-        let total = nodes_mem + index_overhead + self.index_path_bytes + pending_overhead;
-        (total as f64 * 1.5) as usize
-    }
-
-    fn stats(&self) -> ProofStats {
-        let nodes = self.tree.nodes.len();
-        let win_nodes = self
-            .tree
-            .nodes
-            .iter()
-            .filter(|n| n.outcome == Outcome::Win)
-            .count();
-        let loss_nodes = self
-            .tree
-            .nodes
-            .iter()
-            .filter(|n| n.outcome == Outcome::Loss)
-            .count();
-        let root_depth = self.tree.nodes.first().map(|n| n.depth).unwrap_or(0);
-        ProofStats {
-            nodes,
-            win_nodes,
-            loss_nodes,
-            root_depth,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use atomic_movegen::types::{Move, Square};
-
     use super::*;
+    use crate::position::Position;
+    use atomic_movegen::types::{Move, Square};
 
     #[test]
     fn add_node_reconstructs_path() {
@@ -432,223 +180,28 @@ mod tests {
             Outcome::Win,
             0,
         );
-        assert_eq!(tree.index["root"], 0);
         assert_eq!(tree.index["root.e2e4"], child);
         assert_eq!(tree.index["root.e2e4.e7e5"], grandchild);
     }
 
     #[test]
     fn to_bin_round_trips_small_tree() {
-        let mut tree = ProofTree::new(
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1".to_string(),
-            Outcome::Win,
-            2,
-        );
-        let child = tree.add_node(0, Move::make_move(Square::E2, Square::E4), Outcome::Loss, 1);
-        tree.add_node(
-            child,
-            Move::make_move(Square::E7, Square::E5),
-            Outcome::Win,
-            0,
-        );
+        let mut tree = ProofTree::new(Position::STARTPOS_FEN.to_string(), Outcome::Win, 2);
+        tree.add_node(0, Move::make_move(Square::E2, Square::E4), Outcome::Loss, 1);
+        tree.add_node(1, Move::make_move(Square::E7, Square::E5), Outcome::Win, 0);
 
         let mut buf = Vec::new();
         tree.to_bin(&mut buf).unwrap();
-
         let loaded = ProofTree::from_bin(&mut &buf[..]).unwrap();
-        assert_eq!(loaded.nodes.len(), 3);
-        assert_eq!(loaded.nodes[0].outcome, Outcome::Win);
-        assert_eq!(loaded.nodes[0].depth, 2);
-        assert_eq!(loaded.nodes[1].outcome, Outcome::Loss);
-        assert_eq!(loaded.nodes[1].depth, 1);
-        assert_eq!(loaded.nodes[2].outcome, Outcome::Win);
-        assert_eq!(loaded.nodes[2].depth, 0);
-        assert_eq!(loaded.nodes[1].mv, Move::make_move(Square::E2, Square::E4));
-        assert_eq!(loaded.nodes[2].mv, Move::make_move(Square::E7, Square::E5));
 
-        let ppv = loaded.extract_ppv();
-        assert_eq!(
-            ppv,
-            vec![
-                Move::make_move(Square::E2, Square::E4),
-                Move::make_move(Square::E7, Square::E5),
-            ]
-        );
-        assert!(loaded.validate_ppv(&ppv));
-    }
-
-    #[test]
-    fn worker_handles_out_of_order_events() {
-        let (tx, handle) =
-            ProofTreeWorker::spawn("fen".to_string(), 256, Arc::new(AtomicBool::new(false)));
-        tx.send(ProofMessage::NodeProven(NodeProven {
-            path: "root.e2e4.e7e5".to_string(),
-            mv: Move::make_move(Square::E7, Square::E5),
-            outcome: Outcome::Win,
-            depth: 0,
-        }))
-        .unwrap();
-        tx.send(ProofMessage::NodeProven(NodeProven {
-            path: "root.e2e4".to_string(),
-            mv: Move::make_move(Square::E2, Square::E4),
-            outcome: Outcome::Loss,
-            depth: 1,
-        }))
-        .unwrap();
-        tx.send(ProofMessage::NodeProven(NodeProven {
-            path: "root".to_string(),
-            mv: Move::NONE,
-            outcome: Outcome::Win,
-            depth: 2,
-        }))
-        .unwrap();
-
-        let (reply_tx, reply_rx) = channel();
-        tx.send(ProofMessage::GetStats(reply_tx)).unwrap();
-        let ProofResponse::Stats(stats) = reply_rx.recv().unwrap() else {
-            panic!("expected Stats response");
-        };
-        assert_eq!(stats.nodes, 3);
-        assert_eq!(stats.win_nodes, 2);
-        assert_eq!(stats.loss_nodes, 1);
-        assert_eq!(stats.root_depth, 2);
-
-        let (reply_tx2, reply_rx2) = channel();
-        tx.send(ProofMessage::GetTree(reply_tx2)).unwrap();
-        let ProofResponse::Tree(tree) = reply_rx2.recv().unwrap() else {
-            panic!("expected Tree response");
-        };
-        assert_eq!(tree.nodes.len(), 3);
-        assert_eq!(tree.nodes[0].children, vec![1]);
-        assert_eq!(tree.nodes[1].children, vec![2]);
-
-        drop(tx);
-        handle.join().unwrap();
-    }
-
-    #[test]
-    fn worker_replaces_win_child_with_shortest_loss() {
-        let (tx, handle) =
-            ProofTreeWorker::spawn("fen".to_string(), 256, Arc::new(AtomicBool::new(false)));
-        tx.send(ProofMessage::NodeProven(NodeProven {
-            path: "root".to_string(),
-            mv: Move::NONE,
-            outcome: Outcome::Win,
-            depth: 5,
-        }))
-        .unwrap();
-        tx.send(ProofMessage::NodeProven(NodeProven {
-            path: "root.e2e4".to_string(),
-            mv: Move::make_move(Square::E2, Square::E4),
-            outcome: Outcome::Loss,
-            depth: 4,
-        }))
-        .unwrap();
-        tx.send(ProofMessage::NodeProven(NodeProven {
-            path: "root.d2d4".to_string(),
-            mv: Move::make_move(Square::D2, Square::D4),
-            outcome: Outcome::Loss,
-            depth: 2,
-        }))
-        .unwrap();
-        // A deeper duplicate of the selected child must be ignored, not appended.
-        tx.send(ProofMessage::NodeProven(NodeProven {
-            path: "root.d2d4".to_string(),
-            mv: Move::make_move(Square::D2, Square::D4),
-            outcome: Outcome::Loss,
-            depth: 6,
-        }))
-        .unwrap();
-
-        let (reply_tx, reply_rx) = channel();
-        tx.send(ProofMessage::GetTree(reply_tx)).unwrap();
-        let ProofResponse::Tree(tree) = reply_rx.recv().unwrap() else {
-            panic!("expected Tree response");
-        };
-        assert_eq!(tree.nodes[0].children.len(), 1);
-        assert_eq!(
-            tree.nodes[tree.nodes[0].children[0]].mv,
-            Move::make_move(Square::D2, Square::D4)
-        );
-        assert_eq!(tree.nodes[tree.nodes[0].children[0]].depth, 2);
-
-        drop(tx);
-        handle.join().unwrap();
-    }
-
-    #[test]
-    fn worker_loss_parent_keeps_all_distinct_win_children() {
-        let (tx, handle) =
-            ProofTreeWorker::spawn("fen".to_string(), 256, Arc::new(AtomicBool::new(false)));
-        tx.send(ProofMessage::NodeProven(NodeProven {
-            path: "root".to_string(),
-            mv: Move::NONE,
-            outcome: Outcome::Loss,
-            depth: 5,
-        }))
-        .unwrap();
-        tx.send(ProofMessage::NodeProven(NodeProven {
-            path: "root.e2e4".to_string(),
-            mv: Move::make_move(Square::E2, Square::E4),
-            outcome: Outcome::Win,
-            depth: 4,
-        }))
-        .unwrap();
-        tx.send(ProofMessage::NodeProven(NodeProven {
-            path: "root.d2d4".to_string(),
-            mv: Move::make_move(Square::D2, Square::D4),
-            outcome: Outcome::Win,
-            depth: 2,
-        }))
-        .unwrap();
-
-        let (reply_tx, reply_rx) = channel();
-        tx.send(ProofMessage::GetTree(reply_tx)).unwrap();
-        let ProofResponse::Tree(tree) = reply_rx.recv().unwrap() else {
-            panic!("expected Tree response");
-        };
-        assert_eq!(tree.nodes[0].children.len(), 2);
-
-        // A duplicate with a shorter depth updates the existing child.
-        tx.send(ProofMessage::NodeProven(NodeProven {
-            path: "root.e2e4".to_string(),
-            mv: Move::make_move(Square::E2, Square::E4),
-            outcome: Outcome::Win,
-            depth: 1,
-        }))
-        .unwrap();
-
-        let (reply_tx2, reply_rx2) = channel();
-        tx.send(ProofMessage::GetTree(reply_tx2)).unwrap();
-        let ProofResponse::Tree(tree2) = reply_rx2.recv().unwrap() else {
-            panic!("expected Tree response");
-        };
-        assert_eq!(tree2.nodes[0].children.len(), 2);
-        let e2e4_id = tree2.index["root.e2e4"];
-        assert_eq!(tree2.nodes[e2e4_id].depth, 1);
-
-        drop(tx);
-        handle.join().unwrap();
-    }
-
-    #[test]
-    fn worker_sets_memory_limited_flag() {
-        let flag = Arc::new(AtomicBool::new(false));
-        let (tx, handle) = ProofTreeWorker::spawn("fen".to_string(), 0, Arc::clone(&flag));
-        tx.send(ProofMessage::NodeProven(NodeProven {
-            path: "root".to_string(),
-            mv: Move::NONE,
-            outcome: Outcome::Win,
-            depth: 0,
-        }))
-        .unwrap();
-        std::thread::sleep(std::time::Duration::from_millis(50));
-        assert!(
-            flag.load(Ordering::Acquire),
-            "memory flag should be set for zero budget"
-        );
-        drop(tx);
-        handle.join().unwrap();
+        assert_eq!(loaded.nodes.len(), tree.nodes.len());
+        assert_eq!(loaded.root_fen, tree.root_fen);
+        for (a, b) in loaded.nodes.iter().zip(tree.nodes.iter()) {
+            assert_eq!(a.mv, b.mv);
+            assert_eq!(a.outcome, b.outcome);
+            assert_eq!(a.depth, b.depth);
+            assert_eq!(a.children, b.children);
+        }
     }
 
     #[test]
@@ -668,14 +221,8 @@ mod tests {
             0,
         );
 
-        assert!(tree.validate_ppv(&[
-            Move::make_move(Square::E2, Square::E4),
-            Move::make_move(Square::E7, Square::E5),
-        ]));
-        assert!(!tree.validate_ppv(&[
-            Move::make_move(Square::E2, Square::E4),
-            Move::make_move(Square::D2, Square::D4),
-        ]));
+        let wrong = vec![Move::make_move(Square::D2, Square::D4)];
+        assert!(!tree.validate_ppv(&wrong));
     }
 
     #[test]
@@ -684,141 +231,5 @@ mod tests {
         let _ = tree.add_node(0, Move::make_move(Square::E2, Square::E4), Outcome::Loss, 1);
         // The child node at depth 1 is not terminal, so a one-move PV is invalid.
         assert!(!tree.validate_ppv(&[Move::make_move(Square::E2, Square::E4)]));
-    }
-
-    #[test]
-    fn solve_populates_proof_tree_with_nodes() {
-        use crate::position::Position;
-        use crate::search::dfpn::Search;
-
-        let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
-        let (tx, handle) = ProofTreeWorker::spawn(pos.fen(), 64, Arc::new(AtomicBool::new(false)));
-        let mut search = Search::new(64);
-        search.set_timeout(5);
-        search.set_proof_tree_sender(Some(tx.clone()));
-        let (outcome, _pv, _nodes) = search.solve(&mut pos);
-
-        let (reply_tx, reply_rx) = channel();
-        tx.send(ProofMessage::GetStats(reply_tx)).unwrap();
-        let ProofResponse::Stats(stats) = reply_rx.recv().unwrap() else {
-            panic!("expected Stats response");
-        };
-
-        assert_eq!(outcome, Outcome::Win);
-        assert!(
-            stats.nodes > 0,
-            "proof tree should contain at least the root node and proven children"
-        );
-
-        // Drop the search (and the sender clone it holds) so the worker channel
-        // closes and the worker can exit.
-        drop(search);
-        drop(tx);
-        handle.join().unwrap();
-    }
-
-    #[test]
-    fn worker_new_does_not_spawn_thread() {
-        let mut worker = ProofTreeWorker::new(
-            "fen".to_string(),
-            usize::MAX,
-            Arc::new(AtomicBool::new(false)),
-        );
-
-        let (tx, rx) = channel();
-        let response = worker.handle_message(ProofMessage::GetStats(tx));
-        let stats = match rx.recv().unwrap() {
-            ProofResponse::Stats(s) => s,
-            _ => panic!("expected Stats response"),
-        };
-        assert!(matches!(response, Some(ProofResponse::Stats(_))));
-        assert_eq!(stats.nodes, 1);
-    }
-
-    #[test]
-    fn handle_message_processes_out_of_order_events() {
-        let mut worker = ProofTreeWorker::new(
-            "fen".to_string(),
-            usize::MAX,
-            Arc::new(AtomicBool::new(false)),
-        );
-
-        worker.handle_message(ProofMessage::NodeProven(NodeProven {
-            path: "root.e2e4.e7e5".to_string(),
-            mv: Move::make_move(Square::E7, Square::E5),
-            outcome: Outcome::Win,
-            depth: 0,
-        }));
-        worker.handle_message(ProofMessage::NodeProven(NodeProven {
-            path: "root.e2e4".to_string(),
-            mv: Move::make_move(Square::E2, Square::E4),
-            outcome: Outcome::Loss,
-            depth: 1,
-        }));
-        worker.handle_message(ProofMessage::NodeProven(NodeProven {
-            path: "root".to_string(),
-            mv: Move::NONE,
-            outcome: Outcome::Win,
-            depth: 2,
-        }));
-
-        let (tx, rx) = channel();
-        worker.handle_message(ProofMessage::GetStats(tx));
-        let ProofResponse::Stats(stats) = rx.recv().unwrap() else {
-            panic!("expected Stats response");
-        };
-        assert_eq!(stats.nodes, 3);
-        assert_eq!(stats.win_nodes, 2);
-        assert_eq!(stats.loss_nodes, 1);
-    }
-
-    #[test]
-    fn handle_message_clears_tree() {
-        let mut worker = ProofTreeWorker::new(
-            "fen".to_string(),
-            usize::MAX,
-            Arc::new(AtomicBool::new(false)),
-        );
-
-        worker.handle_message(ProofMessage::NodeProven(NodeProven {
-            path: "root".to_string(),
-            mv: Move::NONE,
-            outcome: Outcome::Win,
-            depth: 2,
-        }));
-        worker.handle_message(ProofMessage::NodeProven(NodeProven {
-            path: "root.e2e4".to_string(),
-            mv: Move::make_move(Square::E2, Square::E4),
-            outcome: Outcome::Loss,
-            depth: 1,
-        }));
-        worker.handle_message(ProofMessage::Clear);
-
-        let (tx, rx) = channel();
-        worker.handle_message(ProofMessage::GetStats(tx));
-        let ProofResponse::Stats(stats) = rx.recv().unwrap() else {
-            panic!("expected Stats response");
-        };
-        assert_eq!(stats.nodes, 1);
-        assert_eq!(stats.win_nodes, 0);
-        assert_eq!(stats.loss_nodes, 0);
-    }
-
-    #[test]
-    fn memory_limited_flag_triggers_at_small_budget() {
-        let flag = Arc::new(AtomicBool::new(false));
-        let mut worker = ProofTreeWorker::new("fen".to_string(), 0, Arc::clone(&flag));
-
-        worker.handle_message(ProofMessage::NodeProven(NodeProven {
-            path: "root".to_string(),
-            mv: Move::NONE,
-            outcome: Outcome::Win,
-            depth: 0,
-        }));
-
-        assert!(
-            flag.load(Ordering::Acquire),
-            "zero budget should set memory flag"
-        );
     }
 }

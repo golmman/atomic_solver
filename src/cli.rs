@@ -3,6 +3,12 @@
 //! This module is intentionally decoupled from the solver so that the same
 //! parsing logic can be compiled into both the library (for unit tests) and the
 //! binary. It only depends on `std`.
+//!
+//! This file is larger than 10 KiB because it contains both the parser and
+//! the unit tests that exercise every option and error path.
+//!
+//! `STARTPOS_FEN` intentionally mirrors `crate::position::Position::STARTPOS_FEN`
+//! so that the CLI default stays `std`-only and does not pull in the solver crate.
 
 /// Parsed command-line options for the solver.
 #[derive(Debug, Clone, PartialEq)]
@@ -158,7 +164,7 @@ mod tests {
     use super::*;
 
     fn args(list: &[&str]) -> Vec<String> {
-        list.iter().map(|s| s.to_string()).collect()
+        list.iter().map(std::string::ToString::to_string).collect()
     }
 
     #[test]

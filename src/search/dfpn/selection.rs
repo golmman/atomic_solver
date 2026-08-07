@@ -1,4 +1,9 @@
 //! DF-PN solved-child detection and unsolved-child ordering.
+//!
+//! This file is larger than 10 KiB and close to the 20 KiB soft limit because
+//! the OR/AND selection logic, best/second-unsolved search, and exhaustive unit
+//! tests are all expressed directly over the `ChildInfo` table. If it grows much
+//! further, the test module should be split into a separate file.
 
 #![allow(clippy::similar_names)]
 

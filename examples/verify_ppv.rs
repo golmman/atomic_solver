@@ -6,13 +6,11 @@
 //! The example prints `is_ppv: true` when every defender reply can be refuted
 //! within the remaining PPV length, and `is_ppv: false` otherwise.
 
-mod common;
-
 use std::process;
 use std::time::{Duration, Instant};
 
 use atomic_movegen::types::{Move, MoveList};
-use atomic_solver::notation::move_to_uci;
+use atomic_solver::notation::{move_to_uci, uci_to_move};
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
 
@@ -29,14 +27,6 @@ fn print_help(program: &str) {
     println!("  --moves <MOVES>     Space-separated UCI move list");
     println!("  --timeout <SECONDS> Maximum total wall time in seconds");
     println!("                      (default: 60)");
-}
-
-fn outcome_str(outcome: Outcome) -> &'static str {
-    match outcome {
-        Outcome::Win => "win",
-        Outcome::Loss => "loss",
-        Outcome::Draw => "draw",
-    }
 }
 
 fn main() {
@@ -136,7 +126,7 @@ fn main() {
             process::exit(1);
         }
 
-        let m = common::parse_uci(&positions[i], token).unwrap_or_else(|| {
+        let m = uci_to_move(token, &positions[i]).unwrap_or_else(|| {
             eprintln!("error: move '{}' at ply {} is not legal", token, i + 1);
             println!("is_ppv: false");
             process::exit(1);
@@ -163,14 +153,14 @@ fn main() {
     if root_outcome == Outcome::Draw {
         eprintln!(
             "error: final position is not decisive (outcome: {})",
-            outcome_str(root_outcome)
+            root_outcome.as_str()
         );
         println!("is_ppv: false");
         process::exit(1);
     }
 
-    println!("moves: {}", n);
-    println!("outcome: {}", outcome_str(root_outcome));
+    println!("moves: {n}");
+    println!("outcome: {}", root_outcome.as_str());
 
     let attacker_color = if root_outcome == Outcome::Win {
         positions[0].side_to_move()

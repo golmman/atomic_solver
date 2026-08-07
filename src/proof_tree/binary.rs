@@ -1,5 +1,9 @@
 //! Compact binary serialization for the in-memory proof tree.
 //!
+//! This file is larger than 10 KiB because the bit-packing routines for moves,
+//! node adjacency, the compact binary format, and the round-trip tests all share
+//! the same encoding constants.
+//!
 //! The binary dump is driver-free and stores only parent ids and 16-bit move
 //! codes.  External loaders derive `outcome`, `depth`, `terminal`, and the
 //! UCI move string from the adjacency list and the root outcome stored in the

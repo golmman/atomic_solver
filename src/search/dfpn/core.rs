@@ -1,4 +1,9 @@
 //! Core DF-PN recursive search routine.
+//!
+//! This file is larger than 10 KiB because the recursive `dfpn` loop, TT reuse,
+//! threshold computation, and proof-tree path tracking are tightly coupled in a
+//! single hot path; splitting would add function-call overhead and obscure the
+//! shared mutable state.
 
 #![allow(clippy::similar_names)]
 
@@ -17,6 +22,30 @@ pub(super) struct Resolved {
 }
 
 impl Search {
+    /// Run `f` with `proof_path` and `move_stack` updated when a proof-tree
+    /// sender is configured.
+    ///
+    /// This keeps the recursive `dfpn` call identical regardless of whether
+    /// proof-tree events are being emitted.
+    fn with_child_path<F, R>(&mut self, mv: Move, f: F) -> R
+    where
+        F: FnOnce(&mut Self) -> R,
+    {
+        if self.proof_tree_sender.is_some() {
+            let uci = crate::notation::move_to_uci(mv);
+            let proof_len = self.proof_path.len();
+            self.proof_path.push('.');
+            self.proof_path.push_str(&uci);
+            self.move_stack.push(mv);
+            let r = f(self);
+            self.move_stack.pop();
+            self.proof_path.truncate(proof_len);
+            r
+        } else {
+            f(self)
+        }
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub(super) fn dfpn(
         &mut self,
@@ -27,8 +56,6 @@ impl Search {
         max_work: u64,
         is_or_node: bool,
     ) -> Outcome {
-        let emit = self.proof_tree_sender.is_some();
-
         if self.time_exceeded() {
             return Outcome::Draw;
         }
@@ -200,13 +227,8 @@ impl Search {
             };
 
             pos.do_move(mv);
-            if emit {
-                let uci = crate::notation::move_to_uci(mv);
-                let proof_len = self.proof_path.len();
-                self.proof_path.push('.');
-                self.proof_path.push_str(&uci);
-                self.move_stack.push(mv);
-                let _ = self.dfpn(
+            self.with_child_path(mv, |search| {
+                let _ = search.dfpn(
                     pos,
                     np,
                     nd,
@@ -214,18 +236,7 @@ impl Search {
                     child_max_work,
                     !is_or_node,
                 );
-                self.move_stack.pop();
-                self.proof_path.truncate(proof_len);
-            } else {
-                let _ = self.dfpn(
-                    pos,
-                    np,
-                    nd,
-                    max_depth.saturating_sub(1),
-                    child_max_work,
-                    !is_or_node,
-                );
-            }
+            });
             pos.undo_move(mv);
         }
 

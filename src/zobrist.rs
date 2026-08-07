@@ -56,19 +56,18 @@ pub fn board_hash(board: &Board) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::position::Position;
     use atomic_movegen::board::Board;
 
     #[test]
     fn hash_is_deterministic_for_same_position() {
-        let board =
-            Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
+        let board = Board::from_fen(Position::STARTPOS_FEN).unwrap();
         assert_eq!(hash(&board, 0), hash(&board, 0));
     }
 
     #[test]
     fn hash_differs_for_distinct_placements() {
-        let a =
-            Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
+        let a = Board::from_fen(Position::STARTPOS_FEN).unwrap();
         let b =
             Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1").unwrap();
         assert_ne!(hash(&a, 0), hash(&b, 0), "side to move should change hash");
@@ -82,8 +81,7 @@ mod tests {
 
     #[test]
     fn incremental_zobrist_matches_full_hash_after_random_game() {
-        let mut board =
-            Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
+        let mut board = Board::from_fen(Position::STARTPOS_FEN).unwrap();
         // Use a fixed PRNG sequence.
         let mut rng = 0x1234_5678_9abc_def0u64;
 
@@ -95,8 +93,8 @@ mod tests {
                 break;
             }
             rng = rng
-                .wrapping_mul(6364136223846793005)
-                .wrapping_add(1442695040888963407);
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
             let idx = (rng as usize) % moves.len();
             let mv = moves[idx];
             let mut si = atomic_movegen::board::StateInfo::new();

@@ -1,4 +1,7 @@
 //! Shared helpers for integration tests.
+//!
+//! `M19_FEN` is intentionally duplicated from `examples/common.rs` because
+//! example binaries and integration tests cannot share modules.
 
 #![allow(dead_code)]
 

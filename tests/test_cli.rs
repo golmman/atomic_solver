@@ -113,12 +113,7 @@ fn parse_outcome(line: &str) -> Option<Outcome> {
     line.strip_prefix("outcome: ")?
         .split_whitespace()
         .next()
-        .and_then(|s| match s {
-            "win" => Some(Outcome::Win),
-            "loss" => Some(Outcome::Loss),
-            "draw" => Some(Outcome::Draw),
-            _ => None,
-        })
+        .and_then(|s| s.parse::<Outcome>().ok())
 }
 
 #[test]

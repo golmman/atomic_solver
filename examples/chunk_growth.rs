@@ -1,4 +1,7 @@
 //! Benchmark `max_work` chunk growth with a configurable factor on one position.
+//!
+//! This file is larger than 10 KiB because it contains argument parsing, timing,
+//! and formatted output for a standalone diagnostic example.
 
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
@@ -11,7 +14,7 @@ struct Run {
     child_evals: u64,
 }
 
-struct Result {
+struct ChunkResult {
     outcome: Outcome,
     nodes: u64,
     child_evals: u64,
@@ -77,36 +80,40 @@ fn main() {
     println!("timeout={timeout}s runs={runs}");
     println!();
 
-    let mut results: Vec<(String, Result)> = Vec::new();
+    let mut results: Vec<(String, ChunkResult)> = Vec::new();
 
     if linear {
-        let r = bench_mode(&fen, timeout, runs, None);
-        results.push(("linear".to_string(), r));
+        let (label, r) = bench_mode(&fen, timeout, runs, None);
+        results.push((label, r));
     }
 
     for factor in factors {
-        let (num, den) = factor_fraction(factor);
-        let r = bench_mode(&fen, timeout, runs, Some((num, den)));
-        results.push((format!("factor {factor}"), r));
+        let (label, r) = bench_mode(&fen, timeout, runs, Some(factor));
+        results.push((label, r));
     }
 
     print_results_table(&results);
 }
 
-fn bench_mode(fen: &str, timeout: u64, runs: usize, factor: Option<(u64, u64)>) -> Result {
-    let _ = run_once(fen, timeout, factor);
+fn bench_mode(fen: &str, timeout: u64, runs: usize, factor: Option<f64>) -> (String, ChunkResult) {
+    let (_, warmup_frac) = run_once(fen, timeout, factor);
 
     let mut times = Vec::with_capacity(runs);
     let mut first: Option<Run> = None;
 
-    let label = match factor {
-        None => "linear".to_string(),
-        Some((num, den)) => format!("factor {num}/{den}"),
+    let label = if let Some(f) = factor {
+        if let Some((num, den)) = warmup_frac {
+            format!("factor {num}/{den}")
+        } else {
+            format!("factor {f}")
+        }
+    } else {
+        "linear".to_string()
     };
     println!("benchmarking {label} chunks ...");
 
     for _ in 0..runs {
-        let run = run_once(fen, timeout, factor);
+        let (run, _) = run_once(fen, timeout, factor);
         times.push(run.elapsed);
         if first.is_none() {
             first = Some(run);
@@ -114,47 +121,50 @@ fn bench_mode(fen: &str, timeout: u64, runs: usize, factor: Option<(u64, u64)>) 
     }
 
     let first = first.unwrap();
-    let total: u128 = times.iter().map(|d| d.as_nanos()).sum();
+    let total: u128 = times.iter().map(Duration::as_nanos).sum();
     let mean = Duration::from_nanos((total / runs as u128) as u64);
     let min = *times.iter().min_by_key(|d| d.as_nanos()).unwrap();
     let max = *times.iter().max_by_key(|d| d.as_nanos()).unwrap();
 
-    Result {
+    let result = ChunkResult {
         outcome: first.outcome,
         nodes: first.nodes,
         child_evals: first.child_evals,
         mean,
         min,
         max,
-    }
+    };
+    (label, result)
 }
 
-fn run_once(fen: &str, timeout: u64, factor: Option<(u64, u64)>) -> Run {
+fn run_once(fen: &str, timeout: u64, factor: Option<f64>) -> (Run, Option<(u64, u64)>) {
     let mut pos = Position::from_fen(fen).expect("valid FEN");
     let mut search = Search::new(64);
     search.set_timeout(timeout);
     search.set_epsilon(0.125);
-    match factor {
-        None => search.set_linear_chunks(true),
-        Some((num, den)) => {
-            search.set_linear_chunks(false);
-            search.set_chunk_multiplier(num, den);
+
+    let fraction = match factor {
+        None => {
+            search.set_linear_chunks(true);
+            None
         }
-    }
+        Some(f) => Some(search.set_chunk_multiplier_from_factor(f)),
+    };
 
     let start = Instant::now();
     let (outcome, _pv, _nodes) = search.search_depth(&mut pos, u32::MAX);
     let elapsed = start.elapsed();
 
-    Run {
+    let run = Run {
         elapsed,
         outcome,
         nodes: search.nodes(),
         child_evals: search.child_evaluations(),
-    }
+    };
+    (run, fraction)
 }
 
-fn print_results_table(results: &[(String, Result)]) {
+fn print_results_table(results: &[(String, ChunkResult)]) {
     const GROWTH_W: usize = 14;
     const OUTCOME_W: usize = 7;
     const MEAN_W: usize = 8;
@@ -182,7 +192,7 @@ fn print_results_table(results: &[(String, Result)]) {
         println!(
             "| {:<GROWTH_W$} | {:<OUTCOME_W$} | {:>MEAN_W$.3} | {:>MIN_W$.3} | {:>MAX_W$.3} | {:>NODES_W$} | {:>CHILD_W$} |",
             name,
-            outcome_str(r.outcome),
+            r.outcome.as_str(),
             r.mean.as_secs_f64(),
             r.min.as_secs_f64(),
             r.max.as_secs_f64(),
@@ -198,39 +208,4 @@ fn sep(width: usize, right: bool) -> String {
     } else {
         format!("{:-<width$}", ":")
     }
-}
-
-fn outcome_str(o: Outcome) -> &'static str {
-    match o {
-        Outcome::Win => "win",
-        Outcome::Loss => "loss",
-        Outcome::Draw => "draw",
-    }
-}
-
-fn factor_fraction(v: f64) -> (u64, u64) {
-    let bits = v.to_bits();
-    let exponent = ((bits >> 52) & 0x7ff) as i32;
-    let mantissa = bits & 0xfffffffffffff;
-    let mut num = (1u64 << 52) | mantissa;
-    let mut den = 1u64;
-
-    let exp = exponent - 1075;
-    if exp >= 0 {
-        num <<= exp as u32;
-    } else {
-        den = 1u64 << (-exp) as u32;
-    }
-
-    let g = gcd(num, den);
-    (num / g, den / g)
-}
-
-fn gcd(mut a: u64, mut b: u64) -> u64 {
-    while b != 0 {
-        let t = a % b;
-        a = b;
-        b = t;
-    }
-    a
 }

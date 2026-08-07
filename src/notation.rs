@@ -13,6 +13,7 @@ pub fn move_to_uci(m: Move) -> String {
 ///
 /// Promotion piece is expected as the optional fifth character of the UCI
 /// string (e.g. `c7c8q`).
+#[must_use]
 pub fn uci_to_move(uci: &str, pos: &Position) -> Option<Move> {
     let mut moves = MoveList::new();
     pos.legal_moves(&mut moves);
@@ -31,8 +32,7 @@ mod tests {
 
     #[test]
     fn normal_move_round_trips() {
-        let pos =
-            Position::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
+        let pos = Position::from_fen(Position::STARTPOS_FEN).unwrap();
         let mut moves = MoveList::new();
         pos.legal_moves(&mut moves);
         assert!(!moves.is_empty());

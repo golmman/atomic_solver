@@ -6,12 +6,7 @@ use atomic_solver::position::Outcome;
 use common::cli_bin;
 
 fn parse_expected(token: &str) -> Option<Outcome> {
-    match token.to_lowercase().as_str() {
-        "win" => Some(Outcome::Win),
-        "loss" => Some(Outcome::Loss),
-        "draw" => Some(Outcome::Draw),
-        _ => None,
-    }
+    token.parse::<Outcome>().ok()
 }
 
 fn run_cli(fen: &str, timeout: u64) -> Outcome {

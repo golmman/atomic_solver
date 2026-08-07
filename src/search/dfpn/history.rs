@@ -1,4 +1,8 @@
 //! History and killer move ordering helpers.
+//!
+//! This file is larger than 10 KiB because the history table, killer slots,
+//! move sorting, and diagnostic breakdown all share the same scoring constants
+//! and mutable search state.
 
 use atomic_movegen::board::StateInfo;
 use atomic_movegen::types::{Color, Move, MoveList, Square};
@@ -132,6 +136,7 @@ impl Search {
     /// The returned vector contains `(move, static_score, history_bonus,
     /// killer_bonus, total_score)` tuples, sorted from highest total score to
     /// lowest. This is intended for the `move_order_debug` example.
+    #[must_use]
     pub fn move_order_breakdown(&self, pos: &Position) -> Vec<(Move, i32, i32, i32, i32)> {
         use crate::search::ordering::{StaticAtomicScorer, nearest_commoner_map};
 
@@ -168,7 +173,7 @@ mod tests {
     use atomic_movegen::types::{Color, Square};
 
     fn start_position() -> Position {
-        Position::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap()
+        Position::from_fen(Position::STARTPOS_FEN).unwrap()
     }
 
     #[test]

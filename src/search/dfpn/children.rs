@@ -1,4 +1,8 @@
 //! DF-PN child evaluation.
+//!
+//! This file is larger than 10 KiB because `ChildInfo` construction, terminal
+//! detection, TT reuse, and proof-tree event emission for every child all share
+//! the same `Position` move/undo sequence.
 
 #![allow(clippy::similar_names)]
 

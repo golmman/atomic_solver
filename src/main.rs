@@ -1,3 +1,45 @@
+//! Command-line solver for atomic chess.
+//!
+//! This file is larger than 10 KiB because it contains the argument parsing,
+//! help text, search setup, proof-tree wiring, and pre-exit hook in one place
+//! so the binary is self-contained.
+//!
+//! Usage:
+//!   atomic_solver [OPTIONS]
+//!
+//! Options:
+//!   -h, --help                 Show this help message and exit.
+//!   --fen <FEN>                Position to solve in Forsyth-Edwards Notation.
+//!                              Defaults to [`Position::STARTPOS_FEN`].
+//!   --tt-size <MB>             Transposition-table size in megabytes.
+//!                              Defaults to 64.
+//!   --epsilon <VALUE>          DF-PN+ threshold parameter in the range [0.0, 1.0].
+//!                              Defaults to 0.125.
+//!   --timeout <SECONDS>        Search time limit in seconds.
+//!                              Defaults to 5.
+//!   --first-outcome             Stop after the first decisive outcome and skip
+//!                              the iterative PV refinement.
+//!   --outcome-only             Print only the outcome/PV and skip the pre-exit
+//!                              summary. No stdin reader is spawned.
+//!   --pt-size <MB>             Maximum in-memory proof-tree size in megabytes.
+//!                              Defaults to 256.
+//!   --dump-path <FILE>         Path for the compact binary proof-tree dump.
+//!                              Defaults to `proof_tree.bin`.
+//!
+//! Output:
+//!   Each newly discovered decisive line is logged as
+//!   `outcome: <win|loss|draw> length: <plies>`. For wins and losses the final
+//!   line is followed by `pv: <UCI moves>`, an informational best-effort line
+//!   from the transposition table. If the timeout is reached after any result,
+//!   `timeout` is printed on its own line. The pre-exit hook writes the
+//!   accumulated proof tree to `proof_tree.bin`.
+//!
+//! Examples:
+//!   atomic_solver --help
+//!   atomic_solver --fen "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1"
+//!   atomic_solver --epsilon 0.5 --first-outcome
+//!   atomic_solver --timeout 10
+
 use atomic_movegen::types::Move;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
@@ -10,44 +52,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 mod cli;
 use cli::{CliOptions, ParseResult, parse_args};
 
-/// Command-line solver for atomic chess.
-///
-/// Usage:
-///   atomic_solver [OPTIONS]
-///
-/// Options:
-///   -h, --help                 Show this help message and exit.
-///   --fen <FEN>                Position to solve in Forsyth-Edwards Notation.
-///                              Defaults to the standard atomic start position
-///                              ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").
-///   --tt-size <MB>             Transposition-table size in megabytes.
-///                              Defaults to 64.
-///   --epsilon <VALUE>          DF-PN+ threshold parameter in the range [0.0, 1.0].
-///                              Defaults to 0.125.
-///   --timeout <SECONDS>        Search time limit in seconds.
-///                              Defaults to 5.
-///   --first-outcome             Stop after the first decisive outcome and skip
-///                              the iterative PV refinement.
-///   --outcome-only             Print only the outcome/PV and skip the pre-exit
-///                              summary. No stdin reader is spawned.
-///   --pt-size <MB>             Maximum in-memory proof-tree size in megabytes.
-///                              Defaults to 256.
-///   --dump-path <FILE>         Path for the compact binary proof-tree dump.
-///                              Defaults to `proof_tree.bin`.
-///
-/// Output:
-///   Each newly discovered decisive line is logged as
-///   `outcome: <win|loss|draw> length: <plies>`. For wins and losses the final
-///   line is followed by `pv: <UCI moves>`, an informational best-effort line
-///   from the transposition table. If the timeout is reached after any result,
-///   `timeout` is printed on its own line. The pre-exit hook writes the
-///   accumulated proof tree to `proof_tree.bin`.
-///
-/// Examples:
-///   atomic_solver --help
-///   atomic_solver --fen "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1"
-///   atomic_solver --epsilon 0.5 --first-outcome
-///   atomic_solver --timeout 10
 fn print_help(program: &str) {
     println!("atomic chess solver");
     println!();
@@ -80,17 +84,10 @@ fn print_help(program: &str) {
     println!("  {program} --timeout 10");
 }
 
-fn outcome_str(outcome: Outcome) -> &'static str {
-    match outcome {
-        Outcome::Win => "win",
-        Outcome::Loss => "loss",
-        Outcome::Draw => "draw",
-    }
-}
-
-fn pv_str(pv: &[atomic_movegen::types::Move]) -> String {
+fn pv_str(pv: &[Move]) -> String {
     pv.iter()
-        .map(|&m| move_to_uci(m))
+        .copied()
+        .map(move_to_uci)
         .collect::<Vec<_>>()
         .join(" ")
 }
@@ -209,10 +206,10 @@ fn main() {
 
     let (outcome, pv, timed_out) = {
         let (outcome, pv, _nodes) = search.solve_with_progress(&mut pos, |o, line| {
-            eprintln!("outcome: {} length: {}", outcome_str(o), line.len());
+            eprintln!("outcome: {} length: {}", o.as_str(), line.len());
         });
 
-        println!("outcome: {} length: {}", outcome_str(outcome), pv.len());
+        println!("outcome: {} length: {}", outcome.as_str(), pv.len());
         if outcome != Outcome::Draw {
             println!("pv: {}", pv_str(&pv));
         }

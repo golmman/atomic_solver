@@ -1,4 +1,9 @@
 //! Position wrapper around `atomic_movegen::board::Board`.
+//!
+//! This file is intentionally larger than 10 KiB because the `Outcome` enum,
+//! `Position` struct, move application, terminal detection, and unit tests are
+//! tightly coupled; exposing them through small helpers would add boilerplate
+//! without improving readability.
 
 use atomic_movegen::board::{Board, StateInfo};
 use atomic_movegen::movegen::{generate_legal, generate_legal_with_state};
@@ -15,16 +20,37 @@ pub enum Outcome {
 
 impl std::fmt::Display for Outcome {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Outcome::Win => "win",
-            Outcome::Loss => "loss",
-            Outcome::Draw => "draw",
-        };
-        write!(f, "{s}")
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl std::str::FromStr for Outcome {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.eq_ignore_ascii_case("win") {
+            Ok(Outcome::Win)
+        } else if s.eq_ignore_ascii_case("loss") {
+            Ok(Outcome::Loss)
+        } else if s.eq_ignore_ascii_case("draw") {
+            Ok(Outcome::Draw)
+        } else {
+            Err(format!("unknown outcome: {s}"))
+        }
     }
 }
 
 impl Outcome {
+    /// Return the textual outcome: `"win"`, `"loss"`, or `"draw"`.
+    #[must_use]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Outcome::Win => "win",
+            Outcome::Loss => "loss",
+            Outcome::Draw => "draw",
+        }
+    }
+
     #[must_use]
     pub fn to_pn_dn(self) -> (u64, u64) {
         match self {
@@ -61,6 +87,7 @@ pub struct Position {
 impl Position {
     pub const STARTPOS_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
+    #[must_use]
     pub fn new() -> Self {
         Self::from_fen(Self::STARTPOS_FEN).unwrap()
     }
@@ -79,6 +106,7 @@ impl Position {
     ///
     /// Callers should prefer `Position` methods for state changes; this
     /// accessor is provided for `MoveScorer` implementations and diagnostics.
+    #[must_use]
     pub fn board(&self) -> &Board {
         &self.board
     }
@@ -86,17 +114,20 @@ impl Position {
     pub fn do_move(&mut self, m: Move) {
         let mut state = StateInfo::new();
         self.board.do_move(m, &mut state);
-
-        // `Board::hash()` is maintained incrementally; only the rule50 key changes.
-        self.zobrist = self.board.hash() ^ zobrist::rule50_key(self.board.rule50());
+        self.refresh_zobrist();
         self.undo_stack.push(state);
     }
 
     pub fn undo_move(&mut self, m: Move) {
         let state = self.undo_stack.pop().expect("undo without move");
         self.board.undo_move(m, &state);
+        self.refresh_zobrist();
+    }
 
-        // `Board::hash()` is maintained incrementally; only the rule50 key changes.
+    /// Recompute the full Zobrist key from the board hash and rule50 key.
+    ///
+    /// `Board::hash()` is maintained incrementally; only the rule50 key changes.
+    fn refresh_zobrist(&mut self) {
         self.zobrist = self.board.hash() ^ zobrist::rule50_key(self.board.rule50());
     }
 
@@ -104,7 +135,7 @@ impl Position {
     ///
     /// This is intended for property-based and fuzz tests where blindly
     /// calling `do_move` could panic.
-    #[allow(dead_code)]
+    #[cfg(test)]
     pub(crate) fn try_do_move(&mut self, m: Move) -> bool {
         let mut moves = MoveList::new();
         self.legal_moves(&mut moves);
@@ -127,25 +158,29 @@ impl Position {
     }
 
     pub fn legal_moves_with_state(&self, moves: &mut MoveList, state: &mut StateInfo) {
-        self.board.populate_state(state);
+        self.populate_state(state);
         generate_legal_with_state(&self.board, state, moves);
     }
 
     /// Convenience helper that returns all legal moves in a `Vec`.
+    #[must_use]
     pub fn legal_moves_vec(&self) -> Vec<Move> {
         let mut moves = MoveList::new();
         self.legal_moves(&mut moves);
         moves.as_slice().to_vec()
     }
 
+    #[must_use]
     pub fn side_to_move(&self) -> Color {
         self.board.side_to_move()
     }
 
+    #[must_use]
     pub fn commoners(&self, c: Color) -> Bitboard {
         self.board.commoners(c)
     }
 
+    #[must_use]
     pub fn outcome(&self) -> Option<Outcome> {
         let mut moves = MoveList::new();
         let mut state = StateInfo::new();
@@ -156,6 +191,7 @@ impl Position {
     /// Terminal detector for callers that already have a move list and the
     /// corresponding `StateInfo`. Returns `None` if the position is not
     /// terminal, otherwise the `Outcome` from the side-to-move perspective.
+    #[must_use]
     pub fn outcome_from_state(&self, state: &StateInfo, moves: &MoveList) -> Option<Outcome> {
         let us = self.side_to_move();
         let them = us.flip();
@@ -191,6 +227,7 @@ impl Position {
         zobrist::board_hash(&self.board)
     }
 
+    #[must_use]
     pub fn fen(&self) -> String {
         self.board.fen()
     }
@@ -290,8 +327,7 @@ mod tests {
 
     #[test]
     fn try_do_move_accepts_legal_and_rejects_illegal() {
-        let mut pos =
-            Position::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
+        let mut pos = Position::from_fen(Position::STARTPOS_FEN).unwrap();
         let legal = atomic_movegen::types::Move::make_move(
             atomic_movegen::types::Square::E2,
             atomic_movegen::types::Square::E4,

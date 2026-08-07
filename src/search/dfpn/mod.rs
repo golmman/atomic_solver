@@ -16,7 +16,6 @@ mod tests;
 pub use crate::zobrist::INF;
 pub use core::outcome_from_pn_dn;
 
-use std::io::Write;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
@@ -53,11 +52,14 @@ impl std::fmt::Display for ExitReason {
     }
 }
 
-/// Convert the f64 value `1.0 + epsilon` into an exact reduced `num/den` fraction.
-fn epsilon_fraction(v: f64) -> (u64, u64) {
+/// Convert a positive f64 into an exact reduced `num/den` fraction.
+///
+/// This is used both for `1.0 + epsilon` and for geometric chunk-growth
+/// factors, so the helper is not specific to epsilon.
+fn fraction_from_f64(v: f64) -> (u64, u64) {
     let bits = v.to_bits();
     let exponent = ((bits >> 52) & 0x7ff) as i32;
-    let mantissa = bits & 0xfffffffffffff;
+    let mantissa = bits & 0x000f_ffff_ffff_ffff;
     let mut num = (1u64 << 52) | mantissa;
     let mut den = 1u64;
 
@@ -108,12 +110,12 @@ pub struct Search {
     proof_tree_sender: Option<std::sync::mpsc::Sender<crate::proof_tree::ProofMessage>>,
     move_stack: Vec<Move>,
     proof_path: String,
-    log_writer: Option<Box<dyn Write + Send>>,
 }
 
 impl Search {
+    #[must_use]
     pub fn new(tt_mb: usize) -> Self {
-        let (epsilon_num, epsilon_den) = epsilon_fraction(1.0 + DEFAULT_EPSILON);
+        let (epsilon_num, epsilon_den) = fraction_from_f64(1.0 + DEFAULT_EPSILON);
         Self {
             tt: TranspositionTable::with_mb(tt_mb),
             path_stack: Vec::new(),
@@ -141,17 +143,7 @@ impl Search {
             proof_tree_sender: None,
             move_stack: Vec::new(),
             proof_path: "root".to_string(),
-            log_writer: None,
         }
-    }
-
-    /// Set an optional writer to capture `log_chunk` output.
-    ///
-    /// If set, `log_chunk` writes to this writer; otherwise it falls back to
-    /// `eprintln!`. This is used by unit tests to inspect chunk progress
-    /// without spawning the binary.
-    pub fn set_log_writer(&mut self, writer: Option<Box<dyn Write + Send>>) {
-        self.log_writer = writer;
     }
 
     pub fn set_first_outcome_only(&mut self, value: bool) {
@@ -174,12 +166,19 @@ impl Search {
         self.chunk_increment = increment.max(1);
     }
 
-    pub fn set_chunk_multiplier(&mut self, num: u64, den: u64) {
-        assert!(den > 0, "chunk multiplier denominator must be positive");
-        assert!(num > 0, "chunk multiplier numerator must be positive");
-        let g = gcd(num, den);
-        self.chunk_multiplier_num = num / g;
-        self.chunk_multiplier_den = den / g;
+    /// Set the geometric chunk-growth factor from a floating-point value and
+    /// return the exact reduced fraction that is used internally.
+    ///
+    /// `factor` must be at least `1.0`.
+    pub fn set_chunk_multiplier_from_factor(&mut self, factor: f64) -> (u64, u64) {
+        assert!(
+            factor >= 1.0,
+            "chunk growth factor must be >= 1.0, got {factor}"
+        );
+        let (num, den) = fraction_from_f64(factor);
+        self.chunk_multiplier_num = num;
+        self.chunk_multiplier_den = den;
+        (num, den)
     }
 
     pub fn set_epsilon(&mut self, epsilon: f64) {
@@ -187,7 +186,7 @@ impl Search {
             (0.0..=1.0).contains(&epsilon),
             "epsilon must be in [0.0, 1.0], got {epsilon}"
         );
-        let (num, den) = epsilon_fraction(1.0 + epsilon);
+        let (num, den) = fraction_from_f64(1.0 + epsilon);
         self.epsilon_num = num;
         self.epsilon_den = den;
     }
@@ -210,6 +209,7 @@ impl Search {
     /// Aggregate transposition-table statistics after a search.
     ///
     /// Tuple fields are: `(buckets, live_entries, solved_entries, unsolved_entries, generation)`.
+    #[must_use]
     pub fn tt_stats(&self) -> (usize, usize, usize, usize, u32) {
         self.tt.stats()
     }
@@ -217,6 +217,7 @@ impl Search {
     /// Distribution of stored `best_child` values among live TT entries.
     ///
     /// Useful for debugging proof-tree/GHI path-code usage.
+    #[must_use]
     pub fn tt_best_child_counts(&self) -> Vec<(u8, usize)> {
         self.tt.best_child_counts()
     }
@@ -243,6 +244,7 @@ impl Search {
     }
 
     /// The reason the search stopped (timeout, quit, memory limit, or complete).
+    #[must_use]
     pub fn exit_reason(&self) -> ExitReason {
         if self
             .memory_limited
@@ -391,40 +393,22 @@ impl Search {
         (outcome, pv, self.nodes)
     }
 
-    /// Convenience entry point that accepts an external stop flag and writes the
-    /// final exit reason to `exit_reason`.
-    pub fn search_with_settings(
-        &mut self,
-        pos: &mut Position,
-        stop_flag: Option<Arc<AtomicBool>>,
-        exit_reason: &mut ExitReason,
-    ) -> (Outcome, Vec<Move>, u64) {
-        self.set_stop_flag(stop_flag);
-        let result = self.solve(pos);
-        *exit_reason = self.exit_reason();
-        result
-    }
-
     fn begin_run(&mut self) {
+        self.reset_search_state();
         self.nodes = 0;
         self.child_evals = 0;
         self.start = Instant::now();
         self.deadline = self.start + self.timeout;
-        self.path_stack.clear();
-        self.move_stack.clear();
-        self.proof_path = "root".to_string();
-        self.max_depth_reached = 0;
-        if let Some(keys) = &self.prefix_path {
-            self.path_stack = keys.clone();
-        }
     }
 
     /// Total number of nodes (positions) visited by the search.
+    #[must_use]
     pub fn nodes(&self) -> u64 {
         self.nodes
     }
 
     /// Total number of child position evaluations performed.
+    #[must_use]
     pub fn child_evaluations(&self) -> u64 {
         self.child_evals
     }
@@ -447,16 +431,10 @@ impl Search {
         } else {
             0.0
         };
-        let msg = format!(
-            "[{label}] chunk done: work_done={work_done} next_chunk={next_chunk} elapsed={secs:.3}s max_depth={} nodes={} nps={nps:.0}\n",
+        eprintln!(
+            "[{label}] chunk done: work_done={work_done} next_chunk={next_chunk} elapsed={secs:.3}s max_depth={} nodes={} nps={nps:.0}",
             self.max_depth_reached, self.nodes
         );
-
-        if let Some(writer) = &mut self.log_writer {
-            let _ = writer.write_all(msg.as_bytes());
-        } else {
-            eprint!("{msg}");
-        }
     }
 
     pub(super) fn path_contains(&self, key: u64) -> bool {
@@ -472,6 +450,7 @@ impl Search {
         self.path_stack.pop();
     }
 
+    #[must_use]
     pub fn time_exceeded(&self) -> bool {
         if let Some(flag) = &self.stop_flag
             && flag.load(Ordering::Acquire)

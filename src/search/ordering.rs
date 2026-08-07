@@ -1,4 +1,9 @@
 //! Move ordering for the atomic-chess solver.
+//!
+//! This file is larger than 10 KiB because the `MoveScorer` trait, the static
+//! scorer implementation, distance heuristics, and the unit-test matrix for
+//! captures/promotions/quiet moves are kept together to avoid exposing the
+//! scorer internals through extra modules.
 
 use atomic_movegen::attacks;
 use atomic_movegen::board::{Board, StateInfo};
@@ -266,11 +271,11 @@ mod tests {
         let (board, state, moves) =
             legal_moves_and_state("rnbqkbnr/pppp1ppp/8/4p3/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 3");
         let scorer = StaticAtomicScorer;
-        let f3e5 = find_move(&moves, "f3e5");
-        let capture = scorer.score(&board, f3e5, &state);
+        let capture_move = find_move(&moves, "f3e5");
+        let capture = scorer.score(&board, capture_move, &state);
 
-        let f3d4 = find_move(&moves, "f3d4");
-        let quiet = scorer.score(&board, f3d4, &state);
+        let quiet_move = find_move(&moves, "f3d4");
+        let quiet = scorer.score(&board, quiet_move, &state);
         assert!(
             capture > quiet,
             "capture should score above quiet development"

@@ -55,6 +55,7 @@ impl TranspositionTable {
     }
 
     /// Return a small copy of the base fields for `key`.
+    #[must_use]
     pub fn probe_summary(&self, key: u64) -> Option<TtSummary> {
         self.probe(key).map(|e| TtSummary {
             best_move: e.best_move,
@@ -73,6 +74,7 @@ impl TranspositionTable {
     /// Returns the stored best move for solved entries (it may be `Move::NONE`
     /// for terminal positions) and for unsolved entries that already have a
     /// preferred move.
+    #[must_use]
     pub fn probe_best_move(&self, key: u64) -> Option<Move> {
         let entry = self.probe(key)?;
         if entry.outcome.is_some() || entry.best_move != Move::NONE {
@@ -178,6 +180,7 @@ impl TranspositionTable {
     ///
     /// `u8::MAX` (the "unknown" sentinel) is excluded. This is useful for
     /// debugging proof-tree and GHI path-code usage.
+    #[must_use]
     pub fn best_child_counts(&self) -> Vec<(u8, usize)> {
         let mut counts = std::collections::HashMap::new();
         for bucket in &self.table {
@@ -198,6 +201,7 @@ impl TranspositionTable {
     /// Return aggregate statistics about the current transposition table contents.
     ///
     /// Tuple fields are: `(buckets, live_entries, solved_entries, unsolved_entries, generation)`.
+    #[must_use]
     pub fn stats(&self) -> (usize, usize, usize, usize, u32) {
         let mut live = 0;
         let mut solved = 0;

@@ -1,7 +1,7 @@
 //! Reproducible benchmark harness for the atomic-chess solver.
 //!
 //! Run with:
-//!     cargo run --release --example benchmark -- --runs 10
+//!     cargo run --release --example `benchmark` -- --runs 10
 
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
@@ -130,7 +130,7 @@ fn main() {
         let min = r.min.as_secs_f64();
         let max = r.max.as_secs_f64();
         let pv_len = r.pv.len();
-        let outcome = outcome_str(r.outcome);
+        let outcome = r.outcome.as_str();
         println!(
             "| {name} | {outcome} | {} | {} | {mean:.3} | {min:.3} | {max:.3} | {pv_len} |",
             r.nodes, r.child_evals
@@ -154,7 +154,7 @@ fn bench_case(case: &Case, runs: usize, timeout: u64, epsilon: f64) -> BenchResu
     }
 
     let first = first.unwrap();
-    let nanos: Vec<u128> = times.iter().map(|d| d.as_nanos()).collect();
+    let nanos: Vec<u128> = times.iter().map(Duration::as_nanos).collect();
     let total: u128 = nanos.iter().sum();
     let mean = Duration::from_nanos((total / runs as u128) as u64);
     let min = *times.iter().min_by_key(|d| d.as_nanos()).unwrap();
@@ -182,7 +182,7 @@ fn run_once(fen: &str, timeout: u64, epsilon: f64) -> Run {
     let elapsed = start.elapsed();
 
     let child_evals = search.child_evaluations();
-    let pv = pv.iter().map(|&m| move_to_uci(m)).collect();
+    let pv = pv.iter().copied().map(move_to_uci).collect();
 
     Run {
         elapsed,
@@ -190,13 +190,5 @@ fn run_once(fen: &str, timeout: u64, epsilon: f64) -> Run {
         nodes,
         child_evals,
         pv,
-    }
-}
-
-fn outcome_str(o: Outcome) -> &'static str {
-    match o {
-        Outcome::Win => "win",
-        Outcome::Loss => "loss",
-        Outcome::Draw => "draw",
     }
 }

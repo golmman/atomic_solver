@@ -53,6 +53,50 @@ impl Default for TtEntry {
     }
 }
 
+impl TtEntry {
+    /// Return the cached result for `expected` if the base entry stores one.
+    #[must_use]
+    pub fn result_for(&self, expected: Outcome) -> Option<EntryResult> {
+        if self.outcome == Some(expected) {
+            Some(EntryResult {
+                best_move: self.best_move,
+                depth: self.depth,
+            })
+        } else {
+            None
+        }
+    }
+
+    /// Return the cached result for `expected` only if its stored depth matches
+    /// `remaining`. Used to extract PVs whose length is known from a bounded
+    /// solve.
+    #[must_use]
+    pub fn result_for_depth(&self, expected: Outcome, remaining: u32) -> Option<EntryResult> {
+        if self.outcome == Some(expected) && self.depth == remaining {
+            Some(EntryResult {
+                best_move: self.best_move,
+                depth: self.depth,
+            })
+        } else {
+            None
+        }
+    }
+
+    /// Return the best move, outcome, and depth stored in the base entry.
+    ///
+    /// This is used by PV extraction when no expected outcome is supplied yet.
+    #[must_use]
+    pub fn best_result(&self) -> Option<(Move, Outcome, u32)> {
+        self.outcome.map(|o| (self.best_move, o, self.depth))
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct EntryResult {
+    pub best_move: Move,
+    pub depth: u32,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -102,45 +146,4 @@ mod tests {
         let empty = TtEntry::default();
         assert_eq!(empty.best_result(), None);
     }
-}
-
-impl TtEntry {
-    /// Return the cached result for `expected` if the base entry stores one.
-    pub fn result_for(&self, expected: Outcome) -> Option<EntryResult> {
-        if self.outcome == Some(expected) {
-            Some(EntryResult {
-                best_move: self.best_move,
-                depth: self.depth,
-            })
-        } else {
-            None
-        }
-    }
-
-    /// Return the cached result for `expected` only if its stored depth matches
-    /// `remaining`. Used to extract PVs whose length is known from a bounded
-    /// solve.
-    pub fn result_for_depth(&self, expected: Outcome, remaining: u32) -> Option<EntryResult> {
-        if self.outcome == Some(expected) && self.depth == remaining {
-            Some(EntryResult {
-                best_move: self.best_move,
-                depth: self.depth,
-            })
-        } else {
-            None
-        }
-    }
-
-    /// Return the best move, outcome, and depth stored in the base entry.
-    ///
-    /// This is used by PV extraction when no expected outcome is supplied yet.
-    pub fn best_result(&self) -> Option<(Move, Outcome, u32)> {
-        self.outcome.map(|o| (self.best_move, o, self.depth))
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct EntryResult {
-    pub best_move: Move,
-    pub depth: u32,
 }

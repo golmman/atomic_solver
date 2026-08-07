@@ -13,6 +13,7 @@
 
 mod common;
 
+use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::Position;
 use atomic_solver::search::dfpn::Search;
 
@@ -49,7 +50,11 @@ fn main() {
     println!("outcome: {outcome:?}");
     println!(
         "pv: {}",
-        pv.iter().map(|m| m.to_uci()).collect::<Vec<_>>().join(" ")
+        pv.iter()
+            .copied()
+            .map(move_to_uci)
+            .collect::<Vec<_>>()
+            .join(" ")
     );
     println!("nodes: {nodes}");
     println!("tt_buckets: {buckets}");
