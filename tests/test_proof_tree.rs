@@ -1,10 +1,9 @@
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
-use std::sync::mpsc::channel;
 
 use atomic_movegen::types::Move;
 use atomic_solver::position::{Outcome, Position};
-use atomic_solver::proof_tree::{ProofMessage, ProofResponse, ProofTreeWorker};
+use atomic_solver::proof_tree::ProofTreeWorkerHandle;
 use atomic_solver::search::dfpn::Search;
 
 fn solve_and_get_tree(fen: &str) -> (Outcome, Vec<Move>, atomic_solver::proof_tree::ProofTree) {
@@ -13,23 +12,18 @@ fn solve_and_get_tree(fen: &str) -> (Outcome, Vec<Move>, atomic_solver::proof_tr
     search.set_timeout(10);
 
     let memory_limited = Arc::new(AtomicBool::new(false));
-    let (tx, handle) = ProofTreeWorker::spawn(fen.to_string(), 256, Arc::clone(&memory_limited));
+    let (handle, join) =
+        ProofTreeWorkerHandle::spawn(fen.to_string(), 256, Arc::clone(&memory_limited));
     search.set_memory_limited(Some(memory_limited));
-    search.set_proof_tree_sender(Some(tx.clone()));
+    search.set_proof_event_sender(Some(handle.event_sender()));
 
     let (outcome, pv, _nodes) = search.solve(&mut pos);
 
-    let (reply_tx, reply_rx) = channel();
-    tx.send(ProofMessage::GetTree(reply_tx))
-        .expect("send GetTree");
-    let tree = match reply_rx.recv().expect("recv tree") {
-        ProofResponse::Tree(t) => t,
-        _ => panic!("expected Tree response"),
-    };
+    let tree = handle.tree();
 
     drop(search);
-    drop(tx);
-    handle.join().expect("worker thread");
+    drop(handle);
+    join.join().expect("worker thread");
 
     (outcome, pv, tree)
 }

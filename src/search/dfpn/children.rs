@@ -8,9 +8,8 @@
 
 use atomic_movegen::types::{Move, MoveList};
 
-use crate::notation::move_to_uci;
 use crate::position::{Outcome, Position};
-use crate::proof_tree::{NodeProven, ProofMessage};
+use crate::proof_event::{NodeProven, ProofEvent};
 
 use super::{INF, Search};
 
@@ -161,20 +160,15 @@ impl Search {
             }
         };
 
-        if self.proof_tree_sender.is_some()
+        if let Some(sender) = &self.proof_event_sender
             && let Some(outcome) = info.outcome
             && outcome != Outcome::Draw
         {
-            let uci = move_to_uci(mv);
-            let path = format!("{}.{}", self.proof_path, uci);
-            if let Some(sender) = &self.proof_tree_sender {
-                let _ = sender.send(ProofMessage::NodeProven(NodeProven {
-                    path,
-                    mv,
-                    outcome,
-                    depth: info.depth,
-                }));
-            }
+            let mut path = self.move_stack.clone();
+            path.push(mv);
+            let _ = sender.send(ProofEvent::NodeProven(NodeProven::new(
+                path, outcome, info.depth,
+            )));
         }
 
         pos.undo_move(mv);

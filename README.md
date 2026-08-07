@@ -50,8 +50,9 @@ let (outcome, pv, nodes) = search.solve(&mut pos);
   shorter decisive line. Each probe is work-bounded, reusing the transposition
   table and heuristics across chunks, and the search terminates when a shorter
   line cannot be found or the timeout is reached.
-- **Proof-tree emission** — `dfpn` emits a `NodeProven` event for every node it
-  proves or disproves whenever a proof-tree sender is configured.
+- **Proof-tree emission** — `dfpn` emits `ProofEvent` nodes for every node it
+  proves or disproves; an optional background proof-tree worker consumes these
+  events and builds the in-memory proven subtree.
 
 ### Transposition table and repetition
 
@@ -113,6 +114,9 @@ let (outcome, pv, nodes) = search.solve(&mut pos);
 - `atomic_solver::search::ordering` — `MoveScorer` trait and
   `StaticAtomicScorer`.
 - `atomic_solver::search::tt` — transposition-table types.
+- `atomic_solver::proof_event::{ProofEvent, NodeProven}` — search-to-worker
+  event protocol.
+- `atomic_solver::proof_tree` — in-memory proof tree and worker handle.
 - `atomic_solver::notation` — UCI move helpers.
 - `atomic_solver::zobrist` — position and path hashing.
 

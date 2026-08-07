@@ -22,28 +22,16 @@ pub(super) struct Resolved {
 }
 
 impl Search {
-    /// Run `f` with `proof_path` and `move_stack` updated when a proof-tree
-    /// sender is configured.
-    ///
-    /// This keeps the recursive `dfpn` call identical regardless of whether
-    /// proof-tree events are being emitted.
+    /// Run `f` with `move_stack` updated so the proof-tree event carries the
+    /// path to the child position.
     fn with_child_path<F, R>(&mut self, mv: Move, f: F) -> R
     where
         F: FnOnce(&mut Self) -> R,
     {
-        if self.proof_tree_sender.is_some() {
-            let uci = crate::notation::move_to_uci(mv);
-            let proof_len = self.proof_path.len();
-            self.proof_path.push('.');
-            self.proof_path.push_str(&uci);
-            self.move_stack.push(mv);
-            let r = f(self);
-            self.move_stack.pop();
-            self.proof_path.truncate(proof_len);
-            r
-        } else {
-            f(self)
-        }
+        self.move_stack.push(mv);
+        let r = f(self);
+        self.move_stack.pop();
+        r
     }
 
     #[allow(clippy::too_many_arguments)]

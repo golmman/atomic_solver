@@ -1,29 +1,36 @@
-//! Background worker that collects `NodeProven` events and maintains the
+//! Background worker that collects `ProofEvent` messages and maintains the
 //! in-memory proof tree.
 //!
-//! Worker-specific tests live in `worker/tests.rs` to keep this file under the
-//! 20 KiB soft module-size limit.
+//! This module is intentionally larger than 10 KiB because the worker state
+//! machine, the public `ProofTreeWorkerHandle`, and the query protocol are
+//! tightly coupled; splitting them would add cross-module boilerplate without
+//! improving readability. Worker-specific tests live in `worker/tests.rs` to
+//! keep this file under the 20 KiB soft module-size limit.
 
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Sender, channel};
+use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender, channel};
+use std::time::Duration;
 
+use atomic_movegen::types::Move;
+
+use crate::notation::moves_to_uci_path;
 use crate::position::Outcome;
-use crate::proof_tree::{NodeProven, ProofNode, ProofTree};
+use crate::proof_event::{NodeProven, ProofEvent};
 
-/// Messages sent to the proof-tree worker.
+use super::{ProofNode, ProofTree};
+
+/// Control messages sent to the proof-tree worker.
 #[derive(Debug)]
-pub enum ProofMessage {
-    Clear,
-    NodeProven(NodeProven),
+enum ProofTreeWorkerMessage {
     GetStats(Sender<ProofResponse>),
     GetTree(Sender<ProofResponse>),
 }
 
 /// Replies from the proof-tree worker.
 #[derive(Debug)]
-pub enum ProofResponse {
+enum ProofResponse {
     Stats(ProofStats),
     Tree(ProofTree),
 }
@@ -37,9 +44,65 @@ pub struct ProofStats {
     pub root_depth: u32,
 }
 
-/// Background worker that collects `NodeProven` events and maintains the
+/// Public handle to a spawned proof-tree worker.
+#[derive(Clone)]
+pub struct ProofTreeWorkerHandle {
+    event_tx: Sender<ProofEvent>,
+    query_tx: Sender<ProofTreeWorkerMessage>,
+}
+
+impl ProofTreeWorkerHandle {
+    /// Spawn a worker thread with the given memory budget and return a handle.
+    pub fn spawn(
+        root_fen: String,
+        pt_size_mb: usize,
+        memory_limited: Arc<AtomicBool>,
+    ) -> (Self, std::thread::JoinHandle<()>) {
+        let (event_tx, event_rx) = channel();
+        let (query_tx, query_rx) = channel();
+        let mut worker = ProofTreeWorker::new(
+            root_fen,
+            pt_size_mb.saturating_mul(1024 * 1024),
+            memory_limited,
+        );
+        let handle = std::thread::spawn(move || worker.run(event_rx, query_rx));
+        (Self { event_tx, query_tx }, handle)
+    }
+
+    /// Return a clone of the event sender for use by the search.
+    #[must_use]
+    pub fn event_sender(&self) -> Sender<ProofEvent> {
+        self.event_tx.clone()
+    }
+
+    /// Request statistics from the worker.
+    pub fn stats(&self) -> ProofStats {
+        let (tx, rx) = channel();
+        self.query_tx
+            .send(ProofTreeWorkerMessage::GetStats(tx))
+            .expect("worker thread alive");
+        match rx.recv().expect("worker response") {
+            ProofResponse::Stats(s) => s,
+            _ => panic!("expected Stats response"),
+        }
+    }
+
+    /// Request a clone of the in-memory proof tree from the worker.
+    pub fn tree(&self) -> ProofTree {
+        let (tx, rx) = channel();
+        self.query_tx
+            .send(ProofTreeWorkerMessage::GetTree(tx))
+            .expect("worker thread alive");
+        match rx.recv().expect("worker response") {
+            ProofResponse::Tree(t) => t,
+            _ => panic!("expected Tree response"),
+        }
+    }
+}
+
+/// Background worker that collects `ProofEvent` messages and maintains the
 /// in-memory proof tree.
-pub struct ProofTreeWorker {
+pub(crate) struct ProofTreeWorker {
     tree: ProofTree,
     pending: HashMap<String, Vec<NodeProven>>,
     budget: usize,
@@ -47,14 +110,12 @@ pub struct ProofTreeWorker {
     // Memory-accounting totals updated incrementally so `estimate_memory` is O(1).
     index_path_bytes: usize,
     pending_path_bytes: usize,
+    pending_move_bytes: usize,
     pending_event_count: usize,
 }
 
 impl ProofTreeWorker {
     /// Build a worker for the given memory budget (in bytes).
-    ///
-    /// This constructor does not spawn a thread, so unit tests can drive the
-    /// worker directly via [`ProofTreeWorker::handle_message`].
     pub(crate) fn new(root_fen: String, budget: usize, memory_limited: Arc<AtomicBool>) -> Self {
         let tree = ProofTree::new(root_fen, Outcome::Draw, 0);
         let index_path_bytes = tree.index.keys().map(|k| k.len()).sum();
@@ -65,53 +126,47 @@ impl ProofTreeWorker {
             memory_limited,
             index_path_bytes,
             pending_path_bytes: 0,
+            pending_move_bytes: 0,
             pending_event_count: 0,
         }
     }
 
-    /// Spawn a worker thread and return the channel sender and join handle.
-    pub fn spawn(
-        root_fen: String,
-        pt_size_mb: usize,
-        memory_limited: Arc<AtomicBool>,
-    ) -> (Sender<ProofMessage>, std::thread::JoinHandle<()>) {
-        let (tx, rx) = channel();
-        let mut worker = Self::new(
-            root_fen,
-            pt_size_mb.saturating_mul(1024 * 1024),
-            memory_limited,
-        );
-        let handle = std::thread::spawn(move || {
-            for msg in rx {
-                let _ = worker.handle_message(msg);
+    /// Run the worker loop, consuming events and handling queries.
+    fn run(&mut self, event_rx: Receiver<ProofEvent>, query_rx: Receiver<ProofTreeWorkerMessage>) {
+        loop {
+            match event_rx.recv_timeout(Duration::from_millis(1)) {
+                Ok(event) => self.handle_event(event),
+                Err(RecvTimeoutError::Timeout) => {
+                    while let Ok(query) = query_rx.try_recv() {
+                        self.handle_query(query);
+                    }
+                }
+                Err(RecvTimeoutError::Disconnected) => {
+                    while let Ok(query) = query_rx.try_recv() {
+                        self.handle_query(query);
+                    }
+                    break;
+                }
             }
-        });
-        (tx, handle)
+        }
     }
 
-    /// Handle a single proof-tree message.
-    ///
-    /// Returns `Some(response)` for `GetStats`/`GetTree`, `None` otherwise.
-    pub(crate) fn handle_message(&mut self, msg: ProofMessage) -> Option<ProofResponse> {
+    /// Handle a single proof-tree event.
+    fn handle_event(&mut self, event: ProofEvent) {
+        match event {
+            ProofEvent::Clear => self.clear(),
+            ProofEvent::NodeProven(np) => self.process_event(np),
+        }
+    }
+
+    /// Handle a single query message, sending a reply if one is produced.
+    fn handle_query(&mut self, msg: ProofTreeWorkerMessage) {
         match msg {
-            ProofMessage::Clear => {
-                self.clear();
-                None
+            ProofTreeWorkerMessage::GetStats(tx) => {
+                let _ = tx.send(ProofResponse::Stats(self.stats()));
             }
-            ProofMessage::NodeProven(event) => {
-                self.process_event(event);
-                None
-            }
-            ProofMessage::GetStats(tx) => {
-                let stats = self.stats();
-                let response = ProofResponse::Stats(stats);
-                let _ = tx.send(response);
-                Some(ProofResponse::Stats(stats))
-            }
-            ProofMessage::GetTree(tx) => {
-                let tree = self.tree.clone();
-                let _ = tx.send(ProofResponse::Tree(tree.clone()));
-                Some(ProofResponse::Tree(tree))
+            ProofTreeWorkerMessage::GetTree(tx) => {
+                let _ = tx.send(ProofResponse::Tree(self.tree.clone()));
             }
         }
     }
@@ -121,6 +176,7 @@ impl ProofTreeWorker {
         self.pending.clear();
         self.index_path_bytes = self.tree.index.keys().map(|k| k.len()).sum();
         self.pending_path_bytes = 0;
+        self.pending_move_bytes = 0;
         self.pending_event_count = 0;
     }
 
@@ -135,7 +191,7 @@ impl ProofTreeWorker {
     }
 
     fn insert_event(&mut self, event: NodeProven) {
-        if event.path == "root" {
+        if event.path.is_empty() {
             self.tree.nodes[0].mv = event.mv;
             self.tree.nodes[0].outcome = event.outcome;
             self.tree.nodes[0].depth = event.depth;
@@ -143,23 +199,21 @@ impl ProofTreeWorker {
             return;
         }
 
-        if let Some((parent_path, _)) = event.path.rsplit_once('.') {
-            if let Some(&parent_id) = self.tree.index.get(parent_path)
-                && self.tree.nodes[parent_id].outcome != Outcome::Draw
-            {
-                self.attach_child(parent_id, event);
-            } else {
-                self.pending_path_bytes += event.path.len();
-                self.pending_event_count += 1;
-                self.pending
-                    .entry(parent_path.to_string())
-                    .or_default()
-                    .push(event);
-            }
+        let parent_path = moves_to_uci_path(&event.path[..event.path.len() - 1]);
+        if let Some(&parent_id) = self.tree.index.get(&parent_path)
+            && self.tree.nodes[parent_id].outcome != Outcome::Draw
+        {
+            let child_path = moves_to_uci_path(&event.path);
+            self.attach_child(parent_id, event, &child_path);
+        } else {
+            self.pending_path_bytes += parent_path.len();
+            self.pending_move_bytes += event.path.capacity() * std::mem::size_of::<Move>();
+            self.pending_event_count += 1;
+            self.pending.entry(parent_path).or_default().push(event);
         }
     }
 
-    fn attach_child(&mut self, parent_id: usize, event: NodeProven) {
+    fn attach_child(&mut self, parent_id: usize, event: NodeProven, full_path: &str) {
         let parent_outcome = self.tree.nodes[parent_id].outcome;
         let valid = match parent_outcome {
             Outcome::Win => event.outcome == Outcome::Loss,
@@ -172,7 +226,7 @@ impl ProofTreeWorker {
 
         if parent_outcome == Outcome::Win {
             if let Some(&existing_id) = self.tree.nodes[parent_id].children.first() {
-                let same_path = self.tree.index.get(&event.path) == Some(&existing_id);
+                let same_path = self.tree.index.get(full_path) == Some(&existing_id);
                 if same_path {
                     if event.depth < self.tree.nodes[existing_id].depth {
                         self.tree.nodes[existing_id].depth = event.depth;
@@ -186,7 +240,7 @@ impl ProofTreeWorker {
             self.tree.nodes[parent_id].children.clear();
         }
 
-        let id = if let Some(&id) = self.tree.index.get(&event.path) {
+        let id = if let Some(&id) = self.tree.index.get(full_path) {
             self.tree.nodes[id].mv = event.mv;
             self.tree.nodes[id].outcome = event.outcome;
             if event.depth < self.tree.nodes[id].depth {
@@ -202,13 +256,12 @@ impl ProofTreeWorker {
                 depth: event.depth,
                 children: Vec::new(),
             });
-            self.index_path_bytes += event.path.len();
-            let path = event.path.clone();
-            self.tree.index.insert(event.path, id);
+            self.index_path_bytes += full_path.len();
+            self.tree.index.insert(full_path.to_string(), id);
             if !self.tree.nodes[parent_id].children.contains(&id) {
                 self.tree.nodes[parent_id].children.push(id);
             }
-            self.process_pending(&path);
+            self.process_pending(full_path);
             return;
         };
 
@@ -216,19 +269,19 @@ impl ProofTreeWorker {
             self.tree.nodes[parent_id].children.push(id);
         }
 
-        self.process_pending(&event.path);
+        self.process_pending(full_path);
     }
 
     fn process_pending(&mut self, path: &str) {
         if let Some(children) = self.pending.remove(path)
             && let Some(&parent_id) = self.tree.index.get(path)
         {
-            for child in &children {
-                self.pending_path_bytes -= child.path.len();
-                self.pending_event_count -= 1;
-            }
+            self.pending_path_bytes -= path.len();
             for child in children {
-                self.attach_child(parent_id, child);
+                self.pending_move_bytes -= child.path.capacity() * std::mem::size_of::<Move>();
+                self.pending_event_count -= 1;
+                let child_path = moves_to_uci_path(&child.path);
+                self.attach_child(parent_id, child, &child_path);
             }
         }
     }
@@ -240,7 +293,8 @@ impl ProofTreeWorker {
             * (std::mem::size_of::<String>() + std::mem::size_of::<usize>() + 8);
         let pending_overhead = self.pending.len() * std::mem::size_of::<Vec<NodeProven>>()
             + self.pending_event_count * std::mem::size_of::<NodeProven>()
-            + self.pending_path_bytes;
+            + self.pending_path_bytes
+            + self.pending_move_bytes;
         let total = nodes_mem + index_overhead + self.index_path_bytes + pending_overhead;
         (total as f64 * 1.5) as usize
     }

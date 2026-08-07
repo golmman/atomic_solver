@@ -43,7 +43,7 @@
 use atomic_movegen::types::Move;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
-use atomic_solver::proof_tree::{ProofMessage, ProofResponse, ProofTreeWorker};
+use atomic_solver::proof_tree::ProofTreeWorkerHandle;
 use atomic_solver::search::dfpn::{ExitReason, Search};
 use std::io::BufRead;
 use std::sync::Arc;
@@ -133,12 +133,12 @@ fn main() {
 
     let stop_flag = Arc::new(AtomicBool::new(false));
     let memory_limited = Arc::new(AtomicBool::new(false));
-    let (proof_tx, proof_handle) = if outcome_only {
+    let (pt_handle, pt_join) = if outcome_only {
         (None, None)
     } else {
-        let (tx, handle) =
-            ProofTreeWorker::spawn(fen.clone(), pt_size, Arc::clone(&memory_limited));
-        (Some(tx), Some(handle))
+        let (handle, join) =
+            ProofTreeWorkerHandle::spawn(fen.clone(), pt_size, Arc::clone(&memory_limited));
+        (Some(handle), Some(join))
     };
 
     let hook: Option<PreExitHook> = if outcome_only {
@@ -159,35 +159,23 @@ fn main() {
             }
         });
 
-        let hook_tx = proof_tx.as_ref().unwrap().clone();
+        let hook_handle = pt_handle.as_ref().unwrap().clone();
         Some(Box::new(move |reason, outcome, nodes, _pv: &[Move]| {
             println!("pre_exit: reason={reason} outcome={outcome} nodes={nodes}");
 
-            let (stats_tx, stats_rx) = std::sync::mpsc::channel();
-            if let Err(e) = hook_tx.send(ProofMessage::GetStats(stats_tx)) {
-                eprintln!("failed to request proof-tree stats: {e}");
-                return;
-            }
-            if let Ok(ProofResponse::Stats(stats)) = stats_rx.recv() {
-                println!(
-                    "proof_tree: nodes={} win={} loss={} root_depth={}",
-                    stats.nodes, stats.win_nodes, stats.loss_nodes, stats.root_depth
-                );
-            }
+            let stats = hook_handle.stats();
+            println!(
+                "proof_tree: nodes={} win={} loss={} root_depth={}",
+                stats.nodes, stats.win_nodes, stats.loss_nodes, stats.root_depth
+            );
 
-            let (tree_tx, tree_rx) = std::sync::mpsc::channel();
-            if let Err(e) = hook_tx.send(ProofMessage::GetTree(tree_tx)) {
-                eprintln!("failed to request proof tree: {e}");
-                return;
-            }
-            if let Ok(ProofResponse::Tree(tree)) = tree_rx.recv() {
-                if let Err(e) =
-                    std::fs::File::create(&dump_path).and_then(|mut file| tree.to_bin(&mut file))
-                {
-                    eprintln!("failed to write proof-tree dump to {dump_path}: {e}");
-                } else {
-                    println!("proof_tree_dump: {dump_path}");
-                }
+            let tree = hook_handle.tree();
+            if let Err(e) =
+                std::fs::File::create(&dump_path).and_then(|mut file| tree.to_bin(&mut file))
+            {
+                eprintln!("failed to write proof-tree dump to {dump_path}: {e}");
+            } else {
+                println!("proof_tree_dump: {dump_path}");
             }
         }))
     };
@@ -202,7 +190,7 @@ fn main() {
     } else {
         Some(Arc::clone(&memory_limited))
     });
-    search.set_proof_tree_sender(proof_tx.clone());
+    search.set_proof_event_sender(pt_handle.as_ref().map(|h| h.event_sender()));
 
     let (outcome, pv, timed_out) = {
         let (outcome, pv, _nodes) = search.solve_with_progress(&mut pos, |o, line| {
@@ -231,8 +219,8 @@ fn main() {
     }
 
     drop(search);
-    drop(proof_tx);
-    if let Some(handle) = proof_handle {
-        let _ = handle.join();
+    drop(pt_handle);
+    if let Some(join) = pt_join {
+        let _ = join.join();
     }
 }

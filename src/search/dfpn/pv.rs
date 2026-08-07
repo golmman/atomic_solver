@@ -12,9 +12,8 @@ use std::collections::HashSet;
 
 use atomic_movegen::types::{Move, MoveList};
 
-use crate::notation::move_to_uci;
 use crate::position::{Outcome, Position};
-use crate::proof_tree::{NodeProven, ProofMessage};
+use crate::proof_event::{NodeProven, ProofEvent};
 
 use super::Search;
 
@@ -167,7 +166,7 @@ impl Search {
     }
 
     /// Rebuild the proof tree from the transposition table and emit it to the
-    /// configured proof-tree sender.
+    /// configured proof-event sender.
     ///
     /// During iterative refinement many nodes are resolved from the TT without
     /// re-searching their descendants, so the incremental `NodeProven` events
@@ -182,24 +181,24 @@ impl Search {
         root_outcome: Outcome,
         pv: &[Move],
     ) {
-        if self.proof_tree_sender.is_none() || root_outcome == Outcome::Draw {
+        if self.proof_event_sender.is_none() || root_outcome == Outcome::Draw {
             return;
         }
-        self.clear_proof_tree();
-        let _ = self.emit_proof_subtree(pos, "root", Move::NONE, root_outcome, pv);
+        self.clear_proof_events();
+        let mut path = Vec::new();
+        let _ = self.emit_proof_subtree(pos, &mut path, root_outcome, pv);
     }
 
     fn emit_proof_subtree(
         &mut self,
         pos: &mut Position,
-        path: &str,
-        mv: Move,
+        path: &mut Vec<Move>,
         expected: Outcome,
         pv_tail: &[Move],
     ) -> Option<u32> {
         if let Some(terminal) = pos.outcome() {
             if terminal == expected {
-                self.send_proof_node(path, mv, expected, 0);
+                self.send_proof_node(path, expected, 0);
                 return Some(0);
             }
             return None;
@@ -208,7 +207,7 @@ impl Search {
         let entry = self.tt.probe(pos.hash())?;
         let result = entry.result_for(expected)?;
         let depth = result.depth;
-        self.send_proof_node(path, mv, expected, depth);
+        self.send_proof_node(path, expected, depth);
 
         // A terminal cached result has no children to expand.
         if depth == 0 {
@@ -222,11 +221,11 @@ impl Search {
                 (result.best_move, &[][..])
             };
             if best_move != Move::NONE {
-                let uci = move_to_uci(best_move);
-                let child_path = format!("{path}.{uci}");
+                path.push(best_move);
                 pos.do_move(best_move);
-                let _ = self.emit_proof_subtree(pos, &child_path, best_move, Outcome::Loss, tail);
+                let _ = self.emit_proof_subtree(pos, path, Outcome::Loss, tail);
                 pos.undo_move(best_move);
+                path.pop();
             }
             Some(depth)
         } else {
@@ -239,29 +238,28 @@ impl Search {
             };
             for i in 0..moves.len() {
                 let mv = moves[i];
-                let uci = move_to_uci(mv);
-                let child_path = format!("{path}.{uci}");
                 let child_tail = if pv_head == Some(mv) {
                     pv_rest
                 } else {
                     &[][..]
                 };
+                path.push(mv);
                 pos.do_move(mv);
-                let _ = self.emit_proof_subtree(pos, &child_path, mv, Outcome::Win, child_tail);
+                let _ = self.emit_proof_subtree(pos, path, Outcome::Win, child_tail);
                 pos.undo_move(mv);
+                path.pop();
             }
             Some(depth)
         }
     }
 
-    fn send_proof_node(&self, path: &str, mv: Move, outcome: Outcome, depth: u32) {
-        if let Some(sender) = &self.proof_tree_sender {
-            let _ = sender.send(ProofMessage::NodeProven(NodeProven {
-                path: path.to_string(),
-                mv,
+    fn send_proof_node(&self, path: &[Move], outcome: Outcome, depth: u32) {
+        if let Some(sender) = &self.proof_event_sender {
+            let _ = sender.send(ProofEvent::NodeProven(NodeProven::new(
+                path.to_vec(),
                 outcome,
                 depth,
-            }));
+            )));
         }
     }
 }
@@ -372,68 +370,5 @@ mod tests {
             vec![mv],
             "extract_pv should follow the TT to the terminal"
         );
-    }
-
-    #[test]
-    fn emit_proof_tree_populates_validate_ppv() {
-        use crate::proof_tree::{ProofMessage, ProofResponse, ProofTreeWorker};
-        use crate::zobrist::INF;
-        use std::sync::Arc;
-        use std::sync::atomic::AtomicBool;
-
-        let mut search = Search::new(1);
-        let (tx, handle) = ProofTreeWorker::spawn(
-            "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1".to_string(),
-            64,
-            Arc::new(AtomicBool::new(false)),
-        );
-        search.set_proof_tree_sender(Some(tx.clone()));
-
-        let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
-        let pv = vec![Move::make_move(Square::E1, Square::E8)];
-        let mv = pv[0];
-
-        // Seed the TT so emit_proof_tree can walk to the terminal child.
-        search.tt.store(
-            pos.hash(),
-            mv,
-            0,
-            0,
-            Some(Outcome::Win),
-            0,
-            INF,
-            1,
-            u32::MAX,
-        );
-        pos.do_move(mv);
-        search.tt.store(
-            pos.hash(),
-            Move::NONE,
-            u8::MAX,
-            0,
-            Some(Outcome::Loss),
-            INF,
-            0,
-            0,
-            u32::MAX,
-        );
-        pos.undo_move(mv);
-
-        search.emit_proof_tree(&mut pos, Outcome::Win, &pv);
-
-        let (reply_tx, reply_rx) = std::sync::mpsc::channel();
-        tx.send(ProofMessage::GetTree(reply_tx)).unwrap();
-        let ProofResponse::Tree(tree) = reply_rx.recv().unwrap() else {
-            panic!("expected Tree response");
-        };
-
-        assert!(
-            tree.validate_ppv(&pv),
-            "emitted proof tree should validate the supplied PV"
-        );
-
-        drop(search);
-        drop(tx);
-        handle.join().unwrap();
     }
 }

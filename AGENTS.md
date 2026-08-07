@@ -6,14 +6,17 @@ A pure solver for atomic chess in Rust.
 
 ## Architecture
 
-- `src/lib.rs` re-exports `notation`, `position`, `proof_tree`, `search`, and
-  `zobrist`.
+- `src/lib.rs` re-exports `notation`, `position`, `proof_event`, `proof_tree`,
+  `search`, and `zobrist`.
 - `src/position.rs` wraps `atomic_movegen::board::Board` and tracks the
   `Outcome` (Win/Loss/Draw from the side-to-move perspective), undo state,
   and Zobrist hashing.
+- `src/proof_event.rs` defines the neutral `ProofEvent` protocol (`Clear` and
+  `NodeProven`) that decouples the solver from the proof-tree implementation.
+  `NodeProven` carries a `Vec<Move>` path, the proven `Outcome`, and a depth.
 - `src/search/dfpn/` implements the sequential DF-PN+ solver with iterative
   bounded refinement, history/killer heuristics, and a 5-second default
-  timeout. `dfpn` emits `NodeProven` events for every node it proves or
+  timeout. `dfpn` emits `ProofEvent` nodes for every node it proves or
   disproves; the returned PV is an informational best-effort line from the
   transposition table and is not guaranteed to be a valid proof. Proof
   generation is the responsibility of the proof-tree layer.
@@ -23,13 +26,16 @@ A pure solver for atomic chess in Rust.
 - `src/search/ordering.rs` provides the `MoveScorer` trait and the
   `StaticAtomicScorer`.
 - `src/proof_tree/mod.rs` provides a `Move`-based in-memory proof tree and a
-  background worker that collects `NodeProven` events from the search,
-  maintains the tree, enforces a memory budget, and serializes the full proven
-  subtree to a compact binary adjacency dump (`src/proof_tree/binary.rs`).
-  External tools can import the binary dump into PostgreSQL.
+  background worker that consumes `ProofEvent` messages, maintains the tree,
+  enforces a memory budget, and serializes the full proven subtree to a
+  compact binary adjacency dump (`src/proof_tree/binary.rs`). The worker
+  exposes `ProofTreeWorkerHandle` with `event_sender()`, `stats()`, and
+  `tree()` for querying. External tools can import the binary dump into
+  PostgreSQL.
 - `src/zobrist.rs` generates deterministic Zobrist keys for positions,
   including the halfmove clock for transposition-table lookup.
-- `src/notation.rs` provides UCI move helpers.
+- `src/notation.rs` provides UCI move helpers, including `moves_to_uci_path`
+  for converting a `Vec<Move>` path into the tree's string key format.
 - `src/main.rs` is the CLI entry point. It accepts `--fen <FEN>` (default
   standard start position), `--tt-size <MB>` (default 64), `--epsilon <VALUE>`
   (default 0.125), `--timeout <SECONDS>` (default 5), `--first-outcome`
@@ -42,6 +48,14 @@ A pure solver for atomic chess in Rust.
   proof-tree statistics and writes the binary dump before exit.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
+
+## Dependency direction
+
+- `search` depends only on `proof_event`; it does not know about `proof_tree`.
+- `proof_tree` depends on `proof_event` and consumes `ProofEvent` messages.
+- `proof_tree` knows nothing about `search`.
+- A future `ProofSink` trait (stretch goal) can hide the `Sender` from `search`
+  and make unit testing with a `Vec`-collecting sink trivial.
 
 ## Examples
 

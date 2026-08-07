@@ -23,7 +23,7 @@ use std::time::{Duration, Instant};
 use atomic_movegen::types::Move;
 
 use crate::position::{Outcome, Position};
-use crate::proof_tree::{NodeProven, ProofMessage};
+use crate::proof_event::{NodeProven, ProofEvent};
 
 use super::ordering::StaticAtomicScorer;
 use super::tt::TranspositionTable;
@@ -107,9 +107,8 @@ pub struct Search {
     chunk_multiplier_den: u64,
     stop_flag: Option<Arc<AtomicBool>>,
     memory_limited: Option<Arc<AtomicBool>>,
-    proof_tree_sender: Option<std::sync::mpsc::Sender<crate::proof_tree::ProofMessage>>,
+    proof_event_sender: Option<std::sync::mpsc::Sender<ProofEvent>>,
     move_stack: Vec<Move>,
-    proof_path: String,
 }
 
 impl Search {
@@ -140,9 +139,8 @@ impl Search {
             chunk_multiplier_den: 1,
             stop_flag: None,
             memory_limited: None,
-            proof_tree_sender: None,
+            proof_event_sender: None,
             move_stack: Vec::new(),
-            proof_path: "root".to_string(),
         }
     }
 
@@ -199,11 +197,8 @@ impl Search {
         self.memory_limited = memory_limited;
     }
 
-    pub fn set_proof_tree_sender(
-        &mut self,
-        sender: Option<std::sync::mpsc::Sender<crate::proof_tree::ProofMessage>>,
-    ) {
-        self.proof_tree_sender = sender;
+    pub fn set_proof_event_sender(&mut self, sender: Option<std::sync::mpsc::Sender<ProofEvent>>) {
+        self.proof_event_sender = sender;
     }
 
     /// Aggregate transposition-table statistics after a search.
@@ -222,9 +217,9 @@ impl Search {
         self.tt.best_child_counts()
     }
 
-    fn clear_proof_tree(&self) {
-        if let Some(sender) = &self.proof_tree_sender {
-            let _ = sender.send(crate::proof_tree::ProofMessage::Clear);
+    fn clear_proof_events(&self) {
+        if let Some(sender) = &self.proof_event_sender {
+            let _ = sender.send(ProofEvent::Clear);
         }
     }
 
@@ -232,14 +227,10 @@ impl Search {
         if outcome == Outcome::Draw {
             return;
         }
-        if let Some(sender) = &self.proof_tree_sender {
-            let mv = self.move_stack.last().copied().unwrap_or(Move::NONE);
-            let _ = sender.send(ProofMessage::NodeProven(NodeProven {
-                path: self.proof_path.clone(),
-                mv,
-                outcome,
-                depth,
-            }));
+        if let Some(sender) = &self.proof_event_sender {
+            let event =
+                ProofEvent::NodeProven(NodeProven::new(self.move_stack.clone(), outcome, depth));
+            let _ = sender.send(event);
         }
     }
 
@@ -309,7 +300,7 @@ impl Search {
         max_depth: u32,
     ) -> (Outcome, Vec<Move>, u64) {
         self.begin_run();
-        self.clear_proof_tree();
+        self.clear_proof_events();
         let (outcome, pv) = self.bounded_search(pos, max_depth);
         (outcome, pv, self.nodes)
     }
@@ -359,7 +350,7 @@ impl Search {
         F: FnMut(Outcome, &[Move]),
     {
         self.begin_run();
-        self.clear_proof_tree();
+        self.clear_proof_events();
 
         // 1. First decisive outcome (work-chunked, unbounded depth).
         let (mut outcome, mut pv) = self.bounded_search(pos, u32::MAX);
@@ -416,7 +407,6 @@ impl Search {
     fn reset_search_state(&mut self) {
         self.path_stack.clear();
         self.move_stack.clear();
-        self.proof_path = "root".to_string();
         self.max_depth_reached = 0;
         if let Some(keys) = &self.prefix_path {
             self.path_stack = keys.clone();

@@ -9,6 +9,20 @@ pub fn move_to_uci(m: Move) -> String {
     m.to_uci()
 }
 
+#[must_use]
+pub fn moves_to_uci_path(moves: &[Move]) -> String {
+    if moves.is_empty() {
+        "root".to_string()
+    } else {
+        let mut s = "root".to_string();
+        for mv in moves {
+            s.push('.');
+            s.push_str(&move_to_uci(*mv));
+        }
+        s
+    }
+}
+
 /// Convert a UCI move string into a legal `Move` for the given position.
 ///
 /// Promotion piece is expected as the optional fifth character of the UCI
