@@ -17,3 +17,8 @@ Analyze where the code could be improved in such a way that testability is incre
 
 Create at least two separate implementation plans (`docs/plans/testability/plan1.md`, ...), one for each step, or even more if advised.
 
+
+---
+
+debug assertions?
+
