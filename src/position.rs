@@ -53,7 +53,7 @@ impl Outcome {
 }
 
 pub struct Position {
-    pub board: Board,
+    board: Board,
     zobrist: u64,
     undo_stack: Vec<StateInfo>,
 }
@@ -75,6 +75,14 @@ impl Position {
         })
     }
 
+    /// Read-only access to the underlying `Board`.
+    ///
+    /// Callers should prefer `Position` methods for state changes; this
+    /// accessor is provided for `MoveScorer` implementations and diagnostics.
+    pub fn board(&self) -> &Board {
+        &self.board
+    }
+
     pub fn do_move(&mut self, m: Move) {
         let mut state = StateInfo::new();
         self.board.do_move(m, &mut state);
@@ -92,13 +100,42 @@ impl Position {
         self.zobrist = self.board.hash() ^ zobrist::rule50_key(self.board.rule50());
     }
 
+    /// Play a move only if it is legal, returning `true` on success.
+    ///
+    /// This is intended for property-based and fuzz tests where blindly
+    /// calling `do_move` could panic.
+    #[allow(dead_code)]
+    pub(crate) fn try_do_move(&mut self, m: Move) -> bool {
+        let mut moves = MoveList::new();
+        self.legal_moves(&mut moves);
+        for i in 0..moves.len() {
+            if moves[i] == m {
+                self.do_move(m);
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn legal_moves(&self, moves: &mut MoveList) {
         generate_legal(&self.board, moves);
+    }
+
+    /// Populate `state` with the board state needed by `generate_legal_with_state`.
+    pub fn populate_state(&self, state: &mut StateInfo) {
+        self.board.populate_state(state);
     }
 
     pub fn legal_moves_with_state(&self, moves: &mut MoveList, state: &mut StateInfo) {
         self.board.populate_state(state);
         generate_legal_with_state(&self.board, state, moves);
+    }
+
+    /// Convenience helper that returns all legal moves in a `Vec`.
+    pub fn legal_moves_vec(&self) -> Vec<Move> {
+        let mut moves = MoveList::new();
+        self.legal_moves(&mut moves);
+        moves.as_slice().to_vec()
     }
 
     pub fn side_to_move(&self) -> Color {
@@ -249,5 +286,32 @@ mod tests {
         let pos1 = Position::from_fen("4k3/8/8/8/8/8/8/4K3 w - - 25 1").unwrap();
         assert_eq!(pos0.repetition_key(), pos1.repetition_key());
         assert_ne!(pos0.hash(), pos1.hash());
+    }
+
+    #[test]
+    fn try_do_move_accepts_legal_and_rejects_illegal() {
+        let mut pos =
+            Position::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
+        let legal = atomic_movegen::types::Move::make_move(
+            atomic_movegen::types::Square::E2,
+            atomic_movegen::types::Square::E4,
+        );
+        let illegal = atomic_movegen::types::Move::make_move(
+            atomic_movegen::types::Square::E2,
+            atomic_movegen::types::Square::E5,
+        );
+
+        assert!(
+            pos.try_do_move(legal),
+            "e2e4 should be legal from the start position"
+        );
+        assert_eq!(pos.undo_stack.len(), 1);
+
+        assert!(!pos.try_do_move(illegal), "e2e5 should be illegal");
+        assert_eq!(
+            pos.undo_stack.len(),
+            1,
+            "illegal move must not change state"
+        );
     }
 }

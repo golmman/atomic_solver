@@ -18,62 +18,79 @@ use crate::proof_tree::{NodeProven, ProofMessage};
 
 use super::Search;
 
+/// Validate that `pv` is a legal sequence from `pos` ending in a terminal
+/// position whose side-to-move outcome equals `expected` after adjusting for
+/// the parity of `pv.len()`.
+///
+/// If `expected_depth` is `Some(d)`, `pv` must contain exactly `d` plies.
+pub(super) fn validate_pv(
+    pv: &[Move],
+    pos: &Position,
+    expected: Outcome,
+    expected_depth: Option<u32>,
+) -> bool {
+    if let Some(d) = expected_depth
+        && pv.len() as u32 != d
+    {
+        return false;
+    }
+
+    let current = match validate_pv_prefix(pv, pos) {
+        Some(c) => c,
+        None => return false,
+    };
+
+    // `Position::outcome()` is the canonical terminal detector, including
+    // commoner extinction, rule50, the two-piece draw, checkmate, and stalemate.
+    let final_outcome = current.outcome();
+
+    // Outcome is from the side-to-move perspective. After `pv.len()` plies,
+    // the side to move is the original player on even lengths and the
+    // opponent on odd lengths, so the terminal outcome must be adjusted.
+    let final_expected = if pv.len().is_multiple_of(2) {
+        expected
+    } else {
+        expected.flip()
+    };
+    final_outcome == Some(final_expected)
+}
+
+fn validate_pv_prefix(pv: &[Move], pos: &Position) -> Option<Position> {
+    let mut current = pos.clone();
+    for &m in pv {
+        let mut moves = MoveList::new();
+        current.legal_moves(&mut moves);
+
+        let mut legal = false;
+        for i in 0..moves.len() {
+            if moves[i] == m {
+                legal = true;
+                break;
+            }
+        }
+        if !legal {
+            return None;
+        }
+        current.do_move(m);
+    }
+    Some(current)
+}
+
 impl Search {
     pub(super) fn extract_pv(&self, pos: &Position) -> Vec<Move> {
         self.extract_pv_internal(pos, None, None).0
     }
 
+    /// Thin wrapper around the module-level `validate_pv` so callers can keep
+    /// using `Search::validate_pv` as before.
     pub fn validate_pv(
+        &self,
         pv: &[Move],
         pos: &Position,
         expected: Outcome,
         expected_depth: Option<u32>,
     ) -> bool {
-        if let Some(d) = expected_depth
-            && pv.len() as u32 != d
-        {
-            return false;
-        }
-
-        let current = match Self::validate_pv_prefix(pv, pos) {
-            Some(c) => c,
-            None => return false,
-        };
-
-        // `Position::outcome()` is the canonical terminal detector, including
-        // commoner extinction, rule50, the two-piece draw, checkmate, and stalemate.
-        let final_outcome = current.outcome();
-
-        // Outcome is from the side-to-move perspective. After `pv.len()` plies,
-        // the side to move is the original player on even lengths and the
-        // opponent on odd lengths, so the terminal outcome must be adjusted.
-        let final_expected = if pv.len().is_multiple_of(2) {
-            expected
-        } else {
-            expected.flip()
-        };
-        final_outcome == Some(final_expected)
-    }
-
-    fn validate_pv_prefix(pv: &[Move], pos: &Position) -> Option<Position> {
-        let mut current = pos.clone();
-        for &m in pv {
-            let mut moves = MoveList::new();
-            current.legal_moves(&mut moves);
-
-            let mut legal = false;
-            for i in 0..moves.len() {
-                if moves[i] == m {
-                    legal = true;
-                    break;
-                }
-            }
-            if !legal {
-                return None;
-            }
-            current.do_move(m);
-        }
-        Some(current)
+        validate_pv(pv, pos, expected, expected_depth)
     }
 
     fn extract_pv_internal(
@@ -251,7 +268,7 @@ impl Search {
 
 #[cfg(test)]
 mod tests {
-    use super::Search;
+    use super::*;
     use crate::position::{Outcome, Position};
     use atomic_movegen::types::{Move, Square};
 
@@ -259,26 +276,26 @@ mod tests {
     fn validate_pv_accepts_valid_win() {
         let pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
         let pv = vec![Move::make_move(Square::E1, Square::E8)];
-        assert!(Search::validate_pv(&pv, &pos, Outcome::Win, Some(1)));
+        assert!(validate_pv(&pv, &pos, Outcome::Win, Some(1)));
         // Depth mismatch should fail.
-        assert!(!Search::validate_pv(&pv, &pos, Outcome::Win, Some(2)));
+        assert!(!validate_pv(&pv, &pos, Outcome::Win, Some(2)));
         // Wrong expected outcome should fail.
-        assert!(!Search::validate_pv(&pv, &pos, Outcome::Loss, Some(1)));
+        assert!(!validate_pv(&pv, &pos, Outcome::Loss, Some(1)));
     }
 
     #[test]
     fn validate_pv_rejects_illegal_move() {
         let pos = Position::from_fen("4k3/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
         let pv = vec![Move::make_move(Square::E1, Square::E8)];
-        assert!(!Search::validate_pv(&pv, &pos, Outcome::Win, None));
+        assert!(!validate_pv(&pv, &pos, Outcome::Win, None));
     }
 
     #[test]
     fn validate_pv_rejects_wrong_terminal_outcome() {
         let pos = Position::from_fen("4k3/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
         let pv = vec![];
-        assert!(Search::validate_pv(&pv, &pos, Outcome::Draw, None));
-        assert!(!Search::validate_pv(&pv, &pos, Outcome::Win, None));
+        assert!(validate_pv(&pv, &pos, Outcome::Draw, None));
+        assert!(!validate_pv(&pv, &pos, Outcome::Win, None));
     }
 
     #[test]
@@ -310,7 +327,7 @@ mod tests {
             replay.do_move(mv);
             pv.push(mv);
         }
-        assert!(Search::validate_pv(&pv, &pos, Outcome::Win, None));
+        assert!(validate_pv(&pv, &pos, Outcome::Win, None));
     }
 
     #[test]

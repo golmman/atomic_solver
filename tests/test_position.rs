@@ -66,7 +66,7 @@ fn incremental_hash_matches_full_hash_in_random_game() {
         played.push(m);
         assert_eq!(
             pos.hash(),
-            zobrist::hash(&pos.board, pos.board.rule50()),
+            zobrist::hash(pos.board(), pos.board().rule50()),
             "incremental Position hash must equal full zobrist hash after do_move"
         );
     }
@@ -75,7 +75,7 @@ fn incremental_hash_matches_full_hash_in_random_game() {
         pos.undo_move(m);
         assert_eq!(
             pos.hash(),
-            zobrist::hash(&pos.board, pos.board.rule50()),
+            zobrist::hash(pos.board(), pos.board().rule50()),
             "incremental Position hash must equal full zobrist hash after undo_move"
         );
     }

@@ -3,6 +3,77 @@ use crate::position::Outcome;
 use atomic_movegen::types::{Move, Square};
 
 #[test]
+fn with_capacity_rounds_to_power_of_two() {
+    let tt = TranspositionTable::with_capacity(1);
+    assert_eq!(tt.bucket_count(), 1);
+
+    let tt = TranspositionTable::with_capacity(3);
+    assert_eq!(tt.bucket_count(), 4);
+
+    let tt = TranspositionTable::with_capacity(0);
+    assert_eq!(tt.bucket_count(), 1);
+}
+
+#[test]
+fn with_capacity_forces_deterministic_eviction() {
+    // One bucket, two slots: a third distinct key must evict a live slot.
+    let mut tt = TranspositionTable::with_capacity(1);
+
+    let key1 = 1u64;
+    let key2 = 2u64;
+    let key3 = 3u64;
+
+    tt.store(
+        key1,
+        Move::NONE,
+        u8::MAX,
+        0,
+        Some(Outcome::Win),
+        0,
+        0,
+        0,
+        u32::MAX,
+    );
+    tt.store(
+        key2,
+        Move::NONE,
+        u8::MAX,
+        0,
+        Some(Outcome::Loss),
+        0,
+        0,
+        0,
+        u32::MAX,
+    );
+    assert!(tt.probe(key1).is_some());
+    assert!(tt.probe(key2).is_some());
+
+    tt.store(
+        key3,
+        Move::NONE,
+        u8::MAX,
+        0,
+        Some(Outcome::Draw),
+        0,
+        0,
+        0,
+        u32::MAX,
+    );
+    assert!(
+        tt.probe(key3).is_some(),
+        "new entry should be present after eviction"
+    );
+    let remaining = [tt.probe(key1).is_some(), tt.probe(key2).is_some()]
+        .iter()
+        .filter(|&&b| b)
+        .count();
+    assert_eq!(
+        remaining, 1,
+        "exactly one old entry should survive eviction"
+    );
+}
+
+#[test]
 fn empty_table_probe_returns_none() {
     let tt = TranspositionTable::with_mb(1);
     assert!(tt.probe(0x1234).is_none());

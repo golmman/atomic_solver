@@ -7,6 +7,9 @@ use std::io::BufRead;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+mod cli;
+use cli::{CliOptions, ParseResult, parse_args};
+
 /// Command-line solver for atomic chess.
 ///
 /// Usage:
@@ -97,121 +100,29 @@ type PreExitHook = Box<dyn FnOnce(ExitReason, Outcome, u64, &[Move]) + Send>;
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let program = args.first().map(String::as_str).unwrap_or("atomic_solver");
-    let mut fen = Position::STARTPOS_FEN.to_string();
-    let mut tt_size: usize = 64;
-    let mut epsilon = 0.125;
-    let mut timeout: u64 = 5;
-    let mut first_outcome_only = false;
-    let mut outcome_only = false;
-    let mut pt_size: usize = 256;
-    let mut dump_path = "proof_tree.bin".to_string();
-    let mut i = 1;
-    while i < args.len() {
-        let arg = args[i].as_str();
-        match arg {
-            "-h" | "--help" => {
-                print_help(program);
-                std::process::exit(0);
-            }
-            "--fen" => {
-                if i + 1 >= args.len() {
-                    eprintln!("error: --fen requires a value");
-                    std::process::exit(1);
-                }
-                fen = args[i + 1].clone();
-                i += 2;
-            }
-            "--tt-size" => {
-                if i + 1 >= args.len() {
-                    eprintln!("error: --tt-size requires a value");
-                    std::process::exit(1);
-                }
-                match args[i + 1].parse::<usize>() {
-                    Ok(v) if v > 0 => tt_size = v,
-                    Ok(v) => {
-                        eprintln!("error: --tt-size must be positive, got {v}");
-                        std::process::exit(1);
-                    }
-                    Err(e) => {
-                        eprintln!("error: invalid --tt-size value: {e}");
-                        std::process::exit(1);
-                    }
-                }
-                i += 2;
-            }
-            "--epsilon" => {
-                if i + 1 >= args.len() {
-                    eprintln!("error: --epsilon requires a value");
-                    std::process::exit(1);
-                }
-                match args[i + 1].parse::<f64>() {
-                    Ok(v) if (0.0..=1.0).contains(&v) => epsilon = v,
-                    Ok(v) => {
-                        eprintln!("error: epsilon must be in [0.0, 1.0], got {v}");
-                        std::process::exit(1);
-                    }
-                    Err(e) => {
-                        eprintln!("error: invalid epsilon value: {e}");
-                        std::process::exit(1);
-                    }
-                }
-                i += 2;
-            }
-            "--timeout" => {
-                if i + 1 >= args.len() {
-                    eprintln!("error: --timeout requires a value");
-                    std::process::exit(1);
-                }
-                match args[i + 1].parse::<u64>() {
-                    Ok(v) if v > 0 => timeout = v,
-                    Ok(v) => {
-                        eprintln!("error: timeout must be positive, got {v}");
-                        std::process::exit(1);
-                    }
-                    Err(e) => {
-                        eprintln!("error: invalid timeout value: {e}");
-                        std::process::exit(1);
-                    }
-                }
-                i += 2;
-            }
-            "--first-outcome" => {
-                first_outcome_only = true;
-                i += 1;
-            }
-            "--outcome-only" => {
-                outcome_only = true;
-                i += 1;
-            }
-            "--pt-size" => {
-                if i + 1 >= args.len() {
-                    eprintln!("error: --pt-size requires a value");
-                    std::process::exit(1);
-                }
-                match args[i + 1].parse::<usize>() {
-                    Ok(v) => pt_size = v,
-                    Err(e) => {
-                        eprintln!("error: invalid --pt-size value: {e}");
-                        std::process::exit(1);
-                    }
-                }
-                i += 2;
-            }
-            "--dump-path" => {
-                if i + 1 >= args.len() {
-                    eprintln!("error: --dump-path requires a value");
-                    std::process::exit(1);
-                }
-                dump_path = args[i + 1].clone();
-                i += 2;
-            }
-            _ => {
-                eprintln!("error: unknown option '{arg}'");
-                eprintln!("Run '{program} --help' for usage.");
-                std::process::exit(1);
-            }
+
+    let opts = match parse_args(&args) {
+        Ok(ParseResult::Help) => {
+            print_help(program);
+            std::process::exit(0);
         }
-    }
+        Ok(ParseResult::Options(o)) => o,
+        Err(e) => {
+            eprintln!("{e}");
+            std::process::exit(1);
+        }
+    };
+
+    let CliOptions {
+        fen,
+        tt_size,
+        epsilon,
+        timeout,
+        first_outcome,
+        outcome_only,
+        pt_size,
+        dump_path,
+    } = opts;
 
     let mut pos = Position::from_fen(&fen).unwrap_or_else(|e| {
         eprintln!("Failed to parse FEN: {e}");
@@ -221,7 +132,7 @@ fn main() {
     let mut search = Search::new(tt_size);
     search.set_timeout(timeout);
     search.set_epsilon(epsilon);
-    search.set_first_outcome_only(first_outcome_only);
+    search.set_first_outcome_only(first_outcome);
 
     let stop_flag = Arc::new(AtomicBool::new(false));
     let memory_limited = Arc::new(AtomicBool::new(false));
@@ -252,7 +163,6 @@ fn main() {
         });
 
         let hook_tx = proof_tx.as_ref().unwrap().clone();
-        let hook_dump_path = dump_path;
         Some(Box::new(move |reason, outcome, nodes, _pv: &[Move]| {
             println!("pre_exit: reason={reason} outcome={outcome} nodes={nodes}");
 
@@ -274,12 +184,12 @@ fn main() {
                 return;
             }
             if let Ok(ProofResponse::Tree(tree)) = tree_rx.recv() {
-                if let Err(e) = std::fs::File::create(&hook_dump_path)
-                    .and_then(|mut file| tree.to_bin(&mut file))
+                if let Err(e) =
+                    std::fs::File::create(&dump_path).and_then(|mut file| tree.to_bin(&mut file))
                 {
-                    eprintln!("failed to write proof-tree dump to {hook_dump_path}: {e}");
+                    eprintln!("failed to write proof-tree dump to {dump_path}: {e}");
                 } else {
-                    println!("proof_tree_dump: {hook_dump_path}");
+                    println!("proof_tree_dump: {dump_path}");
                 }
             }
         }))

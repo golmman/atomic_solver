@@ -8,6 +8,7 @@ use atomic_movegen::types::{Move, MoveList};
 use crate::position::{Outcome, Position};
 
 use super::children::{ChildInfo, ChildSelection};
+use super::selection::select_from_children;
 use super::{INF, Search};
 
 pub(super) struct Resolved {
@@ -140,7 +141,7 @@ impl Search {
                 .as_ref()
                 .filter(|s| s.best_child != u8::MAX)
                 .map(|s| s.best_child);
-            selection = Some(self.select_from_children(
+            selection = Some(select_from_children(
                 &children,
                 is_or_node,
                 previous_best_move,

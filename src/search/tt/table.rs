@@ -18,6 +18,19 @@ impl TranspositionTable {
         self.table.len()
     }
 
+    /// Construct a table with the given number of buckets (rounded up to the
+    /// next power of two). This is `pub(crate)` so unit tests can force
+    /// collisions and eviction deterministically.
+    #[cfg(test)]
+    pub(crate) fn with_capacity(buckets: usize) -> Self {
+        let buckets = buckets.next_power_of_two().max(1);
+        Self {
+            table: vec![[TtEntry::default(); 2]; buckets],
+            mask: buckets - 1,
+            current_generation: 1,
+        }
+    }
+
     pub fn with_mb(mb: usize) -> Self {
         let bytes = mb.saturating_mul(1024 * 1024);
         let entries = (bytes / std::mem::size_of::<TtEntry>()).next_power_of_two();

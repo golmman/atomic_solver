@@ -28,16 +28,16 @@ fn main() {
     pos.legal_moves(&mut moves);
 
     let mut state = StateInfo::new();
-    pos.board.populate_state(&mut state);
+    pos.populate_state(&mut state);
 
-    let nearest = nearest_commoner_map(&pos.board, pos.side_to_move().flip());
+    let nearest = nearest_commoner_map(pos.board(), pos.side_to_move().flip());
 
     let mut scored: Vec<(usize, i32)> = (0..moves.len())
         .map(|i| {
             let m = moves[i];
             (
                 i,
-                StaticAtomicScorer.score_with_map(&pos.board, m, &state, &nearest),
+                StaticAtomicScorer.score_with_map(pos.board(), m, &state, &nearest),
             )
         })
         .collect();

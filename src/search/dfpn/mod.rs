@@ -16,6 +16,7 @@ mod tests;
 pub use crate::zobrist::INF;
 pub use core::outcome_from_pn_dn;
 
+use std::io::Write;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
@@ -107,6 +108,7 @@ pub struct Search {
     proof_tree_sender: Option<std::sync::mpsc::Sender<crate::proof_tree::ProofMessage>>,
     move_stack: Vec<Move>,
     proof_path: String,
+    log_writer: Option<Box<dyn Write + Send>>,
 }
 
 impl Search {
@@ -139,7 +141,17 @@ impl Search {
             proof_tree_sender: None,
             move_stack: Vec::new(),
             proof_path: "root".to_string(),
+            log_writer: None,
         }
+    }
+
+    /// Set an optional writer to capture `log_chunk` output.
+    ///
+    /// If set, `log_chunk` writes to this writer; otherwise it falls back to
+    /// `eprintln!`. This is used by unit tests to inspect chunk progress
+    /// without spawning the binary.
+    pub fn set_log_writer(&mut self, writer: Option<Box<dyn Write + Send>>) {
+        self.log_writer = writer;
     }
 
     pub fn set_first_outcome_only(&mut self, value: bool) {
@@ -230,6 +242,7 @@ impl Search {
         }
     }
 
+    /// The reason the search stopped (timeout, quit, memory limit, or complete).
     pub fn exit_reason(&self) -> ExitReason {
         if self
             .memory_limited
@@ -406,10 +419,12 @@ impl Search {
         }
     }
 
+    /// Total number of nodes (positions) visited by the search.
     pub fn nodes(&self) -> u64 {
         self.nodes
     }
 
+    /// Total number of child position evaluations performed.
     pub fn child_evaluations(&self) -> u64 {
         self.child_evals
     }
@@ -424,7 +439,7 @@ impl Search {
         }
     }
 
-    fn log_chunk(&self, work_done: u64, next_chunk: u64, label: &str) {
+    fn log_chunk(&mut self, work_done: u64, next_chunk: u64, label: &str) {
         let elapsed = self.start.elapsed();
         let secs = elapsed.as_secs_f64();
         let nps = if secs > 0.0 {
@@ -432,10 +447,16 @@ impl Search {
         } else {
             0.0
         };
-        eprintln!(
-            "[{label}] chunk done: work_done={work_done} next_chunk={next_chunk} elapsed={secs:.3}s max_depth={} nodes={} nps={nps:.0}",
+        let msg = format!(
+            "[{label}] chunk done: work_done={work_done} next_chunk={next_chunk} elapsed={secs:.3}s max_depth={} nodes={} nps={nps:.0}\n",
             self.max_depth_reached, self.nodes
         );
+
+        if let Some(writer) = &mut self.log_writer {
+            let _ = writer.write_all(msg.as_bytes());
+        } else {
+            eprint!("{msg}");
+        }
     }
 
     pub(super) fn path_contains(&self, key: u64) -> bool {
