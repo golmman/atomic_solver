@@ -215,3 +215,17 @@ The current “build the proof tree from the TT after the search” approach has
    ppv_valid: true no longer means “the event-built proof tree is complete”; it means “the TT-based reconstruction succeeded.” Those are not the same thing, and failures become harder to debug because they come from the interaction of two separate systems.
 
 In short, the TT-rebuild gives a correct dump for the reported FEN, but it makes the dump fragile and couples the proof tree to the search table, which is exactly what the proof tree was introduced to avoid.
+
+
+
+---
+
+Please investigate if GHI (see `docs/plans/dfpn/research_ghi.md`, `docs/plans/dfpn/ghi_test_theory.md`) is really necessary for this application.
+
+My understanding:
+* "first-player-loss": can be avoided "by not storing any disproofs caused by repetitions"
+* "current-player-loss": "This scenario does not occur in checkmating problems where only one player’s king is under attack"
+  * does that mean this is irrelevant for us?
+
+
+

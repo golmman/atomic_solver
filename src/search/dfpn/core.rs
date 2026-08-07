@@ -6,7 +6,6 @@ use atomic_movegen::board::StateInfo;
 use atomic_movegen::types::{Move, MoveList};
 
 use crate::position::{Outcome, Position};
-use crate::zobrist;
 
 use super::children::{ChildInfo, ChildSelection};
 use super::{INF, Search};
@@ -14,7 +13,6 @@ use super::{INF, Search};
 pub(super) struct Resolved {
     pub outcome: Outcome,
     pub depth: u32,
-    pub repetition_seen: bool,
 }
 
 impl Search {
@@ -47,8 +45,6 @@ impl Search {
         let mut state = StateInfo::new();
         pos.legal_moves_with_state(&mut moves, &mut state);
 
-        let path_length = self.path_stack.len() as u32;
-
         if let Some(outcome) = pos.outcome_from_state(&state, &moves) {
             let (pn, dn) = outcome.pn_dn_for(is_or_node);
             self.tt.store(
@@ -61,9 +57,6 @@ impl Search {
                 dn,
                 0,
                 u32::MAX,
-                self.path_code,
-                path_length,
-                false,
             );
             self.emit_proof_node(outcome, 0);
             return outcome;
@@ -73,43 +66,27 @@ impl Search {
             // A non-terminal leaf is an unsolved frontier, not a proven draw.
             // Store cheap (1, 1) bounds so the next deeper probe can grow past
             // the horizon without re-expanding the entire subtree.
-            self.tt.store(
-                tt_key,
-                Move::NONE,
-                u8::MAX,
-                0,
-                None,
-                1,
-                1,
-                0,
-                0,
-                self.path_code,
-                path_length,
-                false,
-            );
+            self.tt
+                .store(tt_key, Move::NONE, u8::MAX, 0, None, 1, 1, 0, 0);
             return Outcome::Draw;
         }
 
-        if let Some(resolved) = self.try_use_tt(pos, tt_key, max_depth, self.path_code, path_length)
-        {
-            self.emit_proof_node(resolved.outcome, resolved.depth);
-            return resolved.outcome;
-        }
-
+        // Local repetition: this board is already on the current search stack.
         if self.path_contains(rep_key) {
             return Outcome::Draw;
         }
 
+        if let Some(resolved) = self.try_use_tt(pos, tt_key, max_depth) {
+            self.emit_proof_node(resolved.outcome, resolved.depth);
+            return resolved.outcome;
+        }
+
         let previous_summary = self.tt.probe_summary(tt_key);
 
-        let best_from_tt = self
-            .tt
-            .probe_best_move(tt_key, self.path_code)
-            .unwrap_or(Move::NONE);
+        let best_from_tt = self.tt.probe_best_move(tt_key).unwrap_or(Move::NONE);
         self.sort_moves(pos, &mut moves, best_from_tt);
 
         self.path_push(rep_key);
-        let old_path_code = self.path_code;
 
         let mut outcome_to_store: Option<Outcome> = None;
         let mut outcome_to_store_best_move = Move::NONE;
@@ -121,7 +98,6 @@ impl Search {
         let mut pn = INF;
         let mut dn = INF;
         let mut depth = 0;
-        let mut repetition_seen = false;
 
         let mut children: Vec<ChildInfo> = Vec::new();
         let mut selection: Option<ChildSelection> = None;
@@ -164,7 +140,7 @@ impl Search {
                 .as_ref()
                 .filter(|s| s.best_child != u8::MAX)
                 .map(|s| s.best_child);
-            selection = Some(Search::select_from_children(
+            selection = Some(self.select_from_children(
                 &children,
                 is_or_node,
                 previous_best_move,
@@ -175,7 +151,6 @@ impl Search {
             pn = selection.pn;
             dn = selection.dn;
             depth = selection.depth;
-            repetition_seen = selection.repetition_seen;
 
             if let Some(solved) = selection.solved_outcome {
                 // Win: one winning child is enough. Loss and Draw require all
@@ -224,7 +199,6 @@ impl Search {
             };
 
             pos.do_move(mv);
-            self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
             if emit {
                 let uci = crate::notation::move_to_uci(mv);
                 let proof_len = self.proof_path.len();
@@ -251,7 +225,6 @@ impl Search {
                     !is_or_node,
                 );
             }
-            self.path_code ^= zobrist::path_random(mv, self.path_stack.len());
             pos.undo_move(mv);
         }
 
@@ -265,18 +238,33 @@ impl Search {
             .position(|c| c.mv == store_best_move)
             .map_or(u8::MAX, |i| i as u8);
         let work = self.child_evals - child_evals_start;
-        let store_remaining_depth = match outcome_to_store {
-            Some(Outcome::Win | Outcome::Loss) => u32::MAX,
-            _ => max_depth,
-        };
 
-        // Unsolved bounds must be positive; a stored (0, INF) or (INF, 0) with no
-        // outcome looks like a solved terminal and can trick a later search into
-        // treating an unproven node as decided.
-        let (store_pn, store_dn) = if outcome_to_store.is_some() {
+        // First-player-loss shortcut: do not cache a Draw that only holds
+        // because of a repetition in the current path. Store it as an unsolved
+        // (1, 1) entry so the next search re-expands it and sees the local Draw.
+        let suppress_draw =
+            outcome_to_store == Some(Outcome::Draw) && outcome_to_store_repetition_seen;
+        let store_outcome = if suppress_draw {
+            None
+        } else {
+            outcome_to_store
+        };
+        let (store_pn, store_dn) = if suppress_draw {
+            (1, 1)
+        } else if outcome_to_store.is_some() {
             (outcome_to_store_pn, outcome_to_store_dn)
         } else {
             (pn.max(1), dn.max(1))
+        };
+        let store_depth = if outcome_to_store.is_some() {
+            outcome_to_store_depth
+        } else {
+            depth
+        };
+        let store_remaining_depth = if outcome_to_store.is_some() {
+            u32::MAX
+        } else {
+            max_depth
         };
 
         self.tt.store(
@@ -284,22 +272,11 @@ impl Search {
             store_best_move,
             store_best_child,
             work,
-            outcome_to_store,
+            store_outcome,
             store_pn,
             store_dn,
-            if outcome_to_store.is_some() {
-                outcome_to_store_depth
-            } else {
-                depth
-            },
+            store_depth,
             store_remaining_depth,
-            old_path_code,
-            (self.path_stack.len() - 1) as u32,
-            if outcome_to_store.is_some() {
-                outcome_to_store_repetition_seen
-            } else {
-                repetition_seen
-            },
         );
 
         if let Some(outcome) = outcome_to_store
@@ -314,7 +291,6 @@ impl Search {
         self.maybe_age_history();
 
         self.path_pop();
-        self.path_code = old_path_code;
 
         if let Some(outcome) = outcome_to_store {
             self.emit_proof_node(outcome, outcome_to_store_depth);
@@ -322,6 +298,33 @@ impl Search {
         } else {
             Outcome::Draw
         }
+    }
+
+    /// Try to reuse a solved, path-independent result from the transposition table.
+    ///
+    /// A one-ply guard rejects the result if the stored best move would
+    /// immediately repeat a position on the current search stack. This catches
+    /// the most obvious cross-path GHI case without keeping the full simulation
+    /// machinery.
+    pub(super) fn try_use_tt(&self, pos: &Position, key: u64, max_depth: u32) -> Option<Resolved> {
+        let entry = self.tt.probe(key)?;
+        let outcome = entry.outcome?;
+        if entry.remaining_depth < max_depth || entry.depth > max_depth {
+            return None;
+        }
+
+        if entry.best_move != Move::NONE {
+            let mut child = pos.clone();
+            child.do_move(entry.best_move);
+            if self.path_stack.contains(&child.repetition_key()) {
+                return None;
+            }
+        }
+
+        Some(Resolved {
+            outcome,
+            depth: entry.depth,
+        })
     }
 
     pub(super) fn epsilon_ceil(&self, x: u64) -> u64 {

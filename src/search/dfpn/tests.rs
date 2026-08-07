@@ -1,176 +1,67 @@
 //! Cross-module DF-PN unit tests.
-//!
-//! This file collects tests for private `Search` methods that exercise several
-//! submodules together (simulation, cross-path twin lookup, and the public
-//! solver entry points). Splitting it would force those tests into modules that
-//! do not own the code under test, so it is intentionally kept slightly above
-//! the usual 10 KB source-file limit.
 
 use crate::position::{Outcome, Position};
 use crate::search::dfpn::Search;
-use crate::search::dfpn::simulate::{SIM_MAX_DEPTH, simulate};
 use atomic_movegen::types::{Move, Square};
 
 #[test]
-fn simulate_repeated_position_is_draw_only() {
-    let mut search = Search::new(64);
-    let mut pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
+fn local_repetition_in_prefix_returns_draw() {
+    // The same cyclic rook-safe-area position, reached after a reversible
+    // rook/king shuffle. Its own repetition key is supplied as a prefix, so
+    // the solver should short-circuit to a draw.
+    let mut pos = Position::from_fen("8/8/8/8/2k5/8/8/4KR2 w - - 0 1").unwrap();
+    pos.do_move(Move::make_move(Square::F1, Square::G1));
+    pos.do_move(Move::make_move(Square::C4, Square::B4));
+    pos.do_move(Move::make_move(Square::G1, Square::F1));
+    pos.do_move(Move::make_move(Square::B4, Square::C4));
+
     let rep_key = pos.repetition_key();
-    search.path_stack.push(rep_key);
-
-    let mut sim_stack = search.path_stack.clone();
-    let mut sim_nodes = 0;
-
-    assert!(simulate(
-        &search.tt,
-        &mut pos,
-        0,
-        0,
-        Outcome::Draw,
-        Move::NONE,
-        &mut sim_stack,
-        &mut sim_nodes,
-        SIM_MAX_DEPTH,
-    ));
-    assert!(!simulate(
-        &search.tt,
-        &mut pos,
-        0,
-        0,
-        Outcome::Win,
-        Move::NONE,
-        &mut sim_stack,
-        &mut sim_nodes,
-        SIM_MAX_DEPTH,
-    ));
-    assert!(!simulate(
-        &search.tt,
-        &mut pos,
-        0,
-        0,
-        Outcome::Loss,
-        Move::NONE,
-        &mut sim_stack,
-        &mut sim_nodes,
-        SIM_MAX_DEPTH,
-    ));
-}
-
-#[test]
-fn simulate_loss_branch_rejects_stalemate() {
-    let search = Search::new(64);
-    let mut pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
-
-    let mut sim_stack = search.path_stack.clone();
-    let mut sim_nodes = 0;
-
-    assert!(!simulate(
-        &search.tt,
-        &mut pos,
-        0,
-        0,
-        Outcome::Loss,
-        Move::NONE,
-        &mut sim_stack,
-        &mut sim_nodes,
-        SIM_MAX_DEPTH,
-    ));
-}
-
-#[test]
-fn try_use_tt_simulation_uses_current_path() {
     let mut search = Search::new(64);
-    let pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
-    let key = pos.hash();
-    let rep_key = pos.repetition_key();
-    search.path_stack.push(rep_key);
-    search.path_code = 0;
+    search.set_timeout(5);
 
-    // Store a Draw twin for a different path code.
-    let twin_path_code = 0xDEAD_BEEF;
-    search.tt.store_twin(
-        key,
-        twin_path_code,
-        0,
-        Outcome::Draw,
-        Move::NONE,
-        0,
-        u32::MAX,
-        0,
-    );
-
-    let resolved = search.try_use_tt(&pos, key, u32::MAX, 0, 0);
-    assert!(resolved.is_some());
-    assert_eq!(resolved.unwrap().outcome, Outcome::Draw);
+    let (outcome, depth, _nodes) = search.search_depth_with_prefix(&mut pos, u32::MAX, &[rep_key]);
+    assert_eq!(outcome, Outcome::Draw);
+    assert_eq!(depth, 0);
 }
 
 #[test]
-fn try_use_tt_rejects_win_twin_for_repeated_position() {
-    let mut search = Search::new(64);
-    let pos = Position::from_fen("7k/8/8/8/8/8/2q5/K7 w - - 0 1").unwrap();
-    let key = pos.hash();
-    let rep_key = pos.repetition_key();
-    search.path_stack.push(rep_key);
-    search.path_code = 0;
-
-    // Store a Win twin for a different path code. The current search prefix
-    // already contains this position, so the real outcome is Draw, not Win.
-    let twin_path_code = 0xDEAD_BEEF;
-    search.tt.store_twin(
-        key,
-        twin_path_code,
-        0,
-        Outcome::Win,
-        Move::NONE,
-        0,
-        u32::MAX,
-        0,
-    );
-
-    assert!(search.try_use_tt(&pos, key, u32::MAX, 0, 0).is_none());
-}
-
-#[test]
-fn try_use_tt_accepts_cross_path_win_twin() {
-    let mut search = Search::new(64);
+fn try_use_tt_rejects_win_when_best_move_repeats() {
+    // Store a win for a position whose winning move leads to a board already
+    // on the search path. The one-ply repetition guard in try_use_tt should
+    // reject the cached result.
     let pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
     let key = pos.hash();
-    search.path_code = 0;
+    let win_move = Move::make_move(Square::E1, Square::E8);
 
-    // Store a Win twin from a different path; the best move e1e8 mates.
-    let twin_path_code = 0x0ABC;
-    search.tt.store_twin(
+    let mut child = pos.clone();
+    child.do_move(win_move);
+    let child_rep_key = child.repetition_key();
+
+    let mut search = Search::new(64);
+    search.tt.store(
         key,
-        twin_path_code,
+        win_move,
+        u8::MAX,
         0,
-        Outcome::Win,
-        Move::make_move(Square::E1, Square::E8),
+        Some(Outcome::Win),
+        0,
+        crate::zobrist::INF,
         1,
         u32::MAX,
-        0,
     );
 
-    let resolved = search.try_use_tt(&pos, key, u32::MAX, 0, 0);
-    assert!(resolved.is_some());
-    assert_eq!(resolved.unwrap().outcome, Outcome::Win);
-}
+    // With the child on the path, the cached win is invalid.
+    search.path_stack.push(child_rep_key);
+    assert!(
+        search.try_use_tt(&pos, key, u32::MAX).is_none(),
+        "try_use_tt should reject a win whose best move repeats a board on the path"
+    );
 
-#[test]
-fn try_use_tt_rejects_cross_path_win_twin_without_child_proof() {
-    // A Win twin from another path is only trustworthy if the stored proof
-    // tree can be simulated under the current prefix. Here the twin's best
-    // move leads to a non-terminal position with no matching child twin, so
-    // simulation fails and the twin is rejected.
-    let mut search = Search::new(64);
-    let pos = Position::from_fen("4k3/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
-    let key = pos.hash();
-    search.path_code = 0;
-
-    let twin_path_code = 0x0ABC;
-    let best = Move::make_move(Square::E1, Square::D1);
-    search
-        .tt
-        .store_twin(key, twin_path_code, 0, Outcome::Win, best, 100, u32::MAX, 0);
-
-    assert!(search.try_use_tt(&pos, key, u32::MAX, 0, 0).is_none());
+    // Without the child on the path, the cached win is valid.
+    search.path_stack.clear();
+    let resolved = search
+        .try_use_tt(&pos, key, u32::MAX)
+        .expect("cached win should be accepted when the child is not on the path");
+    assert_eq!(resolved.outcome, Outcome::Win);
+    assert_eq!(resolved.depth, 1);
 }

@@ -16,8 +16,9 @@ A pure solver for atomic chess in Rust.
   default timeout. `dfpn` emits `NodeProven` events for every node it proves
   or disproves; the returned PV is the shortest decisive line found before the
   timeout or a bounded-search failure.
-- `src/search/tt/` holds the transposition table, including path-independent
-  base entries and path-dependent "twin" entries for repetition handling.
+- `src/search/tt/` holds the transposition table with path-independent base
+  entries. Repetition-dependent results are not cached, following the
+  first-player-loss GHI shortcut.
 - `src/search/ordering.rs` provides the `MoveScorer` trait and the
   `StaticAtomicScorer`.
 - `src/proof_tree/mod.rs` provides a `Move`-based in-memory proof tree and a
@@ -25,8 +26,8 @@ A pure solver for atomic chess in Rust.
   maintains the tree, enforces a memory budget, and serializes the full proven
   subtree to a compact binary adjacency dump (`src/proof_tree/binary.rs`).
   External tools can import the binary dump into PostgreSQL.
-- `src/zobrist.rs` generates deterministic Zobrist keys for positions and
-  path-dependent move codes.
+- `src/zobrist.rs` generates deterministic Zobrist keys for positions,
+  including the halfmove clock for transposition-table lookup.
 - `src/notation.rs` provides UCI move helpers.
 - `src/main.rs` is the CLI entry point. It accepts `--fen <FEN>` (default
   standard start position), `--tt-size <MB>` (default 64), `--epsilon <VALUE>`
@@ -61,8 +62,6 @@ The runnable examples are:
   `max_depth` and no iterative-deepening bootstrap.
 - `static_move_scores` — Prints the `StaticAtomicScorer` values for all legal
   moves, sorted from highest to lowest.
-- `twin_stats` — Solves GHI-sensitive positions and reports twin-table
-  insertion, eviction, and peak-live-twin statistics.
 - `verify_ppv` — Verifies that a supplied UCI move list is a Proof Principal
   Variation for a given FEN.
 

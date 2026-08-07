@@ -7,7 +7,6 @@ use atomic_movegen::types::{Move, MoveList};
 use crate::notation::move_to_uci;
 use crate::position::{Outcome, Position};
 use crate::proof_tree::{NodeProven, ProofMessage};
-use crate::zobrist;
 
 use super::Search;
 
@@ -109,11 +108,9 @@ impl Search {
         let mut pv = Vec::new();
         let mut seen = HashSet::new();
         let mut current = pos.clone();
-        let mut path_code = 0u64;
         let mut remaining = expected_depth;
 
         for _ in 0..self.max_ply {
-            let tt_key = current.hash();
             let rep_key = current.repetition_key();
             if seen.contains(&rep_key) {
                 break;
@@ -122,7 +119,7 @@ impl Search {
                 break;
             }
 
-            let entry = match self.tt.probe(tt_key) {
+            let entry = match self.tt.probe(current.hash()) {
                 Some(e) => e,
                 None => break,
             };
@@ -130,7 +127,7 @@ impl Search {
             let node_expected = match expected {
                 Some(e) => e,
                 None => {
-                    if let Some((_, Some(o), _)) = entry.best_result_for_path(path_code) {
+                    if let Some((_, o, _)) = entry.best_result() {
                         expected = Some(o);
                         o
                     } else {
@@ -141,14 +138,8 @@ impl Search {
 
             let node_remaining = if let Some(r) = remaining {
                 r
-            } else if let Some(r) = entry.find_result_for_path(path_code, node_expected) {
+            } else if let Some(r) = entry.result_for(node_expected) {
                 r.depth
-            } else if let Some((_, Some(o), d)) = entry.best_result_for_path(path_code) {
-                if o == node_expected {
-                    d
-                } else {
-                    break;
-                }
             } else {
                 break;
             };
@@ -156,12 +147,10 @@ impl Search {
             // Prefer an entry whose stored depth matches the remaining plies.
             // Fall back to any entry with the expected outcome so extraction
             // still succeeds when the depth-aware entry is missing.
-            let result = if let Some(r) =
-                entry.find_result_for_path_with_depth(path_code, node_expected, node_remaining)
-            {
+            let result = if let Some(r) = entry.result_for_depth(node_expected, node_remaining) {
                 Some(r)
             } else {
-                entry.find_result_for_path(path_code, node_expected)
+                entry.result_for(node_expected)
             };
 
             if let Some(r) = result {
@@ -172,7 +161,6 @@ impl Search {
                 seen.insert(rep_key);
                 pv.push(mv);
                 current.do_move(mv);
-                path_code ^= zobrist::path_random(mv, pv.len());
                 expected = expected.map(Outcome::flip);
                 remaining = Some(r.depth.saturating_sub(1));
             } else {
@@ -204,17 +192,14 @@ impl Search {
             return;
         }
         self.clear_proof_tree();
-        self.emit_proof_subtree(pos, "root", Move::NONE, 0, 0usize, root_outcome, pv);
+        let _ = self.emit_proof_subtree(pos, "root", Move::NONE, root_outcome, pv);
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn emit_proof_subtree(
         &mut self,
         pos: &mut Position,
         path: &str,
         mv: Move,
-        path_code: u64,
-        path_length: usize,
         expected: Outcome,
         pv_tail: &[Move],
     ) -> Option<u32> {
@@ -227,10 +212,11 @@ impl Search {
         }
 
         let entry = self.tt.probe(pos.hash())?;
-        let result = entry.find_result_for_path(path_code, expected)?;
+        let result = entry.result_for(expected)?;
         let depth = result.depth;
         self.send_proof_node(path, mv, expected, depth);
 
+        // A terminal cached result has no children to expand.
         if depth == 0 {
             return Some(0);
         }
@@ -241,29 +227,17 @@ impl Search {
             } else {
                 (result.best_move, &[][..])
             };
-            if best_move == Move::NONE {
-                return None;
+            if best_move != Move::NONE {
+                let uci = move_to_uci(best_move);
+                let child_path = format!("{path}.{uci}");
+                pos.do_move(best_move);
+                let _ = self.emit_proof_subtree(pos, &child_path, best_move, Outcome::Loss, tail);
+                pos.undo_move(best_move);
             }
-            let uci = move_to_uci(best_move);
-            let child_path = format!("{path}.{uci}");
-            let child_path_code = path_code ^ zobrist::path_random(best_move, path_length + 1);
-            pos.do_move(best_move);
-            let child_depth_opt = self.emit_proof_subtree(
-                pos,
-                &child_path,
-                best_move,
-                child_path_code,
-                path_length + 1,
-                Outcome::Loss,
-                tail,
-            );
-            pos.undo_move(best_move);
-            let child_depth = child_depth_opt?;
-            Some(child_depth + 1)
+            Some(depth)
         } else {
             let mut moves = MoveList::new();
             pos.legal_moves(&mut moves);
-            let mut max_child_depth = 0u32;
             let (pv_head, pv_rest) = if let Some((&m, rest)) = pv_tail.split_first() {
                 (Some(m), rest)
             } else {
@@ -273,27 +247,16 @@ impl Search {
                 let mv = moves[i];
                 let uci = move_to_uci(mv);
                 let child_path = format!("{path}.{uci}");
-                let child_path_code = path_code ^ zobrist::path_random(mv, path_length + 1);
                 let child_tail = if pv_head == Some(mv) {
                     pv_rest
                 } else {
                     &[][..]
                 };
                 pos.do_move(mv);
-                if let Some(child_depth) = self.emit_proof_subtree(
-                    pos,
-                    &child_path,
-                    mv,
-                    child_path_code,
-                    path_length + 1,
-                    Outcome::Win,
-                    child_tail,
-                ) {
-                    max_child_depth = max_child_depth.max(child_depth);
-                }
+                let _ = self.emit_proof_subtree(pos, &child_path, mv, Outcome::Win, child_tail);
                 pos.undo_move(mv);
             }
-            Some(max_child_depth + 1)
+            Some(depth)
         }
     }
 
@@ -313,7 +276,6 @@ impl Search {
 mod tests {
     use super::Search;
     use crate::position::{Outcome, Position};
-    use crate::zobrist;
     use atomic_movegen::types::{Move, Square};
 
     #[test]
@@ -356,58 +318,6 @@ mod tests {
             "truncation must not change the outcome"
         );
         assert_eq!(pv.len(), 2, "PV should be truncated to max_ply");
-    }
-
-    #[test]
-    fn extract_pv_follows_path_dependent_twin_entries() {
-        // Solve a short forced-mate position, then re-store every node along the
-        // principal variation as a path-dependent twin. This exercises the
-        // exact 1-indexed path-code arithmetic that `extract_pv` must share with
-        // `dfpn`.
-        let fen = "rnbqkbnr/ppppp2p/5pp1/3Q4/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 3";
-        let mut pos = Position::from_fen(fen).unwrap();
-        let mut search = Search::new(64);
-        search.set_timeout(5);
-
-        let (outcome, pv, _nodes) = search.solve(&mut pos);
-        assert_eq!(outcome, Outcome::Loss, "expected a forced loss for black");
-        assert!(!pv.is_empty(), "expected a non-empty PV");
-
-        // Re-store each node as a twin keyed by the 1-indexed path code.
-        let mut current = Position::from_fen(fen).unwrap();
-        let mut path_code = 0u64;
-        for (i, &mv) in pv.iter().enumerate() {
-            let key = current.hash();
-            let expected = if i % 2 == 0 {
-                Outcome::Loss
-            } else {
-                Outcome::Win
-            };
-            let (pn, dn) = expected.to_pn_dn();
-            let remaining = (pv.len() - i) as u32;
-            search.tt.store(
-                key,
-                mv,
-                u8::MAX,
-                0,
-                Some(expected),
-                pn,
-                dn,
-                remaining,
-                u32::MAX,
-                path_code,
-                i as u32,
-                true,
-            );
-            current.do_move(mv);
-            path_code ^= zobrist::path_random(mv, i + 1);
-        }
-
-        let extracted = search.extract_pv(&Position::from_fen(fen).unwrap());
-        assert_eq!(
-            extracted, pv,
-            "extract_pv must follow twin entries using 1-indexed path codes"
-        );
     }
 
     #[test]

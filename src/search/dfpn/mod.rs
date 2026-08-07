@@ -5,7 +5,6 @@ mod core;
 mod history;
 mod pv;
 mod selection;
-mod simulate;
 
 #[cfg(test)]
 mod tests;
@@ -50,10 +49,6 @@ impl std::fmt::Display for ExitReason {
 }
 
 /// Convert the f64 value `1.0 + epsilon` into an exact reduced `num/den` fraction.
-///
-/// `epsilon` is constrained to `[0.0, 1.0]`, so `v` is in `[1.0, 2.0]` and is a
-/// normal dyadic rational.  The returned numerator and denominator fit in `u64`
-/// and are reduced by their greatest common divisor.
 fn epsilon_fraction(v: f64) -> (u64, u64) {
     let bits = v.to_bits();
     let exponent = ((bits >> 52) & 0x7ff) as i32;
@@ -84,7 +79,6 @@ fn gcd(mut a: u64, mut b: u64) -> u64 {
 pub struct Search {
     tt: TranspositionTable,
     path_stack: Vec<u64>,
-    path_code: u64,
     nodes: u64,
     child_evals: u64,
     start: Instant,
@@ -99,7 +93,7 @@ pub struct Search {
     history_age_counter: u64,
     max_ply: usize,
     max_depth_reached: u32,
-    prefix_path: Option<(Vec<u64>, u64)>,
+    prefix_path: Option<Vec<u64>>,
     linear_chunks: bool,
     chunk_increment: u64,
     chunk_multiplier_num: u64,
@@ -117,7 +111,6 @@ impl Search {
         Self {
             tt: TranspositionTable::with_mb(tt_mb),
             path_stack: Vec::new(),
-            path_code: 0,
             nodes: 0,
             child_evals: 0,
             start: Instant::now(),
@@ -171,14 +164,6 @@ impl Search {
         let g = gcd(num, den);
         self.chunk_multiplier_num = num / g;
         self.chunk_multiplier_den = den / g;
-    }
-
-    pub fn twin_stats(&self) -> (u64, u64) {
-        self.tt.twin_stats()
-    }
-
-    pub fn peak_twins(&self) -> u8 {
-        self.tt.peak_twins()
     }
 
     pub fn set_epsilon(&mut self, epsilon: f64) {
@@ -248,11 +233,6 @@ impl Search {
     }
 
     /// Run a single bounded, work-chunked `dfpn` search for `max_depth` plies.
-    ///
-    /// For finite `max_depth` this stops as soon as the bounded tree is exhausted
-    /// (the search cannot consume its full work budget). For `max_depth =
-    /// u32::MAX` it keeps increasing the work budget until a decisive outcome is
-    /// found, time expires, or the budget saturates.
     fn bounded_search(&mut self, pos: &mut Position, max_depth: u32) -> (Outcome, Vec<Move>) {
         let mut outcome = Outcome::Draw;
         let mut chunk = 500_000u64;
@@ -305,21 +285,18 @@ impl Search {
 
     /// Run a bounded OR-node win search with a pre-populated repetition path.
     ///
-    /// This is used by the `verify_ppv` example to check defender replies while
-    /// preserving the history of the supplied PPV prefix. The repetition keys
-    /// `prefix_keys` are the positions *before* `pos` is pushed onto the path
-    /// stack; `prefix_path_code` is the XOR of `zobrist::path_random(...)` for
-    /// all moves that led to `pos` (including the final move into `pos`), using
-    /// the same 1-indexed depths as `dfpn`.
+    /// The repetition keys `prefix_keys` are the positions *before* `pos` is
+    /// pushed onto the path stack. This is used by the `verify_ppv` example to
+    /// check defender replies while preserving the history of the supplied PPV
+    /// prefix.
     pub fn search_depth_with_prefix(
         &mut self,
         pos: &mut Position,
         max_depth: u32,
         prefix_keys: &[u64],
-        prefix_path_code: u64,
     ) -> (Outcome, u32, u64) {
         let saved_prefix = self.prefix_path.take();
-        self.prefix_path = Some((prefix_keys.to_vec(), prefix_path_code));
+        self.prefix_path = Some(prefix_keys.to_vec());
         self.begin_run();
 
         let (outcome, pv) = self.bounded_search(pos, max_depth);
@@ -402,13 +379,11 @@ impl Search {
         self.start = Instant::now();
         self.deadline = self.start + self.timeout;
         self.path_stack.clear();
-        self.path_code = 0;
         self.move_stack.clear();
         self.proof_path = "root".to_string();
         self.max_depth_reached = 0;
-        if let Some((keys, code)) = &self.prefix_path {
+        if let Some(keys) = &self.prefix_path {
             self.path_stack = keys.clone();
-            self.path_code = *code;
         }
     }
 
@@ -422,13 +397,11 @@ impl Search {
 
     fn reset_search_state(&mut self) {
         self.path_stack.clear();
-        self.path_code = 0;
         self.move_stack.clear();
         self.proof_path = "root".to_string();
         self.max_depth_reached = 0;
-        if let Some((keys, code)) = &self.prefix_path {
+        if let Some(keys) = &self.prefix_path {
             self.path_stack = keys.clone();
-            self.path_code = *code;
         }
     }
 

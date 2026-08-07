@@ -1,4 +1,3 @@
-use atomic_movegen::types::{Move, Square};
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
 
@@ -22,8 +21,8 @@ fn promotion_transposition_outcome_is_consistent() {
     assert!(!pv1.is_empty(), "expected a PV for the win");
 
     // The same transposed position, but with Black to move, is a loss for Black.
-    // The TT populated by the first solve should contain a decisive result for
-    // this board that the second solve can reuse.
+    // The TT populated by the first solve should contain a decisive base result
+    // for this board that the second solve can reuse.
     let mut pos2 = Position::from_fen("QQ2k3/8/8/8/8/8/8/4K3 b - - 0 1").unwrap();
     let (outcome2, pv2, _nodes2) = search.solve(&mut pos2);
     assert_eq!(
@@ -60,6 +59,7 @@ fn reversible_cycle_does_not_claim_win() {
     let mut pos = Position::from_fen("8/8/8/8/2k5/8/8/4KR2 w - - 0 1").unwrap();
 
     // Rf1-g1, Kc4-b4, Rg1-f1, Kb4-c4 returns to the same board.
+    use atomic_movegen::types::{Move, Square};
     let moves = [
         Move::make_move(Square::F1, Square::G1),
         Move::make_move(Square::C4, Square::B4),
@@ -79,12 +79,3 @@ fn reversible_cycle_does_not_claim_win() {
         "repeated board should not be declared a win"
     );
 }
-
-/// A cross-path twin whose winning move depends on a repetition that is only
-/// legal in the twin's original path is difficult to construct for atomic chess.
-/// When such a position is found, this test should be enabled with a concrete FEN
-/// and the solver should not incorrectly reuse a win proven along a different
-/// path.
-#[test]
-#[ignore = "TODO: construct a concrete atomic-chess cross-path repetition-dependent win"]
-fn cross_path_repetition_dependent_win_is_not_reused() {}

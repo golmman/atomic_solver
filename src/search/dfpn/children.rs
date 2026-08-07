@@ -7,7 +7,6 @@ use atomic_movegen::types::{Move, MoveList};
 use crate::notation::move_to_uci;
 use crate::position::{Outcome, Position};
 use crate::proof_tree::{NodeProven, ProofMessage};
-use crate::zobrist;
 
 use super::{INF, Search};
 
@@ -71,6 +70,113 @@ impl Search {
         children
     }
 
+    pub(super) fn evaluate_child(
+        &mut self,
+        pos: &mut Position,
+        mv: Move,
+        max_depth: u32,
+        is_or_node: bool,
+    ) -> ChildInfo {
+        self.child_evals += 1;
+        pos.do_move(mv);
+        let child_key = pos.hash();
+        let child_rep_key = pos.repetition_key();
+        let child_is_or = !is_or_node;
+
+        let info = if let Some(outcome) = pos.outcome() {
+            let (pn, dn) = outcome.pn_dn_for(child_is_or);
+            ChildInfo {
+                mv,
+                pn,
+                dn,
+                outcome: Some(outcome),
+                depth: 0,
+                repetition_seen: false,
+                explored: false,
+            }
+        } else if self.path_contains(child_rep_key) {
+            let (pn, dn) = Outcome::Draw.pn_dn_for(child_is_or);
+            ChildInfo {
+                mv,
+                pn,
+                dn,
+                outcome: Some(Outcome::Draw),
+                depth: 0,
+                repetition_seen: true,
+                explored: false,
+            }
+        } else {
+            let child_max_depth = max_depth.saturating_sub(1);
+            if let Some(resolved) = self.try_use_tt(pos, child_key, child_max_depth) {
+                let (pn, dn) = resolved.outcome.pn_dn_for(child_is_or);
+                ChildInfo {
+                    mv,
+                    pn,
+                    dn,
+                    outcome: Some(resolved.outcome),
+                    depth: resolved.depth,
+                    repetition_seen: false,
+                    explored: false,
+                }
+            } else if let Some(summary) = self.tt.probe_summary(child_key) {
+                // Only reuse unsolved bounds when they are non-degenerate.  A
+                // previous work-bounded search may have stored a candidate
+                // terminal-like bound (pn == 0 or dn == 0) without an outcome,
+                // and propagating such values can trick the parent search into
+                // treating an unproven node as solved.  Fall back to neutral
+                // (1, 1) in those cases.
+                let use_as_unsolved = summary.outcome.is_none()
+                    && summary.pn > 0
+                    && summary.dn > 0
+                    && summary.remaining_depth != u32::MAX
+                    && summary.remaining_depth <= child_max_depth;
+                let (pn, dn) = if use_as_unsolved {
+                    (summary.pn, summary.dn)
+                } else {
+                    (1, 1)
+                };
+                ChildInfo {
+                    mv,
+                    pn,
+                    dn,
+                    outcome: None,
+                    depth: 0,
+                    repetition_seen: false,
+                    explored: false,
+                }
+            } else {
+                ChildInfo {
+                    mv,
+                    pn: 1,
+                    dn: 1,
+                    outcome: None,
+                    depth: 0,
+                    repetition_seen: false,
+                    explored: false,
+                }
+            }
+        };
+
+        if self.proof_tree_sender.is_some()
+            && let Some(outcome) = info.outcome
+            && outcome != Outcome::Draw
+        {
+            let uci = move_to_uci(mv);
+            let path = format!("{}.{}", self.proof_path, uci);
+            if let Some(sender) = &self.proof_tree_sender {
+                let _ = sender.send(ProofMessage::NodeProven(NodeProven {
+                    path,
+                    mv,
+                    outcome,
+                    depth: info.depth,
+                }));
+            }
+        }
+
+        pos.undo_move(mv);
+        info
+    }
+
     /// Compute the parent's proof/disproof numbers and pick the best/second
     /// unsolved child from a cached `ChildInfo` table.
     ///
@@ -78,6 +184,7 @@ impl Search {
     /// transposition table. If the stored child is still valid and still the
     /// most-proving child, it is reused without recomputing the full argmin.
     pub(super) fn select_from_children(
+        &self,
         children: &[ChildInfo],
         is_or_node: bool,
         previous_best_move: Option<Move>,
@@ -117,25 +224,20 @@ impl Search {
             }
         }
 
-        let mut pn;
-        let mut dn;
+        // Compute proof/disproof numbers from all children.
+        let (mut pn, mut dn) = if is_or_node { (INF, 0) } else { (0, INF) };
         if is_or_node {
-            pn = INF;
-            dn = 0;
             for c in children {
                 pn = std::cmp::min(pn, c.pn);
                 dn = std::cmp::min(INF, dn.saturating_add(c.dn));
             }
         } else {
-            pn = 0;
-            dn = INF;
             for c in children {
                 pn = std::cmp::min(INF, pn.saturating_add(c.pn));
                 dn = std::cmp::min(dn, c.dn);
             }
         }
 
-        // Choose the child to expand from the unsolved children only.
         let (best_idx, second_idx) = Self::best_and_second_unsolved(children, is_or_node);
         let best = best_idx.map(|i| &children[i]);
         let second = second_idx.map(|i| &children[i]);
@@ -143,21 +245,19 @@ impl Search {
         let best_child = best.map_or((Move::NONE, INF, INF), |b| (b.mv, b.pn, b.dn));
         let second_child = second.map_or((INF, INF), |s| (s.pn, s.dn));
 
-        let best_move = if let Some((_, _, mv, _, _)) = solved {
-            mv
-        } else {
-            best_idx.map_or(Move::NONE, |i| children[i].mv)
-        };
+        let best_move = solved.as_ref().map_or_else(
+            || best_idx.map_or(Move::NONE, |i| children[i].mv),
+            |(_, _, mv, _, _)| *mv,
+        );
 
-        let depth = solved.map_or(0, |(_, d, _, _, _)| d);
+        let depth = solved.as_ref().map_or(0, |(_, d, _, _, _)| *d);
 
+        // Win and Loss cannot depend on a repetition. Draw may, so use the
+        // selected draw child's flag.
         let repetition_seen = if let Some((outcome, _, _, _, idx)) = solved {
-            match outcome {
-                Outcome::Win | Outcome::Draw => children[idx].repetition_seen,
-                Outcome::Loss => children.iter().any(|c| c.repetition_seen),
-            }
+            matches!(outcome, Outcome::Draw) && children[idx].repetition_seen
         } else {
-            children.iter().any(|c| c.repetition_seen)
+            false
         };
 
         ChildSelection {
@@ -198,7 +298,7 @@ impl Search {
             depth: 0,
             best_move: best.mv,
             solved_outcome: None,
-            repetition_seen: children.iter().any(|c| c.repetition_seen),
+            repetition_seen: false,
         }
     }
 
@@ -232,129 +332,5 @@ impl Search {
             }
         }
         best
-    }
-
-    pub(super) fn evaluate_child(
-        &mut self,
-        pos: &mut Position,
-        mv: Move,
-        max_depth: u32,
-        is_or_node: bool,
-    ) -> ChildInfo {
-        self.child_evals += 1;
-        pos.do_move(mv);
-        let child_key = pos.hash();
-        let child_rep_key = pos.repetition_key();
-        let child_is_or = !is_or_node;
-        let child_path_code = self.path_code ^ zobrist::path_random(mv, self.path_stack.len());
-
-        let info = if let Some(outcome) = pos.outcome() {
-            let (pn, dn) = outcome.pn_dn_for(child_is_or);
-            ChildInfo {
-                mv,
-                pn,
-                dn,
-                outcome: Some(outcome),
-                depth: 0,
-                repetition_seen: false,
-                explored: false,
-            }
-        } else if self.path_stack.contains(&child_rep_key) {
-            let (pn, dn) = Outcome::Draw.pn_dn_for(child_is_or);
-            ChildInfo {
-                mv,
-                pn,
-                dn,
-                outcome: Some(Outcome::Draw),
-                depth: 0,
-                repetition_seen: true,
-                explored: false,
-            }
-        } else {
-            let child_max_depth = max_depth.saturating_sub(1);
-            let child_path_length = self.path_stack.len() as u32;
-            if let Some(resolved) = self.try_use_tt(
-                pos,
-                child_key,
-                child_max_depth,
-                child_path_code,
-                child_path_length,
-            ) {
-                let (pn, dn) = resolved.outcome.pn_dn_for(child_is_or);
-                ChildInfo {
-                    mv,
-                    pn,
-                    dn,
-                    outcome: Some(resolved.outcome),
-                    depth: resolved.depth,
-                    repetition_seen: resolved.repetition_seen,
-                    explored: false,
-                }
-            } else if let Some(summary) = self.tt.probe_summary(child_key) {
-                // Only reuse unsolved bounds when they are non-degenerate.  A
-                // previous work-bounded search may have stored a candidate
-                // terminal-like bound (pn == 0 or dn == 0) without an outcome,
-                // and propagating such values can trick the parent search into
-                // treating an unproven node as solved.  Fall back to neutral
-                // (1, 1) in those cases.
-                //
-                // `remaining_depth == u32::MAX` on an unsolved entry means an
-                // unbounded work cutoff.  With `max_depth == u32::MAX` during the
-                // bootstrap this only applies to the root, which is never
-                // evaluated here; deeper unsolved entries carry
-                // `u32::MAX - ply`, matching `child_max_depth` on reuse.  When
-                // `child_max_depth` is finite (e.g. during iterative
-                // refinement), the `<=` guard rejects over-deep summaries as
-                // intended.
-                let use_as_unsolved = summary.outcome.is_none()
-                    && summary.remaining_depth != u32::MAX
-                    && summary.remaining_depth <= child_max_depth
-                    && summary.pn > 0
-                    && summary.dn > 0;
-                let (pn, dn) = if use_as_unsolved {
-                    (summary.pn, summary.dn)
-                } else {
-                    (1, 1)
-                };
-                ChildInfo {
-                    mv,
-                    pn,
-                    dn,
-                    outcome: None,
-                    depth: 0,
-                    repetition_seen: summary.repetition_seen,
-                    explored: false,
-                }
-            } else {
-                ChildInfo {
-                    mv,
-                    pn: 1,
-                    dn: 1,
-                    outcome: None,
-                    depth: 0,
-                    repetition_seen: false,
-                    explored: false,
-                }
-            }
-        };
-
-        if self.proof_tree_sender.is_some()
-            && let Some(outcome) = info.outcome
-            && outcome != Outcome::Draw
-        {
-            let uci = move_to_uci(mv);
-            let path = format!("{}.{}", self.proof_path, uci);
-            if let Some(sender) = &self.proof_tree_sender {
-                let _ = sender.send(ProofMessage::NodeProven(NodeProven {
-                    path,
-                    mv,
-                    outcome,
-                    depth: info.depth,
-                }));
-            }
-        }
-
-        pos.undo_move(mv);
-        info
     }
 }

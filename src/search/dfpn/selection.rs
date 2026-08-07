@@ -13,10 +13,10 @@ impl Search {
     /// Detect whether the children already determine the parent's outcome.
     ///
     /// The returned `Outcome` is from the side-to-move perspective at the
-    /// parent.  A side-to-move `Win` requires any child that is a `Loss` for
-    /// the player to move at that child; a side-to-move `Loss` requires all
-    /// children to be `Win` for that player.  The best child is chosen with
-    /// the node-type-aware depth rule:
+    /// parent.  A side-to-move `Win` requires any child that is a `Loss` for the
+    /// player to move at that child; a side-to-move `Loss` requires all children
+    /// to be `Win` for that player.  The best child is chosen with the node-type-
+    /// aware depth rule:
     ///
     /// * `Win` (OR or AND): shortest decisive child.
     /// * `Loss` (OR or AND): longest decisive child (most resistance).
@@ -42,8 +42,7 @@ impl Search {
                 }
                 Some(Outcome::Loss) => {
                     // A child Loss means the next player loses, so the parent
-                    // side-to-move can choose it and win.  Pick the shortest
-                    // such win.
+                    // side-to-move can choose it and win.  Pick the shortest such win.
                     if d < win_depth
                         || (d == win_depth
                             && win_child_idx.is_some()
@@ -67,9 +66,9 @@ impl Search {
                     found_draw = true;
                 }
                 Some(Outcome::Win) => {
-                    // A child Win means the next player wins.  If all children
-                    // are Wins, the parent side-to-move loses; pick the one
-                    // that delays the loss longest.
+                    // A child Win means the next player wins.  If all children are
+                    // Wins, the parent side-to-move loses; pick the one that delays
+                    // the loss longest.
                     if d > loss_depth
                         || (d == loss_depth
                             && loss_child_idx.is_some()
@@ -105,7 +104,7 @@ impl Search {
         children: &[ChildInfo],
         solved: Option<(Outcome, u32, Move, bool, usize)>,
     ) -> Option<ChildSelection> {
-        if let Some((Outcome::Win, depth, mv, _, idx)) = solved {
+        if let Some((Outcome::Win, depth, mv, _, _)) = solved {
             return Some(ChildSelection {
                 best_child: (Move::NONE, INF, INF),
                 second_child: (INF, INF),
@@ -115,12 +114,15 @@ impl Search {
                 depth,
                 best_move: mv,
                 solved_outcome: Some(Outcome::Win),
-                repetition_seen: children[idx].repetition_seen,
+                repetition_seen: false,
             });
         }
         if let Some((outcome, depth, mv, all_solved, idx)) = solved
             && all_solved
         {
+            // A Win or Loss is path-independent. A Draw may depend on a
+            // repetition; carry the selected draw child's flag.
+            let repetition_seen = matches!(outcome, Outcome::Draw) && children[idx].repetition_seen;
             return Some(ChildSelection {
                 best_child: (Move::NONE, INF, INF),
                 second_child: (INF, INF),
@@ -130,7 +132,7 @@ impl Search {
                 depth,
                 best_move: mv,
                 solved_outcome: Some(outcome),
-                repetition_seen: children[idx].repetition_seen,
+                repetition_seen,
             });
         }
         None

@@ -15,7 +15,6 @@ use atomic_movegen::types::{Move, MoveList};
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
-use atomic_solver::zobrist;
 
 fn print_help(program: &str) {
     println!("verify a supplied Proof Principal Variation");
@@ -125,8 +124,6 @@ fn main() {
         process::exit(1);
     })];
     let mut supplied_moves: Vec<Move> = Vec::with_capacity(move_args.len());
-    let mut path_codes: Vec<u64> = Vec::with_capacity(move_args.len() + 1);
-    path_codes.push(0);
 
     let n = move_args.len();
     for (i, token) in move_args.iter().enumerate() {
@@ -149,8 +146,6 @@ fn main() {
         next.do_move(m);
         positions.push(next);
         supplied_moves.push(m);
-
-        path_codes.push(path_codes[i] ^ zobrist::path_random(m, i + 1));
     }
 
     let final_outcome = positions[n].outcome().unwrap_or_else(|| {
@@ -217,7 +212,6 @@ fn main() {
                 .iter()
                 .map(|p| p.repetition_key())
                 .collect();
-            let prefix_path_code = path_codes[i] ^ zobrist::path_random(m, i + 1);
 
             let wall_remaining = global_deadline.saturating_duration_since(Instant::now());
             if wall_remaining.is_zero() {
@@ -231,12 +225,8 @@ fn main() {
             }
             search.set_timeout(wall_remaining.as_secs().max(1));
 
-            let (outcome, depth, nodes) = search.search_depth_with_prefix(
-                &mut child,
-                next_remaining as u32,
-                &prefix_keys,
-                prefix_path_code,
-            );
+            let (outcome, depth, nodes) =
+                search.search_depth_with_prefix(&mut child, next_remaining as u32, &prefix_keys);
             total_nodes += nodes;
 
             if outcome != Outcome::Win {
