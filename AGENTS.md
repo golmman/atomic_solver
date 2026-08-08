@@ -139,6 +139,7 @@ refinement when only a decisive outcome is needed.
   - implementation reports can be found via `find . -type f -name 'report*.md'`
   - the final task of an implementation plan is creating the corresponding implementation report
     - the report should include additional tools/examples used, problems encountered, unresolved parts, missing tests, next steps
+  - older plans and reports may not reflect the current state of the application or its goals
 
 ## Conversational Guidelines
 
