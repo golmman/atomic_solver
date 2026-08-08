@@ -17,17 +17,19 @@ pub enum ProofEvent {
 pub struct NodeProven {
     pub path: Vec<Move>,
     pub mv: Move,
+    pub hash: u64,
     pub outcome: Outcome,
     pub depth: u32,
 }
 
 impl NodeProven {
     #[must_use]
-    pub fn new(path: Vec<Move>, outcome: Outcome, depth: u32) -> Self {
+    pub fn new(path: Vec<Move>, hash: u64, outcome: Outcome, depth: u32) -> Self {
         let mv = path.last().copied().unwrap_or(Move::NONE);
         Self {
             path,
             mv,
+            hash,
             outcome,
             depth,
         }

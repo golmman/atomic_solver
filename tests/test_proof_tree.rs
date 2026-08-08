@@ -19,6 +19,7 @@ fn solve_and_get_tree(fen: &str) -> (Outcome, Vec<Move>, atomic_solver::proof_tr
 
     let (outcome, pv, _nodes) = search.solve(&mut pos);
 
+    handle.finalize();
     let tree = handle.tree();
 
     drop(search);

@@ -4,16 +4,14 @@
 //! transposition table's `best_move` chain; it is not guaranteed to be a valid
 //! proof.  Proof generation is the responsibility of the proof-tree layer.
 //!
-//! This module is larger than 10 KB because the `extract_pv`, `validate_pv`,
-//! and proof-tree emission helpers all share the same `Position` and `Move`
-//! types and are kept together for cohesion.
+//! This module is larger than 10 KB because `extract_pv`, `validate_pv`,
+//! and the supporting `Position`/`Move` helpers are kept together for cohesion.
 
 use std::collections::HashSet;
 
 use atomic_movegen::types::{Move, MoveList};
 
 use crate::position::{Outcome, Position};
-use crate::proof_event::{NodeProven, ProofEvent};
 
 use super::Search;
 
@@ -163,104 +161,6 @@ impl Search {
 
         let truncated = pv.len() == self.max_ply && current.outcome().is_none();
         (pv, truncated)
-    }
-
-    /// Rebuild the proof tree from the transposition table and emit it to the
-    /// configured proof-event sender.
-    ///
-    /// During iterative refinement many nodes are resolved from the TT without
-    /// re-searching their descendants, so the incremental `NodeProven` events
-    /// may leave the in-memory proof tree with non-terminal leaves.  This method
-    /// clears the existing tree and re-emits a complete proven subtree by
-    /// walking the TT directly.  The supplied `pv` is used as the principal
-    /// variation so that the returned line is guaranteed to be present in the
-    /// tree; other branches are expanded using the winning reply from the TT.
-    pub(super) fn emit_proof_tree(
-        &mut self,
-        pos: &mut Position,
-        root_outcome: Outcome,
-        pv: &[Move],
-    ) {
-        if self.proof_event_sender.is_none() || root_outcome == Outcome::Draw {
-            return;
-        }
-        self.clear_proof_events();
-        let mut path = Vec::new();
-        let _ = self.emit_proof_subtree(pos, &mut path, root_outcome, pv);
-    }
-
-    fn emit_proof_subtree(
-        &mut self,
-        pos: &mut Position,
-        path: &mut Vec<Move>,
-        expected: Outcome,
-        pv_tail: &[Move],
-    ) -> Option<u32> {
-        if let Some(terminal) = pos.outcome() {
-            if terminal == expected {
-                self.send_proof_node(path, expected, 0);
-                return Some(0);
-            }
-            return None;
-        }
-
-        let entry = self.tt.probe(pos.hash())?;
-        let result = entry.result_for(expected)?;
-        let depth = result.depth;
-        self.send_proof_node(path, expected, depth);
-
-        // A terminal cached result has no children to expand.
-        if depth == 0 {
-            return Some(0);
-        }
-
-        if expected == Outcome::Win {
-            let (best_move, tail) = if let Some((&m, rest)) = pv_tail.split_first() {
-                (m, rest)
-            } else {
-                (result.best_move, &[][..])
-            };
-            if best_move != Move::NONE {
-                path.push(best_move);
-                pos.do_move(best_move);
-                let _ = self.emit_proof_subtree(pos, path, Outcome::Loss, tail);
-                pos.undo_move(best_move);
-                path.pop();
-            }
-            Some(depth)
-        } else {
-            let mut moves = MoveList::new();
-            pos.legal_moves(&mut moves);
-            let (pv_head, pv_rest) = if let Some((&m, rest)) = pv_tail.split_first() {
-                (Some(m), rest)
-            } else {
-                (None, &[][..])
-            };
-            for i in 0..moves.len() {
-                let mv = moves[i];
-                let child_tail = if pv_head == Some(mv) {
-                    pv_rest
-                } else {
-                    &[][..]
-                };
-                path.push(mv);
-                pos.do_move(mv);
-                let _ = self.emit_proof_subtree(pos, path, Outcome::Win, child_tail);
-                pos.undo_move(mv);
-                path.pop();
-            }
-            Some(depth)
-        }
-    }
-
-    fn send_proof_node(&self, path: &[Move], outcome: Outcome, depth: u32) {
-        if let Some(sender) = &self.proof_event_sender {
-            let _ = sender.send(ProofEvent::NodeProven(NodeProven::new(
-                path.to_vec(),
-                outcome,
-                depth,
-            )));
-        }
     }
 }
 

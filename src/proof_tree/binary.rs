@@ -202,6 +202,7 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
         nodes.push(ProofNode {
             parent,
             mv,
+            hash: 0,
             outcome: Outcome::Draw,
             depth: 0,
             children: Vec::new(),

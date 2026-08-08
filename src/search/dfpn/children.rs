@@ -167,7 +167,10 @@ impl Search {
             let mut path = self.move_stack.clone();
             path.push(mv);
             let _ = sender.send(ProofEvent::NodeProven(NodeProven::new(
-                path, outcome, info.depth,
+                path,
+                pos.hash(),
+                outcome,
+                info.depth,
             )));
         }
 

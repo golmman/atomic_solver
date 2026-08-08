@@ -28,6 +28,7 @@ fn worker_handles_out_of_order_events() {
                 Move::make_move(Square::E2, Square::E4),
                 Move::make_move(Square::E7, Square::E5),
             ],
+            0,
             Outcome::Win,
             0,
         )))
@@ -36,6 +37,7 @@ fn worker_handles_out_of_order_events() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![Move::make_move(Square::E2, Square::E4)],
+            0,
             Outcome::Loss,
             1,
         )))
@@ -44,6 +46,7 @@ fn worker_handles_out_of_order_events() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![],
+            0,
             Outcome::Win,
             2,
         )))
@@ -73,6 +76,7 @@ fn worker_replaces_win_child_with_shortest_loss() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![],
+            0,
             Outcome::Win,
             5,
         )))
@@ -81,6 +85,7 @@ fn worker_replaces_win_child_with_shortest_loss() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![Move::make_move(Square::E2, Square::E4)],
+            0,
             Outcome::Loss,
             4,
         )))
@@ -89,6 +94,7 @@ fn worker_replaces_win_child_with_shortest_loss() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![Move::make_move(Square::D2, Square::D4)],
+            0,
             Outcome::Loss,
             2,
         )))
@@ -98,6 +104,7 @@ fn worker_replaces_win_child_with_shortest_loss() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![Move::make_move(Square::D2, Square::D4)],
+            0,
             Outcome::Loss,
             6,
         )))
@@ -124,6 +131,7 @@ fn worker_loss_parent_keeps_all_distinct_win_children() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![],
+            0,
             Outcome::Loss,
             5,
         )))
@@ -132,6 +140,7 @@ fn worker_loss_parent_keeps_all_distinct_win_children() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![Move::make_move(Square::E2, Square::E4)],
+            0,
             Outcome::Win,
             4,
         )))
@@ -140,6 +149,7 @@ fn worker_loss_parent_keeps_all_distinct_win_children() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![Move::make_move(Square::D2, Square::D4)],
+            0,
             Outcome::Win,
             2,
         )))
@@ -161,6 +171,7 @@ fn worker_updates_existing_child_with_shorter_depth() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![],
+            0,
             Outcome::Loss,
             5,
         )))
@@ -169,6 +180,7 @@ fn worker_updates_existing_child_with_shorter_depth() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![Move::make_move(Square::E2, Square::E4)],
+            0,
             Outcome::Win,
             4,
         )))
@@ -177,6 +189,7 @@ fn worker_updates_existing_child_with_shorter_depth() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![Move::make_move(Square::D2, Square::D4)],
+            0,
             Outcome::Win,
             2,
         )))
@@ -190,6 +203,7 @@ fn worker_updates_existing_child_with_shorter_depth() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![Move::make_move(Square::E2, Square::E4)],
+            0,
             Outcome::Win,
             1,
         )))
@@ -212,6 +226,7 @@ fn worker_sets_memory_limited_flag() {
         .event_sender()
         .send(ProofEvent::NodeProven(NodeProven::new(
             vec![],
+            0,
             Outcome::Win,
             0,
         )))
@@ -234,7 +249,7 @@ fn worker_new_does_not_spawn_thread() {
     );
 
     let (tx, rx) = channel();
-    worker.handle_query(ProofTreeWorkerMessage::GetStats(tx));
+    worker.handle_query(ProofTreeWorkerMessage::GetStats(tx), None);
     let stats = match rx.recv().unwrap() {
         ProofResponse::Stats(s) => s,
         _ => panic!("expected Stats response"),
@@ -255,22 +270,25 @@ fn worker_handles_out_of_order_events_directly() {
             Move::make_move(Square::E2, Square::E4),
             Move::make_move(Square::E7, Square::E5),
         ],
+        0,
         Outcome::Win,
         0,
     )));
     worker.handle_event(ProofEvent::NodeProven(NodeProven::new(
         vec![Move::make_move(Square::E2, Square::E4)],
+        0,
         Outcome::Loss,
         1,
     )));
     worker.handle_event(ProofEvent::NodeProven(NodeProven::new(
         vec![],
+        0,
         Outcome::Win,
         2,
     )));
 
     let (tx, rx) = channel();
-    worker.handle_query(ProofTreeWorkerMessage::GetStats(tx));
+    worker.handle_query(ProofTreeWorkerMessage::GetStats(tx), None);
     let stats = match rx.recv().unwrap() {
         ProofResponse::Stats(s) => s,
         _ => panic!("expected Stats response"),
@@ -291,18 +309,20 @@ fn worker_clears_tree_directly() {
 
     worker.handle_event(ProofEvent::NodeProven(NodeProven::new(
         vec![],
+        0,
         Outcome::Win,
         2,
     )));
     worker.handle_event(ProofEvent::NodeProven(NodeProven::new(
         vec![Move::make_move(Square::E2, Square::E4)],
+        0,
         Outcome::Loss,
         1,
     )));
     worker.handle_event(ProofEvent::Clear);
 
     let (tx, rx) = channel();
-    worker.handle_query(ProofTreeWorkerMessage::GetStats(tx));
+    worker.handle_query(ProofTreeWorkerMessage::GetStats(tx), None);
     let stats = match rx.recv().unwrap() {
         ProofResponse::Stats(s) => s,
         _ => panic!("expected Stats response"),
@@ -319,6 +339,7 @@ fn memory_limited_flag_triggers_at_small_budget_directly() {
 
     worker.handle_event(ProofEvent::NodeProven(NodeProven::new(
         vec![],
+        0,
         Outcome::Win,
         0,
     )));
@@ -342,6 +363,7 @@ fn solve_populates_proof_tree_with_nodes() {
     search.set_proof_event_sender(Some(handle.event_sender()));
     let (outcome, pv, _nodes) = search.solve(&mut pos);
 
+    handle.finalize();
     let stats = handle.stats();
     let tree = handle.tree();
     assert_eq!(outcome, Outcome::Win);
@@ -352,6 +374,140 @@ fn solve_populates_proof_tree_with_nodes() {
     assert!(tree.validate_ppv(&pv), "proof tree should validate the PV");
 
     drop(search);
+    drop(handle);
+    join.join().unwrap();
+}
+
+#[test]
+fn finalize_copies_expanded_twin_to_unexpanded_sibling() {
+    let (handle, join) =
+        ProofTreeWorkerHandle::spawn("fen".to_string(), 256, Arc::new(AtomicBool::new(false)));
+
+    // Loss root with two Win children that are the same position (hash 10).
+    // Only the first is expanded; the second should inherit its subtree.
+    handle
+        .event_sender()
+        .send(ProofEvent::NodeProven(NodeProven::new(
+            vec![],
+            0,
+            Outcome::Loss,
+            1,
+        )))
+        .unwrap();
+    handle
+        .event_sender()
+        .send(ProofEvent::NodeProven(NodeProven::new(
+            vec![Move::make_move(Square::E2, Square::E4)],
+            10,
+            Outcome::Win,
+            1,
+        )))
+        .unwrap();
+    handle
+        .event_sender()
+        .send(ProofEvent::NodeProven(NodeProven::new(
+            vec![
+                Move::make_move(Square::E2, Square::E4),
+                Move::make_move(Square::E7, Square::E5),
+            ],
+            20,
+            Outcome::Loss,
+            0,
+        )))
+        .unwrap();
+    handle
+        .event_sender()
+        .send(ProofEvent::NodeProven(NodeProven::new(
+            vec![Move::make_move(Square::D2, Square::D4)],
+            10,
+            Outcome::Win,
+            1,
+        )))
+        .unwrap();
+
+    handle.finalize();
+    let tree = handle.tree();
+    assert_eq!(tree.nodes[0].children.len(), 2);
+    for &c in &tree.nodes[0].children {
+        assert_eq!(tree.nodes[c].children.len(), 1);
+        let leaf = tree.nodes[c].children[0];
+        assert_eq!(tree.nodes[leaf].outcome, Outcome::Loss);
+        assert_eq!(tree.nodes[leaf].depth, 0);
+    }
+
+    drop(handle);
+    join.join().unwrap();
+}
+
+#[test]
+fn finalize_prefers_shorter_consistent_twin() {
+    let (handle, join) =
+        ProofTreeWorkerHandle::spawn("fen".to_string(), 256, Arc::new(AtomicBool::new(false)));
+
+    // Loss root with two Win twins. One has a stale stored depth of 4 with a
+    // terminal child; the other is consistent with depth 1 and a terminal child.
+    handle
+        .event_sender()
+        .send(ProofEvent::NodeProven(NodeProven::new(
+            vec![],
+            0,
+            Outcome::Loss,
+            5,
+        )))
+        .unwrap();
+    handle
+        .event_sender()
+        .send(ProofEvent::NodeProven(NodeProven::new(
+            vec![Move::make_move(Square::E2, Square::E4)],
+            10,
+            Outcome::Win,
+            4,
+        )))
+        .unwrap();
+    handle
+        .event_sender()
+        .send(ProofEvent::NodeProven(NodeProven::new(
+            vec![
+                Move::make_move(Square::E2, Square::E4),
+                Move::make_move(Square::E7, Square::E5),
+            ],
+            20,
+            Outcome::Loss,
+            0,
+        )))
+        .unwrap();
+    handle
+        .event_sender()
+        .send(ProofEvent::NodeProven(NodeProven::new(
+            vec![Move::make_move(Square::D2, Square::D4)],
+            10,
+            Outcome::Win,
+            1,
+        )))
+        .unwrap();
+    handle
+        .event_sender()
+        .send(ProofEvent::NodeProven(NodeProven::new(
+            vec![
+                Move::make_move(Square::D2, Square::D4),
+                Move::make_move(Square::E7, Square::E5),
+            ],
+            20,
+            Outcome::Loss,
+            0,
+        )))
+        .unwrap();
+
+    handle.finalize();
+    let tree = handle.tree();
+    assert_eq!(tree.nodes[0].children.len(), 2);
+    for &c in &tree.nodes[0].children {
+        assert_eq!(tree.nodes[c].children.len(), 1);
+        assert_eq!(tree.nodes[c].depth, 1);
+    }
+    // The stale depth is replaced by the consistent, shorter depth.
+    assert_eq!(tree.nodes[0].depth, 2);
+
     drop(handle);
     join.join().unwrap();
 }

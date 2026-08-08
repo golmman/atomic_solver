@@ -217,19 +217,17 @@ impl Search {
         self.tt.best_child_counts()
     }
 
-    fn clear_proof_events(&self) {
-        if let Some(sender) = &self.proof_event_sender {
-            let _ = sender.send(ProofEvent::Clear);
-        }
-    }
-
-    fn emit_proof_node(&self, outcome: Outcome, depth: u32) {
+    fn emit_proof_node(&self, pos: &Position, outcome: Outcome, depth: u32) {
         if outcome == Outcome::Draw {
             return;
         }
         if let Some(sender) = &self.proof_event_sender {
-            let event =
-                ProofEvent::NodeProven(NodeProven::new(self.move_stack.clone(), outcome, depth));
+            let event = ProofEvent::NodeProven(NodeProven::new(
+                self.move_stack.clone(),
+                pos.hash(),
+                outcome,
+                depth,
+            ));
             let _ = sender.send(event);
         }
     }
@@ -300,7 +298,6 @@ impl Search {
         max_depth: u32,
     ) -> (Outcome, Vec<Move>, u64) {
         self.begin_run();
-        self.clear_proof_events();
         let (outcome, pv) = self.bounded_search(pos, max_depth);
         (outcome, pv, self.nodes)
     }
@@ -350,7 +347,6 @@ impl Search {
         F: FnMut(Outcome, &[Move]),
     {
         self.begin_run();
-        self.clear_proof_events();
 
         // 1. First decisive outcome (work-chunked, unbounded depth).
         let (mut outcome, mut pv) = self.bounded_search(pos, u32::MAX);
@@ -375,10 +371,6 @@ impl Search {
             pv = new_pv;
             n = pv.len() as u32;
             on_progress(outcome, &pv);
-        }
-
-        if outcome != Outcome::Draw {
-            self.emit_proof_tree(pos, outcome, &pv);
         }
 
         (outcome, pv, self.nodes)

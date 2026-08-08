@@ -31,8 +31,8 @@
 //!   `outcome: <win|loss|draw> length: <plies>`. For wins and losses the final
 //!   line is followed by `pv: <UCI moves>`, an informational best-effort line
 //!   from the transposition table. If the timeout is reached after any result,
-//!   `timeout` is printed on its own line. The pre-exit hook writes the
-//!   accumulated proof tree to `proof_tree.bin`.
+//!   `timeout` is printed on its own line. The pre-exit hook finalizes the
+//!   authoritative proof tree and writes it to `proof_tree.bin`.
 //!
 //! Examples:
 //!   atomic_solver --help
@@ -163,6 +163,7 @@ fn main() {
         Some(Box::new(move |reason, outcome, nodes, _pv: &[Move]| {
             println!("pre_exit: reason={reason} outcome={outcome} nodes={nodes}");
 
+            hook_handle.finalize();
             let stats = hook_handle.stats();
             println!(
                 "proof_tree: nodes={} win={} loss={} root_depth={}",
@@ -206,12 +207,14 @@ fn main() {
     };
 
     if timed_out {
-        let msg = match search.exit_reason() {
-            ExitReason::Quit => "quit",
-            ExitReason::MemoryLimit => "memory",
-            _ => "timeout",
+        match search.exit_reason() {
+            ExitReason::Quit => println!("quit"),
+            ExitReason::MemoryLimit => {
+                eprintln!("error: proof-tree memory limit ({pt_size} MB) reached");
+                std::process::exit(1);
+            }
+            _ => println!("timeout"),
         };
-        println!("{msg}");
     }
 
     if let Some(hook) = hook {

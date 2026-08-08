@@ -74,7 +74,7 @@ impl Search {
                 0,
                 u32::MAX,
             );
-            self.emit_proof_node(outcome, 0);
+            self.emit_proof_node(pos, outcome, 0);
             return outcome;
         }
 
@@ -93,7 +93,7 @@ impl Search {
         }
 
         if let Some(resolved) = self.try_use_tt(pos, tt_key, max_depth) {
-            self.emit_proof_node(resolved.outcome, resolved.depth);
+            self.emit_proof_node(pos, resolved.outcome, resolved.depth);
             return resolved.outcome;
         }
 
@@ -293,7 +293,7 @@ impl Search {
         self.path_pop();
 
         if let Some(outcome) = outcome_to_store {
-            self.emit_proof_node(outcome, outcome_to_store_depth);
+            self.emit_proof_node(pos, outcome, outcome_to_store_depth);
             outcome
         } else {
             Outcome::Draw

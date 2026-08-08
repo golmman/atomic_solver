@@ -13,25 +13,30 @@ A pure solver for atomic chess in Rust.
   and Zobrist hashing.
 - `src/proof_event.rs` defines the neutral `ProofEvent` protocol (`Clear` and
   `NodeProven`) that decouples the solver from the proof-tree implementation.
-  `NodeProven` carries a `Vec<Move>` path, the proven `Outcome`, and a depth.
+  `NodeProven` carries a `Vec<Move>` path, the position Zobrist hash, the
+  proven `Outcome`, and a depth.
 - `src/search/dfpn/` implements the sequential DF-PN+ solver with iterative
   bounded refinement, history/killer heuristics, and a 5-second default
   timeout. `dfpn` emits `ProofEvent` nodes for every node it proves or
   disproves; the returned PV is an informational best-effort line from the
-  transposition table and is not guaranteed to be a valid proof. Proof
-  generation is the responsibility of the proof-tree layer.
+  transposition table and is not guaranteed to be a valid proof. The solver
+  never clears proof events; proof-tree finalization is the responsibility of
+  the proof-tree layer.
 - `src/search/tt/` holds the transposition table with path-independent base
   entries. Repetition-dependent results are not cached, following the
   first-player-loss GHI shortcut.
 - `src/search/ordering.rs` provides the `MoveScorer` trait and the
   `StaticAtomicScorer`.
-- `src/proof_tree/mod.rs` provides a `Move`-based in-memory proof tree and a
-  background worker that consumes `ProofEvent` messages, maintains the tree,
-  enforces a memory budget, and serializes the full proven subtree to a
-  compact binary adjacency dump (`src/proof_tree/binary.rs`). The worker
-  exposes `ProofTreeWorkerHandle` with `event_sender()`, `stats()`, and
-  `tree()` for querying. External tools can import the binary dump into
-  PostgreSQL.
+- `src/proof_tree/mod.rs` provides a `Move`- and hash-based in-memory proof
+  tree and a background worker that consumes `ProofEvent` messages, maintains
+  the tree, enforces a memory budget, and serializes the full proven subtree
+  to a compact binary adjacency dump (`src/proof_tree/binary.rs`). Each
+  `ProofNode` carries the Zobrist hash of its position; the worker's
+  `finalize()` pass copies fully expanded canonical subtrees onto unexpanded
+  transpositions, making the tree authoritative without a transposition-table
+  reconstruction step. The worker exposes `ProofTreeWorkerHandle` with
+  `event_sender()`, `stats()`, `tree()`, and `finalize()` for querying.
+  External tools can import the binary dump into PostgreSQL.
 - `src/zobrist.rs` generates deterministic Zobrist keys for positions,
   including the halfmove clock for transposition-table lookup.
 - `src/notation.rs` provides UCI move helpers, including `moves_to_uci_path`
@@ -98,14 +103,18 @@ complexity, prefer them in this order:
    more).
 2. **Informational PV** returned by `Search::solve` as a best-effort line from
    the transposition table. It is not validated as a proof.
-3. **Proof tree dump** (`proof_tree.bin`) that records nodes proven or disproven
-   during the search. Its PPV extraction and validation are handled separately by
+3. **Proof tree dump** (`proof_tree.bin`) produced by the worker's `finalize()`
+   pass. The authoritative in-memory tree carries Zobrist hashes and copies
+   fully expanded canonical subtrees onto unexpanded transpositions before the
+   dump is written. PPV extraction and validation are handled separately by
    the proof-tree layer.
 
 `Search::solve` returns the first decisive line quickly, then uses the
 remaining time budget to iteratively improve the informational PV. Use
 `Search::first_outcome_only` (or the CLI `--first-outcome` flag) to skip
-refinement when only a decisive outcome is needed.
+refinement when only a decisive outcome is needed. The proof tree is never
+cleared automatically and the root FEN is fixed for the lifetime of the
+program.
 
 ## Conventions
 
