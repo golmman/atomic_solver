@@ -10,10 +10,12 @@
 //! bonuses are zero. Pass `--solve` as the first argument to run a short solve
 //! first and see the dynamic bonuses.
 //!
-//! Default position is the `m19` regression FEN.
+//! Default position is the `m19` regression FEN. Use `--name <case>` to inspect
+//! one of the move-order benchmark positions from `tests/fixtures/move_order_positions.txt`.
 //!
 //! Usage:
 //!     cargo run --example move_order_debug
+//!     cargo run --example move_order_debug -- --name m25_white
 //!     cargo run --example move_order_debug -- --solve "<fen>"
 //!     cargo run --example move_order_debug -- "<fen>"
 
@@ -26,6 +28,7 @@ use atomic_solver::search::dfpn::Search;
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut solve_first = false;
+    let mut name: Option<String> = None;
     let mut fen: Option<String> = None;
     let mut i = 0;
     while i < args.len() {
@@ -34,11 +37,15 @@ fn main() {
                 solve_first = true;
                 i += 1;
             }
+            "--name" if i + 1 < args.len() => {
+                name = Some(args[i + 1].clone());
+                i += 2;
+            }
             "--fen" if i + 1 < args.len() => {
                 fen = Some(args[i + 1].clone());
                 i += 2;
             }
-            _ if fen.is_none() => {
+            _ if name.is_none() && fen.is_none() => {
                 fen = Some(args[i].clone());
                 i += 1;
             }
@@ -48,7 +55,14 @@ fn main() {
         }
     }
 
-    let fen = fen.unwrap_or_else(|| common::M19_FEN.to_string());
+    let fen = if let Some(name) = name {
+        common::move_order_case(&name)
+            .unwrap_or_else(|| panic!("unknown benchmark name '{name}'"))
+            .fen
+    } else {
+        fen.unwrap_or_else(|| common::M19_FEN.to_string())
+    };
+
     let pos = if fen == "startpos" {
         Position::new()
     } else {

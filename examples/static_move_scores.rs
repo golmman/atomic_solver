@@ -4,10 +4,12 @@
 //! heuristics. The list is sorted from highest to lowest score, so the move
 //! the solver would try first is at the top.
 //!
-//! Default position is the `m19` regression FEN.
+//! Default position is the `m19` regression FEN. Use `--name <case>` to inspect
+//! one of the move-order benchmark positions.
 //!
 //! Usage:
 //!     cargo run --example `static_move_scores`
+//!     cargo run --example `static_move_scores` -- --name m25_white
 //!     cargo run --example `static_move_scores` -- "<fen>"
 
 mod common;
@@ -19,9 +21,30 @@ use atomic_solver::position::Position;
 use atomic_solver::search::ordering::{StaticAtomicScorer, nearest_commoner_map};
 
 fn main() {
-    let fen = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| common::M19_FEN.to_string());
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let mut fen: Option<String> = None;
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--name" if i + 1 < args.len() => {
+                let name = &args[i + 1];
+                fen = Some(
+                    common::move_order_case(name)
+                        .unwrap_or_else(|| panic!("unknown benchmark name '{name}'"))
+                        .fen,
+                );
+                i += 2;
+            }
+            _ if fen.is_none() => {
+                fen = Some(args[i].clone());
+                i += 1;
+            }
+            _ => {
+                i += 1;
+            }
+        }
+    }
+    let fen = fen.unwrap_or_else(|| common::M19_FEN.to_string());
     let pos = Position::from_fen(&fen).unwrap();
 
     let mut moves = MoveList::new();

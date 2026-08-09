@@ -7,9 +7,64 @@
 
 use atomic_movegen::types::{Move, parse_sq};
 use atomic_solver::notation::{move_to_uci, uci_to_move};
-use atomic_solver::position::Position;
+use atomic_solver::position::{Outcome, Position};
 
 pub const M19_FEN: &str = "4r1k1/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R4R1K w - - 2 19";
+
+/// Fixture containing the move-order benchmark positions (m20 to m29).
+pub const MOVE_ORDER_FIXTURE: &str = include_str!("../tests/fixtures/move_order_positions.txt");
+
+/// A single move-order benchmark entry.
+#[derive(Debug, Clone)]
+pub struct MoveOrderCase {
+    pub name: String,
+    pub fen: String,
+    pub expected: Option<Outcome>,
+    pub note: Option<String>,
+}
+
+/// Load the move-order benchmark suite from the embedded fixture.
+pub fn load_move_order_suite() -> Vec<MoveOrderCase> {
+    parse_move_order_fixture(MOVE_ORDER_FIXTURE)
+}
+
+/// Look up a move-order benchmark position by name.
+pub fn move_order_case(name: &str) -> Option<MoveOrderCase> {
+    load_move_order_suite()
+        .into_iter()
+        .find(|case| case.name == name)
+}
+
+fn parse_move_order_fixture(s: &str) -> Vec<MoveOrderCase> {
+    s.lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .map(|line| {
+            let mut parts = line.splitn(4, ';');
+            let name = parts.next().unwrap_or("").trim().to_string();
+            let fen = parts.next().unwrap_or("").trim().to_string();
+            let expected = parts.next().and_then(|p| {
+                let p = p.trim();
+                if p.is_empty() {
+                    None
+                } else {
+                    p.parse::<Outcome>().ok()
+                }
+            });
+            let note = parts
+                .next()
+                .map(str::trim)
+                .filter(|n| !n.is_empty())
+                .map(String::from);
+            MoveOrderCase {
+                name,
+                fen,
+                expected,
+                note,
+            }
+        })
+        .collect()
+}
 
 /// Build a candidate UCI move from the supplied components, convert it to a
 /// string, and look it up in the legal moves of `pos`.

@@ -12,6 +12,79 @@ use atomic_solver::search::dfpn::Search;
 
 pub const M19_FEN: &str = "4r1k1/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R4R1K w - - 2 19";
 
+/// Fixture containing the move-order benchmark positions (m20 to m29).
+pub const MOVE_ORDER_FIXTURE: &str = include_str!("../fixtures/move_order_positions.txt");
+
+/// A single move-order benchmark entry.
+#[derive(Debug, Clone)]
+pub struct MoveOrderCase {
+    pub name: String,
+    pub fen: String,
+    pub expected: Option<Outcome>,
+    pub note: Option<String>,
+}
+
+/// Load the move-order benchmark suite from the embedded fixture.
+pub fn load_move_order_suite() -> Vec<MoveOrderCase> {
+    parse_move_order_fixture(MOVE_ORDER_FIXTURE)
+}
+
+fn parse_move_order_fixture(s: &str) -> Vec<MoveOrderCase> {
+    s.lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .map(|line| {
+            let mut parts = line.splitn(4, ';');
+            let name = parts.next().unwrap_or("").trim().to_string();
+            let fen = parts.next().unwrap_or("").trim().to_string();
+            let expected = parts.next().and_then(|p| {
+                let p = p.trim();
+                if p.is_empty() {
+                    None
+                } else {
+                    p.parse::<Outcome>().ok()
+                }
+            });
+            let note = parts
+                .next()
+                .map(str::trim)
+                .filter(|n| !n.is_empty())
+                .map(String::from);
+            MoveOrderCase {
+                name,
+                fen,
+                expected,
+                note,
+            }
+        })
+        .collect()
+}
+
+/// Solve `fen` with `secs` timeout and assert that any decisive outcome matches
+/// `expected`. A `Draw` result is allowed (it means the solver timed out), but a
+/// `Draw` returned without exceeding the time budget is treated as a
+/// misclassification and fails the test.
+pub fn assert_solves_or_times_out(fen: &str, expected: Outcome, secs: u64) {
+    let mut pos =
+        Position::from_fen(fen).unwrap_or_else(|e| panic!("failed to parse FEN '{fen}': {e}"));
+    let mut search = Search::new(64);
+    search.set_timeout(secs);
+    let (outcome, _pv, _nodes) = search.solve(&mut pos);
+
+    assert_ne!(
+        (outcome, search.time_exceeded()),
+        (Outcome::Draw, false),
+        "position {fen} returned Draw without timing out; expected {expected:?}"
+    );
+
+    if outcome != Outcome::Draw {
+        assert_eq!(
+            outcome, expected,
+            "expected {expected:?} for {fen}, got {outcome:?}"
+        );
+    }
+}
+
 fn solve_with_options(fen: &str, secs: u64, first_outcome_only: bool) -> (Outcome, Vec<Move>, u64) {
     let mut pos =
         Position::from_fen(fen).unwrap_or_else(|e| panic!("failed to parse FEN '{fen}': {e}"));

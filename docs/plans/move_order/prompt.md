@@ -29,3 +29,12 @@ The following positions are all won for white and are ordered from hardest to ea
 ```
 
 Please create an implementation plan for the benchmark improvements and store it in `docs/plans/move_order/plan1.md`.
+
+---
+
+We improved the benchmark suite (`docs/plans/move_order/report1.md`) and want to implement the ideas from `docs/plans/move_order/ideas.md` step by step.
+
+We only want to keep implementations with measurable improvements though.
+
+Write an implementation plan for the first reasonable batch of ideas.
+

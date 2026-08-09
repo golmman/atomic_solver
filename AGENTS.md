@@ -70,9 +70,10 @@ not itself a runnable example.
 The runnable examples are:
 
 - `benchmark` — Reproducible benchmark harness over a fixed suite of positions.
-  Supports `--runs`, `--timeout`, `--epsilon`, `--first-outcome`, and an
-  optional positional name filter. Prints a table with outcome, nodes, child
-  evaluations, mean/min/max time, and PV length.
+  Supports `--suite default|move-order|all`, `--runs`, `--timeout`, `--epsilon`,
+  `--first-outcome`, and an optional positional name filter. Prints a table with
+  status, outcome, expected outcome, nodes, child evaluations, mean/min/max time,
+  and PV length.
 - `chunk_growth` — Explore work-chunk growth settings and their effect on
   node counts.
 - `find_winning_child` — Enumerates every legal first move, solves the resulting
@@ -81,14 +82,16 @@ The runnable examples are:
 - `inspect_pt` — Dump a binary `proof_tree.bin` to human-readable JSON.
 - `list_legal` — List all legal UCI moves and the terminal outcome for a FEN.
 - `move_order_debug` — Print static, history, killer, and total move-ordering
-  scores for every legal move.
+  scores for every legal move. Use `--name <case>` to inspect a move-order
+  benchmark position.
 - `play_and_solve` — Plays a user-specified move and then solves the resulting
   position. Useful for inspecting a particular line.
 - `replay` — Replay a UCI line from a FEN and solve the resulting position.
 - `solve_depth_limited` — Runs `Search::search_depth` with a fixed
   `max_depth` and no iterative-deepening bootstrap.
 - `static_move_scores` — Prints the `StaticAtomicScorer` values for all legal
-  moves, sorted from highest to lowest.
+  moves, sorted from highest to lowest. Use `--name <case>` to inspect a
+  move-order benchmark position.
 - `twin_stats` — Report transposition-table statistics for GHI-sensitive
   positions.
 - `verify_ppv` — Verifies that a supplied UCI move list is a Proof Principal
