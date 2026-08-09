@@ -1,6 +1,7 @@
 use std::fs;
 
 use atomic_solver::notation::move_to_uci;
+use atomic_solver::position::Outcome;
 use atomic_solver::proof_tree::ProofTree;
 
 fn dump_tree(tree: &ProofTree, node: usize, prefix: &mut Vec<String>, max_ply: usize) {
@@ -14,7 +15,7 @@ fn dump_tree(tree: &ProofTree, node: usize, prefix: &mut Vec<String>, max_ply: u
         println!(
             "leaf ply={} outcome={:?} depth={} path={}",
             prefix.len(),
-            n.outcome,
+            n.outcome.unwrap_or(Outcome::Draw),
             n.depth,
             uci
         );
@@ -37,7 +38,8 @@ fn main() {
     println!("nodes: {}", tree.nodes.len());
     println!(
         "root outcome: {:?} depth: {}",
-        tree.nodes[0].outcome, tree.nodes[0].depth
+        tree.nodes[0].outcome.unwrap_or(Outcome::Draw),
+        tree.nodes[0].depth
     );
     println!("root children:");
     for &c in &tree.nodes[0].children {
@@ -45,7 +47,7 @@ fn main() {
         println!(
             "  {} outcome={:?} depth={} children={}",
             move_to_uci(n.mv),
-            n.outcome,
+            n.outcome.unwrap_or(Outcome::Draw),
             n.depth,
             n.children.len()
         );

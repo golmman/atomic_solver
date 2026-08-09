@@ -49,10 +49,10 @@ fn proof_tree_contains_defender_replies() {
     let (_outcome, _pv, tree) = solve_and_get_tree(fen);
 
     let defender_branching = tree.nodes.iter().any(|n| {
-        n.outcome == Outcome::Loss
+        n.outcome == Some(Outcome::Loss)
             && n.children
                 .iter()
-                .filter(|&&c| tree.nodes[c].outcome == Outcome::Win)
+                .filter(|&&c| tree.nodes[c].outcome == Some(Outcome::Win))
                 .count()
                 > 1
     });

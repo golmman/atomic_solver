@@ -156,3 +156,11 @@ program.
 - Push back if the users ideas or tasks are not sound or need clarification
 - Feel free to ask questions where decisions are needed
   - explain the trade-offs for decision options
+
+## File size justifications
+
+- `src/proof_tree/worker.rs` is larger than the 20 KB guideline because it
+  contains the full proof-tree worker: the threaded handle, event loop,
+  `find_or_create_node` path traversal, dummy-node reconciliation, canonical
+  finalization, and memory accounting. Splitting it further would fragment the
+  state machine and the shared `ProofTreeWorker` fields.

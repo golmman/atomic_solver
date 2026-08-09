@@ -6,6 +6,12 @@
 //! tightly coupled; splitting them would add cross-module boilerplate without
 //! improving readability. Worker-specific tests live in `worker/tests.rs` to
 //! keep this file under the 20 KiB soft module-size limit.
+//!
+//! The worker builds the tree by traversing each event's `Vec<Move>` path from
+//! the root. Missing ancestors are created as dummy nodes with `outcome: None`
+//! and are realized when their own `NodeProven` event arrives. The final
+//! `finalize()` pass removes any remaining dummy subtrees and rebuilds the
+//! canonical proven tree.
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -15,10 +21,10 @@ use std::time::Duration;
 
 use atomic_movegen::types::Move;
 
-use crate::notation::moves_to_uci_path;
 use crate::position::Outcome;
 use crate::proof_event::{NodeProven, ProofEvent};
 
+use super::binary::move_to_bits;
 use super::{ProofNode, ProofTree};
 
 /// Control messages sent to the proof-tree worker.
@@ -112,32 +118,31 @@ impl ProofTreeWorkerHandle {
 /// in-memory proof tree.
 pub(crate) struct ProofTreeWorker {
     tree: ProofTree,
-    pending: HashMap<String, Vec<NodeProven>>,
+    /// Per-node `move -> child id` index used to traverse event paths in O(1)
+    /// per ply without scanning the `children` vector.
+    child_index: Vec<HashMap<u16, usize>>,
+    /// Expanded (terminal or internal) nodes indexed by `(hash, outcome)` for
+    /// the final canonicalization pass.
     expanded_by_hash: HashMap<(u64, Outcome), Vec<usize>>,
+    /// Running sums used by `estimate_memory` to avoid scanning the whole tree
+    /// after every event.
+    children_len: usize,
+    child_index_entries: usize,
     budget: usize,
     memory_limited: Arc<AtomicBool>,
-    // Memory-accounting totals updated incrementally so `estimate_memory` is O(1).
-    index_path_bytes: usize,
-    pending_path_bytes: usize,
-    pending_move_bytes: usize,
-    pending_event_count: usize,
 }
 
 impl ProofTreeWorker {
     /// Build a worker for the given memory budget (in bytes).
     pub(crate) fn new(root_fen: String, budget: usize, memory_limited: Arc<AtomicBool>) -> Self {
-        let tree = ProofTree::new(root_fen, 0, Outcome::Draw, 0);
-        let index_path_bytes = tree.index.keys().map(|k| k.len()).sum();
         Self {
-            tree,
-            pending: HashMap::new(),
+            tree: ProofTree::new(root_fen, 0, None, 0),
+            child_index: vec![HashMap::new()],
             expanded_by_hash: HashMap::new(),
+            children_len: 0,
+            child_index_entries: 0,
             budget,
             memory_limited,
-            index_path_bytes,
-            pending_path_bytes: 0,
-            pending_move_bytes: 0,
-            pending_event_count: 0,
         }
     }
 
@@ -189,180 +194,175 @@ impl ProofTreeWorker {
     }
 
     fn clear(&mut self) {
-        self.tree = ProofTree::new(self.tree.root_fen.clone(), 0, Outcome::Draw, 0);
-        self.pending.clear();
+        self.tree = ProofTree::new(self.tree.root_fen.clone(), 0, None, 0);
+        self.child_index = vec![HashMap::new()];
         self.expanded_by_hash.clear();
-        self.index_path_bytes = self.tree.index.keys().map(|k| k.len()).sum();
-        self.pending_path_bytes = 0;
-        self.pending_move_bytes = 0;
-        self.pending_event_count = 0;
+        self.children_len = 0;
+        self.child_index_entries = 0;
     }
 
     fn process_event(&mut self, event: NodeProven) {
         if self.memory_limited.load(Ordering::Acquire) {
             return;
         }
-        self.insert_event(event);
+
+        let id = self.find_or_create_node(&event.path);
+        let was_dummy = self.tree.nodes[id].outcome.is_none();
+        self.apply_event(id, &event);
+        if was_dummy {
+            self.reconcile_children(id);
+        }
+
+        if !event.path.is_empty() {
+            let parent_path = &event.path[..event.path.len() - 1];
+            let parent_id = self.find_or_create_node(parent_path);
+            if self.tree.nodes[parent_id].outcome.is_some() {
+                self.reconcile_children(parent_id);
+            }
+        }
+
         if self.estimate_memory() > self.budget {
             self.memory_limited.store(true, Ordering::Release);
         }
     }
 
-    fn insert_event(&mut self, event: NodeProven) {
-        if event.path.is_empty() {
-            self.tree.nodes[0].mv = event.mv;
-            self.tree.nodes[0].hash = event.hash;
-            self.tree.nodes[0].outcome = event.outcome;
-            self.tree.nodes[0].depth = event.depth;
-            self.insert_expanded(0);
-            self.process_pending("root");
-            return;
-        }
-
-        let parent_path = moves_to_uci_path(&event.path[..event.path.len() - 1]);
-        if let Some(&parent_id) = self.tree.index.get(&parent_path)
-            && self.tree.nodes[parent_id].outcome != Outcome::Draw
-        {
-            let child_path = moves_to_uci_path(&event.path);
-            self.attach_child(parent_id, event, &child_path);
-        } else {
-            self.pending_path_bytes += parent_path.len();
-            self.pending_move_bytes += event.path.capacity() * std::mem::size_of::<Move>();
-            self.pending_event_count += 1;
-            self.pending.entry(parent_path).or_default().push(event);
-        }
-    }
-
-    fn attach_child(&mut self, parent_id: usize, event: NodeProven, full_path: &str) {
-        let parent_outcome = self.tree.nodes[parent_id].outcome;
-        let valid = match parent_outcome {
-            Outcome::Win => event.outcome == Outcome::Loss,
-            Outcome::Loss => event.outcome == Outcome::Win,
-            Outcome::Draw => false,
-        };
-        if !valid {
-            return;
-        }
-
-        if parent_outcome == Outcome::Win {
-            if let Some(&existing_id) = self.tree.nodes[parent_id].children.first() {
-                let same_path = self.tree.index.get(full_path) == Some(&existing_id);
-                if same_path {
-                    if event.depth < self.tree.nodes[existing_id].depth {
-                        self.tree.nodes[existing_id].depth = event.depth;
-                    }
-                    self.insert_expanded(existing_id);
-                    return;
-                }
-                if event.depth >= self.tree.nodes[existing_id].depth {
-                    return;
-                }
+    /// Locate the node for `path`, creating dummy ancestors as needed.
+    fn find_or_create_node(&mut self, path: &[Move]) -> usize {
+        let mut id = 0;
+        for &mv in path {
+            let key = move_to_bits(mv);
+            if let Some(&child_id) = self.child_index[id].get(&key) {
+                id = child_id;
+                continue;
             }
-            self.tree.nodes[parent_id].children.clear();
-        }
-
-        let id = if let Some(&id) = self.tree.index.get(full_path) {
-            self.tree.nodes[id].mv = event.mv;
-            self.tree.nodes[id].hash = event.hash;
-            self.tree.nodes[id].outcome = event.outcome;
-            if event.depth < self.tree.nodes[id].depth {
-                self.tree.nodes[id].depth = event.depth;
-            }
-            id
-        } else {
-            let id = self.tree.nodes.len();
+            let new_id = self.tree.nodes.len();
             self.tree.nodes.push(ProofNode {
-                parent: Some(parent_id),
-                mv: event.mv,
-                hash: event.hash,
-                outcome: event.outcome,
-                depth: event.depth,
+                parent: Some(id),
+                mv,
+                hash: 0,
+                outcome: None,
+                depth: 0,
                 children: Vec::new(),
             });
-            self.index_path_bytes += full_path.len();
-            self.tree.index.insert(full_path.to_string(), id);
-            if !self.tree.nodes[parent_id].children.contains(&id) {
-                self.tree.nodes[parent_id].children.push(id);
+            self.child_index.push(HashMap::new());
+            self.tree.nodes[id].children.push(new_id);
+            self.child_index[id].insert(key, new_id);
+            self.children_len += 1;
+            self.child_index_entries += 1;
+            id = new_id;
+        }
+        id
+    }
+
+    /// Apply a `NodeProven` event to a real or dummy node.
+    fn apply_event(&mut self, id: usize, event: &NodeProven) {
+        let node = &mut self.tree.nodes[id];
+        node.mv = event.mv;
+        node.hash = event.hash;
+        match node.outcome {
+            None => {
+                node.outcome = Some(event.outcome);
+                node.depth = event.depth;
             }
-            self.insert_expanded(parent_id);
-            self.insert_expanded(id);
-            self.process_pending(full_path);
+            Some(_) if event.depth < node.depth => {
+                node.depth = event.depth;
+            }
+            _ => {}
+        }
+    }
+
+    /// Validate and select children for a newly realized parent.
+    fn reconcile_children(&mut self, parent_id: usize) {
+        let Some(parent_outcome) = self.tree.nodes[parent_id].outcome else {
             return;
         };
+        let old_children = std::mem::take(&mut self.tree.nodes[parent_id].children);
 
-        if !self.tree.nodes[parent_id].children.contains(&id) {
-            self.tree.nodes[parent_id].children.push(id);
-        }
-
-        self.insert_expanded(parent_id);
-        self.insert_expanded(id);
-
-        self.process_pending(full_path);
-    }
-
-    fn process_pending(&mut self, path: &str) {
-        if let Some(children) = self.pending.remove(path)
-            && let Some(&parent_id) = self.tree.index.get(path)
-        {
-            self.pending_path_bytes -= path.len();
-            for child in children {
-                self.pending_move_bytes -= child.path.capacity() * std::mem::size_of::<Move>();
-                self.pending_event_count -= 1;
-                let child_path = moves_to_uci_path(&child.path);
-                self.attach_child(parent_id, child, &child_path);
+        let new_children = match parent_outcome {
+            Outcome::Win => {
+                let mut best: Option<usize> = None;
+                let mut best_depth = u32::MAX;
+                for &c in &old_children {
+                    if self.tree.nodes[c].outcome == Some(Outcome::Loss) {
+                        let d = self.tree.nodes[c].depth;
+                        if d < best_depth {
+                            best_depth = d;
+                            best = Some(c);
+                        }
+                    }
+                }
+                best.into_iter().collect::<Vec<_>>()
             }
-        }
-    }
-
-    /// Mark `id` as an expanded node if it is a terminal leaf or has children.
-    /// Expanded nodes are indexed by `(hash, outcome)` for the finalization pass.
-    fn insert_expanded(&mut self, id: usize) {
-        let (hash, outcome, depth, has_children) = {
-            let node = &self.tree.nodes[id];
-            (
-                node.hash,
-                node.outcome,
-                node.depth,
-                !node.children.is_empty(),
-            )
+            Outcome::Loss => old_children
+                .iter()
+                .copied()
+                .filter(|&c| self.tree.nodes[c].outcome == Some(Outcome::Win))
+                .collect(),
+            Outcome::Draw => Vec::new(),
         };
-        if depth == 0 || has_children {
-            let key = (hash, outcome);
-            let present = self
-                .expanded_by_hash
-                .get(&key)
-                .is_some_and(|v| v.contains(&id));
-            if !present {
-                self.expanded_by_hash.entry(key).or_default().push(id);
-            }
-        }
-    }
 
-    /// Attach any pending children whose parents now exist in the tree.
-    /// Repeated until no more pending entries can be resolved.
-    fn flush_pending(&mut self) {
-        loop {
-            let keys: Vec<String> = self.pending.keys().cloned().collect();
-            let mut progress = false;
-            for path in keys {
-                if self.tree.index.contains_key(&path) {
-                    self.process_pending(&path);
-                    progress = true;
+        match parent_outcome {
+            Outcome::Win => {
+                let keep: HashSet<usize> = new_children.iter().copied().collect();
+                for &c in &old_children {
+                    if !keep.contains(&c) {
+                        let key = move_to_bits(self.tree.nodes[c].mv);
+                        if self.child_index[parent_id].remove(&key).is_some() {
+                            self.child_index_entries -= 1;
+                        }
+                    }
                 }
             }
-            if !progress {
-                break;
+            Outcome::Loss => {
+                for &c in &old_children {
+                    if self.tree.nodes[c].outcome != Some(Outcome::Win) {
+                        let key = move_to_bits(self.tree.nodes[c].mv);
+                        if self.child_index[parent_id].remove(&key).is_some() {
+                            self.child_index_entries -= 1;
+                        }
+                    }
+                }
+            }
+            Outcome::Draw => {
+                for &c in &old_children {
+                    let key = move_to_bits(self.tree.nodes[c].mv);
+                    if self.child_index[parent_id].remove(&key).is_some() {
+                        self.child_index_entries -= 1;
+                    }
+                }
+            }
+        }
+
+        self.children_len = self.children_len + new_children.len() - old_children.len();
+        self.tree.nodes[parent_id].children = new_children;
+    }
+
+    /// Rebuild the `(hash, outcome) -> node ids` index used to canonicalise
+    /// transpositions during finalisation. Only terminal nodes and internal
+    /// nodes with children are considered "expanded".
+    fn build_expanded_index(&mut self) {
+        self.expanded_by_hash.clear();
+        for (id, node) in self.tree.nodes.iter().enumerate() {
+            let Some(outcome) = node.outcome else {
+                continue;
+            };
+            if node.depth == 0 || !node.children.is_empty() {
+                self.expanded_by_hash
+                    .entry((node.hash, outcome))
+                    .or_default()
+                    .push(id);
             }
         }
     }
 
     /// Finalize the proof tree after search has stopped.
     ///
-    /// This drains any remaining events, flushes pending children, selects a
-    /// canonical expanded node for every `(hash, outcome)` key, and rebuilds a
-    /// complete proof tree by copying canonical subtrees onto unexpanded
-    /// occurrences. If the final tree contains an unexpanded internal node,
-    /// the process logs an error and exits.
+    /// This drains any remaining events, selects a canonical expanded node for
+    /// every `(hash, outcome)` key, and rebuilds a complete proof tree by
+    /// copying canonical subtrees onto unexpanded transpositions. Dummy nodes
+    /// that were never realized are skipped during the rebuild. If the final
+    /// tree contains an unexpanded internal node, the process logs an error and
+    /// exits.
     fn finalize_tree(&mut self, event_rx: Option<&Receiver<ProofEvent>>) {
         // Drain any remaining events.
         if let Some(rx) = event_rx {
@@ -371,8 +371,12 @@ impl ProofTreeWorker {
             }
         }
 
-        // Flush pending children whose parents have arrived.
-        self.flush_pending();
+        if self.tree.nodes[0].outcome.is_none() {
+            eprintln!("error: proof-tree root was never realized");
+            std::process::exit(1);
+        }
+
+        self.build_expanded_index();
 
         // Select the canonical expanded node for each (hash, outcome).
         let mut canonical: HashMap<(u64, Outcome), usize> =
@@ -392,19 +396,19 @@ impl ProofTreeWorker {
                         .map(|&c| self.tree.nodes[c].depth)
                         .collect();
                     match node.outcome {
-                        Outcome::Win => child_depths
+                        Some(Outcome::Win) => child_depths
                             .iter()
                             .min()
                             .copied()
                             .unwrap_or(0)
                             .saturating_add(1),
-                        Outcome::Loss => child_depths
+                        Some(Outcome::Loss) => child_depths
                             .iter()
                             .max()
                             .copied()
                             .unwrap_or(0)
                             .saturating_add(1),
-                        Outcome::Draw => 0,
+                        _ => 0,
                     }
                 };
                 let consistent = node.depth == implied;
@@ -424,7 +428,7 @@ impl ProofTreeWorker {
             }
         }
 
-        // Rebuild the tree from the root.
+        // Rebuild the tree from the root, skipping any remaining dummy nodes.
         let root_fen = self.tree.root_fen.clone();
         let root_hash = self.tree.nodes[0].hash;
         let root_outcome = self.tree.nodes[0].outcome;
@@ -441,7 +445,6 @@ impl ProofTreeWorker {
         }
 
         let mut actions: Vec<Action> = Vec::new();
-        let mut path: Vec<Move> = Vec::new();
         let mut path_hashes: HashSet<u64> = HashSet::new();
         let mut path_hash_stack: Vec<u64> = Vec::new();
         actions.push(Action::Enter(0, 0, Move::NONE));
@@ -450,13 +453,19 @@ impl ProofTreeWorker {
             match action {
                 Action::Enter(raw_id, parent_new_id, edge_mv) => {
                     let node = &old_tree.nodes[raw_id];
+                    if node.outcome.is_none() {
+                        continue;
+                    }
+                    let Some(outcome) = node.outcome else {
+                        continue;
+                    };
                     let eff_id = canonical
-                        .get(&(node.hash, node.outcome))
+                        .get(&(node.hash, outcome))
                         .copied()
                         .unwrap_or(raw_id);
                     let eff_node = &old_tree.nodes[eff_id];
                     let hash = eff_node.hash;
-                    let outcome = eff_node.outcome;
+                    let eff_outcome = eff_node.outcome;
                     let depth = eff_node.depth;
 
                     let is_root = edge_mv == Move::NONE && parent_new_id == 0;
@@ -464,31 +473,28 @@ impl ProofTreeWorker {
                     // Cycle guard: if this hash already appears on the current
                     // path, create a leaf and stop expanding this branch.
                     if !is_root && path_hashes.contains(&hash) {
-                        path.push(edge_mv);
-                        let full_path = moves_to_uci_path(&path);
+                        let Some(leaf_outcome) = eff_outcome else {
+                            continue;
+                        };
                         let _ = new_tree.add_node(
                             parent_new_id,
-                            &full_path,
                             edge_mv,
                             hash,
-                            outcome,
+                            Some(leaf_outcome),
                             depth,
                         );
-                        path.pop();
                         continue;
                     }
 
                     let new_id = if is_root {
                         new_tree.nodes[0].hash = hash;
-                        new_tree.nodes[0].outcome = outcome;
+                        new_tree.nodes[0].outcome = eff_outcome;
                         new_tree.nodes[0].depth = depth;
                         0
                     } else {
-                        path.push(edge_mv);
                         path_hashes.insert(hash);
                         path_hash_stack.push(hash);
-                        let full_path = moves_to_uci_path(&path);
-                        new_tree.add_node(parent_new_id, &full_path, edge_mv, hash, outcome, depth)
+                        new_tree.add_node(parent_new_id, edge_mv, hash, eff_outcome, depth)
                     };
 
                     actions.push(Action::Exit);
@@ -501,7 +507,6 @@ impl ProofTreeWorker {
                     if let Some(h) = path_hash_stack.pop() {
                         path_hashes.remove(&h);
                     }
-                    path.pop();
                 }
             }
         }
@@ -517,19 +522,19 @@ impl ProofTreeWorker {
                     .map(|&c| new_tree.nodes[c].depth)
                     .collect();
                 new_tree.nodes[i].depth = match new_tree.nodes[i].outcome {
-                    Outcome::Win => child_depths
+                    Some(Outcome::Win) => child_depths
                         .iter()
                         .min()
                         .copied()
                         .unwrap_or(0)
                         .saturating_add(1),
-                    Outcome::Loss => child_depths
+                    Some(Outcome::Loss) => child_depths
                         .iter()
                         .max()
                         .copied()
                         .unwrap_or(0)
                         .saturating_add(1),
-                    Outcome::Draw => 0,
+                    _ => 0,
                 };
             }
         }
@@ -537,7 +542,10 @@ impl ProofTreeWorker {
         // Any non-terminal node without children violates the assumption that
         // every proven node has an expanded twin.
         for (id, node) in new_tree.nodes.iter().enumerate() {
-            if node.outcome != Outcome::Draw && node.depth != 0 && node.children.is_empty() {
+            if node.outcome.is_some_and(|o| o != Outcome::Draw)
+                && node.depth != 0
+                && node.children.is_empty()
+            {
                 eprintln!(
                     "error: proof-tree finalization left unexpanded internal node id={} outcome={:?} depth={}",
                     id, node.outcome, node.depth
@@ -548,18 +556,26 @@ impl ProofTreeWorker {
 
         self.tree = new_tree;
         self.expanded_by_hash.clear();
+
+        // Rebuild the per-node child move index so it matches the final tree.
+        self.child_index = vec![HashMap::new(); self.tree.nodes.len()];
+        for (i, node) in self.tree.nodes.iter().enumerate() {
+            if let Some(p) = node.parent {
+                self.child_index[p].insert(move_to_bits(node.mv), i);
+            }
+        }
+
+        self.children_len = self.tree.nodes.iter().map(|n| n.children.len()).sum();
+        self.child_index_entries = self.child_index.iter().map(|m| m.len()).sum();
     }
 
     fn estimate_memory(&self) -> usize {
         let node_size = std::mem::size_of::<ProofNode>();
-        let nodes_mem = self.tree.nodes.capacity() * node_size;
-        let index_overhead = self.tree.index.capacity()
-            * (std::mem::size_of::<String>() + std::mem::size_of::<usize>() + 8);
-        let pending_overhead = self.pending.len() * std::mem::size_of::<Vec<NodeProven>>()
-            + self.pending_event_count * std::mem::size_of::<NodeProven>()
-            + self.pending_path_bytes
-            + self.pending_move_bytes;
-        let total = nodes_mem + index_overhead + self.index_path_bytes + pending_overhead;
+        let nodes_mem = self.tree.nodes.len() * node_size;
+        let children_mem = self.children_len * std::mem::size_of::<usize>();
+        let child_index_mem = self.child_index.len() * std::mem::size_of::<HashMap<u16, usize>>()
+            + self.child_index_entries * std::mem::size_of::<(u16, usize)>();
+        let total = nodes_mem + children_mem + child_index_mem;
         (total as f64 * 1.5) as usize
     }
 
@@ -569,13 +585,13 @@ impl ProofTreeWorker {
             .tree
             .nodes
             .iter()
-            .filter(|n| n.outcome == Outcome::Win)
+            .filter(|n| n.outcome == Some(Outcome::Win))
             .count();
         let loss_nodes = self
             .tree
             .nodes
             .iter()
-            .filter(|n| n.outcome == Outcome::Loss)
+            .filter(|n| n.outcome == Some(Outcome::Loss))
             .count();
         let root_depth = self.tree.nodes.first().map(|n| n.depth).unwrap_or(0);
         ProofStats {

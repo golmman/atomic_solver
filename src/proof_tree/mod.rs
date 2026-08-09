@@ -9,9 +9,8 @@
 //! This module is intentionally larger than 10 KiB because the `ProofTree` data
 //! model, the `ProofTreeWorker` thread, and the binary serialization logic form a
 //! single cohesive unit; the worker was split into `worker.rs` because it was
-//! approaching the 20 KiB soft limit.
+//! approaching the 20 KiB soft module-size limit.
 
-use std::collections::HashMap;
 use std::io::{self, Read, Write};
 
 use atomic_movegen::types::Move;
@@ -29,24 +28,28 @@ pub struct ProofNode {
     pub parent: Option<usize>,
     pub mv: Move,
     pub hash: u64,
-    pub outcome: Outcome,
+    /// `None` means the node was created as an ancestor placeholder and has
+    /// not yet been realized by its own `NodeProven` event.
+    pub outcome: Option<Outcome>,
     pub depth: u32,
     pub children: Vec<usize>,
 }
 
-/// Proof tree indexed by path string for event ordering.
+/// Proof tree built by traversing event paths and realizing dummy parents.
 #[derive(Debug, Clone)]
 pub struct ProofTree {
     pub root_fen: String,
     pub nodes: Vec<ProofNode>,
-    pub index: HashMap<String, usize>,
 }
 
 impl ProofTree {
     /// Create a new proof tree with a single root node.
-    pub fn new(root_fen: String, root_hash: u64, root_outcome: Outcome, root_depth: u32) -> Self {
-        let mut index = HashMap::new();
-        index.insert("root".to_string(), 0);
+    pub fn new(
+        root_fen: String,
+        root_hash: u64,
+        root_outcome: Option<Outcome>,
+        root_depth: u32,
+    ) -> Self {
         Self {
             root_fen,
             nodes: vec![ProofNode {
@@ -57,19 +60,16 @@ impl ProofTree {
                 depth: root_depth,
                 children: Vec::new(),
             }],
-            index,
         }
     }
 
-    /// Add a child node under `parent` with the given UCI `full_path` and
-    /// return its id. Used by unit tests and the worker.
+    /// Add a child node under `parent` and return its id.
     pub(crate) fn add_node(
         &mut self,
         parent_id: usize,
-        full_path: &str,
         mv: Move,
         hash: u64,
-        outcome: Outcome,
+        outcome: Option<Outcome>,
         depth: u32,
     ) -> usize {
         let id = self.nodes.len();
@@ -82,7 +82,6 @@ impl ProofTree {
             depth,
             children: Vec::new(),
         });
-        self.index.insert(full_path.to_string(), id);
         id
     }
 
@@ -97,10 +96,12 @@ impl ProofTree {
         binary::read_proof_tree(reader)
     }
 
-    /// Return true if the node is a terminal leaf (proven at depth 0).
+    /// Return true if the node is a terminal leaf (real and proven at depth 0).
     #[must_use]
     pub fn is_terminal(&self, node_id: usize) -> bool {
-        self.nodes.get(node_id).is_some_and(|n| n.depth == 0)
+        self.nodes
+            .get(node_id)
+            .is_some_and(|n| n.outcome.is_some() && n.depth == 0)
     }
 
     /// Extract a principal variation from the proof tree.
@@ -114,15 +115,18 @@ impl ProofTree {
         let mut id = 0usize;
         while !self.is_terminal(id) {
             let node = &self.nodes[id];
+            let Some(outcome) = node.outcome else {
+                break;
+            };
             let children = node.children.iter().copied().filter(|&c| {
                 let child = &self.nodes[c];
-                match node.outcome {
-                    Outcome::Win => child.outcome == Outcome::Loss,
-                    Outcome::Loss => child.outcome == Outcome::Win,
+                match outcome {
+                    Outcome::Win => child.outcome == Some(Outcome::Loss),
+                    Outcome::Loss => child.outcome == Some(Outcome::Win),
                     Outcome::Draw => false,
                 }
             });
-            let next = match node.outcome {
+            let next = match outcome {
                 Outcome::Win => children.min_by_key(|&c| self.nodes[c].depth),
                 Outcome::Loss => children.max_by_key(|&c| self.nodes[c].depth),
                 Outcome::Draw => None,
@@ -147,6 +151,9 @@ impl ProofTree {
                 return false;
             }
             let node = &self.nodes[id];
+            if node.outcome.is_none() {
+                return false;
+            }
             let Some(&next_id) = node.children.iter().find(|&&c| self.nodes[c].mv == *mv) else {
                 return false;
             };
@@ -163,45 +170,41 @@ mod tests {
     use atomic_movegen::types::{Move, Square};
 
     #[test]
-    fn add_node_reconstructs_path() {
-        let mut tree = ProofTree::new("fen".to_string(), 0, Outcome::Win, 2);
+    fn add_node_builds_path() {
+        let mut tree = ProofTree::new("fen".to_string(), 0, Some(Outcome::Win), 2);
         let child = tree.add_node(
             0,
-            "root.e2e4",
             Move::make_move(Square::E2, Square::E4),
             0,
-            Outcome::Loss,
+            Some(Outcome::Loss),
             1,
         );
         let grandchild = tree.add_node(
             child,
-            "root.e2e4.e7e5",
             Move::make_move(Square::E7, Square::E5),
             0,
-            Outcome::Win,
+            Some(Outcome::Win),
             0,
         );
-        assert_eq!(tree.index["root.e2e4"], child);
-        assert_eq!(tree.index["root.e2e4.e7e5"], grandchild);
+        assert_eq!(tree.nodes[0].children, vec![child]);
+        assert_eq!(tree.nodes[child].children, vec![grandchild]);
     }
 
     #[test]
     fn to_bin_round_trips_small_tree() {
-        let mut tree = ProofTree::new(Position::STARTPOS_FEN.to_string(), 0, Outcome::Win, 2);
+        let mut tree = ProofTree::new(Position::STARTPOS_FEN.to_string(), 0, Some(Outcome::Win), 2);
         tree.add_node(
             0,
-            "root.e2e4",
             Move::make_move(Square::E2, Square::E4),
             0,
-            Outcome::Loss,
+            Some(Outcome::Loss),
             1,
         );
         tree.add_node(
             1,
-            "root.e2e4.e7e5",
             Move::make_move(Square::E7, Square::E5),
             0,
-            Outcome::Win,
+            Some(Outcome::Win),
             0,
         );
 
@@ -221,27 +224,25 @@ mod tests {
 
     #[test]
     fn extract_ppv_returns_empty_for_drawn_root() {
-        let tree = ProofTree::new("fen".to_string(), 0, Outcome::Draw, 0);
+        let tree = ProofTree::new("fen".to_string(), 0, Some(Outcome::Draw), 0);
         assert!(tree.extract_ppv().is_empty());
     }
 
     #[test]
     fn validate_ppv_rejects_wrong_path() {
-        let mut tree = ProofTree::new("fen".to_string(), 0, Outcome::Win, 2);
+        let mut tree = ProofTree::new("fen".to_string(), 0, Some(Outcome::Win), 2);
         let child = tree.add_node(
             0,
-            "root.e2e4",
             Move::make_move(Square::E2, Square::E4),
             0,
-            Outcome::Loss,
+            Some(Outcome::Loss),
             1,
         );
         tree.add_node(
             child,
-            "root.e2e4.e7e5",
             Move::make_move(Square::E7, Square::E5),
             0,
-            Outcome::Win,
+            Some(Outcome::Win),
             0,
         );
 
@@ -251,13 +252,12 @@ mod tests {
 
     #[test]
     fn validate_ppv_rejects_premature_termination() {
-        let mut tree = ProofTree::new("fen".to_string(), 0, Outcome::Win, 2);
+        let mut tree = ProofTree::new("fen".to_string(), 0, Some(Outcome::Win), 2);
         let _ = tree.add_node(
             0,
-            "root.e2e4",
             Move::make_move(Square::E2, Square::E4),
             0,
-            Outcome::Loss,
+            Some(Outcome::Loss),
             1,
         );
         // The child node at depth 1 is not terminal, so a one-move PV is invalid.

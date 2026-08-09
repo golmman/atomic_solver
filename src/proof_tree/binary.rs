@@ -14,7 +14,6 @@ use std::io::{self, Read, Write};
 use atomic_movegen::types::{Move, MoveType, PROMOTION_PIECES, Square};
 
 use super::{ProofNode, ProofTree};
-use crate::notation::move_to_uci;
 use crate::position::Outcome;
 
 const MAGIC: &[u8; 8] = b"ATOMTREE";
@@ -91,16 +90,30 @@ fn outcome_from_u8(value: u8) -> Option<Outcome> {
 }
 
 /// Write `tree` to `writer` in the compact `proof_tree.bin` format.
+///
+/// The tree is expected to be finalized so every node carries a real outcome.
 pub fn write_proof_tree<W: Write>(tree: &ProofTree, writer: &mut W) -> io::Result<()> {
     writer.write_all(MAGIC)?;
     writer.write_all(&[VERSION])?;
     writeln!(writer, "{}", tree.root_fen)?;
 
     let root = &tree.nodes[0];
-    writer.write_all(&[outcome_to_u8(root.outcome)])?;
+    let root_outcome = root.outcome.ok_or_else(|| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            "cannot dump a proof tree with an unrealized root",
+        )
+    })?;
+    writer.write_all(&[outcome_to_u8(root_outcome)])?;
     writer.write_all(&root.depth.to_le_bytes())?;
 
     for node in &tree.nodes {
+        if node.outcome.is_none() {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "cannot dump a proof tree containing dummy nodes",
+            ));
+        }
         let parent_id = node.parent.map_or(ROOT_PARENT, |p| p as u32);
         writer.write_all(&parent_id.to_le_bytes())?;
         writer.write_all(&move_to_bits(node.mv).to_le_bytes())?;
@@ -203,7 +216,7 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
             parent,
             mv,
             hash: 0,
-            outcome: Outcome::Draw,
+            outcome: Some(Outcome::Draw),
             depth: 0,
             children: Vec::new(),
         });
@@ -224,13 +237,13 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
     }
 
     for i in 0..node_count {
-        nodes[i].outcome = if root_outcome == Outcome::Draw {
+        nodes[i].outcome = Some(if root_outcome == Outcome::Draw {
             Outcome::Draw
         } else if graph_depths[i] % 2 == 0 {
             root_outcome
         } else {
             root_outcome.flip()
-        };
+        });
     }
 
     // Derive proven depths by a post-order traversal.  Records are written in
@@ -245,9 +258,9 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
         let child_depths: Vec<u32> = nodes[i].children.iter().map(|&c| nodes[c].depth).collect();
 
         nodes[i].depth = match nodes[i].outcome {
-            Outcome::Win => 1 + child_depths.iter().min().copied().unwrap_or(0),
-            Outcome::Loss => 1 + child_depths.iter().max().copied().unwrap_or(0),
-            Outcome::Draw => 0,
+            Some(Outcome::Win) => 1 + child_depths.iter().min().copied().unwrap_or(0),
+            Some(Outcome::Loss) => 1 + child_depths.iter().max().copied().unwrap_or(0),
+            _ => 0,
         };
     }
 
@@ -261,26 +274,9 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
         ));
     }
 
-    // Rebuild the path index so that `add_node` and `path_for` work on a loaded
-    // tree.  Because the dump is a tree (each node has exactly one parent),
-    // paths are unique.
-    let mut index = std::collections::HashMap::with_capacity(node_count);
-    let mut paths = Vec::with_capacity(node_count);
-    paths.push("root".to_string());
-    index.insert(paths[0].clone(), 0);
-
-    for (i, node) in nodes.iter().enumerate().skip(1) {
-        let parent = node.parent.expect("non-root node has a parent");
-        let uci = move_to_uci(node.mv);
-        let path = format!("{}.{}", paths[parent], uci);
-        paths.push(path.clone());
-        index.insert(path, i);
-    }
-
     Ok(ProofTree {
         root_fen: fen,
         nodes,
-        index,
     })
 }
 
