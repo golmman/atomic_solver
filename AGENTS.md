@@ -137,6 +137,7 @@ program.
 - The most important quality attributes for this project are (highest priority first):
   - correctness
   - performance
+  - efficient memory usage
   - maintainability
   - testability
   - consistency
