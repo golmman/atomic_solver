@@ -2,7 +2,7 @@ Write the ideas to `docs/plans/move_order/ideas.md`.
 
 ---
 
-Improve the benchmark suite.
+We want to improve the benchmark suite to increase testability for the upcoming changes to move orderings (see `docs/plans/move_order/ideas.md`).
 
 The following positions are all won for white and are ordered from hardest to easiest to find.
 
@@ -27,3 +27,5 @@ The following positions are all won for white and are ordered from hardest to ea
 5R2/3p4/3Bk1p1/2p3Pp/7P/p1N2P2/P1PP4/7K b - - 5 28
 5R2/3p4/3Bk1p1/6Pp/2p4P/p1N2P2/P1PP4/7K w - - 0 29
 ```
+
+Please create an implementation plan for the benchmark improvements and store it in `docs/plans/move_order/plan1.md`.
