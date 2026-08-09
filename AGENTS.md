@@ -35,7 +35,7 @@ A pure solver for atomic chess in Rust.
   `finalize()` pass copies fully expanded canonical subtrees onto unexpanded
   transpositions, making the tree authoritative without a transposition-table
   reconstruction step. The worker exposes `ProofTreeWorkerHandle` with
-  `event_sender()`, `stats()`, `tree()`, and `finalize()` for querying.
+  `event_sender()`, `stats()`, `tree()`, `finalize()`, and `dump_to_bin()` for querying.
   External tools can import the binary dump into PostgreSQL.
 - `src/zobrist.rs` generates deterministic Zobrist keys for positions,
   including the halfmove clock for transposition-table lookup.

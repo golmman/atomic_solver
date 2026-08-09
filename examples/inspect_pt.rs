@@ -10,7 +10,7 @@ fn dump_tree(tree: &ProofTree, node: usize, prefix: &mut Vec<String>, max_ply: u
         println!("{} ... (truncated)", prefix.join(" "));
         return;
     }
-    if n.children.is_empty() {
+    if n.first_child.is_none() {
         let uci = prefix.join(" ");
         println!(
             "leaf ply={} outcome={:?} depth={} path={}",
@@ -21,7 +21,7 @@ fn dump_tree(tree: &ProofTree, node: usize, prefix: &mut Vec<String>, max_ply: u
         );
         return;
     }
-    for &c in &n.children {
+    for c in tree.children(node) {
         let uci = move_to_uci(tree.nodes[c].mv);
         prefix.push(uci);
         dump_tree(tree, c, prefix, max_ply);
@@ -42,14 +42,14 @@ fn main() {
         tree.nodes[0].depth
     );
     println!("root children:");
-    for &c in &tree.nodes[0].children {
+    for c in tree.children(0) {
         let n = &tree.nodes[c];
         println!(
             "  {} outcome={:?} depth={} children={}",
             move_to_uci(n.mv),
             n.outcome.unwrap_or(Outcome::Draw),
             n.depth,
-            n.children.len()
+            tree.children(c).count()
         );
     }
 

@@ -18,11 +18,7 @@ use crate::proof_event::{NodeProven, ProofEvent};
 use crate::proof_tree::ProofTree;
 
 fn child_by_move(tree: &ProofTree, parent: usize, mv: Move) -> Option<usize> {
-    tree.nodes[parent]
-        .children
-        .iter()
-        .copied()
-        .find(|&c| tree.nodes[c].mv == mv)
+    tree.children(parent).find(|&c| tree.nodes[c].mv == mv)
 }
 
 #[test]
@@ -69,8 +65,8 @@ fn worker_handles_out_of_order_events() {
 
     let tree = handle.tree();
     assert_eq!(tree.nodes.len(), 3);
-    assert_eq!(tree.nodes[0].children, vec![1]);
-    assert_eq!(tree.nodes[1].children, vec![2]);
+    assert_eq!(tree.children(0).collect::<Vec<_>>(), vec![1]);
+    assert_eq!(tree.children(1).collect::<Vec<_>>(), vec![2]);
 
     drop(handle);
     join.join().unwrap();
@@ -120,12 +116,11 @@ fn worker_replaces_win_child_with_shortest_loss() {
         .unwrap();
 
     let tree = handle.tree();
-    assert_eq!(tree.nodes[0].children.len(), 1);
-    assert_eq!(
-        tree.nodes[tree.nodes[0].children[0]].mv,
-        Move::make_move(Square::D2, Square::D4)
-    );
-    assert_eq!(tree.nodes[tree.nodes[0].children[0]].depth, 2);
+    assert_eq!(tree.children(0).count(), 1);
+    let d2d4 = Move::make_move(Square::D2, Square::D4);
+    let d2d4_id = child_by_move(&tree, 0, d2d4).expect("d2d4 child exists");
+    assert_eq!(tree.nodes[d2d4_id].mv, d2d4);
+    assert_eq!(tree.nodes[d2d4_id].depth, 2);
 
     drop(handle);
     join.join().unwrap();
@@ -165,7 +160,7 @@ fn worker_loss_parent_keeps_all_distinct_win_children() {
         .unwrap();
 
     let tree = handle.tree();
-    assert_eq!(tree.nodes[0].children.len(), 2);
+    assert_eq!(tree.children(0).count(), 2);
 
     drop(handle);
     join.join().unwrap();
@@ -205,15 +200,11 @@ fn worker_loss_parent_removes_loss_children() {
         .unwrap();
 
     let tree = handle.tree();
-    assert_eq!(tree.nodes[0].children.len(), 1);
-    assert_eq!(
-        tree.nodes[tree.nodes[0].children[0]].mv,
-        Move::make_move(Square::D2, Square::D4)
-    );
-    assert_eq!(
-        tree.nodes[tree.nodes[0].children[0]].outcome,
-        Some(Outcome::Win)
-    );
+    assert_eq!(tree.children(0).count(), 1);
+    let d2d4 = Move::make_move(Square::D2, Square::D4);
+    let d2d4_id = child_by_move(&tree, 0, d2d4).expect("d2d4 child exists");
+    assert_eq!(tree.nodes[d2d4_id].mv, d2d4);
+    assert_eq!(tree.nodes[d2d4_id].outcome, Some(Outcome::Win));
 
     drop(handle);
     join.join().unwrap();
@@ -253,7 +244,7 @@ fn worker_updates_existing_child_with_shorter_depth() {
         .unwrap();
 
     let tree = handle.tree();
-    assert_eq!(tree.nodes[0].children.len(), 2);
+    assert_eq!(tree.children(0).count(), 2);
 
     // A duplicate with a shorter depth updates the existing child.
     handle
@@ -267,7 +258,7 @@ fn worker_updates_existing_child_with_shorter_depth() {
         .unwrap();
 
     let tree2 = handle.tree();
-    assert_eq!(tree2.nodes[0].children.len(), 2);
+    assert_eq!(tree2.children(0).count(), 2);
     let e2e4 = Move::make_move(Square::E2, Square::E4);
     let e2e4_id = child_by_move(&tree2, 0, e2e4).expect("e2e4 child exists");
     assert_eq!(tree2.nodes[e2e4_id].depth, 1);
@@ -485,10 +476,10 @@ fn finalize_copies_expanded_twin_to_unexpanded_sibling() {
 
     handle.finalize();
     let tree = handle.tree();
-    assert_eq!(tree.nodes[0].children.len(), 2);
-    for &c in &tree.nodes[0].children {
-        assert_eq!(tree.nodes[c].children.len(), 1);
-        let leaf = tree.nodes[c].children[0];
+    assert_eq!(tree.children(0).count(), 2);
+    for c in tree.children(0) {
+        assert_eq!(tree.children(c).count(), 1);
+        let leaf = tree.children(c).next().unwrap();
         assert_eq!(tree.nodes[leaf].outcome, Some(Outcome::Loss));
         assert_eq!(tree.nodes[leaf].depth, 0);
     }
@@ -558,9 +549,9 @@ fn finalize_prefers_shorter_consistent_twin() {
 
     handle.finalize();
     let tree = handle.tree();
-    assert_eq!(tree.nodes[0].children.len(), 2);
-    for &c in &tree.nodes[0].children {
-        assert_eq!(tree.nodes[c].children.len(), 1);
+    assert_eq!(tree.children(0).count(), 2);
+    for c in tree.children(0) {
+        assert_eq!(tree.children(c).count(), 1);
         assert_eq!(tree.nodes[c].depth, 1);
     }
     // The stale depth is replaced by the consistent, shorter depth.
@@ -622,9 +613,9 @@ fn finalize_prunes_dummy_subtree() {
     handle.finalize();
     let tree = handle.tree();
     assert_eq!(tree.nodes.len(), 3);
-    assert_eq!(tree.nodes[0].children.len(), 1);
+    assert_eq!(tree.children(0).count(), 1);
     let e2e4_id = child_by_move(&tree, 0, e2e4).expect("e2e4 child");
-    assert_eq!(tree.nodes[e2e4_id].children.len(), 1);
+    assert_eq!(tree.children(e2e4_id).count(), 1);
     assert!(child_by_move(&tree, 0, d2d4).is_none());
     assert!(!tree.nodes.iter().any(|n| n.mv == d7d5));
 

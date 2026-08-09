@@ -170,10 +170,7 @@ fn main() {
                 stats.nodes, stats.win_nodes, stats.loss_nodes, stats.root_depth
             );
 
-            let tree = hook_handle.tree();
-            if let Err(e) =
-                std::fs::File::create(&dump_path).and_then(|mut file| tree.to_bin(&mut file))
-            {
+            if let Err(e) = hook_handle.dump_to_bin(&dump_path) {
                 eprintln!("failed to write proof-tree dump to {dump_path}: {e}");
             } else {
                 println!("proof_tree_dump: {dump_path}");

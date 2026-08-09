@@ -48,11 +48,11 @@ fn proof_tree_contains_defender_replies() {
     let fen = "rnbqkbnr/ppppp2p/5pp1/3Q4/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 3";
     let (_outcome, _pv, tree) = solve_and_get_tree(fen);
 
-    let defender_branching = tree.nodes.iter().any(|n| {
+    let defender_branching = tree.nodes.iter().enumerate().any(|(id, n)| {
         n.outcome == Some(Outcome::Loss)
-            && n.children
-                .iter()
-                .filter(|&&c| tree.nodes[c].outcome == Some(Outcome::Win))
+            && tree
+                .children(id)
+                .filter(|&c| tree.nodes[c].outcome == Some(Outcome::Win))
                 .count()
                 > 1
     });

@@ -10,6 +10,7 @@
 //! header.
 
 use std::io::{self, Read, Write};
+use std::num::NonZeroU32;
 
 use atomic_movegen::types::{Move, MoveType, PROMOTION_PIECES, Square};
 
@@ -114,7 +115,9 @@ pub fn write_proof_tree<W: Write>(tree: &ProofTree, writer: &mut W) -> io::Resul
                 "cannot dump a proof tree containing dummy nodes",
             ));
         }
-        let parent_id = node.parent.map_or(ROOT_PARENT, |p| p as u32);
+        let parent_id = node
+            .parent
+            .map_or(ROOT_PARENT, |p| p.get().saturating_sub(1));
         writer.write_all(&parent_id.to_le_bytes())?;
         writer.write_all(&move_to_bits(node.mv).to_le_bytes())?;
     }
@@ -177,6 +180,12 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
             "missing root node",
         ));
     }
+    if node_count > u32::MAX as usize {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "proof tree exceeds u32 node-id limit",
+        ));
+    }
 
     let mut nodes: Vec<ProofNode> = Vec::with_capacity(node_count);
     let mut parents: Vec<usize> = Vec::with_capacity(node_count);
@@ -207,27 +216,28 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
         let parent = if i == 0 {
             None
         } else {
-            Some(parent_id as usize)
+            NonZeroU32::new(parent_id + 1)
         };
         let mv = bits_to_move(move_code)
             .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "invalid move_code"))?;
 
         nodes.push(ProofNode {
             parent,
+            first_child: None,
+            next_sibling: None,
             mv,
             hash: 0,
             outcome: Some(Outcome::Draw),
             depth: 0,
-            children: Vec::new(),
         });
         parents.push(parent_id as usize);
     }
 
-    // Reconstruct children from parent links.
-    for i in 0..node_count {
-        if let Some(p) = nodes[i].parent {
-            nodes[p].children.push(i);
-        }
+    // Reconstruct the intrusive first-child / next-sibling list from parent links.
+    for i in 1..node_count {
+        let p = parents[i];
+        nodes[i].next_sibling = nodes[p].first_child;
+        nodes[p].first_child = NonZeroU32::new(i as u32);
     }
 
     // Derive per-node outcomes from the root outcome and graph depth parity.
@@ -246,16 +256,16 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
         });
     }
 
-    // Derive proven depths by a post-order traversal.  Records are written in
+    // Derive proven depths by a post-order traversal. Records are written in
     // creation order, so every parent precedes its children; iterating in
     // reverse visits children before parents.
     for i in (0..node_count).rev() {
-        if nodes[i].children.is_empty() {
+        if nodes[i].first_child.is_none() {
             nodes[i].depth = 0;
             continue;
         }
 
-        let child_depths: Vec<u32> = nodes[i].children.iter().map(|&c| nodes[c].depth).collect();
+        let child_depths: Vec<u32> = node_children(&nodes, i).map(|c| nodes[c].depth).collect();
 
         nodes[i].depth = match nodes[i].outcome {
             Some(Outcome::Win) => 1 + child_depths.iter().min().copied().unwrap_or(0),
@@ -277,6 +287,15 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
     Ok(ProofTree {
         root_fen: fen,
         nodes,
+    })
+}
+
+fn node_children(nodes: &[ProofNode], node_id: usize) -> impl Iterator<Item = usize> + '_ {
+    let mut next = nodes[node_id].first_child.map(|nz| nz.get() as usize);
+    std::iter::from_fn(move || {
+        let id = next?;
+        next = nodes[id].next_sibling.map(|nz| nz.get() as usize);
+        Some(id)
     })
 }
 
