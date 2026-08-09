@@ -36,5 +36,5 @@ We improved the benchmark suite (`docs/plans/move_order/report1.md`) and want to
 
 We only want to keep implementations with measurable improvements though.
 
-Write an implementation plan for the first reasonable batch of ideas.
+Write an implementation plan for the first reasonable batch of ideas to `docs/plans/move_order/plan2.md`.
 
