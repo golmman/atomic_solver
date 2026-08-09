@@ -17,11 +17,12 @@ pub struct StaticAtomicScorer;
 
 const SCORE_WINNING_CAPTURE: i32 = 100_000_000;
 const SCORE_PROMOTION: i32 = 1_000_000;
-const SCORE_CAPTURE: i32 = 100_000;
+const SCORE_CAPTURE: i32 = 5_000;
 const SCORE_THREAT_LAST: i32 = 10_000;
-const SCORE_ATOMIC_CHECK: i32 = 9_000;
 const SCORE_THREAT: i32 = 1_000;
-const SCORE_BLAST: i32 = 500;
+const SCORE_KAMIKAZE_LAST: i32 = 9_000;
+const SCORE_KAMIKAZE: i32 = 3_000;
+const CAPTURE_NET_SCALE: i32 = 10;
 const SCORE_APPROACH: i32 = 100;
 const SCORE_CENTER: i32 = 50;
 
@@ -35,6 +36,50 @@ fn piece_value(pt: PieceType) -> i32 {
         PieceType::Commoner => 20_000,
         _ => 0,
     }
+}
+
+/// Compute the net material destroyed by an atomic capture blast.
+///
+/// The capturing piece is always lost. Non-pawn pieces in the surrounding
+/// 3x3 blast zone are also lost; pawns are immune to the surrounding blast.
+/// The victim at ground zero is always lost. The origin square is excluded
+/// because the moving piece is leaving it.
+fn capture_net_value(board: &Board, m: Move) -> i32 {
+    let from = m.from_sq();
+    let to = m.to_sq();
+    let moving_piece = board.piece_on(from);
+    let moving_value = piece_value(moving_piece.type_of().unwrap());
+
+    let victim_value = if m.is_en_passant() {
+        piece_value(PieceType::Pawn)
+    } else {
+        piece_value(board.piece_on(to).type_of().unwrap())
+    };
+
+    let mut own_destroyed = moving_value;
+    let mut enemy_destroyed = victim_value;
+
+    let blast = attacks::king_attacks(to) & !board.pieces_pt(PieceType::Pawn);
+
+    let mut b = blast;
+    while !b.is_empty() {
+        let sq = b.pop_lsb();
+        if sq == from {
+            continue;
+        }
+        let p = board.piece_on(sq);
+        if p == NO_PIECE {
+            continue;
+        }
+        let value = piece_value(p.type_of().unwrap());
+        if p.color().unwrap() == board.side_to_move() {
+            own_destroyed += value;
+        } else {
+            enemy_destroyed += value;
+        }
+    }
+
+    enemy_destroyed - own_destroyed
 }
 
 fn file_rank_of(sq: Square) -> (i8, i8) {
@@ -105,7 +150,6 @@ impl StaticAtomicScorer {
             return 0;
         }
         let from_pt = from_piece.type_of().unwrap();
-        let to_piece = board.piece_on(to);
         let us = board.side_to_move();
         let them = us.flip();
 
@@ -123,24 +167,20 @@ impl StaticAtomicScorer {
             }
         }
 
-        // 2. Promotion.
-        if m.is_promotion() {
+        // 2. Promotion (non-captures only; capture-promotions are evaluated by aSEE).
+        if m.is_promotion() && !is_capture {
             return SCORE_PROMOTION + piece_value(m.promotion_type());
         }
 
-        // 3. Capture by MVV-LVA.
+        // 3. Capture by atomic static exchange evaluation (aSEE).
         if is_capture {
-            let victim = if m.is_en_passant() {
-                PieceType::Pawn
-            } else {
-                to_piece.type_of().unwrap()
-            };
-            return SCORE_CAPTURE + piece_value(victim) * 10 - piece_value(from_pt);
+            let net = capture_net_value(board, m);
+            return SCORE_CAPTURE + net * CAPTURE_NET_SCALE;
         }
 
         let mut score = 0;
 
-        // 4. Check-like threat: after moving, the piece attacks an opponent commoner.
+        // 4. Direct commoner threat: after moving, the piece attacks an opponent commoner.
         {
             let from_bb = atomic_movegen::types::Bitboard::square_bb(from);
             let to_bb = atomic_movegen::types::Bitboard::square_bb(to);
@@ -152,28 +192,17 @@ impl StaticAtomicScorer {
                 } else {
                     score += SCORE_THREAT;
                 }
-            } else if state.them_commoners_count == 1 {
-                let mut them_commoners = board.commoners(them);
-                let enemy_king_sq = them_commoners.pop_lsb();
-                let near_king = attacks::king_attacks(enemy_king_sq);
-                if (attack_bb & near_king) != atomic_movegen::types::Bitboard::EMPTY {
-                    score += SCORE_ATOMIC_CHECK;
-                }
             }
         }
 
-        // 5. Blast-threaten capture: capture blast zone is near an enemy commoner.
+        // 5. Kamikaze: landing adjacent to an enemy commoner creates a real blast threat.
+        if (attacks::king_attacks(to) & board.commoners(them))
+            != atomic_movegen::types::Bitboard::EMPTY
         {
-            let blast_zone =
-                attacks::king_attacks(to) | atomic_movegen::types::Bitboard::square_bb(to);
-            let mut near = blast_zone;
-            let mut b = blast_zone;
-            while !b.is_empty() {
-                let sq = b.pop_lsb();
-                near = near | attacks::king_attacks(sq);
-            }
-            if (board.commoners(them) & near) != atomic_movegen::types::Bitboard::EMPTY {
-                score += SCORE_BLAST;
+            if state.them_commoners_count == 1 {
+                score += SCORE_KAMIKAZE_LAST;
+            } else {
+                score += SCORE_KAMIKAZE;
             }
         }
 
@@ -299,5 +328,73 @@ mod tests {
         let board = Board::from_fen("8/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
         let map = nearest_commoner_map(&board, Color::Black);
         assert!(map.iter().all(|&d| d == i8::MAX));
+    }
+
+    #[test]
+    fn kamikaze_landing_adjacent_to_lone_commoner() {
+        // White knight c2 -> e3 lands next to the black commoner on e4 but does
+        // not attack it. A non-kamikaze knight jump should score lower.
+        let (board, state, moves) = legal_moves_and_state("8/8/8/8/4k3/8/2N5/4K3 w - - 0 1");
+        let scorer = StaticAtomicScorer;
+
+        let kamikaze = scorer.score(&board, find_move(&moves, "c2e3"), &state);
+        let other = scorer.score(&board, find_move(&moves, "c2a3"), &state);
+        assert!(
+            kamikaze > other,
+            "kamikaze move c2e3 should score above a non-kamikaze jump"
+        );
+    }
+
+    #[test]
+    fn losing_capture_scores_below_direct_commoner_threat() {
+        // White queen capturing the e5 pawn loses the queen for a pawn. A quiet
+        // bishop move to c6 attacks the black commoner on e8 and should score higher.
+        let (board, state, moves) = legal_moves_and_state("4k3/8/8/1B2p3/8/8/4Q3/4K3 w - - 0 1");
+        let scorer = StaticAtomicScorer;
+
+        let capture = scorer.score(&board, find_move(&moves, "e2e5"), &state);
+        let threat = scorer.score(&board, find_move(&moves, "b5c6"), &state);
+        assert!(
+            threat > capture,
+            "direct commoner threat should score above a losing capture"
+        );
+    }
+
+    #[test]
+    fn capture_with_blasted_rook_scores_higher() {
+        // A queen capture on e5 that also destroys the f5 rook should score
+        // higher than a capture that only takes a pawn.
+        let (board, state, moves) = legal_moves_and_state("4k3/8/8/2p1pr2/3Q4/8/8/4K3 w - - 0 1");
+        let scorer = StaticAtomicScorer;
+
+        let rook_blast = scorer.score(&board, find_move(&moves, "d4e5"), &state);
+        let pawn_only = scorer.score(&board, find_move(&moves, "d4c5"), &state);
+        assert!(
+            rook_blast > pawn_only,
+            "capture that also blasts a rook should score higher"
+        );
+    }
+
+    #[test]
+    fn capture_promotion_is_not_scored_as_promotion() {
+        // Pawn a7xb8 with promotion should be evaluated by aSEE, not by the
+        // promotion bonus, because the promoted piece is destroyed in the blast.
+        let (board, state, moves) = legal_moves_and_state("1n2k3/P7/8/8/8/8/8/4K3 w - - 0 1");
+        let scorer = StaticAtomicScorer;
+
+        let capture_promo = find_move(&moves, "a7b8q");
+        let non_capture_promo = find_move(&moves, "a7a8q");
+
+        let capture_score = scorer.score(&board, capture_promo, &state);
+        let promo_score = scorer.score(&board, non_capture_promo, &state);
+
+        assert!(
+            capture_score < SCORE_PROMOTION,
+            "capture-promotion should not receive the promotion bonus"
+        );
+        assert!(
+            promo_score > capture_score,
+            "non-capture promotion should score above capture-promotion here"
+        );
     }
 }
