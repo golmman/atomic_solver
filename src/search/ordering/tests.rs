@@ -201,3 +201,64 @@ fn m22_pawn_storm_does_not_overvalue_distant_pawn_pushes() {
     assert_eq!(a2a3, 0, "a2a3 should not get a pawn-storm bonus");
     assert_eq!(a2a4, 0, "a2a4 should not get a pawn-storm bonus");
 }
+
+#[test]
+fn pawn_storm_is_lower_at_and_node() {
+    // The key pawn-storm push is valued less highly from the defender's
+    // perspective (AND node) than from the attacker's (OR node).
+    let (board, state, moves) =
+        legal_moves_and_state("4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22");
+    let nearest = nearest_commoner_map(&board, board.side_to_move().flip());
+
+    let g4g5 = find_move(&moves, "g4g5");
+    let or = StaticAtomicScorer.score_with_map(&board, g4g5, &state, &nearest, true);
+    let and = StaticAtomicScorer.score_with_map(&board, g4g5, &state, &nearest, false);
+    assert!(
+        and < or,
+        "AND-node pawn storm should score below OR-node pawn storm"
+    );
+}
+
+#[test]
+fn direct_commoner_threat_stays_high_at_and_node() {
+    // A direct attack on the enemy commoner is a genuine counter-threat even
+    // for the defender, so the AND profile should not reduce it.
+    let (board, state, moves) =
+        legal_moves_and_state("4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22");
+    let nearest = nearest_commoner_map(&board, board.side_to_move().flip());
+
+    let d6e5 = find_move(&moves, "d6e5");
+    let or = StaticAtomicScorer.score_with_map(&board, d6e5, &state, &nearest, true);
+    let and = StaticAtomicScorer.score_with_map(&board, d6e5, &state, &nearest, false);
+    assert!(
+        and > 0,
+        "direct commoner threat should stay positive at an AND node"
+    );
+    assert!(
+        and >= or / 2,
+        "direct commoner threat should not collapse at an AND node"
+    );
+}
+
+#[test]
+fn and_profile_shrinks_gap_between_pawn_storm_and_quiet_move() {
+    // At an AND node the speculative pawn storm bonus is reduced, so the
+    // distance between a pawn-storm push and a quiet centralizing move shrinks
+    // even though the pawn storm can still be useful.
+    let (board, state, moves) =
+        legal_moves_and_state("4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22");
+    let nearest = nearest_commoner_map(&board, board.side_to_move().flip());
+
+    let g4g5 = find_move(&moves, "g4g5");
+    let e3e4 = find_move(&moves, "e3e4");
+    let storm_or = StaticAtomicScorer.score_with_map(&board, g4g5, &state, &nearest, true);
+    let quiet_or = StaticAtomicScorer.score_with_map(&board, e3e4, &state, &nearest, true);
+    let storm_and = StaticAtomicScorer.score_with_map(&board, g4g5, &state, &nearest, false);
+    let quiet_and = StaticAtomicScorer.score_with_map(&board, e3e4, &state, &nearest, false);
+    let gap_or = storm_or - quiet_or;
+    let gap_and = storm_and - quiet_and;
+    assert!(
+        gap_and < gap_or,
+        "AND profile should reduce the gap between pawn storm and quiet central move"
+    );
+}

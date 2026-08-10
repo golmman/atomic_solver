@@ -5,11 +5,13 @@
 //! the solver would try first is at the top.
 //!
 //! Default position is the `m19` regression FEN. Use `--name <case>` to inspect
-//! one of the move-order benchmark positions.
+//! one of the move-order benchmark positions. Use `--and` to show scores from
+//! the defender (AND-node) perspective.
 //!
 //! Usage:
 //!     cargo run --example `static_move_scores`
 //!     cargo run --example `static_move_scores` -- --name m25_white
+//!     cargo run --example `static_move_scores` -- --name m25_white --and
 //!     cargo run --example `static_move_scores` -- "<fen>"
 
 mod common;
@@ -23,6 +25,7 @@ use atomic_solver::search::ordering::{StaticAtomicScorer, nearest_commoner_map};
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut fen: Option<String> = None;
+    let mut is_or_node = true;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -34,6 +37,10 @@ fn main() {
                         .fen,
                 );
                 i += 2;
+            }
+            "--and" => {
+                is_or_node = false;
+                i += 1;
             }
             _ if fen.is_none() => {
                 fen = Some(args[i].clone());
@@ -60,7 +67,7 @@ fn main() {
             let m = moves[i];
             (
                 i,
-                StaticAtomicScorer.score_with_map(pos.board(), m, &state, &nearest),
+                StaticAtomicScorer.score_with_map(pos.board(), m, &state, &nearest, is_or_node),
             )
         })
         .collect();

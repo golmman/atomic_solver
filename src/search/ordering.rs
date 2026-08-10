@@ -31,6 +31,9 @@ const SCORE_ROOK_CENTER: i32 = 500;
 const SCORE_ROOK_OPEN_FILE: i32 = 2_000;
 const SCORE_ROOK_OPEN_FILE_STEP: i32 = 50;
 const SCORE_ROOK_BACK_RANK: i32 = 300;
+const AND_PAWN_STORM_SCALE: i32 = 50;
+const AND_ROOK_ATTACK_SCALE: i32 = 50;
+const AND_APPROACH_SCALE: i32 = 75;
 
 fn piece_value(pt: PieceType) -> i32 {
     match pt {
@@ -142,12 +145,17 @@ impl StaticAtomicScorer {
     ///
     /// This is the same logic as [`MoveScorer::score`] but avoids recomputing
     /// the enemy commoner distance for every `from`/`to` pair.
+    ///
+    /// `is_or_node` selects the scoring profile: OR nodes (attacker) use the
+    /// full static bonuses, while AND nodes (defender) scale down speculative
+    /// attacker-only bonuses such as pawn storms and rook lifts.
     pub fn score_with_map(
         &self,
         board: &Board,
         m: Move,
         state: &StateInfo,
         nearest: &[i8; 64],
+        is_or_node: bool,
     ) -> i32 {
         let from = m.from_sq();
         let to = m.to_sq();
@@ -185,6 +193,41 @@ impl StaticAtomicScorer {
         }
 
         let mut score = 0;
+
+        // Node-type-aware scaling. OR nodes (attacker) keep the full bonuses;
+        // AND nodes (defender) scale down speculative attacker-only bonuses.
+        let (pawn_storm, pawn_storm_step) = if is_or_node {
+            (SCORE_PAWN_STORM, SCORE_PAWN_STORM_STEP)
+        } else {
+            (
+                SCORE_PAWN_STORM * AND_PAWN_STORM_SCALE / 100,
+                SCORE_PAWN_STORM_STEP * AND_PAWN_STORM_SCALE / 100,
+            )
+        };
+        let (rook_open_file, rook_open_file_step, rook_back_rank) = if is_or_node {
+            (
+                SCORE_ROOK_OPEN_FILE,
+                SCORE_ROOK_OPEN_FILE_STEP,
+                SCORE_ROOK_BACK_RANK,
+            )
+        } else {
+            (
+                SCORE_ROOK_OPEN_FILE * AND_ROOK_ATTACK_SCALE / 100,
+                SCORE_ROOK_OPEN_FILE_STEP * AND_ROOK_ATTACK_SCALE / 100,
+                SCORE_ROOK_BACK_RANK * AND_ROOK_ATTACK_SCALE / 100,
+            )
+        };
+        let (approach, approach_step, center, center_step, rook_center) = if is_or_node {
+            (SCORE_APPROACH, 10, SCORE_CENTER, 10, SCORE_ROOK_CENTER)
+        } else {
+            (
+                SCORE_APPROACH * AND_APPROACH_SCALE / 100,
+                10 * AND_APPROACH_SCALE / 100,
+                SCORE_CENTER * AND_APPROACH_SCALE / 100,
+                10 * AND_APPROACH_SCALE / 100,
+                SCORE_ROOK_CENTER * AND_APPROACH_SCALE / 100,
+            )
+        };
 
         // Precompute the lone enemy commoner square when it exists.
         let lone_commoner = if state.them_commoners_count == 1 {
@@ -250,8 +293,7 @@ impl StaticAtomicScorer {
                     }
                 }
                 if near {
-                    score +=
-                        SCORE_PAWN_STORM + i32::from(from_dist - to_dist) * SCORE_PAWN_STORM_STEP;
+                    score += pawn_storm + i32::from(from_dist - to_dist) * pawn_storm_step;
                 }
             }
         }
@@ -270,7 +312,7 @@ impl StaticAtomicScorer {
                 != atomic_movegen::types::Bitboard::EMPTY
             {
                 let reduction = (from_dist - to_dist).max(0);
-                score += SCORE_ROOK_OPEN_FILE + i32::from(reduction) * SCORE_ROOK_OPEN_FILE_STEP;
+                score += rook_open_file + i32::from(reduction) * rook_open_file_step;
             } else {
                 // A rook/queen that moves onto a central/semi-open file pointing
                 // at an enemy piece on the back rank is a strong plan signal.
@@ -298,8 +340,7 @@ impl StaticAtomicScorer {
                         != atomic_movegen::types::Bitboard::EMPTY
                     {
                         let reduction = (from_dist - to_dist).max(0);
-                        score +=
-                            SCORE_ROOK_OPEN_FILE + i32::from(reduction) * SCORE_ROOK_OPEN_FILE_STEP;
+                        score += rook_open_file + i32::from(reduction) * rook_open_file_step;
                     }
                 }
             }
@@ -307,7 +348,7 @@ impl StaticAtomicScorer {
             // Back-rank presence when the enemy commoner is on or near it.
             let back_rank = if us == Color::White { 7 } else { 0 };
             if (to as u8 / 8) == back_rank && chebyshev(to, commoner_sq) <= 2 {
-                score += SCORE_ROOK_BACK_RANK;
+                score += rook_back_rank;
             }
         }
 
@@ -315,15 +356,15 @@ impl StaticAtomicScorer {
         let from_dist = nearest[from as usize];
         let to_dist = nearest[to as usize];
         if from_dist < i8::MAX && to_dist < i8::MAX && to_dist < from_dist {
-            score += SCORE_APPROACH + i32::from(from_dist - to_dist) * 10;
+            score += approach + i32::from(from_dist - to_dist) * approach_step;
         }
 
         let (f, r) = file_rank_of(to);
-        let center = 3 - (f - 3).abs().max(r - 3).abs();
-        if center > 0 {
-            score += SCORE_CENTER + i32::from(center) * 10;
+        let centrality = 3 - (f - 3).abs().max(r - 3).abs();
+        if centrality > 0 {
+            score += center + i32::from(centrality) * center_step;
             if matches!(from_pt, PieceType::Rook | PieceType::Queen) {
-                score += SCORE_ROOK_CENTER * i32::from(center);
+                score += rook_center * i32::from(centrality);
             }
         }
 
@@ -341,7 +382,7 @@ impl MoveScorer for StaticAtomicScorer {
         let us = board.side_to_move();
         let them = us.flip();
         let nearest = nearest_commoner_map(board, them);
-        self.score_with_map(board, m, state, &nearest)
+        self.score_with_map(board, m, state, &nearest, true)
     }
 }
 

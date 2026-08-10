@@ -275,7 +275,7 @@ mod tests {
         pos.legal_moves(&mut moves);
 
         // Sort so the winning capture e1e8 is tried first.
-        search.sort_moves(&pos, &mut moves, Move::NONE);
+        search.sort_moves(&pos, &mut moves, Move::NONE, true);
         let children = search.evaluate_all_children(&mut pos, &moves, u32::MAX, true);
 
         assert_eq!(children.len(), moves.len());

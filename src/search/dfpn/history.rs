@@ -70,7 +70,13 @@ fn killer_bonus(killers: &[[Move; KILLER_SLOTS]; MAX_KILLER_DEPTH], m: Move, dep
 }
 
 impl Search {
-    pub(super) fn sort_moves(&self, pos: &Position, moves: &mut MoveList, best_from_tt: Move) {
+    pub(super) fn sort_moves(
+        &self,
+        pos: &Position,
+        moves: &mut MoveList,
+        best_from_tt: Move,
+        is_or_node: bool,
+    ) {
         let mut state = StateInfo::new();
         pos.populate_state(&mut state);
 
@@ -79,12 +85,15 @@ impl Search {
         let depth = self.path_stack.len();
         let nearest = nearest_commoner_map(pos.board(), them);
 
+        let board = pos.board();
         let slice = moves.as_mut_slice();
         let mut scored: Vec<(Move, i32)> = slice
             .iter()
             .copied()
             .map(|m| {
-                let score = self.scorer.score_with_map(pos.board(), m, &state, &nearest)
+                let score = self
+                    .scorer
+                    .score_with_map(board, m, &state, &nearest, is_or_node)
                     + self.history[us][m.from_sq() as usize][m.to_sq() as usize]
                     + self.killer_bonus(m, depth);
                 (m, score)
@@ -137,7 +146,11 @@ impl Search {
     /// killer_bonus, total_score)` tuples, sorted from highest total score to
     /// lowest. This is intended for the `move_order_debug` example.
     #[must_use]
-    pub fn move_order_breakdown(&self, pos: &Position) -> Vec<(Move, i32, i32, i32, i32)> {
+    pub fn move_order_breakdown(
+        &self,
+        pos: &Position,
+        is_or_node: bool,
+    ) -> Vec<(Move, i32, i32, i32, i32)> {
         use crate::search::ordering::{StaticAtomicScorer, nearest_commoner_map};
 
         let mut moves = MoveList::new();
@@ -154,7 +167,8 @@ impl Search {
 
         for i in 0..moves.len() {
             let m = moves[i];
-            let static_score = StaticAtomicScorer.score_with_map(pos.board(), m, &state, &nearest);
+            let static_score =
+                StaticAtomicScorer.score_with_map(pos.board(), m, &state, &nearest, is_or_node);
             let history = self.history[us as usize][m.from_sq() as usize][m.to_sq() as usize];
             let killer = self.killer_bonus(m, depth);
             let total = static_score + history + killer;
@@ -181,7 +195,7 @@ mod tests {
         let search = Search::new(1);
         let pos = start_position();
         let mut moves = MoveList::new();
-        search.sort_moves(&pos, &mut moves, Move::NONE);
+        search.sort_moves(&pos, &mut moves, Move::NONE, true);
         assert!(moves.is_empty());
     }
 
@@ -193,8 +207,8 @@ mod tests {
         let mut moves2 = MoveList::new();
         pos.legal_moves(&mut moves1);
         pos.legal_moves(&mut moves2);
-        search.sort_moves(&pos, &mut moves1, Move::NONE);
-        search.sort_moves(&pos, &mut moves2, Move::NONE);
+        search.sort_moves(&pos, &mut moves1, Move::NONE, true);
+        search.sort_moves(&pos, &mut moves2, Move::NONE, true);
         assert_eq!(moves1.as_slice(), moves2.as_slice());
     }
 
@@ -206,14 +220,14 @@ mod tests {
 
         let mut before = MoveList::new();
         pos.legal_moves(&mut before);
-        search.sort_moves(&pos, &mut before, Move::NONE);
+        search.sort_moves(&pos, &mut before, Move::NONE, true);
         let rank_before = before.as_slice().iter().position(|&m| m == e2e4).unwrap();
 
         search.update_history(e2e4, Color::White);
 
         let mut after = MoveList::new();
         pos.legal_moves(&mut after);
-        search.sort_moves(&pos, &mut after, Move::NONE);
+        search.sort_moves(&pos, &mut after, Move::NONE, true);
         let rank_after = after.as_slice().iter().position(|&m| m == e2e4).unwrap();
 
         assert!(
@@ -336,7 +350,7 @@ mod tests {
         let pos = start_position();
         let mut moves = MoveList::new();
         pos.legal_moves(&mut moves);
-        search.sort_moves(&pos, &mut moves, Move::NONE);
+        search.sort_moves(&pos, &mut moves, Move::NONE, true);
 
         assert_eq!(moves[0], e2e4, "killer move should be sorted first");
     }

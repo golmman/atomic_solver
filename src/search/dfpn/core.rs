@@ -100,7 +100,7 @@ impl Search {
         let previous_summary = self.tt.probe_summary(tt_key);
 
         let best_from_tt = self.tt.probe_best_move(tt_key).unwrap_or(Move::NONE);
-        self.sort_moves(pos, &mut moves, best_from_tt);
+        self.sort_moves(pos, &mut moves, best_from_tt, is_or_node);
 
         self.path_push(rep_key);
 

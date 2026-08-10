@@ -8,7 +8,8 @@
 //!
 //! By default the breakdown is shown *before* any search, so history and killer
 //! bonuses are zero. Pass `--solve` as the first argument to run a short solve
-//! first and see the dynamic bonuses.
+//! first and see the dynamic bonuses. Pass `--and` to show the defender
+//! (AND-node) scoring profile.
 //!
 //! Default position is the `m19` regression FEN. Use `--name <case>` to inspect
 //! one of the move-order benchmark positions from `tests/fixtures/move_order_positions.txt`.
@@ -16,6 +17,7 @@
 //! Usage:
 //!     cargo run --example move_order_debug
 //!     cargo run --example move_order_debug -- --name m25_white
+//!     cargo run --example move_order_debug -- --name m25_white --and
 //!     cargo run --example move_order_debug -- --solve "<fen>"
 //!     cargo run --example move_order_debug -- "<fen>"
 
@@ -28,6 +30,7 @@ use atomic_solver::search::dfpn::Search;
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut solve_first = false;
+    let mut is_or_node = true;
     let mut name: Option<String> = None;
     let mut fen: Option<String> = None;
     let mut i = 0;
@@ -35,6 +38,10 @@ fn main() {
         match args[i].as_str() {
             "--solve" => {
                 solve_first = true;
+                i += 1;
+            }
+            "--and" => {
+                is_or_node = false;
                 i += 1;
             }
             "--name" if i + 1 < args.len() => {
@@ -76,7 +83,7 @@ fn main() {
         search.solve(&mut p);
     }
 
-    let breakdown = search.move_order_breakdown(&pos);
+    let breakdown = search.move_order_breakdown(&pos, is_or_node);
     println!("fen: {}", pos.fen());
     println!("move  static  history  killer  total");
     for (m, static_score, history, killer, total) in breakdown {
