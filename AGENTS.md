@@ -169,3 +169,8 @@ program.
   `find_or_create_node` path traversal, dummy-node reconciliation, canonical
   finalization, and memory accounting. Splitting it further would fragment the
   state machine and the shared `ProofTreeWorker` fields.
+- `src/search/ordering.rs` is larger than the 10 KB guideline because it holds
+  the complete `StaticAtomicScorer` move-ordering heuristics (kamikaze, threats,
+  atomic SEE, pawn-storm, rook centralization, and back-rank bonuses) and the
+  constants that are tuned together. The unit tests are split out into
+  `src/search/ordering/tests.rs` to keep the main file under the 20 KB limit.

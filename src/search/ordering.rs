@@ -25,6 +25,12 @@ const SCORE_KAMIKAZE: i32 = 3_000;
 const CAPTURE_NET_SCALE: i32 = 10;
 const SCORE_APPROACH: i32 = 100;
 const SCORE_CENTER: i32 = 50;
+const SCORE_PAWN_STORM: i32 = 5_500;
+const SCORE_PAWN_STORM_STEP: i32 = 100;
+const SCORE_ROOK_CENTER: i32 = 500;
+const SCORE_ROOK_OPEN_FILE: i32 = 2_000;
+const SCORE_ROOK_OPEN_FILE_STEP: i32 = 50;
+const SCORE_ROOK_BACK_RANK: i32 = 300;
 
 fn piece_value(pt: PieceType) -> i32 {
     match pt {
@@ -180,6 +186,15 @@ impl StaticAtomicScorer {
 
         let mut score = 0;
 
+        // Precompute the lone enemy commoner square when it exists.
+        let lone_commoner = if state.them_commoners_count == 1 {
+            let mut c = board.commoners(them);
+            let sq = c.pop_lsb();
+            if sq != Square::NONE { Some(sq) } else { None }
+        } else {
+            None
+        };
+
         // 4. Direct commoner threat: after moving, the piece attacks an opponent commoner.
         {
             let from_bb = atomic_movegen::types::Bitboard::square_bb(from);
@@ -187,11 +202,21 @@ impl StaticAtomicScorer {
             let new_occupied = (board.occupied() & !from_bb) | to_bb;
             let attack_bb = attacks_from(from_pt, us, to, new_occupied);
             if (attack_bb & board.commoners(them)) != atomic_movegen::types::Bitboard::EMPTY {
-                if state.them_commoners_count == 1 {
-                    score += SCORE_THREAT_LAST;
+                let base = if state.them_commoners_count == 1 {
+                    SCORE_THREAT_LAST
                 } else {
-                    score += SCORE_THREAT;
-                }
+                    SCORE_THREAT
+                };
+                // If the threatening piece can be immediately captured, the
+                // threat is less reliable; downgrade it.
+                let enemy_attackers =
+                    board.attackers_to(to, new_occupied) & board.pieces_color(them);
+                let bonus = if enemy_attackers.is_empty() {
+                    base
+                } else {
+                    base / 2
+                };
+                score += bonus;
             }
         }
 
@@ -206,7 +231,87 @@ impl StaticAtomicScorer {
             }
         }
 
-        // 6. Centralizing / attacking moves.
+        // 6. Pawn storm: a pawn push toward the lone enemy commoner that attacks
+        // squares near it.
+        if from_pt == PieceType::Pawn
+            && let Some(commoner_sq) = lone_commoner
+        {
+            let from_dist = nearest[from as usize];
+            let to_dist = nearest[to as usize];
+            if to_dist < from_dist {
+                let attacks = attacks::pawn_attacks(us, to);
+                let mut b = attacks;
+                let mut near = false;
+                while !b.is_empty() {
+                    let sq = b.pop_lsb();
+                    if chebyshev(sq, commoner_sq) <= 2 {
+                        near = true;
+                        break;
+                    }
+                }
+                if near {
+                    score +=
+                        SCORE_PAWN_STORM + i32::from(from_dist - to_dist) * SCORE_PAWN_STORM_STEP;
+                }
+            }
+        }
+
+        // 7. Heavy-piece centralization, open-file alignment, and back-rank presence.
+        if matches!(from_pt, PieceType::Rook | PieceType::Queen)
+            && let Some(commoner_sq) = lone_commoner
+        {
+            let from_dist = nearest[from as usize];
+            let to_dist = nearest[to as usize];
+
+            let from_bb = atomic_movegen::types::Bitboard::square_bb(from);
+            let occupied_without_from = board.occupied() & !from_bb;
+            let rook_attacks = attacks::rook_attacks(to, occupied_without_from);
+            if (rook_attacks & atomic_movegen::types::Bitboard::square_bb(commoner_sq))
+                != atomic_movegen::types::Bitboard::EMPTY
+            {
+                let reduction = (from_dist - to_dist).max(0);
+                score += SCORE_ROOK_OPEN_FILE + i32::from(reduction) * SCORE_ROOK_OPEN_FILE_STEP;
+            } else {
+                // A rook/queen that moves onto a central/semi-open file pointing
+                // at an enemy piece on the back rank is a strong plan signal.
+                // Treat own pawns as transparent so that a lift like Rg1-e1
+                // (preparing Rxe8) is recognized before the e-pawn has left the
+                // file. Only award this on a file the move actually changed, so
+                // shuffling a rook already on the e-file does not keep receiving
+                // the bonus.
+                let changed_file =
+                    atomic_movegen::types::file_of(to) != atomic_movegen::types::file_of(from);
+                if changed_file {
+                    let enemy_back_rank = if us == Color::White { 7u32 } else { 0u32 };
+                    let back_rank_mask =
+                        atomic_movegen::types::Bitboard(0xFFu64 << (enemy_back_rank * 8));
+                    let file_mask = atomic_movegen::types::Bitboard(
+                        0x0101_0101_0101_0101u64
+                            << (atomic_movegen::types::file_of(to) as u8 as u32),
+                    );
+                    let occupied_no_own_pawns =
+                        board.occupied() & !board.pieces_color_pt(us, PieceType::Pawn) & !from_bb;
+                    let rook_attacks_semi = attacks::rook_attacks(to, occupied_no_own_pawns);
+                    let enemy_back_rank_pieces =
+                        board.pieces_color(them) & back_rank_mask & file_mask;
+                    if (rook_attacks_semi & enemy_back_rank_pieces)
+                        != atomic_movegen::types::Bitboard::EMPTY
+                    {
+                        let reduction = (from_dist - to_dist).max(0);
+                        score +=
+                            SCORE_ROOK_OPEN_FILE + i32::from(reduction) * SCORE_ROOK_OPEN_FILE_STEP;
+                    }
+                }
+            }
+
+            // Back-rank presence when the enemy commoner is on or near it.
+            let back_rank = if us == Color::White { 7 } else { 0 };
+            if (to as u8 / 8) == back_rank && chebyshev(to, commoner_sq) <= 2 {
+                score += SCORE_ROOK_BACK_RANK;
+            }
+        }
+
+        // 8. Centralizing / attacking moves.
         let from_dist = nearest[from as usize];
         let to_dist = nearest[to as usize];
         if from_dist < i8::MAX && to_dist < i8::MAX && to_dist < from_dist {
@@ -217,6 +322,9 @@ impl StaticAtomicScorer {
         let center = 3 - (f - 3).abs().max(r - 3).abs();
         if center > 0 {
             score += SCORE_CENTER + i32::from(center) * 10;
+            if matches!(from_pt, PieceType::Rook | PieceType::Queen) {
+                score += SCORE_ROOK_CENTER * i32::from(center);
+            }
         }
 
         score
@@ -238,163 +346,4 @@ impl MoveScorer for StaticAtomicScorer {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use atomic_movegen::board::{Board, StateInfo};
-    use atomic_movegen::movegen::generate_legal;
-    use atomic_movegen::types::MoveList;
-
-    fn legal_moves_and_state(fen: &str) -> (Board, StateInfo, MoveList) {
-        let board = Board::from_fen(fen).unwrap();
-        let mut state = StateInfo::new();
-        board.populate_state(&mut state);
-        let mut moves = MoveList::new();
-        generate_legal(&board, &mut moves);
-        (board, state, moves)
-    }
-
-    fn find_move(moves: &MoveList, uci: &str) -> Move {
-        for i in 0..moves.len() {
-            if moves[i].to_uci() == uci {
-                return moves[i];
-            }
-        }
-        panic!("move {uci} not found");
-    }
-
-    #[test]
-    fn winning_capture_scores_highest() {
-        // White queen on f7 captures the e7 pawn; the blast removes the lone
-        // black commoner on d7.
-        let (board, state, moves) =
-            legal_moves_and_state("rnbq1bnr/pppkpQ1p/3p1pp1/8/8/4P3/PPPP1PPP/RNB1KBNR w KQ - 2 5");
-        let f7e7 = find_move(&moves, "f7e7");
-        let scorer = StaticAtomicScorer;
-        assert_eq!(scorer.score(&board, f7e7, &state), SCORE_WINNING_CAPTURE);
-    }
-
-    #[test]
-    fn promotion_scores_above_threat_and_center() {
-        let (board, state, moves) = legal_moves_and_state("4k3/1P6/8/8/8/8/8/4K3 w - - 0 1");
-        let scorer = StaticAtomicScorer;
-        let b7b8q = find_move(&moves, "b7b8q");
-        let promotion = scorer.score(&board, b7b8q, &state);
-
-        // A quiet king move should be scored far below a promotion.
-        let e1d1 = moves
-            .as_slice()
-            .iter()
-            .find(|m| m.to_uci() == "e1d1")
-            .copied()
-            .unwrap();
-        let quiet = scorer.score(&board, e1d1, &state);
-        assert!(
-            promotion > quiet,
-            "promotion should be preferred to a quiet king move"
-        );
-    }
-
-    #[test]
-    fn capture_scores_above_quiet_moves() {
-        // White knight on f3 can capture e5 or move to a quiet square.
-        let (board, state, moves) =
-            legal_moves_and_state("rnbqkbnr/pppp1ppp/8/4p3/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 3");
-        let scorer = StaticAtomicScorer;
-        let capture_move = find_move(&moves, "f3e5");
-        let capture = scorer.score(&board, capture_move, &state);
-
-        let quiet_move = find_move(&moves, "f3d4");
-        let quiet = scorer.score(&board, quiet_move, &state);
-        assert!(
-            capture > quiet,
-            "capture should score above quiet development"
-        );
-    }
-
-    #[test]
-    fn score_is_deterministic() {
-        let (board, state, moves) =
-            legal_moves_and_state("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        let scorer = StaticAtomicScorer;
-        for i in 0..moves.len() {
-            let a = scorer.score(&board, moves[i], &state);
-            let b = scorer.score(&board, moves[i], &state);
-            assert_eq!(a, b, "score should be deterministic");
-        }
-    }
-
-    #[test]
-    fn score_with_no_commoners_is_max_distance() {
-        let board = Board::from_fen("8/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
-        let map = nearest_commoner_map(&board, Color::Black);
-        assert!(map.iter().all(|&d| d == i8::MAX));
-    }
-
-    #[test]
-    fn kamikaze_landing_adjacent_to_lone_commoner() {
-        // White knight c2 -> e3 lands next to the black commoner on e4 but does
-        // not attack it. A non-kamikaze knight jump should score lower.
-        let (board, state, moves) = legal_moves_and_state("8/8/8/8/4k3/8/2N5/4K3 w - - 0 1");
-        let scorer = StaticAtomicScorer;
-
-        let kamikaze = scorer.score(&board, find_move(&moves, "c2e3"), &state);
-        let other = scorer.score(&board, find_move(&moves, "c2a3"), &state);
-        assert!(
-            kamikaze > other,
-            "kamikaze move c2e3 should score above a non-kamikaze jump"
-        );
-    }
-
-    #[test]
-    fn losing_capture_scores_below_direct_commoner_threat() {
-        // White queen capturing the e5 pawn loses the queen for a pawn. A quiet
-        // bishop move to c6 attacks the black commoner on e8 and should score higher.
-        let (board, state, moves) = legal_moves_and_state("4k3/8/8/1B2p3/8/8/4Q3/4K3 w - - 0 1");
-        let scorer = StaticAtomicScorer;
-
-        let capture = scorer.score(&board, find_move(&moves, "e2e5"), &state);
-        let threat = scorer.score(&board, find_move(&moves, "b5c6"), &state);
-        assert!(
-            threat > capture,
-            "direct commoner threat should score above a losing capture"
-        );
-    }
-
-    #[test]
-    fn capture_with_blasted_rook_scores_higher() {
-        // A queen capture on e5 that also destroys the f5 rook should score
-        // higher than a capture that only takes a pawn.
-        let (board, state, moves) = legal_moves_and_state("4k3/8/8/2p1pr2/3Q4/8/8/4K3 w - - 0 1");
-        let scorer = StaticAtomicScorer;
-
-        let rook_blast = scorer.score(&board, find_move(&moves, "d4e5"), &state);
-        let pawn_only = scorer.score(&board, find_move(&moves, "d4c5"), &state);
-        assert!(
-            rook_blast > pawn_only,
-            "capture that also blasts a rook should score higher"
-        );
-    }
-
-    #[test]
-    fn capture_promotion_is_not_scored_as_promotion() {
-        // Pawn a7xb8 with promotion should be evaluated by aSEE, not by the
-        // promotion bonus, because the promoted piece is destroyed in the blast.
-        let (board, state, moves) = legal_moves_and_state("1n2k3/P7/8/8/8/8/8/4K3 w - - 0 1");
-        let scorer = StaticAtomicScorer;
-
-        let capture_promo = find_move(&moves, "a7b8q");
-        let non_capture_promo = find_move(&moves, "a7a8q");
-
-        let capture_score = scorer.score(&board, capture_promo, &state);
-        let promo_score = scorer.score(&board, non_capture_promo, &state);
-
-        assert!(
-            capture_score < SCORE_PROMOTION,
-            "capture-promotion should not receive the promotion bonus"
-        );
-        assert!(
-            promo_score > capture_score,
-            "non-capture promotion should score above capture-promotion here"
-        );
-    }
-}
+mod tests;
