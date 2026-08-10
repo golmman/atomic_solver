@@ -41,10 +41,12 @@
 //!   atomic_solver --timeout 10
 
 use atomic_movegen::types::Move;
+use atomic_solver::config;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::proof_tree::ProofTreeWorkerHandle;
 use atomic_solver::search::dfpn::{ExitReason, Search};
+use atomic_solver::search::ordering::StaticAtomicScorer;
 use std::io::BufRead;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -76,6 +78,8 @@ fn print_help(program: &str) {
     println!("                             (default: 256)");
     println!("  --dump-path <FILE>         Path for the compact binary proof-tree dump");
     println!("                             (default: proof_tree.bin)");
+    println!("  --config <FILE>            Path to a TOML file overriding scorer");
+    println!("                             parameters; defaults to built-in values");
     println!();
     println!("Examples:");
     println!("  {program} --help");
@@ -119,7 +123,21 @@ fn main() {
         outcome_only,
         pt_size,
         dump_path,
+        config_path,
     } = opts;
+
+    let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
+
+    let scorer = match config_path {
+        Some(path) => match config::load_scorer_config(&path) {
+            Ok(params) => StaticAtomicScorer::from_params(params),
+            Err(e) => {
+                eprintln!("Failed to load config file: {e}");
+                std::process::exit(1);
+            }
+        },
+        None => StaticAtomicScorer::default(),
+    };
 
     let mut pos = Position::from_fen(&fen).unwrap_or_else(|e| {
         eprintln!("Failed to parse FEN: {e}");
@@ -127,6 +145,7 @@ fn main() {
     });
 
     let mut search = Search::new(tt_size);
+    search.set_scorer(scorer);
     search.set_timeout(timeout);
     search.set_epsilon(epsilon);
     search.set_first_outcome_only(first_outcome);

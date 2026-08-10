@@ -29,6 +29,8 @@ pub struct CliOptions {
     pub pt_size: usize,
     /// Path for the compact binary proof-tree dump.
     pub dump_path: String,
+    /// Path to a TOML config file overriding the default scorer parameters.
+    pub config_path: Option<String>,
 }
 
 impl Default for CliOptions {
@@ -42,6 +44,7 @@ impl Default for CliOptions {
             outcome_only: false,
             pt_size: 256,
             dump_path: "proof_tree.bin".to_string(),
+            config_path: None,
         }
     }
 }
@@ -148,6 +151,13 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 opts.dump_path = value.clone();
                 i += 2;
             }
+            "--config" => {
+                let value = args
+                    .get(i + 1)
+                    .ok_or_else(|| "error: --config requires a value".to_string())?;
+                opts.config_path = Some(value.clone());
+                i += 2;
+            }
             _ => {
                 return Err(format!(
                     "error: unknown option '{arg}'\nRun with --help for usage."
@@ -179,6 +189,7 @@ mod tests {
             outcome_only,
             pt_size,
             dump_path,
+            config_path,
         } = match parsed {
             ParseResult::Options(o) => o,
             ParseResult::Help => panic!("unexpected help"),
@@ -191,6 +202,7 @@ mod tests {
         assert!(!outcome_only);
         assert_eq!(pt_size, 256);
         assert_eq!(dump_path, "proof_tree.bin");
+        assert!(config_path.is_none());
     }
 
     #[test]
@@ -269,6 +281,17 @@ mod tests {
     }
 
     #[test]
+    fn config_path_is_parsed() {
+        let parsed = parse_args(&args(&["atomic_solver", "--config", "/tmp/scorer.toml"])).unwrap();
+        match parsed {
+            ParseResult::Options(o) => {
+                assert_eq!(o.config_path, Some("/tmp/scorer.toml".to_string()))
+            }
+            ParseResult::Help => panic!("unexpected help"),
+        }
+    }
+
+    #[test]
     fn first_outcome_is_parsed() {
         let parsed = parse_args(&args(&["atomic_solver", "--first-outcome"])).unwrap();
         match parsed {
@@ -294,6 +317,7 @@ mod tests {
         assert!(parse_args(&args(&["atomic_solver", "--timeout"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--pt-size"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--dump-path"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--config"])).is_err());
     }
 
     #[test]

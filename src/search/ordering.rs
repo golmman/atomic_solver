@@ -3,47 +3,50 @@
 //! This file is larger than 10 KiB because the `MoveScorer` trait, the static
 //! scorer implementation, distance heuristics, and the unit-test matrix for
 //! captures/promotions/quiet moves are kept together to avoid exposing the
-//! scorer internals through extra modules.
+//! scorer internals through extra modules. The configurable scorer parameters
+//! live in `params.rs` to keep this file focused on scoring logic.
 
 use atomic_movegen::attacks;
 use atomic_movegen::board::{Board, StateInfo};
 use atomic_movegen::types::{Color, Move, NO_PIECE, PieceType, Square};
 
+mod params;
+pub use params::{PieceValues, ScorerParams, ScorerParamsError};
+
 pub trait MoveScorer {
     fn score(&self, board: &Board, m: Move, state: &StateInfo) -> i32;
 }
 
-pub struct StaticAtomicScorer;
+#[derive(Clone)]
+pub struct StaticAtomicScorer {
+    params: ScorerParams,
+}
 
-const SCORE_WINNING_CAPTURE: i32 = 100_000_000;
-const SCORE_PROMOTION: i32 = 1_000_000;
-const SCORE_CAPTURE: i32 = 5_000;
-const SCORE_THREAT_LAST: i32 = 10_000;
-const SCORE_THREAT: i32 = 1_000;
-const SCORE_KAMIKAZE_LAST: i32 = 9_000;
-const SCORE_KAMIKAZE: i32 = 3_000;
-const CAPTURE_NET_SCALE: i32 = 10;
-const SCORE_APPROACH: i32 = 100;
-const SCORE_CENTER: i32 = 50;
-const SCORE_PAWN_STORM: i32 = 5_500;
-const SCORE_PAWN_STORM_STEP: i32 = 100;
-const SCORE_ROOK_CENTER: i32 = 500;
-const SCORE_ROOK_OPEN_FILE: i32 = 2_000;
-const SCORE_ROOK_OPEN_FILE_STEP: i32 = 50;
-const SCORE_ROOK_BACK_RANK: i32 = 300;
-const AND_PAWN_STORM_SCALE: i32 = 50;
-const AND_ROOK_ATTACK_SCALE: i32 = 50;
-const AND_APPROACH_SCALE: i32 = 75;
+impl StaticAtomicScorer {
+    /// Create a scorer with the compiled-in default parameters.
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            params: ScorerParams::default(),
+        }
+    }
 
-fn piece_value(pt: PieceType) -> i32 {
-    match pt {
-        PieceType::Pawn => 100,
-        PieceType::Knight => 320,
-        PieceType::Bishop => 330,
-        PieceType::Rook => 500,
-        PieceType::Queen => 900,
-        PieceType::Commoner => 20_000,
-        _ => 0,
+    /// Create a scorer from an externally loaded parameter set.
+    #[must_use]
+    pub fn from_params(params: ScorerParams) -> Self {
+        Self { params }
+    }
+
+    /// Borrow the current parameters.
+    #[must_use]
+    pub fn params(&self) -> &ScorerParams {
+        &self.params
+    }
+}
+
+impl Default for StaticAtomicScorer {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -53,16 +56,17 @@ fn piece_value(pt: PieceType) -> i32 {
 /// 3x3 blast zone are also lost; pawns are immune to the surrounding blast.
 /// The victim at ground zero is always lost. The origin square is excluded
 /// because the moving piece is leaving it.
-fn capture_net_value(board: &Board, m: Move) -> i32 {
+fn capture_net_value(scorer: &StaticAtomicScorer, board: &Board, m: Move) -> i32 {
+    let params = &scorer.params;
     let from = m.from_sq();
     let to = m.to_sq();
     let moving_piece = board.piece_on(from);
-    let moving_value = piece_value(moving_piece.type_of().unwrap());
+    let moving_value = params.piece_value(moving_piece.type_of().unwrap());
 
     let victim_value = if m.is_en_passant() {
-        piece_value(PieceType::Pawn)
+        params.piece_value(PieceType::Pawn)
     } else {
-        piece_value(board.piece_on(to).type_of().unwrap())
+        params.piece_value(board.piece_on(to).type_of().unwrap())
     };
 
     let mut own_destroyed = moving_value;
@@ -80,7 +84,7 @@ fn capture_net_value(board: &Board, m: Move) -> i32 {
         if p == NO_PIECE {
             continue;
         }
-        let value = piece_value(p.type_of().unwrap());
+        let value = params.piece_value(p.type_of().unwrap());
         if p.color().unwrap() == board.side_to_move() {
             own_destroyed += value;
         } else {
@@ -157,6 +161,7 @@ impl StaticAtomicScorer {
         nearest: &[i8; 64],
         is_or_node: bool,
     ) -> i32 {
+        let p = &self.params;
         let from = m.from_sq();
         let to = m.to_sq();
         let from_piece = board.piece_on(from);
@@ -177,19 +182,19 @@ impl StaticAtomicScorer {
             if them_commoners.count() == 1
                 && (them_commoners & blast_zone) != atomic_movegen::types::Bitboard::EMPTY
             {
-                return SCORE_WINNING_CAPTURE;
+                return p.score_winning_capture;
             }
         }
 
         // 2. Promotion (non-captures only; capture-promotions are evaluated by aSEE).
         if m.is_promotion() && !is_capture {
-            return SCORE_PROMOTION + piece_value(m.promotion_type());
+            return p.score_promotion + p.piece_value(m.promotion_type());
         }
 
         // 3. Capture by atomic static exchange evaluation (aSEE).
         if is_capture {
-            let net = capture_net_value(board, m);
-            return SCORE_CAPTURE + net * CAPTURE_NET_SCALE;
+            let net = capture_net_value(self, board, m);
+            return p.score_capture + net * p.capture_net_scale;
         }
 
         let mut score = 0;
@@ -197,35 +202,41 @@ impl StaticAtomicScorer {
         // Node-type-aware scaling. OR nodes (attacker) keep the full bonuses;
         // AND nodes (defender) scale down speculative attacker-only bonuses.
         let (pawn_storm, pawn_storm_step) = if is_or_node {
-            (SCORE_PAWN_STORM, SCORE_PAWN_STORM_STEP)
+            (p.score_pawn_storm, p.score_pawn_storm_step)
         } else {
             (
-                SCORE_PAWN_STORM * AND_PAWN_STORM_SCALE / 100,
-                SCORE_PAWN_STORM_STEP * AND_PAWN_STORM_SCALE / 100,
+                p.score_pawn_storm * p.and_pawn_storm_scale / 100,
+                p.score_pawn_storm_step * p.and_pawn_storm_scale / 100,
             )
         };
         let (rook_open_file, rook_open_file_step, rook_back_rank) = if is_or_node {
             (
-                SCORE_ROOK_OPEN_FILE,
-                SCORE_ROOK_OPEN_FILE_STEP,
-                SCORE_ROOK_BACK_RANK,
+                p.score_rook_open_file,
+                p.score_rook_open_file_step,
+                p.score_rook_back_rank,
             )
         } else {
             (
-                SCORE_ROOK_OPEN_FILE * AND_ROOK_ATTACK_SCALE / 100,
-                SCORE_ROOK_OPEN_FILE_STEP * AND_ROOK_ATTACK_SCALE / 100,
-                SCORE_ROOK_BACK_RANK * AND_ROOK_ATTACK_SCALE / 100,
+                p.score_rook_open_file * p.and_rook_attack_scale / 100,
+                p.score_rook_open_file_step * p.and_rook_attack_scale / 100,
+                p.score_rook_back_rank * p.and_rook_attack_scale / 100,
             )
         };
         let (approach, approach_step, center, center_step, rook_center) = if is_or_node {
-            (SCORE_APPROACH, 10, SCORE_CENTER, 10, SCORE_ROOK_CENTER)
+            (
+                p.score_approach,
+                p.score_approach_step,
+                p.score_center,
+                p.score_center_step,
+                p.score_rook_center,
+            )
         } else {
             (
-                SCORE_APPROACH * AND_APPROACH_SCALE / 100,
-                10 * AND_APPROACH_SCALE / 100,
-                SCORE_CENTER * AND_APPROACH_SCALE / 100,
-                10 * AND_APPROACH_SCALE / 100,
-                SCORE_ROOK_CENTER * AND_APPROACH_SCALE / 100,
+                p.score_approach * p.and_approach_scale / 100,
+                p.score_approach_step * p.and_approach_scale / 100,
+                p.score_center * p.and_approach_scale / 100,
+                p.score_center_step * p.and_approach_scale / 100,
+                p.score_rook_center * p.and_approach_scale / 100,
             )
         };
 
@@ -246,9 +257,9 @@ impl StaticAtomicScorer {
             let attack_bb = attacks_from(from_pt, us, to, new_occupied);
             if (attack_bb & board.commoners(them)) != atomic_movegen::types::Bitboard::EMPTY {
                 let base = if state.them_commoners_count == 1 {
-                    SCORE_THREAT_LAST
+                    p.score_threat_last
                 } else {
-                    SCORE_THREAT
+                    p.score_threat
                 };
                 // If the threatening piece can be immediately captured, the
                 // threat is less reliable; downgrade it.
@@ -268,9 +279,9 @@ impl StaticAtomicScorer {
             != atomic_movegen::types::Bitboard::EMPTY
         {
             if state.them_commoners_count == 1 {
-                score += SCORE_KAMIKAZE_LAST;
+                score += p.score_kamikaze_last;
             } else {
-                score += SCORE_KAMIKAZE;
+                score += p.score_kamikaze;
             }
         }
 

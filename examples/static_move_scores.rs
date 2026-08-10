@@ -6,18 +6,21 @@
 //!
 //! Default position is the `m19` regression FEN. Use `--name <case>` to inspect
 //! one of the move-order benchmark positions. Use `--and` to show scores from
-//! the defender (AND-node) perspective.
+//! the defender (AND-node) perspective. Use `--config <FILE>` to load custom
+//! scorer parameters.
 //!
 //! Usage:
 //!     cargo run --example `static_move_scores`
 //!     cargo run --example `static_move_scores` -- --name m25_white
 //!     cargo run --example `static_move_scores` -- --name m25_white --and
+//!     cargo run --example `static_move_scores` -- --config /path/to/scorer.toml
 //!     cargo run --example `static_move_scores` -- "<fen>"
 
 mod common;
 
 use atomic_movegen::board::StateInfo;
 use atomic_movegen::types::MoveList;
+use atomic_solver::config;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::Position;
 use atomic_solver::search::ordering::{StaticAtomicScorer, nearest_commoner_map};
@@ -26,6 +29,7 @@ fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut fen: Option<String> = None;
     let mut is_or_node = true;
+    let mut config_path: Option<String> = None;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -42,6 +46,10 @@ fn main() {
                 is_or_node = false;
                 i += 1;
             }
+            "--config" if i + 1 < args.len() => {
+                config_path = Some(args[i + 1].clone());
+                i += 2;
+            }
             _ if fen.is_none() => {
                 fen = Some(args[i].clone());
                 i += 1;
@@ -51,8 +59,18 @@ fn main() {
             }
         }
     }
+    let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
+
     let fen = fen.unwrap_or_else(|| common::M19_FEN.to_string());
     let pos = Position::from_fen(&fen).unwrap();
+
+    let scorer = match config_path {
+        Some(path) => {
+            let params = config::load_scorer_config(&path).expect("valid scorer config");
+            StaticAtomicScorer::from_params(params)
+        }
+        None => StaticAtomicScorer::default(),
+    };
 
     let mut moves = MoveList::new();
     pos.legal_moves(&mut moves);
@@ -67,7 +85,7 @@ fn main() {
             let m = moves[i];
             (
                 i,
-                StaticAtomicScorer.score_with_map(pos.board(), m, &state, &nearest, is_or_node),
+                scorer.score_with_map(pos.board(), m, &state, &nearest, is_or_node),
             )
         })
         .collect();

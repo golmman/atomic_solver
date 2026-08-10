@@ -1,0 +1,35 @@
+# Default move-ordering parameters for the atomic-chess solver.
+#
+# These values match the compiled-in defaults. Copy this file and pass it with
+# `--config <FILE>` to experiment with different weights without recompiling.
+
+[scorer]
+score_winning_capture = 100_000_000
+score_promotion = 1_000_000
+score_capture = 5_000
+capture_net_scale = 10
+score_threat_last = 10_000
+score_threat = 1_000
+score_kamikaze_last = 9_000
+score_kamikaze = 3_000
+score_approach = 100
+score_approach_step = 10
+score_center = 50
+score_center_step = 10
+score_pawn_storm = 5_500
+score_pawn_storm_step = 100
+score_rook_center = 500
+score_rook_open_file = 2_000
+score_rook_open_file_step = 50
+score_rook_back_rank = 300
+and_pawn_storm_scale = 50
+and_rook_attack_scale = 50
+and_approach_scale = 75
+
+[scorer.pieces]
+pawn = 100
+knight = 320
+bishop = 330
+rook = 500
+queen = 900
+commoner = 20_000

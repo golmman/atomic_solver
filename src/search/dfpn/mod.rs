@@ -124,7 +124,7 @@ impl Search {
             deadline: Instant::now(),
             epsilon_num,
             epsilon_den,
-            scorer: StaticAtomicScorer,
+            scorer: StaticAtomicScorer::default(),
             first_outcome_only: false,
             timeout: Duration::from_secs(TIMEOUT_SECS),
             history: [[[0; 64]; 64]; 2],
@@ -146,6 +146,14 @@ impl Search {
 
     pub fn set_first_outcome_only(&mut self, value: bool) {
         self.first_outcome_only = value;
+    }
+
+    pub fn set_scorer(&mut self, scorer: StaticAtomicScorer) {
+        self.scorer = scorer;
+    }
+
+    pub fn scorer(&self) -> &StaticAtomicScorer {
+        &self.scorer
     }
 
     pub fn set_timeout(&mut self, seconds: u64) {

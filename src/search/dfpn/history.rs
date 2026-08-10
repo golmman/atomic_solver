@@ -151,7 +151,7 @@ impl Search {
         pos: &Position,
         is_or_node: bool,
     ) -> Vec<(Move, i32, i32, i32, i32)> {
-        use crate::search::ordering::{StaticAtomicScorer, nearest_commoner_map};
+        use crate::search::ordering::nearest_commoner_map;
 
         let mut moves = MoveList::new();
         pos.legal_moves(&mut moves);
@@ -168,7 +168,8 @@ impl Search {
         for i in 0..moves.len() {
             let m = moves[i];
             let static_score =
-                StaticAtomicScorer.score_with_map(pos.board(), m, &state, &nearest, is_or_node);
+                self.scorer
+                    .score_with_map(pos.board(), m, &state, &nearest, is_or_node);
             let history = self.history[us as usize][m.from_sq() as usize][m.to_sq() as usize];
             let killer = self.killer_bonus(m, depth);
             let total = static_score + history + killer;

@@ -12,9 +12,11 @@
 
 mod common;
 
+use atomic_solver::config;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
+use atomic_solver::search::ordering::StaticAtomicScorer;
 use std::time::{Duration, Instant};
 
 #[derive(Clone, Debug)]
@@ -59,6 +61,7 @@ fn main() {
     let mut suite = Suite::Default;
     let mut first_outcome = false;
     let mut filter: Option<String> = None;
+    let mut config_path: Option<String> = None;
 
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut i = 0;
@@ -101,12 +104,26 @@ fn main() {
                 first_outcome = true;
                 i += 1;
             }
+            "--config" => {
+                config_path = Some(args.get(i + 1).expect("--config needs a file path").clone());
+                i += 2;
+            }
             other => {
                 filter = Some(other.to_string());
                 i += 1;
             }
         }
     }
+
+    let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
+
+    let scorer = match config_path {
+        Some(path) => {
+            let params = config::load_scorer_config(&path).expect("valid scorer config");
+            StaticAtomicScorer::from_params(params)
+        }
+        None => StaticAtomicScorer::default(),
+    };
 
     let cases = load_suite(&suite);
 
@@ -130,7 +147,7 @@ fn main() {
             continue;
         }
         println!("benchmarking {} ...", case.name);
-        let result = bench_case(&case, runs, timeout, epsilon, first_outcome);
+        let result = bench_case(&case, runs, timeout, epsilon, first_outcome, &scorer);
         if let Some(expected) = result.expected
             && result.outcome != Outcome::Draw
             && result.outcome != expected
@@ -241,15 +258,16 @@ fn bench_case(
     timeout: u64,
     epsilon: f64,
     first_outcome: bool,
+    scorer: &StaticAtomicScorer,
 ) -> BenchResult {
     // Warm-up run, excluded from statistics (matching the report style).
-    let _ = run_once(&case.fen, timeout, epsilon, first_outcome);
+    let _ = run_once(&case.fen, timeout, epsilon, first_outcome, scorer.clone());
 
     let mut times = Vec::with_capacity(runs);
     let mut first: Option<Run> = None;
 
     for _ in 0..runs {
-        let run = run_once(&case.fen, timeout, epsilon, first_outcome);
+        let run = run_once(&case.fen, timeout, epsilon, first_outcome, scorer.clone());
         times.push(run.elapsed);
         if first.is_none() {
             first = Some(run);
@@ -277,9 +295,16 @@ fn bench_case(
     }
 }
 
-fn run_once(fen: &str, timeout: u64, epsilon: f64, first_outcome: bool) -> Run {
+fn run_once(
+    fen: &str,
+    timeout: u64,
+    epsilon: f64,
+    first_outcome: bool,
+    scorer: StaticAtomicScorer,
+) -> Run {
     let mut pos = Position::from_fen(fen).expect("valid FEN");
     let mut search = Search::new(64);
+    search.set_scorer(scorer);
     search.set_timeout(timeout);
     search.set_epsilon(epsilon);
     search.set_first_outcome_only(first_outcome);

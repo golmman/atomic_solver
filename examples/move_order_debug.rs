@@ -9,7 +9,8 @@
 //! By default the breakdown is shown *before* any search, so history and killer
 //! bonuses are zero. Pass `--solve` as the first argument to run a short solve
 //! first and see the dynamic bonuses. Pass `--and` to show the defender
-//! (AND-node) scoring profile.
+//! (AND-node) scoring profile. Pass `--config <FILE>` to load custom scorer
+//! parameters.
 //!
 //! Default position is the `m19` regression FEN. Use `--name <case>` to inspect
 //! one of the move-order benchmark positions from `tests/fixtures/move_order_positions.txt`.
@@ -18,14 +19,17 @@
 //!     cargo run --example move_order_debug
 //!     cargo run --example move_order_debug -- --name m25_white
 //!     cargo run --example move_order_debug -- --name m25_white --and
+//!     cargo run --example move_order_debug -- --config /path/to/scorer.toml
 //!     cargo run --example move_order_debug -- --solve "<fen>"
 //!     cargo run --example move_order_debug -- "<fen>"
 
 mod common;
 
+use atomic_solver::config;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::Position;
 use atomic_solver::search::dfpn::Search;
+use atomic_solver::search::ordering::StaticAtomicScorer;
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -33,6 +37,7 @@ fn main() {
     let mut is_or_node = true;
     let mut name: Option<String> = None;
     let mut fen: Option<String> = None;
+    let mut config_path: Option<String> = None;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -50,6 +55,10 @@ fn main() {
             }
             "--fen" if i + 1 < args.len() => {
                 fen = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--config" if i + 1 < args.len() => {
+                config_path = Some(args[i + 1].clone());
                 i += 2;
             }
             _ if name.is_none() && fen.is_none() => {
@@ -70,13 +79,24 @@ fn main() {
         fen.unwrap_or_else(|| common::M19_FEN.to_string())
     };
 
+    let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
+
     let pos = if fen == "startpos" {
         Position::new()
     } else {
         Position::from_fen(&fen).unwrap()
     };
 
+    let scorer = match config_path {
+        Some(path) => {
+            let params = config::load_scorer_config(&path).expect("valid scorer config");
+            StaticAtomicScorer::from_params(params)
+        }
+        None => StaticAtomicScorer::default(),
+    };
+
     let mut search = Search::new(64);
+    search.set_scorer(scorer);
     if solve_first {
         search.set_timeout(5);
         let mut p = pos.clone();
