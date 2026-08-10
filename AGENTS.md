@@ -150,8 +150,9 @@ program.
   - ignore all `prompt.md` files
   - implementation plans can be found via `find . -type f -name 'plan*.md'`
   - implementation reports can be found via `find . -type f -name 'report*.md'`
+  - implementation plans should always be self contained so they can be implemented i a seaparate session
   - the final task of an implementation plan is creating the corresponding implementation report
-    - the report should include additional tools/examples used, problems encountered, unresolved parts, missing tests, next steps
+  - a report should include additional tools/examples used, problems encountered, unresolved parts, missing tests, next steps
   - older plans and reports may not reflect the current state of the application or its goals
 
 ## Conversational Guidelines
