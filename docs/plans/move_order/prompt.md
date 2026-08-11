@@ -62,3 +62,13 @@ q3kbnr/2p3pp/5p2/4p3/6b1/2PpPP2/1P1P2PP/RNBQKB1R w KQk - 0 10
 3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41
 7k/pr6/4B1p1/1P6/3PpPPp/4P3/P6P/4KR2 w - - 1 28
 ```
+
+---
+
+We want to prepare for an external optimizer to finetune the `config.toml` values via gradient descent.
+
+I suppose we need at least one quick benchmark for rapid testing and one thorough benchmark for validations.
+Also we should aim for consistent benchmark output with relevant metrics.
+
+Help me brainstorm what else we can do to provide a proper interface to the optimizer.
+
