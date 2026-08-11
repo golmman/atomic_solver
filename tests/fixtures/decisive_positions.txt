@@ -1,0 +1,16 @@
+# Decisive benchmark positions that solve within the default 5-second budget.
+# All outcomes are from the side-to-move perspective.
+# Format: name;fen;expected;note
+#
+# These positions were verified with the release CLI using the default
+# 5-second refined search.  The printed PV lengths are informational only.
+dec01;r5r1/5N1k/2p2p2/pp1p3p/3Pp3/2P1P3/P7/2bQ1R1K w - - 0 30;Win;solves in 5s, 27 plies
+dec02;8/1k1p4/1P2p3/p2P1P2/P7/6p1/6K1/8 b - - 0 27;Loss;solves in 5s, 30 plies
+dec03;r4r2/pp2p1Bk/2p3p1/1B1pP1bp/3P3P/1PN5/2P5/5R1K w - - 1 21;Win;solves in 5s, 7 plies
+dec04;3k3r/1p1P4/4p2P/5p2/P7/2n1P3/6K1/7R b - - 0 25;Win;solves in 5s, 11 plies
+dec05;7k/7p/1pp3p1/3B4/2P5/5pPP/P7/R5K1 w - - 0 26;Win;solves in 5s, 15 plies
+dec06;3r2k1/8/p7/2P2P2/8/1P1p3P/P2K2r1/6R1 w - - 1 32;Loss;solves in 5s, 22 plies
+dec07;r2qk2r/p2n4/6pp/1ppppp2/3P1B2/5PPP/PPP1Q1B1/R4RK1 w kq - 0 18;Win;solves in 5s, 9 plies
+dec08;r4r1k/3q1P2/pp4pp/2pp4/N4Q2/2P3PP/PP2p3/R4R1K w - - 0 25;Win;solves in 5s, 3 plies
+dec09;5k2/p1Rb1P2/6r1/1P2p3/P2pP1np/3P3B/3b4/3K2R1 b - - 0 28;Win;solves in 5s, 3 plies
+dec10;3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41;Win;solves in 5s, 33 plies

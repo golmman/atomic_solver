@@ -15,6 +15,12 @@ pub const M19_FEN: &str = "4r1k1/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R4R1K w - - 2
 /// Fixture containing the move-order benchmark positions (m20 to m29).
 pub const MOVE_ORDER_FIXTURE: &str = include_str!("../fixtures/move_order_positions.txt");
 
+/// Fixture containing the decisive benchmark positions (dec01 to dec10).
+pub const DECISIVE_FIXTURE: &str = include_str!("../fixtures/decisive_positions.txt");
+
+/// Fixture containing decisive positions that are not solved in the default 5-second budget.
+pub const DECISIVE_REMAINING_FIXTURE: &str = include_str!("../fixtures/decisive_remaining.txt");
+
 /// A single move-order benchmark entry.
 #[derive(Debug, Clone)]
 pub struct MoveOrderCase {
@@ -27,6 +33,16 @@ pub struct MoveOrderCase {
 /// Load the move-order benchmark suite from the embedded fixture.
 pub fn load_move_order_suite() -> Vec<MoveOrderCase> {
     parse_move_order_fixture(MOVE_ORDER_FIXTURE)
+}
+
+/// Load the decisive benchmark suite from the embedded fixture.
+pub fn load_decisive_suite() -> Vec<MoveOrderCase> {
+    parse_move_order_fixture(DECISIVE_FIXTURE)
+}
+
+/// Load the remaining decisive positions that are too hard for the default budget.
+pub fn load_decisive_remaining_suite() -> Vec<MoveOrderCase> {
+    parse_move_order_fixture(DECISIVE_REMAINING_FIXTURE)
 }
 
 fn parse_move_order_fixture(s: &str) -> Vec<MoveOrderCase> {
@@ -83,6 +99,33 @@ pub fn assert_solves_or_times_out(fen: &str, expected: Outcome, secs: u64) {
             "expected {expected:?} for {fen}, got {outcome:?}"
         );
     }
+}
+
+/// Assert that `fen` is not proven decisive within `secs`.
+///
+/// This is the stress-test contract: the solver should return `Draw` only
+/// because it ran out of time, not because it found a decisive line.
+pub fn assert_unproven_in_secs(fen: &str, secs: u64) {
+    let mut pos =
+        Position::from_fen(fen).unwrap_or_else(|e| panic!("failed to parse FEN '{fen}': {e}"));
+    let mut search = Search::new(64);
+    search.set_timeout(secs);
+
+    let (outcome, _pv, _nodes) = search.solve(&mut pos);
+
+    assert!(
+        search.time_exceeded(),
+        "expected search to time out for unproven stress position {fen}"
+    );
+    assert_eq!(
+        outcome,
+        Outcome::Draw,
+        "unproven stress position should return Draw on timeout, got {outcome:?} for {fen}"
+    );
+}
+
+pub fn assert_unproven_in_60s(fen: &str) {
+    assert_unproven_in_secs(fen, 60);
 }
 
 fn solve_with_options(fen: &str, secs: u64, first_outcome_only: bool) -> (Outcome, Vec<Move>, u64) {

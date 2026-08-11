@@ -70,7 +70,7 @@ not itself a runnable example.
 The runnable examples are:
 
 - `benchmark` — Reproducible benchmark harness over a fixed suite of positions.
-  Supports `--suite default|move-order|all`, `--runs`, `--timeout`, `--epsilon`,
+  Supports `--suite default|move-order|decisive|all`, `--runs`, `--timeout`, `--epsilon`,
   `--first-outcome`, and an optional positional name filter. Prints a table with
   status, outcome, expected outcome, nodes, child evaluations, mean/min/max time,
   and PV length.

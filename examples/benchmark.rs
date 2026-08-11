@@ -9,6 +9,7 @@
 //!     cargo run --release --example benchmark -- --runs 10
 //!     cargo run --release --example benchmark -- --suite move-order --timeout 10 --runs 1
 //!     cargo run --release --example benchmark -- --suite move-order --first-outcome --timeout 5
+//!     cargo run --release --example benchmark -- --suite decisive --timeout 5 --runs 1
 
 mod common;
 
@@ -30,6 +31,7 @@ struct Case {
 enum Suite {
     Default,
     MoveOrder,
+    Decisive,
     All,
 }
 
@@ -93,9 +95,12 @@ fn main() {
                 suite = match value.as_str() {
                     "default" => Suite::Default,
                     "move-order" => Suite::MoveOrder,
+                    "decisive" => Suite::Decisive,
                     "all" => Suite::All,
                     other => {
-                        panic!("unknown suite '{other}'; try 'default', 'move-order', or 'all'")
+                        panic!(
+                            "unknown suite '{other}'; try 'default', 'move-order', 'decisive', or 'all'"
+                        )
                     }
                 };
                 i += 2;
@@ -171,6 +176,7 @@ fn suite_name(suite: &Suite) -> &'static str {
     match suite {
         Suite::Default => "default",
         Suite::MoveOrder => "move-order",
+        Suite::Decisive => "decisive",
         Suite::All => "all",
     }
 }
@@ -179,9 +185,11 @@ fn load_suite(suite: &Suite) -> Vec<Case> {
     match suite {
         Suite::Default => default_suite(),
         Suite::MoveOrder => move_order_suite(),
+        Suite::Decisive => decisive_suite(),
         Suite::All => {
             let mut cases = default_suite();
             cases.extend(move_order_suite());
+            cases.extend(decisive_suite());
             cases
         }
     }
@@ -242,6 +250,18 @@ fn default_suite() -> Vec<Case> {
 
 fn move_order_suite() -> Vec<Case> {
     common::load_move_order_suite()
+        .into_iter()
+        .map(|case| Case {
+            name: case.name,
+            fen: case.fen,
+            expected: case.expected,
+            note: case.note,
+        })
+        .collect()
+}
+
+fn decisive_suite() -> Vec<Case> {
+    common::load_decisive_suite()
         .into_iter()
         .map(|case| Case {
             name: case.name,

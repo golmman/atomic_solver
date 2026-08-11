@@ -128,7 +128,7 @@ let (outcome, pv, nodes) = search.solve(&mut pos);
 Run with `cargo run --example <name> -- [args]`:
 
 - `benchmark` — reproducible benchmark over a fixed suite of positions. Supports
-  `--suite default|move-order|all`, `--first-outcome`, and `--runs N`.
+  `--suite default|move-order|decisive|all`, `--first-outcome`, and `--runs N`.
 - `chunk_growth` — explore work-chunk growth settings.
 - `find_winning_child` — try every first move and report one that wins.
 - `inspect_pt` — dump a binary proof tree to human-readable JSON.
