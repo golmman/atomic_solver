@@ -154,6 +154,7 @@ program.
   - the final task of an implementation plan is creating the corresponding implementation report
   - a report should include additional tools/examples used, problems encountered, unresolved parts, missing tests, next steps
   - older plans and reports may not reflect the current state of the application or its goals
+- Boy Scout principle: you should leave the codebase as clean or cleaner than you found it
 
 ## Conversational Guidelines
 

@@ -1,0 +1,249 @@
+# Optimizer Interface Contract
+
+## Version
+
+Version 1.
+
+## Overview
+
+This document defines the command-line interface that `atomic_solver` exposes
+to an external optimizer. The optimizer's goal is to find `ScorerParams` values
+that minimize the work required to solve the benchmark positions.
+
+`atomic_solver` provides a deterministic, stateless evaluator. The optimizer is
+responsible for:
+
+- proposing parameter values,
+- writing a valid `config.toml` (full or partial),
+- invoking the benchmark binary,
+- parsing the JSON output,
+- computing a scalar loss.
+
+The application is responsible only for validating the config, running the
+requested benchmark suite, and returning raw metrics as JSON.
+
+## Provided evaluator
+
+The evaluator is the release example binary:
+
+```bash
+target/release/examples/benchmark \
+    --config <CANDIDATE_TOML> \
+    --suite <SUITE> \
+    --json \
+    --timeout <SECONDS> \
+    --runs <N> \
+    [--first-outcome]
+```
+
+The JSON can be written to `stdout` or to a file:
+
+```bash
+--json                    # print JSON to stdout
+--output-file <PATH>      # also write JSON to a file
+```
+
+The application does **not** compute a loss. It validates the config, runs the
+suite, emits a JSON document, and exits `0` on success.
+
+## Input contract
+
+### Config file
+
+The file passed to `--config` is a TOML file containing a partial or full
+`[scorer]` table. Missing keys use the compiled-in defaults because
+`ScorerParams` is annotated with `#[serde(default)]`. The application validates
+the final config with `ScorerParams::validate()`; invalid configs cause a
+non-zero exit.
+
+Example partial config:
+
+```toml
+[scorer]
+score_pawn_storm = 5600
+score_pawn_storm_step = 110
+and_pawn_storm_scale = 52
+```
+
+### Suite selection
+
+The `--suite` argument selects the benchmark set. The optimizer-facing suite
+names are:
+
+- `quick` — fast feedback loop, roughly 10–15 seconds per evaluation.
+- `thorough` — validation set, several minutes per evaluation.
+
+The exact positions and timeouts are defined by the suite implementations in
+`examples/benchmark.rs` and the fixtures in `tests/fixtures/`.
+
+### Search controls
+
+| Flag | Meaning |
+|---|---|
+| `--timeout` | Time budget in seconds. |
+| `--runs` | Number of repeated runs for timing statistics. `nodes` and `child_evals` are deterministic, so one run is normally enough for the metric. |
+| `--first-outcome` | Stop after the first decisive line. Recommended for tuning move ordering. |
+| `--epsilon` | DF-PN+ threshold. Should be kept fixed during a tuning study. |
+| `--tt-size` | Transposition-table size in megabytes. Should be kept fixed during a tuning study. |
+
+## Output contract
+
+With `--json`, the benchmark prints a single JSON object to `stdout` and, if
+`--output-file` is supplied, writes the same JSON to a file. `stderr` may contain
+progress logs (for example `[bounded_search] chunk done`) which the optimizer
+must ignore.
+
+### JSON schema
+
+```json
+{
+  "suite": "quick",
+  "mode": "first-outcome",
+  "timeout": 3,
+  "runs": 1,
+  "epsilon": 0.125,
+  "tt_size": 64,
+  "config_path": "/tmp/atomic_solver_cand_abc123.toml",
+  "results": [
+    {
+      "name": "dec01",
+      "status": "ok",
+      "outcome": "win",
+      "expected": "win",
+      "nodes": 284480,
+      "child_evals": 5713086,
+      "time_mean": 1.576,
+      "time_min": 1.576,
+      "time_max": 1.576,
+      "pv_len": 27,
+      "timeout": false,
+      "wrong": false
+    }
+  ],
+  "aggregates": {
+    "total_nodes": 284480,
+    "total_child_evals": 5713086,
+    "total_time": 1.576,
+    "solved": 1,
+    "timeouts": 0,
+    "wrong": 0,
+    "mean_pv_len": 27
+  }
+}
+```
+
+### Status values
+
+| Status | Meaning |
+|---|---|
+| `ok` | Returned a decisive outcome matching the expected value. |
+| `timeout` | Hit the time limit before a decisive outcome. |
+| `wrong` | Returned a decisive outcome that does not match the expected value. |
+| `unknown` | Position has no expected outcome (neither `ok` nor `wrong` applies). |
+
+## Error contract
+
+| Condition | Exit code | `stdout` | `stderr` |
+|---|---|---|---|
+| Valid config, successful run | `0` | JSON | optional progress logs |
+| Invalid config | non-zero | empty | error message |
+| Invalid FEN or other runtime error | non-zero | empty | error message |
+
+The optimizer must treat any non-zero exit as a failed evaluation and assign a
+large loss.
+
+## Loss computation
+
+The application does not compute a loss. The optimizer loads a baseline run and
+computes a scalar. An example formula is:
+
+```
+loss = 0
+for r in result["results"]:
+    base = baselines[suite][r["name"]]
+    if r["wrong"]:
+        loss += WRONG_PENALTY
+    elif r["timeout"] and not base["timeout"]:
+        loss += TIMEOUT_PENALTY + log(r["child_evals"] / base["child_evals"])
+    else:
+        loss += log(r["child_evals"] / base["child_evals"])
+```
+
+- `child_evals` is the preferred efficiency metric because it is deterministic.
+- `WRONG_PENALTY` must dominate the loss, reflecting correctness as the highest
+  priority.
+- The exact loss weights and timeout handling are owned by the optimizer, not by
+  `atomic_solver`.
+
+## Baseline generation
+
+Baselines are produced by running the benchmark with the default `config.toml`
+for the target suite and saving the JSON output:
+
+```bash
+cargo build --release --example benchmark
+
+target/release/examples/benchmark \
+    --config config.toml \
+    --suite quick \
+    --json \
+    --timeout 3 \
+    --runs 1 \
+    --first-outcome \
+    --output-file tune/baselines_quick.json
+
+target/release/examples/benchmark \
+    --config config.toml \
+    --suite thorough \
+    --json \
+    --timeout 5 \
+    --runs 3 \
+    --first-outcome \
+    --output-file tune/baselines_thorough.json
+```
+
+The optimizer reads the appropriate baseline file and extracts the `results`
+array. `tune/baselines_quick.json` and `tune/baselines_thorough.json` are
+committed to the repository and regenerated when the suites or the default
+`ScorerParams` change.
+
+A convenience shell script, `scripts/generate_baselines.sh`, runs the two
+commands above.
+
+## Parameter constraints
+
+Any config passed to the benchmark must pass `ScorerParams::validate()`. The
+most important constraints for an optimizer to respect are:
+
+- All `score_*`, `*_step`, `and_*_scale`, and piece values are non-negative.
+- `and_pawn_storm_scale`, `and_rook_attack_scale`, and `and_approach_scale` are
+  in `[0, 100]`.
+- `pieces.commoner` is strictly greater than the sum of all other piece values.
+- `score_winning_capture` is strictly greater than the highest possible
+  promotion score (`score_promotion + pieces.queen`).
+- `score_promotion` is strictly greater than the highest possible non-winning
+  capture score.
+- No intermediate computation overflows `i32`.
+
+The exact validation logic is in `ScorerParams::validate()` in
+`src/search/ordering/params.rs`.
+
+## Optional server mode
+
+For a very high number of evaluations, a `tune_server` binary may read candidate
+config paths or parameter JSON lines on `stdin` and reply with result JSON lines
+on `stdout`. This avoids the per-evaluation process-spawn overhead. The protocol
+is otherwise identical to the file-based CLI.
+
+## Reproducibility
+
+A tuning study must fix:
+
+- the release binary,
+- `--epsilon`,
+- `--tt-size`,
+- the suite definitions,
+- the baseline files,
+- the loss weights.
+
+Changing any of these requires regenerating baselines.
