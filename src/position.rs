@@ -10,8 +10,10 @@ use atomic_movegen::movegen::{generate_legal, generate_legal_with_state};
 use atomic_movegen::types::{Bitboard, Color, Move, MoveList};
 
 use crate::zobrist;
+use serde::Serialize;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Outcome {
     Loss,
     Draw,

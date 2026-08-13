@@ -181,17 +181,24 @@ The optimizer may store baselines wherever it chooses.
 ## Parameter constraints
 
 Any config passed to the benchmark must pass `ScorerParams::validate()`. The
-most important constraints are:
+exact constraints are:
 
-- All `score_*`, `*_step`, `and_*_scale`, and piece values are non-negative.
-- `and_pawn_storm_scale`, `and_rook_attack_scale`, and `and_approach_scale` are
-  in `[0, 100]`.
-- `pieces.commoner` is strictly greater than the sum of all other piece values.
-- `score_winning_capture` is strictly greater than the highest possible
-  promotion score (`score_promotion + pieces.queen`).
-- `score_promotion` is strictly greater than the highest possible non-winning
-  capture score.
-- No intermediate computation overflows `i32`.
+- All `score_*` fields (`score_winning_capture`, `score_promotion`,
+  `score_capture`, ...), all `*_step` fields, all `and_*_scale` fields, and all
+  `pieces.*` values must be non-negative integers.
+- `and_pawn_storm_scale`, `and_rook_attack_scale`, and `and_approach_scale` must
+  be in `[0, 100]`.
+- `pieces.commoner` must be strictly greater than the sum of `pieces.pawn`,
+  `pieces.knight`, `pieces.bishop`, `pieces.rook`, and `pieces.queen`.
+- `score_winning_capture` must be strictly greater than the highest possible
+  promotion score:
+  `score_winning_capture > score_promotion + pieces.queen`.
+- `score_promotion` must be strictly greater than the highest possible
+  non-winning capture score. The highest non-winning capture removes every
+  non-commoner enemy piece with a pawn and is valued as:
+  `score_capture + capture_net_scale * ((pieces.queen + pieces.rook +
+  pieces.bishop + pieces.knight) - pieces.pawn)`.
+- No intermediate computation in the hierarchy checks may overflow `i32`.
 
-The exact validation logic is in `ScorerParams::validate()` in
+These rules are enforced by `ScorerParams::validate()` in
 `src/search/ordering/params.rs`.

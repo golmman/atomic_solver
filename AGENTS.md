@@ -20,8 +20,8 @@ A pure solver for atomic chess in Rust.
   timeout. `dfpn` emits `ProofEvent` nodes for every node it proves or
   disproves; the returned PV is an informational best-effort line from the
   transposition table and is not guaranteed to be a valid proof. The solver
-  never clears proof events; proof-tree finalization is the responsibility of
-  the proof-tree layer.
+  never clears proof events; proof-tree finalization is the responsibility of the
+  proof-tree layer.
 - `src/search/tt/` holds the transposition table with path-independent base
   entries. Repetition-dependent results are not cached, following the
   first-player-loss GHI shortcut.
@@ -70,10 +70,10 @@ not itself a runnable example.
 The runnable examples are:
 
 - `benchmark` — Reproducible benchmark harness over a fixed suite of positions.
-  Supports `--suite default|move-order|decisive|all`, `--runs`, `--timeout`, `--epsilon`,
-  `--first-outcome`, and an optional positional name filter. Prints a table with
-  status, outcome, expected outcome, nodes, child evaluations, mean/min/max time,
-  and PV length.
+  Supports `--suite default|move-order|decisive|quick|thorough|all`, `--runs`,
+  `--timeout`, `--epsilon`, `--tt-size`, `--first-outcome`, `--config`, `--json`,
+  and `--output-file`. Prints a table by default and, with `--json`, emits a JSON
+  document suitable for an external optimizer.
 - `chunk_growth` — Explore work-chunk growth settings and their effect on
   node counts.
 - `find_winning_child` — Enumerates every legal first move, solves the resulting
@@ -175,3 +175,20 @@ program.
   atomic SEE, pawn-storm, rook centralization, and back-rank bonuses) and the
   constants that are tuned together. The unit tests are split out into
   `src/search/ordering/tests.rs` to keep the main file under the 20 KB limit.
+
+## Tuning workflow
+
+The optimizer interface contract in `docs/spec/optimizer_interface.md` defines
+how an external optimizer can evaluate candidate `ScorerParams` by invoking the
+`benchmark` example with `--json`. The contract is intentionally narrow:
+
+- `atomic_solver` provides the evaluator (`--suite quick` and `--suite thorough`),
+  validates the TOML config, and returns raw metrics as JSON.
+- The optimizer is responsible for generating its own baselines, choosing which
+  `ScorerParams` to vary, mapping the optimizer's parameter space onto the TOML
+  format, projecting invalid proposals back into the valid region, and computing
+  a scalar loss.
+
+Use `child_evals` as the preferred deterministic efficiency metric and ensure
+that any `WRONG_PENALTY` dominates the loss, reflecting correctness as the
+highest priority.
