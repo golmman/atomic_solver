@@ -15,9 +15,9 @@ parsing the JSON output.
 - `ScorerParams` supports partial TOML via `#[serde(default)]`, so an optimizer
   can write only the parameters it wants to vary.
 - The contract requires JSON output from the benchmark, two optimizer-facing
-  suites (`quick` and `thorough`), and a documented parameter/loss contract.
-  The optimizer itself is responsible for generating baselines, parameter
-  mapping, projection, and loss computation.
+  suites (`quick` and `thorough`), and documented `ScorerParams` validation
+  constraints. Parameter mapping, projection, baselines, and loss computation
+  are the optimizer's responsibilities.
 
 ## Scope
 
@@ -26,9 +26,10 @@ In scope:
 - `--json` and `--output-file` flags for `examples/benchmark.rs`.
 - `Suite::Quick` and `Suite::Thorough`.
 - Integration tests for the JSON output.
-- Documentation update linking the contract to the workflow.
-- A recommended first-pass tunable subset, projection rules, and example loss
-  formula, documented in this plan.
+- Documentation update pointing to the contract and clarifying optimizer
+  responsibilities.
+- Updated `docs/spec/optimizer_interface.md` with the `ScorerParams` validation
+  constraints.
 
 Out of scope for this plan:
 
@@ -90,88 +91,27 @@ The exact case lists come from the existing fixtures in
 `tests/fixtures/move_order_positions.txt`, loaded through the same parser
 already used by `examples/common.rs`.
 
-### 3. Baselines
+### 3. Baselines, parameter mapping, and loss
 
-`atomic_solver` does not generate or ship baseline files. The optimizer
-produces its own baseline by running the benchmark with the default
-`config.toml` for the target suite and saving the JSON output. The contract in
-`docs/spec/optimizer_interface.md` documents the expected command and the
-baseline file format.
+`atomic_solver` does not generate baselines, choose a parameter subset,
+implement projection, or compute a loss. The optimizer does all of that. The
+contract in `docs/spec/optimizer_interface.md` documents:
 
-### 4. Recommended first-pass tunable subset
+- how to generate a baseline by running the default config,
+- the preferred `child_evals` metric,
+- the `ScorerParams` validation constraints.
 
-This subset is guidance for optimizer implementers. The optimizer may choose a
-different subset as long as the resulting TOML passes `ScorerParams::validate()`.
-
-| Parameter | Default | Lower | Upper | Notes |
-|---|---|---|---|---|
-| `score_capture` | 5000 | 1000 | 50000 | Keep above `score_kamikaze` if both are tuned. |
-| `capture_net_scale` | 10 | 1 | 100 | |
-| `score_threat` | 1000 | 0 | 5000 | Keep below `score_kamikaze`. |
-| `score_kamikaze` | 3000 | 0 | 10000 | Keep below `score_capture`. |
-| `score_approach` | 100 | 0 | 50000 | |
-| `score_approach_step` | 10 | 0 | 10000 | |
-| `score_center` | 50 | 0 | 50000 | |
-| `score_center_step` | 10 | 0 | 10000 | |
-| `score_pawn_storm` | 5500 | 0 | 500000 | |
-| `score_pawn_storm_step` | 100 | 0 | 100000 | |
-| `score_rook_open_file` | 2000 | 0 | 500000 | |
-| `score_rook_open_file_step` | 50 | 0 | 100000 | |
-| `score_rook_back_rank` | 300 | 0 | 500000 | |
-| `and_pawn_storm_scale` | 50 | 0 | 100 | Percent multiplier. |
-| `and_rook_attack_scale` | 50 | 0 | 100 | Percent multiplier. |
-| `and_approach_scale` | 75 | 0 | 100 | Percent multiplier. |
-
-Fixed for the first pass:
-
-- `score_winning_capture`
-- `score_promotion`
-- `score_threat_last`
-- `score_kamikaze_last`
-- `score_rook_center`
-- all `pieces` values
-
-The exact hierarchy and overflow constraints are enforced by
-`ScorerParams::validate()`.
-
-### 5. Example loss formula
-
-Document an example loss formula in `docs/spec/optimizer_interface.md`:
-
-```
-loss = 0
-for r in result["results"]:
-    base = baselines[suite][r["name"]]
-    if r["wrong"]:
-        loss += WRONG_PENALTY
-    elif r["timeout"] and not base["timeout"]:
-        loss += TIMEOUT_PENALTY + log(r["child_evals"] / base["child_evals"])
-    else:
-        loss += log(r["child_evals"] / base["child_evals"])
-```
-
-Default weights for an example implementation:
-
-- `WRONG_PENALTY = 100.0`
-- `TIMEOUT_PENALTY = 10.0`
-
-The optimizer may use a different loss. `atomic_solver` only provides the raw
-metrics.
-
-### 6. Tests
+### 4. Tests
 
 - Add an integration test under `tests/` that runs
   `target/release/examples/benchmark --config config.toml --suite quick --json
   --timeout 1 --runs 1 --output-file <temp>` and validates the JSON schema.
 
-### 7. Documentation
+### 5. Documentation
 
-Append a "Tuning workflow" section to `AGENTS.md` that points to:
-
-- `docs/spec/optimizer_interface.md`
-
-Make clear that baseline generation, parameter mapping, projection, and loss
-computation are the optimizer's responsibilities.
+Append a short "Tuning workflow" section to `AGENTS.md` that points to
+`docs/spec/optimizer_interface.md` and makes clear that the optimizer owns
+baselines, parameter mapping, projection, and loss.
 
 ## Implementation steps
 
@@ -182,7 +122,8 @@ computation are the optimizer's responsibilities.
    `examples/benchmark.rs` and add `--json` / `--output-file` parsing.
 3. Add `Suite::Quick` and `Suite::Thorough` and the corresponding
    `quick_suite()` / `thorough_suite()` loaders.
-4. Update `docs/spec/optimizer_interface.md` with the parameter constraints.
+4. Update `docs/spec/optimizer_interface.md` with the `ScorerParams` validation
+   constraints.
 5. Add the JSON integration test.
 6. Update `AGENTS.md`.
 7. Run `cargo fmt`, `cargo clippy --all-targets`, `cargo test`, and the
@@ -224,8 +165,6 @@ target/release/examples/benchmark \
 |---|---|
 | `serde_json` conflicts with pinned `serde` | Use `[dev-dependencies]`; if conflict, fall back to manual JSON. |
 | Quick suite too slow for the optimizer loop | Reduce timeout or subset; measure before committing. |
-| Loss dominated by timeouts | The optimizer, not the app, owns the loss weights. Document defaults. |
-| Overfitting to move-order positions | Use `thorough` for validation and consider a held-out test set later. |
 | Invalid configs crash the optimizer | The app returns a non-zero exit; the optimizer must assign a large loss. |
 
 ## Success criteria
@@ -245,4 +184,4 @@ Write `docs/plans/tune/report1.md` describing:
 - the exact JSON schema and suite definitions,
 - any deviations from this plan,
 - measured wall times for `quick` and `thorough` on the default config,
-- unresolved parts and next steps (more parameters, held-out validation, etc.).
+- unresolved parts and next steps.

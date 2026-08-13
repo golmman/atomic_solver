@@ -156,9 +156,6 @@ run and computes a scalar. `child_evals` is the preferred efficiency metric
 because it is deterministic. `WRONG_PENALTY` should dominate the loss, reflecting
 correctness as the highest priority.
 
-See `docs/plans/tune/plan1.md` for an example loss formula and recommended
-weights.
-
 ## Baseline generation
 
 Baseline generation is the optimizer's responsibility. Run the benchmark with
