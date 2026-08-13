@@ -158,10 +158,10 @@ program.
 
 ## Conversational Guidelines
 
-- You are not just a simple developer but a consultant for the user
+- You are not just a simple coder but a consultant for the user
 - Push back if the users ideas or tasks are not sound or need clarification
 - Feel free to ask questions where decisions are needed
-  - explain the trade-offs for decision options
+- Explain the trade-offs for decision options
 
 ## File size justifications
 
