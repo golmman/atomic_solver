@@ -11,13 +11,9 @@ to an external optimizer. The optimizer's goal is to find `ScorerParams` values
 that minimize the work required to solve the benchmark positions.
 
 `atomic_solver` provides a deterministic, stateless evaluator. The optimizer is
-responsible for:
-
-- proposing parameter values,
-- writing a valid `config.toml` (full or partial),
-- invoking the benchmark binary,
-- parsing the JSON output,
-- computing a scalar loss.
+responsible for proposing parameter values, writing a valid `config.toml`,
+generating its own baselines, invoking the benchmark binary, parsing the JSON
+output, and computing a scalar loss.
 
 The application is responsible only for validating the config, running the
 requested benchmark suite, and returning raw metrics as JSON.
@@ -43,8 +39,9 @@ The JSON can be written to `stdout` or to a file:
 --output-file <PATH>      # also write JSON to a file
 ```
 
-The application does **not** compute a loss. It validates the config, runs the
-suite, emits a JSON document, and exits `0` on success.
+The application does **not** compute a loss, does **not** store baselines, and
+does **not** know about the optimizer's search space. It validates the config,
+runs the suite, emits a JSON document, and exits `0` on success.
 
 ## Input contract
 
@@ -154,35 +151,24 @@ large loss.
 
 ## Loss computation
 
-The application does not compute a loss. The optimizer loads a baseline run and
-computes a scalar. An example formula is:
+The application does not compute a loss. The optimizer loads its own baseline
+run and computes a scalar. `child_evals` is the preferred efficiency metric
+because it is deterministic. `WRONG_PENALTY` should dominate the loss, reflecting
+correctness as the highest priority.
 
-```
-loss = 0
-for r in result["results"]:
-    base = baselines[suite][r["name"]]
-    if r["wrong"]:
-        loss += WRONG_PENALTY
-    elif r["timeout"] and not base["timeout"]:
-        loss += TIMEOUT_PENALTY + log(r["child_evals"] / base["child_evals"])
-    else:
-        loss += log(r["child_evals"] / base["child_evals"])
-```
-
-- `child_evals` is the preferred efficiency metric because it is deterministic.
-- `WRONG_PENALTY` must dominate the loss, reflecting correctness as the highest
-  priority.
-- The exact loss weights and timeout handling are owned by the optimizer, not by
-  `atomic_solver`.
+See `docs/plans/tune/plan1.md` for an example loss formula and recommended
+weights.
 
 ## Baseline generation
 
-Baselines are produced by running the benchmark with the default `config.toml`
-for the target suite and saving the JSON output:
+Baseline generation is the optimizer's responsibility. Run the benchmark with
+the default `config.toml` for the target suite and save the JSON output. The
+baseline file has the same schema as the benchmark output; the optimizer
+extracts the `results` array.
+
+Example command:
 
 ```bash
-cargo build --release --example benchmark
-
 target/release/examples/benchmark \
     --config config.toml \
     --suite quick \
@@ -190,30 +176,15 @@ target/release/examples/benchmark \
     --timeout 3 \
     --runs 1 \
     --first-outcome \
-    --output-file tune/baselines_quick.json
-
-target/release/examples/benchmark \
-    --config config.toml \
-    --suite thorough \
-    --json \
-    --timeout 5 \
-    --runs 3 \
-    --first-outcome \
-    --output-file tune/baselines_thorough.json
+    --output-file /path/to/optimizer/baseline_quick.json
 ```
 
-The optimizer reads the appropriate baseline file and extracts the `results`
-array. `tune/baselines_quick.json` and `tune/baselines_thorough.json` are
-committed to the repository and regenerated when the suites or the default
-`ScorerParams` change.
-
-A convenience shell script, `scripts/generate_baselines.sh`, runs the two
-commands above.
+The optimizer may store baselines wherever it chooses.
 
 ## Parameter constraints
 
 Any config passed to the benchmark must pass `ScorerParams::validate()`. The
-most important constraints for an optimizer to respect are:
+most important constraints are:
 
 - All `score_*`, `*_step`, `and_*_scale`, and piece values are non-negative.
 - `and_pawn_storm_scale`, `and_rook_attack_scale`, and `and_approach_scale` are
@@ -227,23 +198,3 @@ most important constraints for an optimizer to respect are:
 
 The exact validation logic is in `ScorerParams::validate()` in
 `src/search/ordering/params.rs`.
-
-## Optional server mode
-
-For a very high number of evaluations, a `tune_server` binary may read candidate
-config paths or parameter JSON lines on `stdin` and reply with result JSON lines
-on `stdout`. This avoids the per-evaluation process-spawn overhead. The protocol
-is otherwise identical to the file-based CLI.
-
-## Reproducibility
-
-A tuning study must fix:
-
-- the release binary,
-- `--epsilon`,
-- `--tt-size`,
-- the suite definitions,
-- the baseline files,
-- the loss weights.
-
-Changing any of these requires regenerating baselines.

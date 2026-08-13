@@ -15,9 +15,9 @@ parsing the JSON output.
 - `ScorerParams` supports partial TOML via `#[serde(default)]`, so an optimizer
   can write only the parameters it wants to vary.
 - The contract requires JSON output from the benchmark, two optimizer-facing
-  suites (`quick` and `thorough`), committed baseline files, and a documented
-  parameter/loss contract. The optimizer itself implements parameter mapping,
-  projection, and loss computation.
+  suites (`quick` and `thorough`), and a documented parameter/loss contract.
+  The optimizer itself is responsible for generating baselines, parameter
+  mapping, projection, and loss computation.
 
 ## Scope
 
@@ -25,18 +25,15 @@ In scope:
 
 - `--json` and `--output-file` flags for `examples/benchmark.rs`.
 - `Suite::Quick` and `Suite::Thorough`.
-- A `scripts/generate_baselines.sh` convenience script that uses the CLI to
-  produce `tune/baselines_quick.json` and `tune/baselines_thorough.json`.
-- Committing baseline files for the default `config.toml`.
 - Integration tests for the JSON output.
 - Documentation update linking the contract to the workflow.
 - A recommended first-pass tunable subset, projection rules, and example loss
-  formula, documented in `docs/spec/optimizer_interface.md`.
+  formula, documented in this plan.
 
 Out of scope for this plan:
 
 - Any language-specific optimizer wrapper.
-- `tune_server` stdin/stdout mode.
+- Baseline files or baseline-generation scripts.
 - Tuning history/killer parameters.
 - True gradients or differentiable surrogates.
 
@@ -93,40 +90,18 @@ The exact case lists come from the existing fixtures in
 `tests/fixtures/move_order_positions.txt`, loaded through the same parser
 already used by `examples/common.rs`.
 
-### 3. Baseline generation
+### 3. Baselines
 
-`scripts/generate_baselines.sh` builds the release benchmark and runs:
-
-```bash
-target/release/examples/benchmark \
-    --config config.toml \
-    --suite quick \
-    --json \
-    --timeout 3 \
-    --runs 1 \
-    --first-outcome \
-    --output-file tune/baselines_quick.json
-
-target/release/examples/benchmark \
-    --config config.toml \
-    --suite thorough \
-    --json \
-    --timeout 5 \
-    --runs 3 \
-    --first-outcome \
-    --output-file tune/baselines_thorough.json
-```
-
-The optimizer reads the baseline file for the suite it is running and extracts
-the `results` array. A baseline file is the same JSON output as a normal
-benchmark run, but produced from the default `config.toml`.
+`atomic_solver` does not generate or ship baseline files. The optimizer
+produces its own baseline by running the benchmark with the default
+`config.toml` for the target suite and saving the JSON output. The contract in
+`docs/spec/optimizer_interface.md` documents the expected command and the
+baseline file format.
 
 ### 4. Recommended first-pass tunable subset
 
-Document this subset in `docs/spec/optimizer_interface.md` as guidance for
-optimizer implementers. The parameters below are a starting point; the optimizer
-may choose a different subset as long as the resulting TOML passes
-`ScorerParams::validate()`.
+This subset is guidance for optimizer implementers. The optimizer may choose a
+different subset as long as the resulting TOML passes `ScorerParams::validate()`.
 
 | Parameter | Default | Lower | Upper | Notes |
 |---|---|---|---|---|
@@ -188,17 +163,15 @@ metrics.
 - Add an integration test under `tests/` that runs
   `target/release/examples/benchmark --config config.toml --suite quick --json
   --timeout 1 --runs 1 --output-file <temp>` and validates the JSON schema.
-- Optionally add a small shell test that runs `scripts/generate_baselines.sh`
-  and checks the generated baseline files.
 
 ### 7. Documentation
 
 Append a "Tuning workflow" section to `AGENTS.md` that points to:
 
 - `docs/spec/optimizer_interface.md`
-- `tune/baselines_quick.json`
-- `tune/baselines_thorough.json`
-- `scripts/generate_baselines.sh`
+
+Make clear that baseline generation, parameter mapping, projection, and loss
+computation are the optimizer's responsibilities.
 
 ## Implementation steps
 
@@ -209,23 +182,17 @@ Append a "Tuning workflow" section to `AGENTS.md` that points to:
    `examples/benchmark.rs` and add `--json` / `--output-file` parsing.
 3. Add `Suite::Quick` and `Suite::Thorough` and the corresponding
    `quick_suite()` / `thorough_suite()` loaders.
-4. Update `docs/spec/optimizer_interface.md` with the parameter constraints and
-   recommended subset appendix.
-5. Create `scripts/generate_baselines.sh` and produce
-   `tune/baselines_quick.json` and `tune/baselines_thorough.json`.
-6. Add the JSON integration test.
-7. Update `AGENTS.md`.
-8. Run `cargo fmt`, `cargo clippy --all-targets`, `cargo test`, and the
+4. Update `docs/spec/optimizer_interface.md` with the parameter constraints.
+5. Add the JSON integration test.
+6. Update `AGENTS.md`.
+7. Run `cargo fmt`, `cargo clippy --all-targets`, `cargo test`, and the
    manual validation commands.
-9. Write `docs/plans/tune/report1.md`.
+8. Write `docs/plans/tune/report1.md`.
 
 ## Files changed
 
 - `Cargo.toml`
 - `examples/benchmark.rs`
-- `scripts/generate_baselines.sh` (new)
-- `tune/baselines_quick.json` (new)
-- `tune/baselines_thorough.json` (new)
 - `tests/test_benchmark_json.rs` (new)
 - `docs/spec/optimizer_interface.md`
 - `AGENTS.md`
@@ -249,9 +216,6 @@ target/release/examples/benchmark \
     --output-file /tmp/quick_default.json
 
 # Verify the output is valid JSON and contains the expected fields.
-
-# Generate baselines.
-./scripts/generate_baselines.sh
 ```
 
 ## Risks and mitigations
@@ -269,11 +233,9 @@ target/release/examples/benchmark \
 1. `examples/benchmark --json` emits valid JSON matching the contract.
 2. `quick` and `thorough` suites are selectable and finish in the expected
    time.
-3. `scripts/generate_baselines.sh` produces
-   `tune/baselines_quick.json` and `tune/baselines_thorough.json`.
-4. `cargo test` passes, including the new integration test.
-5. `AGENTS.md` links to the contract and baseline files.
-6. `docs/plans/tune/report1.md` documents any deviations and measurements.
+3. `cargo test` passes, including the new integration test.
+4. `AGENTS.md` links to the contract and explains optimizer responsibilities.
+5. `docs/plans/tune/report1.md` documents any deviations and measurements.
 
 ## Final task
 
@@ -282,6 +244,5 @@ Write `docs/plans/tune/report1.md` describing:
 - which files changed and why,
 - the exact JSON schema and suite definitions,
 - any deviations from this plan,
-- measured wall times for `quick` and `thorough` baselines,
-- sample loss values for the default and a perturbed parameter set,
-- unresolved parts and next steps (server mode, more parameters, etc.).
+- measured wall times for `quick` and `thorough` on the default config,
+- unresolved parts and next steps (more parameters, held-out validation, etc.).
