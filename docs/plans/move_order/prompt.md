@@ -72,3 +72,38 @@ Also we should aim for consistent benchmark output with relevant metrics.
 
 Help me brainstorm what else we can do to provide a proper interface to the optimizer.
 
+---
+
+More positions
+
+```
+rnbBk2r/pp4pp/2p5/4Np2/1b1pP3/2N4P/1PP2P2/3QKB1R b Kkq e3 0 12
+r4rk1/1p5p/2p3p1/p2p2R1/7P/4PP2/2P5/5K2 b - - 3 20
+rnb1k2r/p2p3p/4ppp1/qp6/3PPQ2/8/PPP2PPP/R3KB1R w KQkq - 2 11
+2b2k1r/pp5p/2ppp3/8/4P2P/qPPP4/P1Q2b2/5R1K w - - 0 23
+rn1q3r/ppNk2pp/2p2p2/2bpp3/P2PP1b1/2P2P2/1P4PP/R1BQKB1R w KQ - 1 12
+rnbq1rk1/pp4pp/2ppp3/5pP1/3P3P/BPN1PP2/P1Q5/R1nK1B1R b - - 0 14
+3r3r/1p3k1p/4p1pB/4Pp2/8/8/PPP2PPP/R4RK1 w - - 0 16
+r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14
+r1bq1k1r/ppN5/n1p1p1pp/3p1p1P/3P4/P1PB4/1P3PP1/R1BQK2R w KQ - 0 15
+r3qrk1/p2pp2p/b1n2pp1/1B5P/1p1PP1P1/8/PPPQ4/R1B2RK1 w - - 0 15
+r3k1r1/1b1n3p/3p1pPb/pp1Pp3/P3P3/4B3/1PP4P/R3KBR1 w Qq - 1 20
+2kr1b1r/ppp3pp/4bp2/4p3/2B1P3/2PP2PP/PP1n1P2/RN1Q1R1K w - - 3 14
+r1bqk2r/pp4pp/2p2p1n/1P4B1/4P3/2Pp1PP1/7P/R2QKBNR w KQkq - 0 14
+r2k1bnr/p7/1p1p1ppp/1B6/4P3/2P3P1/PP3P1P/RNBQK2R b KQ - 0 10
+1r2kb1r/7p/b5p1/1BP1p3/3P1p2/P3P1P1/1p3P1P/1R2K2R b Kk - 2 20
+r1b2k1r/p1p4p/1pnNppp1/1B1p4/1b1PP3/2P5/PP4PP/RNB1K2R w KQ - 0 13
+r2qkbnr/4p1pp/p1n2p2/1B6/3P4/8/1PP2P1P/R1BQK2R w KQkq - 0 10
+rnbqk2r/4n3/2p3pp/pp1p1p1B/3PP3/6PN/PPPB3P/R2Q1RK1 w kq - 1 12
+4kb1r/6pp/B1p2p2/2P5/1p4b1/BP3N2/P5PP/R3K2R b KQk - 0 17
+8/5k2/2n4p/5p2/2pPpP2/6P1/2P2N1P/6K1 b - - 1 30
+r1bqk1nr/p7/1p4pp/P2ppp2/3PPP2/B5PN/7P/R2QKB1R w KQkq - 0 14
+5r2/7k/8/Pp1p3p/1P1PP1p1/5p1P/2P5/R1b2R1K w - - 0 24
+rnb1k2r/pppp1p1p/5npb/4p3/4PP2/N7/PPPP2PP/R1BQKB1R b KQkq - 0 6
+rnbqkbnr/8/6pp/pppppp1B/3PPP2/N5PN/PPP4P/R1BQ1RK1 w kq - 0 10
+4k2r/6p1/2p2p2/3ppn2/1b5p/1P2P1P1/P1PP1P1P/R1B2R1K b k - 0 17
+5rk1/2p4p/1p1p4/3Pp3/P3P1p1/2P2P2/1P5P/R3K1R1 w Q - 0 18
+2r1k1r1/p6p/4pp2/1N1p4/3PP1P1/1p6/PP3P1P/2R1K2R w K - 0 16
+2R2r1k/r7/2p2np1/p2p3p/3P1PP1/4p3/P1P4P/4N1K1 w - - 4 23
+```
+
