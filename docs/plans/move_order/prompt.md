@@ -74,7 +74,8 @@ Help me brainstorm what else we can do to provide a proper interface to the opti
 
 ---
 
-More positions
+All the following positions are proven to be decisive outcomes (no draws) in under 20 moves.
+Can we use these to improve the variety of the benchmark tests?
 
 ```
 rnbBk2r/pp4pp/2p5/4Np2/1b1pP3/2N4P/1PP2P2/3QKB1R b Kkq e3 0 12
