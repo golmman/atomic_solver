@@ -84,6 +84,12 @@ The runnable examples are:
 - `move_order_debug` — Print static, history, killer, and total move-ordering
   scores for every legal move. Use `--name <case>` to inspect a move-order
   benchmark position.
+- `move_order_fractions` — Gate 0 measurement for the learned move-ordering
+  concept: solves positions and reports, for every OR (Win) node in the
+  finalized proof tree, the rank of the proven decisive child under the static
+  ordering, flat and work-weighted by subtree size. Supports `--fen`,
+  `--suite move-order|decisive|all`, `--timeout`, `--epsilon`, `--tt-size`,
+  and `--pt-size`.
 - `play_and_solve` — Plays a user-specified move and then solves the resulting
   position. Useful for inspecting a particular line.
 - `replay` — Replay a UCI line from a FEN and solve the resulting position.
