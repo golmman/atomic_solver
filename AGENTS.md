@@ -76,6 +76,14 @@ The runnable examples are:
   document suitable for an external optimizer.
 - `chunk_growth` — Explore work-chunk growth settings and their effect on
   node counts.
+- `corpus_gen` — Gate-1 corpus generation for the learned move-ordering
+  concept. `solve` runs the quick/decisive suites at fixed deterministic
+  settings and writes one `proof_tree.bin` dump plus a manifest per case;
+  `load` replays the dumps, derives one row per expanded non-leaf node
+  (`hash`, `source`, `fen`, `stm`, `outcome`, `depth`, `subtree_size`,
+  `legal_moves`, `static_scores`, `children`, `first_decisive_rank`,
+  `partial`), deduplicates by Zobrist hash, and emits NDJSON for the external
+  trainer. The move-order suite is held out for evaluation.
 - `find_winning_child` — Enumerates every legal first move, solves the resulting
   child with a short timeout, and reports the first move that is winning for
   the root side (a child `Loss`).
