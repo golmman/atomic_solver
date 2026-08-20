@@ -16,7 +16,6 @@ Questions about the extraction pipeline:
 
 ---
 
-
 Proof of Concept - Move ordering neural network
 
 1. Run solver on batch of positions
@@ -25,3 +24,8 @@ Proof of Concept - Move ordering neural network
 4. Measure against baseline
 
 Help me refine this plan.
+
+---
+
+Last session we proved (`docs/plans/nn/report1.md`) that the implementation of the ideas in `docs/plans/nn/concept.md` are worth it.
+Create an implementation plan for Gate 1.
