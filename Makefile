@@ -8,3 +8,8 @@ quick_export2:
 
 macos_cleanup:
 	find . -name ".DS_Store" -print -delete
+
+nn_corpus:
+	rm -rf data/corpus/
+	cargo run --release --example corpus_gen -- solve --suite quick --timeout 20 --dump-dir data/corpus/trees
+	cargo run --release --example corpus_gen -- load  --dump-dir data/corpus/trees --output data/corpus/train.ndjson

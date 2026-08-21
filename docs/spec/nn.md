@@ -26,13 +26,28 @@ time) per resolved root position, not single-move prediction accuracy.
 Each feature is a binary indicator: 1 if that (piece, color, square)
 combination is present on the board, 0 otherwise.
 
+### Exact feature index layout (v1)
+
+Both views share the same index formula (this is part of the trainer/loader
+contract; the external trainer and the Rust inference code must implement it
+identically):
+
+- **square index:** `sq = file + 8 * rank`, `file` ∈ [0, 8) = a..h,
+  `rank` ∈ [0, 8) = 1..8; so `a1 = 0`, `h8 = 63`.
+- **piece index:** `p = 6 * color + type`, `color` ∈ {0 = this view's own
+  side, 1 = the other side}, `type` ∈ {0 = pawn, 1 = knight, 2 = bishop,
+  3 = rook, 4 = queen, 5 = king}.
+- **feature index:** `f = 64 * sq + p` ∈ [0, 768).
+
 ### Split by perspective
 
 Every position is encoded twice, relative to the side to move: once as seen
-by the side to move and once as seen by the other side (colors swapped,
-king/files mirrored consistently between the two views). Both views share a
-single linear projection (see §3), so a feature means the same thing in
-either perspective.
+by the side to move and once as seen by the other side. The transform for the
+other side's view is: **swap colors and mirror the board across the center
+file** (`file f` → `7 - f`, rank unchanged); in that view `color 0` is the
+side that was not the side to move. Both views share a single linear
+projection (§3), so a feature means the same thing in either perspective.
+The trainer and the Rust loader must apply this exact transform.
 
 ## 3. Layer-by-layer architecture
 
@@ -72,10 +87,12 @@ incremental path past the feature transformer.
 
 ## 5. Output encoding and masking
 
-- `policy_size`: move-index space. v1 recommendation: `64 × 64 = 4096`
-  (from-square × to-square), with promotions handled as a fixed multiplier
-  or a special-cased subset. More compact move-plane encodings are a
-  possible later optimization.
+- `policy_size`: **pinned to 4096 for v1**: `policy_index = from_sq * 64 +
+  to_sq`, with the square indexing of §2 (`a1 = 0`, `h8 = 63`). All four
+  promotion variants of a pawn move map to the same `(from, to)` index;
+  promotion is not distinguished in v1. A compact move-plane encoding is a
+  v2 optimization only if Gate 4 shows the 4096-row output head is a
+  measurable cost.
 - At inference: compute `s ∈ ℝ^policy_size`, apply a legal-move mask (set
   illegal indices to `−∞` or drop them), then sort remaining entries
   descending. The mask comes from the legal move list the search already
@@ -122,9 +139,47 @@ well as aggregates, since a handful of hard positions can dominate cost.
 
 ## 9. Open parameters to determine empirically
 
-- `policy_size` exact scheme (plain 4096 vs. compact move-plane encoding)
 - Whether king-relative or capture-target/explosion-relative features
   improve ranking quality enough to justify their complexity (v2 candidate)
 - Whether the 128-wide accumulator is sufficient, or 256 is needed
 - Training data budget: how many recorded `(position, move, work)` triples
   are needed for the ranking loss to saturate
+
+## 10. Weight-file format (v1, pinned)
+
+This section is the byte-level contract between the external trainer
+(producer) and the Rust weight loader (consumer, Gate 3). It must not change
+without a version bump.
+
+All integers little-endian. One header, then all tensors as IEEE-754 binary32
+(float32), little-endian, row-major.
+
+```
+Header (16 bytes):
+  u32 magic        0x4E4E5441   // ASCII "ATNN" as bytes 41 54 4E 4E
+  u16 version      1
+  u16 input        768
+  u16 accumulator  128
+  u16 hidden       32
+  u16 policy       4096
+  u16 flags        0            // 0 = float32, unquantized
+  u16 reserved     0
+
+Tensors, in this order (all float32, row-major):
+  W_1  [128][768]   // rows = accumulator, cols = input
+  b_1  [128]
+  W_2  [32][256]
+  b_2  [32]
+  W_3  [4096][32]
+  b_3  [4096]
+```
+
+Total size: `16 + 4 * (98,304 + 128 + 8,192 + 32 + 131,072 + 4,096)`
+= `16 + 4 * 241,824` = 967,312 bytes. With `W_1` stored row-major
+(rows = accumulator, columns = input), column `i` is exactly the
+incremental-update vector `W_1[:, i]` used in §4.
+
+The loader (Gate 3) must validate `magic`, `version`, and the four dimension
+fields against the architecture before reading; any mismatch is a hard error.
+`flags` reserves room for a quantized v2 (e.g. int8 + scale) without
+renaming the file.

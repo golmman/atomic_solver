@@ -29,3 +29,22 @@ Help me refine this plan.
 
 Last session we proved (`docs/plans/nn/report1.md`) that the implementation of the ideas in `docs/plans/nn/concept.md` are worth it.
 Create an implementation plan for Gate 1.
+
+---
+
+Last session we finished with `docs/plans/nn/report2.md`.
+
+Help me understand the next steps by answering these questions:
+1. How to re-create the data with different timeouts?
+2. Will there more data when we choose longer timeouts?
+3. Can we add more positions so we generate more data?
+4. Which data and information should we pass to the external model trainer (gate 2)?
+
+---
+
+Let's do this then:
+
+* pin gap 1 and 2
+  * update `docs/spec/nn.md` where necessary
+  * write `docs/plans/nn/plan_external_trainer.md`: a rough proposal for an implementation for the external trainer
+* ablation: draft the plan for design A in `docs/plans/nn/plan3.md`, with B hinted as escalation
