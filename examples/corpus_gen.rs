@@ -12,8 +12,13 @@
 //!   node with `{hash, source, fen, stm, outcome, depth, subtree_size,
 //!   legal_moves, static_scores, children, first_decisive_rank, partial}`,
 //!   deduplicates rows by Zobrist hash, and serializes them as NDJSON for the
-//!   external (Gate 2) trainer. The move-order suite is held out for
+//!   external (Gate 2) trainer.  The move-order suite is held out for
 //!   evaluation (concept.md Gate 4).
+//!
+//! Since design B (`docs/plans/nn/plan4.md`), every `children[]` entry carries
+//! the recorded real `work` (`child_evals` spent proving that child's subtree)
+//! from the v2 dump; the corpus version is `atomic-corpus/2` and the AND label
+//! is "rank the children by `work`".
 //!
 //! This file is larger than 10 KiB because the solve driver, the load replay
 //! (DFS with a single mutable `Position`, static scoring, subtree sizes), and
@@ -46,7 +51,7 @@ use atomic_solver::search::dfpn::{ExitReason, Search};
 use atomic_solver::search::ordering::{StaticAtomicScorer, nearest_commoner_map};
 use serde::{Deserialize, Serialize};
 
-const CORPUS_VERSION: &str = "atomic-corpus/1";
+const CORPUS_VERSION: &str = "atomic-corpus/2";
 
 enum Command {
     Solve(SolveCli),
@@ -342,6 +347,7 @@ fn solve_case(name: &str, fen: &str, cli: &SolveCli) -> CaseMeta {
                 pos.hash(),
                 Outcome::Loss,
                 0,
+                0,
             )));
     }
 
@@ -439,6 +445,7 @@ struct ChildRow {
     mv: String,
     outcome: Outcome,
     subtree_size: u64,
+    work: u64,
 }
 
 fn run_load(cli: &LoadCli) {
@@ -669,6 +676,7 @@ impl Row {
                     "mv": c.mv,
                     "outcome": c.outcome.as_str(),
                     "subtree_size": c.subtree_size,
+                    "work": c.work,
                 })
             })
             .collect();
@@ -788,6 +796,7 @@ fn case_rows(
                                 mv: move_to_uci(tree.nodes[c].mv),
                                 outcome,
                                 subtree_size: sizes[c],
+                                work: tree.nodes[c].work,
                             })
                         })
                         .collect();

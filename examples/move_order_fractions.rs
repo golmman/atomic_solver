@@ -268,6 +268,7 @@ fn solve_and_measure(name: &str, fen: &str, cli: &Cli) -> CaseReport {
                 pos.hash(),
                 Outcome::Loss,
                 0,
+                0,
             )));
     }
 

@@ -48,3 +48,16 @@ Let's do this then:
   * update `docs/spec/nn.md` where necessary
   * write `docs/plans/nn/plan_external_trainer.md`: a rough proposal for an implementation for the external trainer
 * ablation: draft the plan for design A in `docs/plans/nn/plan3.md`, with B hinted as escalation
+
+
+---
+
+Help me understand this better.
+Here is my understanding:
+
+* we want to train the nn with a pairwise ranking loss
+* ideally we would use the real subtree size per move for this comparison
+* the partially computed subtree sizes of the df-pn search are not suited for this
+* instead we proved that taking the amount of work done per move is a suitable metric
+
+Is this correct?

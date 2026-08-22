@@ -11,12 +11,14 @@ fn add_node_builds_path() {
         0,
         Some(Outcome::Loss),
         1,
+        0,
     );
     let grandchild = tree.add_node(
         child,
         Move::make_move(Square::E7, Square::E5),
         0,
         Some(Outcome::Win),
+        0,
         0,
     );
     assert_eq!(tree.children(0).collect::<Vec<_>>(), vec![child]);
@@ -32,6 +34,7 @@ fn to_bin_round_trips_small_tree() {
         0,
         Some(Outcome::Loss),
         1,
+        7,
     );
     tree.add_node(
         1,
@@ -39,6 +42,7 @@ fn to_bin_round_trips_small_tree() {
         0,
         Some(Outcome::Win),
         0,
+        3,
     );
 
     let mut buf = Vec::new();
@@ -53,6 +57,7 @@ fn to_bin_round_trips_small_tree() {
         assert_eq!(a.mv, b.mv);
         assert_eq!(a.outcome, b.outcome);
         assert_eq!(a.depth, b.depth);
+        assert_eq!(a.work, b.work);
         assert_eq!(
             loaded.children(i).collect::<Vec<_>>(),
             tree.children(i).collect::<Vec<_>>()
@@ -75,12 +80,14 @@ fn validate_ppv_rejects_wrong_path() {
         0,
         Some(Outcome::Loss),
         1,
+        0,
     );
     tree.add_node(
         child,
         Move::make_move(Square::E7, Square::E5),
         0,
         Some(Outcome::Win),
+        0,
         0,
     );
 
@@ -97,6 +104,7 @@ fn validate_ppv_rejects_premature_termination() {
         0,
         Some(Outcome::Loss),
         1,
+        0,
     );
     // The child node at depth 1 is not terminal, so a one-move PV is invalid.
     assert!(!tree.validate_ppv(&[Move::make_move(Square::E2, Square::E4)]));

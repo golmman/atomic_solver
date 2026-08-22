@@ -26,6 +26,9 @@ pub struct ProofNode {
     /// not yet been realized by its own `NodeProven` event.
     pub outcome: Option<Outcome>,
     pub depth: u32,
+    /// Cumulative `child_evals` spent proving this node's subtree, recorded
+    /// from the `NodeProven` event at prove time.
+    pub work: u64,
 }
 
 /// Proof tree built by traversing event paths and realizing dummy parents.
@@ -53,6 +56,7 @@ impl ProofTree {
                 hash: root_hash,
                 outcome: root_outcome,
                 depth: root_depth,
+                work: 0,
             }],
         }
     }
@@ -75,6 +79,7 @@ impl ProofTree {
         hash: u64,
         outcome: Option<Outcome>,
         depth: u32,
+        work: u64,
     ) -> usize {
         let id = self.nodes.len();
         assert!(id < u32::MAX as usize, "proof tree node id overflow");
@@ -91,6 +96,7 @@ impl ProofTree {
             hash,
             outcome,
             depth,
+            work,
         });
         self.nodes[parent_id].first_child = Some(id_nz);
         id

@@ -225,7 +225,16 @@ impl Search {
         self.tt.best_child_counts()
     }
 
-    fn emit_proof_node(&self, pos: &Position, outcome: Outcome, depth: u32) {
+    /// Real work recorded in the transposition table for a position hash.
+    ///
+    /// The value is the cumulative `child_evals` spent under that subtree.
+    /// `None` if the entry was evicted or never stored.
+    #[must_use]
+    pub fn tt_work_for(&self, key: u64) -> Option<u64> {
+        self.tt.probe_summary(key).map(|s| s.work)
+    }
+
+    fn emit_proof_node(&self, pos: &Position, outcome: Outcome, depth: u32, work: u64) {
         if outcome == Outcome::Draw {
             return;
         }
@@ -235,6 +244,7 @@ impl Search {
                 pos.hash(),
                 outcome,
                 depth,
+                work,
             ));
             let _ = sender.send(event);
         }

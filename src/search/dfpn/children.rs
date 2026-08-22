@@ -80,6 +80,7 @@ impl Search {
         max_depth: u32,
         is_or_node: bool,
     ) -> ChildInfo {
+        let child_evals_start = self.child_evals;
         self.child_evals += 1;
         pos.do_move(mv);
         let child_key = pos.hash();
@@ -171,6 +172,7 @@ impl Search {
                 pos.hash(),
                 outcome,
                 info.depth,
+                self.child_evals - child_evals_start,
             )));
         }
 

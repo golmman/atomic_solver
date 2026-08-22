@@ -4,10 +4,13 @@
 //! node adjacency, the compact binary format, and the round-trip tests all share
 //! the same encoding constants.
 //!
-//! The binary dump is driver-free and stores only parent ids and 16-bit move
-//! codes.  External loaders derive `outcome`, `depth`, `terminal`, and the
-//! UCI move string from the adjacency list and the root outcome stored in the
-//! header.
+//! The binary dump is driver-free and stores only parent ids, 16-bit move
+//! codes, and the recorded `work` value.  External loaders derive `outcome`,
+//! `depth`, `terminal`, and the UCI move string from the adjacency list and the
+//! root outcome stored in the header.
+//!
+//! Version 2 records carry an 8-byte `work` field per node.  Version 1 records
+//! (6 bytes) are still read, with `work == 0` for every node.
 
 use std::io::{self, Read, Write};
 use std::num::NonZeroU32;
@@ -18,8 +21,10 @@ use super::{ProofNode, ProofTree};
 use crate::position::Outcome;
 
 const MAGIC: &[u8; 8] = b"ATOMTREE";
-const VERSION: u8 = 1;
+const VERSION: u8 = 2;
 const ROOT_PARENT: u32 = u32::MAX;
+const RECORD_SIZE_V2: usize = 4 + 2 + 8;
+const RECORD_SIZE_V1: usize = 4 + 2;
 
 /// Encode an `atomic_movegen` `Move` into a 16-bit code using only the public
 /// API.
@@ -120,6 +125,7 @@ pub fn write_proof_tree<W: Write>(tree: &ProofTree, writer: &mut W) -> io::Resul
             .map_or(ROOT_PARENT, |p| p.get().saturating_sub(1));
         writer.write_all(&parent_id.to_le_bytes())?;
         writer.write_all(&move_to_bits(node.mv).to_le_bytes())?;
+        writer.write_all(&node.work.to_le_bytes())?;
     }
 
     Ok(())
@@ -138,12 +144,16 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
 
     let mut version = [0u8; 1];
     reader.read_exact(&mut version)?;
-    if version[0] != VERSION {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            format!("unsupported proof-tree version {}", version[0]),
-        ));
-    }
+    let record_size = match version[0] {
+        1 => RECORD_SIZE_V1,
+        2 => RECORD_SIZE_V2,
+        other => {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("unsupported proof-tree version {}", other),
+            ));
+        }
+    };
 
     let mut fen = String::new();
     loop {
@@ -166,14 +176,14 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
 
     let mut payload = Vec::new();
     reader.read_to_end(&mut payload)?;
-    if payload.len() % 6 != 0 {
+    if payload.len() % record_size != 0 {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
             "truncated node records",
         ));
     }
 
-    let node_count = payload.len() / 6;
+    let node_count = payload.len() / record_size;
     if node_count == 0 {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
@@ -191,7 +201,7 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
     let mut parents: Vec<usize> = Vec::with_capacity(node_count);
 
     for i in 0..node_count {
-        let off = i * 6;
+        let off = i * record_size;
         let parent_id = u32::from_le_bytes([
             payload[off],
             payload[off + 1],
@@ -199,6 +209,20 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
             payload[off + 3],
         ]);
         let move_code = u16::from_le_bytes([payload[off + 4], payload[off + 5]]);
+        let work = if record_size == RECORD_SIZE_V2 {
+            u64::from_le_bytes([
+                payload[off + 6],
+                payload[off + 7],
+                payload[off + 8],
+                payload[off + 9],
+                payload[off + 10],
+                payload[off + 11],
+                payload[off + 12],
+                payload[off + 13],
+            ])
+        } else {
+            0
+        };
 
         if i == 0 && (parent_id != ROOT_PARENT || move_code != 0) {
             return Err(io::Error::new(
@@ -229,6 +253,7 @@ pub fn read_proof_tree<R: Read>(reader: &mut R) -> io::Result<ProofTree> {
             hash: 0,
             outcome: Some(Outcome::Draw),
             depth: 0,
+            work,
         });
         parents.push(parent_id as usize);
     }
@@ -356,5 +381,43 @@ mod tests {
 
         let e7e8q = Move::make_promotion(Square::E7, Square::E8, PieceType::Queen);
         assert_eq!(move_to_bits(e7e8q), 7484);
+    }
+
+    #[test]
+    fn reads_version_one_dump_with_zero_work() {
+        use crate::position::Outcome;
+
+        let mut buf = Vec::new();
+        buf.extend(super::MAGIC);
+        buf.push(1); // version 1
+        buf.extend(b"x\n");
+        buf.push(1); // root_outcome: Win
+        buf.extend(2u32.to_le_bytes()); // root_depth
+        // root record
+        buf.extend(u32::MAX.to_le_bytes());
+        buf.extend(0u16.to_le_bytes());
+        // e2e4 under root
+        buf.extend(0u32.to_le_bytes());
+        buf.extend(796u16.to_le_bytes());
+        // e7e5 under e2e4
+        buf.extend(1u32.to_le_bytes());
+        buf.extend(3364u16.to_le_bytes());
+
+        let tree = super::read_proof_tree(&mut &buf[..]).unwrap();
+        assert_eq!(tree.nodes.len(), 3);
+        assert!(tree.nodes.iter().all(|n| n.work == 0));
+        assert_eq!(tree.nodes[0].outcome, Some(Outcome::Win));
+        assert_eq!(tree.nodes[1].outcome, Some(Outcome::Loss));
+        assert_eq!(tree.nodes[1].depth, 1);
+        assert_eq!(tree.nodes[2].depth, 0);
+    }
+
+    #[test]
+    fn rejects_unknown_version() {
+        let mut buf = Vec::new();
+        buf.extend(super::MAGIC);
+        buf.push(3);
+        let err = super::read_proof_tree(&mut &buf[..]).expect_err("version 3 should be rejected");
+        assert!(err.to_string().contains("unsupported proof-tree version 3"));
     }
 }

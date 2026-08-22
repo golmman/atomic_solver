@@ -105,17 +105,21 @@ Re-run the Gate-0 example and `examples/benchmark --suite move-order
   decisive child must rank above every other legal move. Siblings with no
   recorded work are censored, never treated as "cheap".
 - **AND node** (`outcome == Loss`): every child is expanded and solved, so
-  rank the children by derived subtree size (post-order node count from the
-  proof tree).
+  rank the children by their recorded real work — the cumulative `child_evals`
+  spent proving each child's subtree, carried by `ProofNode.work` (design B,
+  `docs/plans/nn/plan4.md`) and emitted per child by `corpus_gen`
+  (`atomic-corpus/2`).
 
-Subtree size is a _proxy_ for search cost because the solver never records
-per-child `child_evals`. Instrumenting real work counters is an optional
-ablation, not a blocker.
+Design A (`plan3.md`) measured whether derived post-order `subtree_size`
+proxies this real work; the pair flip rate (28–29%) and work-weighted flip
+share (45–48%) rejected the proxy, which is why the labels are now defined on
+recorded `work` directly.
 
 ## 6. Key decisions
 
-- **Labels**: derive subtree size + first-decisive-rank offline from the
-  existing dump. No solver instrumentation, no dump-format change.
+- **Labels**: AND nodes rank children by the recorded real `work`
+  (`ProofNode.work`, dump v2); OR nodes carry `first_decisive_rank`, both
+  derived offline from the dump by `corpus_gen`.
 - **Toolchain split**: Rust emits the corpus; an external trainer produces the
   weight file; Rust loads it at inference.
 - **Metrics**: `child_evals` (deterministic) AND wall time; hard success bar.

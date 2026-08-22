@@ -20,11 +20,13 @@ pub struct NodeProven {
     pub hash: u64,
     pub outcome: Outcome,
     pub depth: u32,
+    /// Cumulative `child_evals` spent proving this node's subtree.
+    pub work: u64,
 }
 
 impl NodeProven {
     #[must_use]
-    pub fn new(path: Vec<Move>, hash: u64, outcome: Outcome, depth: u32) -> Self {
+    pub fn new(path: Vec<Move>, hash: u64, outcome: Outcome, depth: u32, work: u64) -> Self {
         let mv = path.last().copied().unwrap_or(Move::NONE);
         Self {
             path,
@@ -32,6 +34,7 @@ impl NodeProven {
             hash,
             outcome,
             depth,
+            work,
         }
     }
 }

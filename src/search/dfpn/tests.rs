@@ -67,6 +67,17 @@ fn try_use_tt_rejects_win_when_best_move_repeats() {
 }
 
 #[test]
+fn tt_work_for_returns_stored_work() {
+    let mut search = Search::new(64);
+    let key = 0x1234_5678_9abc_def0u64;
+    search
+        .tt
+        .store(key, Move::NONE, u8::MAX, 42, None, 1, 1, 1, 1);
+    assert_eq!(search.tt_work_for(key), Some(42));
+    assert_eq!(search.tt_work_for(key ^ 0xffff_ffff), None);
+}
+
+#[test]
 fn set_timeout_zero_causes_immediate_exit() {
     let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
     let mut search = Search::new(64);

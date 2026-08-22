@@ -2,14 +2,15 @@
 
 ## Version
 
-Version 1.
+Version 2.
 
 ## Overview
 
 `proof_tree.bin` is a compact, driver-free binary serialization of the
 `atomic_solver` in-memory proof tree. It stores one adjacency record per node:
-the id of the parent node and a 16-bit move code. Because no materialized
-`ltree` path strings are stored, the file size is `O(nodes)` and does not grow
+the id of the parent node, a 16-bit move code, and the node's recorded `work`
+(`child_evals` spent proving its subtree). Because no materialized `ltree` path
+strings are stored, the file size is `O(nodes)` and does not grow
 as `O(nodes × depth)` for deep principal variations.
 
 External tools read this file, derive `outcome`, `depth`, `terminal`, and
@@ -22,7 +23,7 @@ All multi-byte integers are **little-endian**.
 | Field | Size | Description |
 |---|---|---|
 | `magic` | 8 bytes | ASCII `"ATOMTREE"` |
-| `version` | 1 byte | Format version; currently `1` |
+| `version` | 1 byte | Format version; currently `2` |
 | `fen` | variable | Root position in FEN notation, terminated by `\n` (`0x0A`) |
 | `root_outcome` | 1 byte | `0` Draw, `1` Win, `2` Loss |
 | `root_depth` | 4 bytes | `u32` LE; proven distance from root to a terminal node |
@@ -34,6 +35,7 @@ After the header, every node is written as one record in node-creation order
 |---|---|---|
 | `parent_id` | 4 bytes | `u32` LE; `0xFFFFFFFF` for the root |
 | `move_code` | 2 bytes | `u16` LE; `0` for the root (`Move::NONE`) |
+| `work` | 8 bytes | `u64` LE; cumulative `child_evals` spent proving this node's subtree |
 
 The implicit node id of record `i` (0-indexed) is `i`. The proof tree is built
 top-down, so a child always has a higher id than its parent; `parent_id` is
@@ -62,6 +64,24 @@ For display, a loader reconstructs `Move` from `move_code` and then uses
 `move_to_uci` to obtain the UCI string. `move_to_uci` normalizes castling
 moves to the standard UCI king-destination form (`e1g1`, `e1c1`, `e8g8`,
 `e8c8`) regardless of whether `to_sq` is the king or rook square.
+
+## `work` semantics
+
+`work` is the cumulative `child_evals` the search spent *proving* the node's
+subtree, recorded in the generating `NodeProven` event at prove time
+(design B, `docs/plans/nn/plan4.md`):
+
+- terminal leaves: `1` (the single child evaluation that resolved them) except
+  for a terminal root (`0`);
+- TT-reused nodes: `0` in the event, but the canonicalization pass copies the
+  expanded twin's recorded `work` onto unexpanded transpositions, so every
+  non-root node of a **finalized** dump has `work >= 1`;
+- internal nodes: the `child_evals` delta of their proving expansion;
+  duplicate prove events are max-updated (the same semantics as
+  `TtEntry.work`).
+
+The AND-node ranking label of the corpus (`docs/plans/nn/concept.md` §5) is
+"rank the children by recorded `work`".
 
 ## Deriving node metadata
 
@@ -108,18 +128,18 @@ Root FEN: `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`
 Header:
 
 - `magic`: `ATOMTREE`
-- `version`: `1`
+- `version`: `2`
 - `fen`: the FEN above followed by `\n`
 - `root_outcome`: `1` (Win)
 - `root_depth`: `2`
 
-Records (decimal `move_code` values):
+Records (decimal `move_code` values; example `work` values):
 
-| node id | `parent_id` | move | `move_code` |
-|---|---|---|---|
-| 0 | `0xFFFFFFFF` | (root, `Move::NONE`) | `0` |
-| 1 | `0` | `e2e4` | `796` |
-| 2 | `1` | `e7e5` | `3364` |
+| node id | `parent_id` | move | `move_code` | `work` |
+|---|---|---|---|---|
+| 0 | `0xFFFFFFFF` | (root, `Move::NONE`) | `0` | `3` |
+| 1 | `0` | `e2e4` | `796` | `2` |
+| 2 | `1` | `e7e5` | `3364` | `1` |
 
 `e2e4` encodes as `(from_sq = 12, to_sq = 28, move_type = 0)`:
 `12 << 6 | 28 = 796`.
@@ -132,9 +152,14 @@ move_type = 1, promotion_idx = 0)`: `52 << 6 | 60 | (1 << 12) = 7484`.
 
 ## Versioning
 
-Future versions may append fields to the header or introduce additional record
-fields. Loaders must read the `version` byte and reject or skip unknown
-versions.
+- **Version 1** (6-byte records, no `work`). Still readable: every node loads
+  with `work == 0`.
+- **Version 2** (14-byte records with `work`). Written by the current
+  `atomic_solver`.
+
+Loaders must read the `version` byte and reject unknown versions. Corpora
+generated from version 1 dumps carry `work == 0` for every child and are
+stale for the `work`-ranked AND label; regenerate them.
 
 ## Notes
 

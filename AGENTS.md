@@ -30,13 +30,15 @@ A pure solver for atomic chess in Rust.
 - `src/proof_tree/mod.rs` provides a `Move`- and hash-based in-memory proof
   tree and a background worker that consumes `ProofEvent` messages, maintains
   the tree, enforces a memory budget, and serializes the full proven subtree
-  to a compact binary adjacency dump (`src/proof_tree/binary.rs`). Each
-  `ProofNode` carries the Zobrist hash of its position; the worker's
-  `finalize()` pass copies fully expanded canonical subtrees onto unexpanded
-  transpositions, making the tree authoritative without a transposition-table
-  reconstruction step. The worker exposes `ProofTreeWorkerHandle` with
-  `event_sender()`, `stats()`, `tree()`, `finalize()`, and `dump_to_bin()` for querying.
-  External tools can import the binary dump into PostgreSQL.
+  to a compact binary adjacency dump (`src/proof_tree/binary.rs`, version 2).
+  Each `ProofNode` carries the Zobrist hash of its position and the recorded
+  real `work` (the cumulative `child_evals` spent proving its subtree, emitted
+  at prove time by the search); the worker's `finalize()` pass copies fully
+  expanded canonical subtrees onto unexpanded transpositions, making the tree
+  authoritative without a transposition-table reconstruction step. The worker
+  exposes `ProofTreeWorkerHandle` with `event_sender()`, `stats()`, `tree()`,
+  `finalize()`, and `dump_to_bin()` for querying. External tools can import
+  the binary dump into PostgreSQL.
 - `src/zobrist.rs` generates deterministic Zobrist keys for positions,
   including the halfmove clock for transposition-table lookup.
 - `src/notation.rs` provides UCI move helpers, including `moves_to_uci_path`
@@ -83,7 +85,11 @@ The runnable examples are:
   (`hash`, `source`, `fen`, `stm`, `outcome`, `depth`, `subtree_size`,
   `legal_moves`, `static_scores`, `children`, `first_decisive_rank`,
   `partial`), deduplicates by Zobrist hash, and emits NDJSON for the external
-  trainer. The move-order suite is held out for evaluation.
+  trainer. Since design B (`docs/plans/nn/plan4.md`) every `children[]` entry
+  carries the recorded real `work` (`child_evals` spent proving that child's
+  subtree) from the v2 dump, and the corpus version is `atomic-corpus/2`: the
+  AND label is "rank the children by `work`". The move-order suite is held out
+  for evaluation.
 - `find_winning_child` — Enumerates every legal first move, solves the resulting
   child with a short timeout, and reports the first move that is winning for
   the root side (a child `Loss`).
@@ -110,6 +116,15 @@ The runnable examples are:
   positions.
 - `verify_ppv` — Verifies that a supplied UCI move list is a Proof Principal
   Variation for a given FEN.
+- `work_proxy_ablation` — Ablation (nn plan3 design A, re-measured with the
+  design-B recorded-work ground truth) measuring whether the corpus's
+  `subtree_size` label proxies the solver's real per-child work: at every AND
+  (Loss) node with ≥ 2 children in the finalized proof tree it ranks children
+  by `ProofNode.work` (the `child_evals` recorded at prove time) and reports
+  the pair flip rate, Kendall τ, top-child agreement, and work-weighted flip
+  share, plus a TT cross-check (`Search::tt_work_for`) with per-case coverage
+  and `tt_agree`. Supports `--fen`, `--suite quick|decisive|all`, `--timeout`,
+  `--epsilon`, `--tt-size`, and `--pt-size`.
 
 ## Output priorities
 

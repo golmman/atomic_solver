@@ -97,7 +97,7 @@ fn corpus_gen_solve_load_round_trip() {
     );
 
     let meta: serde_json::Value = serde_json::from_str(lines[0]).expect("meta line should parse");
-    assert_eq!(meta["_meta"], "atomic-corpus/1");
+    assert_eq!(meta["_meta"], "atomic-corpus/2");
     assert!(meta["rows"].is_u64());
 
     let mut hashes = HashSet::new();
@@ -108,6 +108,21 @@ fn corpus_gen_solve_load_round_trip() {
                 row.get(key).is_some(),
                 "row missing required key {key}: {row}"
             );
+        }
+        let children = row["children"]
+            .as_array()
+            .expect("children should be an array");
+        for child in children {
+            assert!(
+                child.get("work").is_some() && child["work"].is_u64(),
+                "child missing u64 work: {child}"
+            );
+            if row["outcome"] == "loss" {
+                assert!(
+                    child["work"].as_u64().unwrap() > 0,
+                    "AND-child work must be > 0: {child}"
+                );
+            }
         }
         assert!(
             hashes.insert(

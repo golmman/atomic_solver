@@ -251,7 +251,7 @@ impl ProofTreeWorker {
                 id = child_id;
                 continue;
             }
-            let new_id = self.tree.add_node(id as usize, mv, 0, None, 0) as u32;
+            let new_id = self.tree.add_node(id as usize, mv, 0, None, 0, 0) as u32;
             self.child_index.insert(key, new_id);
             id = new_id;
         }
@@ -263,6 +263,7 @@ impl ProofTreeWorker {
         let node = &mut self.tree.nodes[id];
         node.mv = event.mv;
         node.hash = event.hash;
+        node.work = node.work.max(event.work);
         match node.outcome {
             None => {
                 node.outcome = Some(event.outcome);
@@ -467,6 +468,7 @@ impl ProofTreeWorker {
                     let hash = eff_node.hash;
                     let eff_outcome = eff_node.outcome;
                     let depth = eff_node.depth;
+                    let eff_work = eff_node.work;
 
                     let is_root = edge_mv == Move::NONE && parent_new_id == 0;
 
@@ -482,6 +484,7 @@ impl ProofTreeWorker {
                             hash,
                             Some(leaf_outcome),
                             depth,
+                            eff_work,
                         );
                         continue;
                     }
@@ -490,11 +493,19 @@ impl ProofTreeWorker {
                         new_tree.nodes[0].hash = hash;
                         new_tree.nodes[0].outcome = eff_outcome;
                         new_tree.nodes[0].depth = depth;
+                        new_tree.nodes[0].work = eff_work;
                         0
                     } else {
                         path_hashes.insert(hash);
                         path_hash_stack.push(hash);
-                        new_tree.add_node(parent_new_id, edge_mv, hash, eff_outcome, depth)
+                        new_tree.add_node(
+                            parent_new_id,
+                            edge_mv,
+                            hash,
+                            eff_outcome,
+                            depth,
+                            eff_work,
+                        )
                     };
 
                     actions.push(Action::Exit);
