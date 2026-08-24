@@ -95,3 +95,16 @@ r7/1Rp4k/4P2B/6p1/3P2P1/p6p/P6K/8 b - - 0 35
 1r3Q2/8/k3p1b1/4P3/P7/K7/6p1/6R1 b - - 0 34
 4k2r/1p2P3/7P/p1Pp4/3P4/8/5pp1/2K2R2 w - - 0 34
 ```
+
+---
+
+
+Write a concise document (`docs/plans/nn/trainer_init.md`) for me, which tells what we need for the external trainer:
+* Which files (specs, plans, docs) from here should be copied over?
+* The trainer and its delevopment runs in a docker container. What should be preinstalled?
+
+Also update existing files as necessary:
+* `docs/plans/nn/concept.md`
+* `docs/plans/nn/plan_external_trainer.md`
+* `docs/spec/nn.md`
+* others?
