@@ -64,7 +64,8 @@ Is this correct?
 
 ---
 
-new easy positions
+Please check if we can add the following positions to the set of `tests/fixtures/decisive_positions.txt`.
+Add them if fine.
 
 ```
 rnbq1k1r/ppN4p/Bbp3p1/8/4PPPP/1QPp4/PP6/R4K1R b - - 1 16
