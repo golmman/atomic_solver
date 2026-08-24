@@ -7,6 +7,8 @@
 # dec11..dec23 were added to broaden the suite beyond rook/pawn endgames:
 # they are game-derived middlegame and endgame positions of varied material
 # (queen and rook sacrifices, opposite-side attacks, knight endgames).
+# dec24..dec46 were added from the same game-derived position batch; all solve
+# within the default budget (worst ~0.5 s in first-outcome mode).
 dec01;r5r1/5N1k/2p2p2/pp1p3p/3Pp3/2P1P3/P7/2bQ1R1K w - - 0 30;Win;solves in 5s, 27 plies
 dec02;8/1k1p4/1P2p3/p2P1P2/P7/6p1/6K1/8 b - - 0 27;Loss;solves in 5s, 30 plies
 dec03;r4r2/pp2p1Bk/2p3p1/1B1pP1bp/3P3P/1PN5/2P5/5R1K w - - 1 21;Win;solves in 5s, 7 plies
@@ -30,3 +32,26 @@ dec20;rnbqk2r/4n3/2p3pp/pp1p1p1B/3PP3/6PN/PPPB3P/R2Q1RK1 w kq - 1 12;Win;solves 
 dec21;8/5k2/2n4p/5p2/2pPpP2/6P1/2P2N1P/6K1 b - - 1 30;Win;solves in 5s, 21 plies
 dec22;r1bqk1nr/p7/1p4pp/P2ppp2/3PPP2/B5PN/7P/R2QKB1R w KQkq - 0 14;Win;solves in 5s, 7 plies
 dec23;5rk1/2p4p/1p1p4/3Pp3/P3P1p1/2P2P2/1P5P/R3K1R1 w Q - 0 18;Win;solves in 5s, 9 plies
+dec24;rnbq1k1r/ppN4p/Bbp3p1/8/4PPPP/1QPp4/PP6/R4K1R b - - 1 16;Loss;solves in 5s, 10 plies
+dec25;rnb1kb2/pp1pp1p1/2p2p2/q7/8/2N5/PPPPPPPP/R1BQKB1R b KQq - 2 4;Win;solves in 5s, 9 plies
+dec26;r3k2r/p1pN2pp/5q1n/3p4/1b1Pp1bP/2P1PP1B/PP6/R1BQK1R1 b Qkq - 0 15;Win;solves in 5s, 9 plies
+dec27;r3kb1r/1p3ppp/2p5/4p3/2PP1P1P/4n3/2n1K2R/1Q4N1 w kq - 0 15;Win;solves in 5s, 5 plies
+dec28;rnb2kRr/pppB4/3b4/3p3p/3P3P/4P3/PPP5/RNB1K3 b Q - 1 15;Loss;solves in 5s, 8 plies
+dec29;r1b1kbnr/ppp1p1pp/5p2/8/1n6/4P3/PPPP1PPP/RNBQKB1R w KQkq - 1 6;Win;solves in 5s, 5 plies
+dec30;r1b1k1nr/pppp1Np1/2n4p/1B2pp2/1b5q/2N1P1P1/PPPP1P1P/R1BQK2R b KQkq - 0 7;Win;solves in 5s, 9 plies
+dec31;r1bq1k2/ppN3p1/2p1p2P/6P1/1b1P1p2/8/PP3P2/R2K1B1R b - - 0 15;Loss;solves in 5s, 22 plies
+dec32;rnb1N1nr/pp2k1pp/B1p2q2/3p4/5PPP/4p3/PPP1K3/RNB4R b - - 3 14;Win;solves in 5s, 5 plies
+dec33;rnbqk2r/p4pp1/7p/1pBp4/4P2N/2P2PP1/PP1Q3P/RN2nK1R b kq - 0 13;Win;solves in 5s, 5 plies
+dec34;rnb1kb1r/ppp2Npp/4p3/q2p1pB1/3PP3/2P2P2/PP4PP/RN2KB1R w KQkq - 1 11;Win;solves in 5s, 7 plies
+dec35;k2r3r/2B3pp/5p2/p3p3/1P6/4P1PP/P4P2/7K b - - 0 25;Win;solves in 5s, 5 plies
+dec36;8/pp6/5ppP/6P1/kP6/3R4/P1P5/6K1 b - - 0 28;Loss;solves in 5s, 8 plies
+dec37;3r3k/2p4p/6p1/8/5P2/2P1P2P/1P4Pb/4K2R w K - 0 19;Loss;solves in 5s, 12 plies
+dec38;6k1/4r1P1/2pp1P2/8/2b4p/4R3/1PP1n2K/4R3 b - - 0 35;Loss;solves in 5s, 14 plies
+dec39;rn2kb1r/p1pp1pp1/8/1p5p/8/3PP1P1/PPP2n1P/R1BQ1RK1 w kq - 0 13;Win;solves in 5s, 7 plies
+dec40;2kr4/p1pb1p2/3p3p/3Pp3/4P3/7P/P2QK3/6R1 b - - 0 24;Loss;solves in 5s, 12 plies
+dec41;1k1r1N2/3P2p1/p6r/P3pp2/7P/Bpp1P3/4b3/2K1R1R1 w - - 0 33;Loss;solves in 5s, 10 plies
+dec42;2kr3r/p5pp/4p2n/2pP4/8/1R6/PP3PPP/2K4R b - - 1 15;Loss;solves in 5s, 12 plies
+dec43;2r2r1k/2Bq3p/p4pp1/7Q/P1pPP3/1p5P/1P6/R5RK b - - 3 24;Loss;solves in 5s, 14 plies
+dec44;r7/1Rp4k/4P2B/6p1/3P2P1/p6p/P6K/8 b - - 0 35;Loss;solves in 5s, 48 plies
+dec45;1r3Q2/8/k3p1b1/4P3/P7/K7/6p1/6R1 b - - 0 34;Win;solves in 5s, 7 plies
+dec46;4k2r/1p2P3/7P/p1Pp4/3P4/8/5pp1/2K2R2 w - - 0 34;Loss;solves in 5s, 14 plies

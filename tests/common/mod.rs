@@ -15,7 +15,7 @@ pub const M19_FEN: &str = "4r1k1/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R4R1K w - - 2
 /// Fixture containing the move-order benchmark positions (m20 to m29).
 pub const MOVE_ORDER_FIXTURE: &str = include_str!("../fixtures/move_order_positions.txt");
 
-/// Fixture containing the decisive benchmark positions (dec01 to dec23).
+/// Fixture containing the decisive benchmark positions (dec01 to dec46).
 pub const DECISIVE_FIXTURE: &str = include_str!("../fixtures/decisive_positions.txt");
 
 /// Fixture containing decisive positions that are not solved in the default 5-second budget.
