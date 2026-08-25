@@ -8,7 +8,7 @@ Given an atomic-chess position, `atomic_solver` determines whether the side to
 move can force a **Win**, **Loss**, or **Draw**, and prints a principal
 variation (PV) when the result is decisive.
 
-The solver is built on top of [`atomic-movegen`](https://crates.io/crates/atomic-movegen) 2.0.0.
+The solver is built on top of [`atomic-movegen`](https://crates.io/crates/atomic-movegen) 2.1.0.
 
 ## Quick start
 

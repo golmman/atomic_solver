@@ -115,9 +115,9 @@ fn m27_white_wins() {
 
 #[test]
 fn m27_kh7_fast_win_with_commoners() {
-    // The `c`/`C` pieces are intentional custom commoners; the FEN is valid
-    // and the position solves quickly.
-    let mut pos = Position::from_fen("1R6/3p3c/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/7C w - - 2 27").unwrap();
+    // atomic-movegen >= 2.1.0 uses standard FEN notation only: kings/commoners
+    // are `k`/`K`, never the 2.0.x `c`/`C` spelling.
+    let mut pos = Position::from_fen("1R6/3p3k/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/7K w - - 2 27").unwrap();
     let mut search = Search::new(64);
     search.set_timeout(5);
     let (outcome, _pv, _nodes) = search.solve(&mut pos);
