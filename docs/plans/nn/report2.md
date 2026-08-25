@@ -86,7 +86,7 @@ First line:
 |---|---|---|---|
 | `hash` | u64 (JSON number) | yes | `Position::hash()` (includes fullmove clock); dedup key |
 | `source` | string | yes | case name (bin file stem) |
-| `fen` | string | yes | position FEN; atomic FEN convention (`c`/`C` kings; see diff item) |
+| `fen` | string | yes | position FEN (`c`/`C` kings before atomic-movegen 2.1.0, standard `k`/`K` since; see diff item) |
 | `stm` | string | yes | `"w"`/`"b"` |
 | `outcome` | string | yes | `"win"`/`"loss"` |
 | `depth` | u32 | yes | proven distance to a terminal (binary-derived post-order) |
@@ -150,7 +150,9 @@ Measured static rank-1 share on the quick corpus is 68.1% of OR rows
   `Board::fen()`) writes kings as commoners (`c`/`C`), e.g.
   `4k3/.../4R1K1` becomes `4c3/.../4R1C1`. It is the round-trip FEN of the
   engine feature source; a trainer must parse this same convention (or
-  regenerate features from the move list).
+  regenerate features from the move list). *(Superseded: atomic-movegen
+  2.1.0 standardizes on `k`/`K` notation only and rejects `c`/`C` on input;
+  the regenerated `atomic-corpus/2` uses standard FENs.)*
 - **Replay-crash mitigation is exit, not catch.** The release profile sets
   `panic = "abort"`, so the plan's "catch the `do_move` panic, skip the
   case" mitigation is not available in the profile the corpus runs under. A
@@ -194,6 +196,16 @@ Measured static rank-1 share on the quick corpus is 68.1% of OR rows
 
 ## Input contract for the Gate 2 trainer
 
+> Schema drift note (design B, `docs/plans/nn/report4.md`; atomic-movegen
+> 2.1.0): the shipped corpus is `atomic-corpus/2` — every `children[]` entry
+> additionally carries `work` (the cumulative `child_evals` spent proving that
+> child's subtree), the AND label is "rank the children by `work`" instead of
+> by `subtree_size`, and (since atomic-movegen 2.1.0) `fen` uses standard
+> `k`/`K` notation instead of the `c`/`C` commoner spelling. The parsing
+> caveats below (NDJSON structure, `hash` precision, key order, alignment)
+> still apply verbatim; the AND-label bullet below reflects the v2 `work`
+> target.
+
 - One JSON object per text line after a leading `_meta` line (NDJSON, never
   pretty). The file contains `hash` as a decimal u64 JSON number; decode
   with exact integer semantics (Python `int`/`numpy.uint64`; JavaScript
@@ -201,9 +213,9 @@ Measured static rank-1 share on the quick corpus is 68.1% of OR rows
   (serde_json's default `BTreeMap` sorts object keys). Use
   `legal_moves[i]` ⇄ `static_scores[legal_moves[i]]` ⇄ the static rank
   derived by sorting the score map keys descending.
-- `children[]` is ordered as stored, and `subtree_size` there saturates the
-  AND-node ranking label: for `outcome == "loss"` rows, sort the children by
-  `subtree_size` descending and rank that ordering against
+- `children[]` is ordered as stored, and `work` there is the AND-node ranking
+  label: for `outcome == "loss"` rows, sort the children by `work` descending
+  (ties: any stable order) and rank that ordering against
   `static_scores`-derived order to produce AND labels offline; `win` rows
   carry `first_decisive_rank` directly.
 - `hash` is the dedup key; `source` keeps provenance; `partial` must filter
@@ -217,7 +229,7 @@ Example row (subject to the meta line above):
 
 ```json
 {"children":[{"mv":"e1e8","outcome":"loss","subtree_size":1}],"depth":1,
- "fen":"4c3/8/8/8/8/8/8/4R1C1 w - - 0 1","first_decisive_rank":1,
+ "fen":"4k3/8/8/8/8/8/8/4R1K1 w - - 0 1","first_decisive_rank":1,
  "hash":13158622503721752706,"legal_moves":["e1a1","e1b1",...],
  "outcome":"win","partial":false,"source":"fen",
  "static_scores":{"e1a1":0,"e1b1":560,...},"stm":"w","subtree_size":2}

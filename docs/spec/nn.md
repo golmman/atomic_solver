@@ -39,6 +39,18 @@ identically):
   3 = rook, 4 = queen, 5 = king}.
 - **feature index:** `f = 64 * sq + p` ∈ [0, 768).
 
+### FEN parsing and the corpus king convention
+
+Features are extracted from the corpus `fen` field plus `stm`. The corpus FENs
+are the engine's **round-trip** FENs (`Position::fen()` → `atomic-movegen`'s
+`Board::fen()`). Since atomic-movegen 2.1.0, FEN parsing and output are
+**standard notation only — kings label the commoner** (in atomic chess the
+king is a capturable piece, not a standard-chess royal), e.g.
+`4k3/8/8/8/8/8/8/4R1K1 w - - 0 1`. Every corpus row uses standard `k`/`K`.
+The pre-2.1.0 `c`/`C` commoner spelling is obsolete: 2.1.0 rejects it on
+input, corpora generated before 2.1.0 are stale and must be regenerated, and
+the feature extractor only needs the standard piece letters (case = color).
+
 ### Split by perspective
 
 Every position is encoded twice, relative to the side to move: once as seen
@@ -103,14 +115,19 @@ incremental path past the feature transformer.
 ## 6. Training target and loss
 
 - **Label source:** the search engine's own results. Whenever the engine
-  finishes proving a node, each child that received search effort can be
-  recorded as a `(position, move, work)` triple, where `work` is the number
-  of nodes visited while resolving that child's subtree.
+  finishes proving a node, each child that received search effort is
+  recorded as a `(position, move, work)` triple, where `work` is the
+  cumulative `child_evals` the search spent proving that child's subtree,
+  recorded at prove time (proof-tree dump v2, `docs/spec/proof_tree_dump.md`)
+  and carried in the NDJSON corpus as `children[].work`.
+- **OR nodes** (`outcome == "win"`): the proven decisive child(ren) must rank
+  above every other legal move (one-vs-rest pairs).
+- **AND nodes** (`outcome == "loss"`): every child is expanded; rank the
+  children by their recorded `work`, lowest (cheapest) first.
 - **Loss:** pairwise ranking loss (e.g. RankNet) over sibling pairs at a
-  node, ordering the child with the smallest resolved subtree against its
-  siblings. Children with zero recorded work are excluded from the loss
-  (they are censored — the solver never needed to resolve them — not
-  "cheap").
+  node, using the OR/AND targets above. Children with zero recorded work are
+  excluded from the loss (they are censored — the solver never needed to
+  resolve them — not "cheap").
 - **No absolute regression target** — only the relative order between
   siblings matters for move ordering.
 

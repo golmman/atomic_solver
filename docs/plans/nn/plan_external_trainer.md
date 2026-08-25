@@ -8,6 +8,14 @@ corpus and emits the float32 weight file whose byte layout is pinned in
 `docs/spec/nn.md` §10. Gate 1 (corpus generation) is implemented and verified
 (`docs/plans/nn/report2.md`).
 
+The corpus has since moved to design B (`docs/plans/nn/plan4.md` +
+`report4.md`): every `children[]` entry carries the recorded real `work`
+(cumulative `child_evals` spent proving that child's subtree) and the corpus
+version is `atomic-corpus/2`. The AND label is therefore **"rank the children
+by `work`"** (descending), not by `subtree_size`. The trainer and its
+development run in a Docker container; the setup handoff (which files to copy
+over, what to preinstall) is `docs/plans/nn/trainer_init.md`.
+
 The two open gaps from report2's "next step" are now pinned:
 
 - **`policy_size` = 4096** (nn.md §5): `from_sq * 64 + to_sq`, promotions
@@ -51,7 +59,9 @@ and measurement. The trainer must not depend on the Rust toolchain.
     legal move. `first_decisive_rank` is a summary, not the training target;
     the target is the pairwise order.
   - **AND rows** (`outcome == "loss"`): every child is expanded, so rank the
-    `children[]` by `subtree_size` descending.
+    `children[]` by recorded `work` descending (design B,
+    `docs/plans/nn/plan4.md`; `report4.md` rejects `subtree_size` as the
+    label).
   - **Censoring**: legal moves that are not in `children[]` were never
     expanded (OR-node early stop). They are censored in the sense that no
     pairs are formed *among them* and they are never treated as "cheap" —
@@ -80,9 +90,9 @@ and measurement. The trainer must not depend on the Rust toolchain.
   and (later) the Rust loader's review will refer to.
 - **Ranking data**: for OR rows, generate one pair per (decisive, other
   legal) combination, weighted by... (implementer choice: unweighted pairs
-  are fine for v1; a work-weighted variant using `subtree_size` of the row
-  is a cheap ablation). For AND rows, one pair per `(children[i],
-  children[j])` with `subtree_size_i > subtree_size_j`.
+  are fine for v1; a pair-weighting variant using `abs(log2(work_i /
+  work_j))` is a cheap ablation). For AND rows, one pair per `(children[i],
+  children[j])` with `work_i > work_j`.
 - **`partial` rows**: dropped by default for the "trusted-label" run (a
   `--keep-partial` flag re-enables them). The report must state which mode
   was used.
@@ -109,6 +119,10 @@ In scope:
 - `AGENTS.md` "Examples" section: a brief "Trainer (Gate 2)" note (the
   trainer is not a Rust example; put it near the examples list or in the
   dependencies section).
+- `docs/plans/nn/trainer_init.md` already exists and pins the Docker
+  handoff (files to copy over, preinstalled packages, runtime mounts); this
+  plan implements inside that container and adds no dependency beyond the
+  pinned Python toolchain.
 - A sample weight file fixture: `trainer/fixtures/weights.v1.bin` written by
   the trainer with a fixed seed (used by the future Gate 3 Rust loader
   test).
@@ -119,7 +133,9 @@ Out of scope:
   corpus schema.
 - The Rust weight loader and Gate 3/4 integration (separate plans).
 - Quantization, int8, or anything beyond float32.
-- The `child_evals` counter ablation (see `docs/plans/nn/plan3.md`).
+- The `child_evals` counter question is settled by design B
+  (`docs/plans/nn/plan4.md`/`report4.md`): recorded `work` is now a corpus
+  field, so no ablation remains.
 
 ## Design
 
@@ -132,7 +148,8 @@ Out of scope:
 - `fen` (string), `stm` ("w"/"b").
 - `outcome` ("win"/"loss").
 - `legal_moves` (list of UCI).
-- `children`: list of `{mv, subtree_size, outcome}`.
+- `children`: list of `{mv, subtree_size, work, outcome}` (`work` is the
+  label source for AND rows; `subtree_size` is kept for comparison).
 - `partial` (bool).
 - `source` (string), `depth`, `subtree_size`.
 
@@ -149,10 +166,10 @@ For each kept row:
   "loss"]`; one-vs-rest pairs: `(decisive.mv, other.mv)` for every legal
   move NOT in `decisive`. No pairs are formed between two non-decisive
   moves (they were never expanded — no ordering signal among them).
-- `outcome == "loss"` (AND): sort `children` by `subtree_size` descending
-  (ties: any stable order); pairs `(higher.mv, lower.mv)` for each `(i, j)`
-  with `children[i].subtree_size > children[j].subtree_size`. All legal
-  moves not in `children` are censored.
+- `outcome == "loss"` (AND): sort `children` by `work` descending (ties: any
+  stable order); pairs `(higher.mv, lower.mv)` for each `(i, j)` with
+  `children[i].work > children[j].work`. All legal moves not in `children`
+  are censored.
 - `partial` rows are dropped unless `--keep-partial`.
 
 ### 3. Features
@@ -160,9 +177,11 @@ For each kept row:
 `features.py`: `features_for(fen: str, stm: str) -> tuple[torch.Tensor,
 torch.Tensor]` returning two 768-dim binary tensors (the STM view and the
 other view per §2), using the §2 index formula. Implement the FEN
-parser inside `features.py` (piece letters, case = color, missing
-halfmove-clock fields default). Unit tests: hand-built FENs (`"8/8/.../8/8/
-... w - - 0 1"` etc.), e.g. a lone white king on a1 is only index `0*64 +
+parser inside `features.py` (standard piece letters, case = color; kings are
+`k`/`K` per `docs/spec/nn.md` §2 — the corpus uses standard notation only,
+no `c`/`C` commoners; missing halfmove-clock fields default). Unit tests:
+hand-built FENs (`"8/8/.../8/8/... w - - 0 1"` etc.), e.g. a lone white king on
+a1 is only index `0*64 +
 0*6+5 = 5` in view A and becomes... in view B, mirrored file `f=0 -> 7`, so
 square index `sq = 7 + 0 = 7`, color swapped → `p = 6*1 + 5 = 11` → index
 `7*64 + 11 = 459`. These tests exist to pin the transform.
@@ -194,8 +213,7 @@ loss = mean over pairs (i, j) of:
     log(1 + exp(-(s_i - s_j) * T))       # T = 1.0 v1
 ```
 
-Optionally weighted by `abs(log2(subtree_size_i / subtree_size_j))` or by
-the row's work proxy; v1 keeps it unweighted.
+Optionally weighted by `abs(log2(work_i / work_j))`; v1 keeps it unweighted.
 
 ### 6. Weight file I/O
 
@@ -220,7 +238,7 @@ python3 -m trainer.train --corpus <ndjson> --out <weights.bin>
 
 The trainer prints per-epoch train/val loss to stdout and writes the weight
 file + a `<out>.json` summary at the end. The corpus file may be the full
-20k-row corpus; a `--max-rows` flag caps it for quick runs.
+~26k-row corpus; a `--max-rows` flag caps it for quick runs.
 
 ### 8. Tests
 
@@ -241,8 +259,8 @@ file + a `<out>.json` summary at the end. The corpus file may be the full
 2. Add the unit tests.
 3. `pytest trainer/` on a small synthetic corpus and on the real
    `data/corpus/train.ndjson` (reduced epochs).
-4. Run a real training pass (small net, ~1-2 epochs over 20k rows on CPU or
-   small GPU); produce `weights.v1.bin` + the sample fixture.
+4. Run a real training pass (small net, ~1-2 epochs over the current ~26k-row
+   corpus on CPU or small GPU); produce `weights.v1.bin` + the sample fixture.
 5. Update `AGENTS.md` (trainer note).
 6. Write `docs/plans/nn/report_external_trainer.md`.
 
@@ -256,7 +274,7 @@ file + a `<out>.json` summary at the end. The corpus file may be the full
 ## Verification
 
 - `pytest trainer/` passes.
-- A real run on the 20k corpus: final validation RankNet loss decreases
+- A real run on the current corpus: final validation RankNet loss decreases
   from epoch 1 to last; the emitted weight file has the exact §10 size and
   reads back with `weights.read`.
 - The sample fixture is byte-stable across runs (fixed seed).
@@ -268,7 +286,7 @@ file + a `<out>.json` summary at the end. The corpus file may be the full
 | Risk | Mitigation |
 |---|---|
 | Feature-index mismatch between trainer and future Rust loader | The §2 layout is pinned in the spec; the sample fixture + the layout tests in `features.py` are the canonical cross-check. |
-| Train overfits (20k rows vs ~242k weights) | Tiny net, dropout, small LR, validation by case-source split; treat the output as a feasibility check, not a full model. |
+| Train overfits (~26k rows vs ~242k weights) | Tiny net, dropout, small LR, validation by case-source split; treat the output as a feasibility check, not a full model. |
 | `partial` rows dominate | Dropped by default; `--keep-partial` is an explicit escape hatch. |
 | Censored children leak negative signal | Pairwise loss excludes censored moves from both sides of the comparison. |
 | u64 `hash` JSON decoding loses precision | Parse with `int()`, never float; corpus tests assert uniqueness with exact int semantics. |
@@ -276,7 +294,8 @@ file + a `<out>.json` summary at the end. The corpus file may be the full
 
 ## Success criteria
 
-1. `trainer/` runs against the real corpus NDJSON from report2.
+1. `trainer/` runs against the real corpus NDJSON (`data/corpus/train.ndjson`,
+   `atomic-corpus/2`).
 2. A weight file is produced in the §10 layout; `weights.read` round-trips
    it byte-exactly.
 3. A deterministic sample fixture exists for the future Gate 3 Rust loader

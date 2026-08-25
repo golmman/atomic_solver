@@ -221,3 +221,14 @@ how an external optimizer can evaluate candidate `ScorerParams` by invoking the
 Use `child_evals` as the preferred deterministic efficiency metric and ensure
 that any `WRONG_PENALTY` dominates the loss, reflecting correctness as the
 highest priority.
+
+## External NN trainer (Gate 2)
+
+The move-ordering-network trainer is an external Python/PyTorch toolchain that
+runs in its own Docker container and must not depend on the Rust toolchain.
+The authoritative documents are `docs/spec/nn.md` (features, architecture,
+weight-file layout), `docs/plans/nn/plan_external_trainer.md` (Gate 2
+implementation plan), and `docs/plans/nn/trainer_init.md` (setup handoff:
+files to copy into the container, preinstalled packages). The training corpus
+`data/corpus/train.ndjson` (`atomic-corpus/2`) is git-ignored; regenerate it
+with `make nn_corpus`.

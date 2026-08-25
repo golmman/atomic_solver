@@ -3,10 +3,16 @@
 ## Status
 
 Refined general idea for the PoC pipeline. The architecture spec is
-`docs/spec/nn.md`; the first implementation gate (measurement, "Gate 0") is
-`docs/plans/nn/plan1.md`. This document records the _why_, the pipeline, the
-decisions, and the honest risk assessment so later plans can refer to a stable
-baseline of reasoning.
+`docs/spec/nn.md`. Execution status: Gate 0 (measurement,
+`docs/plans/nn/plan1.md` + `report1.md`) and Gate 1 (corpus generation,
+`plan2.md` + `report2.md`) are done; the `subtree_size` proxy was ablated and
+rejected (`plan3.md` + `report3.md`) and replaced by real per-child `work`
+counters in the proof tree (design B, `plan4.md` + `report4.md`, corpus
+`atomic-corpus/2`); Gate 2's implementation plan is
+`docs/plans/nn/plan_external_trainer.md` and its Docker setup handoff is
+`docs/plans/nn/trainer_init.md`. This document records the _why_, the
+pipeline, the decisions, and the honest risk assessment so later plans can
+refer to a stable baseline of reasoning.
 
 ## 1. Idea
 
@@ -72,10 +78,12 @@ Train on these suites; hold out `move-order` for evaluation.
 ### Gate 2: training (external)
 
 External toolchain (PyTorch/numpy) consumes the NDJSON corpus and emits a
-float32 weight file plus a small header. Network shape and loss are specified
-in `docs/spec/nn.md`. Agree on the `policy_size` scheme (plain 64x64=4096 vs.
-compact move-plane encoding) and the exact weight-file layout _before_ building
-the Rust loader.
+float32 weight file plus a small header; it runs in a Docker container outside
+this repo. Network shape and loss are specified in `docs/spec/nn.md`; the two
+open format questions are pinned: `policy_size` = 4096 (§5) and the exact
+weight-file layout (§10). Implementation plan:
+`docs/plans/nn/plan_external_trainer.md`; container setup:
+`docs/plans/nn/trainer_init.md`.
 
 ### Gate 3: inference integration (Rust side)
 
@@ -140,9 +148,14 @@ recorded `work` directly.
 
 ## 8. Phasing
 
-1. `docs/plans/nn/plan1.md` — Gate 0 measurement example (next).
-2. Gate 1 corpus generation (future plan).
-3. Gate 2 external trainer + weight contract (future plan).
-4. Gate 3 Rust inference integration (future plan).
-5. Gate 4 full measurement and report (future plan).
+1. `docs/plans/nn/plan1.md` + `report1.md` — Gate 0 measurement example.
+   Done.
+2. `docs/plans/nn/plan2.md` + `report2.md` — Gate 1 corpus generation. Done.
+3. `docs/plans/nn/plan3.md`/`report3.md` + `plan4.md`/`report4.md` — the
+   subtree-size proxy ablation; proxy rejected; real per-child `work` labels
+   (design B, corpus v2). Done.
+4. `docs/plans/nn/plan_external_trainer.md` + `trainer_init.md` — Gate 2
+   external trainer (next; `trainer_init.md` is the Docker handoff).
+5. Gate 3 Rust inference integration (future plan).
+6. Gate 4 full measurement and report (future plan).
 

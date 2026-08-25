@@ -108,3 +108,13 @@ Also update existing files as necessary:
 * `docs/plans/nn/plan_external_trainer.md`
 * `docs/spec/nn.md`
 * others?
+
+---
+
+* why are non-standard FENs (with c/C as commoners/kings) necessary? no fen in decisive_positions.txt has c/C labels.
+* why copy concept/reports and trainer_init.md when we could just add the info to the contract (docs/spec/nn.md) or plan (plan_external_trainer.md)?
+
+---
+
+* tests < 1 minute
+* done: q8 upwards
