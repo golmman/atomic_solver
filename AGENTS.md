@@ -229,6 +229,8 @@ runs in its own Docker container and must not depend on the Rust toolchain.
 The authoritative documents are `docs/spec/nn.md` (features, architecture,
 weight-file layout), `docs/plans/nn/plan_external_trainer.md` (Gate 2
 implementation plan), and `docs/plans/nn/trainer_init.md` (setup handoff:
-files to copy into the container, preinstalled packages). The training corpus
+disposable container with the trainer's own repo rw-mounted, `uv`-only image,
+repo-local venv/cache; the in-repo bootstrap is pinned by the plan). The
+training corpus
 `data/corpus/train.ndjson` (`atomic-corpus/2`) is git-ignored; regenerate it
 with `make nn_corpus`.

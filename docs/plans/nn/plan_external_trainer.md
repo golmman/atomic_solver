@@ -13,8 +13,11 @@ The corpus has since moved to design B (`docs/plans/nn/plan4.md` +
 (cumulative `child_evals` spent proving that child's subtree) and the corpus
 version is `atomic-corpus/2`. The AND label is therefore **"rank the children
 by `work`"** (descending), not by `subtree_size`. The trainer and its
-development run in a Docker container; the setup handoff (which files to copy
-over, what to preinstall) is `docs/plans/nn/trainer_init.md`.
+development run in a Docker container; the setup handoff (which files to
+provision into the mounted trainer repo, what to preinstall in the image, how
+to launch the container) is `docs/plans/nn/trainer_init.md`. The **in-repo
+bootstrap** (project files, uv config, git-ignore rules) is pinned in this
+plan: see "Decisions" and "Implementation steps" below.
 
 The two open gaps from report2's "next step" are now pinned:
 
@@ -82,7 +85,30 @@ and measurement. The trainer must not depend on the Rust toolchain.
 
 - **Toolchain**: Python 3.12 + PyTorch (>=2.0). Numpy only where the weight
   writer needs to avoid torch tensor host/device concerns. No other
-  dependencies beyond numpy/torch.
+  dependencies beyond numpy/torch (plus `pytest` as a dev dependency).
+- **Project scaffolding (uv; verified against uv 0.12)**: the trainer
+  repository root is the uv project root. `pyproject.toml` carries only
+  project metadata + dependencies (`uv init --python 3.12`, `uv add numpy
+  "torch>=2.0"`, `uv add --dev pytest`) and **must not define a `[tool.uv]`
+  table**. All uv configuration lives in the repo-root `uv.toml` (committed):
+  the cache location and the CPU-only PyTorch index. Rationale: `sources` is
+  not allowed in `uv.toml` (project-scoped), and a `[tool.uv]` table in
+  `pyproject.toml` would be shadowed/ignored when a same-directory `uv.toml`
+  exists — so the torch pin must use *index priority*, not `sources`:
+  ```toml
+  # uv.toml (repo root)
+  cache-dir = ".uv-cache"
+
+  [[index]]
+  name = "pytorch-cpu"
+  url = "https://download.pytorch.org/whl/cpu"
+  ```
+  This resolves `torch>=2.0` to the CPU wheel (verified: `2.13.0+cpu` records
+  `download.pytorch.org/whl/cpu` in `uv.lock`); point the URL at
+  `https://download.pytorch.org/whl/cu126` for a GPU machine. `uv.lock`
+  (committed) records the resolved source and hashes, which is what keeps the
+  §10 fixture byte-stable. (`torch-backend` affects only `uv pip` commands,
+  not `uv sync`.)
 - **Feature extraction**: a standalone module (`features.py`) with a pure
   Python (numpy) implementation of the §2 layout and the §2 other-side
   transform (color swap + file mirror), with unit tests against hand-built
@@ -120,9 +146,13 @@ In scope:
   trainer is not a Rust example; put it near the examples list or in the
   dependencies section).
 - `docs/plans/nn/trainer_init.md` already exists and pins the Docker
-  handoff (files to copy over, preinstalled packages, runtime mounts); this
-  plan implements inside that container and adds no dependency beyond the
-  pinned Python toolchain.
+  handoff: a disposable container with the **trainer's own repo** rw-mounted,
+  a `uv`-only image, repo-local venv/cache, the container launch/lifecycle,
+  and runtime mounts. The **in-repo bootstrap** (`pyproject.toml`, `uv.lock`,
+  `uv.toml`, `.gitignore`) is defined in this plan (Decisions + Implementation
+  steps). This plan adds no dependency beyond the pinned Python toolchain
+  (numpy/torch + `pytest`); the container image itself preinstalls only `uv`
+  and `git`.
 - A sample weight file fixture: `trainer/fixtures/weights.v1.bin` written by
   the trainer with a fixed seed (used by the future Gate 3 Rust loader
   test).
@@ -254,19 +284,28 @@ file + a `<out>.json` summary at the end. The corpus file may be the full
 
 ## Implementation steps
 
-1. Create `trainer/` package: `features.py`, `corpus.py`, `model.py`,
+1. Scaffold the uv project at the trainer repository root (per Decisions,
+   "Project scaffolding"): `uv init --python 3.12`; `uv add numpy
+   "torch>=2.0"`; `uv add --dev pytest`; write the repo-root `uv.toml`; add
+   `.venv/`, `.uv-cache/`, `__pycache__/`, `*.pyc` to `.gitignore`; commit
+   `pyproject.toml`, `uv.lock`, and `uv.toml`. `uv sync --locked` must
+   succeed and must install the CPU torch wheel.
+2. Create `trainer/` package: `features.py`, `corpus.py`, `model.py`,
    `loss.py`, `weights.py`, `train.py`.
-2. Add the unit tests.
-3. `pytest trainer/` on a small synthetic corpus and on the real
+3. Add the unit tests.
+4. `pytest trainer/` on a small synthetic corpus and on the real
    `data/corpus/train.ndjson` (reduced epochs).
-4. Run a real training pass (small net, ~1-2 epochs over the current ~26k-row
+5. Run a real training pass (small net, ~1-2 epochs over the current ~26k-row
    corpus on CPU or small GPU); produce `weights.v1.bin` + the sample fixture.
-5. Update `AGENTS.md` (trainer note).
-6. Write `docs/plans/nn/report_external_trainer.md`.
+6. Update `AGENTS.md` (trainer note).
+7. Write `docs/plans/nn/report_external_trainer.md`.
 
 ## Files changed
 
 - `trainer/` (new, python)
+- `pyproject.toml`, `uv.lock`, `uv.toml` (new, committed) — uv project + lock
+  + config (cache-dir, CPU torch index), per Decisions "Project scaffolding"
+- `.gitignore` (updated: `.venv/`, `.uv-cache/`, `__pycache__/`, `*.pyc`)
 - `docs/plans/nn/report_external_trainer.md` (new, final report)
 - `AGENTS.md` (note)
 - `data/corpus/weights.v1.bin` (generated artifact, git-ignored by `/data/`)
