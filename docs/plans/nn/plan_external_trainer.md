@@ -16,7 +16,7 @@ by `work`"** (lowest `work` = cheapest to resolve, first), not by
 `subtree_size`. The trainer and its
 development run in a Docker container; the setup handoff (which files to
 provision into the mounted trainer repo, what to preinstall in the image, how
-to launch the container) is `docs/plans/nn/trainer_init.md`. The **in-repo
+to launch the container) is `docs/plans/nn/trainer_handoff.md`. The **in-repo
 bootstrap** (project files, uv config, git-ignore rules) is pinned in this
 plan: see "Decisions" and "Implementation steps" below.
 
@@ -147,7 +147,7 @@ In scope:
 - `AGENTS.md` "Examples" section: a brief "Trainer (Gate 2)" note (the
   trainer is not a Rust example; put it near the examples list or in the
   dependencies section).
-- `docs/plans/nn/trainer_init.md` already exists and pins the Docker
+- `docs/plans/nn/trainer_handoff.md` already exists and pins the Docker
   handoff: a disposable container with the **trainer's own repo** rw-mounted,
   a `uv`-only image, repo-local venv/cache, the container launch/lifecycle,
   and runtime mounts. The **in-repo bootstrap** (`pyproject.toml`, `uv.lock`,

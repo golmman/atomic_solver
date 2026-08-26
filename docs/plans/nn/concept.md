@@ -10,7 +10,7 @@ rejected (`plan3.md` + `report3.md`) and replaced by real per-child `work`
 counters in the proof tree (design B, `plan4.md` + `report4.md`, corpus
 `atomic-corpus/2`); Gate 2's implementation plan is
 `docs/plans/nn/plan_external_trainer.md` and its Docker setup handoff is
-`docs/plans/nn/trainer_init.md`. This document records the _why_, the
+`docs/plans/nn/trainer_handoff.md`. This document records the _why_, the
 pipeline, the decisions, and the honest risk assessment so later plans can
 refer to a stable baseline of reasoning.
 
@@ -83,7 +83,7 @@ this repo. Network shape and loss are specified in `docs/spec/nn.md`; the two
 open format questions are pinned: `policy_size` = 4096 (§5) and the exact
 weight-file layout (§10). Implementation plan:
 `docs/plans/nn/plan_external_trainer.md`; container setup:
-`docs/plans/nn/trainer_init.md`.
+`docs/plans/nn/trainer_handoff.md`.
 
 ### Gate 3: inference integration (Rust side)
 
@@ -154,8 +154,8 @@ recorded `work` directly.
 3. `docs/plans/nn/plan3.md`/`report3.md` + `plan4.md`/`report4.md` — the
    subtree-size proxy ablation; proxy rejected; real per-child `work` labels
    (design B, corpus v2). Done.
-4. `docs/plans/nn/plan_external_trainer.md` + `trainer_init.md` — Gate 2
-   external trainer (next; `trainer_init.md` is the Docker handoff).
+4. `docs/plans/nn/plan_external_trainer.md` + `trainer_handoff.md` — Gate 2
+   external trainer (next; `trainer_handoff.md` is the Docker handoff).
 5. Gate 3 Rust inference integration (future plan).
 6. Gate 4 full measurement and report (future plan).
 

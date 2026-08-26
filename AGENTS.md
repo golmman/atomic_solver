@@ -228,7 +228,7 @@ The move-ordering-network trainer is an external Python/PyTorch toolchain that
 runs in its own Docker container and must not depend on the Rust toolchain.
 The authoritative documents are `docs/spec/nn.md` (features, architecture,
 weight-file layout), `docs/plans/nn/plan_external_trainer.md` (Gate 2
-implementation plan), and `docs/plans/nn/trainer_init.md` (setup handoff:
+implementation plan), and `docs/plans/nn/trainer_handoff.md` (setup handoff:
 disposable container with the trainer's own repo rw-mounted, `uv`-only image,
 repo-local venv/cache; the in-repo bootstrap is pinned by the plan). The
 training corpus

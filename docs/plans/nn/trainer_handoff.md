@@ -1,4 +1,4 @@
-# Trainer init: external trainer setup (Gate 2)
+# Trainer handoff: external trainer setup (Gate 2)
 
 ## Status
 
@@ -70,7 +70,7 @@ Recommended context (not required to implement):
 
 Not needed in the container: the Rust sources, `Cargo.toml`, examples,
 fixtures, the `.bin` dumps (they need the Rust `corpus_gen` binary to replay),
-the Rust toolchain, or this `trainer_init.md` itself — it is a host-side setup
+the Rust toolchain, or this `trainer_handoff.md` itself — it is a host-side setup
 guide, read here in the repo by whoever builds the image.
 
 ### Suggested working-copy layout
