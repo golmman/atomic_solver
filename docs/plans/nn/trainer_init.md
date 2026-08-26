@@ -33,8 +33,10 @@ the authoritative details live in the listed files, not here.
 --timeout 20 --tt-size 64 --pt-size 256`. The NDJSON is the **only required
   input**.
   - The file is git-ignored in this repo (`/data/` in `.gitignore`), so it
-    cannot be cloned; copy it into the trainer repository (or mount it at run
-    time). Regeneration happens on the Rust side (`make nn_corpus`) and is out
+    cannot be cloned from here. **Commit it into the trainer repository**
+    (~20 MB; it is the single required input, and committing it makes the
+    trainer repo self-sufficient — see "Gotchas" on `git clean -fdx`).
+    Regeneration happens on the Rust side (`make nn_corpus`) and is out
     of scope for the container.
   - The first line is the `_meta` object (`{"_meta": "atomic-corpus/2",
 "rows": …, "cases": …}`). The trainer should assert the version it was built
@@ -58,7 +60,13 @@ Recommended context (not required to implement):
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `docs/plans/nn/report2.md` | The full NDJSON schema table and the "Input contract for the Gate 2 trainer" (the plan points to it for detail). |
 | `docs/plans/nn/report4.md` | Why `work` is the AND label (the `subtree_size` proxy was measured and rejected).                                |
-| `docs/plans/nn/concept.md` | The _why_ of the whole pipeline and the honest risk assessment.                                                  |
+| `docs/plans/nn/concept.md` | The _why_ of the whole pipeline and the honest risk assessment. |
+
+> The reports' numbers predate the current corpus — `report2.md`/`report4.md`
+> quote 23/36 cases and 20,224 rows, while the decisive fixture has since
+> grown to 46 cases. The shipped corpus is 59 cases / 26,475 rows,
+> `atomic-corpus/2`; the `_meta` line is authoritative over anything in this
+> file.
 
 Not needed in the container: the Rust sources, `Cargo.toml`, examples,
 fixtures, the `.bin` dumps (they need the Rust `corpus_gen` binary to replay),
@@ -70,7 +78,7 @@ guide, read here in the repo by whoever builds the image.
 ```
 trainer-repo/              # the trainer's own repo, rw-mounted into the container
   docs/                    # the plan + spec (+ optional reports), same layout
-  data/corpus/train.ndjson
+  data/corpus/train.ndjson # the corpus, COMMITTED (single required input)
   pyproject.toml           # uv project; committed (created by the plan's bootstrap)
   uv.lock                  # pinned resolution; committed
   uv.toml                  # uv config (cache-dir, CPU torch index); committed
@@ -104,8 +112,8 @@ scaffolding" + Implementation steps) and is **not** present in this repo:
 ### Image
 
 - **Base image:** `python:3.12-slim` is enough. The net is tiny (~242k
-  weights) and the plan explicitly runs the v1 training on CPU; a
-  `pytorch/pytorch` GPU image only if a GPU is available.
+  weights) and the plan runs the v1 training on CPU by default (GPU is
+  optional — use a `pytorch/pytorch` GPU image only if a GPU is available).
 - **Preinstall:** `uv` and `git` only. In particular **no**
   `torch`/`numpy`/`pytest` baked into the image: they are installed into the
   mounted trainer repo on first boot (`uv sync`), where they stay. The image
@@ -117,7 +125,7 @@ Example Dockerfile:
 
 ```dockerfile
 FROM python:3.12-slim
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.6 /uv /bin/
 RUN apt-get update && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/*
 ```
@@ -182,8 +190,8 @@ environment variable takes precedence over the config file.
 ### Runtime mounts
 
 One read-write mount of the trainer repository root (e.g. `/repo`). The corpus
-is either copied into the repo (see "Files to provision") or mounted read-only
-on top of `data/corpus/` at run time:
+is committed inside the repo (see "Files to provision"), so no extra copy or
+runtime mount is needed:
 
 - Read: `data/corpus/train.ndjson`.
 - Write: `data/corpus/weights.v1.bin` and `<out>.json` (git-ignored), and
@@ -196,13 +204,16 @@ even though the bundled plan/spec state them. Each points at its normative
 home; if a fact is missing there, the bundle is stale.
 
 - **Corpus FENs use standard `k`/`K` notation** (atomic-movegen ≥ 2.1.0;
-  verified on `atomic-corpus/2` — all rows, zero `c`/`C`). Corpora generated
-  with the pre-2.1.0 `c`/`C` spelling are obsolete and rejected by the crate;
-  regenerate with `make nn_corpus`. `docs/spec/nn.md` §2 pins the convention.
+  verified on `atomic-corpus/2`: zero `c`/`C` *piece letters* in the board
+  ranks — the only `c` in the file is the en-passant target file, e.g.
+  `w - c6 0 15`). Corpora generated with the pre-2.1.0 `c`/`C` spelling are
+  obsolete and rejected by the crate; regenerate with `make nn_corpus`.
+  `docs/spec/nn.md` §2 pins the convention.
 - `hash` is a decimal u64 JSON number; parse with Python's exact `int`
   semantics, never `float` (plan Background).
-- `children[].work` is the AND label: rank children by `work` **descending**
-  (cheapest first); `work >= 1` for every expanded child; zero/absent `work`
+- `children[].work` is the AND label: rank children by `work`, **lowest
+  (cheapest to resolve) first**; `work >= 1` for every expanded child;
+  zero/absent `work`
   means censored — excluded from loss pairs, never "cheap" (nn.md §6, plan §2).
 - `partial: true` rows stem from timed-out/synthesized cases; dropped by
   default (`--keep-partial` re-enables; plan §2).
@@ -223,9 +234,13 @@ home; if a fact is missing there, the bundle is stale.
   CUDA-bundled PyPI wheel on a CPU-only run. A GPU machine changes the URL to
   the `cu126` index. (uv's `torch-backend` setting affects only `uv pip`
   commands, not `uv sync`.)
-- **Aggressive host cleans:** `git clean -fdx` from the host removes `.venv/`
-  and `.uv-cache/`; harmless because they are recreatable from `uv.lock`
-  (re-download needed afterwards).
+- **Aggressive host cleans:** `git clean -fdx` removes *all* untracked
+  files, including ignored ones: `.venv/` and `.uv-cache/` are harmlessly
+  recreatable from `uv.lock`, but **a copied-but-uncommitted corpus or
+  generated outputs are not** — the corpus needs the Rust `make nn_corpus`
+  to regenerate. This is why the corpus is committed (see "Files to
+  provision"); after a clean, `uv sync --locked` restores `.venv`/`.uv-cache`
+  and the corpus stays untouched in git.
 
 ## Outputs / hand-back
 

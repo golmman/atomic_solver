@@ -12,7 +12,8 @@ The corpus has since moved to design B (`docs/plans/nn/plan4.md` +
 `report4.md`): every `children[]` entry carries the recorded real `work`
 (cumulative `child_evals` spent proving that child's subtree) and the corpus
 version is `atomic-corpus/2`. The AND label is therefore **"rank the children
-by `work`"** (descending), not by `subtree_size`. The trainer and its
+by `work`"** (lowest `work` = cheapest to resolve, first), not by
+`subtree_size`. The trainer and its
 development run in a Docker container; the setup handoff (which files to
 provision into the mounted trainer repo, what to preinstall in the image, how
 to launch the container) is `docs/plans/nn/trainer_init.md`. The **in-repo
@@ -62,7 +63,8 @@ and measurement. The trainer must not depend on the Rust toolchain.
     legal move. `first_decisive_rank` is a summary, not the training target;
     the target is the pairwise order.
   - **AND rows** (`outcome == "loss"`): every child is expanded, so rank the
-    `children[]` by recorded `work` descending (design B,
+    `children[]` by recorded `work`, **lowest (cheapest to resolve) first**
+    (design B,
     `docs/plans/nn/plan4.md`; `report4.md` rejects `subtree_size` as the
     label).
   - **Censoring**: legal moves that are not in `children[]` were never
@@ -196,10 +198,11 @@ For each kept row:
   "loss"]`; one-vs-rest pairs: `(decisive.mv, other.mv)` for every legal
   move NOT in `decisive`. No pairs are formed between two non-decisive
   moves (they were never expanded — no ordering signal among them).
-- `outcome == "loss"` (AND): sort `children` by `work` descending (ties: any
-  stable order); pairs `(higher.mv, lower.mv)` for each `(i, j)` with
-  `children[i].work > children[j].work`. All legal moves not in `children`
-  are censored.
+- `outcome == "loss"` (AND): sort `children` by `work` ascending (ties: any
+  stable order); pairs `(cheaper.mv, pricier.mv)` for each `(i, j)` with
+  `children[i].work > children[j].work` — equivalently, emit the
+  lower-`work` child as the first (preferred) element. All legal moves not in
+  `children` are censored.
 - `partial` rows are dropped unless `--keep-partial`.
 
 ### 3. Features
@@ -209,7 +212,9 @@ torch.Tensor]` returning two 768-dim binary tensors (the STM view and the
 other view per §2), using the §2 index formula. Implement the FEN
 parser inside `features.py` (standard piece letters, case = color; kings are
 `k`/`K` per `docs/spec/nn.md` §2 — the corpus uses standard notation only,
-no `c`/`C` commoners; missing halfmove-clock fields default). Unit tests:
+no `c`/`C` commoner piece letters; note an en-passant target file letter such
+as `w - c6 0 15` is FEN syntax, not a commoner; missing halfmove-clock fields
+default). Unit tests:
 hand-built FENs (`"8/8/.../8/8/... w - - 0 1"` etc.), e.g. a lone white king on
 a1 is only index `0*64 +
 0*6+5 = 5` in view A and becomes... in view B, mirrored file `f=0 -> 7`, so
@@ -242,6 +247,9 @@ tied-parameter hack needed).
 loss = mean over pairs (i, j) of:
     log(1 + exp(-(s_i - s_j) * T))       # T = 1.0 v1
 ```
+
+The first pair element is always the preferred child: the decisive move on
+OR rows, the cheaper child on AND rows.
 
 Optionally weighted by `abs(log2(work_i / work_j))`; v1 keeps it unweighted.
 
@@ -278,6 +286,9 @@ file + a `<out>.json` summary at the end. The corpus file may be the full
 - `features.py`: the hand-built FEN cases from §3; also a full-corpus
   smoke test: load the real `data/corpus/train.ndjson` and assert row
   counts, label-pair counts, unique hashes.
+- `corpus.py`: for every AND row, assert each generated pair's first element
+  has strictly lower `work` than its second (ties produce no pair); OR rows'
+  first elements are the decisive children.
 - `weights.py`: round-trip byte-exact.
 - `train.py` on a tiny synthetic NDJSON (5 rows): loss decreases, weight
   file is written with the correct dims and size.

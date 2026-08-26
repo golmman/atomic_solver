@@ -836,6 +836,21 @@ fn case_rows(
                         first_decisive_rank,
                         partial,
                     });
+
+                    // Standard-king-notation guard: the board part of the
+                    // emitted FEN must not contain `c`/`C` (atomic-movegen
+                    // >= 2.1.0 spells kings `k`/`K`; the only `c` allowed in
+                    // a FEN is the en-passant target file such as `w - c6`).
+                    // A stale `c`/`C` spelling would silently yield a
+                    // malformed corpus the trainer cannot see, so abort.
+                    let fen = pos.fen();
+                    let board = fen.split(' ').next().unwrap_or_default();
+                    if board.chars().any(|ch| matches!(ch, 'c' | 'C')) {
+                        eprintln!(
+                            "BUG: emitted fen uses pre-2.1.0 `c`/`C` commoner spelling: `{fen}`"
+                        );
+                        std::process::exit(1);
+                    }
                 }
 
                 // Traversal must be independent of row emission: skipping an
