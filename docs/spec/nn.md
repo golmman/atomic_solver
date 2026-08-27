@@ -127,7 +127,13 @@ incremental path past the feature transformer.
 - **Loss:** pairwise ranking loss (e.g. RankNet) over sibling pairs at a
   node, using the OR/AND targets above. Children with zero recorded work are
   excluded from the loss (they are censored — the solver never needed to
-  resolve them — not "cheap").
+  resolve them — not "cheap"). "Excluded" means: never the *preferred*
+  (first) element of a pair, and no pair between two censored moves. It does
+  not remove them from the OR one-vs-rest pairs above — on OR nodes every
+  legal move that is not a proven decisive child, including never-expanded
+  moves that have no `children[]` entry at all, is the negative side of a
+  pair. (In `atomic-corpus/2` every expanded child has `work >= 1`, so the
+  zero-work censoring case does not occur in the shipped corpus.)
 - **No absolute regression target** — only the relative order between
   siblings matters for move ordering.
 
@@ -180,7 +186,6 @@ Header (16 bytes):
   u16 hidden       32
   u16 policy       4096
   u16 flags        0            // 0 = float32, unquantized
-  u16 reserved     0
 
 Tensors, in this order (all float32, row-major):
   W_1  [128][768]   // rows = accumulator, cols = input
@@ -191,7 +196,9 @@ Tensors, in this order (all float32, row-major):
   b_3  [4096]
 ```
 
-Total size: `16 + 4 * (98,304 + 128 + 8,192 + 32 + 131,072 + 4,096)`
+The header is exactly 16 bytes: the `u32` magic plus six `u16` fields — no
+padding, no reserved field, no alignment words. Total size:
+`16 + 4 * (98,304 + 128 + 8,192 + 32 + 131,072 + 4,096)`
 = `16 + 4 * 241,824` = 967,312 bytes. With `W_1` stored row-major
 (rows = accumulator, columns = input), column `i` is exactly the
 incremental-update vector `W_1[:, i]` used in §4.

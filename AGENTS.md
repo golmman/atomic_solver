@@ -88,8 +88,9 @@ The runnable examples are:
   trainer. Since design B (`docs/plans/nn/plan4.md`) every `children[]` entry
   carries the recorded real `work` (`child_evals` spent proving that child's
   subtree) from the v2 dump, and the corpus version is `atomic-corpus/2`: the
-  AND label is "rank the children by `work`". The move-order suite is held out
-  for evaluation.
+  AND label is "rank the children by `work`". The move-order cases m23+ are
+  part of the `quick` suite and therefore train; only the m20–m22 move-order
+  cases are held out for evaluation.
 - `find_winning_child` — Enumerates every legal first move, solves the resulting
   child with a short timeout, and reports the first move that is winning for
   the root side (a child `Loss`).

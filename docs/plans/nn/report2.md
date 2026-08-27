@@ -182,8 +182,9 @@ Measured static rank-1 share on the quick corpus is 68.1% of OR rows
   `child_evals` counters; subtree size is the planned proxy, and per-child
   work counters remain an optional ablation.
 - **The echo chamber argument applies:** rows come from trees the current
-  ordering can build; positions it never expands never appear. The move-order
-  suite (m20..m29) is held out for evaluation.
+  ordering can build; positions it never expands never appear. The m20..m22
+  move-order cases are held out for evaluation (m23+ are part of the `quick`
+  suite and appear in the corpus).
 - **Synthesized-root data-consistency note:** when a case times out with no
   root proof (or is an immediate draw), the corpus loader synthesizes a Loss
   root event so `finalize()` keeps the realized (refuted-line) children,

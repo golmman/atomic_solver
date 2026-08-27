@@ -126,8 +126,11 @@ and measurement. The trainer must not depend on the Rust toolchain.
   was used.
 - **Split**: a `--validation-fraction` (default 0.1) of rows held out from
   training, chosen per `source` (case-level) to keep transpositions
-  together. The move-order suite is NOT in the corpus and therefore cannot
-  leak; the trainer never sees it.
+  together. Leakage caveat: the `quick` suite includes the move-order cases
+  with number ≥ 23, and 8 of them (`m23_*` through `m27_black`) survive
+  dedup as row sources — those positions are training data by design. The
+  honestly held-out move-order set is **m20–m22 only** (6 cases); Gate 4's
+  evaluation suite must reflect that.
 - **Regularization**: the net is small by design (nn.md §7); dropout on the
   256-dim activation plus `L2` on `W_2`/`W_3` is enough. The success target
   is validation loss not overfit.
@@ -257,8 +260,9 @@ Optionally weighted by `abs(log2(work_i / work_j))`; v1 keeps it unweighted.
 
 `weights.py`:
 
-- `write(path, W1, b1, W2, b2, W3, b3)`: pack the §10 header (magic
-  `0x4E4E5441`, version 1, dims 768/128/32/4096, flags 0, reserved 0), then
+- `write(path, W1, b1, W2, b2, W3, b3)`: pack the §10 header — exactly 16
+  bytes: magic `0x4E4E5441`, version 1, dims 768/128/32/4096, flags 0 (no
+  `reserved` field; this matches the 967,312-byte total in nn.md §10), then
   each tensor row-major as float32 little-endian via `struct.pack`/`array`.
 - `read(path)` returning dims + numpy arrays; `roundtrip_test` verifies
   byte-identical write→read for a tiny tensor set.
@@ -336,7 +340,7 @@ file + a `<out>.json` summary at the end. The corpus file may be the full
 | Risk | Mitigation |
 |---|---|
 | Feature-index mismatch between trainer and future Rust loader | The §2 layout is pinned in the spec; the sample fixture + the layout tests in `features.py` are the canonical cross-check. |
-| Train overfits (~26k rows vs ~242k weights) | Tiny net, dropout, small LR, validation by case-source split; treat the output as a feasibility check, not a full model. |
+| Train overfits (~26k rows, ≈9.1k after the default `partial` drop, vs ~242k weights) | Tiny net, dropout, small LR, validation by case-source split; treat the output as a feasibility check, not a full model. |
 | `partial` rows dominate | Dropped by default; `--keep-partial` is an explicit escape hatch. |
 | Censored children leak negative signal | Pairwise loss excludes censored moves from both sides of the comparison. |
 | u64 `hash` JSON decoding loses precision | Parse with `int()`, never float; corpus tests assert uniqueness with exact int semantics. |

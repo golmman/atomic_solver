@@ -149,13 +149,16 @@ index, the no-`[tool.uv]` rule) and Implementation step 1. Run those steps
 first; this handoff covers the container, not the project files.
 
 Once the source is set up, `uv sync` creates `.venv/` (inside the mount) and
-installs into it. The first run downloads wheels into the repo-local cache;
-afterwards the container is network-independent:
+installs into it. **The first sync must run online** — it downloads the
+wheels into the repo-local cache; only from then on is the container
+network-independent (`uv sync --locked --offline` re-creates `.venv` from
+the lock file and the warm cache):
 
 ```sh
-uv sync --locked --offline
+uv sync --locked            # first boot: online, fills .uv-cache
 uv run pytest
 uv run python -m trainer.train --corpus data/corpus/train.ndjson --out data/corpus/weights.v1.bin
+# later reboots / after `git clean -fdx`: uv sync --locked --offline
 ```
 
 ### Cache location and the CWD rule
@@ -186,6 +189,10 @@ environment variable takes precedence over the config file.
   here; do not install into the system Python. After losing the container,
   `uv sync --locked` rebuilds `.venv` from the lock file, and the warm
   `.uv-cache` avoids re-downloads.
+- Host-architecture changes: `.venv` and `.uv-cache` are architecture-
+  specific (e.g. a mount prepared on x86_64 moved to an arm64 host). If the
+  mount was last used on a different host type, `rm -rf .venv && uv sync
+  --locked` from the repo root; the lock file re-pins everything.
 
 ### Runtime mounts
 
@@ -212,9 +219,16 @@ home; if a fact is missing there, the bundle is stale.
 - `hash` is a decimal u64 JSON number; parse with Python's exact `int`
   semantics, never `float` (plan Background).
 - `children[].work` is the AND label: rank children by `work`, **lowest
-  (cheapest to resolve) first**; `work >= 1` for every expanded child;
-  zero/absent `work`
-  means censored — excluded from loss pairs, never "cheap" (nn.md §6, plan §2).
+  (cheapest to resolve) first**; `work >= 1` for every expanded child (all
+  41,484 entries in this corpus, min 1). The zero/absent-`work` = censored
+  rule (nn.md §6, plan §2) never fires on this corpus, but keep its precise
+  meaning: a censored move is never the *preferred* (first) element of a
+  pair, and no pair is formed between two censored moves. It is **not**
+  excluded from OR one-vs-rest pairs: on `win` rows every legal move that is
+  not in `decisive` — including never-expanded moves with no `children[]`
+  entry at all — is the negative side of a pair (plan §2). Reading
+  "excluded from the loss" literally would produce zero pairs on all 18,991
+  OR rows (~72% of the corpus).
 - `partial: true` rows stem from timed-out/synthesized cases; dropped by
   default (`--keep-partial` re-enables; plan §2).
 - Other-side transform is pinned in nn.md §2: swap colors + mirror the file
@@ -232,8 +246,11 @@ home; if a fact is missing there, the bundle is stale.
   `uv.toml` (`[[index]] url = "https://download.pytorch.org/whl/cpu"`),
   verified to resolve `2.13.0+cpu`; this avoids the default multi-GB
   CUDA-bundled PyPI wheel on a CPU-only run. A GPU machine changes the URL to
-  the `cu126` index. (uv's `torch-backend` setting affects only `uv pip`
-  commands, not `uv sync`.)
+  the `cu126` index — but that changes the resolution, so `uv.lock` will
+  differ. Keep the committed lock CPU-only and produce the byte-stable
+  sample fixture from the CPU run; a GPU run is a separate, uncommitted
+  resolution. (uv's `torch-backend` setting affects only `uv pip` commands,
+  not `uv sync`.)
 - **Aggressive host cleans:** `git clean -fdx` removes *all* untracked
   files, including ignored ones: `.venv/` and `.uv-cache/` are harmlessly
   recreatable from `uv.lock`, but **a copied-but-uncommitted corpus or
@@ -255,4 +272,7 @@ The trainer writes (per `docs/plans/nn/plan_external_trainer.md`):
 
 Gate 3 (Rust loader) will consume the weight file; `report_external_trainer.md`
 must record the exact input contract the container consumed (corpus version,
-partial handling, pair semantics) alongside the run metrics.
+partial handling, pair semantics) alongside the run metrics. Record the
+trusted-label budget too: dropping `partial` rows (17,345 of 26,475, ~65%)
+leaves ~9,130 rows for the default trusted-label run — state the actual kept
+count and whether `--keep-partial` was used.

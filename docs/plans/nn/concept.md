@@ -73,7 +73,9 @@ A new example that solves the `quick` + `decisive` suites at fixed
 (root FEN + move paths), materializing per node:
 `{hash, fen, legal_moves, outcome, depth, subtree_size, first_decisive_rank}`,
 deduplicated by Zobrist hash, serialized to NDJSON for the external trainer.
-Train on these suites; hold out `move-order` for evaluation.
+Train on these suites; the move-order cases m23+ are part of `quick` and
+therefore train too — the honestly held-out move-order set is `m20..m22`
+(6 cases).
 
 ### Gate 2: training (external)
 
