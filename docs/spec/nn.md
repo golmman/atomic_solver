@@ -61,6 +61,15 @@ side that was not the side to move. Both views share a single linear
 projection (§3), so a feature means the same thing in either perspective.
 The trainer and the Rust loader must apply this exact transform.
 
+**Why the file mirror (and not another transform):** v1 has no castling-rights
+or en-passant features, so a position and its horizontal mirror are
+strategically identical — mirroring the file is therefore free augmentation:
+each position trains `W_1` on both itself and its mirror image. A rank flip
+(the NNUE-conventional look) would be unsound here: with absolute square
+indices it would teach `W_1` a false vertical-mirror equivalence, since pawn
+direction makes the board rank-asymmetric. A pure color swap (no spatial
+transform) is correct but forfeits the augmentation.
+
 ## 3. Layer-by-layer architecture
 
 | Stage | Operation                          | Input dim    | Output dim    | Learned?                    | Notes                                            |
@@ -68,9 +77,15 @@ The trainer and the Rust loader must apply this exact transform.
 | 1a    | Feature transformer (side-to-move) | 768 (sparse) | 128           | Yes (`W_1`, shared weights) | `a_stm = W_1 x_stm + b_1`     |
 | 1b    | Feature transformer (other side)   | 768 (sparse) | 128           | Yes (same `W_1`)            | `a_other = W_1 x_other + b_1` |
 | 2     | Concatenate                        | 128 + 128    | 256           | No                          | `a = concat(a_stm, a_other)`, side-to-move first |
-| 3     | Activation                        | 256          | 256           | No                          | ClippedReLU, clamp to `[0, max]` |
-| 4     | Hidden (dense)                    | 256          | 32            | Yes (`W_2`, `b_2`)          | `h = ClippedReLU(W_2 a + b_2)` |
+| 3     | Activation                        | 256          | 256           | No                          | ClippedReLU, clamp to `[0, 1]` (max pinned, see below) |
+| 4     | Hidden (dense)                    | 256          | 32            | Yes (`W_2`, `b_2`)          | `h = ClippedReLU(W_2 a + b_2)`, same clamp |
 | 5     | Output (dense)                    | 32           | `policy_size` | Yes (`W_3`, `b_3`)          | `s = W_3 h + b_3`, raw per-move scores |
+
+**Clamp max is part of the inference contract.** Both ClippedReLU stages use
+`max = 1.0`. The weight file (§10) does not record the activation function or
+its clamp max — only the shapes are in the header — so the trainer and the
+Rust loader (Gate 3) must hard-code the same value; changing it requires a
+version bump of the weight file.
 
 Compact notation: **`768 → 128×2 → 32 → policy_size`**
 

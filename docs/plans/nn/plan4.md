@@ -57,8 +57,8 @@ children by it.
    `docs/spec/proof_tree_dump.md` is updated to v2.
 4. **`corpus_gen`**: `CORPUS_VERSION` → `atomic-corpus/2`; `children[]` rows
    gain `"work"` (from `tree.nodes[c].work`). The AND label (concept.md §5)
-   becomes "rank the children by recorded `work`" (descending; lower work =
-   cheaper subtree first).
+   becomes "rank the children by recorded `work`" — lowest work = cheapest
+   subtree first (`docs/spec/nn.md` §6 pins the direction).
 5. **`work_proxy_ablation`**: child work now reads `ProofNode.work` (always
    present post-finalize), so every AND node is complete by construction; the
    TT probe stays as a cross-check: report `tt_agree` (fraction of probed

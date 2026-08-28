@@ -215,8 +215,9 @@ Measured static rank-1 share on the quick corpus is 68.1% of OR rows
   `legal_moves[i]` ⇄ `static_scores[legal_moves[i]]` ⇄ the static rank
   derived by sorting the score map keys descending.
 - `children[]` is ordered as stored, and `work` there is the AND-node ranking
-  label: for `outcome == "loss"` rows, sort the children by `work` descending
-  (ties: any stable order) and rank that ordering against
+  label: for `outcome == "loss"` rows, sort the children by `work` **ascending**
+  — lowest (cheapest to resolve) first; `docs/spec/nn.md` §6 pins the direction
+  — (ties: any stable order) and rank that ordering against
   `static_scores`-derived order to produce AND labels offline; `win` rows
   carry `first_decisive_rank` directly.
 - `hash` is the dedup key; `source` keeps provenance; `partial` must filter

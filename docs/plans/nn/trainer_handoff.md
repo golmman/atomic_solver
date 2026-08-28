@@ -30,8 +30,17 @@ the authoritative details live in the listed files, not here.
 
 - `data/corpus/train.ndjson` — the corpus, `atomic-corpus/2`, ~20 MB: 26,475
   rows (18,991 win / 7,484 loss), 59 cases, generated with `--suite quick
---timeout 20 --tt-size 64 --pt-size 256`. The NDJSON is the **only required
+  --timeout 20 --tt-size 64 --pt-size 256`. The NDJSON is the **only required
   input**.
+  - The `_meta` line counts 59 cases, but only **54 distinct `source` values**
+    appear in the rows: five move-order cases (`m26_white`, `m27_white`,
+    `m28_black`, `m28_white`, `m29_white`) had every row absorbed by the
+    cross-case transposition dedup (report2 observed the identical 5-case gap
+    on the earlier corpus). A case-level validation split — as the plan's
+    "Split" decision prescribes, per `source` — therefore operates on 54
+    sources, not 59; per-source row counts are also heavily skewed (dec10:
+    5,289 rows vs m25_black: 2), so the report must list which sources landed
+    in validation.
   - The file is git-ignored in this repo (`/data/` in `.gitignore`), so it
     cannot be cloned from here. **Commit it into the trainer repository**
     (~20 MB; it is the single required input, and committing it makes the
@@ -133,12 +142,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends git \
 ### Launching the container
 
 Run as a non-root user matching the host UID so files written into the mount
-are not root-owned on the host:
+are not root-owned on the host. `HOME=/tmp` gives uv and git a writable home
+(state written there is disposable by design; `HOME=/repo` would dirty the
+working copy with untracked dotfiles):
 
 ```sh
-docker run -it --rm --user "$(id -u):$(id -g)" \
+docker run -it --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
     -v "$PWD:/repo" -w /repo <image> bash
 ```
+
+Git identity does not survive the disposable HOME — set it repo-locally once
+(`git config user.email …; git config user.name …`), which is durable because
+`.git/config` lives in the mount.
 
 ### Bootstrapping the trainer repository
 
@@ -212,8 +227,10 @@ home; if a fact is missing there, the bundle is stale.
 
 - **Corpus FENs use standard `k`/`K` notation** (atomic-movegen ≥ 2.1.0;
   verified on `atomic-corpus/2`: zero `c`/`C` *piece letters* in the board
-  ranks — the only `c` in the file is the en-passant target file, e.g.
-  `w - c6 0 15`). Corpora generated with the pre-2.1.0 `c`/`C` spelling are
+  ranks, and within the FEN fields the only `c`/`C` is the en-passant target
+  file, e.g. `w - c6 0 15` — elsewhere in the file `c` appears only in
+  unrelated metadata such as the `decNN` source names). Corpora generated with
+  the pre-2.1.0 `c`/`C` spelling are
   obsolete and rejected by the crate; regenerate with `make nn_corpus`.
   `docs/spec/nn.md` §2 pins the convention.
 - `hash` is a decimal u64 JSON number; parse with Python's exact `int`
@@ -275,4 +292,6 @@ must record the exact input contract the container consumed (corpus version,
 partial handling, pair semantics) alongside the run metrics. Record the
 trusted-label budget too: dropping `partial` rows (17,345 of 26,475, ~65%)
 leaves ~9,130 rows for the default trusted-label run — state the actual kept
-count and whether `--keep-partial` was used.
+count and whether `--keep-partial` was used. Record the validation split as
+well (fraction, surviving validation sources, their row counts; see the
+corpus note under "Inputs" for the 54-sources and skew caveat).

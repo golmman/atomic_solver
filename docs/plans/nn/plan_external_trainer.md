@@ -130,7 +130,12 @@ and measurement. The trainer must not depend on the Rust toolchain.
   with number ≥ 23, and 8 of them (`m23_*` through `m27_black`) survive
   dedup as row sources — those positions are training data by design. The
   honestly held-out move-order set is **m20–m22 only** (6 cases); Gate 4's
-  evaluation suite must reflect that.
+  evaluation suite must reflect that. Note that only 54 distinct sources
+  exist (five of the 59 cases were absorbed by transposition dedup; see
+  `trainer_handoff.md` "Inputs") and per-source row counts are heavily
+  skewed (dec10: 5,289 vs m25_black: 2), so the report must record the
+  actual split: fraction, surviving validation sources, and their row
+  counts.
 - **Regularization**: the net is small by design (nn.md §7); dropout on the
   256-dim activation plus `L2` on `W_2`/`W_3` is enough. The success target
   is validation loss not overfit.
@@ -229,14 +234,19 @@ square index `sq = 7 + 0 = 7`, color swapped → `p = 6*1 + 5 = 11` → index
 `model.py`: the §3 stack with the pinned shapes:
 
 ```
-W1 = torch.nn.Linear(768, 128, bias=True)   # shared, applied to both views
-a_stm  = W1(x_stm)
-a_other = W1(x_other)
+W1 = torch.nn.Linear(768, 128, bias=False)  # shared, applied to both views
+a_stm  = W1(x_stm) + b_1
+a_other = W1(x_other) + b_1
 a = concat(a_stm, a_other)                   # 256
-a = ClippedReLU(a, max=1.0)                 # clamp
-h = ClippedReLU(W2(a) + b2)                 # 32
-s = W3(h) + b3                              # 4096
+a = ClippedReLU(a, max=1.0)                 # clamp (nn.md §3 pins max = 1.0)
+h = ClippedReLU(W2(a) + b_2)                 # 32
+s = W3(h) + b_3                              # 4096
 ```
+
+`W1`/`W2`/`W3` are `bias=False` and `b_1`/`b_2`/`b_3` are separate parameters,
+so the trained tensors map 1:1 onto the six §10 file tensors. Do **not** use
+`bias=True` *and* an explicit `+ b` add: the double bias would make inference
+(`W x + b`) diverge from what training actually computed.
 
 The shared-`W_1` requirement is realized by applying the same `W1` linear
 to both `x_stm` and `x_other` (two forward calls on the same module — no
@@ -304,7 +314,12 @@ file + a `<out>.json` summary at the end. The corpus file may be the full
    "torch>=2.0"`; `uv add --dev pytest`; write the repo-root `uv.toml`; add
    `.venv/`, `.uv-cache/`, `__pycache__/`, `*.pyc` to `.gitignore`; commit
    `pyproject.toml`, `uv.lock`, and `uv.toml`. `uv sync --locked` must
-   succeed and must install the CPU torch wheel.
+   succeed and must install the CPU torch wheel. **Assert the resolution
+   before committing the lock**: `uv.lock` must record
+   `https://download.pytorch.org/whl/cpu` as torch's source
+   (`grep -q 'download.pytorch.org/whl/cpu' uv.lock` must succeed) — if PyPI
+   won the resolution instead, stop and fix `uv.toml` first; a CUDA-bundled
+   torch would break the offline sync and the byte-stable fixture.
 2. Create `trainer/` package: `features.py`, `corpus.py`, `model.py`,
    `loss.py`, `weights.py`, `train.py`.
 3. Add the unit tests.
@@ -342,7 +357,7 @@ file + a `<out>.json` summary at the end. The corpus file may be the full
 | Feature-index mismatch between trainer and future Rust loader | The §2 layout is pinned in the spec; the sample fixture + the layout tests in `features.py` are the canonical cross-check. |
 | Train overfits (~26k rows, ≈9.1k after the default `partial` drop, vs ~242k weights) | Tiny net, dropout, small LR, validation by case-source split; treat the output as a feasibility check, not a full model. |
 | `partial` rows dominate | Dropped by default; `--keep-partial` is an explicit escape hatch. |
-| Censored children leak negative signal | Pairwise loss excludes censored moves from both sides of the comparison. |
+| Censored children leak negative signal | Pairwise loss follows §2 exactly: censored moves are never the preferred (first) element of a pair and no pair is formed between two censored moves — but they are the negative side of OR one-vs-rest pairs (excluding them there would leave zero pairs on all win rows). |
 | u64 `hash` JSON decoding loses precision | Parse with `int()`, never float; corpus tests assert uniqueness with exact int semantics. |
 | Promotions collapse onto one index | Pinned in §5; only affects the mask, which the trainer computes from `legal_moves` (multiple promotions → same index, still all legal). |
 
@@ -367,6 +382,8 @@ Write `docs/plans/nn/report_external_trainer.md` covering:
 - the exact feature extraction (index layout + transform) as implemented,
 - the label-pair generation (OR/AND, censoring, `partial` handling),
 - the training run and its metrics,
+- the validation split (fraction, surviving validation sources, per-source
+  row counts),
 - the emitted weight file: byte layout, dims, size, and the sample fixture,
 - the input contract the trainer consumed (NDJSON schema + `hash`
   precision caveat),
