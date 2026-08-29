@@ -146,14 +146,17 @@ Run with `cargo run --example <name> -- [args]`:
 ## Development
 
 ```bash
-cargo fmt
-cargo clippy
-cargo test
-cargo doc
+make test       # fast gate: unit + fast integration tests (release build)
+make test-full  # everything, incl. the slow 60 s regression/stress suites
+make test-lite  # debug build, quick logic check
 ```
 
+`cargo fmt`, `cargo clippy`, and `cargo doc` are used for code quality.
+
 Unit tests live in `#[cfg(test)]` modules at the bottom of source files;
-integration/regression tests live under `tests/`.
+integration/regression tests live under `tests/`. Slow tests are marked
+`#[ignore]` and run via `cargo test --release -- --include-ignored`
+(`make test-full`).
 
 ## License
 

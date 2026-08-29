@@ -1,6 +1,7 @@
 //! Stress tests for positions that are too deep to prove within the default
-//! budget. They run only in release builds (`cargo test --release -- --ignored`)
-//! and serve as a guard against hangs or false decisive results.
+//! budget. They are marked `#[ignore]` (slow tier) and run via
+//! `cargo test --release -- --include-ignored`; they serve as a guard against
+//! hangs or false decisive results.
 
 mod common;
 
@@ -30,7 +31,7 @@ fn assert_unproven_in_60s(fen: &str) {
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "60 second stress test; run with --ignored")]
+#[ignore = "slow: 60 s budget per position; run with -- --include-ignored"]
 fn m19_white_unproven_in_60s() {
     assert_unproven_in_60s("4r1k1/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R4R1K w - - 2 19");
 }
@@ -41,7 +42,7 @@ fn m19_white_unproven_in_60s() {
 /// m21 decisive, this test will fail; the position should then be moved to the
 /// regression suite.
 #[test]
-#[cfg_attr(debug_assertions, ignore = "60 second stress test; run with --ignored")]
+#[ignore = "slow: 60 s budget per position; run with -- --include-ignored"]
 fn move_order_hard_positions_unproven_in_60s() {
     for case in load_move_order_suite() {
         if case.name.starts_with("m20_") || case.name.starts_with("m21_") {

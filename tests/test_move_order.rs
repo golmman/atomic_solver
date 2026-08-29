@@ -11,7 +11,7 @@ use atomic_solver::position::Outcome;
 use common::{assert_solves_or_times_out, assert_solves_to_timeout, load_move_order_suite};
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow move-order benchmark suite")]
+#[ignore = "slow: 5 s timeout per move-order position; run with -- --include-ignored"]
 fn move_order_suite_no_misclassification() {
     for case in load_move_order_suite() {
         let expected = case
@@ -24,7 +24,7 @@ fn move_order_suite_no_misclassification() {
 /// `m22_white` is the target of the plan-aware ordering work. It is decisive
 /// within a 10-second refined search.
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow move-order benchmark suite")]
+#[ignore = "slow: 10 s refined search on m22; run with -- --include-ignored"]
 fn m22_white_solves_in_10s() {
     let m22 = load_move_order_suite()
         .into_iter()

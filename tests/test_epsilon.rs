@@ -81,7 +81,7 @@ fn cli_rejects_out_of_range_epsilon() {
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow in debug builds")]
+#[ignore = "slow: 5 s timeout per position; run with -- --include-ignored"]
 fn epsilon_zero_solves_mate_in_two() {
     let fen = "rnbqkbnr/ppppp2p/5pp1/7Q/8/4P3/PPPP1PPP/RNB1KBNR w KQkq - 0 3";
     let (outcome, _pv, _nodes) = solve_with_epsilon_full(fen, 0.0);
@@ -89,7 +89,7 @@ fn epsilon_zero_solves_mate_in_two() {
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow in debug builds")]
+#[ignore = "slow: 5 s timeout per position; run with -- --include-ignored"]
 fn epsilon_thresholds_do_not_claim_win_in_cyclic_position() {
     let fen = "8/8/8/8/2k5/8/8/4KR2 w - - 0 1";
     for epsilon in [0.0, 0.25, 0.5] {

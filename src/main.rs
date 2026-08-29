@@ -209,7 +209,7 @@ fn main() {
     });
     search.set_proof_event_sender(pt_handle.as_ref().map(|h| h.event_sender()));
 
-    let (outcome, pv, timed_out) = {
+    let (outcome, pv, cut_short) = {
         let (outcome, pv, _nodes) = search.solve_with_progress(&mut pos, |o, line| {
             eprintln!("outcome: {} length: {}", o.as_str(), line.len());
         });
@@ -219,16 +219,18 @@ fn main() {
             println!("pv: {}", pv_str(&pv));
         }
 
-        (outcome, pv, search.time_exceeded())
+        let budget_exhausted = matches!(search.exit_reason(), ExitReason::BudgetExhausted);
+        (outcome, pv, search.time_exceeded() || budget_exhausted)
     };
 
-    if timed_out {
+    if cut_short {
         match search.exit_reason() {
             ExitReason::Quit => println!("quit"),
             ExitReason::MemoryLimit => {
                 eprintln!("error: proof-tree memory limit ({pt_size} MB) reached");
                 std::process::exit(1);
             }
+            ExitReason::BudgetExhausted => println!("budget exhausted"),
             _ => println!("timeout"),
         };
     }

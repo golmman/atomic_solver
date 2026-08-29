@@ -21,7 +21,12 @@ A pure solver for atomic chess in Rust.
   disproves; the returned PV is an informational best-effort line from the
   transposition table and is not guaranteed to be a valid proof. The solver
   never clears proof events; proof-tree finalization is the responsibility of the
-  proof-tree layer.
+  proof-tree layer. Searches can additionally be bounded by cumulative child
+  evaluations via `Search::set_child_eval_budget` (deterministic alternative
+  to the wall-clock timeout, used by the test tiers): a budget-exhausted
+  search returns `Draw`, stores only unsolved TT entries, and reports
+  `ExitReason::BudgetExhausted` — never `ExitReason::Timeout`, which stays
+  exclusively about wall time.
 - `src/search/tt/` holds the transposition table with path-independent base
   entries. Repetition-dependent results are not cached, following the
   first-player-loss GHI shortcut.
@@ -149,6 +154,26 @@ refinement when only a decisive outcome is needed. The proof tree is never
 cleared automatically and the root FEN is fixed for the lifetime of the
 program.
 
+## Testing tiers
+
+The test suite is split into tiers. Test selection is orthogonal to the build
+profile: slow tests are marked with plain `#[ignore = "slow: ..."]` attributes,
+never with `#[cfg_attr(debug_assertions, ignore)]`.
+
+- `make test` — the default fast gate. `CARGO_PROFILE_RELEASE_LTO=thin
+  cargo test --release`; runs all unit tests plus every fast integration test
+  (all `#[ignore]`d tests are skipped). Target: < ~60 s of test time on the
+  reference host (compile time excluded).
+- `make test-full` — everything, including the 60 s wall-clock
+  regression/stress suites (`cargo test --release -- --include-ignored`;
+  ~25 min). Required for search, move-ordering, TT/GHI, and proof-tree changes,
+  and before releases. Pre-commit hooks must never run `make test-full`.
+- `make test-lite` — debug build (`cargo test`) for quick logic checks.
+
+There is no CI (project decision): the make targets plus these conventions are
+the enforcement point. Regressions caught only by the slow tier surface when
+someone chooses to run it.
+
 ## Conventions
 
 - Follow standard Rust 2024 edition idioms.
@@ -167,6 +192,11 @@ program.
   - this limit does not hold for `docs/`
 - Unit tests go in a `#[cfg(test)] mod tests` at the bottom of each module.
   Integration/regression tests go under `tests/`.
+- Slow tests are marked with `#[ignore = "slow: ..."]` and are excluded from
+  the default gate (`make test`); run them with
+  `cargo test --release -- --include-ignored`. Do not reintroduce
+  `#[cfg_attr(debug_assertions, ignore)]` — the build profile must not select
+  which tests run.
 - The most important quality attributes for this project are (highest priority first):
   - correctness
   - performance

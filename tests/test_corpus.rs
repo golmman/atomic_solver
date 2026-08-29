@@ -39,7 +39,7 @@ fn run_cli(fen: &str, timeout: u64) -> Outcome {
 /// Solve every position in `tests/fixtures/positions.txt` via the CLI and assert
 /// the expected outcome.  The returned PV is informational and is not validated.
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow corpus; run with --ignored")]
+#[ignore = "slow: 60 s CLI timeout per corpus position; run with -- --include-ignored"]
 fn corpus_solves_to_expected_outcome() {
     let corpus = include_str!("fixtures/positions.txt");
     let mut solved = 0;
