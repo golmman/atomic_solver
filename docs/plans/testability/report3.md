@@ -69,27 +69,39 @@ tasks 4, 5, plus the `m22` smoke entry of task 3.3).
 
 All 24 previously profile-coupled tests are now in the **slow tier**
 (`#[ignore]`d in every profile, runnable via `make test-full`). None moved
-into the fast tier in this phase; that happens in Phase 3 when wall-clock
-budgets become `child_evals` budgets.
+into the fast tier during the attribute conversion; that happens in Phase 3
+when wall-clock budgets become `child_evals` budgets. Phase 3 additionally
+added one new ignored test, `decisive_remaining_solvable_within_evals`
+(slow tier), bringing the slow-tier count to 25; together with the 3
+pre-existing non-slow proof-tree deferrals the repository now has 28
+`#[ignore]`d tests in total.
 
 ## Measured wall times
 
 Host caveat: the reference host in the plan is the asahi M1. This session ran
 in a Linux container, so absolute numbers differ; ratios and the pass/fail
-behavior are what matter.
+behavior are what matter. (An earlier partial measurement pass taken before
+the budget unit tests landed reported 1 m 28 s / ~61 s test time / 154 lib
+tests; the numbers below are the final, complete ones.)
 
-* `make test` (fast gate): **1 m 28 s wall including a cold release build**;
-  ~61 s of actual test time (sum of the harness `finished in` values, the
-  largest single contributor being `tests/test_benchmark_json.rs` at 24 s,
-  then the smoke suite at 6.3 s). 154 unit tests + all fast integration tests
-  passed; exactly 24 tests ignored.
-* `make test-lite`: 45 s wall including compile (before the smoke suite);
-  same 24 ignored.
+* `make test` (fast gate): **~2 m 09 s wall including a cold release build**;
+  ~67 s of actual test time (sum of the harness `finished in` values).
+  Largest contributors: `tests/test_benchmark_json.rs` 24 s, the smoke suite
+  6.7 s, the 15 unproven eval-budget tripwires ~5.5 s,
+  `test_plan2`/`test_inf`/`test_repetition` 5 s each. 158 unit tests + all
+  fast integration tests passed; 25 slow-tier tests ignored (28 `#[ignore]`d
+  tests in total, incl. the 3 pre-existing non-slow proof-tree deferrals).
+  Slightly over the 60 s target; the dominant single cost is
+  `test_benchmark_json`, which is outside this plan's scope.
+* `make test-lite`: 2 m 26 s wall incl. compile (the eval-budget tripwires
+  cost ~69 s in debug because the budget is in evals, not seconds; behavior
+  is identical, only slower).
 * `make test-full`: not executed end-to-end in this session (≈25 min on the
-  reference host, longer here). Spot-checked via
-  `cargo test --release --test test_plan6 -- --include-ignored`
-  (see below) and via `--list --ignored`, which confirms the ignored tests
-  are selected by `--include-ignored`.
+  reference host, longer here). Validated via targeted `--include-ignored`
+  runs (test_plan6: all pass except the known-flaky `m22_black_loses`;
+  decisive_remaining solvable budgets: pass in 222 s) and via
+  `--list --ignored`, which confirms the ignored tests are selected by
+  `--include-ignored`.
 
 ## Smoke suite (Phase 2, task 3)
 
@@ -247,26 +259,6 @@ New behavior verified explicitly:
   nothing and the fraction-budget exit caches no proven poison entry;
 * a full `make test-full` run remains machine-dependent in exactly one place:
   `m22_black_loses` (see Problems).
-
-## Measured wall times
-
-Host caveat: the reference host in the plan is the asahi M1. This session ran
-in a Linux container, so absolute numbers differ; ratios and the pass/fail
-behavior are what matter.
-
-* `make test` (fast gate): ~2 m 09 s wall including a cold release build;
-  ~67 s of actual test time. Largest contributors:
-  `tests/test_benchmark_json.rs` 24 s, the smoke suite 6.7 s, the 15 unproven
-  eval-budget tripwires ~5.5 s, `test_plan2`/`test_inf`/`test_repetition`
-  5 s each. Slightly over the 60 s target; the dominant single cost is
-  `test_benchmark_json`, which is outside this plan's scope.
-* `make test-lite`: 2 m 26 s wall incl. compile (the eval-budget tripwires
-  cost ~69 s in debug because the budget is in evals, not seconds; behavior
-  is identical, only slower).
-* `make test-full`: not executed end-to-end in this session. Validated via
-  targeted `--include-ignored` runs (test_plan6: all pass except the
-  known-flaky `m22_black_loses`; decisive_remaining solvable budgets: pass in
-  222 s) plus `--list --ignored`.
 
 ## Problems encountered
 
