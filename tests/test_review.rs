@@ -86,7 +86,7 @@ fn two_rook_shortest_pv_is_three_plies() {
 
 /// Shortest-PV refinement must find the 7-ply win in the promotion-transposition
 /// position. The two pawns can promote in either order, stressing path codes.
-#[cfg_attr(debug_assertions, ignore = "slow in debug builds")]
+#[ignore = "slow: shortest-PV refinement; run with -- --include-ignored"]
 #[test]
 fn promotion_shortest_pv_is_seven_plies() {
     assert_solves_to("4k3/PP6/8/8/8/8/8/4K3 w - - 0 1", Outcome::Win, Some(7));
@@ -94,7 +94,7 @@ fn promotion_shortest_pv_is_seven_plies() {
 
 /// Shortest-PV refinement must find the 5-ply win in the epsilon regression
 /// position. This is the mate-in-two position from tests/test_epsilon.rs.
-#[cfg_attr(debug_assertions, ignore = "slow in debug builds")]
+#[ignore = "slow: shortest-PV refinement; run with -- --include-ignored"]
 #[test]
 fn epsilon_mate_shortest_pv_is_five_plies() {
     let fen = "rnbqkbnr/ppppp2p/5pp1/7Q/8/4P3/PPPP1PPP/RNB1KBNR w KQkq - 0 3";

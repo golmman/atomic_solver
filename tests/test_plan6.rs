@@ -4,13 +4,13 @@ use std::process::Command;
 
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
-use common::{assert_solves_to, assert_solves_to_timeout, cli_bin};
+use common::{assert_solves_to, assert_solves_to_timeout, assert_solves_within_evals, cli_bin};
 
-// Fast regression positions that run in release CI but are too slow for debug
-// builds (they take several seconds even with the 5-second timeout).
+// Fast regression positions that solve within the default 5-second timeout in
+// release builds but are too slow for debug builds (several seconds each).
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow regression; run with --ignored")]
+#[ignore = "slow: 5 s default-timeout regression; run with -- --include-ignored"]
 fn m23_white_wins() {
     assert_solves_to(
         "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R2R2K w - - 1 23",
@@ -20,7 +20,7 @@ fn m23_white_wins() {
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow regression; run with --ignored")]
+#[ignore = "slow: 5 s default-timeout regression; run with -- --include-ignored"]
 fn m23_black_loses() {
     assert_solves_to(
         "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R2R2K b - - 2 23",
@@ -30,7 +30,7 @@ fn m23_black_loses() {
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow regression; run with --ignored")]
+#[ignore = "slow: 5 s default-timeout regression; run with -- --include-ignored"]
 fn m24_white_wins() {
     assert_solves_to(
         "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R2R2K w - - 0 24",
@@ -40,7 +40,7 @@ fn m24_white_wins() {
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow regression; run with --ignored")]
+#[ignore = "slow: 5 s default-timeout regression; run with -- --include-ignored"]
 fn m24_black_loses() {
     // Fixed: rank 5 was `p6Pp` (9 squares); corrected to `p5Pp`.
     assert_solves_to(
@@ -51,7 +51,7 @@ fn m24_black_loses() {
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow regression; run with --ignored")]
+#[ignore = "slow: 5 s default-timeout regression; run with -- --include-ignored"]
 fn m25a_white_wins() {
     // Fixed: rank 5 was `p6Pp` (9 squares); corrected to `p5Pp`.
     assert_solves_to(
@@ -62,7 +62,7 @@ fn m25a_white_wins() {
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow regression; run with --ignored")]
+#[ignore = "slow: 5 s default-timeout regression; run with -- --include-ignored"]
 fn m25a_black_loses() {
     // Fixed: rank 5 was `p6Pp` (9 squares); corrected to `p5Pp`.
     assert_solves_to(
@@ -82,7 +82,7 @@ fn m25b_white_wins() {
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow regression; run with --ignored")]
+#[ignore = "slow: 5 s default-timeout regression; run with -- --include-ignored"]
 fn m25b_black_loses() {
     // Regression for the cyclic/invalid PV reported in the issue tracker:
     // the solver used to return a non-terminal PV for this black-to-move FEN.
@@ -95,7 +95,7 @@ fn m25b_black_loses() {
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow regression; run with --ignored")]
+#[ignore = "slow: 5 s default-timeout regression; run with -- --include-ignored"]
 fn m26_black_loses() {
     assert_solves_to(
         "1R4k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/7K b - - 1 26",
@@ -199,7 +199,7 @@ fn m29_white_wins() {
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow regression; run with --ignored")]
+#[ignore = "slow: 5 s default-timeout regression; run with -- --include-ignored"]
 fn m29_black_loses() {
     assert_solves_to(
         "8/3p4/3BkRp1/6Pp/2p4P/p1N2P2/P1PP4/7K b - - 1 29",
@@ -208,23 +208,29 @@ fn m29_black_loses() {
     );
 }
 
-// Positions that are too deep to prove in a 5-second budget but solve in 60
-// seconds in release builds.
+// Positions that are too deep to prove in a 5-second budget but solve with a
+// 60-second budget (release builds).
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "60 second regression; run with --ignored")]
+#[ignore = "slow: deterministic eval budget (~2 min); run with -- --include-ignored"]
 fn m22_white_wins() {
-    assert_solves_to_timeout(
+    // Deterministic conversion of the former 60 s wall-clock regression:
+    // the first-outcome solve measured 37,503,264 child evals (two identical
+    // runs); the budget carries ~3× headroom.
+    assert_solves_within_evals(
         "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
         Outcome::Win,
-        None,
-        60,
+        120_000_000,
     );
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "60 second regression; run with --ignored")]
+#[ignore = "slow: 60 s regression budget; run with -- --include-ignored"]
 fn m22_black_loses() {
+    // Left wall-clock deliberately: this position does not solve within a
+    // 90-second first-outcome search (>= ~330M child evals) on the
+    // measurement host, so no deterministic budget could be measured for it.
+    // It is a known machine-dependent borderline case (plan3 report).
     assert_solves_to_timeout(
         "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R4RK b - - 0 22",
         Outcome::Loss,
@@ -234,7 +240,7 @@ fn m22_black_loses() {
 }
 
 #[test]
-#[cfg_attr(debug_assertions, ignore = "60 second stress test; run with --ignored")]
+#[ignore = "slow: 60 s stress test; run with -- --include-ignored"]
 fn m24_solve_with_pv() {
     let fen = "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R2R2K w - - 0 24";
     let mut pos = Position::from_fen(fen).unwrap();

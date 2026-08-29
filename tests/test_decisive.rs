@@ -7,7 +7,7 @@ use common::{assert_solves_or_times_out, load_decisive_suite};
 /// allowed because positions may occasionally time out due to machine variance,
 /// but a Draw without a timeout or a wrong decisive result is a failure.
 #[test]
-#[cfg_attr(debug_assertions, ignore = "slow decisive benchmark suite")]
+#[ignore = "slow: 5 s timeout per decisive position; run with -- --include-ignored"]
 fn decisive_suite_no_misclassification() {
     for case in load_decisive_suite() {
         let expected = case

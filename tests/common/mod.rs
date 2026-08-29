@@ -21,6 +21,9 @@ pub const DECISIVE_FIXTURE: &str = include_str!("../fixtures/decisive_positions.
 /// Fixture containing decisive positions that are not solved in the default 5-second budget.
 pub const DECISIVE_REMAINING_FIXTURE: &str = include_str!("../fixtures/decisive_remaining.txt");
 
+/// Fixture for the always-on smoke suite of the fast tier.
+pub const SMOKE_FIXTURE: &str = include_str!("../fixtures/smoke_positions.txt");
+
 /// A single move-order benchmark entry.
 #[derive(Debug, Clone)]
 pub struct MoveOrderCase {
@@ -43,6 +46,11 @@ pub fn load_decisive_suite() -> Vec<MoveOrderCase> {
 /// Load the remaining decisive positions that are too hard for the default budget.
 pub fn load_decisive_remaining_suite() -> Vec<MoveOrderCase> {
     parse_move_order_fixture(DECISIVE_REMAINING_FIXTURE)
+}
+
+/// Load the smoke suite from the embedded fixture.
+pub fn load_smoke_suite() -> Vec<MoveOrderCase> {
+    parse_move_order_fixture(SMOKE_FIXTURE)
 }
 
 fn parse_move_order_fixture(s: &str) -> Vec<MoveOrderCase> {
@@ -99,6 +107,123 @@ pub fn assert_solves_or_times_out(fen: &str, expected: Outcome, secs: u64) {
             "expected {expected:?} for {fen}, got {outcome:?}"
         );
     }
+}
+
+/// Smoke-suite assertion: solve `fen` with the given timeout and assert that
+/// the solver never returns a *wrong* result.
+///
+/// * decisive `expected`: a decisive outcome must match `expected`; a `Draw`
+///   is accepted only when the search was cut short (`time_exceeded()`).
+/// * `Outcome::Draw` expected: any decisive outcome is a misclassification,
+///   so only `Draw` is accepted. This covers both terminal stalemate draws
+///   (which return instantly, without timing out) and non-terminal drawn
+///   positions (which exhaust the time budget).
+///
+/// Phase 3 of `docs/plans/testability/plan3.md` extends the acceptance rule
+/// with `child_eval_budget_exceeded()` for the `m22` deep tripwire entry.
+pub fn assert_smoke(fen: &str, expected: Outcome, secs: u64) {
+    let mut pos =
+        Position::from_fen(fen).unwrap_or_else(|e| panic!("failed to parse FEN '{fen}': {e}"));
+    let mut search = Search::new(64);
+    search.set_timeout(secs);
+    let (outcome, _pv, _nodes) = search.solve(&mut pos);
+
+    if outcome == Outcome::Draw {
+        if expected == Outcome::Draw {
+            return;
+        }
+        assert!(
+            search.time_exceeded(),
+            "position {fen} returned Draw without exceeding the time budget; expected {expected:?}"
+        );
+    } else {
+        assert_eq!(
+            outcome, expected,
+            "expected {expected:?} for {fen}, got {outcome:?}"
+        );
+    }
+}
+
+/// A fixture note carrying a deterministic child-eval budget, e.g.
+/// `solvable_evals:15000000` or `unproven_evals:5000000` (plan3 task 5.5).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EvalBudget {
+    /// The position must solve to its expected outcome within the budget.
+    Solvable(u64),
+    /// The position must remain unproven within the budget.
+    Unproven(u64),
+}
+
+/// Parse a fixture note carrying a deterministic child-eval budget.
+///
+/// The budget is the first whitespace-delimited token after the prefix, so
+/// notes may carry a human-readable suffix. Returns `None` for any other note
+/// (e.g. `solvable_60s`), so callers can route entries between the
+/// deterministic and wall-clock test tiers.
+pub fn parse_eval_budget_note(note: &str) -> Option<EvalBudget> {
+    let note = note.split_whitespace().next()?;
+    if let Some(value) = note.strip_prefix("solvable_evals:") {
+        Some(EvalBudget::Solvable(value.parse().ok()?))
+    } else if let Some(value) = note.strip_prefix("unproven_evals:") {
+        Some(EvalBudget::Unproven(value.parse().ok()?))
+    } else {
+        None
+    }
+}
+
+/// Assert that `fen` stays unproven within `budget` cumulative child
+/// evaluations (deterministic replacement for the wall-clock stress budget).
+///
+/// The search must return `Draw` *and* exhaust the budget. A decisive result
+/// means the solver improved enough to solve the position and the entry should
+/// be re-categorized as solvable; a `Draw` without budget exhaustion means the
+/// bounded tree was exhausted, i.e. the position may be genuinely drawn and
+/// should also be re-categorized.
+pub fn assert_unproven_within_evals(fen: &str, budget: u64) {
+    let mut pos =
+        Position::from_fen(fen).unwrap_or_else(|e| panic!("failed to parse FEN '{fen}': {e}"));
+    let mut search = Search::new(64);
+    // The eval budget binds long before the clock; the timeout only guards
+    // against hangs on pathologically slow machines.
+    search.set_timeout(3600);
+    search.set_child_eval_budget(budget);
+    let (outcome, _pv, _nodes) = search.solve(&mut pos);
+
+    assert_eq!(
+        outcome,
+        Outcome::Draw,
+        "position {fen} was proven decisive within the {budget}-eval budget; \
+         re-categorize it as solvable and record the expected outcome"
+    );
+    assert!(
+        search.child_eval_budget_exceeded(),
+        "position {fen} returned Draw without spending its {budget}-eval budget; \
+         it may be genuinely drawn — re-categorize it"
+    );
+}
+
+/// Assert that `fen` solves to `expected` within `budget` cumulative child
+/// evaluations (deterministic replacement for the wall-clock regression
+/// budget). Uses first-outcome mode, so the budget bounds the work to the
+/// first decisive line.
+pub fn assert_solves_within_evals(fen: &str, expected: Outcome, budget: u64) {
+    let mut pos =
+        Position::from_fen(fen).unwrap_or_else(|e| panic!("failed to parse FEN '{fen}': {e}"));
+    let mut search = Search::new(64);
+    search.set_timeout(3600);
+    search.set_first_outcome_only(true);
+    search.set_child_eval_budget(budget);
+    let (outcome, _pv, _nodes) = search.solve(&mut pos);
+
+    assert_eq!(
+        outcome, expected,
+        "expected {expected:?} for {fen} within {budget} child evals, got {outcome:?}"
+    );
+    assert!(
+        !search.child_eval_budget_exceeded(),
+        "position {fen} solved only at/after the {budget}-eval budget boundary; \
+         the solver needs more than the budgeted work"
+    );
 }
 
 /// Assert that `fen` is not proven decisive within `secs`.

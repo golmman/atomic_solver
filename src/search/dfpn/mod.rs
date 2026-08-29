@@ -38,6 +38,7 @@ pub enum ExitReason {
     Timeout,
     Quit,
     MemoryLimit,
+    BudgetExhausted,
     Complete,
 }
 
@@ -47,6 +48,7 @@ impl std::fmt::Display for ExitReason {
             ExitReason::Timeout => write!(f, "Timeout"),
             ExitReason::Quit => write!(f, "Quit"),
             ExitReason::MemoryLimit => write!(f, "MemoryLimit"),
+            ExitReason::BudgetExhausted => write!(f, "BudgetExhausted"),
             ExitReason::Complete => write!(f, "Complete"),
         }
     }
@@ -95,6 +97,7 @@ pub struct Search {
     scorer: StaticAtomicScorer,
     first_outcome_only: bool,
     timeout: Duration,
+    child_eval_budget: u64,
     history: [[[i32; 64]; 64]; 2],
     killers: [[Move; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
     history_age_counter: u64,
@@ -127,6 +130,7 @@ impl Search {
             scorer: StaticAtomicScorer::default(),
             first_outcome_only: false,
             timeout: Duration::from_secs(TIMEOUT_SECS),
+            child_eval_budget: u64::MAX,
             history: [[[0; 64]; 64]; 2],
             killers: [[Move::NONE; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
             history_age_counter: 0,
@@ -158,6 +162,29 @@ impl Search {
 
     pub fn set_timeout(&mut self, seconds: u64) {
         self.timeout = Duration::from_secs(seconds);
+    }
+
+    /// Bound the search by cumulative child evaluations instead of wall time.
+    /// `u64::MAX` (the default) means unbounded.
+    ///
+    /// The budget is enforced at the same boundaries as the time budget: the
+    /// work-chunk loop stops once the budget is spent, and each `dfpn` call is
+    /// capped at the remaining budget so the existing `max_work` checks cut the
+    /// recursion. A budget-exhausted search returns `Outcome::Draw`, stores
+    /// only unsolved transposition entries, and reports
+    /// [`ExitReason::BudgetExhausted`] from [`Search::exit_reason`]; it is
+    /// never reported by [`Search::time_exceeded`], which stays exclusively
+    /// about wall time.
+    pub fn set_child_eval_budget(&mut self, budget: u64) {
+        self.child_eval_budget = budget;
+    }
+
+    /// Whether the cumulative child-evaluation budget set by
+    /// [`Search::set_child_eval_budget`] has been spent. Always `false` when no
+    /// budget was set (`u64::MAX`).
+    #[must_use]
+    pub fn child_eval_budget_exceeded(&self) -> bool {
+        self.child_evals >= self.child_eval_budget
     }
 
     pub fn set_max_ply(&mut self, max_ply: usize) {
@@ -240,7 +267,8 @@ impl Search {
         }
     }
 
-    /// The reason the search stopped (timeout, quit, memory limit, or complete).
+    /// The reason the search stopped (timeout, quit, memory limit, child-eval
+    /// budget exhausted, or complete).
     #[must_use]
     pub fn exit_reason(&self) -> ExitReason {
         if self
@@ -255,6 +283,8 @@ impl Search {
             .is_some_and(|f| f.load(Ordering::Acquire))
         {
             ExitReason::Quit
+        } else if self.child_eval_budget_exceeded() {
+            ExitReason::BudgetExhausted
         } else if Instant::now() >= self.deadline {
             ExitReason::Timeout
         } else {
@@ -268,16 +298,22 @@ impl Search {
         let mut chunk = 500_000u64;
         let mut last_child_evals_before;
 
-        while !self.time_exceeded() && chunk > 0 {
+        while !self.time_exceeded() && !self.child_eval_budget_exceeded() && chunk > 0 {
             self.reset_search_state();
             last_child_evals_before = self.child_evals;
-            outcome = self.dfpn(pos, INF, INF, max_depth, chunk, true);
+            // Cap the call's work at the remaining child-eval budget so the
+            // existing `max_work` checks inside `dfpn` also enforce the global
+            // budget. A budget-cut result therefore unwinds and is stored
+            // exactly like an ordinary work-chunk cutoff: as unsolved entries.
+            let remaining_budget = self.child_eval_budget.saturating_sub(self.child_evals);
+            let call_max_work = chunk.min(remaining_budget);
+            outcome = self.dfpn(pos, INF, INF, max_depth, call_max_work, true);
             if outcome != Outcome::Draw {
                 break;
             }
 
             let work_done = self.child_evals - last_child_evals_before;
-            if work_done < chunk {
+            if work_done < call_max_work {
                 // The search did not use its full work budget, so the bounded
                 // tree was exhausted without finding a decisive line. More work
                 // cannot change the outcome at this depth.
@@ -368,7 +404,11 @@ impl Search {
         // Iterative refinement is best-effort: it uses the informational PV
         // length from `extract_pv` to set a shorter bound, but it does not
         // validate that the new PV is a sound proof.
-        while !self.first_outcome_only && outcome != Outcome::Draw && n > 2 && !self.time_exceeded()
+        while !self.first_outcome_only
+            && outcome != Outcome::Draw
+            && n > 2
+            && !self.time_exceeded()
+            && !self.child_eval_budget_exceeded()
         {
             let bound = n - 2;
             let (new_outcome, new_pv) = self.bounded_search(pos, bound);

@@ -1,0 +1,31 @@
+# Always-on smoke suite for the fast tier (`make test`).
+# Format: name;fen;expected;note
+#
+# Seeded from tests/fixtures/positions.txt (converted from the CLI corpus
+# format `fen;expected;max_pv_plies`; the smoke suite makes no PV-length
+# assertions) and from representative entries of
+# tests/fixtures/decisive_positions.txt chosen to exercise different mate
+# themes. The assertion property is "no wrong decisive result": a decisive
+# outcome must match `expected`, and a `Draw` is accepted only when the search
+# was cut short by the 2-second timeout (or when `Draw` is the expected
+# outcome, which covers terminal stalemate draws). See tests/test_smoke.rs.
+#
+# Entries whose note carries a child-evals budget (`unproven_evals:<B>` /
+# `solvable_evals:<B>`) are routed to the deterministic helpers instead of the
+# wall-clock assertion. The m22 entry is the deep-search tripwire: it uses a
+# deterministic child-evals budget instead of the 2 s wall-clock timeout, so
+# it stays cheap and machine-independent while still exercising the
+# deep-search machinery in the fast tier (plan3 task 3.3).
+smoke_m22_black_unproven;4r2k/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R4RK b - - 0 22;;unproven_evals:1000000 deep tripwire (m22)
+smoke_rook_mate;4k3/8/8/8/8/8/8/4R1K1 w - - 0 1;Win;from positions.txt: rook back-rank mate
+smoke_queen_corner_loss;7K/8/8/8/8/8/1Q6/k7 b - - 0 1;Loss;from positions.txt: queen corner mate
+smoke_bare_kings_white;8/8/8/8/8/8/8/4K3 w - - 0 1;Win;from positions.txt: two-commoners rule
+smoke_bare_kings_black;8/8/8/8/8/8/8/4k3 b - - 0 1;Win;from positions.txt: two-commoners rule
+smoke_promotion;4k3/PP6/8/8/8/8/8/4K3 w - - 0 1;Win;from positions.txt: promotion transposition
+smoke_two_rooks;4k3/8/8/8/8/8/8/4KRR1 w - - 0 1;Win;from positions.txt: rook transpositions
+smoke_stalemate;7k/8/8/8/8/8/2q5/K7 w - - 0 1;Draw;from positions.txt: terminal stalemate draw
+smoke_dec02_pawn_endgame;8/1k1p4/1P2p3/p2P1P2/P7/6p1/6K1/8 b - - 0 27;Loss;from decisive_positions.txt dec02: pawn endgame
+smoke_dec04_promotion_mate;3k3r/1p1P4/4p2P/5p2/P7/2n1P3/6K1/7R b - - 0 25;Win;from decisive_positions.txt dec04: promotion + rook mate
+smoke_dec08_queen_mate;r4r1k/3q1P2/pp4pp/2pp4/N4Q2/2P3PP/PP2p3/R4R1K w - - 0 25;Win;from decisive_positions.txt dec08: 3-ply queen mate
+smoke_dec37_rook_backrank;3r3k/2p4p/6p1/8/5P2/2P1P2P/1P4Pb/4K2R w K - 0 19;Loss;from decisive_positions.txt dec37: rook back-rank
+smoke_dec45_queen_sacrifice;1r3Q2/8/k3p1b1/4P3/P7/K7/6p1/6R1 b - - 0 34;Win;from decisive_positions.txt dec45: queen sacrifice

@@ -1,41 +1,56 @@
 # Remaining decisive positions not solved in the default 5-second budget.
-# These are used as 60-second regression and stress targets.
 # All outcomes are from the side-to-move perspective.
 # Format: name;fen;expected;note
 #
-# "solvable_60s" positions reliably produce a decisive outcome within 60 s
-# and have a known expected result.  "unproven_60s" positions currently time
-# out within 60 s; their expected outcome is not yet determined.
+# Note values carry the test budget for each entry (plan3 tasks 5.3/5.5):
+#   solvable_evals:<B>  — must solve to the expected outcome within B child
+#                         evaluations (deterministic, slow tier; B = 3× the
+#                         measured first-outcome effort, rounded up).
+#   unproven_evals:<B>  — must stay unproven within B child evaluations
+#                         (deterministic, fast tier; B = 1,000,000, far below
+#                         any known solve effort for these positions).
+#   solvable_60s / unproven_60s — legacy wall-clock 60 s budgets; no entry
+#                         currently uses them. Re-categorized entries should
+#                         move between the note kinds; the matching test
+#                         runners live in tests/test_decisive_remaining.rs.
+#
+# Measured first-outcome child_evals (Search::new(64), default epsilon,
+# first_outcome_only; two identical runs each):
+#   rem01 66452175, rem04 11798950, rem07 30826494, rem08 28781735,
+#   rem09 131141572, rem10 23300929, rem11 82081357, rem12 59988758,
+#   rem13 41634958, rem23 90152959.
+# The unproven entries did not solve within a 90-second first-outcome search
+# (>= ~250M evals) or within the former 60 s wall-clock budget.
 #
 # rem01..rem07 were previously named dec11..dec17; they were renumbered so
 # that the decNN series in decisive_positions.txt stays contiguous.
-# rem08..rem13 are solvable within 60 s (rem09 is borderline at ~46 s).
+# rem08..rem13 are solvable (rem09 is the most expensive at ~131M evals).
 # rem14..rem22 come from the same game-derived position set as
-# decisive_positions.txt dec11..dec23 but remain unproven after 60 s.
-# rem23..rem25 come from the dec24..dec46 batch: rem23 solves within 60 s,
-# rem24 and rem25 remain unproven after 60 s.
-rem01;1k6/8/1R6/p4p1p/P2b1PpP/6P1/8/3n3K b - - 32 49;Win;solvable_60s
-rem02;2r1k2r/2R5/b4p1p/BP1ppPpP/p3P1P1/N7/8/4K2R b Kk - 4 24;;unproven_60s
-rem03;4rr1k/pp2bBp1/n1p4p/3p4/5P1P/2P1B3/PP6/R2Q1RK1 b - - 4 18;;unproven_60s
-rem04;q3kbnr/2p3pp/5p2/4p3/6b1/2PpPP2/1P1P2PP/RNBQKB1R w KQk - 0 10;Win;solvable_60s
-rem05;6k1/3p3p/4pr2/8/P2PPpp1/8/1P1B1PPn/2R2R1K b - - 3 21;;unproven_60s
-rem06;8/p7/7k/3p4/1P6/3P4/P6p/4K2R b - - 0 29;;unproven_60s
-rem07;7k/pr6/4B1p1/1P6/3PpPPp/4P3/P6P/4KR2 w - - 1 28;Win;solvable_60s
-rem08;rn1q3r/ppNk2pp/2p2p2/2bpp3/P2PP1b1/2P2P2/1P4PP/R1BQKB1R w KQ - 1 12;Win;solvable_60s
-rem09;r3qrk1/p2pp2p/b1n2pp1/1B5P/1p1PP1P1/8/PPPQ4/R1B2RK1 w - - 0 15;Win;solvable_60s
-rem10;1r2kb1r/7p/b5p1/1BP1p3/3P1p2/P3P1P1/1p3P1P/1R2K2R b Kk - 2 20;Win;solvable_60s
-rem11;rnb1k2r/pppp1p1p/5npb/4p3/4PP2/N7/PPPP2PP/R1BQKB1R b KQkq - 0 6;Win;solvable_60s
-rem12;rnbqkbnr/8/6pp/pppppp1B/3PPP2/N5PN/PPP4P/R1BQ1RK1 w kq - 0 10;Win;solvable_60s
-rem13;4k2r/6p1/2p2p2/3ppn2/1b5p/1P2P1P1/P1PP1P1P/R1B2R1K b k - 0 17;Win;solvable_60s
-rem14;rnbBk2r/pp4pp/2p5/4Np2/1b1pP3/2N4P/1PP2P2/3QKB1R b Kkq e3 0 12;;unproven_60s
-rem15;r4rk1/1p5p/2p3p1/p2p2R1/7P/4PP2/2P5/5K2 b - - 3 20;;unproven_60s
-rem16;rnbq1rk1/pp4pp/2ppp3/5pP1/3P3P/BPN1PP2/P1Q5/R1nK1B1R b - - 0 14;;unproven_60s
-rem17;3r3r/1p3k1p/4p1pB/4Pp2/8/8/PPP2PPP/R4RK1 w - - 0 16;;unproven_60s
-rem18;r2k1bnr/p7/1p1p1ppp/1B6/4P3/2P3P1/PP3P1P/RNBQK2R b KQ - 0 10;;unproven_60s
-rem19;4kb1r/6pp/B1p2p2/2P5/1p4b1/BP3N2/P5PP/R3K2R b KQk - 0 17;;unproven_60s
-rem20;5r2/7k/8/Pp1p3p/1P1PP1p1/5p1P/2P5/R1b2R1K w - - 0 24;;unproven_60s
-rem21;2r1k1r1/p6p/4pp2/1N1p4/3PP1P1/1p6/PP3P1P/2R1K2R w K - 0 16;;unproven_60s
-rem22;2R2r1k/r7/2p2np1/p2p3p/3P1PP1/4p3/P1P4P/4N1K1 w - - 4 23;;unproven_60s
-rem23;7k/pp6/4prpp/3pQp2/3P1P2/4P3/PP4PP/4K2R b K - 0 23;Loss;solvable_60s
-rem24;r2R4/3k4/1P3n2/p1pp3p/3Pp3/2P5/P5PP/R5K1 b - - 18 31;;unproven_60s
-rem25;4n1k1/4P3/2p2Rp1/p2p3p/P2P4/6P1/7P/2K5 b - - 1 33;;unproven_60s
+# decisive_positions.txt dec11..dec23 and remain unproven.
+# rem23..rem25 come from the dec24..dec46 batch: rem23 is solvable,
+# rem24 and rem25 remain unproven.
+rem01;1k6/8/1R6/p4p1p/P2b1PpP/6P1/8/3n3K b - - 32 49;Win;solvable_evals:200000000
+rem02;2r1k2r/2R5/b4p1p/BP1ppPpP/p3P1P1/N7/8/4K2R b Kk - 4 24;;unproven_evals:1000000
+rem03;4rr1k/pp2bBp1/n1p4p/3p4/5P1P/2P1B3/PP6/R2Q1RK1 b - - 4 18;;unproven_evals:1000000
+rem04;q3kbnr/2p3pp/5p2/4p3/6b1/2PpPP2/1P1P2PP/RNBQKB1R w KQk - 0 10;Win;solvable_evals:36000000
+rem05;6k1/3p3p/4pr2/8/P2PPpp1/8/1P1B1PPn/2R2R1K b - - 3 21;;unproven_evals:1000000
+rem06;8/p7/7k/3p4/1P6/3P4/P6p/4K2R b - - 0 29;;unproven_evals:1000000
+rem07;7k/pr6/4B1p1/1P6/3PpPPp/4P3/P6P/4KR2 w - - 1 28;Win;solvable_evals:93000000
+rem08;rn1q3r/ppNk2pp/2p2p2/2bpp3/P2PP1b1/2P2P2/1P4PP/R1BQKB1R w KQ - 1 12;Win;solvable_evals:87000000
+rem09;r3qrk1/p2pp2p/b1n2pp1/1B5P/1p1PP1P1/8/PPPQ4/R1B2RK1 w - - 0 15;Win;solvable_evals:394000000
+rem10;1r2kb1r/7p/b5p1/1BP1p3/3P1p2/P3P1P1/1p3P1P/1R2K2R b Kk - 2 20;Win;solvable_evals:70000000
+rem11;rnb1k2r/pppp1p1p/5npb/4p3/4PP2/N7/PPPP2PP/R1BQKB1R b KQkq - 0 6;Win;solvable_evals:247000000
+rem12;rnbqkbnr/8/6pp/pppppp1B/3PPP2/N5PN/PPP4P/R1BQ1RK1 w kq - 0 10;Win;solvable_evals:180000000
+rem13;4k2r/6p1/2p2p2/3ppn2/1b5p/1P2P1P1/P1PP1P1P/R1B2R1K b k - 0 17;Win;solvable_evals:125000000
+rem14;rnbBk2r/pp4pp/2p5/4Np2/1b1pP3/2N4P/1PP2P2/3QKB1R b Kkq e3 0 12;;unproven_evals:1000000
+rem15;r4rk1/1p5p/2p3p1/p2p2R1/7P/4PP2/2P5/5K2 b - - 3 20;;unproven_evals:1000000
+rem16;rnbq1rk1/pp4pp/2ppp3/5pP1/3P3P/BPN1PP2/P1Q5/R1nK1B1R b - - 0 14;;unproven_evals:1000000
+rem17;3r3r/1p3k1p/4p1pB/4Pp2/8/8/PPP2PPP/R4RK1 w - - 0 16;;unproven_evals:1000000
+rem18;r2k1bnr/p7/1p1p1ppp/1B6/4P3/2P3P1/PP3P1P/RNBQK2R b KQ - 0 10;;unproven_evals:1000000
+rem19;4kb1r/6pp/B1p2p2/2P5/1p4b1/BP3N2/P5PP/R3K2R b KQk - 0 17;;unproven_evals:1000000
+rem20;5r2/7k/8/Pp1p3p/1P1PP1p1/5p1P/2P5/R1b2R1K w - - 0 24;;unproven_evals:1000000
+rem21;2r1k1r1/p6p/4pp2/1N1p4/3PP1P1/1p6/PP3P1P/2R1K2R w K - 0 16;;unproven_evals:1000000
+rem22;2R2r1k/r7/2p2np1/p2p3p/3P1PP1/4p3/P1P4P/4N1K1 w - - 4 23;;unproven_evals:1000000
+rem23;7k/pp6/4prpp/3pQp2/3P1P2/4P3/PP4PP/4K2R b K - 0 23;Loss;solvable_evals:271000000
+rem24;r2R4/3k4/1P3n2/p1pp3p/3Pp3/2P5/P5PP/R5K1 b - - 18 31;;unproven_evals:1000000
+rem25;4n1k1/4P3/2p2Rp1/p2p3p/P2P4/6P1/7P/2K5 b - - 1 33;;unproven_evals:1000000
