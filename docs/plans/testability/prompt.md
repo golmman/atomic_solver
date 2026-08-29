@@ -41,3 +41,6 @@ Benchmarks, stress tests, performance tests, extended integrative tests should o
 Is my opinion sound and justified? If you agree, what should be changed and how? What are the (non-obvious) trade-offs?
 Please answer my questions and come up with new ideas.
 
+---
+
+I like your ideas. Don't it implement yet. Write an implementation plan to `docs/plans/testability/plan3.md`.
