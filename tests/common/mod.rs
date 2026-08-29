@@ -119,8 +119,11 @@ pub fn assert_solves_or_times_out(fen: &str, expected: Outcome, secs: u64) {
 ///   (which return instantly, without timing out) and non-terminal drawn
 ///   positions (which exhaust the time budget).
 ///
-/// Phase 3 of `docs/plans/testability/plan3.md` extends the acceptance rule
-/// with `child_eval_budget_exceeded()` for the `m22` deep tripwire entry.
+/// This helper is wall-clock only. Fixture entries whose note carries a
+/// child-evals budget (`solvable_evals:` / `unproven_evals:`) are *not* routed
+/// through it; callers send those to `assert_solves_within_evals` /
+/// `assert_unproven_within_evals` instead (Phase 3 of
+/// `docs/plans/testability/plan3.md`).
 pub fn assert_smoke(fen: &str, expected: Outcome, secs: u64) {
     let mut pos =
         Position::from_fen(fen).unwrap_or_else(|e| panic!("failed to parse FEN '{fen}': {e}"));
