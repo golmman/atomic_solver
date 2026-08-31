@@ -22,6 +22,7 @@ use std::time::{Duration, Instant};
 
 use atomic_movegen::types::Move;
 
+use crate::nn::scorer::NnMoveScorer;
 use crate::position::{Outcome, Position};
 use crate::proof_event::{NodeProven, ProofEvent};
 
@@ -95,6 +96,7 @@ pub struct Search {
     epsilon_num: u64,
     epsilon_den: u64,
     scorer: StaticAtomicScorer,
+    nn_scorer: Option<NnMoveScorer>,
     first_outcome_only: bool,
     timeout: Duration,
     child_eval_budget: u64,
@@ -128,6 +130,7 @@ impl Search {
             epsilon_num,
             epsilon_den,
             scorer: StaticAtomicScorer::default(),
+            nn_scorer: None,
             first_outcome_only: false,
             timeout: Duration::from_secs(TIMEOUT_SECS),
             child_eval_budget: u64::MAX,
@@ -158,6 +161,22 @@ impl Search {
 
     pub fn scorer(&self) -> &StaticAtomicScorer {
         &self.scorer
+    }
+
+    /// Enable the learned move-ordering network (`nn.md`, Gate 3).
+    ///
+    /// When set, [`Search::sort_moves`] replaces the static term with the
+    /// network's ranking; history, killer, and best-from-TT ordering stay
+    /// additive (`concept.md` §6). `None` (the default) keeps the
+    /// hand-crafted `StaticAtomicScorer` ordering.
+    pub fn set_nn_scorer(&mut self, scorer: Option<NnMoveScorer>) {
+        self.nn_scorer = scorer;
+    }
+
+    /// The configured neural move-ordering scorer, if any.
+    #[must_use]
+    pub fn nn_scorer(&self) -> Option<&NnMoveScorer> {
+        self.nn_scorer.as_ref()
     }
 
     pub fn set_timeout(&mut self, seconds: u64) {

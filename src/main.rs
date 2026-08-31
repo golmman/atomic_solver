@@ -42,6 +42,7 @@
 
 use atomic_movegen::types::Move;
 use atomic_solver::config;
+use atomic_solver::nn::{NnMoveScorer, NnWeights};
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::proof_tree::ProofTreeWorkerHandle;
@@ -80,6 +81,9 @@ fn print_help(program: &str) {
     println!("                             (default: proof_tree.bin)");
     println!("  --config <FILE>            Path to a TOML file overriding scorer");
     println!("                             parameters; defaults to built-in values");
+    println!("  --nn-weights <FILE>        Path to a move-ordering network weight");
+    println!("                             file (§10); enables the learned move");
+    println!("                             ordering (default: hand-crafted scorer)");
     println!();
     println!("Examples:");
     println!("  {program} --help");
@@ -124,6 +128,7 @@ fn main() {
         pt_size,
         dump_path,
         config_path,
+        nn_weights,
     } = opts;
 
     let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
@@ -146,6 +151,18 @@ fn main() {
 
     let mut search = Search::new(tt_size);
     search.set_scorer(scorer);
+    if let Some(path) = nn_weights {
+        match NnWeights::from_path(&path) {
+            Ok(weights) => {
+                eprintln!("nn move ordering: loaded weights from {path}");
+                search.set_nn_scorer(Some(NnMoveScorer::new(std::sync::Arc::new(weights))));
+            }
+            Err(e) => {
+                eprintln!("Failed to load NN weight file: {e}");
+                std::process::exit(1);
+            }
+        }
+    }
     search.set_timeout(timeout);
     search.set_epsilon(epsilon);
     search.set_first_outcome_only(first_outcome);

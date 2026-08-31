@@ -31,6 +31,9 @@ pub struct CliOptions {
     pub dump_path: String,
     /// Path to a TOML config file overriding the default scorer parameters.
     pub config_path: Option<String>,
+    /// Path to a §10 move-ordering network weight file; enables the
+    /// learned move ordering (Gate 3).
+    pub nn_weights: Option<String>,
 }
 
 impl Default for CliOptions {
@@ -45,6 +48,7 @@ impl Default for CliOptions {
             pt_size: 256,
             dump_path: "proof_tree.bin".to_string(),
             config_path: None,
+            nn_weights: None,
         }
     }
 }
@@ -158,6 +162,13 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 opts.config_path = Some(value.clone());
                 i += 2;
             }
+            "--nn-weights" => {
+                let value = args
+                    .get(i + 1)
+                    .ok_or_else(|| "error: --nn-weights requires a value".to_string())?;
+                opts.nn_weights = Some(value.clone());
+                i += 2;
+            }
             _ => {
                 return Err(format!(
                     "error: unknown option '{arg}'\nRun with --help for usage."
@@ -190,6 +201,7 @@ mod tests {
             pt_size,
             dump_path,
             config_path,
+            nn_weights,
         } = match parsed {
             ParseResult::Options(o) => o,
             ParseResult::Help => panic!("unexpected help"),
@@ -203,6 +215,7 @@ mod tests {
         assert_eq!(pt_size, 256);
         assert_eq!(dump_path, "proof_tree.bin");
         assert!(config_path.is_none());
+        assert!(nn_weights.is_none());
     }
 
     #[test]
@@ -292,6 +305,22 @@ mod tests {
     }
 
     #[test]
+    fn nn_weights_path_is_parsed() {
+        let parsed = parse_args(&args(&[
+            "atomic_solver",
+            "--nn-weights",
+            "/tmp/weights.v1.bin",
+        ]))
+        .unwrap();
+        match parsed {
+            ParseResult::Options(o) => {
+                assert_eq!(o.nn_weights, Some("/tmp/weights.v1.bin".to_string()))
+            }
+            ParseResult::Help => panic!("unexpected help"),
+        }
+    }
+
+    #[test]
     fn first_outcome_is_parsed() {
         let parsed = parse_args(&args(&["atomic_solver", "--first-outcome"])).unwrap();
         match parsed {
@@ -318,6 +347,7 @@ mod tests {
         assert!(parse_args(&args(&["atomic_solver", "--pt-size"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--dump-path"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--config"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--nn-weights"])).is_err());
     }
 
     #[test]

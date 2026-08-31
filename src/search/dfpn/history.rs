@@ -81,19 +81,36 @@ impl Search {
         pos.populate_state(&mut state);
 
         let us = pos.side_to_move() as usize;
-        let them = pos.side_to_move().flip();
         let depth = self.path_stack.len();
-        let nearest = nearest_commoner_map(pos.board(), them);
+        let slice = moves.as_mut_slice();
+
+        // With the neural scorer enabled it replaces the static term
+        // (concept.md §6); history + killer stay additive. The nearest-
+        // commoner map is only needed by the hand-crafted static scorer.
+        let nn_scores = self
+            .nn_scorer
+            .as_ref()
+            .map(|nn| nn.move_scores(pos.board(), slice));
+        let nearest = if nn_scores.is_none() {
+            Some(nearest_commoner_map(pos.board(), pos.side_to_move().flip()))
+        } else {
+            None
+        };
 
         let board = pos.board();
-        let slice = moves.as_mut_slice();
         let mut scored: Vec<(Move, i32)> = slice
             .iter()
             .copied()
-            .map(|m| {
-                let score = self
-                    .scorer
-                    .score_with_map(board, m, &state, &nearest, is_or_node)
+            .enumerate()
+            .map(|(i, m)| {
+                let static_score = match (&nn_scores, &nearest) {
+                    (Some(scores), _) => scores[i],
+                    (None, Some(map)) => self
+                        .scorer
+                        .score_with_map(board, m, &state, map, is_or_node),
+                    (None, None) => unreachable!("either nn scores or the static scorer runs"),
+                };
+                let score = static_score
                     + self.history[us][m.from_sq() as usize][m.to_sq() as usize]
                     + self.killer_bonus(m, depth);
                 (m, score)
@@ -144,7 +161,9 @@ impl Search {
     ///
     /// The returned vector contains `(move, static_score, history_bonus,
     /// killer_bonus, total_score)` tuples, sorted from highest total score to
-    /// lowest. This is intended for the `move_order_debug` example.
+    /// lowest. This is intended for the `move_order_debug` example. The
+    /// breakdown always uses the hand-crafted static scorer; it does not
+    /// reflect a configured `NnMoveScorer` (see `Search::set_nn_scorer`).
     #[must_use]
     pub fn move_order_breakdown(
         &self,

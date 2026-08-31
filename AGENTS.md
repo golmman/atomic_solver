@@ -32,6 +32,18 @@ A pure solver for atomic chess in Rust.
   first-player-loss GHI shortcut.
 - `src/search/ordering.rs` provides the `MoveScorer` trait and the
   `StaticAtomicScorer`.
+- `src/nn/` is the Gate-3 consumer of the move-ordering network
+  (`docs/spec/nn.md`): `weights.rs` parses the §10 weight file (hard errors
+  on magic/version/dims/flags/size), `features.rs` builds the two §2
+  perspectives (`f = 64 * p + sq`; the other view swaps colors and mirrors
+  the file) plus the §5 `policy_index`, `eval.rs` is the forward pass with
+  the hard-coded ClippedReLU (max = 1.0), and `scorer.rs` ranks legal moves
+  by `s[policy_index]` (promotion variants deduplicate to one index; scores
+  are RankNet margins — sort, never threshold). `Search::set_nn_scorer`
+  replaces the static term with the network ranking (history/killer stay
+  additive, `concept.md` §6); the CLI `--nn-weights <FILE>` flag enables it.
+  Conformance vectors and the byte-frozen loader fixture live in
+  `docs/nn_trainer_ref/`.
 - `src/proof_tree/mod.rs` provides a `Move`- and hash-based in-memory proof
   tree and a background worker that consumes `ProofEvent` messages, maintains
   the tree, enforces a memory budget, and serializes the full proven subtree
@@ -54,7 +66,8 @@ A pure solver for atomic chess in Rust.
   (stop after the first decisive line without iterative shortest-PV refinement),
   `--outcome-only` (disables the pre-exit hook and stdin reader), `--pt-size <MB>`
   (default 256, max in-memory proof-tree size), `--dump-path <FILE>`
-  (default `proof_tree.bin`, binary dump of the full proven subtree), plus
+  (default `proof_tree.bin`, binary dump of the full proven subtree),
+  `--nn-weights <FILE>` (enable the learned move-ordering network), plus
   `-h`/`--help`. Unknown options exit with an error. It prints the outcome and
   an informational PV when the result is decisive and, by default, logs
   proof-tree statistics and writes the binary dump before exit.
@@ -235,6 +248,11 @@ someone chooses to run it.
   atomic SEE, pawn-storm, rook centralization, and back-rank bonuses) and the
   constants that are tuned together. The unit tests are split out into
   `src/search/ordering/tests.rs` to keep the main file under the 20 KB limit.
+- `src/nn/weights.rs` is larger than the 10 KB guideline because the §10
+  byte-level parser, its validation error type, the transposing `W_1` load,
+  the tensor accessors, and the fixture-driven conformance tests (header,
+  known entries, and every rejection path) mirror the reference reader in
+  `docs/nn_trainer_ref/weights.py` and are kept together.
 
 ## Tuning workflow
 
