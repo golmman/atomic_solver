@@ -37,7 +37,8 @@ identically):
 - **piece index:** `p = 6 * color + type`, `color` ∈ {0 = this view's own
   side, 1 = the other side}, `type` ∈ {0 = pawn, 1 = knight, 2 = bishop,
   3 = rook, 4 = queen, 5 = king}.
-- **feature index:** `f = 64 * sq + p` ∈ [0, 768).
+- **feature index:** `f = 64 * p + sq` ∈ [0, 768). Piece-major layout: the
+  12-valued piece axis is the outer, 64-strided axis (the NNUE convention).
 
 ### FEN parsing and the corpus king convention
 
