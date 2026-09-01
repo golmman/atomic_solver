@@ -1,7 +1,9 @@
 # Plan: Gate 4b — residual training iteration (option B)
 
 Status: Rust side implemented; trainer side pending in the external repo
-(see `report7.md` when written).
+(see `report7.md` when written). Handoff for the trainer delta:
+`handoff_user_train_plan7.md` (user checklist) +
+`handoff_agent_train_plan7.md` (trainer-repo agent prompt).
 
 Gate 4 (`plan6.md` + `report6.md`) failed its success bar: child_evals
 dropped 44% at fixed wall time, but wall time regressed +8.3%, and at fixed
