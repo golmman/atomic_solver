@@ -8,11 +8,19 @@ Refined general idea for the PoC pipeline. The architecture spec is
 `plan2.md` + `report2.md`) are done; the `subtree_size` proxy was ablated and
 rejected (`plan3.md` + `report3.md`) and replaced by real per-child `work`
 counters in the proof tree (design B, `plan4.md` + `report4.md`, corpus
-`atomic-corpus/2`); Gate 2's implementation plan is
-`docs/plans/nn/plan_external_trainer.md` and its Docker setup handoff is
-`docs/plans/nn/trainer_handoff.md`. This document records the _why_, the
-pipeline, the decisions, and the honest risk assessment so later plans can
-refer to a stable baseline of reasoning.
+`atomic-corpus/2`); Gate 2 (external trainer, `plan_external_trainer.md`) and
+Gate 3 (Rust inference, `plan5.md` + `report5.md`) are done; Gate 4
+(`plan6.md` + `report6.md`) measured the trained network against the tuned
+baseline and **failed the success bar**: child_evals dropped 44% at fixed
+wall time, but wall time regressed (+8.3%) — the eval-throughput loss from
+the dense forward pass outweighs the node reduction, and the only case both
+configs solve at fixed effort needs 1.76x more evals under the network. One
+bounded iteration (option B, `plan7.md`) is underway: residual-on-static
+training target, work-weighted pairwise loss, deeper corpus; the tuned
+`ScorerParams` ordering remains the default until that iteration passes.
+This document records the
+_why_, the pipeline, the decisions, and the honest risk assessment so later
+plans can refer to a stable baseline of reasoning.
 
 ## 1. Idea
 
@@ -133,8 +141,10 @@ recorded `work` directly.
 - **Toolchain split**: Rust emits the corpus; an external trainer produces the
   weight file; Rust loads it at inference.
 - **Metrics**: `child_evals` (deterministic) AND wall time; hard success bar.
-- **Ordering composition**: the network ranks legal moves; history/killer/TT
-  remain additive. Final score is `nn + history + killer`.
+- **Ordering composition**: the network is a residual on top of the static
+  ordering (§6a v2 recipe in `docs/spec/nn.md`, adopted for the Gate-4b
+  iteration after the v1 replacement composition failed Gate 4): final
+  score is `static + nn + history + killer`.
 
 ## 7. Relation to existing artifacts
 
@@ -157,7 +167,14 @@ recorded `work` directly.
    subtree-size proxy ablation; proxy rejected; real per-child `work` labels
    (design B, corpus v2). Done.
 4. `docs/plans/nn/plan_external_trainer.md` + `trainer_handoff.md` — Gate 2
-   external trainer (next; `trainer_handoff.md` is the Docker handoff).
-5. Gate 3 Rust inference integration (future plan).
-6. Gate 4 full measurement and report (future plan).
+   external trainer. Done.
+5. `docs/plans/nn/plan5.md` + `report5.md` — Gate 3 Rust inference
+   integration. Done.
+6. `docs/plans/nn/plan6.md` + `report6.md` — Gate 4 full measurement and
+   report. Done: success bar not met (wall time regresses); the PoC stops
+   here unless the follow-ups in `report6.md` are pursued.
+7. `docs/plans/nn/plan7.md` (+ `report7.md` when measured) — Gate 4b
+   residual-training iteration (option B): residual-on-static target,
+   work-weighted pairwise loss, deeper corpus (`--timeout 60`). Rust side
+   done; trainer delta pending in the external repo.
 

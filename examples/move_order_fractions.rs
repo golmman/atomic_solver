@@ -1,20 +1,22 @@
-//! Measure static move-ordering quality over the finalized proof tree.
+//! Measure move-ordering quality over the finalized proof tree.
 //!
 //! For every OR (Win) node in the finalized proof tree with a proven Loss
-//! child, this example reports the rank of the proven decisive child under the
-//! default `StaticAtomicScorer` ordering. The rank is the **static** ordering
-//! only: history, killer, and best-from-TT promotion are runtime state and are
-//! not recorded anywhere. Ranks are reported flat (fraction of OR nodes) and
+//! child, this example reports the rank of the proven decisive child under
+//! the move ordering. By default that is the **static** `StaticAtomicScorer`
+//! ordering; with `--nn-weights` it is the learned `NnMoveScorer` ordering
+//! (the runtime-only history/killer/TT state is not recorded anywhere in
+//! either case). Ranks are reported flat (fraction of OR nodes) and
 //! work-weighted (weighted by the subtree size of each OR node, a proxy for
 //! the solver's node-work at that position).
 //!
 //! This is the Gate 0 measurement for the learned move-ordering concept
-//! (`docs/plans/nn/concept.md`): if most OR nodes already rank the decisive
-//! child first, the headroom for a learned ranker is thin.
+//! (`docs/plans/nn/concept.md`); re-run with `--nn-weights` it is the Gate 4
+//! ordering-quality comparison.
 //!
 //! Usage:
 //!     cargo run --release --example move_order_fractions -- --suite move-order
 //!     cargo run --release --example move_order_fractions -- --fen "<fen>"
+//!     cargo run --release --example move_order_fractions -- --suite move-order --nn-weights data/corpus/weights.v1.bin
 //!
 //! Options:
 //!   -h, --help            Print help and exit
@@ -24,11 +26,13 @@
 //!   --epsilon <F>         DF-PN+ threshold (default: 0.125)
 //!   --tt-size <MB>        TT size (default: 64)
 //!   --pt-size <MB>        Proof-tree memory budget (default: 256)
+//!   --nn-weights <FILE>   Rank by the learned network instead of the static scorer
 
 mod common;
 
 use atomic_movegen::board::StateInfo;
 use atomic_movegen::types::{Move, MoveList};
+use atomic_solver::nn::{NnMoveScorer, NnWeights};
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::proof_event::{NodeProven, ProofEvent};
 use atomic_solver::proof_tree::{ProofTree, ProofTreeWorkerHandle};
@@ -51,6 +55,7 @@ struct Cli {
     epsilon: f64,
     tt_size: usize,
     pt_size: usize,
+    nn_weights: Option<String>,
 }
 
 #[derive(Default)]
@@ -83,6 +88,7 @@ fn print_help(program: &str) {
     println!("  --epsilon <F>         DF-PN+ threshold (default: 0.125)");
     println!("  --tt-size <MB>        TT size (default: 64)");
     println!("  --pt-size <MB>        Proof-tree memory budget (default: 256)");
+    println!("  --nn-weights <FILE>   Rank by the learned network instead of the static scorer");
 }
 
 fn parse_args(args: &[String]) -> Result<Cli, String> {
@@ -93,6 +99,7 @@ fn parse_args(args: &[String]) -> Result<Cli, String> {
         epsilon: 0.125,
         tt_size: 64,
         pt_size: 256,
+        nn_weights: None,
     };
     let mut i = 0;
     while i < args.len() {
@@ -144,6 +151,14 @@ fn parse_args(args: &[String]) -> Result<Cli, String> {
                     .ok_or("--pt-size needs a positive integer")?;
                 i += 2;
             }
+            "--nn-weights" => {
+                cli.nn_weights = Some(
+                    args.get(i + 1)
+                        .ok_or("--nn-weights needs a file path")?
+                        .clone(),
+                );
+                i += 2;
+            }
             other => return Err(format!("unknown option '{other}'")),
         }
     }
@@ -169,10 +184,19 @@ fn main() {
     };
 
     let cases = load_cases(&cli);
+    let nn_weights = cli.nn_weights.as_ref().map(|path| {
+        Arc::new(NnWeights::from_path(path).unwrap_or_else(|e| {
+            eprintln!("failed to load NN weights from {path}: {e}");
+            std::process::exit(1);
+        }))
+    });
+    if let Some(path) = &cli.nn_weights {
+        eprintln!("ordering: nn-weights={path}");
+    }
     let mut reports = Vec::new();
     for (name, fen) in &cases {
         eprintln!("solving {name} ...");
-        reports.push(solve_and_measure(name, fen, &cli));
+        reports.push(solve_and_measure(name, fen, &cli, nn_weights.clone()));
     }
 
     for report in &reports {
@@ -235,7 +259,12 @@ fn load_cases(cli: &Cli) -> Vec<(String, String)> {
     cases
 }
 
-fn solve_and_measure(name: &str, fen: &str, cli: &Cli) -> CaseReport {
+fn solve_and_measure(
+    name: &str,
+    fen: &str,
+    cli: &Cli,
+    nn_weights: Option<Arc<NnWeights>>,
+) -> CaseReport {
     let mut pos = Position::from_fen(fen).unwrap_or_else(|e| {
         eprintln!("failed to parse FEN for {name}: {e}");
         std::process::exit(1);
@@ -244,6 +273,9 @@ fn solve_and_measure(name: &str, fen: &str, cli: &Cli) -> CaseReport {
     let mut search = Search::new(cli.tt_size);
     search.set_timeout(cli.timeout);
     search.set_epsilon(cli.epsilon);
+    if let Some(weights) = &nn_weights {
+        search.set_nn_scorer(Some(NnMoveScorer::new(Arc::clone(weights))));
+    }
 
     let memory_limited = Arc::new(AtomicBool::new(false));
     let (handle, join) =
@@ -278,7 +310,7 @@ fn solve_and_measure(name: &str, fen: &str, cli: &Cli) -> CaseReport {
     drop(handle);
     let _ = join.join();
 
-    let report = analyze_tree(name, &tree, outcome, timed_out, mem_limited);
+    let report = analyze_tree(name, &tree, outcome, timed_out, mem_limited, nn_weights);
     eprintln!(
         "  {name}: outcome={} tree_nodes={} or_nodes={}",
         report.outcome.as_str(),
@@ -294,9 +326,10 @@ fn analyze_tree(
     outcome: Outcome,
     timed_out: bool,
     memory_limited: bool,
+    nn_weights: Option<Arc<NnWeights>>,
 ) -> CaseReport {
     let sizes = subtree_sizes(tree);
-    let samples = rank_samples(tree, &sizes);
+    let samples = rank_samples(tree, &sizes, nn_weights);
 
     let mut buckets = Buckets::default();
     for (rank, work) in &samples {
@@ -336,9 +369,14 @@ fn subtree_sizes(tree: &ProofTree) -> Vec<u64> {
     sizes
 }
 
-fn rank_samples(tree: &ProofTree, sizes: &[u64]) -> Vec<(usize, u64)> {
+fn rank_samples(
+    tree: &ProofTree,
+    sizes: &[u64],
+    nn_weights: Option<Arc<NnWeights>>,
+) -> Vec<(usize, u64)> {
     let mut pos = Position::from_fen(&tree.root_fen).unwrap();
     let scorer = StaticAtomicScorer::default();
+    let nn = nn_weights.map(NnMoveScorer::new);
     let mut samples = Vec::new();
 
     enum Op {
@@ -363,10 +401,10 @@ fn rank_samples(tree: &ProofTree, sizes: &[u64]) -> Vec<(usize, u64)> {
                         pos.legal_moves(&mut moves);
                         let mut state = StateInfo::new();
                         pos.populate_state(&mut state);
+                        let slice = moves.as_slice();
                         let them = pos.side_to_move().flip();
                         let nearest = nearest_commoner_map(pos.board(), them);
-                        let mut scored: Vec<(Move, i32)> = moves
-                            .as_slice()
+                        let mut scored: Vec<(Move, i32)> = slice
                             .iter()
                             .copied()
                             .map(|m| {
@@ -376,6 +414,16 @@ fn rank_samples(tree: &ProofTree, sizes: &[u64]) -> Vec<(usize, u64)> {
                                 )
                             })
                             .collect();
+                        if let Some(nn) = &nn {
+                            // Residual composition (nn.md §6 v2 recipe): the
+                            // network adds to the static term, matching
+                            // `sort_moves`; history/killer are runtime state
+                            // and are not part of the measured ordering.
+                            let scores = nn.move_scores(pos.board(), slice);
+                            for ((_, score), nn_score) in scored.iter_mut().zip(scores) {
+                                *score += nn_score;
+                            }
+                        }
                         scored.sort_by_key(|&(_, s)| std::cmp::Reverse(s));
                         let mut min_rank = usize::MAX;
                         for &c in &decisive {

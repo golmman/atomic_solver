@@ -18,7 +18,14 @@ quick_export2:
 macos_cleanup:
 	find . -name ".DS_Store" -print -delete
 
+# Gate-4b corpus (plan7): budgeted deep solve (per-case cap 420 s, total
+# budget 19200 s, pt-size 1024 for the deeper trees); keep
+# data/corpus/weights.v1.bin{,.json} across the wipe.
 nn_corpus:
+	mkdir -p /tmp/opencode/nn_weights_keep
+	-cp data/corpus/weights.v1.bin data/corpus/weights.v1.bin.json /tmp/opencode/nn_weights_keep/ 2>/dev/null
 	rm -rf data/corpus/
-	cargo run --release --example corpus_gen -- solve --suite quick --timeout 20 --dump-dir data/corpus/trees
+	mkdir -p data/corpus
+	-cp /tmp/opencode/nn_weights_keep/weights.v1.bin /tmp/opencode/nn_weights_keep/weights.v1.bin.json data/corpus/ 2>/dev/null
+	cargo run --release --example corpus_gen -- solve --suite quick --timeout 420 --budget-seconds 19200 --pt-size 1024 --dump-dir data/corpus/trees
 	cargo run --release --example corpus_gen -- load  --dump-dir data/corpus/trees --output data/corpus/train.ndjson

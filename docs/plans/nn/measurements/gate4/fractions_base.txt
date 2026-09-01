@@ -1,0 +1,95 @@
+=== m20_white  outcome=draw  tree_nodes=1  or_nodes=0  timeout=yes
+=== m20_black  outcome=draw  tree_nodes=1  or_nodes=0  timeout=yes
+=== m21_white  outcome=draw  tree_nodes=1  or_nodes=0  timeout=yes
+=== m21_black  outcome=draw  tree_nodes=1  or_nodes=0  timeout=yes
+=== m22_white  outcome=draw  tree_nodes=1  or_nodes=0  timeout=yes
+=== m22_black  outcome=draw  tree_nodes=19  or_nodes=9  timeout=yes
+rank    nodes  pct      work    work_pct
+1            7    77.8%       44     75.9%
+2            2    22.2%       14     24.1%
+3            0     0.0%        0      0.0%
+>3           0     0.0%        0      0.0%
+=== m23_white  outcome=win  tree_nodes=16650  or_nodes=8325  timeout=yes
+rank    nodes  pct      work    work_pct
+1         5523    66.3%    28942     24.8%
+2          717     8.6%     5254      4.5%
+3          149     1.8%     6688      5.7%
+>3        1936    23.3%    75906     65.0%
+=== m23_black  outcome=loss  tree_nodes=9799  or_nodes=4899
+rank    nodes  pct      work    work_pct
+1         3561    72.7%    20936     44.8%
+2          832    17.0%    13586     29.1%
+3          353     7.2%     3206      6.9%
+>3         153     3.1%     8972     19.2%
+=== m24_white  outcome=win  tree_nodes=1780  or_nodes=890  timeout=yes
+rank    nodes  pct      work    work_pct
+1          655    73.6%     2928     33.6%
+2          123    13.8%     2286     26.3%
+3           58     6.5%      282      3.2%
+>3          54     6.1%     3212     36.9%
+=== m24_black  outcome=loss  tree_nodes=1111  or_nodes=555
+rank    nodes  pct      work    work_pct
+1          444    80.0%     2342     58.5%
+2           73    13.2%      854     21.3%
+3           27     4.9%      162      4.0%
+>3          11     2.0%      644     16.1%
+=== m25_white  outcome=win  tree_nodes=206  or_nodes=103  timeout=yes
+rank    nodes  pct      work    work_pct
+1           83    80.6%      330     38.8%
+2            6     5.8%      150     17.6%
+3            5     4.9%       30      3.5%
+>3           9     8.7%      340     40.0%
+=== m25_black  outcome=loss  tree_nodes=105  or_nodes=52
+rank    nodes  pct      work    work_pct
+1           38    73.1%      190     62.9%
+2            4     7.7%       26      8.6%
+3            4     7.7%       12      4.0%
+>3           6    11.5%       74     24.5%
+=== m26_white  outcome=win  tree_nodes=20  or_nodes=10
+rank    nodes  pct      work    work_pct
+1            8    80.0%       44     84.6%
+2            1    10.0%        4      7.7%
+3            1    10.0%        4      7.7%
+>3           0     0.0%        0      0.0%
+=== m26_black  outcome=loss  tree_nodes=19  or_nodes=9
+rank    nodes  pct      work    work_pct
+1            7    77.8%       24     75.0%
+2            1    11.1%        4     12.5%
+3            1    11.1%        4     12.5%
+>3           0     0.0%        0      0.0%
+=== m27_white  outcome=win  tree_nodes=8  or_nodes=4
+rank    nodes  pct      work    work_pct
+1            3    75.0%       12     75.0%
+2            0     0.0%        0      0.0%
+3            1    25.0%        4     25.0%
+>3           0     0.0%        0      0.0%
+=== m27_black  outcome=loss  tree_nodes=7  or_nodes=3
+rank    nodes  pct      work    work_pct
+1            2    66.7%        4     50.0%
+2            0     0.0%        0      0.0%
+3            0     0.0%        0      0.0%
+>3           1    33.3%        4     50.0%
+=== m28_white  outcome=win  tree_nodes=4  or_nodes=2
+rank    nodes  pct      work    work_pct
+1            1    50.0%        2     33.3%
+2            0     0.0%        0      0.0%
+3            0     0.0%        0      0.0%
+>3           1    50.0%        4     66.7%
+=== m28_black  outcome=loss  tree_nodes=3  or_nodes=1
+rank    nodes  pct      work    work_pct
+1            1   100.0%        2    100.0%
+2            0     0.0%        0      0.0%
+3            0     0.0%        0      0.0%
+>3           0     0.0%        0      0.0%
+=== m29_white  outcome=win  tree_nodes=2  or_nodes=1
+rank    nodes  pct      work    work_pct
+1            1   100.0%        2    100.0%
+2            0     0.0%        0      0.0%
+3            0     0.0%        0      0.0%
+>3           0     0.0%        0      0.0%
+=== aggregate  cases=19  tree_nodes=29738  or_nodes=14863
+rank    nodes  pct      work    work_pct
+1        10334    69.5%    55802     31.4%
+2         1759    11.8%    22178     12.5%
+3          599     4.0%    10392      5.9%
+>3        2171    14.6%    89156     50.2%

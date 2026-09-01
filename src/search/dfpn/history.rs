@@ -84,18 +84,14 @@ impl Search {
         let depth = self.path_stack.len();
         let slice = moves.as_mut_slice();
 
-        // With the neural scorer enabled it replaces the static term
-        // (concept.md §6); history + killer stay additive. The nearest-
-        // commoner map is only needed by the hand-crafted static scorer.
+        // The neural scorer is a residual on top of the static term
+        // (`nn.md` §6 v2 recipe): the final score is static + nn + history
+        // + killer, so the nearest-commoner map is always needed.
         let nn_scores = self
             .nn_scorer
             .as_ref()
             .map(|nn| nn.move_scores(pos.board(), slice));
-        let nearest = if nn_scores.is_none() {
-            Some(nearest_commoner_map(pos.board(), pos.side_to_move().flip()))
-        } else {
-            None
-        };
+        let nearest = nearest_commoner_map(pos.board(), pos.side_to_move().flip());
 
         let board = pos.board();
         let mut scored: Vec<(Move, i32)> = slice
@@ -103,14 +99,12 @@ impl Search {
             .copied()
             .enumerate()
             .map(|(i, m)| {
-                let static_score = match (&nn_scores, &nearest) {
-                    (Some(scores), _) => scores[i],
-                    (None, Some(map)) => self
-                        .scorer
-                        .score_with_map(board, m, &state, map, is_or_node),
-                    (None, None) => unreachable!("either nn scores or the static scorer runs"),
-                };
+                let static_score = self
+                    .scorer
+                    .score_with_map(board, m, &state, &nearest, is_or_node);
+                let nn_score = nn_scores.as_ref().map_or(0, |scores| scores[i]);
                 let score = static_score
+                    + nn_score
                     + self.history[us][m.from_sq() as usize][m.to_sq() as usize]
                     + self.killer_bonus(m, depth);
                 (m, score)
@@ -230,6 +224,58 @@ mod tests {
         search.sort_moves(&pos, &mut moves1, Move::NONE, true);
         search.sort_moves(&pos, &mut moves2, Move::NONE, true);
         assert_eq!(moves1.as_slice(), moves2.as_slice());
+    }
+
+    /// Residual composition (`nn.md` §6a v2 recipe): with the NN scorer
+    /// enabled the ordering must be `static + nn` (fresh search: history and
+    /// killer are zero), not the v1 replacement of the static term.
+    #[test]
+    fn nn_scorer_is_residual_on_the_static_term() {
+        use crate::nn::{NnMoveScorer, NnWeights};
+        use crate::search::ordering::{StaticAtomicScorer, nearest_commoner_map};
+        use atomic_movegen::board::StateInfo;
+        use std::sync::Arc;
+
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("docs/nn_trainer_ref/fixtures/weights.v1.bin");
+        let weights = Arc::new(NnWeights::from_path(&path).expect("fixture weight file must load"));
+        let nn = NnMoveScorer::new(Arc::clone(&weights));
+
+        let mut search = Search::new(1);
+        search.set_scorer(StaticAtomicScorer::default());
+        search.set_nn_scorer(Some(nn));
+
+        let pos = start_position();
+        let mut moves = MoveList::new();
+        pos.legal_moves(&mut moves);
+
+        let slice: Vec<_> = moves.as_slice().to_vec();
+        let nn_scores = search.nn_scorer().unwrap().move_scores(pos.board(), &slice);
+        let mut state = StateInfo::new();
+        pos.populate_state(&mut state);
+        let nearest = nearest_commoner_map(pos.board(), pos.side_to_move().flip());
+        let mut expected: Vec<(Move, i32)> = slice
+            .iter()
+            .copied()
+            .enumerate()
+            .map(|(i, m)| {
+                (
+                    m,
+                    search
+                        .scorer()
+                        .score_with_map(pos.board(), m, &state, &nearest, true)
+                        + nn_scores[i],
+                )
+            })
+            .collect();
+        expected.sort_by_key(|&(_, score)| std::cmp::Reverse(score));
+
+        let mut sorted = MoveList::new();
+        pos.legal_moves(&mut sorted);
+        search.sort_moves(&pos, &mut sorted, Move::NONE, true);
+        let sorted: Vec<Move> = sorted.as_slice().to_vec();
+        let expected: Vec<Move> = expected.into_iter().map(|(m, _)| m).collect();
+        assert_eq!(sorted, expected, "ordering must be static + nn");
     }
 
     #[test]

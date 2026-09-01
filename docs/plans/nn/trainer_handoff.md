@@ -28,10 +28,18 @@ the authoritative details live in the listed files, not here.
 
 ### Inputs (only one data file)
 
-- `data/corpus/train.ndjson` — the corpus, `atomic-corpus/2`, ~20 MB: 26,475
-  rows (18,991 win / 7,484 loss), 59 cases, generated with `--suite quick
-  --timeout 20 --tt-size 64 --pt-size 256`. The NDJSON is the **only required
-  input**.
+- `data/corpus/train.ndjson` — the corpus, `atomic-corpus/2`, ~18 MB: 24,109
+  rows of which **9,552 clean** (the trainer's `partial_mode: dropped`
+  applies: rows whose case hit the solve cap or needed a synthesized root
+  are partial and dropped, 14,557 of them), 54 distinct sources, generated
+  with `--suite quick --timeout 420 --budget-seconds 19200 --tt-size 64
+  --pt-size 1024` (Gate-4b corpus, `docs/plans/nn/plan7.md`). Clean-row
+  history: 9,130 (timeout-20 corpus) → 9,275 (timeout-60) → 9,552: deeper
+  caps converge only a few more cases (37/59 converge at cap 420 s; the
+  remaining 22 refine indefinitely — a 900 s probe on the largest burners,
+  `dec10`/`m23_white`, still did not converge), so this corpus is at the
+  practical clean-data ceiling of the current fixtures. The NDJSON is the
+  **only required input**.
   - The `_meta` line counts 59 cases, but only **54 distinct `source` values**
     appear in the rows: five move-order cases (`m26_white`, `m27_white`,
     `m28_black`, `m28_white`, `m29_white`) had every row absorbed by the
@@ -59,7 +67,7 @@ here. Nothing else in this repo is required:
 
 | File                                     | Why                                                                                                                                                                                                                                                                                                                                                                  |
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/spec/nn.md`                        | Network contract: §2 feature index layout, the FEN convention (standard `k`/`K` notation only since atomic-movegen 2.1.0), and the other-side transform; §3 layer/weight shapes; §5 output mask (`policy_size` = 4096); §6 loss and OR/AND label semantics; §10 weight-file byte layout. The trainer must implement these **identically** to the future Rust loader. |
+| `docs/spec/nn.md`                        | Network contract: §2 feature index layout, the FEN convention (standard `k`/`K` notation only since atomic-movegen 2.1.0), and the other-side transform; §3 layer/weight shapes; §5 output mask (`policy_size` = 4096) and the v2 residual composition; §6 loss and OR/AND label semantics plus the **§6a v2 recipe (residual logits + work weighting)** that the Gate-4b training implements, emitting `weights.v2.bin`; §10 weight-file byte layout (unchanged, still version 1). Re-copy this file even if a previous handoff already provisioned it — §5/§6 changed. The trainer must implement these **identically** to the future Rust loader. |
 | `docs/plans/nn/plan_external_trainer.md` | The Gate 2 implementation plan and the input contract: `trainer/` package layout (`features.py`, `corpus.py`, `model.py`, `loss.py`, `weights.py`, `train.py` + tests), NDJSON parsing caveats, label-pair rules, pinned decisions, CLI, success criteria. Self-contained: nothing below is required to implement it.                                                |
 | `data/corpus/train.ndjson`               | The corpus; see "Inputs" above.                                                                                                                                                                                                                                                                                                                                      |
 

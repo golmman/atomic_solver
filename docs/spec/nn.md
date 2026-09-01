@@ -125,6 +125,13 @@ incremental path past the feature transformer.
   illegal indices to `−∞` or drop them), then sort remaining entries
   descending. The mask comes from the legal move list the search already
   produces for expansion — no extra move-generation cost.
+- **Composition (v2 recipe):** the network is a residual on top of the
+  hand-crafted ordering. The final move score is
+  `static + scale · s[m] (+ history + killer)`; the scaled margins must stay
+  far below `score_winning_capture` so the network can reorder quiet moves
+  but never override a proven winning capture. (v1 used pure replacement;
+  the residual composition was adopted for the Gate-4b iteration,
+  `docs/plans/nn/plan7.md`.)
 - No softmax needed if only a ranking is used; softmax is only relevant if
   training uses a probability-based loss instead of pairwise ranking.
 
@@ -152,6 +159,31 @@ incremental path past the feature transformer.
   zero-work censoring case does not occur in the shipped corpus.)
 - **No absolute regression target** — only the relative order between
   siblings matters for move ordering.
+
+### 6a. v2 training recipe (residual + work weighting, Gate 4b)
+
+Introduced after the v1 network failed the Gate-4 success bar
+(`docs/plans/nn/report6.md`); implemented by the external trainer against an
+`atomic-corpus/2` corpus regenerated at `--timeout 60`. The architecture,
+feature layout, and §10 weight-file format are unchanged.
+
+- **Residual logits.** For a sibling pair `(i, j)` the pairwise logit is
+  `z_ij = (s_i − s_j) + λ · (ŝ_i − ŝ_j)`, where `s` are the network margins
+  and `ŝ_k = static_k / max(1, max_l |static_l|)` is the per-node
+  max-normalized static score from the corpus row's `static_scores`
+  (computed with the node's own OR/AND flag by `corpus_gen`). The network
+  therefore learns the *correction* to the static ordering: where the
+  static prior already ranks correctly it can output near-zero margins.
+  `λ` is an open parameter (§9), default **1.0**.
+- **Work weighting.** Each pair's loss contribution is weighted by
+  `1 + log2(1 + w)` where `w` is the recorded work of the *cheaper* child
+  of the pair for AND rank-by-work pairs, and the work of the proven
+  decisive child for OR one-vs-rest pairs (the negative side may be
+  censored and carries no work of its own). Rationale: resolution cost is
+  concentrated in a minority of badly-ordered heavy nodes (Gate 0), and a
+  linear weight would let the few largest subtrees swamp the corpus.
+- Everything else (censoring rules, one-vs-rest construction at OR nodes,
+  no absolute regression target) is unchanged from the base recipe above.
 
 ## 7. Sizing rationale (v1)
 
@@ -183,6 +215,8 @@ well as aggregates, since a handful of hard positions can dominate cost.
 - Whether the 128-wide accumulator is sufficient, or 256 is needed
 - Training data budget: how many recorded `(position, move, work)` triples
   are needed for the ranking loss to saturate
+- The residual prior strength `λ` (§6a), default 1.0 for the Gate-4b
+  iteration
 
 ## 10. Weight-file format (v1, pinned)
 

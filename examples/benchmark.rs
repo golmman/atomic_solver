@@ -12,15 +12,18 @@
 //!     cargo run --release --example benchmark -- --suite decisive --timeout 5 --runs 1
 //!     cargo run --release --example benchmark -- --suite quick --first-outcome --timeout 3 --runs 1 --json
 //!     cargo run --release --example benchmark -- --suite thorough --first-outcome --timeout 5 --runs 3 --json
+//!     cargo run --release --example benchmark -- --suite move-order --first-outcome --nn-weights data/corpus/weights.v1.bin --json
 
 mod common;
 
 use atomic_solver::config;
+use atomic_solver::nn::{NnMoveScorer, NnWeights};
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
 use atomic_solver::search::ordering::StaticAtomicScorer;
 use serde::Serialize;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 #[derive(Clone, Debug)]
@@ -39,6 +42,14 @@ enum Suite {
     Quick,
     Thorough,
     All,
+}
+
+struct RunConfig {
+    timeout: u64,
+    epsilon: f64,
+    tt_mb: usize,
+    first_outcome: bool,
+    nn_weights: Option<Arc<NnWeights>>,
 }
 
 struct Run {
@@ -71,6 +82,7 @@ struct JsonOutput {
     epsilon: f64,
     tt_size: usize,
     config_path: Option<String>,
+    nn_weights: Option<String>,
     results: Vec<JsonResult>,
     aggregates: JsonAggregate,
 }
@@ -113,6 +125,7 @@ fn main() {
     let mut output_file: Option<String> = None;
     let mut filter: Option<String> = None;
     let mut config_path: Option<String> = None;
+    let mut nn_weights: Option<String> = None;
 
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut i = 0;
@@ -183,6 +196,14 @@ fn main() {
                 config_path = Some(args.get(i + 1).expect("--config needs a file path").clone());
                 i += 2;
             }
+            "--nn-weights" => {
+                nn_weights = Some(
+                    args.get(i + 1)
+                        .expect("--nn-weights needs a file path")
+                        .clone(),
+                );
+                i += 2;
+            }
             other => {
                 filter = Some(other.to_string());
                 i += 1;
@@ -201,6 +222,13 @@ fn main() {
         }
         None => StaticAtomicScorer::default(),
     };
+
+    let nn_weights_loaded = nn_weights.as_ref().map(|path| {
+        Arc::new(
+            NnWeights::from_path(path)
+                .unwrap_or_else(|e| panic!("failed to load NN weights from {path}: {e}")),
+        )
+    });
 
     let cases = load_suite(&suite);
 
@@ -234,11 +262,14 @@ fn main() {
         let result = bench_case(
             &case,
             runs,
-            timeout,
-            epsilon,
-            tt_size,
-            first_outcome,
             &scorer,
+            &RunConfig {
+                timeout,
+                epsilon,
+                tt_mb: tt_size,
+                first_outcome,
+                nn_weights: nn_weights_loaded.clone(),
+            },
         );
         if let Some(expected) = result.expected
             && result.outcome != Outcome::Draw
@@ -260,6 +291,7 @@ fn main() {
             epsilon,
             tt_size,
             config_path,
+            nn_weights,
             results: results_json,
             aggregates,
         };
@@ -411,34 +443,17 @@ fn move_order_number(name: &str) -> Option<usize> {
 fn bench_case(
     case: &Case,
     runs: usize,
-    timeout: u64,
-    epsilon: f64,
-    tt_mb: usize,
-    first_outcome: bool,
     scorer: &StaticAtomicScorer,
+    config: &RunConfig,
 ) -> BenchResult {
     // Warm-up run, excluded from statistics (matching the report style).
-    let _ = run_once(
-        &case.fen,
-        timeout,
-        epsilon,
-        tt_mb,
-        first_outcome,
-        scorer.clone(),
-    );
+    let _ = run_once(&case.fen, scorer, config);
 
     let mut times = Vec::with_capacity(runs);
     let mut first: Option<Run> = None;
 
     for _ in 0..runs {
-        let run = run_once(
-            &case.fen,
-            timeout,
-            epsilon,
-            tt_mb,
-            first_outcome,
-            scorer.clone(),
-        );
+        let run = run_once(&case.fen, scorer, config);
         times.push(run.elapsed);
         if first.is_none() {
             first = Some(run);
@@ -466,20 +481,16 @@ fn bench_case(
     }
 }
 
-fn run_once(
-    fen: &str,
-    timeout: u64,
-    epsilon: f64,
-    tt_mb: usize,
-    first_outcome: bool,
-    scorer: StaticAtomicScorer,
-) -> Run {
+fn run_once(fen: &str, scorer: &StaticAtomicScorer, config: &RunConfig) -> Run {
     let mut pos = Position::from_fen(fen).expect("valid FEN");
-    let mut search = Search::new(tt_mb);
-    search.set_scorer(scorer);
-    search.set_timeout(timeout);
-    search.set_epsilon(epsilon);
-    search.set_first_outcome_only(first_outcome);
+    let mut search = Search::new(config.tt_mb);
+    search.set_scorer(scorer.clone());
+    if let Some(weights) = &config.nn_weights {
+        search.set_nn_scorer(Some(NnMoveScorer::new(Arc::clone(weights))));
+    }
+    search.set_timeout(config.timeout);
+    search.set_epsilon(config.epsilon);
+    search.set_first_outcome_only(config.first_outcome);
 
     let start = Instant::now();
     let (outcome, pv, nodes) = search.solve(&mut pos);

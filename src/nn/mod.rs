@@ -4,7 +4,9 @@
 //! two-perspective feature extractor, the §3/§4 forward pass with the
 //! hard-coded ClippedReLU (max = 1.0), and the [`scorer::NnMoveScorer`]
 //! integration point that ranks legal moves behind
-//! `Search::set_nn_scorer` / the CLI `--nn-weights` flag.
+//! `Search::set_nn_scorer` / the CLI `--nn-weights` flag. The network is a
+//! residual: its score adds to the static term in `sort_moves` (§6 v2
+//! recipe).
 //!
 //! The normative contract is `docs/spec/nn.md`; `docs/nn_trainer_ref/`
 //! holds the trainer's reference implementation and conformance vectors.

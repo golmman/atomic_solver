@@ -9,8 +9,9 @@
 //! Scores are RankNet margins: only the relative order is meaningful. The
 //! monotone round-after-scale mapping to `i32` can merge close scores but
 //! never inverts them, and the scores are only ever sorted, never
-//! thresholded. Composition follows `concept.md` §6: the network replaces
-//! the static term; history, killer, and best-from-TT ordering stay additive.
+//! thresholded. Composition follows `nn.md` §5/§6 (v2 recipe): the network
+//! is a residual and **adds** to the static term
+//! (`static + nn + history + killer`); best-from-TT ordering stays first.
 
 use std::sync::Arc;
 
@@ -24,8 +25,11 @@ use super::weights::NnWeights;
 /// Default mapping scale from f32 RankNet margins to the `i32` ordering
 /// scale. The mapping is monotone, so any positive scale preserves the
 /// network's ranking; the value only sets the trade-off against the additive
-/// history (≤ 10,000) and killer (50,000) bonuses. Tunable via
-/// [`NnMoveScorer::with_scale`] for Gate 4.
+/// static term, history (≤ 10,000), and killer (50,000) bonuses. As a
+/// residual (`nn.md` §6 v2 recipe) the network must stay below
+/// `score_winning_capture` (100,000,000) so it can reorder quiet moves but
+/// never override a proven winning capture. Tunable via
+/// [`NnMoveScorer::with_scale`].
 pub const NN_SCORE_SCALE: f32 = 4096.0;
 
 /// Ranks legal moves with the move-ordering network.

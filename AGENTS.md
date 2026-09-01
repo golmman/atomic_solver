@@ -39,9 +39,10 @@ A pure solver for atomic chess in Rust.
   the file) plus the §5 `policy_index`, `eval.rs` is the forward pass with
   the hard-coded ClippedReLU (max = 1.0), and `scorer.rs` ranks legal moves
   by `s[policy_index]` (promotion variants deduplicate to one index; scores
-  are RankNet margins — sort, never threshold). `Search::set_nn_scorer`
-  replaces the static term with the network ranking (history/killer stay
-  additive, `concept.md` §6); the CLI `--nn-weights <FILE>` flag enables it.
+   are RankNet margins — sort, never threshold). `Search::set_nn_scorer`
+   adds the network ranking as a residual on top of the static term
+   (`static + nn + history + killer`; `nn.md` §6a v2 recipe); the CLI
+   `--nn-weights <FILE>` flag enables it.
   Conformance vectors and the byte-frozen loader fixture live in
   `docs/nn_trainer_ref/`.
 - `src/proof_tree/mod.rs` provides a `Move`- and hash-based in-memory proof
@@ -92,13 +93,17 @@ The runnable examples are:
 - `benchmark` — Reproducible benchmark harness over a fixed suite of positions.
   Supports `--suite default|move-order|decisive|quick|thorough|all`, `--runs`,
   `--timeout`, `--epsilon`, `--tt-size`, `--first-outcome`, `--config`, `--json`,
-  and `--output-file`. Prints a table by default and, with `--json`, emits a JSON
-  document suitable for an external optimizer.
+  `--output-file`, and `--nn-weights <FILE>` (rank moves with the learned
+  network instead of the static term). Prints a table by default and, with
+  `--json`, emits a JSON document suitable for an external optimizer.
 - `chunk_growth` — Explore work-chunk growth settings and their effect on
   node counts.
 - `corpus_gen` — Gate-1 corpus generation for the learned move-ordering
   concept. `solve` runs the quick/decisive suites at fixed deterministic
-  settings and writes one `proof_tree.bin` dump plus a manifest per case;
+  settings and writes one `proof_tree.bin` dump plus a manifest per case
+  (per case: `--timeout <S>` caps the search; `--budget-seconds <S>` bounds
+  the total solve wall clock by splitting the remaining budget evenly over
+  the remaining cases; `--exclude <NAME>` skips matching case names);
   `load` replays the dumps, derives one row per expanded non-leaf node
   (`hash`, `source`, `fen`, `stm`, `outcome`, `depth`, `subtree_size`,
   `legal_moves`, `static_scores`, `children`, `first_decisive_rank`,
@@ -119,10 +124,11 @@ The runnable examples are:
   benchmark position.
 - `move_order_fractions` — Gate 0 measurement for the learned move-ordering
   concept: solves positions and reports, for every OR (Win) node in the
-  finalized proof tree, the rank of the proven decisive child under the static
+  finalized proof tree, the rank of the proven decisive child under the move
   ordering, flat and work-weighted by subtree size. Supports `--fen`,
   `--suite move-order|decisive|all`, `--timeout`, `--epsilon`, `--tt-size`,
-  and `--pt-size`.
+  `--pt-size`, and `--nn-weights <FILE>` (rank by the learned network instead
+  of the static scorer; reused as the Gate-4 ordering-quality harness).
 - `play_and_solve` — Plays a user-specified move and then solves the resulting
   position. Useful for inspecting a particular line.
 - `replay` — Replay a UCI line from a FEN and solve the resulting position.

@@ -40,6 +40,7 @@ use std::io::{BufReader, BufWriter, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
+use std::time::Instant;
 
 use atomic_movegen::board::StateInfo;
 use atomic_movegen::types::{Color, Move, MoveList};
@@ -62,6 +63,8 @@ struct SolveCli {
     fen: Option<String>,
     suite: String,
     timeout: u64,
+    budget_seconds: Option<u64>,
+    exclude: Vec<String>,
     epsilon: f64,
     tt_size: usize,
     pt_size: usize,
@@ -83,7 +86,14 @@ fn print_help(program: &str) {
     println!("  {program} solve [OPTIONS]");
     println!("    --fen <FEN>       Solve a single position; case name \"fen\"");
     println!("    --suite <NAME>    quick | decisive          (default: quick)");
-    println!("    --timeout <S>     Search budget in seconds   (default: 10)");
+    println!("    --timeout <S>     Per-case search cap in seconds   (default: 10)");
+    println!("    --budget-seconds <S>  Total solve wall-clock budget; per-case");
+    println!("                      timeouts are the even split of the remaining");
+    println!("                      budget over the remaining cases (capped by");
+    println!("                      --timeout); cases whose split falls below 1 s");
+    println!("                      are skipped");
+    println!("    --exclude <NAME>  Skip cases whose name starts with NAME");
+    println!("                      (repeatable)");
     println!("    --epsilon <F>     DF-PN+ threshold            (default: 0.125)");
     println!("    --tt-size <MB>    TT size                     (default: 64)");
     println!("    --pt-size <MB>    Proof-tree memory budget    (default: 256)");
@@ -116,6 +126,8 @@ fn parse_solve(args: &[String]) -> Result<SolveCli, String> {
         fen: None,
         suite: "quick".to_string(),
         timeout: 10,
+        budget_seconds: None,
+        exclude: Vec::new(),
         epsilon: 0.125,
         tt_size: 64,
         pt_size: 256,
@@ -146,6 +158,22 @@ fn parse_solve(args: &[String]) -> Result<SolveCli, String> {
                     .get(i + 1)
                     .and_then(|s| s.parse().ok())
                     .ok_or("--timeout needs a positive integer")?;
+                i += 2;
+            }
+            "--budget-seconds" => {
+                cli.budget_seconds = Some(
+                    args.get(i + 1)
+                        .and_then(|s| s.parse().ok())
+                        .ok_or("--budget-seconds needs a positive integer")?,
+                );
+                i += 2;
+            }
+            "--exclude" => {
+                cli.exclude.push(
+                    args.get(i + 1)
+                        .ok_or("--exclude needs a name prefix")?
+                        .clone(),
+                );
                 i += 2;
             }
             "--epsilon" => {
@@ -270,15 +298,41 @@ fn run_solve(cli: &SolveCli) {
     }
 
     let cases = load_cases(cli);
+    let excluded = |name: &str| cli.exclude.iter().any(|prefix| name.starts_with(prefix));
+    let cases: Vec<_> = cases
+        .into_iter()
+        .filter(|(name, _)| !excluded(name))
+        .collect();
     if cases.is_empty() {
         eprintln!("no cases to solve");
         std::process::exit(1);
     }
 
     let mut metas = Vec::with_capacity(cases.len());
-    for (name, fen) in &cases {
-        eprintln!("solving {name} ...");
-        metas.push(solve_case(name, fen, cli));
+    let mut remaining = cli.budget_seconds;
+    for (idx, (name, fen)) in cases.iter().enumerate() {
+        // Even-split budgeting: each case may spend its share of the
+        // remaining wall-clock budget, capped by --timeout. Actual elapsed
+        // time is deducted, so underspent cases leave more for the rest and
+        // the total never exceeds the budget.
+        let timeout = match remaining {
+            Some(budget) => {
+                let cases_left = (cases.len() - idx) as u64;
+                let share = budget / cases_left;
+                if share == 0 {
+                    eprintln!("budget exhausted; skipping {name}");
+                    continue;
+                }
+                share.min(cli.timeout)
+            }
+            None => cli.timeout,
+        };
+        eprintln!("solving {name} (timeout {timeout}s) ...");
+        let start = Instant::now();
+        metas.push(solve_case(name, fen, cli, timeout));
+        if let Some(budget) = remaining.as_mut() {
+            *budget = budget.saturating_sub(start.elapsed().as_secs());
+        }
     }
 
     let manifest = Manifest {
@@ -308,14 +362,15 @@ fn run_solve(cli: &SolveCli) {
     eprintln!("wrote {} ({} cases)", path.display(), manifest.cases.len());
 }
 
-fn solve_case(name: &str, fen: &str, cli: &SolveCli) -> CaseMeta {
+fn solve_case(name: &str, fen: &str, cli: &SolveCli, timeout: u64) -> CaseMeta {
+    let start = Instant::now();
     let mut pos = Position::from_fen(fen).unwrap_or_else(|e| {
         eprintln!("failed to parse FEN for {name}: {e}");
         std::process::exit(1);
     });
 
     let mut search = Search::new(cli.tt_size);
-    search.set_timeout(cli.timeout);
+    search.set_timeout(timeout);
     search.set_epsilon(cli.epsilon);
 
     let memory_limited = Arc::new(AtomicBool::new(false));
@@ -392,6 +447,7 @@ fn solve_case(name: &str, fen: &str, cli: &SolveCli) -> CaseMeta {
         synthesized_root,
         tree_nodes: stats.nodes,
         root_depth: stats.root_depth,
+        elapsed_secs: start.elapsed().as_secs(),
         bin,
     }
 }
@@ -407,6 +463,7 @@ struct CaseMeta {
     synthesized_root: bool,
     tree_nodes: usize,
     root_depth: u32,
+    elapsed_secs: u64,
     bin: Option<String>,
 }
 

@@ -165,9 +165,10 @@ impl Search {
 
     /// Enable the learned move-ordering network (`nn.md`, Gate 3).
     ///
-    /// When set, [`Search::sort_moves`] replaces the static term with the
-    /// network's ranking; history, killer, and best-from-TT ordering stay
-    /// additive (`concept.md` §6). `None` (the default) keeps the
+    /// When set, [`Search::sort_moves`] adds the network's ranking as a
+    /// residual on top of the static term
+    /// (`static + nn + history + killer`; `nn.md` §6 v2 recipe).
+    /// Best-from-TT ordering stays first. `None` (the default) keeps the
     /// hand-crafted `StaticAtomicScorer` ordering.
     pub fn set_nn_scorer(&mut self, scorer: Option<NnMoveScorer>) {
         self.nn_scorer = scorer;
