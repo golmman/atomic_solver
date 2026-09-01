@@ -68,8 +68,7 @@ moves to the standard UCI king-destination form (`e1g1`, `e1c1`, `e8g8`,
 ## `work` semantics
 
 `work` is the cumulative `child_evals` the search spent *proving* the node's
-subtree, recorded in the generating `NodeProven` event at prove time
-(design B, `docs/plans/nn/plan4.md`):
+subtree, recorded in the generating `NodeProven` event at prove time:
 
 - terminal leaves: `1` (the single child evaluation that resolved them) except
   for a terminal root (`0`);
@@ -80,8 +79,8 @@ subtree, recorded in the generating `NodeProven` event at prove time
   duplicate prove events are max-updated (the same semantics as
   `TtEntry.work`).
 
-The AND-node ranking label of the corpus (`docs/plans/nn/concept.md` §5) is
-"rank the children by recorded `work`".
+The AND-node ranking label of the move-ordering training corpus is "rank the
+children by recorded `work`".
 
 ## Deriving node metadata
 

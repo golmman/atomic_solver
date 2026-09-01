@@ -233,6 +233,12 @@ someone chooses to run it.
   - the final task of an implementation plan is creating the corresponding implementation report
   - a report should include additional tools/examples used, problems encountered, unresolved parts, missing tests, next steps
   - older plans and reports may not reflect the current state of the application or its goals
+- Specifications in `docs/spec/` must be standalone documents: no references
+  to `docs/plans/`, reports, or repo-internal process vocabulary (gate names,
+  fixture/case names). They are normative contracts copied verbatim into
+  external repos (e.g. the NN trainer), where such references dangle.
+  Rationale and history belong in `docs/plans/`; a spec may reference other
+  files under `docs/spec/` only.
 - Boy Scout principle: you should leave the codebase as clean or cleaner than you found it
 
 ## Conversational Guidelines

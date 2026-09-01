@@ -85,7 +85,7 @@ transform) is correct but forfeits the augmentation.
 **Clamp max is part of the inference contract.** Both ClippedReLU stages use
 `max = 1.0`. The weight file (§10) does not record the activation function or
 its clamp max — only the shapes are in the header — so the trainer and the
-Rust loader (Gate 3) must hard-code the same value; changing it requires a
+consuming loader must hard-code the same value; changing it requires a
 version bump of the weight file.
 
 Compact notation: **`768 → 128×2 → 32 → policy_size`**
@@ -119,8 +119,8 @@ incremental path past the feature transformer.
   to_sq`, with the square indexing of §2 (`a1 = 0`, `h8 = 63`). All four
   promotion variants of a pawn move map to the same `(from, to)` index;
   promotion is not distinguished in v1. A compact move-plane encoding is a
-  v2 optimization only if Gate 4 shows the 4096-row output head is a
-  measurable cost.
+   v2 optimization only if measurement shows the 4096-row output head is a
+   measurable cost.
 - At inference: compute `s ∈ ℝ^policy_size`, apply a legal-move mask (set
   illegal indices to `−∞` or drop them), then sort remaining entries
   descending. The mask comes from the legal move list the search already
@@ -129,9 +129,9 @@ incremental path past the feature transformer.
   hand-crafted ordering. The final move score is
   `static + scale · s[m] (+ history + killer)`; the scaled margins must stay
   far below `score_winning_capture` so the network can reorder quiet moves
-  but never override a proven winning capture. (v1 used pure replacement;
-  the residual composition was adopted for the Gate-4b iteration,
-  `docs/plans/nn/plan7.md`.)
+   but never override a proven winning capture. (v1 used replacement
+   semantics; weight files trained for it are semantically stale under this
+   composition.)
 - No softmax needed if only a ranking is used; softmax is only relevant if
   training uses a probability-based loss instead of pairwise ranking.
 
@@ -160,11 +160,11 @@ incremental path past the feature transformer.
 - **No absolute regression target** — only the relative order between
   siblings matters for move ordering.
 
-### 6a. v2 training recipe (residual + work weighting, Gate 4b)
+### 6a. v2 training recipe (residual + work weighting)
 
-Introduced after the v1 network failed the Gate-4 success bar
-(`docs/plans/nn/report6.md`); implemented by the external trainer against an
-`atomic-corpus/2` corpus regenerated at `--timeout 60`. The architecture,
+Introduced after the v1 recipe (absolute ranking, unweighted pairs) failed
+its evaluation bar; trained against the `atomic-corpus/2` corpus (the
+corpus `_meta` line is the authoritative provenance). The architecture,
 feature layout, and §10 weight-file format are unchanged.
 
 - **Residual logits.** For a sibling pair `(i, j)` the pairwise logit is
@@ -180,8 +180,8 @@ feature layout, and §10 weight-file format are unchanged.
   of the pair for AND rank-by-work pairs, and the work of the proven
   decisive child for OR one-vs-rest pairs (the negative side may be
   censored and carries no work of its own). Rationale: resolution cost is
-  concentrated in a minority of badly-ordered heavy nodes (Gate 0), and a
-  linear weight would let the few largest subtrees swamp the corpus.
+   concentrated in a minority of badly-ordered heavy nodes, and a
+   linear weight would let the few largest subtrees swamp the corpus.
 - Everything else (censoring rules, one-vs-rest construction at OR nodes,
   no absolute regression target) is unchanged from the base recipe above.
 
@@ -215,13 +215,12 @@ well as aggregates, since a handful of hard positions can dominate cost.
 - Whether the 128-wide accumulator is sufficient, or 256 is needed
 - Training data budget: how many recorded `(position, move, work)` triples
   are needed for the ranking loss to saturate
-- The residual prior strength `λ` (§6a), default 1.0 for the Gate-4b
-  iteration
+- The residual prior strength `λ` (§6a), default 1.0 for the v2 recipe
 
 ## 10. Weight-file format (v1, pinned)
 
 This section is the byte-level contract between the external trainer
-(producer) and the Rust weight loader (consumer, Gate 3). It must not change
+(producer) and the Rust weight loader (consumer). It must not change
 without a version bump.
 
 All integers little-endian. One header, then all tensors as IEEE-754 binary32
@@ -253,7 +252,7 @@ padding, no reserved field, no alignment words. Total size:
 (rows = accumulator, columns = input), column `i` is exactly the
 incremental-update vector `W_1[:, i]` used in §4.
 
-The loader (Gate 3) must validate `magic`, `version`, and the four dimension
+The loader must validate `magic`, `version`, and the four dimension
 fields against the architecture before reading; any mismatch is a hard error.
 `flags` reserves room for a quantized v2 (e.g. int8 + scale) without
 renaming the file.
