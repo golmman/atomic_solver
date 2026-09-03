@@ -104,6 +104,22 @@ Identical settings per run (`--timeout 60 --epsilon 0.125 --tt-size 64`,
 first-outcome); baseline runs are deterministic and reproduce report7's
 counts exactly (m22_white 37,503,264).
 
+**Comparison base:** the baseline is the shipped, hand-tuned
+`StaticAtomicScorer` heuristic. The network is *not* part of this
+measurement — it enters only through report7's separate fixed-effort
+number. On the dominant case the ladder is:
+
+| ordering (m22_white)           | evals vs heuristic |
+|--------------------------------|-------------------:|
+| tuned heuristic (shipped)      |             1.000x |
+| v2 network (report7, measured) |              0.72x |
+| oracle ceiling (this report)   |            0.407x  |
+
+The oracle is an *improvement upon* the heuristic, not a replacement:
+positions absent from the oracle tree fall back to the heuristic order,
+so the measured floor is what per-node tree knowledge adds on top of the
+shipped ordering.
+
 | case       | baseline evals | oracle evals | eval ratio | coverage | board-hash cov |
 |------------|---------------:|-------------:|-----------:|---------:|---------------:|
 | m22_white  |       37.50 M  |     15.28 M  | **0.407x** |    0.4%  |      0.6%      |
@@ -143,6 +159,18 @@ Reading of the numbers:
   the misses are mostly *structural*: the oracle search proves a
   different, smaller tree than the baseline's, so most of its nodes are
   simply absent from the baseline dump).
+- **What the ratio is not:** it cannot be read as "the heuristic has
+  OR-node branching factor ≈ 2". The OR-side branching factor is
+  directly measurable and much lower: ≈ **1.10** in work terms
+  (1/0.906, the decisive-child share from the decomposition) and ≈
+  **1.4** in children-tried terms (mean decisive-child rank under the
+  static ordering, `move_order_fractions` rank distribution). The
+  remaining reduction in the 0.509x comes from AND-side ordering,
+  proof-shape changes (the oracle proves a *different, smaller* tree),
+  and restart dynamics — none of which are OR-node branching. The clean
+  statement: perfect OR ordering alone is bounded by the decomposition
+  at ~9.4% of OR work; the learnable signal lives mostly on the AND
+  side.
 
 ## Step 4 — Practical NN ceiling: skipped
 
