@@ -118,3 +118,18 @@ Also update existing files as necessary:
 
 * tests < 1 minute
 * done: q8 upwards
+
+---
+
+Maybe we should finish the initial PoC here, treat it as an MVP and start with the next milestone.
+
+My train of thoughts goes like this:
+Inference speed optimizations is probably capped at 3 times faster than now.
+Reduction of visited nodes is not as easily estimated: there could be huge hidden potential, maybe it is even possible to half the branching factor.
+So we should explore the size of the headroom for neural network.
+
+What do you think?
+
+----
+
+most promising line - only attacker moves

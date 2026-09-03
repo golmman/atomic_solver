@@ -1,0 +1,205 @@
+   Compiling atomic_solver v0.1.0 (/workspace/atomic_solver)
+    Finished `release` profile [optimized] target(s) in 3.76s
+     Running `target/release/examples/move_order_fractions --suite move-order --nn-weights data/corpus/weights.v2.bin`
+ordering: nn-weights=data/corpus/weights.v2.bin
+solving m20_white ...
+[bounded_search] chunk done: work_done=500000 next_chunk=1000000 elapsed=0.264s max_depth=11 nodes=25958 nps=98249
+[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=0.781s max_depth=18 nodes=76698 nps=98199
+[bounded_search] chunk done: work_done=2000005 next_chunk=4000000 elapsed=1.792s max_depth=16 nodes=178692 nps=99697
+[bounded_search] chunk done: work_done=4000005 next_chunk=8000000 elapsed=3.817s max_depth=18 nodes=379705 nps=99468
+  m20_white: outcome=draw tree_nodes=1 or_nodes=0
+solving m20_black ...
+[bounded_search] chunk done: work_done=500015 next_chunk=1000000 elapsed=0.263s max_depth=12 nodes=25539 nps=97103
+[bounded_search] chunk done: work_done=1000007 next_chunk=2000000 elapsed=0.791s max_depth=12 nodes=76341 nps=96549
+[bounded_search] chunk done: work_done=2000003 next_chunk=4000000 elapsed=1.839s max_depth=18 nodes=177358 nps=96452
+[bounded_search] chunk done: work_done=4000024 next_chunk=8000000 elapsed=4.000s max_depth=23 nodes=386431 nps=96611
+  m20_black: outcome=draw tree_nodes=29 or_nodes=14
+solving m21_white ...
+[bounded_search] chunk done: work_done=500010 next_chunk=1000000 elapsed=0.256s max_depth=15 nodes=24801 nps=96704
+[bounded_search] chunk done: work_done=1000012 next_chunk=2000000 elapsed=0.814s max_depth=11 nodes=77632 nps=95316
+[bounded_search] chunk done: work_done=2000009 next_chunk=4000000 elapsed=1.920s max_depth=18 nodes=185596 nps=96657
+[bounded_search] chunk done: work_done=4000011 next_chunk=8000000 elapsed=4.144s max_depth=20 nodes=401827 nps=96965
+  m21_white: outcome=draw tree_nodes=1 or_nodes=0
+solving m21_black ...
+[bounded_search] chunk done: work_done=500026 next_chunk=1000000 elapsed=0.280s max_depth=12 nodes=25768 nps=91946
+[bounded_search] chunk done: work_done=1000018 next_chunk=2000000 elapsed=0.820s max_depth=10 nodes=73485 nps=89565
+[bounded_search] chunk done: work_done=2000005 next_chunk=4000000 elapsed=1.930s max_depth=17 nodes=174036 nps=90170
+[bounded_search] chunk done: work_done=4000012 next_chunk=8000000 elapsed=4.184s max_depth=22 nodes=378730 nps=90521
+  m21_black: outcome=draw tree_nodes=29 or_nodes=14
+solving m22_white ...
+[bounded_search] chunk done: work_done=500003 next_chunk=1000000 elapsed=0.330s max_depth=11 nodes=24144 nps=73215
+[bounded_search] chunk done: work_done=1000037 next_chunk=2000000 elapsed=0.892s max_depth=13 nodes=75222 nps=84289
+[bounded_search] chunk done: work_done=2000006 next_chunk=4000000 elapsed=2.049s max_depth=19 nodes=186107 nps=90831
+[bounded_search] chunk done: work_done=4000000 next_chunk=8000000 elapsed=4.444s max_depth=72 nodes=423415 nps=95285
+  m22_white: outcome=draw tree_nodes=1 or_nodes=0
+solving m22_black ...
+[bounded_search] chunk done: work_done=500008 next_chunk=1000000 elapsed=0.282s max_depth=12 nodes=28271 nps=100155
+[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=0.845s max_depth=17 nodes=83408 nps=98718
+[bounded_search] chunk done: work_done=2000012 next_chunk=4000000 elapsed=1.967s max_depth=19 nodes=195158 nps=99219
+[bounded_search] chunk done: work_done=4000001 next_chunk=8000000 elapsed=4.290s max_depth=20 nodes=427009 nps=99536
+  m22_black: outcome=draw tree_nodes=19 or_nodes=9
+solving m23_white ...
+[bounded_search] chunk done: work_done=500005 next_chunk=1000000 elapsed=0.278s max_depth=9 nodes=25481 nps=91679
+[bounded_search] chunk done: work_done=1000006 next_chunk=2000000 elapsed=0.867s max_depth=18 nodes=85762 nps=98933
+[bounded_search] chunk done: work_done=2000026 next_chunk=4000000 elapsed=1.998s max_depth=19 nodes=197323 nps=98746
+[bounded_search] chunk done: work_done=4000003 next_chunk=8000000 elapsed=4.306s max_depth=17 nodes=418589 nps=97203
+  m23_white: outcome=draw tree_nodes=1 or_nodes=0
+solving m23_black ...
+[bounded_search] chunk done: work_done=500008 next_chunk=1000000 elapsed=0.278s max_depth=17 nodes=26425 nps=95022
+[bounded_search] chunk done: work_done=1000006 next_chunk=2000000 elapsed=0.849s max_depth=16 nodes=80029 nps=94224
+  outcome: loss length: 26
+[bounded_search] chunk done: work_done=500013 next_chunk=1000000 elapsed=1.496s max_depth=20 nodes=144305 nps=96478
+  m23_black: outcome=loss tree_nodes=8849 or_nodes=4424
+solving m24_white ...
+  outcome: win length: 15
+[bounded_search] chunk done: work_done=500011 next_chunk=1000000 elapsed=0.540s max_depth=13 nodes=53594 nps=99164
+  outcome: win length: 13
+[bounded_search] chunk done: work_done=500007 next_chunk=1000000 elapsed=1.255s max_depth=11 nodes=144526 nps=115121
+[bounded_search] chunk done: work_done=1000013 next_chunk=2000000 elapsed=1.802s max_depth=11 nodes=222631 nps=123513
+[bounded_search] chunk done: work_done=2000000 next_chunk=4000000 elapsed=2.706s max_depth=11 nodes=808591 nps=298791
+[bounded_search] chunk done: work_done=4000009 next_chunk=8000000 elapsed=4.375s max_depth=11 nodes=2373720 nps=542592
+  m24_white: outcome=win tree_nodes=1674 or_nodes=837
+solving m24_black ...
+  outcome: loss length: 24
+  outcome: loss length: 22
+  m24_black: outcome=loss tree_nodes=1651 or_nodes=825
+solving m25_white ...
+  outcome: win length: 11
+  outcome: win length: 9
+[bounded_search] chunk done: work_done=500000 next_chunk=1000000 elapsed=0.230s max_depth=7 nodes=193494 nps=840004
+[bounded_search] chunk done: work_done=1000030 next_chunk=2000000 elapsed=0.623s max_depth=7 nodes=610768 nps=979891
+[bounded_search] chunk done: work_done=2000000 next_chunk=4000000 elapsed=1.350s max_depth=7 nodes=1510723 nps=1119441
+[bounded_search] chunk done: work_done=4000022 next_chunk=8000000 elapsed=2.825s max_depth=7 nodes=3292182 nps=1165497
+  m25_white: outcome=win tree_nodes=88 or_nodes=44
+solving m25_black ...
+  outcome: loss length: 12
+  m25_black: outcome=loss tree_nodes=105 or_nodes=52
+solving m26_white ...
+  outcome: win length: 11
+  outcome: win length: 9
+  outcome: win length: 7
+[bounded_search] chunk done: work_done=500000 next_chunk=1000000 elapsed=0.174s max_depth=5 nodes=217928 nps=1250004
+[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=0.490s max_depth=5 nodes=691174 nps=1410474
+[bounded_search] chunk done: work_done=2000000 next_chunk=4000000 elapsed=1.132s max_depth=5 nodes=1629097 nps=1439301
+[bounded_search] chunk done: work_done=4000018 next_chunk=8000000 elapsed=2.399s max_depth=5 nodes=3522301 nps=1468447
+  m26_white: outcome=win tree_nodes=20 or_nodes=10
+solving m26_black ...
+  outcome: loss length: 10
+  outcome: loss length: 8
+  outcome: loss length: 6
+  m26_black: outcome=loss tree_nodes=19 or_nodes=9
+solving m27_white ...
+  outcome: win length: 5
+  m27_white: outcome=win tree_nodes=8 or_nodes=4
+solving m27_black ...
+  outcome: loss length: 4
+  m27_black: outcome=loss tree_nodes=7 or_nodes=3
+solving m28_white ...
+  outcome: win length: 3
+  m28_white: outcome=win tree_nodes=4 or_nodes=2
+solving m28_black ...
+  outcome: loss length: 2
+  m28_black: outcome=loss tree_nodes=3 or_nodes=1
+solving m29_white ...
+  outcome: win length: 1
+  m29_white: outcome=win tree_nodes=2 or_nodes=1
+=== m20_white  outcome=draw  tree_nodes=1  or_nodes=0  timeout=yes
+=== m20_black  outcome=draw  tree_nodes=29  or_nodes=14  timeout=yes
+rank    nodes  pct      work    work_pct
+1            9    64.3%       60     60.0%
+2            1     7.1%        8      8.0%
+3            0     0.0%        0      0.0%
+>3           4    28.6%       32     32.0%
+=== m21_white  outcome=draw  tree_nodes=1  or_nodes=0  timeout=yes
+=== m21_black  outcome=draw  tree_nodes=29  or_nodes=14  timeout=yes
+rank    nodes  pct      work    work_pct
+1            9    64.3%       60     60.0%
+2            1     7.1%        8      8.0%
+3            0     0.0%        0      0.0%
+>3           4    28.6%       32     32.0%
+=== m22_white  outcome=draw  tree_nodes=1  or_nodes=0  timeout=yes
+=== m22_black  outcome=draw  tree_nodes=19  or_nodes=9  timeout=yes
+rank    nodes  pct      work    work_pct
+1            9   100.0%       58    100.0%
+2            0     0.0%        0      0.0%
+3            0     0.0%        0      0.0%
+>3           0     0.0%        0      0.0%
+=== m23_white  outcome=draw  tree_nodes=1  or_nodes=0  timeout=yes
+=== m23_black  outcome=loss  tree_nodes=8849  or_nodes=4424
+rank    nodes  pct      work    work_pct
+1         3605    81.5%    29784     70.6%
+2          596    13.5%     5026     11.9%
+3           69     1.6%     4396     10.4%
+>3         154     3.5%     2996      7.1%
+=== m24_white  outcome=win  tree_nodes=1674  or_nodes=837  timeout=yes
+rank    nodes  pct      work    work_pct
+1          678    81.0%     4864     61.0%
+2           81     9.7%      812     10.2%
+3           24     2.9%     1828     22.9%
+>3          54     6.5%      468      5.9%
+=== m24_black  outcome=loss  tree_nodes=1651  or_nodes=825
+rank    nodes  pct      work    work_pct
+1          742    89.9%     6170     78.2%
+2           51     6.2%      500      6.3%
+3            7     0.8%      882     11.2%
+>3          25     3.0%      340      4.3%
+=== m25_white  outcome=win  tree_nodes=88  or_nodes=44  timeout=yes
+rank    nodes  pct      work    work_pct
+1           35    79.5%      238     77.3%
+2            4     9.1%       16      5.2%
+3            2     4.5%       42     13.6%
+>3           3     6.8%       12      3.9%
+=== m25_black  outcome=loss  tree_nodes=105  or_nodes=52
+rank    nodes  pct      work    work_pct
+1           42    80.8%      226     74.8%
+2            1     1.9%        6      2.0%
+3            4     7.7%       50     16.6%
+>3           5     9.6%       20      6.6%
+=== m26_white  outcome=win  tree_nodes=20  or_nodes=10
+rank    nodes  pct      work    work_pct
+1            8    80.0%       44     84.6%
+2            1    10.0%        4      7.7%
+3            0     0.0%        0      0.0%
+>3           1    10.0%        4      7.7%
+=== m26_black  outcome=loss  tree_nodes=19  or_nodes=9
+rank    nodes  pct      work    work_pct
+1            7    77.8%       24     75.0%
+2            1    11.1%        4     12.5%
+3            0     0.0%        0      0.0%
+>3           1    11.1%        4     12.5%
+=== m27_white  outcome=win  tree_nodes=8  or_nodes=4
+rank    nodes  pct      work    work_pct
+1            3    75.0%       12     75.0%
+2            0     0.0%        0      0.0%
+3            0     0.0%        0      0.0%
+>3           1    25.0%        4     25.0%
+=== m27_black  outcome=loss  tree_nodes=7  or_nodes=3
+rank    nodes  pct      work    work_pct
+1            2    66.7%        4     50.0%
+2            0     0.0%        0      0.0%
+3            0     0.0%        0      0.0%
+>3           1    33.3%        4     50.0%
+=== m28_white  outcome=win  tree_nodes=4  or_nodes=2
+rank    nodes  pct      work    work_pct
+1            1    50.0%        2     33.3%
+2            0     0.0%        0      0.0%
+3            0     0.0%        0      0.0%
+>3           1    50.0%        4     66.7%
+=== m28_black  outcome=loss  tree_nodes=3  or_nodes=1
+rank    nodes  pct      work    work_pct
+1            1   100.0%        2    100.0%
+2            0     0.0%        0      0.0%
+3            0     0.0%        0      0.0%
+>3           0     0.0%        0      0.0%
+=== m29_white  outcome=win  tree_nodes=2  or_nodes=1
+rank    nodes  pct      work    work_pct
+1            1   100.0%        2    100.0%
+2            0     0.0%        0      0.0%
+3            0     0.0%        0      0.0%
+>3           0     0.0%        0      0.0%
+=== aggregate  cases=19  tree_nodes=12511  or_nodes=6249
+rank    nodes  pct      work    work_pct
+1         5152    82.4%    41550     70.4%
+2          737    11.8%     6384     10.8%
+3          106     1.7%     7198     12.2%
+>3         254     4.1%     3920      6.6%
