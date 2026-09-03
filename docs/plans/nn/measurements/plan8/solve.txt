@@ -1,0 +1,45 @@
+=== m22_white  baseline=win/win evals=37503264 wall=10.58s
+  oracle        evals=15279730 wall=6.41s  coverage=0.4% (2876/757219)  board_hash=0.6%
+  ratio         evals=0.407x wall=0.606x
+=== m23_black  baseline=loss/loss evals=2844260 wall=0.93s
+  oracle        evals=2361270 wall=0.90s  coverage=1.8% (2008/113709)  board_hash=2.1%
+  ratio         evals=0.830x wall=0.972x
+=== m23_white  baseline=win/win evals=9775865 wall=3.26s
+  oracle        evals=7140260 wall=2.82s  coverage=0.2% (734/363590)  board_hash=0.3%
+  ratio         evals=0.730x wall=0.867x
+=== m24_black  baseline=loss/loss evals=93482 wall=0.03s
+  oracle        evals=130506 wall=0.04s  coverage=6.7% (475/7129)  board_hash=8.1%
+  ratio         evals=1.396x wall=1.553x
+=== m24_white  baseline=win/win evals=407509 wall=0.13s
+  oracle        evals=857210 wall=0.33s  coverage=1.0% (434/44475)  board_hash=1.1%
+  ratio         evals=2.104x wall=2.434x
+=== m25_black  baseline=loss/loss evals=5146 wall=0.00s
+  oracle        evals=5429 wall=0.00s  coverage=12.2% (63/515)  board_hash=12.2%
+  ratio         evals=1.055x wall=1.299x
+=== m25_white  baseline=win/win evals=22837 wall=0.01s
+  oracle        evals=28267 wall=0.01s  coverage=3.5% (89/2541)  board_hash=4.1%
+  ratio         evals=1.238x wall=1.342x
+=== m26_black  baseline=loss/loss evals=1011 wall=0.00s
+  oracle        evals=959 wall=0.00s  coverage=22.2% (20/90)  board_hash=22.2%
+  ratio         evals=0.949x wall=0.872x
+=== m26_white  baseline=win/win evals=1086 wall=0.00s
+  oracle        evals=1149 wall=0.00s  coverage=16.9% (21/124)  board_hash=16.9%
+  ratio         evals=1.058x wall=1.299x
+=== m27_black  baseline=loss/loss evals=126 wall=0.00s
+  oracle        evals=40 wall=0.00s  coverage=100.0% (5/5)  board_hash=100.0%
+  ratio         evals=0.317x wall=0.645x
+=== m27_white  baseline=win/win evals=257 wall=0.00s
+  oracle        evals=495 wall=0.00s  coverage=7.7% (6/78)  board_hash=7.7%
+  ratio         evals=1.926x wall=1.793x
+=== m28_black  baseline=loss/loss evals=3 wall=0.00s
+  oracle        evals=3 wall=0.00s  coverage=100.0% (2/2)  board_hash=100.0%
+  ratio         evals=1.000x wall=1.298x
+=== m28_white  baseline=win/win evals=89 wall=0.00s
+  oracle        evals=35 wall=0.00s  coverage=100.0% (3/3)  board_hash=100.0%
+  ratio         evals=0.393x wall=0.656x
+=== m29_white  baseline=win/win evals=1 wall=0.00s
+  oracle        evals=1 wall=0.00s  coverage=100.0% (1/1)  board_hash=100.0%
+  ratio         evals=1.000x wall=1.344x
+=== aggregate  cases=14  evals: baseline=50654936 oracle=25805354 ratio=0.509x
+  unweighted mean per-case ratio=1.029x  wall: baseline=14.9s oracle=10.5s (0.70x)
+  oracle-node coverage=0.5% (6737/1289481)

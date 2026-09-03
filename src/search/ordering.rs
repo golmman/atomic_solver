@@ -14,7 +14,11 @@ mod params;
 pub use params::{PieceValues, ScorerParams, ScorerParamsError};
 
 pub trait MoveScorer {
-    fn score(&self, board: &Board, m: Move, state: &StateInfo) -> i32;
+    /// Score `m` at `board`. `is_or_node` selects the node-type profile:
+    /// OR nodes (attacker) use the full static bonuses, AND nodes (defender)
+    /// scale down speculative attacker-only bonuses. Implementations that
+    /// are node-type agnostic may ignore it.
+    fn score(&self, board: &Board, m: Move, state: &StateInfo, is_or_node: bool) -> i32;
 }
 
 #[derive(Clone)]
@@ -384,7 +388,7 @@ impl StaticAtomicScorer {
 }
 
 impl MoveScorer for StaticAtomicScorer {
-    fn score(&self, board: &Board, m: Move, state: &StateInfo) -> i32 {
+    fn score(&self, board: &Board, m: Move, state: &StateInfo, is_or_node: bool) -> i32 {
         let from = m.from_sq();
         let from_piece = board.piece_on(from);
         if from_piece == NO_PIECE {
@@ -393,7 +397,7 @@ impl MoveScorer for StaticAtomicScorer {
         let us = board.side_to_move();
         let them = us.flip();
         let nearest = nearest_commoner_map(board, them);
-        self.score_with_map(board, m, state, &nearest, true)
+        self.score_with_map(board, m, state, &nearest, is_or_node)
     }
 }
 

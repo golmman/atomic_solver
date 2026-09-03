@@ -14,11 +14,17 @@ Gate 3 (Rust inference, `plan5.md` + `report5.md`) are done; Gate 4
 baseline and **failed the success bar**: child_evals dropped 44% at fixed
 wall time, but wall time regressed (+8.3%) — the eval-throughput loss from
 the dense forward pass outweighs the node reduction, and the only case both
-configs solve at fixed effort needs 1.76x more evals under the network. One
-bounded iteration (option B, `plan7.md`) is underway: residual-on-static
-training target, work-weighted pairwise loss, deeper corpus; the tuned
-`ScorerParams` ordering remains the default until that iteration passes.
-This document records the
+configs solve at fixed effort needs 1.76x more evals under the network.
+One bounded iteration (option B, `plan7.md` + `report7.md`) validated the
+ordering-quality hypothesis (v2 residual network: 0.72x evals at fixed
+effort on m22_white, rank-1 metrics 82.4%/70.4% vs the baseline's
+69.5%/31.4%) but still lost wall time (+6.0%) to the dense-inference
+throughput penalty. **The PoC is closed as an MVP** after Gate 4b
+(`plan8.md`): the tuned `StaticAtomicScorer` stays the shipped ordering,
+the `--nn-weights` path stays flag-gated (off by default), and the
+remaining unknown — how much ordering-quality headroom exists at all —
+is measured by the oracle-floor milestone in `plan8.md`. This document
+records the
 _why_, the pipeline, the decisions, and the honest risk assessment so later
 plans can refer to a stable baseline of reasoning.
 
@@ -173,8 +179,15 @@ recorded `work` directly.
 6. `docs/plans/nn/plan6.md` + `report6.md` — Gate 4 full measurement and
    report. Done: success bar not met (wall time regresses); the PoC stops
    here unless the follow-ups in `report6.md` are pursued.
-7. `docs/plans/nn/plan7.md` (+ `report7.md` when measured) — Gate 4b
-   residual-training iteration (option B): residual-on-static target,
-   work-weighted pairwise loss, deeper corpus (`--timeout 60`). Rust side
-   done; trainer delta pending in the external repo.
+7. `docs/plans/nn/plan7.md` + `report7.md` — Gate 4b residual-training
+   iteration (option B): residual-on-static target, work-weighted pairwise
+   loss, deeper corpus (`--timeout 60`). Done: ordering quality validated,
+   wall time still regresses (throughput-capped).
+8. `docs/plans/nn/plan8.md` + `report8.md` — PoC closed as MVP
+   (documentation-only); oracle-floor measurement of the remaining
+   ordering-quality headroom. Done: the oracle floor measured **0.509x**
+   work-weighted evals (1.03x unweighted) — not meaningfully below the
+   pinned 0.5x bar — so the PoC closed permanently; the durable artifacts
+   are the residual-v2 recipe, the recorded-`work` labels, and the
+   measurement harnesses.
 

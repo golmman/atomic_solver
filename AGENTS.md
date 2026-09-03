@@ -41,10 +41,18 @@ A pure solver for atomic chess in Rust.
   by `s[policy_index]` (promotion variants deduplicate to one index; scores
    are RankNet margins — sort, never threshold). `Search::set_nn_scorer`
    adds the network ranking as a residual on top of the static term
-   (`static + nn + history + killer`; `nn.md` §6a v2 recipe); the CLI
-   `--nn-weights <FILE>` flag enables it.
+  (  `static + nn + history + killer`; `nn.md` §6a v2 recipe); the CLI
+  `--nn-weights <FILE>` flag enables it. `Search::set_ordering_scorer`
+  additionally allows replacing the static base term with any
+  `Arc<dyn MoveScorer>` (composition becomes `override + nn + history +
+  killer`); it is used by measurement harnesses (e.g. the `oracle_floor`
+  example), not by the shipped CLI.
   Conformance vectors and the byte-frozen loader fixture live in
   `docs/nn_trainer_ref/`.
+  The NN path is a **closed PoC** kept behind the `--nn-weights` flag
+  (residual-v2 recipe, ordering quality validated, throughput-capped;
+  oracle floor 0.509x evals ≥ the pinned 0.5x reopen bar):
+  see `docs/plans/nn/report7.md`, `report8.md`, and `plan8.md`.
 - `src/proof_tree/mod.rs` provides a `Move`- and hash-based in-memory proof
   tree and a background worker that consumes `ProofEvent` messages, maintains
   the tree, enforces a memory budget, and serializes the full proven subtree
@@ -122,6 +130,16 @@ The runnable examples are:
 - `move_order_debug` — Print static, history, killer, and total move-ordering
   scores for every legal move. Use `--name <case>` to inspect a move-order
   benchmark position.
+- `oracle_floor` — Oracle-floor measurement (`docs/plans/nn/plan8.md` Step 3):
+  answers how much search work *ideal* move ordering could save. `decompose`
+  mode statically splits the recorded `work` of the baseline proof-tree dumps
+  at OR and AND nodes (no search); `solve` mode runs each case twice with
+  identical settings — baseline vs oracle-ordered through
+  `Search::set_ordering_scorer`, where a per-node override ranks the proven
+  decisive child first at OR nodes and children by recorded `work` ascending
+  at AND nodes (exact-Zobrist lookup by replayed hashes, static fallback,
+  coverage reported). The aggregate oracle eval ratio feeds the pinned 0.5x
+  decision bar. Requires dumps in `data/oracle/trees/` (git-ignored).
 - `move_order_fractions` — Gate 0 measurement for the learned move-ordering
   concept: solves positions and reports, for every OR (Win) node in the
   finalized proof tree, the rank of the proven decisive child under the move

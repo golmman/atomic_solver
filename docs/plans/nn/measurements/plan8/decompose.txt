@@ -1,0 +1,58 @@
+=== m22_white  nodes=65310  max_depth=155  or_nodes=32655  and_nodes=19324
+  OR work: decisive-child share=93.7%  recoverable (refutation+own)=6.3%  (node=32472820 decisive_raw=31041382, 1258 transposition-inflated nodes clamped)
+  OR decisive share per node: min=0.0%  median=98.4%  max=100.0%
+  AND child work share: min=0.0%  median=99.2%  max=100.0%  (per-node max: median=100.0%)
+=== m23_black  nodes=9337  max_depth=24  or_nodes=4668  and_nodes=2516
+  OR work: decisive-child share=61.0%  recoverable (refutation+own)=39.0%  (node=1091374 decisive_raw=683426, 181 transposition-inflated nodes clamped)
+  OR decisive share per node: min=0.1%  median=68.1%  max=100.0%
+  AND child work share: min=0.0%  median=50.0%  max=100.0%  (per-node max: median=100.0%)
+=== m23_white  nodes=12128  max_depth=27  or_nodes=6064  and_nodes=2986
+  OR work: decisive-child share=81.2%  recoverable (refutation+own)=18.8%  (node=3078577 decisive_raw=2588941, 202 transposition-inflated nodes clamped)
+  OR decisive share per node: min=0.1%  median=96.9%  max=100.0%
+  AND child work share: min=0.0%  median=50.0%  max=100.0%  (per-node max: median=98.5%)
+=== m24_black  nodes=1101  max_depth=24  or_nodes=550  and_nodes=313
+  OR work: decisive-child share=70.9%  recoverable (refutation+own)=29.1%  (node=214092 decisive_raw=151926, 18 transposition-inflated nodes clamped)
+  OR decisive share per node: min=0.2%  median=89.1%  max=100.0%
+  AND child work share: min=0.0%  median=50.0%  max=100.0%  (per-node max: median=100.0%)
+=== m24_white  nodes=966  max_depth=15  or_nodes=483  and_nodes=275
+  OR work: decisive-child share=23.5%  recoverable (refutation+own)=76.5%  (node=488956 decisive_raw=114926, 9 transposition-inflated nodes clamped)
+  OR decisive share per node: min=0.7%  median=80.1%  max=100.0%
+  AND child work share: min=0.0%  median=50.0%  max=100.0%  (per-node max: median=100.0%)
+=== m25_black  nodes=109  max_depth=12  or_nodes=54  and_nodes=32
+  OR work: decisive-child share=53.6%  recoverable (refutation+own)=46.4%  (node=5756 decisive_raw=3098, 2 transposition-inflated nodes clamped)
+  OR decisive share per node: min=2.7%  median=90.4%  max=100.0%
+  AND child work share: min=2.2%  median=50.0%  max=100.0%  (per-node max: median=100.0%)
+=== m25_white  nodes=188  max_depth=21  or_nodes=94  and_nodes=53
+  OR work: decisive-child share=63.6%  recoverable (refutation+own)=36.4%  (node=56895 decisive_raw=36200, 3 transposition-inflated nodes clamped)
+  OR decisive share per node: min=0.4%  median=94.7%  max=100.0%
+  AND child work share: min=0.0%  median=50.0%  max=100.0%  (per-node max: median=98.1%)
+=== m26_black  nodes=25  max_depth=10  or_nodes=12  and_nodes=8
+  OR work: decisive-child share=51.9%  recoverable (refutation+own)=48.1%  (node=1234 decisive_raw=641)
+  OR decisive share per node: min=2.9%  median=89.0%  max=100.0%
+  AND child work share: min=2.3%  median=97.7%  max=100.0%  (per-node max: median=100.0%)
+=== m26_white  nodes=26  max_depth=11  or_nodes=13  and_nodes=8
+  OR work: decisive-child share=62.1%  recoverable (refutation+own)=37.9%  (node=1762 decisive_raw=1094)
+  OR decisive share per node: min=2.9%  median=74.3%  max=100.0%
+  AND child work share: min=2.3%  median=97.7%  max=100.0%  (per-node max: median=100.0%)
+=== m27_black  nodes=7  max_depth=4  or_nodes=3  and_nodes=2
+  OR work: decisive-child share=5.5%  recoverable (refutation+own)=94.5%  (node=91 decisive_raw=5)
+  OR decisive share per node: min=3.4%  median=100.0%  max=100.0%
+  AND child work share: min=1.1%  median=98.9%  max=100.0%  (per-node max: median=100.0%)
+=== m27_white  nodes=8  max_depth=5  or_nodes=4  and_nodes=2
+  OR work: decisive-child share=17.3%  recoverable (refutation+own)=82.7%  (node=301 decisive_raw=52)
+  OR decisive share per node: min=7.1%  median=100.0%  max=100.0%
+  AND child work share: min=2.3%  median=97.7%  max=100.0%  (per-node max: median=100.0%)
+=== m28_black  nodes=3  max_depth=2  or_nodes=1  and_nodes=1
+  OR work: decisive-child share=100.0%  recoverable (refutation+own)=0.0%  (node=1 decisive_raw=1)
+  OR decisive share per node: min=100.0%  median=100.0%  max=100.0%
+  AND child work share: min=100.0%  median=100.0%  max=100.0%  (per-node max: median=100.0%)
+=== m28_white  nodes=4  max_depth=3  or_nodes=2  and_nodes=1
+  OR work: decisive-child share=4.4%  recoverable (refutation+own)=95.6%  (node=90 decisive_raw=4)
+  OR decisive share per node: min=3.4%  median=100.0%  max=100.0%
+  AND child work share: min=100.0%  median=100.0%  max=100.0%  (per-node max: median=100.0%)
+=== m29_white  nodes=2  max_depth=1  or_nodes=1  and_nodes=0
+  OR work: decisive-child share=100.0%  recoverable (refutation+own)=0.0%  (node=1 decisive_raw=1)
+  OR decisive share per node: min=100.0%  median=100.0%  max=100.0%
+=== aggregate  cases=14
+  OR work: decisive-child share=90.6%  recoverable (refutation+own)=9.4%
+  AND child work share: min=0.0%  median=52.9%  max=100.0%

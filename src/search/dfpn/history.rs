@@ -86,12 +86,18 @@ impl Search {
 
         // The neural scorer is a residual on top of the static term
         // (`nn.md` §6 v2 recipe): the final score is static + nn + history
-        // + killer, so the nearest-commoner map is always needed.
+        // + killer, so the nearest-commoner map is always needed. When an
+        // ordering-scorer override is set it *replaces* the static term and
+        // supplies its own base scores, so the map is not needed.
         let nn_scores = self
             .nn_scorer
             .as_ref()
             .map(|nn| nn.move_scores(pos.board(), slice));
-        let nearest = nearest_commoner_map(pos.board(), pos.side_to_move().flip());
+        let nearest = if self.ordering_scorer.is_none() {
+            Some(nearest_commoner_map(pos.board(), pos.side_to_move().flip()))
+        } else {
+            None
+        };
 
         let board = pos.board();
         let mut scored: Vec<(Move, i32)> = slice
@@ -99,11 +105,19 @@ impl Search {
             .copied()
             .enumerate()
             .map(|(i, m)| {
-                let static_score = self
-                    .scorer
-                    .score_with_map(board, m, &state, &nearest, is_or_node);
+                let base_score = if let Some(override_scorer) = &self.ordering_scorer {
+                    override_scorer.score(board, m, &state, is_or_node)
+                } else {
+                    self.scorer.score_with_map(
+                        board,
+                        m,
+                        &state,
+                        nearest.as_ref().unwrap(),
+                        is_or_node,
+                    )
+                };
                 let nn_score = nn_scores.as_ref().map_or(0, |scores| scores[i]);
-                let score = static_score
+                let score = base_score
                     + nn_score
                     + self.history[us][m.from_sq() as usize][m.to_sq() as usize]
                     + self.killer_bonus(m, depth);

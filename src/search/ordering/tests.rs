@@ -30,7 +30,7 @@ fn winning_capture_scores_highest() {
     let f7e7 = find_move(&moves, "f7e7");
     let scorer = StaticAtomicScorer::default();
     assert_eq!(
-        scorer.score(&board, f7e7, &state),
+        scorer.score(&board, f7e7, &state, true),
         ScorerParams::default().score_winning_capture
     );
 }
@@ -40,7 +40,7 @@ fn promotion_scores_above_threat_and_center() {
     let (board, state, moves) = legal_moves_and_state("4k3/1P6/8/8/8/8/8/4K3 w - - 0 1");
     let scorer = StaticAtomicScorer::default();
     let b7b8q = find_move(&moves, "b7b8q");
-    let promotion = scorer.score(&board, b7b8q, &state);
+    let promotion = scorer.score(&board, b7b8q, &state, true);
 
     // A quiet king move should be scored far below a promotion.
     let e1d1 = moves
@@ -49,7 +49,7 @@ fn promotion_scores_above_threat_and_center() {
         .find(|m| m.to_uci() == "e1d1")
         .copied()
         .unwrap();
-    let quiet = scorer.score(&board, e1d1, &state);
+    let quiet = scorer.score(&board, e1d1, &state, true);
     assert!(
         promotion > quiet,
         "promotion should be preferred to a quiet king move"
@@ -63,10 +63,10 @@ fn capture_scores_above_quiet_moves() {
         legal_moves_and_state("rnbqkbnr/pppp1ppp/8/4p3/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 3");
     let scorer = StaticAtomicScorer::default();
     let capture_move = find_move(&moves, "f3e5");
-    let capture = scorer.score(&board, capture_move, &state);
+    let capture = scorer.score(&board, capture_move, &state, true);
 
     let quiet_move = find_move(&moves, "f3d4");
-    let quiet = scorer.score(&board, quiet_move, &state);
+    let quiet = scorer.score(&board, quiet_move, &state, true);
     assert!(
         capture > quiet,
         "capture should score above quiet development"
@@ -79,8 +79,8 @@ fn score_is_deterministic() {
         legal_moves_and_state("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     let scorer = StaticAtomicScorer::default();
     for i in 0..moves.len() {
-        let a = scorer.score(&board, moves[i], &state);
-        let b = scorer.score(&board, moves[i], &state);
+        let a = scorer.score(&board, moves[i], &state, true);
+        let b = scorer.score(&board, moves[i], &state, true);
         assert_eq!(a, b, "score should be deterministic");
     }
 }
@@ -99,8 +99,8 @@ fn kamikaze_landing_adjacent_to_lone_commoner() {
     let (board, state, moves) = legal_moves_and_state("8/8/8/8/4k3/8/2N5/4K3 w - - 0 1");
     let scorer = StaticAtomicScorer::default();
 
-    let kamikaze = scorer.score(&board, find_move(&moves, "c2e3"), &state);
-    let other = scorer.score(&board, find_move(&moves, "c2a3"), &state);
+    let kamikaze = scorer.score(&board, find_move(&moves, "c2e3"), &state, true);
+    let other = scorer.score(&board, find_move(&moves, "c2a3"), &state, true);
     assert!(
         kamikaze > other,
         "kamikaze move c2e3 should score above a non-kamikaze jump"
@@ -114,8 +114,8 @@ fn losing_capture_scores_below_direct_commoner_threat() {
     let (board, state, moves) = legal_moves_and_state("4k3/8/8/1B2p3/8/8/4Q3/4K3 w - - 0 1");
     let scorer = StaticAtomicScorer::default();
 
-    let capture = scorer.score(&board, find_move(&moves, "e2e5"), &state);
-    let threat = scorer.score(&board, find_move(&moves, "b5c6"), &state);
+    let capture = scorer.score(&board, find_move(&moves, "e2e5"), &state, true);
+    let threat = scorer.score(&board, find_move(&moves, "b5c6"), &state, true);
     assert!(
         threat > capture,
         "direct commoner threat should score above a losing capture"
@@ -129,8 +129,8 @@ fn capture_with_blasted_rook_scores_higher() {
     let (board, state, moves) = legal_moves_and_state("4k3/8/8/2p1pr2/3Q4/8/8/4K3 w - - 0 1");
     let scorer = StaticAtomicScorer::default();
 
-    let rook_blast = scorer.score(&board, find_move(&moves, "d4e5"), &state);
-    let pawn_only = scorer.score(&board, find_move(&moves, "d4c5"), &state);
+    let rook_blast = scorer.score(&board, find_move(&moves, "d4e5"), &state, true);
+    let pawn_only = scorer.score(&board, find_move(&moves, "d4c5"), &state, true);
     assert!(
         rook_blast > pawn_only,
         "capture that also blasts a rook should score higher"
@@ -147,8 +147,8 @@ fn capture_promotion_is_not_scored_as_promotion() {
     let capture_promo = find_move(&moves, "a7b8q");
     let non_capture_promo = find_move(&moves, "a7a8q");
 
-    let capture_score = scorer.score(&board, capture_promo, &state);
-    let promo_score = scorer.score(&board, non_capture_promo, &state);
+    let capture_score = scorer.score(&board, capture_promo, &state, true);
+    let promo_score = scorer.score(&board, non_capture_promo, &state, true);
 
     assert!(
         capture_score < ScorerParams::default().score_promotion,
@@ -167,8 +167,8 @@ fn m22_g4g5_scores_above_d6e5() {
         legal_moves_and_state("4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22");
     let scorer = StaticAtomicScorer::default();
 
-    let pawn_storm = scorer.score(&board, find_move(&moves, "g4g5"), &state);
-    let bishop_probe = scorer.score(&board, find_move(&moves, "d6e5"), &state);
+    let pawn_storm = scorer.score(&board, find_move(&moves, "g4g5"), &state, true);
+    let bishop_probe = scorer.score(&board, find_move(&moves, "d6e5"), &state, true);
     assert!(
         pawn_storm > bishop_probe,
         "g4g5 pawn storm should score above d6e5 bishop probe"
@@ -183,8 +183,8 @@ fn m22_rg1e1_scores_above_quiet_pawn_moves() {
         legal_moves_and_state("4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22");
     let scorer = StaticAtomicScorer::default();
 
-    let rook_lift = scorer.score(&board, find_move(&moves, "g1e1"), &state);
-    let quiet_pawn = scorer.score(&board, find_move(&moves, "a2a3"), &state);
+    let rook_lift = scorer.score(&board, find_move(&moves, "g1e1"), &state, true);
+    let quiet_pawn = scorer.score(&board, find_move(&moves, "a2a3"), &state, true);
     assert!(
         rook_lift > quiet_pawn,
         "Rg1e1 rook lift should score above quiet a-pawn push"
@@ -199,8 +199,8 @@ fn m22_pawn_storm_does_not_overvalue_distant_pawn_pushes() {
         legal_moves_and_state("4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22");
     let scorer = StaticAtomicScorer::default();
 
-    let a2a3 = scorer.score(&board, find_move(&moves, "a2a3"), &state);
-    let a2a4 = scorer.score(&board, find_move(&moves, "a2a4"), &state);
+    let a2a3 = scorer.score(&board, find_move(&moves, "a2a3"), &state, true);
+    let a2a4 = scorer.score(&board, find_move(&moves, "a2a4"), &state, true);
     assert_eq!(a2a3, 0, "a2a3 should not get a pawn-storm bonus");
     assert_eq!(a2a4, 0, "a2a4 should not get a pawn-storm bonus");
 }

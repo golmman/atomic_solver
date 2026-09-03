@@ -26,7 +26,7 @@ use crate::nn::scorer::NnMoveScorer;
 use crate::position::{Outcome, Position};
 use crate::proof_event::{NodeProven, ProofEvent};
 
-use super::ordering::StaticAtomicScorer;
+use super::ordering::{MoveScorer, StaticAtomicScorer};
 use super::tt::TranspositionTable;
 
 const DEFAULT_EPSILON: f64 = 0.125;
@@ -97,6 +97,7 @@ pub struct Search {
     epsilon_den: u64,
     scorer: StaticAtomicScorer,
     nn_scorer: Option<NnMoveScorer>,
+    ordering_scorer: Option<Arc<dyn MoveScorer>>,
     first_outcome_only: bool,
     timeout: Duration,
     child_eval_budget: u64,
@@ -131,6 +132,7 @@ impl Search {
             epsilon_den,
             scorer: StaticAtomicScorer::default(),
             nn_scorer: None,
+            ordering_scorer: None,
             first_outcome_only: false,
             timeout: Duration::from_secs(TIMEOUT_SECS),
             child_eval_budget: u64::MAX,
@@ -178,6 +180,24 @@ impl Search {
     #[must_use]
     pub fn nn_scorer(&self) -> Option<&NnMoveScorer> {
         self.nn_scorer.as_ref()
+    }
+
+    /// Override the static move-ordering term with a generic scorer.
+    ///
+    /// When set, [`Search::sort_moves`] takes the base score from this scorer
+    /// instead of `StaticAtomicScorer`; the residual composition stays
+    /// `override + nn + history + killer` (or `override + history + killer`
+    /// when no NN scorer is configured). Intended for measurement harnesses
+    /// (e.g. the oracle-floor example); `None` (the default) restores the
+    /// hand-crafted static ordering.
+    pub fn set_ordering_scorer(&mut self, scorer: Option<Arc<dyn MoveScorer>>) {
+        self.ordering_scorer = scorer;
+    }
+
+    /// The configured ordering-scorer override, if any.
+    #[must_use]
+    pub fn ordering_scorer(&self) -> Option<&Arc<dyn MoveScorer>> {
+        self.ordering_scorer.as_ref()
     }
 
     pub fn set_timeout(&mut self, seconds: u64) {
