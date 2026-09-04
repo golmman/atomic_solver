@@ -133,3 +133,12 @@ What do you think?
 ----
 
 most promising line - only attacker moves
+
+---
+
+We concluded with `docs/plans/nn/report8.md` that the PoC hypothesis failed.
+
+I got one other idea that is maybe worth exploring though.
+`make quick_export2` finds a win with length 153 first, then quickly reduces this to length 23.
+Wouldn't it save a lot of work if we found the length 23 win (or even shorter) faster?
+Could we train the network such that we find better lines earlier?
