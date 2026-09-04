@@ -219,6 +219,37 @@ the floor landed at e.g. 0.45x the correct reading of the pinned bar
 would still have been "reopen"; at 0.509x aggregate / 1.03x unweighted
 it is not.
 
+## Post-closure follow-up: "find shorter wins earlier" (no code change)
+
+Revisited after closure via the `make quick_export2` observation (win of
+length 155 found first, refined to 153 then 23). Instrumented breakdown
+of one run (`--timeout 20`): first win ~10 s / ~16 M evals; refinement
+155→153→23 ~2.4 s / ~2 M evals; futile post-23 tail until timeout
+~7.5 s / ~14 M+ evals. Conclusions, recorded so the idea is not
+re-derived:
+
+- The premise does not hold: reaching the short win from the first win
+  is already nearly free — DF-PN's pn/dn dynamics prefer shallow
+  proofs. The expensive phases are the first win and the optimality
+  tail, not the intermediate longer lines.
+- "Rank the winning child earlier at OR nodes" is exactly the oracle
+  hypothesis this report measured (decisive-child-first); a
+  win-length-aware ranker is a variant of that per-node signal and
+  cannot exceed the 0.509x / 1.03x ceiling, which fails the pinned bar.
+- Proving a shorter line is not proportionally cheaper: work is
+  dominated by AND-side refutations along the line, roughly invariant
+  to which winning line is chosen.
+- Honest caveat: the oracle was anchored to the baseline's proven tree,
+  so a globally shortest-win-seeking search could in principle prove a
+  smaller tree; the structural evidence (bimodal decisive-child shares,
+  AND-side work concentration) puts that headroom well below what the
+  NN throughput penalty could repay.
+- The one lever the run exposed that is *not* ordering: the futile
+  refinement tail after the best line is found (~45% of wall time
+  here). If ever revisited, that is a search-policy question (refinement
+  effort caps, `--first-outcome` for first-decisive consumers), not an
+  NN one.
+
 ## Durable artifacts (carried forward per decision 7)
 
 - `--nn-weights` path, residual-v2 recipe, `weights.v2.bin` — unchanged,
