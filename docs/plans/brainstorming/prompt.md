@@ -111,5 +111,8 @@ This is clean, streams results as soon as they are known, and never prints an un
 
 4b2k/P1Bp1p1P/3P1P2/8/8/1p1p4/bPpP4/2B4K w - - 0 1
 
+---
+
+In branch `nn` we proved that the headroom for move ordering is slim. Please analyze how we can reduce wall time and nodes searched.
 
 
