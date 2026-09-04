@@ -108,6 +108,32 @@ cherry-picking the non-NN improvements back onto `main`.
   trivial and the one silent auto-merge (`nn_corpus` in `.PHONY`) was caught
   by inspecting the pick diff.
 
+### Post-plan follow-up: machine-dependent m22 regression tests
+
+The user's first `make test-full` run failed on `m22_black_loses`
+(`test_plan6`): expected `Loss` within a 60 s wall-clock cap, got the
+budget-exhausted `Draw`. Verified pre-existing, not a surgery regression: the
+test fails identically in a worktree at the pre-surgery tip `3570a49`, and
+`docs/plans/testability/report3.md` already called it "known-flaky" — the
+position needs >= ~330M child evals, so no wall-clock cap fits every host
+(this host runs ~150–900k nps).
+
+Follow-up commit `make m22 regression tests machine-independent`:
+
+- `m22_black_loses` → `assert_unproven_within_evals(fen, 1_000_000)`, the
+  same deterministic tripwire pattern as `rem24`/`rem25` and the smoke-suite
+  m22 entry (nothing provable within 1M child evals).
+- `m22_white_solves_in_10s` (`test_move_order`) failed the same way: a 10 s
+  wall-clock `Win` assertion on a position whose proof needs ~37.5M child
+  evals (measured in `m22_white_wins`, which already covers it
+  deterministically with a 120M budget). Converted to
+  `assert_solves_or_times_out(fen, Win, 10)` (renamed
+  `m22_white_not_misclassified_in_10s`): within 10 s the solver must never
+  return a wrong decisive outcome; `Draw` only on timeout.
+
+After both conversions, `make test-full` passed end-to-end on this host
+(~13 min): all test binaries green, 0 failures.
+
 ## Unresolved parts
 
 - None known. `docs/plans/testability/plan3.md`/`report3.md` keep their
@@ -116,15 +142,14 @@ cherry-picking the non-NN improvements back onto `main`.
 
 ## Missing tests
 
-- The slow tier (`make test-full`, ~25 min) was not run in this session; it
-  should be run before the force-push per the AGENTS.md tier policy, since
-  this change touches search/testability code (picks 8–9).
+- `make test-full` was run end-to-end after the m22 conversions and is green
+  on this host; the m22 tripwires are now deterministic, so host speed no
+  longer affects them.
 - The optional `make quick_export` CLI smoke test was not run (covered by
   the fast integration tier instead).
 
 ## Next steps
 
-1. Run `make test-full` (recommended before pushing).
-2. Push: `git push --force-with-lease origin main` and `git push origin nn`.
-3. Delete the local `data/corpus/` / `data/oracle/` directories manually if
+1. Push: `git push --force-with-lease origin main` and `git push origin nn`.
+2. Delete the local `data/corpus/` / `data/oracle/` directories manually if
    no longer wanted (now git-ignored).
