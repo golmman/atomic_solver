@@ -187,7 +187,8 @@ someone chooses to run it.
 - Specifications in `docs/spec/` must be standalone documents: no references
   to `docs/plans/`, reports, or repo-internal process vocabulary (gate names,
   fixture/case names). They are normative contracts copied verbatim into
-  external repos (e.g. the NN trainer), where such references dangle.
+  external repos (e.g. the external optimizer reading
+  `docs/spec/optimizer_interface.md`), where such references dangle.
   Rationale and history belong in `docs/plans/`; a spec may reference other
   files under `docs/spec/` only.
 - Boy Scout principle: you should leave the codebase as clean or cleaner than you found it
