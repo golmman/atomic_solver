@@ -24,3 +24,7 @@ target
 
 proof_tree.bin
 proof_tree.sql
+
+# Local nn-era leftovers (archive lives on the nn branch)
+data/corpus/
+data/oracle/
