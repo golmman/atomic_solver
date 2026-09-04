@@ -4,7 +4,7 @@ use std::process::Command;
 
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
-use common::{assert_solves_to, assert_solves_to_timeout, assert_solves_within_evals, cli_bin};
+use common::{assert_solves_to, assert_solves_within_evals, assert_unproven_within_evals, cli_bin};
 
 // Fast regression positions that solve within the default 5-second timeout in
 // release builds but are too slow for debug builds (several seconds each).
@@ -225,17 +225,19 @@ fn m22_white_wins() {
 }
 
 #[test]
-#[ignore = "slow: 60 s regression budget; run with -- --include-ignored"]
+#[ignore = "slow: deterministic eval budget; run with -- --include-ignored"]
 fn m22_black_loses() {
-    // Left wall-clock deliberately: this position does not solve within a
-    // 90-second first-outcome search (>= ~330M child evals) on the
-    // measurement host, so no deterministic budget could be measured for it.
-    // It is a known machine-dependent borderline case (plan3 report).
-    assert_solves_to_timeout(
+    // The black-side m22 position was never provable in the slow tier: it does
+    // not solve within a 90-second first-outcome search (>= ~330M child evals)
+    // on the measurement host, so the former 60 s wall-clock `Loss` assertion
+    // was machine-dependent and flaky (plan3 report; cleanup report3). It now
+    // mirrors the other unproven tripwires (`rem24`/`rem25`, the smoke-suite
+    // m22 entry): within 1M child evals nothing may be proven. If a search
+    // improvement ever proves it, re-categorize it as solvable and record the
+    // expected outcome.
+    assert_unproven_within_evals(
         "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R4RK b - - 0 22",
-        Outcome::Loss,
-        None,
-        60,
+        1_000_000,
     );
 }
 

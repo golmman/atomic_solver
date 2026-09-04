@@ -8,7 +8,7 @@
 mod common;
 
 use atomic_solver::position::Outcome;
-use common::{assert_solves_or_times_out, assert_solves_to_timeout, load_move_order_suite};
+use common::{assert_solves_or_times_out, load_move_order_suite};
 
 #[test]
 #[ignore = "slow: 5 s timeout per move-order position; run with -- --include-ignored"]
@@ -21,16 +21,21 @@ fn move_order_suite_no_misclassification() {
     }
 }
 
-/// `m22_white` is the target of the plan-aware ordering work. It is decisive
-/// within a 10-second refined search.
+/// `m22_white` is the target of the plan-aware ordering work. The former
+/// "decisive within a 10-second refined search" wall-clock assertion was
+/// machine-dependent (the proof needs ~37.5M child evals; see the
+/// deterministic `m22_white_wins` budget regression in `tests/test_plan6.rs`).
+/// This test keeps the machine-independent part: within a 10-second search
+/// the solver must never return a *wrong* decisive outcome, and a `Draw` is
+/// only acceptable on timeout.
 #[test]
-#[ignore = "slow: 10 s refined search on m22; run with -- --include-ignored"]
-fn m22_white_solves_in_10s() {
+#[ignore = "slow: 10 s timeout on m22; run with -- --include-ignored"]
+fn m22_white_not_misclassified_in_10s() {
     let m22 = load_move_order_suite()
         .into_iter()
         .find(|c| c.name == "m22_white")
         .expect("m22_white fixture missing");
-    assert_solves_to_timeout(&m22.fen, Outcome::Win, None, 10);
+    assert_solves_or_times_out(&m22.fen, Outcome::Win, 10);
 }
 
 /// Sanity check that every fixture FEN parses and has at least one legal move
