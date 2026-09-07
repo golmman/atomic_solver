@@ -31,6 +31,10 @@ use super::tt::TranspositionTable;
 const DEFAULT_EPSILON: f64 = 0.125;
 const TIMEOUT_SECS: u64 = 5;
 const DEFAULT_MAX_PV_PLIES: usize = 1000;
+const DEFAULT_REFINE_CAP_FACTOR: f64 = 0.25;
+/// Floor for the per-refinement-round child-eval cap, so searches with tiny
+/// first-outcome work stay effectively uncapped.
+const MIN_REFINE_ROUND_EVALS: u64 = 1_000_000;
 
 /// Reason the search stopped, recorded for the pre-exit hook.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -98,6 +102,12 @@ pub struct Search {
     first_outcome_only: bool,
     timeout: Duration,
     child_eval_budget: u64,
+    refine_cap_factor_num: u64,
+    refine_cap_factor_den: u64,
+    refine_cap_min: u64,
+    first_outcome_evals: u64,
+    refinement_rounds: u32,
+    refinement_evals: u64,
     history: [[[i32; 64]; 64]; 2],
     killers: [[Move; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
     history_age_counter: u64,
@@ -118,6 +128,8 @@ impl Search {
     #[must_use]
     pub fn new(tt_mb: usize) -> Self {
         let (epsilon_num, epsilon_den) = fraction_from_f64(1.0 + DEFAULT_EPSILON);
+        let (refine_cap_factor_num, refine_cap_factor_den) =
+            fraction_from_f64(DEFAULT_REFINE_CAP_FACTOR);
         Self {
             tt: TranspositionTable::with_mb(tt_mb),
             path_stack: Vec::new(),
@@ -131,6 +143,12 @@ impl Search {
             first_outcome_only: false,
             timeout: Duration::from_secs(TIMEOUT_SECS),
             child_eval_budget: u64::MAX,
+            refine_cap_factor_num,
+            refine_cap_factor_den,
+            refine_cap_min: MIN_REFINE_ROUND_EVALS,
+            first_outcome_evals: 0,
+            refinement_rounds: 0,
+            refinement_evals: 0,
             history: [[[0; 64]; 64]; 2],
             killers: [[Move::NONE; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
             history_age_counter: 0,
@@ -177,6 +195,76 @@ impl Search {
     /// about wall time.
     pub fn set_child_eval_budget(&mut self, budget: u64) {
         self.child_eval_budget = budget;
+    }
+
+    /// Set the per-refinement-round work cap from a factor of the
+    /// first-outcome phase's child evaluations.
+    ///
+    /// Each refinement round in [`Search::solve_with_progress`] is capped at
+    /// `max(MIN_REFINE_ROUND_EVALS, factor * first_outcome_evals)` child
+    /// evaluations; a round that hits the cap without proving a shorter
+    /// decisive line is abandoned and refinement stops. This bounds the cost
+    /// of futile refinement rounds deterministically, without wall-clock
+    /// dependence.
+    ///
+    /// `factor` must be non-negative. A factor of `0.0` disables capping
+    /// entirely (pre-cap behavior); internally this is represented by setting
+    /// `refine_cap_min = u64::MAX`, which makes every round cap effectively
+    /// unlimited.
+    pub fn set_refine_cap_factor(&mut self, factor: f64) {
+        assert!(
+            factor >= 0.0,
+            "refine cap factor must be >= 0.0, got {factor}"
+        );
+        if factor == 0.0 {
+            self.refine_cap_min = u64::MAX;
+        } else {
+            let (num, den) = fraction_from_f64(factor);
+            self.refine_cap_factor_num = num;
+            self.refine_cap_factor_den = den;
+            self.refine_cap_min = MIN_REFINE_ROUND_EVALS;
+        }
+    }
+
+    /// Force a concrete per-round child-eval cap, bypassing the factor
+    /// computation. Test-only helper used to make the cap bind on small
+    /// positions.
+    #[cfg(test)]
+    pub(crate) fn set_refine_round_cap_for_test(&mut self, cap: u64) {
+        self.refine_cap_factor_num = 0;
+        self.refine_cap_factor_den = 1;
+        self.refine_cap_min = cap;
+    }
+
+    /// Child evaluations spent by the first-outcome phase of the last
+    /// [`Search::solve`]/[`Search::solve_with_progress`] call.
+    #[must_use]
+    pub fn first_outcome_evaluations(&self) -> u64 {
+        self.first_outcome_evals
+    }
+
+    /// Number of refinement rounds attempted by the last solve (successful or
+    /// not). Zero when refinement never ran.
+    #[must_use]
+    pub fn refinement_rounds(&self) -> u32 {
+        self.refinement_rounds
+    }
+
+    /// Total child evaluations spent across all refinement rounds of the last
+    /// solve.
+    #[must_use]
+    pub fn refinement_evaluations(&self) -> u64 {
+        self.refinement_evals
+    }
+
+    /// The per-round child-eval cap for the next refinement round.
+    fn refinement_round_cap(&self) -> u64 {
+        if self.refine_cap_min == u64::MAX {
+            return u64::MAX;
+        }
+        let scaled = (self.first_outcome_evals as u128 * self.refine_cap_factor_num as u128
+            / self.refine_cap_factor_den as u128) as u64;
+        scaled.max(self.refine_cap_min)
     }
 
     /// Whether the cumulative child-evaluation budget set by
@@ -293,20 +381,38 @@ impl Search {
     }
 
     /// Run a single bounded, work-chunked `dfpn` search for `max_depth` plies.
-    fn bounded_search(&mut self, pos: &mut Position, max_depth: u32) -> (Outcome, Vec<Move>) {
+    ///
+    /// `round_work_cap` bounds the cumulative child evaluations spent by this
+    /// call (a per-refinement-round cap). `u64::MAX` means uncapped, which is
+    /// what the non-refinement entry points use.
+    fn bounded_search(
+        &mut self,
+        pos: &mut Position,
+        max_depth: u32,
+        round_work_cap: u64,
+    ) -> (Outcome, Vec<Move>) {
         let mut outcome = Outcome::Draw;
         let mut chunk = 500_000u64;
         let mut last_child_evals_before;
+        let round_evals_start = self.child_evals;
 
         while !self.time_exceeded() && !self.child_eval_budget_exceeded() && chunk > 0 {
             self.reset_search_state();
             last_child_evals_before = self.child_evals;
-            // Cap the call's work at the remaining child-eval budget so the
-            // existing `max_work` checks inside `dfpn` also enforce the global
-            // budget. A budget-cut result therefore unwinds and is stored
-            // exactly like an ordinary work-chunk cutoff: as unsolved entries.
+            // Cap the call's work at the remaining child-eval budget (and at
+            // the remaining per-round refinement cap) so the existing
+            // `max_work` checks inside `dfpn` also enforce both budgets. A
+            // budget- or cap-cut result is therefore indistinguishable from an
+            // ordinary work-chunk cutoff: unsolved TT stores, no outcome.
             let remaining_budget = self.child_eval_budget.saturating_sub(self.child_evals);
-            let call_max_work = chunk.min(remaining_budget);
+            let round_remaining =
+                round_work_cap.saturating_sub(self.child_evals - round_evals_start);
+            let call_max_work = chunk.min(remaining_budget).min(round_remaining);
+            if call_max_work == 0 {
+                // Global budget or round cap exhausted without a decisive
+                // line; further chunks cannot change the outcome.
+                break;
+            }
             outcome = self.dfpn(pos, INF, INF, max_depth, call_max_work, true);
             if outcome != Outcome::Draw {
                 break;
@@ -342,7 +448,7 @@ impl Search {
         max_depth: u32,
     ) -> (Outcome, Vec<Move>, u64) {
         self.begin_run();
-        let (outcome, pv) = self.bounded_search(pos, max_depth);
+        let (outcome, pv) = self.bounded_search(pos, max_depth, u64::MAX);
         (outcome, pv, self.nodes)
     }
 
@@ -362,7 +468,7 @@ impl Search {
         self.prefix_path = Some(prefix_keys.to_vec());
         self.begin_run();
 
-        let (outcome, pv) = self.bounded_search(pos, max_depth);
+        let (outcome, pv) = self.bounded_search(pos, max_depth, u64::MAX);
         let depth = if outcome == Outcome::Win {
             pv.len() as u32
         } else {
@@ -393,10 +499,11 @@ impl Search {
         self.begin_run();
 
         // 1. First decisive outcome (work-chunked, unbounded depth).
-        let (mut outcome, mut pv) = self.bounded_search(pos, u32::MAX);
+        let (mut outcome, mut pv) = self.bounded_search(pos, u32::MAX, u64::MAX);
         if outcome != Outcome::Draw || !pv.is_empty() {
             on_progress(outcome, &pv);
         }
+        self.first_outcome_evals = self.child_evals;
 
         // 2. Iteratively tighten the bound by two plies, unless the user asked
         //    for the first outcome only.
@@ -411,7 +518,16 @@ impl Search {
             && !self.child_eval_budget_exceeded()
         {
             let bound = n - 2;
-            let (new_outcome, new_pv) = self.bounded_search(pos, bound);
+            // Each round is work-capped so a round that can never succeed (a
+            // bounded tree too large to exhaust) is abandoned deterministically
+            // instead of running until the global deadline. A cap-cut round
+            // returns Draw with unsolved TT stores, indistinguishable from a
+            // work-chunk cutoff, so the loop's non-improving check stops
+            // refinement with the best result so far.
+            let round_cap = self.refinement_round_cap();
+            let (new_outcome, new_pv) = self.bounded_search(pos, bound, round_cap);
+            self.refinement_rounds += 1;
+            self.refinement_evals = self.child_evals - self.first_outcome_evals;
             if new_outcome == Outcome::Draw || new_pv.len() as u32 >= n {
                 break;
             }
@@ -428,6 +544,9 @@ impl Search {
         self.reset_search_state();
         self.nodes = 0;
         self.child_evals = 0;
+        self.first_outcome_evals = 0;
+        self.refinement_rounds = 0;
+        self.refinement_evals = 0;
         self.start = Instant::now();
         self.deadline = self.start + self.timeout;
     }

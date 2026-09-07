@@ -4,7 +4,7 @@ use crate::position::Outcome;
 use crate::zobrist::INF;
 use atomic_movegen::types::Move;
 
-use super::entry::{TtEntry, TtSummary};
+use super::entry::TtEntry;
 
 pub struct TranspositionTable {
     table: Vec<[TtEntry; 2]>,
@@ -52,36 +52,6 @@ impl TranspositionTable {
         self.table[self.index(key)]
             .iter()
             .find(|e| e.valid && e.key == key && e.generation == self.current_generation)
-    }
-
-    /// Return a small copy of the base fields for `key`.
-    #[must_use]
-    pub fn probe_summary(&self, key: u64) -> Option<TtSummary> {
-        self.probe(key).map(|e| TtSummary {
-            best_move: e.best_move,
-            best_child: e.best_child,
-            work: e.work,
-            outcome: e.outcome,
-            pn: e.pn,
-            dn: e.dn,
-            depth: e.depth,
-            remaining_depth: e.remaining_depth,
-        })
-    }
-
-    /// Return the best move for `key`.
-    ///
-    /// Returns the stored best move for solved entries (it may be `Move::NONE`
-    /// for terminal positions) and for unsolved entries that already have a
-    /// preferred move.
-    #[must_use]
-    pub fn probe_best_move(&self, key: u64) -> Option<Move> {
-        let entry = self.probe(key)?;
-        if entry.outcome.is_some() || entry.best_move != Move::NONE {
-            Some(entry.best_move)
-        } else {
-            None
-        }
     }
 
     pub fn clear(&mut self) {

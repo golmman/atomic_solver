@@ -6,5 +6,5 @@ mod table;
 #[cfg(test)]
 mod tests;
 
-pub use entry::{EntryResult, TtEntry, TtSummary};
+pub use entry::{EntryResult, TtEntry};
 pub use table::TranspositionTable;

@@ -1,0 +1,22 @@
+[bounded_search] chunk done: work_done=500009 next_chunk=1000000 elapsed=0.171s max_depth=15 nodes=24281 nps=142069
+[bounded_search] chunk done: work_done=1000006 next_chunk=2000000 elapsed=0.500s max_depth=15 nodes=75871 nps=151760
+[bounded_search] chunk done: work_done=2000018 next_chunk=4000000 elapsed=1.159s max_depth=23 nodes=183748 nps=158585
+[bounded_search] chunk done: work_done=4000019 next_chunk=8000000 elapsed=2.489s max_depth=69 nodes=410236 nps=164795
+[bounded_search] chunk done: work_done=8000013 next_chunk=16000000 elapsed=5.092s max_depth=97 nodes=892468 nps=175260
+[bounded_search] chunk done: work_done=16000004 next_chunk=32000000 elapsed=8.817s max_depth=141 nodes=2019863 nps=229091
+outcome: win length: 155
+[bounded_search] chunk done: work_done=500013 next_chunk=1000000 elapsed=10.226s max_depth=26 nodes=2473176 nps=241845
+[bounded_search] chunk done: work_done=1000033 next_chunk=2000000 elapsed=10.554s max_depth=35 nodes=2527430 nps=239472
+outcome: win length: 153
+[bounded_search] chunk done: work_done=500014 next_chunk=1000000 elapsed=10.725s max_depth=26 nodes=2551459 nps=237898
+[bounded_search] chunk done: work_done=1000022 next_chunk=2000000 elapsed=11.054s max_depth=31 nodes=2603618 nps=235526
+outcome: win length: 23
+[bounded_search] chunk done: work_done=500000 next_chunk=1000000 elapsed=11.228s max_depth=9 nodes=2627242 nps=233999
+[bounded_search] chunk done: work_done=1000037 next_chunk=2000000 elapsed=11.558s max_depth=21 nodes=2682075 nps=232058
+[bounded_search] chunk done: work_done=2000006 next_chunk=4000000 elapsed=12.249s max_depth=21 nodes=2780564 nps=227002
+[bounded_search] chunk done: work_done=4000009 next_chunk=8000000 elapsed=13.369s max_depth=21 nodes=3164287 nps=236694
+[bounded_search] chunk done: work_done=1875776 next_chunk=16000000 elapsed=14.004s max_depth=21 nodes=3266452 nps=233247
+
+real	0m14.034s
+user	0m13.685s
+sys	0m0.017s

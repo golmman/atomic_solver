@@ -23,6 +23,9 @@ pub struct CliOptions {
     pub timeout: u64,
     /// Stop after the first decisive outcome and skip iterative PV refinement.
     pub first_outcome: bool,
+    /// Per-refinement-round work-cap factor relative to the first-outcome
+    /// phase's child evaluations. `0.0` disables capping.
+    pub refine_cap: f64,
     /// Print only the outcome/PV and skip stdin/proof-tree handling.
     pub outcome_only: bool,
     /// Maximum in-memory proof-tree size in megabytes.
@@ -41,6 +44,7 @@ impl Default for CliOptions {
             epsilon: 0.125,
             timeout: 5,
             first_outcome: false,
+            refine_cap: 0.25,
             outcome_only: false,
             pt_size: 256,
             dump_path: "proof_tree.bin".to_string(),
@@ -130,6 +134,19 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 opts.first_outcome = true;
                 i += 1;
             }
+            "--refine-cap" => {
+                let value = args
+                    .get(i + 1)
+                    .ok_or_else(|| "error: --refine-cap requires a value".to_string())?;
+                let v = value
+                    .parse::<f64>()
+                    .map_err(|e| format!("error: invalid --refine-cap value: {e}"))?;
+                if v < 0.0 {
+                    return Err(format!("error: --refine-cap must be non-negative, got {v}"));
+                }
+                opts.refine_cap = v;
+                i += 2;
+            }
             "--outcome-only" => {
                 opts.outcome_only = true;
                 i += 1;
@@ -186,6 +203,7 @@ mod tests {
             epsilon,
             timeout,
             first_outcome,
+            refine_cap,
             outcome_only,
             pt_size,
             dump_path,
@@ -199,6 +217,7 @@ mod tests {
         assert_eq!(epsilon, 0.125);
         assert_eq!(timeout, 5);
         assert!(!first_outcome);
+        assert_eq!(refine_cap, 0.25);
         assert!(!outcome_only);
         assert_eq!(pt_size, 256);
         assert_eq!(dump_path, "proof_tree.bin");
@@ -301,6 +320,29 @@ mod tests {
     }
 
     #[test]
+    fn refine_cap_is_parsed() {
+        let parsed = parse_args(&args(&["atomic_solver", "--refine-cap", "0.5"])).unwrap();
+        match parsed {
+            ParseResult::Options(o) => assert_eq!(o.refine_cap, 0.5),
+            ParseResult::Help => panic!("unexpected help"),
+        }
+    }
+
+    #[test]
+    fn refine_cap_zero_is_parsed() {
+        let parsed = parse_args(&args(&["atomic_solver", "--refine-cap", "0"])).unwrap();
+        match parsed {
+            ParseResult::Options(o) => assert_eq!(o.refine_cap, 0.0),
+            ParseResult::Help => panic!("unexpected help"),
+        }
+    }
+
+    #[test]
+    fn negative_refine_cap_rejected() {
+        assert!(parse_args(&args(&["atomic_solver", "--refine-cap", "-0.1"])).is_err());
+    }
+
+    #[test]
     fn outcome_only_is_parsed() {
         let parsed = parse_args(&args(&["atomic_solver", "--outcome-only"])).unwrap();
         match parsed {
@@ -318,6 +360,7 @@ mod tests {
         assert!(parse_args(&args(&["atomic_solver", "--pt-size"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--dump-path"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--config"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--refine-cap"])).is_err());
     }
 
     #[test]

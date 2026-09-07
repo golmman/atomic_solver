@@ -1,0 +1,23 @@
+[bounded_search] chunk done: work_done=500009 next_chunk=1000000 elapsed=0.159s max_depth=15 nodes=24281 nps=153117
+[bounded_search] chunk done: work_done=1000006 next_chunk=2000000 elapsed=0.475s max_depth=15 nodes=75871 nps=159688
+[bounded_search] chunk done: work_done=2000018 next_chunk=4000000 elapsed=1.113s max_depth=23 nodes=183748 nps=165059
+[bounded_search] chunk done: work_done=4000019 next_chunk=8000000 elapsed=2.390s max_depth=69 nodes=410236 nps=171643
+[bounded_search] chunk done: work_done=8000013 next_chunk=16000000 elapsed=4.868s max_depth=97 nodes=892468 nps=183327
+[bounded_search] chunk done: work_done=16000004 next_chunk=32000000 elapsed=8.431s max_depth=141 nodes=2019863 nps=239581
+outcome: win length: 155
+[bounded_search] chunk done: work_done=500013 next_chunk=1000000 elapsed=9.773s max_depth=26 nodes=2473176 nps=253053
+[bounded_search] chunk done: work_done=1000033 next_chunk=2000000 elapsed=10.085s max_depth=35 nodes=2527430 nps=250612
+outcome: win length: 153
+[bounded_search] chunk done: work_done=500014 next_chunk=1000000 elapsed=10.246s max_depth=26 nodes=2551459 nps=249018
+[bounded_search] chunk done: work_done=1000022 next_chunk=2000000 elapsed=10.564s max_depth=31 nodes=2603618 nps=246465
+outcome: win length: 23
+[bounded_search] chunk done: work_done=500000 next_chunk=1000000 elapsed=10.729s max_depth=9 nodes=2627242 nps=244872
+[bounded_search] chunk done: work_done=1000037 next_chunk=2000000 elapsed=11.045s max_depth=21 nodes=2682075 nps=242830
+[bounded_search] chunk done: work_done=2000006 next_chunk=4000000 elapsed=11.718s max_depth=21 nodes=2780564 nps=237293
+[bounded_search] chunk done: work_done=4000009 next_chunk=8000000 elapsed=12.793s max_depth=21 nodes=3164287 nps=247351
+[bounded_search] chunk done: work_done=8000014 next_chunk=16000000 elapsed=15.346s max_depth=21 nodes=3629150 nps=236493
+[bounded_search] chunk done: work_done=16000026 next_chunk=32000000 elapsed=19.989s max_depth=21 nodes=5981564 nps=299240
+
+real	0m20.028s
+user	0m19.536s
+sys	0m0.022s

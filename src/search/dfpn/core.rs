@@ -15,6 +15,7 @@ use crate::position::{Outcome, Position};
 use super::children::{ChildInfo, ChildSelection};
 use super::selection::select_from_children;
 use super::{INF, Search};
+use crate::search::tt::TtEntry;
 
 pub(super) struct Resolved {
     pub outcome: Outcome,
@@ -92,15 +93,39 @@ impl Search {
             return Outcome::Draw;
         }
 
-        if let Some(resolved) = self.try_use_tt(pos, tt_key, max_depth) {
+        // Single TT probe for this node: the entry is copied (TtEntry is
+        // Copy) so the borrow ends before the later `self.tt.store`, and the
+        // solved-result check, ordering hint, and previous-bounds snapshot are
+        // all derived from the same snapshot.
+        let tt_entry = self.tt.probe(tt_key).copied();
+        if let Some(entry) = tt_entry.as_ref()
+            && let Some(resolved) = Self::resolved_from_entry(entry, max_depth)
+            && (entry.best_move == Move::NONE || !self.best_move_repeats_path(pos, entry.best_move))
+        {
             self.emit_proof_node(pos, resolved.outcome, resolved.depth);
             return resolved.outcome;
         }
 
-        let previous_summary = self.tt.probe_summary(tt_key);
-
-        let best_from_tt = self.tt.probe_best_move(tt_key).unwrap_or(Move::NONE);
+        // Ordering hint: replicate the old `probe_best_move` rule exactly —
+        // return the stored best move for solved entries (it may be
+        // `Move::NONE` for terminal positions) and for unsolved entries that
+        // already have a preferred move.
+        let best_from_tt = tt_entry
+            .as_ref()
+            .filter(|e| e.outcome.is_some() || e.best_move != Move::NONE)
+            .map_or(Move::NONE, |e| e.best_move);
         self.sort_moves(pos, &mut moves, best_from_tt, is_or_node);
+
+        // Previous-bounds snapshot, taken before any child search can store to
+        // this key via transposition.
+        let previous_best_move = tt_entry
+            .as_ref()
+            .filter(|e| e.best_move != Move::NONE)
+            .map(|e| e.best_move);
+        let previous_best_child = tt_entry
+            .as_ref()
+            .filter(|e| e.best_child != u8::MAX)
+            .map(|e| e.best_child);
 
         self.path_push(rep_key);
 
@@ -148,14 +173,6 @@ impl Search {
                 }
             }
 
-            let previous_best_move = previous_summary
-                .as_ref()
-                .filter(|s| s.best_move != Move::NONE)
-                .map(|s| s.best_move);
-            let previous_best_child = previous_summary
-                .as_ref()
-                .filter(|s| s.best_child != u8::MAX)
-                .map(|s| s.best_child);
             selection = Some(select_from_children(
                 &children,
                 is_or_node,
@@ -300,31 +317,32 @@ impl Search {
         }
     }
 
-    /// Try to reuse a solved, path-independent result from the transposition table.
+    /// Depth checks for a TT entry against the current search bound.
     ///
-    /// A one-ply guard rejects the result if the stored best move would
-    /// immediately repeat a position on the current search stack. This catches
-    /// the most obvious cross-path GHI case without keeping the full simulation
-    /// machinery.
-    pub(super) fn try_use_tt(&self, pos: &Position, key: u64, max_depth: u32) -> Option<Resolved> {
-        let entry = self.tt.probe(key)?;
+    /// A stored solved result is only reusable when the entry was solved at a
+    /// depth that covers `max_depth` (see the `remaining_depth`/`depth` guards).
+    pub(super) fn resolved_from_entry(entry: &TtEntry, max_depth: u32) -> Option<Resolved> {
         let outcome = entry.outcome?;
         if entry.remaining_depth < max_depth || entry.depth > max_depth {
             return None;
         }
-
-        if entry.best_move != Move::NONE {
-            let mut child = pos.clone();
-            child.do_move(entry.best_move);
-            if self.path_stack.contains(&child.repetition_key()) {
-                return None;
-            }
-        }
-
         Some(Resolved {
             outcome,
             depth: entry.depth,
         })
+    }
+
+    /// One-ply repetition guard: `true` if playing `best_move` from `pos`
+    /// would immediately repeat a position already on the current search
+    /// stack.
+    ///
+    /// The move is played and undone on the actual position (net-zero side
+    /// effect; `undo_move` is the exact inverse) instead of cloning.
+    pub(super) fn best_move_repeats_path(&self, pos: &mut Position, best_move: Move) -> bool {
+        pos.do_move(best_move);
+        let rep = pos.repetition_key();
+        pos.undo_move(best_move);
+        self.path_stack.contains(&rep)
     }
 
     pub(super) fn epsilon_ceil(&self, x: u64) -> u64 {

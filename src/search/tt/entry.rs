@@ -3,22 +3,6 @@
 use crate::position::Outcome;
 use atomic_movegen::types::Move;
 
-/// A small, read-only summary of a transposition-table entry.
-///
-/// This contains only the fields used by the search hot path so that probes
-/// do not have to copy the full `TtEntry`.
-#[derive(Clone, Copy, Debug)]
-pub struct TtSummary {
-    pub best_move: Move,
-    pub best_child: u8,
-    pub work: u64,
-    pub outcome: Option<Outcome>,
-    pub pn: u64,
-    pub dn: u64,
-    pub depth: u32,
-    pub remaining_depth: u32,
-}
-
 #[derive(Clone, Copy, Debug)]
 pub struct TtEntry {
     pub(crate) key: u64,

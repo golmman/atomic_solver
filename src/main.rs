@@ -19,6 +19,13 @@
 //!                              Defaults to 5.
 //!   --first-outcome             Stop after the first decisive outcome and skip
 //!                              the iterative PV refinement.
+//!   --refine-cap <FACTOR>      Per-refinement-round work-cap factor relative
+//!                              to the first-outcome phase's child-eval count.
+//!                              Each refinement round is capped at
+//!                              max(1,000,000, FACTOR * first-outcome evals);
+//!                              a round that hits the cap without a shorter
+//!                              decisive line is abandoned. `0` disables
+//!                              capping. Defaults to 0.25.
 //!   --outcome-only             Print only the outcome/PV and skip the pre-exit
 //!                              summary. No stdin reader is spawned.
 //!   --pt-size <MB>             Maximum in-memory proof-tree size in megabytes.
@@ -72,6 +79,11 @@ fn print_help(program: &str) {
     println!("                             (default: 5)");
     println!("  --first-outcome            Stop after the first decisive outcome");
     println!("                             and skip iterative PV refinement");
+    println!("  --refine-cap <FACTOR>      Per-refinement-round work-cap factor vs.");
+    println!("                             the first-outcome eval count; a round that");
+    println!("                             hits the cap without a shorter decisive");
+    println!("                             line is abandoned. 0 disables capping");
+    println!("                             (default: 0.25)");
     println!("  --outcome-only             Print only the outcome/PV;");
     println!("                             do not spawn stdin reader or pre-exit hook");
     println!("  --pt-size <MB>             Maximum in-memory proof-tree size in megabytes");
@@ -120,6 +132,7 @@ fn main() {
         epsilon,
         timeout,
         first_outcome,
+        refine_cap,
         outcome_only,
         pt_size,
         dump_path,
@@ -149,6 +162,7 @@ fn main() {
     search.set_timeout(timeout);
     search.set_epsilon(epsilon);
     search.set_first_outcome_only(first_outcome);
+    search.set_refine_cap_factor(refine_cap);
 
     let stop_flag = Arc::new(AtomicBool::new(false));
     let memory_limited = Arc::new(AtomicBool::new(false));

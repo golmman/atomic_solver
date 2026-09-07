@@ -17,7 +17,14 @@ A pure solver for atomic chess in Rust.
   proven `Outcome`, and a depth.
 - `src/search/dfpn/` implements the sequential DF-PN+ solver with iterative
   bounded refinement, history/killer heuristics, and a 5-second default
-  timeout. `dfpn` emits `ProofEvent` nodes for every node it proves or
+  timeout. Each PV-refinement round is work-capped at
+  `max(1,000,000, factor * first-outcome child evals)` (factor `0.25` by
+  default, configurable via `Search::set_refine_cap_factor` / CLI
+  `--refine-cap`; `0` disables capping) so a futile round is abandoned
+  deterministically instead of running to the global deadline; per-phase
+  counters are exposed via `first_outcome_evaluations()`,
+  `refinement_rounds()`, and `refinement_evaluations()`. `dfpn` emits
+  `ProofEvent` nodes for every node it proves or
   disproves; the returned PV is an informational best-effort line from the
   transposition table and is not guaranteed to be a valid proof. The solver
   never clears proof events; proof-tree finalization is the responsibility of the
@@ -50,6 +57,8 @@ A pure solver for atomic chess in Rust.
   standard start position), `--tt-size <MB>` (default 64), `--epsilon <VALUE>`
   (default 0.125), `--timeout <SECONDS>` (default 5), `--first-outcome`
   (stop after the first decisive line without iterative shortest-PV refinement),
+  `--refine-cap <FACTOR>` (default 0.25; per-refinement-round work-cap factor
+  relative to the first-outcome child-eval count, `0` disables capping),
   `--outcome-only` (disables the pre-exit hook and stdin reader), `--pt-size <MB>`
   (default 256, max in-memory proof-tree size), `--dump-path <FILE>`
   (default `proof_tree.bin`, binary dump of the full proven subtree), plus

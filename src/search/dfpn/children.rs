@@ -110,7 +110,22 @@ impl Search {
             }
         } else {
             let child_max_depth = max_depth.saturating_sub(1);
-            if let Some(resolved) = self.try_use_tt(pos, child_key, child_max_depth) {
+            // Single TT probe for this child: the copied entry (TtEntry is
+            // Copy) feeds both the solved-result reuse (depth checks + one-ply
+            // guard) and the unsolved-bounds reuse below.
+            let entry = self.tt.probe(child_key).copied();
+            let mut resolved = entry
+                .as_ref()
+                .and_then(|e| Self::resolved_from_entry(e, child_max_depth));
+            if let Some(e) = entry.as_ref()
+                && resolved.is_some()
+                && e.best_move != Move::NONE
+                && self.best_move_repeats_path(pos, e.best_move)
+            {
+                resolved = None;
+            }
+
+            if let Some(resolved) = resolved {
                 let (pn, dn) = resolved.outcome.pn_dn_for(child_is_or);
                 ChildInfo {
                     mv,
@@ -121,20 +136,20 @@ impl Search {
                     repetition_seen: false,
                     explored: false,
                 }
-            } else if let Some(summary) = self.tt.probe_summary(child_key) {
+            } else if let Some(e) = entry.as_ref() {
                 // Only reuse unsolved bounds when they are non-degenerate.  A
                 // previous work-bounded search may have stored a candidate
                 // terminal-like bound (pn == 0 or dn == 0) without an outcome,
                 // and propagating such values can trick the parent search into
                 // treating an unproven node as solved.  Fall back to neutral
                 // (1, 1) in those cases.
-                let use_as_unsolved = summary.outcome.is_none()
-                    && summary.pn > 0
-                    && summary.dn > 0
-                    && summary.remaining_depth != u32::MAX
-                    && summary.remaining_depth <= child_max_depth;
+                let use_as_unsolved = e.outcome.is_none()
+                    && e.pn > 0
+                    && e.dn > 0
+                    && e.remaining_depth != u32::MAX
+                    && e.remaining_depth <= child_max_depth;
                 let (pn, dn) = if use_as_unsolved {
-                    (summary.pn, summary.dn)
+                    (e.pn, e.dn)
                 } else {
                     (1, 1)
                 };

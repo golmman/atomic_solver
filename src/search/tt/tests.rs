@@ -77,8 +77,6 @@ fn with_capacity_forces_deterministic_eviction() {
 fn empty_table_probe_returns_none() {
     let tt = TranspositionTable::with_mb(1);
     assert!(tt.probe(0x1234).is_none());
-    assert!(tt.probe_summary(0x1234).is_none());
-    assert!(tt.probe_best_move(0x1234).is_none());
 }
 
 #[test]
@@ -109,7 +107,7 @@ fn clear_removes_all_entries_and_resets_generation() {
 }
 
 #[test]
-fn probe_summary_and_best_move_match_stored_entry() {
+fn probe_matches_stored_entry_fields() {
     let mut tt = TranspositionTable::with_mb(1);
     let key = 0xdead_beefu64;
     let mv = Move::make_move(Square::E2, Square::E4);
@@ -125,12 +123,11 @@ fn probe_summary_and_best_move_match_stored_entry() {
         3,
     );
 
-    let summary = tt.probe_summary(key).expect("summary should be present");
-    assert_eq!(summary.outcome, Some(Outcome::Win));
-    assert_eq!(summary.best_move, mv);
-    assert_eq!(summary.work, 42);
-
-    assert_eq!(tt.probe_best_move(key), Some(mv));
+    let entry = tt.probe(key).expect("entry should be present");
+    assert_eq!(entry.outcome, Some(Outcome::Win));
+    assert_eq!(entry.best_move, mv);
+    assert_eq!(entry.work, 42);
+    assert_eq!(entry.depth, 5);
 }
 
 #[test]

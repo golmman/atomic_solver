@@ -25,10 +25,10 @@ fn local_repetition_in_prefix_returns_draw() {
 }
 
 #[test]
-fn try_use_tt_rejects_win_when_best_move_repeats() {
+fn tt_resolved_rejects_win_when_best_move_repeats() {
     // Store a win for a position whose winning move leads to a board already
-    // on the search path. The one-ply repetition guard in try_use_tt should
-    // reject the cached result.
+    // on the search path. The one-ply repetition guard should reject the
+    // cached result.
     let pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
     let key = pos.hash();
     let win_move = Move::make_move(Square::E1, Square::E8);
@@ -50,18 +50,23 @@ fn try_use_tt_rejects_win_when_best_move_repeats() {
         u32::MAX,
     );
 
+    let entry = search.tt.probe(key).copied().unwrap();
+
     // With the child on the path, the cached win is invalid.
     search.path_stack.push(child_rep_key);
     assert!(
-        search.try_use_tt(&pos, key, u32::MAX).is_none(),
-        "try_use_tt should reject a win whose best move repeats a board on the path"
+        search.best_move_repeats_path(&mut pos.clone(), win_move),
+        "the one-ply guard should reject a win whose best move repeats a board on the path"
     );
 
     // Without the child on the path, the cached win is valid.
     search.path_stack.clear();
-    let resolved = search
-        .try_use_tt(&pos, key, u32::MAX)
-        .expect("cached win should be accepted when the child is not on the path");
+    assert!(
+        !search.best_move_repeats_path(&mut pos.clone(), win_move),
+        "cached win should be accepted when the child is not on the path"
+    );
+    let resolved = Search::resolved_from_entry(&entry, u32::MAX)
+        .expect("cached win should resolve when the child is not on the path");
     assert_eq!(resolved.outcome, Outcome::Win);
     assert_eq!(resolved.depth, 1);
 }
@@ -245,4 +250,85 @@ fn budget_exhausted_pv_is_empty_or_valid() {
             "PV move must be legal in a budget-exhausted search"
         );
     }
+}
+
+/// Fixture that triggers at least one improving refinement round (50 -> 48
+/// plies) and fully converges in well under 100 ms (release).
+const REFINE_FIXTURE_FEN: &str = "r7/1Rp4k/4P2B/6p1/3P2P1/p6p/P6K/8 b - - 0 35";
+
+#[test]
+fn refinement_counters_accumulate() {
+    let mut pos = Position::from_fen(REFINE_FIXTURE_FEN).unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+
+    let (outcome, pv, _nodes) = search.solve(&mut pos);
+    assert_eq!(outcome, Outcome::Loss);
+    assert!(!pv.is_empty());
+
+    assert!(
+        search.first_outcome_evaluations() > 0,
+        "first-outcome phase work must be recorded"
+    );
+    assert!(
+        search.refinement_rounds() >= 1,
+        "the fixture must trigger at least one refinement round"
+    );
+    assert!(
+        search.child_evaluations() >= search.first_outcome_evaluations(),
+        "nodes/child_evals accumulate across refinement rounds (cumulative semantics)"
+    );
+    assert_eq!(
+        search.refinement_evaluations(),
+        search.child_evaluations() - search.first_outcome_evaluations(),
+        "refinement_evals is the delta between total and first-outcome work"
+    );
+}
+
+#[test]
+fn refine_cap_zero_disables_capping() {
+    // Factor 0.0 must preserve the uncapped (pre-cap) behavior: the fixture
+    // still refines, so at least one round runs.
+    let mut pos = Position::from_fen(REFINE_FIXTURE_FEN).unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    search.set_refine_cap_factor(0.0);
+
+    let (outcome, pv, _nodes) = search.solve(&mut pos);
+    assert_eq!(outcome, Outcome::Loss);
+    assert!(!pv.is_empty());
+    assert!(
+        search.refinement_rounds() >= 1,
+        "factor 0.0 disables capping, refinement must still run"
+    );
+}
+
+#[test]
+fn refine_cap_bounds_round_work() {
+    let mut pos = Position::from_fen(REFINE_FIXTURE_FEN).unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    // Force a round cap far below the first-outcome work so the cap binds on
+    // the very first round.
+    search.set_refine_round_cap_for_test(1_000);
+
+    let (outcome, pv, _nodes) = search.solve(&mut pos);
+    // A cap-cut round is abandoned: the best result so far is returned.
+    assert_eq!(outcome, Outcome::Loss);
+    assert!(!pv.is_empty());
+    assert!(
+        search.refinement_rounds() >= 1,
+        "at least one refinement round must run"
+    );
+    assert!(
+        search.refinement_evaluations() < search.first_outcome_evaluations(),
+        "capped rounds must spend far less work than the first-outcome phase"
+    );
+    // Every round is bounded by the 1_000-eval cap plus dfpn's bounded
+    // overshoot (children evaluated after the last work check), so the total
+    // refinement work stays within a small constant times the round count.
+    assert!(
+        search.refinement_evaluations() <= u64::from(search.refinement_rounds()) * 10_000,
+        "each capped round must stay near the 1_000-eval cap"
+    );
 }
