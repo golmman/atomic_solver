@@ -12,7 +12,7 @@ use atomic_movegen::types::{Move, MoveList};
 
 use crate::position::{Outcome, Position};
 
-use super::children::{ChildInfo, ChildSelection};
+use super::children::{ChildPrecompute, ChildSelection};
 use super::selection::select_from_children;
 use super::{INF, Search};
 use crate::search::tt::TtEntry;
@@ -44,6 +44,7 @@ impl Search {
         max_depth: u32,
         max_work: u64,
         is_or_node: bool,
+        precomputed: Option<ChildPrecompute>,
     ) -> Outcome {
         if self.time_exceeded() {
             return Outcome::Draw;
@@ -58,9 +59,19 @@ impl Search {
         // prefer keeping hard-won entries.
         let child_evals_start = self.child_evals;
 
-        let mut moves = MoveList::new();
-        let mut state = StateInfo::new();
-        pos.legal_moves_with_state(&mut moves, &mut state);
+        // Hot-path reuse: when the caller recursed from `evaluate_child`, the
+        // child's legal moves and node state were already generated there for
+        // the terminal check; consume them instead of regenerating. Correctness
+        // never depends on the cache — `None` regenerates.
+        let (mut moves, state) = match precomputed {
+            Some(p) => (p.moves, p.state),
+            None => {
+                let mut m = MoveList::new();
+                let mut s = StateInfo::new();
+                pos.legal_moves_with_state(&mut m, &mut s);
+                (m, s)
+            }
+        };
 
         if let Some(outcome) = pos.outcome_from_state(&state, &moves) {
             let (pn, dn) = outcome.pn_dn_for(is_or_node);
@@ -114,7 +125,7 @@ impl Search {
             .as_ref()
             .filter(|e| e.outcome.is_some() || e.best_move != Move::NONE)
             .map_or(Move::NONE, |e| e.best_move);
-        self.sort_moves(pos, &mut moves, best_from_tt, is_or_node);
+        self.sort_moves(pos, &state, &mut moves, best_from_tt, is_or_node);
 
         // Previous-bounds snapshot, taken before any child search can store to
         // this key via transposition.
@@ -129,6 +140,26 @@ impl Search {
 
         self.path_push(rep_key);
 
+        // Per-frame pooled storage: the children table and the child movegen
+        // slots are borrowed from `Search` with `mem::take` (the frame owns
+        // them across the recursive calls, so a plain borrow cannot span the
+        // recursion) and returned at the single frame exit below. Every early
+        // return of `dfpn` happens above this point. Depth = `path_stack.len()`
+        // after `path_push` is unique among active frames.
+        let frame_depth = self.path_stack.len();
+        if self.child_pool.len() <= frame_depth {
+            self.child_pool.resize_with(frame_depth + 1, Vec::new);
+        }
+        if self.precompute_pool.len() <= frame_depth {
+            self.precompute_pool.resize_with(frame_depth + 1, Vec::new);
+        }
+        let mut children = std::mem::take(&mut self.child_pool[frame_depth]);
+        children.clear();
+        // Precompute slots are *not* cleared: their storage is reused warm
+        // across frames at the same depth (a slot is only read after the
+        // child freshly filled it this frame — see `ChildPrecompute`).
+        let mut slots = std::mem::take(&mut self.precompute_pool[frame_depth]);
+
         let mut outcome_to_store: Option<Outcome> = None;
         let mut outcome_to_store_best_move = Move::NONE;
         let mut outcome_to_store_pn = INF;
@@ -140,7 +171,6 @@ impl Search {
         let mut dn = INF;
         let mut depth = 0;
 
-        let mut children: Vec<ChildInfo> = Vec::new();
         let mut selection: Option<ChildSelection> = None;
 
         loop {
@@ -156,14 +186,23 @@ impl Search {
             }
 
             if children.is_empty() {
-                children = self.evaluate_all_children(pos, &moves, max_depth, is_or_node);
+                self.evaluate_all_children(
+                    pos,
+                    &moves,
+                    max_depth,
+                    is_or_node,
+                    &mut children,
+                    &mut slots,
+                );
             } else if let Some(prev) = selection
                 && let Some(idx) = prev.best_child_index
             {
                 let mv = children[idx].mv;
                 let old_pn = children[idx].pn;
                 let old_dn = children[idx].dn;
-                children[idx] = self.evaluate_child(pos, mv, max_depth, is_or_node);
+                debug_assert!(idx < slots.len(), "every evaluated child has a slot");
+                children[idx] =
+                    self.evaluate_child(pos, mv, max_depth, is_or_node, Some(&mut slots[idx]));
                 // In a work-bounded call, if the child came back with exactly the
                 // same (pn, dn) bounds re-expanding it cannot make progress. Mark
                 // it explored so the search moves on to other children.
@@ -232,6 +271,14 @@ impl Search {
             };
 
             pos.do_move(mv);
+            // Consume the child's movegen slot if present (the slot is
+            // replaced with a fresh empty one, so a later re-selection simply
+            // regenerates into it). Correctness never depends on the cache.
+            let precomputed = selection.best_child_index.and_then(|idx| {
+                slots
+                    .get_mut(idx)
+                    .map(|s| std::mem::replace(s, ChildPrecompute::new()))
+            });
             self.with_child_path(mv, |search| {
                 let _ = search.dfpn(
                     pos,
@@ -240,6 +287,7 @@ impl Search {
                     max_depth.saturating_sub(1),
                     child_max_work,
                     !is_or_node,
+                    precomputed,
                 );
             });
             pos.undo_move(mv);
@@ -306,6 +354,11 @@ impl Search {
         }
 
         self.maybe_age_history();
+
+        // Return the pooled frame storage before leaving the frame.
+        children.clear();
+        self.child_pool[frame_depth] = children;
+        self.precompute_pool[frame_depth] = slots;
 
         self.path_pop();
 

@@ -31,9 +31,14 @@ A pure solver for atomic chess in Rust.
   proof-tree layer. Searches can additionally be bounded by cumulative child
   evaluations via `Search::set_child_eval_budget` (deterministic alternative
   to the wall-clock timeout, used by the test tiers): a budget-exhausted
-  search returns `Draw`, stores only unsolved TT entries, and reports
-  `ExitReason::BudgetExhausted` — never `ExitReason::Timeout`, which stays
-  exclusively about wall time.
+   search returns `Draw`, stores only unsolved TT entries, and reports
+   `ExitReason::BudgetExhausted` — never `ExitReason::Timeout`, which stays
+   exclusively about wall time. The hot path reuses movegen: the child's
+   legal moves are generated once in `evaluate_child` (for the terminal
+   check, into a per-depth pooled slot from `Search::precompute_pool`) and
+   consumed by the recursive `dfpn` call; the node `StateInfo` is shared
+   with `sort_moves` instead of being rebuilt; per-frame child vectors and
+   the `sort_moves` score buffer are pooled on `Search`.
 - `src/search/tt/` holds the transposition table with path-independent base
   entries. Repetition-dependent results are not cached, following the
   first-player-loss GHI shortcut.
@@ -221,6 +226,12 @@ someone chooses to run it.
   atomic SEE, pawn-storm, rook centralization, and back-rank bonuses) and the
   constants that are tuned together. The unit tests are split out into
   `src/search/ordering/tests.rs` to keep the main file under the 20 KB limit.
+- `src/search/dfpn/children.rs` is larger than the 20 KB guideline because
+  `ChildPrecompute` (the per-depth pooled child movegen slots), the
+  cost-ordered terminal fast paths in `evaluate_child`, TT reuse, and
+  proof-event emission share one `Position` move/undo sequence; the slot
+  reuse and staleness invariants are documented next to the type that owns
+  them.
 
 ## Tuning workflow
 

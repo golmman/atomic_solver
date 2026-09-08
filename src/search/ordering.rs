@@ -8,13 +8,70 @@
 
 use atomic_movegen::attacks;
 use atomic_movegen::board::{Board, StateInfo};
-use atomic_movegen::types::{Color, Move, NO_PIECE, PieceType, Square};
+use atomic_movegen::types::{Bitboard, Color, Move, NO_PIECE, PieceType, Square};
 
 mod params;
 pub use params::{PieceValues, ScorerParams, ScorerParamsError};
 
 pub trait MoveScorer {
     fn score(&self, board: &Board, m: Move, state: &StateInfo) -> i32;
+}
+
+/// Per-node invariants for the static scorer, hoisted out of the per-move
+/// scoring loop.
+///
+/// Every field is constant across all moves of one node, so building the
+/// context once per node (in `sort_moves`) replaces the per-move
+/// recomputation of `board.commoners(them)`, the lone-commoner bit scan, and
+/// the enemy back-rank mask. The values are identical to what
+/// [`StaticAtomicScorer::score_with_map`] would have computed per move.
+pub(crate) struct ScoreContext {
+    pub us: Color,
+    pub them: Color,
+    /// Enemy commoners bitboard (`board.commoners(them)`).
+    pub them_commoners: Bitboard,
+    /// `them_commoners.count()`, equal to `state.them_commoners_count`.
+    pub them_commoners_count: u32,
+    /// The single enemy commoner square when exactly one exists.
+    pub lone_commoner: Option<Square>,
+    /// Mask of the enemy back rank (rank 8 for White to move, rank 1 for Black).
+    pub enemy_back_rank: u32,
+    pub back_rank_mask: Bitboard,
+    /// Nearest enemy commoner Chebyshev distance per square.
+    pub nearest: [i8; 64],
+}
+
+impl ScoreContext {
+    /// Build the per-node invariants for `board` + `state` from a precomputed
+    /// `nearest` map (see [`nearest_commoner_map`]).
+    ///
+    /// `state` must be the `StateInfo` of `board` (its `them_commoners_count`
+    /// field is reused, exactly as the per-move path did).
+    #[must_use]
+    pub(crate) fn build(board: &Board, state: &StateInfo, nearest: [i8; 64]) -> Self {
+        let us = board.side_to_move();
+        let them = us.flip();
+        let them_commoners = board.commoners(them);
+        let lone_commoner = if state.them_commoners_count == 1 {
+            let mut c = them_commoners;
+            let sq = c.pop_lsb();
+            if sq != Square::NONE { Some(sq) } else { None }
+        } else {
+            None
+        };
+        let enemy_back_rank = if us == Color::White { 7u32 } else { 0u32 };
+        let back_rank_mask = Bitboard(0xFFu64 << (enemy_back_rank * 8));
+        Self {
+            us,
+            them,
+            them_commoners,
+            them_commoners_count: state.them_commoners_count,
+            lone_commoner,
+            enemy_back_rank,
+            back_rank_mask,
+            nearest,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -161,6 +218,24 @@ impl StaticAtomicScorer {
         nearest: &[i8; 64],
         is_or_node: bool,
     ) -> i32 {
+        let ctx = ScoreContext::build(board, state, *nearest);
+        self.score_with_context(board, m, &ctx, is_or_node)
+    }
+
+    /// Score a move against an already-built [`ScoreContext`].
+    ///
+    /// Identical to [`StaticAtomicScorer::score_with_map`] but the per-node
+    /// invariants (enemy commoners, lone-commoner square, back-rank mask,
+    /// nearest map) are read from the context instead of being recomputed
+    /// per move. Integer arithmetic and evaluation order per move are
+    /// unchanged.
+    pub(crate) fn score_with_context(
+        &self,
+        board: &Board,
+        m: Move,
+        ctx: &ScoreContext,
+        is_or_node: bool,
+    ) -> i32 {
         let p = &self.params;
         let from = m.from_sq();
         let to = m.to_sq();
@@ -169,8 +244,8 @@ impl StaticAtomicScorer {
             return 0;
         }
         let from_pt = from_piece.type_of().unwrap();
-        let us = board.side_to_move();
-        let them = us.flip();
+        let us = ctx.us;
+        let them = ctx.them;
 
         let is_capture = board.is_capture(m);
 
@@ -178,9 +253,8 @@ impl StaticAtomicScorer {
         if is_capture {
             let blast_zone =
                 attacks::king_attacks(to) | atomic_movegen::types::Bitboard::square_bb(to);
-            let them_commoners = board.commoners(them);
-            if them_commoners.count() == 1
-                && (them_commoners & blast_zone) != atomic_movegen::types::Bitboard::EMPTY
+            if ctx.them_commoners_count == 1
+                && (ctx.them_commoners & blast_zone) != atomic_movegen::types::Bitboard::EMPTY
             {
                 return p.score_winning_capture;
             }
@@ -240,14 +314,8 @@ impl StaticAtomicScorer {
             )
         };
 
-        // Precompute the lone enemy commoner square when it exists.
-        let lone_commoner = if state.them_commoners_count == 1 {
-            let mut c = board.commoners(them);
-            let sq = c.pop_lsb();
-            if sq != Square::NONE { Some(sq) } else { None }
-        } else {
-            None
-        };
+        // The lone enemy commoner square was precomputed in the context.
+        let lone_commoner = ctx.lone_commoner;
 
         // 4. Direct commoner threat: after moving, the piece attacks an opponent commoner.
         {
@@ -255,8 +323,8 @@ impl StaticAtomicScorer {
             let to_bb = atomic_movegen::types::Bitboard::square_bb(to);
             let new_occupied = (board.occupied() & !from_bb) | to_bb;
             let attack_bb = attacks_from(from_pt, us, to, new_occupied);
-            if (attack_bb & board.commoners(them)) != atomic_movegen::types::Bitboard::EMPTY {
-                let base = if state.them_commoners_count == 1 {
+            if (attack_bb & ctx.them_commoners) != atomic_movegen::types::Bitboard::EMPTY {
+                let base = if ctx.them_commoners_count == 1 {
                     p.score_threat_last
                 } else {
                     p.score_threat
@@ -275,10 +343,10 @@ impl StaticAtomicScorer {
         }
 
         // 5. Kamikaze: landing adjacent to an enemy commoner creates a real blast threat.
-        if (attacks::king_attacks(to) & board.commoners(them))
+        if (attacks::king_attacks(to) & ctx.them_commoners)
             != atomic_movegen::types::Bitboard::EMPTY
         {
-            if state.them_commoners_count == 1 {
+            if ctx.them_commoners_count == 1 {
                 score += p.score_kamikaze_last;
             } else {
                 score += p.score_kamikaze;
@@ -290,6 +358,7 @@ impl StaticAtomicScorer {
         if from_pt == PieceType::Pawn
             && let Some(commoner_sq) = lone_commoner
         {
+            let nearest = &ctx.nearest;
             let from_dist = nearest[from as usize];
             let to_dist = nearest[to as usize];
             if to_dist < from_dist {
@@ -313,6 +382,7 @@ impl StaticAtomicScorer {
         if matches!(from_pt, PieceType::Rook | PieceType::Queen)
             && let Some(commoner_sq) = lone_commoner
         {
+            let nearest = &ctx.nearest;
             let from_dist = nearest[from as usize];
             let to_dist = nearest[to as usize];
 
@@ -335,9 +405,7 @@ impl StaticAtomicScorer {
                 let changed_file =
                     atomic_movegen::types::file_of(to) != atomic_movegen::types::file_of(from);
                 if changed_file {
-                    let enemy_back_rank = if us == Color::White { 7u32 } else { 0u32 };
-                    let back_rank_mask =
-                        atomic_movegen::types::Bitboard(0xFFu64 << (enemy_back_rank * 8));
+                    let back_rank_mask = ctx.back_rank_mask;
                     let file_mask = atomic_movegen::types::Bitboard(
                         0x0101_0101_0101_0101u64
                             << (atomic_movegen::types::file_of(to) as u8 as u32),
@@ -357,15 +425,14 @@ impl StaticAtomicScorer {
             }
 
             // Back-rank presence when the enemy commoner is on or near it.
-            let back_rank = if us == Color::White { 7 } else { 0 };
-            if (to as u8 / 8) == back_rank && chebyshev(to, commoner_sq) <= 2 {
+            if (to as u8 / 8) as u32 == ctx.enemy_back_rank && chebyshev(to, commoner_sq) <= 2 {
                 score += rook_back_rank;
             }
         }
 
         // 8. Centralizing / attacking moves.
-        let from_dist = nearest[from as usize];
-        let to_dist = nearest[to as usize];
+        let from_dist = ctx.nearest[from as usize];
+        let to_dist = ctx.nearest[to as usize];
         if from_dist < i8::MAX && to_dist < i8::MAX && to_dist < from_dist {
             score += approach + i32::from(from_dist - to_dist) * approach_step;
         }

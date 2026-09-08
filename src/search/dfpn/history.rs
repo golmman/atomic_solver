@@ -10,7 +10,7 @@ use atomic_movegen::types::{Color, Move, MoveList, Square};
 use crate::position::Position;
 
 use super::Search;
-use crate::search::ordering::nearest_commoner_map;
+use crate::search::ordering::{ScoreContext, nearest_commoner_map};
 
 pub(crate) const HISTORY_MAX: i32 = 10_000;
 pub(crate) const HISTORY_BONUS: i32 = 100;
@@ -70,35 +70,38 @@ fn killer_bonus(killers: &[[Move; KILLER_SLOTS]; MAX_KILLER_DEPTH], m: Move, dep
 }
 
 impl Search {
+    /// Order `moves` best-first using static scoring, history, killers, and
+    /// the TT hint.
+    ///
+    /// `state` must be the `StateInfo` of the node whose legal moves are being
+    /// sorted (the caller's `legal_moves_with_state` output); it is shared
+    /// with the scorer instead of rebuilding it via `populate_state`.
     pub(super) fn sort_moves(
-        &self,
+        &mut self,
         pos: &Position,
+        state: &StateInfo,
         moves: &mut MoveList,
         best_from_tt: Move,
         is_or_node: bool,
     ) {
-        let mut state = StateInfo::new();
-        pos.populate_state(&mut state);
-
         let us = pos.side_to_move() as usize;
         let them = pos.side_to_move().flip();
         let depth = self.path_stack.len();
-        let nearest = nearest_commoner_map(pos.board(), them);
 
         let board = pos.board();
+        let nearest = nearest_commoner_map(board, them);
+        let ctx = ScoreContext::build(board, state, nearest);
         let slice = moves.as_mut_slice();
-        let mut scored: Vec<(Move, i32)> = slice
-            .iter()
-            .copied()
-            .map(|m| {
-                let score = self
-                    .scorer
-                    .score_with_map(board, m, &state, &nearest, is_or_node)
-                    + self.history[us][m.from_sq() as usize][m.to_sq() as usize]
-                    + self.killer_bonus(m, depth);
-                (m, score)
-            })
-            .collect();
+        // Reusable scratch buffer: `sort_moves` completes before any
+        // recursion, so one buffer on `Search` suffices.
+        let mut scored = std::mem::take(&mut self.sort_scratch);
+        scored.clear();
+        scored.extend(slice.iter().copied().map(|m| {
+            let score = self.scorer.score_with_context(board, m, &ctx, is_or_node)
+                + self.history[us][m.from_sq() as usize][m.to_sq() as usize]
+                + self.killer_bonus(m, depth);
+            (m, score)
+        }));
 
         scored.sort_by_key(|&(_, score)| std::cmp::Reverse(score));
 
@@ -112,9 +115,10 @@ impl Search {
             scored[0] = entry;
         }
 
-        for (i, (m, _)) in scored.into_iter().enumerate() {
+        for (i, &(m, _)) in scored.iter().enumerate() {
             slice[i] = m;
         }
+        self.sort_scratch = scored;
     }
 
     pub(super) fn update_history(&mut self, m: Move, side: Color) {
@@ -161,15 +165,15 @@ impl Search {
 
         let us = pos.side_to_move();
         let them = us.flip();
-        let nearest = nearest_commoner_map(pos.board(), them);
+        let board = pos.board();
+        let nearest = nearest_commoner_map(board, them);
+        let ctx = ScoreContext::build(board, &state, nearest);
         let depth = self.path_stack.len();
         let mut result = Vec::with_capacity(moves.len());
 
         for i in 0..moves.len() {
             let m = moves[i];
-            let static_score =
-                self.scorer
-                    .score_with_map(pos.board(), m, &state, &nearest, is_or_node);
+            let static_score = self.scorer.score_with_context(board, m, &ctx, is_or_node);
             let history = self.history[us as usize][m.from_sq() as usize][m.to_sq() as usize];
             let killer = self.killer_bonus(m, depth);
             let total = static_score + history + killer;
@@ -191,25 +195,34 @@ mod tests {
         Position::from_fen(Position::STARTPOS_FEN).unwrap()
     }
 
+    /// Build the node `StateInfo` for `pos` (what the search would pass to
+    /// `sort_moves` after `legal_moves_with_state`).
+    fn node_state(pos: &Position) -> StateInfo {
+        let mut state = StateInfo::new();
+        pos.populate_state(&mut state);
+        state
+    }
+
     #[test]
     fn sort_orders_empty_list_without_panic() {
-        let search = Search::new(1);
+        let mut search = Search::new(1);
         let pos = start_position();
         let mut moves = MoveList::new();
-        search.sort_moves(&pos, &mut moves, Move::NONE, true);
+        search.sort_moves(&pos, &node_state(&pos), &mut moves, Move::NONE, true);
         assert!(moves.is_empty());
     }
 
     #[test]
     fn sort_is_deterministic() {
-        let search = Search::new(1);
+        let mut search = Search::new(1);
         let pos = start_position();
+        let state = node_state(&pos);
         let mut moves1 = MoveList::new();
         let mut moves2 = MoveList::new();
         pos.legal_moves(&mut moves1);
         pos.legal_moves(&mut moves2);
-        search.sort_moves(&pos, &mut moves1, Move::NONE, true);
-        search.sort_moves(&pos, &mut moves2, Move::NONE, true);
+        search.sort_moves(&pos, &state, &mut moves1, Move::NONE, true);
+        search.sort_moves(&pos, &state, &mut moves2, Move::NONE, true);
         assert_eq!(moves1.as_slice(), moves2.as_slice());
     }
 
@@ -217,18 +230,19 @@ mod tests {
     fn history_bonus_raises_move_score() {
         let mut search = Search::new(1);
         let pos = start_position();
+        let state = node_state(&pos);
         let e2e4 = Move::make_move(Square::E2, Square::E4);
 
         let mut before = MoveList::new();
         pos.legal_moves(&mut before);
-        search.sort_moves(&pos, &mut before, Move::NONE, true);
+        search.sort_moves(&pos, &state, &mut before, Move::NONE, true);
         let rank_before = before.as_slice().iter().position(|&m| m == e2e4).unwrap();
 
         search.update_history(e2e4, Color::White);
 
         let mut after = MoveList::new();
         pos.legal_moves(&mut after);
-        search.sort_moves(&pos, &mut after, Move::NONE, true);
+        search.sort_moves(&pos, &state, &mut after, Move::NONE, true);
         let rank_after = after.as_slice().iter().position(|&m| m == e2e4).unwrap();
 
         assert!(
@@ -351,7 +365,7 @@ mod tests {
         let pos = start_position();
         let mut moves = MoveList::new();
         pos.legal_moves(&mut moves);
-        search.sort_moves(&pos, &mut moves, Move::NONE, true);
+        search.sort_moves(&pos, &node_state(&pos), &mut moves, Move::NONE, true);
 
         assert_eq!(moves[0], e2e4, "killer move should be sorted first");
     }

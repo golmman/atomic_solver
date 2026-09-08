@@ -1,0 +1,27 @@
+gdb sampling profiler (perf unavailable in container), 55 samples, m22_white first-outcome
+
+--- leaf frames (self time) ---
+ 36.4%  atomic_movegen::movegen::generate_legal_with_state ()
+ 21.8%  <atomic_solver::search::dfpn::Search>::evaluate_child ()
+ 12.7%  <atomic_solver::search::dfpn::Search>::dfpn ()
+ 12.7%  <atomic_movegen::board::Board>::legal ()
+  7.3%  <atomic_movegen::board::Board>::populate_state ()
+  3.6%  ?? ()
+  1.8%  <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapters::filter::filter_try_fold<&atomic_solver::search::dfpn::children::ChildInfo, (), core::ops::control_flow::ControlFlow<()>, atomic_solver::search::dfpn::selection::select_from_children::{closure#4}, core::iter::traits::iterator::Iterator::all::check<&atomic_solver::search::dfpn::children::ChildInfo, atomic_solver::search::dfpn::selection::select_from_children::{closure#5}>::{closure#0}>::{closure#0}, core::ops::control_flow::ControlFlow<()>> ()
+  1.8%  <atomic_solver::position::Position>::do_move ()
+  1.8%  <atomic_movegen::board::Board>::undo_move ()
+
+--- key symbols anywhere in stack ---
+ 49.1%  generate_legal
+  7.3%  populate_state
+  0.0%  score_with_map
+ 74.5%  evaluate_child
+269.1%  dfpn
+  0.0%  malloc
+  0.0%  free
+  0.0%  emit_proof_node
+  0.0%  sort_moves
+  3.6%  do_move
+  1.8%  undo_move
+  0.0%  nearest_commoner_map
+  0.0%  capture_net_value

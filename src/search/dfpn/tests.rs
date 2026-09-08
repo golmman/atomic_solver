@@ -332,3 +332,40 @@ fn refine_cap_bounds_round_work() {
         "each capped round must stay near the 1_000-eval cap"
     );
 }
+
+#[test]
+fn solve_twice_identical_counts() {
+    // Pool/scratch state must not leak between runs: solving dec44 twice
+    // with fresh `Search` objects yields identical `nodes` and `child_evals`.
+    let mut results = Vec::new();
+    for _ in 0..2 {
+        let mut pos = Position::from_fen(REFINE_FIXTURE_FEN).unwrap();
+        let mut search = Search::new(64);
+        search.set_timeout(5);
+        let (outcome, pv, nodes) = search.solve(&mut pos);
+        results.push((outcome, pv.len(), nodes, search.child_evaluations()));
+    }
+    assert_eq!(
+        results[0], results[1],
+        "identical solve, identical counters"
+    );
+}
+
+#[test]
+fn default_refine_cap_leaves_improving_rounds() {
+    // The plan1 default cap (factor 0.25, 1M-eval floor) must not bind on the
+    // quick fixtures: dec44 refines 50 -> 48 plies and converges, so with the
+    // default factor the run still performs at least one improving round and
+    // reaches the converged 48-ply PV.
+    let mut pos = Position::from_fen(REFINE_FIXTURE_FEN).unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+
+    let (outcome, pv, _nodes) = search.solve(&mut pos);
+    assert_eq!(outcome, Outcome::Loss);
+    assert_eq!(pv.len(), 48, "the converged shortest PV is 48 plies");
+    assert!(
+        search.refinement_rounds() >= 1,
+        "default cap must leave improving refinement rounds"
+    );
+}

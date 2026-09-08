@@ -16,6 +16,8 @@ mod tests;
 pub use crate::zobrist::INF;
 pub use core::outcome_from_pn_dn;
 
+use children::{ChildInfo, ChildPrecompute};
+
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
@@ -122,6 +124,13 @@ pub struct Search {
     memory_limited: Option<Arc<AtomicBool>>,
     proof_event_sender: Option<std::sync::mpsc::Sender<ProofEvent>>,
     move_stack: Vec<Move>,
+    /// Per-depth pool of `ChildInfo` tables (`dfpn` frames borrow their
+    /// depth's vector with `mem::take` and return it at frame exit).
+    child_pool: Vec<Vec<ChildInfo>>,
+    /// Per-depth pool of child movegen slots (see `ChildPrecompute`).
+    precompute_pool: Vec<Vec<ChildPrecompute>>,
+    /// Reusable `(move, score)` scratch for `sort_moves`.
+    sort_scratch: Vec<(Move, i32)>,
 }
 
 impl Search {
@@ -163,6 +172,9 @@ impl Search {
             memory_limited: None,
             proof_event_sender: None,
             move_stack: Vec::new(),
+            child_pool: Vec::new(),
+            precompute_pool: Vec::new(),
+            sort_scratch: Vec::new(),
         }
     }
 
@@ -413,7 +425,7 @@ impl Search {
                 // line; further chunks cannot change the outcome.
                 break;
             }
-            outcome = self.dfpn(pos, INF, INF, max_depth, call_max_work, true);
+            outcome = self.dfpn(pos, INF, INF, max_depth, call_max_work, true, None);
             if outcome != Outcome::Draw {
                 break;
             }
