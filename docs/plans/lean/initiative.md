@@ -2,8 +2,8 @@
 
 ## Status
 
-Active. Plan 1 (accounting + first quick wins) is specified in
-`plan1.md`.
+Active. Plan 1 (`report1.md`) and plan 2 (`report2.md`) are done. Plan 3
+(upstream `has_legal_move` fast path) is specified in `plan3.md`.
 
 ## Motivation
 
@@ -65,6 +65,7 @@ memory, maintainability.
 | 7 | Lazy/staged child evaluation | Min-heap: evaluate children in rank order as needed instead of all on first iteration | ~3–10% evals | nodes | M | open |
 | 9 | 2–3-man atomic endgame tablebases | Leaf probes in shallow-material positions | huge where covered, negligible elsewhere | nodes | M–L | open |
 | 10 | History/killer constant re-tuning | Never re-tuned after the GHI/twin removal; side-aware killers | ~0–5% evals | nodes | S–M | open |
+| 11 | Upstream `has_legal_move` early-exit terminal check | movegen-side lazy generation with first-legal-move exit; `evaluate_child`'s terminal check becomes a boolean query + checkers/`occupied==2` classification instead of a full generation per evaluated child | ~20–40% wall | wall | M | **plan3** |
 
 Statuses reference plans under `docs/plans/lean/`; an item is *open*
 until a plan claims it.
@@ -96,9 +97,13 @@ until a plan claims it.
 
 ## Roadmap
 
-- **plan1** — accounting fix + quick wins #1 and #4 (specified).
-- **plan2** — hot-path compute: #3 (+ #6, #8 share one profiling pass).
-- **plan3** — parallelism (#2), only after plan1/plan2 land and with a
+- **plan1** — accounting fix + quick wins #1 and #4 (done, `report1.md`).
+- **plan2** — hot-path compute: #3 (+ #6, #8 share one profiling pass)
+  (done, `report2.md`).
+- **plan3** — upstream `has_legal_move` fast path (#11, the
+  profile-gated leftover of #3; two phases: movegen crate, then solver
+  integration).
+- **plan4** — parallelism (#2), only after plan3 lands and with a
   determinism story for the budget contract.
 - Items #5/#7/#9/#10 are claimed by later plans as capacity allows.
 
