@@ -44,10 +44,13 @@ this container. Raw outputs: `docs/plans/lean/measurements/plan2/`.
 
 `perf` is **not usable in this container** (no hardware counters;
 `perf record` fails to open events, `perf stat` reports nothing) and
-valgrind/callgrind are not installed. Per the plan's fallback, a poor-man's
-sampling profiler was used instead: attach `gdb -batch -ex bt` to the
-running process ~6-7×/s and aggregate leaf frames (55-61 samples per run;
-`perf_before_gdb_samples.txt`, script preserved at `/tmp/opencode/sample_prof.sh`).
+valgrind/callgrind are not installed. *(Superseded 2026-09-08 — see the
+addendum at the end of this report: software-event `perf record/stat` now
+work; hardware counters remain unavailable.)* Per the plan's fallback, a
+poor-man's sampling profiler was used instead: attach `gdb -batch -ex bt` to
+the running process ~6-7×/s and aggregate leaf frames (55-61 samples per run;
+`perf_before_gdb_samples.txt`, script preserved at
+`/tmp/opencode/sample_prof.sh`).
 
 m22_white, `--timeout 20 --first-outcome`, baseline binary:
 
@@ -224,3 +227,35 @@ Full tier (`make test-full`): 283 passed, 0 failed, 0 ignored.
   cost; a cheap "has any legal move" check would remove most of the
   per-evaluated-child generation that this plan could not.
 - Items #5/#7/#9/#10 remain open in the initiative.
+
+## Addendum 2026-09-08 — `perf` became usable
+
+Host-side launcher changes (capabilities + seccomp/SELinux flags; details in
+the "Profiling in this container" section of `AGENTS.md`) made `perf` usable
+for per-process profiling of the container's own processes. Hardware PMU
+events (`cycles`, `instructions`) remain unavailable — the guest still has no
+virtual PMU — and kernel symbols do not resolve, so `cpu-clock` software
+sampling with leaf attribution is the ceiling. The gdb sampling fallback of
+deviation 1 is no longer needed.
+
+The report's conclusions were re-verified against a real perf profile of the
+same workload (m22_white, `--timeout 6 --first-outcome`, release build; a
+single run now produces thousands of samples instead of 55-61 gdb samples):
+
+| symbol (leaf) | % of samples |
+| --- | --- |
+| `generate_legal_with_state` | 46.2% |
+| `evaluate_child` | 23.2% |
+| `Board::legal` | 12.1% |
+| `dfpn` | 5.0% |
+| `do_move` | 3.3% |
+| `score_with_context` | 2.9% |
+| `populate_state` | 1.8% |
+| `malloc`/`free`/`memset` | 0% (memcpy 0.35%, from `sort_moves`) |
+
+This confirms the post-change profile above (movegen dominant, allocation
+removal effective, `score_with_context` and `populate_state` below the 10%
+gate) and validates the gdb-based measurements despite their small sample
+count. The percentages also sharpen the "upstream `has_legal_move` fast path"
+next step: `generate_legal_with_state` + `Board::legal` together are ~58% of
+samples.

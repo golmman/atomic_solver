@@ -158,6 +158,40 @@ There is no CI (project decision): the make targets plus these conventions are
 the enforcement point. Regressions caught only by the slow tier surface when
 someone chooses to run it.
 
+## Profiling in this container
+
+`perf` is usable for per-process profiling of the container's own processes
+(made possible by host-side launcher flags: `CAP_PERFMON`, `SYS_PTRACE`,
+`seccomp=unconfined`, `label=disable`). Verified 2026-09-08 on the release
+build.
+
+- Works: `perf record -e cpu-clock -g -- <cmd>` (statistical sampling with
+  call graphs), `perf stat -e task-clock,context-switches,page-faults`,
+  `perf report`, `perf top`, `perf trace`.
+- Not available: hardware PMU events (`cycles`, `instructions`, cache/branch
+  counters) — the guest has no virtual PMU — and system-wide/CPU-wide
+  profiling. `cpu-clock` software sampling is the profiling ceiling.
+- Kernel symbols do not resolve (`kptr_restrict`); user-space attribution is
+  unaffected.
+- The release build omits frame pointers. Use leaf attribution
+  (`perf report --no-children`) for hot-path work, or
+  `perf record --call-graph dwarf` / `RUSTFLAGS=-Cforce-frame-pointers=yes`
+  when full call chains are needed.
+
+Typical hot-path session:
+
+```bash
+perf record -e cpu-clock -g -o /tmp/opencode/prof.data -- \
+  target/release/atomic_solver --fen '<FEN>' --timeout 6 --first-outcome --outcome-only
+perf report -i /tmp/opencode/prof.data --stdio --no-children
+```
+
+If these commands start failing (`EPERM`/`EACCES` on event open), the
+host-side launcher flags have regressed — the launcher lives outside this
+repo, so the fix is launcher-side; nothing in-repo can grant the missing
+permissions. This section is the only in-repo record of that setup; keep it
+in sync if the launcher changes.
+
 ## Conventions
 
 - Follow standard Rust 2024 edition idioms.
