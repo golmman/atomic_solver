@@ -3,11 +3,12 @@
 //! The default-mode trajectory golden is the automated proxy called out as
 //! missing by the lean plan 2 report: default-mode refinement divergence is
 //! not visible in the quick suite or the first-outcome stdout, so a stored
-//! golden of the m22_white default-mode run is asserted verbatim. The golden
-//! was derived from the drift-verified post-plan3 binary (quick suite 59/59
-//! identical `child_evals`, m22 first-outcome stdout byte-identical, m22
-//! default-mode chunk `work_done`/`nodes` sequence bit-identical; see
-//! `docs/plans/lean/measurements/plan3/`).
+//! golden of the m22_white default-mode run is asserted verbatim. Originally
+//! derived from the drift-verified post-plan3 binary; **re-baselined by lean
+//! plan 4** (TT default 64 → 128 MB), which intentionally changed search
+//! trajectories on capacity-bound positions. The new golden comes from the
+//! post-plan4 binary and its PV was verified as a valid PPV via the
+//! `verify_ppv` example (see `docs/plans/lean/report4.md`).
 
 mod common;
 

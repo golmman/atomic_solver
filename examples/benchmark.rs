@@ -106,7 +106,7 @@ fn main() {
     let mut runs = 10usize;
     let mut timeout = 5u64;
     let mut epsilon = 0.125f64;
-    let mut tt_size = 64usize;
+    let mut tt_size = 128usize;
     let mut suite = Suite::Default;
     let mut first_outcome = false;
     let mut json = false;

@@ -12,7 +12,7 @@
 //!   --fen <FEN>                Position to solve in Forsyth-Edwards Notation.
 //!                              Defaults to [`Position::STARTPOS_FEN`].
 //!   --tt-size <MB>             Transposition-table size in megabytes.
-//!                              Defaults to 64.
+//!                              Defaults to 128.
 //!   --epsilon <VALUE>          DF-PN+ threshold parameter in the range [0.0, 1.0].
 //!                              Defaults to 0.125.
 //!   --timeout <SECONDS>        Search time limit in seconds.
@@ -72,7 +72,7 @@ fn print_help(program: &str) {
     println!("  --fen <FEN>                Position in Forsyth-Edwards Notation");
     println!("                             (default: standard atomic start position)");
     println!("  --tt-size <MB>             Transposition-table size in megabytes");
-    println!("                             (default: 64)");
+    println!("                             (default: 128)");
     println!("  --epsilon <VALUE>          DF-PN+ threshold parameter in [0.0, 1.0]");
     println!("                             (default: 0.125)");
     println!("  --timeout <SECONDS>        Search time limit in seconds");

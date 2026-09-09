@@ -66,7 +66,7 @@ A pure solver for atomic chess in Rust.
 - `src/notation.rs` provides UCI move helpers, including `moves_to_uci_path`
   for converting a `Vec<Move>` path into the tree's string key format.
 - `src/main.rs` is the CLI entry point. It accepts `--fen <FEN>` (default
-  standard start position), `--tt-size <MB>` (default 64), `--epsilon <VALUE>`
+  standard start position), `--tt-size <MB>` (default 128), `--epsilon <VALUE>`
   (default 0.125), `--timeout <SECONDS>` (default 5), `--first-outcome`
   (stop after the first decisive line without iterative shortest-PV refinement),
   `--refine-cap <FACTOR>` (default 0.25; per-refinement-round work-cap factor

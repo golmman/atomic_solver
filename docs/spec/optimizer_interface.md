@@ -99,7 +99,7 @@ must ignore.
   "timeout": 3,
   "runs": 1,
   "epsilon": 0.125,
-  "tt_size": 64,
+  "tt_size": 128,
   "config_path": "/tmp/atomic_solver_cand_abc123.toml",
   "results": [
     {
