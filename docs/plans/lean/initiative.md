@@ -5,8 +5,8 @@
 Active, maintained **agile**: the backlog is a living document re-ranked
 after every profile, plans are single-lever and sized to one session, and
 nothing larger than one lever is planned before a fresh profile justifies
-it. Plans 1–3 are done (`report1.md`–`report3.md`); the post-plan3 profile
-(2026-09-08) is the current baseline for ranking.
+it. Plans 1–5 are done (`report1.md`–`report5.md`); the post-plan4 profile
+(2026-09-09) is the current baseline for ranking.
 
 ## Motivation
 
@@ -20,35 +20,38 @@ permanently. Anything that only ranks the winning OR child earlier — NN
 round 2, win-length-aware rankers — cannot beat that ceiling and is out
 of scope.
 
-### Post-plan3 profile (m22_white, first-outcome, 2026-09-08)
+### Post-plan4 profile (m22_white, first-outcome, default 128 MB TT, 2026-09-09)
 
-After plan3 (−46% wall), the leaf-attributed pie is much smaller and
-re-ranked:
+After plan4 (−49% wall, −62% first-outcome work) the pie is smaller again
+and the shares re-ranked (`perf record -e cpu-clock -g`, leaf
+attribution; raw output under `measurements/plan5/`; post-plan3 shares
+in parentheses):
 
-| cluster | leaves | share |
+| cluster | leaves | share post-plan4 (post-plan3) |
 | --- | --- | --- |
-| child-eval loop | `evaluate_child` (incl. inlined existence-query fragments) | 38.8% |
-| existence check | `populate_state` 12.0% + `has_legal_move_with_state` 4.1% | ~16% |
-| move make/unmake | `do_move` 11.2% + `undo_move` 2.6% | 13.8% |
-| frame overhead | `dfpn` | 11.7% |
-| static scoring | `score_with_context` | 5.4% |
-| full movegen | `Board::legal` 4.0% + `generate_legal_with_state` 2.4% | 6.4% |
-| clock sampling | `vdso` (`Instant::now`) | 2.4% |
+| move make/unmake | `do_move` 25.0% + `undo_move` 1.9% | 26.9% (13.8%) |
+| child-eval loop | `evaluate_child` (incl. inlined existence-query fragments) | 26.6% (38.8%) |
+| existence check | `populate_state` 17.8% + `has_legal_move_with_state` 2.9% | 20.7% (~16%) |
+| frame overhead | `dfpn` | 9.9% (11.7%) |
+| static scoring | `score_with_context` | 4.3% (5.4%) |
+| full movegen | `Board::legal` 2.2% + `generate_legal_with_state` 1.8% | 4.0% (6.4%) |
+| clock sampling | `vdso` (`Instant::now`) | ~2.2% (2.4%) |
+| move sort | `sort_moves` sort leaves | ~2.2% (folded into frame overhead) |
 
-Quantified notes that override older backlog guesses:
+Quantified notes:
 
-- **The existence check dominates movegen, and its cost is the per-child
-  `populate_state` prefix.** `evaluate_child` populates a `StateInfo` for
-  every non-fast-path child (~19 per searched node); the child frame's own
-  populate at its `dfpn` entry is only ~1/20 of populate calls. The
-  "hand the populated StateInfo to the recursion" idea from report3
-  therefore removes only ~0.6% wall — the real levers are making the
-  existence query need less than a full populate, or skipping the populate
-  entirely for children already known non-terminal from the TT.
-- **`populate_state` computes `checkers` + `pinned` + two popcounts.**
-  The existence query needs `checkers` and `pinned` for legality, so the
-  computation is mostly irreducible — the win must come from *calling it
-  less*, not from a slimmer populate.
+- **Fixed per-child costs now dominate relatively.** Per child eval,
+  make/unmake roughly doubled (~31 ns → ~59 ns) and `populate_state`
+  nearly doubled (~18 ns → ~39 ns), while `has_legal_move_with_state`
+  stayed flat (~7 ns). This is consistent with cache pressure from the
+  8× larger TT (zobrist/board working sets evicted by random TT probes);
+  a `--tt-size 64` control run reproduces the post-plan3-like shares
+  (make/unmake 18.6%, `populate_state` 10.8%).
+- **The existence check no longer dominates make/unmake.** The plan3-era
+  claim "the win must come from calling populate less" still holds, but
+  the wrapper-fat micro-win on `Position::do_move` (#14) is now measured
+  against ~27% of the pie instead of ~14% — its absolute ceiling is
+  unchanged (~1–3% of wall), only the pie shrank.
 - Ordering output and search decisions must remain **bit-identical**
   unless a plan explicitly says otherwise and validates the change against
   the move-order benchmark suite.
@@ -132,10 +135,10 @@ memory, maintainability.
 | 16 | TT capacity default | Default `--tt-size` 64 MB is capacity-starved on hard searches (m22 first-outcome: 2.6× work, 2.0× wall at 128 MB; quick suite insensitive ±2%). See `research_tt_capacity.md` | ~2× wall on m22-class hard cases at default settings | wall + behavior (drift protocol N/A; move-order suite is the validator) | S + re-baseline | **done (plan4)**: default now 128 MB; m22 first-outcome −49% wall, default-mode −74%; see `report4.md` |
 | 2 | Parallel search | Lazy-SMP-style parallel sibling children or parallel refinement roots over the shared TT | 2–8× wall on multicore | wall | L–XL | open — the only other multiplicative lever; needs a determinism design spike for the `child_eval_budget` contract first |
 | 12 | Existence-check cost | (a) solver-side: skip `populate_state` + `has_legal_move` when the child TT entry already proves the position non-terminal (`outcome == None` ⇒ it was expanded); (b) upstream: fused populate+existence API | ceiling measured **~2.5% wall** (spike 2026-09-09, see below) | wall | S (a) / M (b) | **spiked, demoted** — only worth folding into a micro-wins bundle |
-| 14 | Upstream make/unmake cost | `do_move`+`undo_move` 13.8% — **spiked 2026-09-09 (below)**: upstream core ~7.6 ns/round-trip and inherently tight; solver wrapper ~4.3 ns (64 B `StateInfo` zeroing + undo-stack push/pop), ~3% wall ceiling | ~1–3% wall (wrapper slimming only) | wall | S | **spiked, re-scoped** — no upstream round; wrapper slimming is a micro-wins candidate |
+| 14 | Upstream make/unmake cost | `do_move`+`undo_move` **26.9% post-plan4** (13.8% post-plan3; per-eval ~31→~59 ns, TT cache pressure — see profile above); upstream core ~7.6 ns/round-trip and inherently tight; solver wrapper ~4.3 ns (64 B `StateInfo` zeroing + undo-stack push/pop) | ~1–3% wall (wrapper slimming only; absolute ceiling unchanged) | wall | S | **spiked, re-scoped** — no upstream round; wrapper slimming is now the top micro-wins candidate |
 | 8 | Cheaper static scoring | `StaticAtomicScorer` does 2–5 sliding-attack scans per quiet move; precomputed/incremental attacks | ~3–5% wall (was 5–15% pre-plan3; `score_with_context` now 5.4%) | wall | M | open |
-| 13 | Clock sampling | `time_exceeded()` calls `Instant::now()` at every `dfpn` entry; sample every N nodes (budget mode is eval-count-based and unaffected) | ~2% wall | wall | S | open — good agile warm-up |
-| 15 | `has_legal_move` playout cross-check | Random-playout property test: `Position::has_legal_move` vs `legal_moves_with_state` + `outcome_from_state` (report3 "missing tests") | correctness hardening, no speed | correctness | S | open |
+| 13 | Clock sampling | `time_exceeded()` calls `Instant::now()` at every `dfpn` entry; sample every N nodes (budget mode is eval-count-based and unaffected) | ~2% wall (2.2% post-plan4, unchanged) | wall | S | open — good agile warm-up |
+| 15 | `has_legal_move` playout cross-check | Random-playout property test: `Position::has_legal_move` vs `legal_moves_with_state` + `outcome_from_state` (report3 "missing tests") | correctness hardening, no speed | correctness | S | **done (plan5)**: `tests/test_playout_crosscheck.rs`, P1–P4 green in both tiers; see `report5.md` |
 | 5 | AND-side ordering signal (non-NN) | Counter-moves, AND-specific history, TT `work` feedback — disproving work concentrates in 1–2 replies per AND node (median max child-share 52.9%) | ~5–20% evals, regression risk (oracle hurt m24_white 2.1×) | nodes | M | open |
 | 7 | Lazy/staged child evaluation | Min-heap: evaluate children in rank order as needed instead of all on first iteration | ~3–10% evals | nodes | M | open |
 | 9 | 2–3-man atomic endgame tablebases | Leaf probes in shallow-material positions | huge where covered, negligible elsewhere | nodes | M–L | open |
@@ -190,10 +193,14 @@ until a plan claims it.
 - **plan4** — TT capacity default (#16): `--tt-size` 64 → 128 MB;
   behavior-changing, validated on the move-order suite; m22
   first-outcome −49% wall, default-mode −74% (done, `report4.md`).
+- **plan5** — #15 `has_legal_move` playout cross-check: test-only
+  property test (`tests/test_playout_crosscheck.rs`), no `src/` change;
+  plus the post-plan4 profile re-rank above (done, `report5.md`).
 - **From here on:** agile cadence per the working agreement above; the
   next plan is chosen from the backlog table, not from a fixed roadmap.
   Leading candidates: #2 parallelism design spike (the only remaining
-  multiplicative lever) or the micro-wins bundle (#13, #12a, #14, #15).
+  multiplicative lever) or the micro-wins bundle (#13, #12a, #14 — #14
+  now the top candidate after the post-plan4 re-rank).
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

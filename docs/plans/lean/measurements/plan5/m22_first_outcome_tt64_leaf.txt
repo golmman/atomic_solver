@@ -1,0 +1,89 @@
+    36.70%  atomic_solver  atomic_solver     [.] <atomic_solver::search::dfpn::Search>::evaluate_child
+    11.54%  atomic_solver  atomic_solver     [.] <atomic_solver::search::dfpn::Search>::dfpn
+    10.77%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::populate_state
+    10.13%  atomic_solver  atomic_solver     [.] <atomic_solver::position::Position>::do_move
+     8.49%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::undo_move
+     4.99%  atomic_solver  atomic_solver     [.] <atomic_solver::search::ordering::StaticAtomicScorer>::score_with_context
+     4.16%  atomic_solver  atomic_solver     [.] atomic_movegen::movegen::has_legal_move_with_state
+     3.76%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::legal
+     2.30%  atomic_solver  atomic_solver     [.] atomic_movegen::movegen::generate_legal_with_state
+     2.23%  atomic_solver  [vdso]            [.] 0x000000000000050c
+     1.01%  atomic_solver  atomic_solver     [.] core::slice::sort::shared::smallsort::insertion_sort_shift_left::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.60%  atomic_solver  atomic_solver     [.] core::slice::sort::stable::quicksort::quicksort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.51%  atomic_solver  atomic_solver     [.] atomic_solver::search::dfpn::selection::selection_for_child
+     0.32%  atomic_solver  atomic_solver     [.] <atomic_solver::search::tt::table::TranspositionTable>::store
+     0.31%  atomic_solver  libc.so.6         [.] __memcpy_generic
+     0.26%  atomic_solver  [vdso]            [.] 0x0000000000000508
+     0.26%  atomic_solver  atomic_solver     [.] core::slice::sort::stable::drift::sort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.23%  atomic_solver  atomic_solver     [.] <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapters::filter::filter_try_fold<&atomic_solver::search::dfpn::children::ChildInfo, (), core::ops::control_flow::ControlFlow<()>, atomic_solver::search::dfpn::selection::select_from_children::{closure#4}, core::iter::traits::iterator::Iterator::all::check<&atomic_solver::search::dfpn::children::ChildInfo, atomic_solver::search::dfpn::selection::select_from_children::{closure#5}>::{closure#0}>::{closure#0}, core::ops::control_flow::ControlFlow<()>>
+     0.22%  atomic_solver  atomic_solver     [.] <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapters::filter::filter_try_fold<&atomic_solver::search::dfpn::children::ChildInfo, (), core::ops::control_flow::ControlFlow<()>, atomic_solver::search::dfpn::selection::select_from_children::{closure#6}, core::iter::traits::iterator::Iterator::all::check<&atomic_solver::search::dfpn::children::ChildInfo, atomic_solver::search::dfpn::selection::select_from_children::{closure#7}>::{closure#0}>::{closure#0}, core::ops::control_flow::ControlFlow<()>>
+     0.11%  atomic_solver  atomic_solver     [.] core::slice::sort::shared::smallsort::sort8_stable::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.11%  atomic_solver  libc.so.6         [.] __memset_zva64
+     0.10%  atomic_solver  atomic_solver     [.] compiler_builtins::int::specialized_div_rem::u128_div_rem
+     0.09%  atomic_solver  atomic_solver     [.] atomic_solver::main
+     0.09%  atomic_solver  libc.so.6         [.] clock_gettime@@GLIBC_2.17
+     0.07%  atomic_solver  atomic_solver     [.] <std::sys::pal::unix::time::Timespec>::now
+     0.05%  atomic_solver  atomic_solver     [.] clock_gettime@plt
+     0.05%  atomic_solver  [unknown]         [k] 0xffffd38584ee7a84
+     0.05%  atomic_solver  [unknown]         [k] 0xffffd38585fd53e0
+     0.04%  atomic_solver  [unknown]         [k] 0xffffd38584f62350
+     0.04%  atomic_solver  [vdso]            [.] 0x00000000000004d0
+     0.03%  atomic_solver  atomic_solver     [.] core::slice::sort::stable::driftsort_main::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}, alloc::vec::Vec<(atomic_movegen::types::Move, i32)>>
+     0.03%  atomic_solver  libc.so.6         [.] __memmove_generic
+     0.02%  atomic_solver  [unknown]         [k] 0xffffd38584f6cca4
+     0.02%  atomic_solver  [unknown]         [k] 0xffffd38585fe7c9c
+     0.02%  atomic_solver  [vdso]            [.] 0x00000000000004f8
+     0.02%  atomic_solver  atomic_solver     [.] <atomic_solver::search::dfpn::Search>::best_move_repeats_path
+     0.01%  atomic_solver  [vdso]            [.] __kernel_clock_gettime
+     0.01%  atomic_solver  [vdso]            [.] 0x0000000000000554
+     0.01%  atomic_solver  atomic_solver     [.] memset@plt
+     0.01%  atomic_solver  [unknown]         [k] 0xffffd38584b39c30
+     0.01%  atomic_solver  [unknown]         [k] 0xffffd38584c31610
+     0.01%  atomic_solver  [unknown]         [k] 0xffffd38584f6e7b8
+     0.01%  atomic_solver  atomic_solver     [.] __udivti3
+     0.01%  atomic_solver  atomic_solver     [.] memcpy@plt
+     0.01%  atomic_solver  [unknown]         [k] 0xffffd38584b8daec
+     0.01%  atomic_solver  [unknown]         [k] 0xffffd38584e514b8
+     0.01%  atomic_solver  [unknown]         [k] 0xffffd38584e7fbf8
+     0.01%  atomic_solver  [unknown]         [k] 0xffffd38584ecb424
+     0.01%  atomic_solver  [unknown]         [k] 0xffffd38584f65614
+     0.00%  atomic_solver  [vdso]            [.] 0x00000000000004d8
+     0.00%  atomic_solver  [vdso]            [.] 0x00000000000004f0
+     0.00%  atomic_solver  [vdso]            [.] 0x0000000000000500
+     0.00%  atomic_solver  atomic_solver     [.] atomic_movegen::movegen::generate_castling::<(), atomic_movegen::movegen::has_legal_move_with_state::{closure#0}>
+     0.00%  atomic_solver  atomic_solver     [.] memmove@plt
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584aa02cc
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584b810bc
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584bd6354
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584c3161c
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584c31624
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584c59dd0
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584e52bcc
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584e7cc48
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584ea6988
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584eacea0
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584eacfe4
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584ead7bc
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584eb3cb0
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584eb3e5c
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584eb54a4
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584eb54c0
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584eb5814
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584eb5968
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584ec7394
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584ee2a88
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584eea6e8
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584eeae08
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584f0e1c0
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584f62394
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584f670a0
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584f670e8
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38584f67bd4
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd385854358c0
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd385855070fc
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38585f9b554
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38585fb0a74
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38585fb4d90
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38585fd53f0
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38585fd9a68
+     0.00%  atomic_solver  [unknown]         [k] 0xffffd38585feb74c
