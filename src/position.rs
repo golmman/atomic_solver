@@ -6,7 +6,9 @@
 //! without improving readability.
 
 use atomic_movegen::board::{Board, StateInfo};
-use atomic_movegen::movegen::{generate_legal, generate_legal_with_state};
+use atomic_movegen::movegen::{
+    generate_legal, generate_legal_with_state, has_legal_move_with_state,
+};
 use atomic_movegen::types::{Bitboard, Color, Move, MoveList};
 
 use crate::zobrist;
@@ -162,6 +164,18 @@ impl Position {
     pub fn legal_moves_with_state(&self, moves: &mut MoveList, state: &mut StateInfo) {
         self.populate_state(state);
         generate_legal_with_state(&self.board, state, moves);
+    }
+
+    /// Early-exit legal-move existence query for callers that already have
+    /// a populated `StateInfo`.
+    ///
+    /// Equivalent to `legal_moves_with_state(..)` followed by
+    /// `!moves.is_empty()`, but stops at the first legal move. `state` must
+    /// have been populated (e.g. via [`Position::populate_state`]) for the
+    /// current board.
+    #[must_use]
+    pub fn has_legal_move(&self, state: &StateInfo) -> bool {
+        has_legal_move_with_state(&self.board, state)
     }
 
     /// Convenience helper that returns all legal moves in a `Vec`.

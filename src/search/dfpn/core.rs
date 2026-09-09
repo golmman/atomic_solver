@@ -7,8 +7,7 @@
 
 #![allow(clippy::similar_names)]
 
-use atomic_movegen::board::StateInfo;
-use atomic_movegen::types::{Move, MoveList};
+use atomic_movegen::types::Move;
 
 use crate::position::{Outcome, Position};
 
@@ -44,7 +43,6 @@ impl Search {
         max_depth: u32,
         max_work: u64,
         is_or_node: bool,
-        precomputed: Option<ChildPrecompute>,
     ) -> Outcome {
         if self.time_exceeded() {
             return Outcome::Draw;
@@ -59,21 +57,25 @@ impl Search {
         // prefer keeping hard-won entries.
         let child_evals_start = self.child_evals;
 
-        // Hot-path reuse: when the caller recursed from `evaluate_child`, the
-        // child's legal moves and node state were already generated there for
-        // the terminal check; consume them instead of regenerating. Correctness
-        // never depends on the cache — `None` regenerates.
-        let (mut moves, state) = match precomputed {
-            Some(p) => (p.moves, p.state),
-            None => {
-                let mut m = MoveList::new();
-                let mut s = StateInfo::new();
-                pos.legal_moves_with_state(&mut m, &mut s);
-                (m, s)
-            }
-        };
+        // Frame-local movegen slot: taken from the per-depth pool at the depth
+        // this frame will occupy after `path_push` (unique among active
+        // frames), cleared and regenerated at entry — correctness never
+        // depends on pooled contents — and returned to the pool at frame exit
+        // so the next frame at this depth reuses warm storage. Frames that
+        // exit early drop their slot contents; the pool entry keeps a fresh
+        // default (see `ChildPrecompute`).
+        let slot_depth = self.path_stack.len() + 1;
+        if self.precompute_pool.len() <= slot_depth {
+            self.precompute_pool
+                .resize_with(slot_depth + 1, ChildPrecompute::new);
+        }
+        let mut slot = std::mem::take(&mut self.precompute_pool[slot_depth]);
+        slot.moves.clear();
+        pos.legal_moves_with_state(&mut slot.moves, &mut slot.state);
+        let moves = &mut slot.moves;
+        let state = &mut slot.state;
 
-        if let Some(outcome) = pos.outcome_from_state(&state, &moves) {
+        if let Some(outcome) = pos.outcome_from_state(state, moves) {
             let (pn, dn) = outcome.pn_dn_for(is_or_node);
             self.tt.store(
                 tt_key,
@@ -87,6 +89,7 @@ impl Search {
                 u32::MAX,
             );
             self.emit_proof_node(pos, outcome, 0);
+            self.precompute_pool[slot_depth] = slot;
             return outcome;
         }
 
@@ -96,11 +99,13 @@ impl Search {
             // the horizon without re-expanding the entire subtree.
             self.tt
                 .store(tt_key, Move::NONE, u8::MAX, 0, None, 1, 1, 0, 0);
+            self.precompute_pool[slot_depth] = slot;
             return Outcome::Draw;
         }
 
         // Local repetition: this board is already on the current search stack.
         if self.path_contains(rep_key) {
+            self.precompute_pool[slot_depth] = slot;
             return Outcome::Draw;
         }
 
@@ -114,6 +119,7 @@ impl Search {
             && (entry.best_move == Move::NONE || !self.best_move_repeats_path(pos, entry.best_move))
         {
             self.emit_proof_node(pos, resolved.outcome, resolved.depth);
+            self.precompute_pool[slot_depth] = slot;
             return resolved.outcome;
         }
 
@@ -125,7 +131,7 @@ impl Search {
             .as_ref()
             .filter(|e| e.outcome.is_some() || e.best_move != Move::NONE)
             .map_or(Move::NONE, |e| e.best_move);
-        self.sort_moves(pos, &state, &mut moves, best_from_tt, is_or_node);
+        self.sort_moves(pos, state, moves, best_from_tt, is_or_node);
 
         // Previous-bounds snapshot, taken before any child search can store to
         // this key via transposition.
@@ -140,25 +146,19 @@ impl Search {
 
         self.path_push(rep_key);
 
-        // Per-frame pooled storage: the children table and the child movegen
-        // slots are borrowed from `Search` with `mem::take` (the frame owns
-        // them across the recursive calls, so a plain borrow cannot span the
-        // recursion) and returned at the single frame exit below. Every early
-        // return of `dfpn` happens above this point. Depth = `path_stack.len()`
-        // after `path_push` is unique among active frames.
+        // Per-frame pooled storage: the children table is borrowed from
+        // `Search` with `mem::take` (the frame owns it across the recursive
+        // calls, so a plain borrow cannot span the recursion) and returned at
+        // the single frame exit below. Every early return of `dfpn` happens
+        // above this point (the frame's movegen slot is already taken and
+        // restored at each of those exits). Depth = `path_stack.len()` after
+        // `path_push` is unique among active frames; it equals `slot_depth`.
         let frame_depth = self.path_stack.len();
         if self.child_pool.len() <= frame_depth {
             self.child_pool.resize_with(frame_depth + 1, Vec::new);
         }
-        if self.precompute_pool.len() <= frame_depth {
-            self.precompute_pool.resize_with(frame_depth + 1, Vec::new);
-        }
         let mut children = std::mem::take(&mut self.child_pool[frame_depth]);
         children.clear();
-        // Precompute slots are *not* cleared: their storage is reused warm
-        // across frames at the same depth (a slot is only read after the
-        // child freshly filled it this frame — see `ChildPrecompute`).
-        let mut slots = std::mem::take(&mut self.precompute_pool[frame_depth]);
 
         let mut outcome_to_store: Option<Outcome> = None;
         let mut outcome_to_store_best_move = Move::NONE;
@@ -186,23 +186,14 @@ impl Search {
             }
 
             if children.is_empty() {
-                self.evaluate_all_children(
-                    pos,
-                    &moves,
-                    max_depth,
-                    is_or_node,
-                    &mut children,
-                    &mut slots,
-                );
+                self.evaluate_all_children(pos, moves, max_depth, is_or_node, &mut children);
             } else if let Some(prev) = selection
                 && let Some(idx) = prev.best_child_index
             {
                 let mv = children[idx].mv;
                 let old_pn = children[idx].pn;
                 let old_dn = children[idx].dn;
-                debug_assert!(idx < slots.len(), "every evaluated child has a slot");
-                children[idx] =
-                    self.evaluate_child(pos, mv, max_depth, is_or_node, Some(&mut slots[idx]));
+                children[idx] = self.evaluate_child(pos, mv, max_depth, is_or_node);
                 // In a work-bounded call, if the child came back with exactly the
                 // same (pn, dn) bounds re-expanding it cannot make progress. Mark
                 // it explored so the search moves on to other children.
@@ -271,14 +262,8 @@ impl Search {
             };
 
             pos.do_move(mv);
-            // Consume the child's movegen slot if present (the slot is
-            // replaced with a fresh empty one, so a later re-selection simply
-            // regenerates into it). Correctness never depends on the cache.
-            let precomputed = selection.best_child_index.and_then(|idx| {
-                slots
-                    .get_mut(idx)
-                    .map(|s| std::mem::replace(s, ChildPrecompute::new()))
-            });
+            // The child's frame generates its own movegen state into its own
+            // pooled slot at entry.
             self.with_child_path(mv, |search| {
                 let _ = search.dfpn(
                     pos,
@@ -287,7 +272,6 @@ impl Search {
                     max_depth.saturating_sub(1),
                     child_max_work,
                     !is_or_node,
-                    precomputed,
                 );
             });
             pos.undo_move(mv);
@@ -358,7 +342,7 @@ impl Search {
         // Return the pooled frame storage before leaving the frame.
         children.clear();
         self.child_pool[frame_depth] = children;
-        self.precompute_pool[frame_depth] = slots;
+        self.precompute_pool[slot_depth] = slot;
 
         self.path_pop();
 

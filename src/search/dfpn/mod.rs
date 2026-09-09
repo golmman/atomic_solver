@@ -127,8 +127,10 @@ pub struct Search {
     /// Per-depth pool of `ChildInfo` tables (`dfpn` frames borrow their
     /// depth's vector with `mem::take` and return it at frame exit).
     child_pool: Vec<Vec<ChildInfo>>,
-    /// Per-depth pool of child movegen slots (see `ChildPrecompute`).
-    precompute_pool: Vec<Vec<ChildPrecompute>>,
+    /// Per-depth pool of frame movegen slots (see `ChildPrecompute`): the
+    /// entry of the `dfpn` frame at depth `d` generates its own legal moves
+    /// into `precompute_pool[d]` and returns it at frame exit.
+    precompute_pool: Vec<ChildPrecompute>,
     /// Reusable `(move, score)` scratch for `sort_moves`.
     sort_scratch: Vec<(Move, i32)>,
 }
@@ -425,7 +427,7 @@ impl Search {
                 // line; further chunks cannot change the outcome.
                 break;
             }
-            outcome = self.dfpn(pos, INF, INF, max_depth, call_max_work, true, None);
+            outcome = self.dfpn(pos, INF, INF, max_depth, call_max_work, true);
             if outcome != Outcome::Draw {
                 break;
             }

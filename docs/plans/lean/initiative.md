@@ -60,12 +60,12 @@ memory, maintainability.
 | 3 | Eliminate redundant move generation | Cache/defer the child `MoveList`+`StateInfo` between `evaluate_child`'s terminal check, `dfpn` entry, and `sort_moves` | ~10–25% wall | wall | M | plan2 candidate |
 | 6 | Allocation & state-rebuild removal | Scratch reuse for per-node `Vec<ChildInfo>` / per-sort `Vec<(Move,i32)>`; avoid `move_stack.clone()` per proof event; hoist per-iteration best-move filtering | ~3–10% wall | wall | S–M | plan2 candidate |
 | 8 | Cheaper static scoring | `StaticAtomicScorer` does 2–5 sliding-attack scans per quiet move; precomputed/incremental attacks | ~5–15% wall | wall | M | plan2 candidate |
-| 2 | Parallel search | Lazy-SMP-style parallel sibling children or parallel refinement roots over the shared TT | 2–8× wall on multicore | wall | L–XL | plan3 candidate, needs determinism design first |
+| 2 | Parallel search | Lazy-SMP-style parallel sibling children or parallel refinement roots over the shared TT | 2–8× wall on multicore | wall | L–XL | plan4 candidate, needs determinism design first |
 | 5 | AND-side ordering signal (non-NN) | Counter-moves, AND-specific history, TT `work` feedback — disproving work concentrates in 1–2 replies per AND node (median max child-share 52.9%) | ~5–20% evals, regression risk (oracle hurt m24_white 2.1×) | nodes | M | open |
 | 7 | Lazy/staged child evaluation | Min-heap: evaluate children in rank order as needed instead of all on first iteration | ~3–10% evals | nodes | M | open |
 | 9 | 2–3-man atomic endgame tablebases | Leaf probes in shallow-material positions | huge where covered, negligible elsewhere | nodes | M–L | open |
 | 10 | History/killer constant re-tuning | Never re-tuned after the GHI/twin removal; side-aware killers | ~0–5% evals | nodes | S–M | open |
-| 11 | Upstream `has_legal_move` early-exit terminal check | movegen-side lazy generation with first-legal-move exit; `evaluate_child`'s terminal check becomes a boolean query + checkers/`occupied==2` classification instead of a full generation per evaluated child | ~20–40% wall | wall | M | **plan3** |
+| 11 | Upstream `has_legal_move` early-exit terminal check | movegen-side lazy generation with first-legal-move exit; `evaluate_child`'s terminal check becomes a boolean query + checkers/`occupied==2` classification instead of a full generation per evaluated child | ~20–40% wall | wall | M | **done (plan3)**: 46% wall on m22 first-outcome |
 
 Statuses reference plans under `docs/plans/lean/`; an item is *open*
 until a plan claims it.
@@ -102,8 +102,8 @@ until a plan claims it.
   (done, `report2.md`).
 - **plan3** — upstream `has_legal_move` fast path (#11, the
   profile-gated leftover of #3; two phases: movegen crate, then solver
-  integration).
-- **plan4** — parallelism (#2), only after plan3 lands and with a
+  integration) (done, `report3.md`).
+- **plan4** — parallelism (#2), now that plan3 has landed; still needs a
   determinism story for the budget contract.
 - Items #5/#7/#9/#10 are claimed by later plans as capacity allows.
 

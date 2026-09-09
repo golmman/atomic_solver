@@ -33,12 +33,19 @@ A pure solver for atomic chess in Rust.
   to the wall-clock timeout, used by the test tiers): a budget-exhausted
    search returns `Draw`, stores only unsolved TT entries, and reports
    `ExitReason::BudgetExhausted` — never `ExitReason::Timeout`, which stays
-   exclusively about wall time. The hot path reuses movegen: the child's
-   legal moves are generated once in `evaluate_child` (for the terminal
-   check, into a per-depth pooled slot from `Search::precompute_pool`) and
-   consumed by the recursive `dfpn` call; the node `StateInfo` is shared
-   with `sort_moves` instead of being rebuilt; per-frame child vectors and
-   the `sort_moves` score buffer are pooled on `Search`.
+   exclusively about wall time. The hot path never generates move lists for
+   terminal checks: `evaluate_child` decides child terminality with the
+   upstream early-exit existence query (`Position::has_legal_move` over
+   `atomic_movegen::movegen::has_legal_move_with_state`, fed by a
+   caller-populated `StateInfo`) plus board-static classification
+   (checkers bit, `occupied == 2`); no legal-move list is produced for the
+   ~95% of evaluated children that are never searched. Only searched
+   children generate their legal moves, once, into a frame-local pooled
+   slot: the `dfpn` entry takes its slot from `Search::precompute_pool` at
+   its own depth (one slot per active frame; the pool no longer scales with
+   branching) and shares the node `StateInfo` with `sort_moves` instead of
+   rebuilding it. Per-frame child vectors and the `sort_moves` score buffer
+   are pooled on `Search`.
 - `src/search/tt/` holds the transposition table with path-independent base
   entries. Repetition-dependent results are not cached, following the
   first-player-loss GHI shortcut.
@@ -261,8 +268,8 @@ in sync if the launcher changes.
   constants that are tuned together. The unit tests are split out into
   `src/search/ordering/tests.rs` to keep the main file under the 20 KB limit.
 - `src/search/dfpn/children.rs` is larger than the 20 KB guideline because
-  `ChildPrecompute` (the per-depth pooled child movegen slots), the
-  cost-ordered terminal fast paths in `evaluate_child`, TT reuse, and
+  `ChildPrecompute` (the per-depth pooled frame movegen slots), the
+  existence-query terminal classification in `evaluate_child`, TT reuse, and
   proof-event emission share one `Position` move/undo sequence; the slot
   reuse and staleness invariants are documented next to the type that owns
   them.
