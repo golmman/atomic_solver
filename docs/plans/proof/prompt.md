@@ -70,3 +70,29 @@ Open questions:
 * How much performance potential is there?
 * Is restoration of a proof tree from a pv reasonable?
 
+---
+
+Understanding your suggestion (point 5.)
+* "Search process RSS becomes TT-only" - what does "RSS" mean in this context?
+* where are the logs stored? directly on the disk? wouldn't that be a performance bottleneck?
+
+---
+
+Thanks for the feedback. I don't like the event log though for the following reasoning:
+
+One nice thing about our df-pn search is that it is memory bound.
+I could in theory let it run for days on compute optimized machines and not worry about running out of RAM or disk space.
+So that is a quality i like to get back by removing the coupling to proof tree generation.
+The proof tree generation could then be outsourced to memory optimized machines.
+
+So how do we find the reasonable middle ground?
+Maybe another simple idea would be to dump the FEN and TT after the search and let the proof tree generation pick up from there.
+What do you think?
+
+---
+
+I'd like to discuss the right space for the initiative first.
+I think the correct initiative would be `docs/plans/proof/`, it is missing an `initiative.md` though.
+My reasoning: the implementation idea has moved from the existing prove tree to picking up a tt dump but the goal remains - providing proof for a discovered outcome.
+
+
