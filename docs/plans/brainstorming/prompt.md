@@ -110,3 +110,19 @@ This is clean, streams results as soon as they are known, and never prints an un
 
 
 4b2k/P1Bp1p1P/3P1P2/8/8/1p1p4/bPpP4/2B4K w - - 0 1
+
+---
+
+* refine-cap -> new "status"
+* shorten or split AGENTS.md?
+* proof-tree rework
+
+
+The break condition `--refine-cap` treats a cap-cut round (unknown, may still improve)
+identically to a naturally exhausted bound (proven: no shorter win).
+`bounded_search` could report which of the two happened; on natural
+exhaustion the PV is proven shortest and could be labelled as such (and
+on cap-cut with time left, one could argue for continuing). Currently
+nothing in the output distinguishes the two cases.
+
+Is there an existing initative where we can add an implementation plan?

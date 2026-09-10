@@ -232,7 +232,10 @@ in sync if the launcher changes.
 - Only use reading `git` commands, never writing ones (no `git add`,
   `git rm`, `git commit`, etc.).
 - `docs/plans/` contains prompts, implementation plans and reports
-  - ignore all `prompt.md` files
+  - each sub-directory in `docs/plans/` is treated as an initiative with a mutual high-level goal 
+  - an initiative may be described by an `initiative.md`
+  - initiative work is agile not waterfall
+  - you can ignore all `prompt.md` files, which are unfiltered user-thoughts
   - implementation plans can be found via `find . -type f -name 'plan*.md'`
   - implementation reports can be found via `find . -type f -name 'report*.md'`
   - implementation plans should always be self contained so they can be implemented i a seaparate session
