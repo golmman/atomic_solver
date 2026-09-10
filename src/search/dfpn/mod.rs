@@ -60,6 +60,47 @@ impl std::fmt::Display for ExitReason {
     }
 }
 
+/// How the PV of the last solve relates to optimality.
+///
+/// This qualifies the PV *length*, not its validity: the returned line is the
+/// informational best-effort PV from the transposition table and is never
+/// validated as a proof by `Search` (that is the proof-tree layer's job).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PvStatus {
+    /// No decisive outcome: there is no PV to qualify.
+    None,
+    /// PV came from the first-outcome phase (including
+    /// `first_outcome_only` runs). Length is informational.
+    FirstOutcome,
+    /// The last refinement round ended in natural exhaustion at
+    /// `bound = pv_len - 2` (the bounded tree was fully explored with no
+    /// decisive line), or the returned win is 1 move long. Within the
+    /// solver's search semantics, no shorter win exists. This says nothing
+    /// about whether the returned move sequence is a valid proof.
+    ProvenShortest,
+    /// The last refinement round was cut by the per-round work cap or by a
+    /// global resource limit, or ended decisive-but-not-shorter. A shorter
+    /// win may exist.
+    Unproven,
+}
+
+/// Why `bounded_search` returned. Only meaningful when `outcome == Draw` for
+/// the non-`Decisive` variants; a decisive return always reports `Decisive`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum RoundTermination {
+    /// A decisive outcome was found.
+    Decisive,
+    /// The bounded tree at `max_depth` was fully explored with no decisive
+    /// line (`work_done < call_max_work` on the final chunk).
+    Exhausted,
+    /// The per-round work cap (`round_work_cap`) stopped the round before
+    /// exhaustion (`call_max_work == 0` reached via the round cap).
+    CapCut,
+    /// Wall time, the stop flag, the memory flag, or the global child-eval
+    /// budget stopped the round before exhaustion.
+    ResourceCut,
+}
+
 /// Convert a positive f64 into an exact reduced `num/den` fraction.
 ///
 /// This is used both for `1.0 + epsilon` and for geometric chunk-growth
@@ -110,6 +151,8 @@ pub struct Search {
     first_outcome_evals: u64,
     refinement_rounds: u32,
     refinement_evals: u64,
+    pv_status: PvStatus,
+    last_round_cap_cut: bool,
     history: [[[i32; 64]; 64]; 2],
     killers: [[Move; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
     history_age_counter: u64,
@@ -160,6 +203,8 @@ impl Search {
             first_outcome_evals: 0,
             refinement_rounds: 0,
             refinement_evals: 0,
+            pv_status: PvStatus::None,
+            last_round_cap_cut: false,
             history: [[[0; 64]; 64]; 2],
             killers: [[Move::NONE; history::KILLER_SLOTS]; history::MAX_KILLER_DEPTH],
             history_age_counter: 0,
@@ -269,6 +314,25 @@ impl Search {
     #[must_use]
     pub fn refinement_evaluations(&self) -> u64 {
         self.refinement_evals
+    }
+
+    /// How the PV returned by the last [`Search::solve`] /
+    /// [`Search::solve_with_progress`] call relates to optimality. See
+    /// [`PvStatus`] for the exact meaning of each variant; in particular,
+    /// [`PvStatus::ProvenShortest`] is a statement about PV *length* within
+    /// the solver's own search semantics, not a validation of the returned
+    /// move sequence.
+    #[must_use]
+    pub fn pv_status(&self) -> PvStatus {
+        self.pv_status
+    }
+
+    /// Whether the last refinement round of the last solve was cut by the
+    /// per-round work cap rather than by a global resource limit. Only
+    /// meaningful when [`Search::pv_status`] is [`PvStatus::Unproven`].
+    #[must_use]
+    pub fn last_refine_round_cap_cut(&self) -> bool {
+        self.last_round_cap_cut
     }
 
     /// The per-round child-eval cap for the next refinement round.
@@ -404,8 +468,13 @@ impl Search {
         pos: &mut Position,
         max_depth: u32,
         round_work_cap: u64,
-    ) -> (Outcome, Vec<Move>) {
+    ) -> (Outcome, Vec<Move>, RoundTermination) {
         let mut outcome = Outcome::Draw;
+        // Default for a loop-condition exit: the only ways to leave the loop
+        // without hitting a `break` below are `time_exceeded()`,
+        // `child_eval_budget_exceeded()`, or (pathologically, via chunk
+        // overflow) `chunk == 0` — all resource cuts.
+        let mut termination = RoundTermination::ResourceCut;
         let mut chunk = 500_000u64;
         let mut last_child_evals_before;
         let round_evals_start = self.child_evals;
@@ -424,19 +493,33 @@ impl Search {
             let call_max_work = chunk.min(remaining_budget).min(round_remaining);
             if call_max_work == 0 {
                 // Global budget or round cap exhausted without a decisive
-                // line; further chunks cannot change the outcome.
+                // line; further chunks cannot change the outcome. Attribute
+                // the cut to whichever constraint is smaller; on a tie the
+                // global budget was spent too, so report the resource cut.
+                termination = if round_remaining < remaining_budget {
+                    RoundTermination::CapCut
+                } else {
+                    RoundTermination::ResourceCut
+                };
                 break;
             }
             outcome = self.dfpn(pos, INF, INF, max_depth, call_max_work, true);
             if outcome != Outcome::Draw {
+                termination = RoundTermination::Decisive;
                 break;
             }
 
             let work_done = self.child_evals - last_child_evals_before;
             if work_done < call_max_work {
-                // The search did not use its full work budget, so the bounded
-                // tree was exhausted without finding a decisive line. More work
-                // cannot change the outcome at this depth.
+                // The search did not use its full work budget. That is natural
+                // exhaustion of the bounded tree — unless a resource limit
+                // also fired during the final chunk, in which case the cut
+                // must never be claimed as exhaustion.
+                termination = if self.time_exceeded() || self.child_eval_budget_exceeded() {
+                    RoundTermination::ResourceCut
+                } else {
+                    RoundTermination::Exhausted
+                };
                 break;
             }
 
@@ -453,7 +536,7 @@ impl Search {
         // chain.  It is not guaranteed to be a valid proof; proof generation is
         // the responsibility of the proof-tree layer.
         let pv = self.extract_pv(pos);
-        (outcome, pv)
+        (outcome, pv, termination)
     }
 
     pub fn search_depth(
@@ -462,7 +545,7 @@ impl Search {
         max_depth: u32,
     ) -> (Outcome, Vec<Move>, u64) {
         self.begin_run();
-        let (outcome, pv) = self.bounded_search(pos, max_depth, u64::MAX);
+        let (outcome, pv, _termination) = self.bounded_search(pos, max_depth, u64::MAX);
         (outcome, pv, self.nodes)
     }
 
@@ -482,7 +565,7 @@ impl Search {
         self.prefix_path = Some(prefix_keys.to_vec());
         self.begin_run();
 
-        let (outcome, pv) = self.bounded_search(pos, max_depth, u64::MAX);
+        let (outcome, pv, _termination) = self.bounded_search(pos, max_depth, u64::MAX);
         let depth = if outcome == Outcome::Win {
             pv.len() as u32
         } else {
@@ -495,6 +578,11 @@ impl Search {
 
     /// Solve a position, returning the decisive outcome and the shortest PV
     /// found within the configured timeout.
+    ///
+    /// The returned PV is proven shortest (in the [`PvStatus::ProvenShortest`]
+    /// sense: no shorter decisive line exists within the solver's search
+    /// semantics) if and only if [`Search::pv_status`] returns
+    /// `ProvenShortest` after the call.
     pub fn solve(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
         self.solve_with_progress(pos, |_, _| {})
     }
@@ -502,6 +590,11 @@ impl Search {
     /// Solve a position and call `on_progress` for every newly found decisive
     /// line. The final returned PV is the shortest line discovered before the
     /// timeout or the first outcome if `first_outcome_only` is set.
+    ///
+    /// The PV is proven shortest (in the [`PvStatus::ProvenShortest`] sense:
+    /// no shorter decisive line exists within the solver's search semantics)
+    /// if and only if [`Search::pv_status`] returns `ProvenShortest` after the
+    /// call.
     pub fn solve_with_progress<F>(
         &mut self,
         pos: &mut Position,
@@ -513,7 +606,7 @@ impl Search {
         self.begin_run();
 
         // 1. First decisive outcome (work-chunked, unbounded depth).
-        let (mut outcome, mut pv) = self.bounded_search(pos, u32::MAX, u64::MAX);
+        let (mut outcome, mut pv, _first_phase) = self.bounded_search(pos, u32::MAX, u64::MAX);
         if outcome != Outcome::Draw || !pv.is_empty() {
             on_progress(outcome, &pv);
         }
@@ -525,6 +618,14 @@ impl Search {
         // Iterative refinement is best-effort: it uses the informational PV
         // length from `extract_pv` to set a shorter bound, but it does not
         // validate that the new PV is a sound proof.
+        //
+        // Status bookkeeping: each round either improves the PV or terminates
+        // the loop with an explicit status; the fallback below covers a
+        // loop-condition exit (or the loop never running).
+        let mut improved = false;
+        // Status decided by the last round's termination (set at every break
+        // site); `None` means the loop exited via its own condition.
+        let mut round_status: Option<PvStatus> = None;
         while !self.first_outcome_only
             && outcome != Outcome::Draw
             && n > 2
@@ -539,17 +640,58 @@ impl Search {
             // work-chunk cutoff, so the loop's non-improving check stops
             // refinement with the best result so far.
             let round_cap = self.refinement_round_cap();
-            let (new_outcome, new_pv) = self.bounded_search(pos, bound, round_cap);
+            let (new_outcome, new_pv, termination) = self.bounded_search(pos, bound, round_cap);
             self.refinement_rounds += 1;
             self.refinement_evals = self.child_evals - self.first_outcome_evals;
-            if new_outcome == Outcome::Draw || new_pv.len() as u32 >= n {
+            if new_outcome == Outcome::Draw {
+                round_status = Some(match termination {
+                    RoundTermination::Exhausted => {
+                        // The bounded tree at `bound = n - 2` was fully
+                        // explored with no decisive line: within the solver's
+                        // search semantics no win of length <= n - 2 exists,
+                        // so the n-ply PV is proven shortest (length-wise).
+                        PvStatus::ProvenShortest
+                    }
+                    RoundTermination::CapCut => {
+                        self.last_round_cap_cut = true;
+                        PvStatus::Unproven
+                    }
+                    _ => PvStatus::Unproven,
+                });
+                break;
+            }
+            if new_pv.len() as u32 >= n {
+                // Defensive: a decisive-but-not-shorter round cannot improve
+                // the PV; keep the best line so far, unproven.
+                round_status = Some(PvStatus::Unproven);
                 break;
             }
             outcome = new_outcome;
             pv = new_pv;
             n = pv.len() as u32;
+            improved = true;
             on_progress(outcome, &pv);
         }
+
+        let status = round_status.unwrap_or_else(|| {
+            // The loop exited via its condition (or never ran).
+            if outcome == Outcome::Draw {
+                PvStatus::None
+            } else if n <= 2 {
+                // A 1-move win cannot be shortened.
+                PvStatus::ProvenShortest
+            } else if improved {
+                // The loop condition cut refinement between rounds after at
+                // least one improving round: a shorter win may exist.
+                PvStatus::Unproven
+            } else {
+                // No improving round ever ran (first_outcome_only, or a
+                // resource cut before the first round): the PV is the
+                // first-outcome line.
+                PvStatus::FirstOutcome
+            }
+        });
+        self.pv_status = status;
 
         (outcome, pv, self.nodes)
     }
@@ -561,6 +703,8 @@ impl Search {
         self.first_outcome_evals = 0;
         self.refinement_rounds = 0;
         self.refinement_evals = 0;
+        self.pv_status = PvStatus::None;
+        self.last_round_cap_cut = false;
         self.start = Instant::now();
         self.deadline = self.start + self.timeout;
     }

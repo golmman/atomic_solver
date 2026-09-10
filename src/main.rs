@@ -37,9 +37,14 @@
 //!   Each newly discovered decisive line is logged as
 //!   `outcome: <win|loss|draw> length: <plies>`. For wins and losses the final
 //!   line is followed by `pv: <UCI moves>`, an informational best-effort line
-//!   from the transposition table. If the timeout is reached after any result,
-//!   `timeout` is printed on its own line. The pre-exit hook finalizes the
-//!   authoritative proof tree and writes it to `proof_tree.bin`.
+//!   from the transposition table, and `pv_status: <label>` describing whether
+//!   the PV is proven shortest (`proven-shortest`), the unrefined first
+//!   outcome (`first-outcome`), cut by the refinement work cap (`cap-cut`), or
+//!   cut by a global resource limit / not shorter (`cut-short`). `pv_status`
+//!   qualifies the PV length, not its validity. If the timeout is reached
+//!   after any result, `timeout` is printed on its own line. The pre-exit
+//!   hook finalizes the authoritative proof tree and writes it to
+//!   `proof_tree.bin`.
 //!
 //! Examples:
 //!   atomic_solver --help
@@ -52,7 +57,7 @@ use atomic_solver::config;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::proof_tree::ProofTreeWorkerHandle;
-use atomic_solver::search::dfpn::{ExitReason, Search};
+use atomic_solver::search::dfpn::{ExitReason, PvStatus, Search};
 use atomic_solver::search::ordering::StaticAtomicScorer;
 use std::io::BufRead;
 use std::sync::Arc;
@@ -231,6 +236,19 @@ fn main() {
         println!("outcome: {} length: {}", outcome.as_str(), pv.len());
         if outcome != Outcome::Draw {
             println!("pv: {}", pv_str(&pv));
+            // Qualifies the PV length, not its validity: `proven-shortest`
+            // means no shorter decisive line exists within the solver's
+            // search semantics.
+            let label = match search.pv_status() {
+                PvStatus::ProvenShortest => "proven-shortest",
+                PvStatus::FirstOutcome => "first-outcome",
+                PvStatus::Unproven if search.last_refine_round_cap_cut() => "cap-cut",
+                PvStatus::Unproven => "cut-short",
+                // Unreachable for a decisive outcome; treat defensively as
+                // the unrefined first-outcome line.
+                PvStatus::None => "first-outcome",
+            };
+            println!("pv_status: {label}");
         }
 
         let budget_exhausted = matches!(search.exit_reason(), ExitReason::BudgetExhausted);

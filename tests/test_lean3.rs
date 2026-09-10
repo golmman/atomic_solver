@@ -9,6 +9,10 @@
 //! trajectories on capacity-bound positions. The new golden comes from the
 //! post-plan4 binary and its PV was verified as a valid PPV via the
 //! `verify_ppv` example (see `docs/plans/lean/report4.md`).
+//! **Re-baselined again by dfpn plan 8**, which added the trailing
+//! `pv_status:` diagnostic line; the pre-existing lines are unchanged and the
+//! search trajectory is drift-verified (identical `child_evals`) in
+//! `docs/plans/dfpn/report8.md`.
 
 mod common;
 

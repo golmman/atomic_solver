@@ -1,5 +1,6 @@
 //! Cross-module DF-PN unit tests.
 
+use super::{PvStatus, RoundTermination};
 use crate::position::{Outcome, Position};
 use crate::search::dfpn::Search;
 use atomic_movegen::types::{Move, Square};
@@ -308,8 +309,11 @@ fn refine_cap_bounds_round_work() {
     let mut pos = Position::from_fen(REFINE_FIXTURE_FEN).unwrap();
     let mut search = Search::new(64);
     search.set_timeout(5);
-    // Force a round cap far below the first-outcome work so the cap binds on
-    // the very first round.
+    // Force a round cap far below the first-outcome work. On this fixture the
+    // rounds are TT-cushioned and complete within the cap (see
+    // `refine_cap_cut_reports_unproven_status` for a cap that actually
+    // binds), so this verifies the capped-round accounting: rounds stay far
+    // below the first-outcome work and near the cap itself.
     search.set_refine_round_cap_for_test(1_000);
 
     let (outcome, pv, _nodes) = search.solve(&mut pos);
@@ -368,4 +372,132 @@ fn default_refine_cap_leaves_improving_rounds() {
         search.refinement_rounds() >= 1,
         "default cap must leave improving refinement rounds"
     );
+}
+
+#[test]
+fn bounded_search_reports_exhaustion_below_mate_depth() {
+    // KRR vs K has no mate in 1, so a depth-1 bound fully explores the
+    // 1-ply tree without a decisive line.
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    search.begin_run();
+    let (outcome, _pv, termination) = search.bounded_search(&mut pos, 1, u64::MAX);
+    assert_eq!(outcome, Outcome::Draw);
+    assert_eq!(termination, RoundTermination::Exhausted);
+}
+
+#[test]
+fn bounded_search_reports_resource_cut_on_budget() {
+    // A global child-eval budget smaller than the root's branching factor
+    // cuts the very first chunk: the loop condition exits with the budget
+    // spent, which must be reported as a resource cut (not exhaustion).
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    search.set_child_eval_budget(10);
+    search.begin_run();
+    let (outcome, _pv, termination) = search.bounded_search(&mut pos, u32::MAX, u64::MAX);
+    assert_eq!(outcome, Outcome::Draw);
+    assert_eq!(termination, RoundTermination::ResourceCut);
+}
+
+#[test]
+fn bounded_search_reports_cap_cut_on_round_cap() {
+    // A per-round cap smaller than the root's branching factor exhausts the
+    // round cap but not the global budget: the `call_max_work == 0` break
+    // must be attributed to the round cap.
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    search.begin_run();
+    let (outcome, _pv, termination) = search.bounded_search(&mut pos, u32::MAX, 5);
+    assert_eq!(outcome, Outcome::Draw);
+    assert_eq!(termination, RoundTermination::CapCut);
+}
+
+#[test]
+fn converged_fixture_is_proven_shortest() {
+    // With default settings the dec44 fixture refines 50 -> 48 plies and the
+    // final round (bound 46) exhausts naturally, proving no win of length
+    // <= 46 exists: the 48-ply PV is proven shortest.
+    let mut pos = Position::from_fen(REFINE_FIXTURE_FEN).unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+
+    let (outcome, pv, _nodes) = search.solve(&mut pos);
+    assert_eq!(outcome, Outcome::Loss);
+    assert_eq!(pv.len(), 48, "the converged shortest PV is 48 plies");
+    assert_eq!(
+        search.pv_status(),
+        PvStatus::ProvenShortest,
+        "the final refinement round must exhaust naturally"
+    );
+    assert!(
+        !search.last_refine_round_cap_cut(),
+        "a proven-shortest result must not carry the cap-cut flag"
+    );
+}
+
+#[test]
+fn refine_cap_cut_reports_unproven_status() {
+    // The fixture's refinement rounds are TT-cushioned and cheap (round 1 is
+    // decisive after ~52 evals, the final bound-46 round exhausts naturally
+    // after ~340 evals), so the cap must sit below that exhaustion cost to
+    // actually bind. At 100 evals the final round is cut by the per-round
+    // cap: the PV is unproven, with the cap-cut cause.
+    let mut pos = Position::from_fen(REFINE_FIXTURE_FEN).unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    search.set_refine_round_cap_for_test(100);
+
+    let (outcome, _pv, _nodes) = search.solve(&mut pos);
+    assert_eq!(outcome, Outcome::Loss);
+    assert_eq!(search.pv_status(), PvStatus::Unproven);
+    assert!(
+        search.last_refine_round_cap_cut(),
+        "the round was cut by the per-round cap, not a resource limit"
+    );
+}
+
+#[test]
+fn resource_cut_reports_unproven_without_cap_flag() {
+    // A global child-eval budget that admits the first outcome (7,449 evals
+    // on the promotion fixture) but is spent before the bounded refinement
+    // tree can be exhausted: unproven via resource cut, not cap cut.
+    let mut pos = Position::from_fen("4k3/PP6/8/8/8/8/8/4K3 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    search.set_child_eval_budget(8_000);
+
+    let (outcome, _pv, _nodes) = search.solve(&mut pos);
+    assert_eq!(outcome, Outcome::Win);
+    assert_eq!(search.pv_status(), PvStatus::Unproven);
+    assert!(
+        !search.last_refine_round_cap_cut(),
+        "the round was cut by the global budget, not the per-round cap"
+    );
+}
+
+#[test]
+fn first_outcome_only_reports_first_outcome_status() {
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    search.set_first_outcome_only(true);
+    let (outcome, _pv, _nodes) = search.solve(&mut pos);
+    assert_eq!(outcome, Outcome::Win);
+    assert_eq!(search.pv_status(), PvStatus::FirstOutcome);
+}
+
+#[test]
+fn drawn_position_reports_none_status() {
+    // Bare kings are a terminal Draw (occupied == 2): no PV to qualify.
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    let (outcome, pv, _nodes) = search.solve(&mut pos);
+    assert_eq!(outcome, Outcome::Draw);
+    assert!(pv.is_empty());
+    assert_eq!(search.pv_status(), PvStatus::None);
 }

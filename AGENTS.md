@@ -76,7 +76,12 @@ A pure solver for atomic chess in Rust.
   (default `proof_tree.bin`, binary dump of the full proven subtree), plus
   `-h`/`--help`. Unknown options exit with an error. It prints the outcome and
   an informational PV when the result is decisive and, by default, logs
-  proof-tree statistics and writes the binary dump before exit.
+  proof-tree statistics and writes the binary dump before exit. For decisive
+  outcomes it also prints `pv_status: proven-shortest | first-outcome |
+  cap-cut | cut-short`, reporting whether the PV length is proven minimal
+  (the last bounded refinement round exhausted naturally, or the win is 1
+  move) or why refinement stopped early; it qualifies the PV *length* within
+  the solver's search semantics, not the PV's validity as a proof.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
 
@@ -141,8 +146,13 @@ complexity, prefer them in this order:
 `Search::solve` returns the first decisive line quickly, then uses the
 remaining time budget to iteratively improve the informational PV. Use
 `Search::first_outcome_only` (or the CLI `--first-outcome` flag) to skip
-refinement when only a decisive outcome is needed. The proof tree is never
-cleared automatically and the root FEN is fixed for the lifetime of the
+refinement when only a decisive outcome is needed. After a solve,
+`Search::pv_status()` reports whether the returned PV is proven shortest
+(PvStatus::ProvenShortest: the last bounded refinement round exhausted
+naturally at `bound = pv_len - 2`, or the win is 1 move) or why not
+(`FirstOutcome` / `Unproven`); this qualifies the PV length within the
+solver's search semantics, not the PV's validity as a proof. The proof tree is
+never cleared automatically and the root FEN is fixed for the lifetime of the
 program.
 
 ## Testing tiers

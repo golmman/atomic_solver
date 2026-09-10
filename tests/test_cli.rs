@@ -161,3 +161,76 @@ fn cli_prints_pv_for_decisive_position() {
         "CLI should not print ppv_valid"
     );
 }
+
+/// The Re8# back-rank mate is a 1-move win: refinement cannot shorten it, so
+/// the PV is proven shortest.
+#[test]
+fn cli_prints_pv_status_proven_shortest_for_mate_in_one() {
+    let output = Command::new(cli_bin())
+        .args([
+            "--fen",
+            "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1",
+            "--timeout",
+            "1",
+            "--outcome-only",
+        ])
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI failed: {stdout}");
+    assert!(stdout.contains("outcome: win"), "expected a win outcome");
+    assert!(
+        stdout.contains("pv_status: proven-shortest"),
+        "expected a proven-shortest pv_status line:\n{stdout}"
+    );
+}
+
+/// `--first-outcome` on the promotion fixture skips refinement: the PV came
+/// from the first-outcome phase and its length is informational.
+#[test]
+fn cli_prints_pv_status_first_outcome() {
+    let output = Command::new(cli_bin())
+        .args([
+            "--fen",
+            "4k3/PP6/8/8/8/8/8/4K3 w - - 0 1",
+            "--timeout",
+            "1",
+            "--first-outcome",
+            "--outcome-only",
+        ])
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI failed: {stdout}");
+    assert!(stdout.contains("outcome: win"), "expected a win outcome");
+    assert!(
+        stdout.contains("pv_status: first-outcome"),
+        "expected a first-outcome pv_status line:\n{stdout}"
+    );
+}
+
+/// A decisive outcome always prints a `pv_status:` line; a draw never does.
+#[test]
+fn cli_draw_prints_no_pv_status() {
+    // Bare kings are a terminal draw.
+    let output = Command::new(cli_bin())
+        .args([
+            "--fen",
+            "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+            "--timeout",
+            "1",
+            "--outcome-only",
+        ])
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI failed: {stdout}");
+    assert!(stdout.contains("outcome: draw"), "expected a draw outcome");
+    assert!(
+        !stdout.contains("pv_status:"),
+        "a draw must not print a pv_status line:\n{stdout}"
+    );
+}
