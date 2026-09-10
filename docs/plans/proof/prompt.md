@@ -56,6 +56,17 @@ Help me brainstorm more ideas!
 
 We don't expect more than u32::MAX nodes for the moment, as a simple safety net we could add a panic with message on overflow.
 
+---
 
+Let's re-evaluate the proof tree generation. Help me brainstorm potentials, risks, trade-offs.
 
+I want to reduce the coupling and improve performance, so here is my idea:
+* decouple search and proof tree generation
+  * win: the problem of overflowing proof tree memory during search is solved
+* the new default of the happy path is: the search is performed, a decisive outcome is found, shorter solutions are refined, **no proof tree is built yet**
+* a new cli parameter accepts FEN and PV and restores the proof tree
+
+Open questions:
+* How much performance potential is there?
+* Is restoration of a proof tree from a pv reasonable?
 
