@@ -32,6 +32,10 @@
 //!                              Defaults to 256.
 //!   --dump-path <FILE>         Path for the compact binary proof-tree dump.
 //!                              Defaults to `proof_tree.bin`.
+//!   --tt-dump-path <FILE>      Write a compact binary snapshot of the
+//!                              transposition table after the search finishes.
+//!                              Optional; the snapshot is the transfer
+//!                              artifact for offline proof reconstruction.
 //!
 //! Output:
 //!   Each newly discovered decisive line is logged as
@@ -59,6 +63,7 @@ use atomic_solver::position::{Outcome, Position};
 use atomic_solver::proof_tree::ProofTreeWorkerHandle;
 use atomic_solver::search::dfpn::{ExitReason, PvStatus, Search};
 use atomic_solver::search::ordering::StaticAtomicScorer;
+use atomic_solver::tt_snapshot::write_tt_snapshot;
 use std::io::BufRead;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -95,6 +100,9 @@ fn print_help(program: &str) {
     println!("                             (default: 256)");
     println!("  --dump-path <FILE>         Path for the compact binary proof-tree dump");
     println!("                             (default: proof_tree.bin)");
+    println!("  --tt-dump-path <FILE>      Write a binary TT snapshot after the search");
+    println!("                             (transfer artifact for offline proof");
+    println!("                             reconstruction; optional)");
     println!("  --config <FILE>            Path to a TOML file overriding scorer");
     println!("                             parameters; defaults to built-in values");
     println!();
@@ -141,6 +149,7 @@ fn main() {
         outcome_only,
         pt_size,
         dump_path,
+        tt_dump_path,
         config_path,
     } = opts;
 
@@ -254,6 +263,36 @@ fn main() {
         let budget_exhausted = matches!(search.exit_reason(), ExitReason::BudgetExhausted);
         (outcome, pv, search.time_exceeded() || budget_exhausted)
     };
+
+    // Write the TT snapshot before any exit path (including the memory-limit
+    // `exit(1)` below): an explicit opt-in artifact must be produced even when
+    // the proof tree hit its memory limit — that is precisely the run where
+    // the snapshot is the rescue artifact for offline reconstruction.
+    // Written regardless of `--outcome-only`; a failed debug artifact must
+    // not turn a good search result into a failure, so I/O errors are logged
+    // and the exit status is unchanged.
+    if let Some(tt_dump_path) = &tt_dump_path {
+        match std::fs::File::create(tt_dump_path) {
+            Ok(file) => {
+                let mut writer = std::io::BufWriter::new(file);
+                let tt_size_mb = tt_size.min(u32::MAX as usize) as u32;
+                match write_tt_snapshot(search.tt(), &fen, tt_size_mb, &mut writer) {
+                    Ok(summary) => {
+                        if let Err(e) = std::io::Write::flush(&mut writer) {
+                            eprintln!("failed to flush TT snapshot to {tt_dump_path}: {e}");
+                        } else {
+                            println!(
+                                "tt_snapshot: {tt_dump_path} solved={} unsolved={} bytes={}",
+                                summary.solved, summary.unsolved, summary.bytes
+                            );
+                        }
+                    }
+                    Err(e) => eprintln!("failed to write TT snapshot to {tt_dump_path}: {e}"),
+                }
+            }
+            Err(e) => eprintln!("failed to create TT snapshot file {tt_dump_path}: {e}"),
+        }
+    }
 
     if cut_short {
         match search.exit_reason() {

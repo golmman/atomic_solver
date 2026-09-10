@@ -3,7 +3,10 @@ mod common;
 use std::process::{Command, Stdio};
 
 use atomic_solver::position::Outcome;
+use atomic_solver::tt_snapshot::read_tt_snapshot;
 use common::cli_bin;
+
+const MATE_FEN: &str = "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1";
 
 #[test]
 fn cli_help_lists_options_and_exits_cleanly() {
@@ -26,6 +29,10 @@ fn cli_help_lists_options_and_exits_cleanly() {
     assert!(
         stdout.contains("--dump-path"),
         "help should mention --dump-path"
+    );
+    assert!(
+        stdout.contains("--tt-dump-path"),
+        "help should mention --tt-dump-path"
     );
 }
 
@@ -232,5 +239,96 @@ fn cli_draw_prints_no_pv_status() {
     assert!(
         !stdout.contains("pv_status:"),
         "a draw must not print a pv_status line:\n{stdout}"
+    );
+}
+
+/// `--tt-dump-path` writes a binary TT snapshot after the search; the snapshot
+/// line is printed and the file parses with `solved_count >= 1` and a size
+/// bounded by the TT RAM (default `--tt-size` = 128 MB).
+#[test]
+fn cli_tt_dump_path_writes_parsable_snapshot() {
+    let dump_path = "target/tt_snapshot_test_cli.bin";
+    let _ = std::fs::remove_file(dump_path);
+
+    let output = Command::new(cli_bin())
+        .args([
+            "--fen",
+            MATE_FEN,
+            "--timeout",
+            "1",
+            "--tt-dump-path",
+            dump_path,
+        ])
+        .stdin(Stdio::null())
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI failed: {stdout}");
+    assert!(
+        stdout.contains(&format!("tt_snapshot: {dump_path} ")),
+        "expected tt_snapshot line in stdout:\n{stdout}"
+    );
+
+    let bytes = std::fs::read(dump_path).expect("snapshot file should exist");
+    let (header, solved, _unsolved) =
+        read_tt_snapshot(&mut std::io::Cursor::new(&bytes)).expect("snapshot should parse");
+    assert_eq!(header.root_fen, MATE_FEN);
+    assert!(header.solved_count >= 1, "expected solved entries");
+    assert_eq!(header.solved_count as usize, solved.len());
+    assert!(
+        bytes.len() as u64 <= header.tt_size_mb as u64 * 1_048_576,
+        "snapshot size {} must stay within the TT bound",
+        bytes.len()
+    );
+    let _ = std::fs::remove_file(dump_path);
+}
+
+/// The explicit `--tt-dump-path` opt-in overrides the `--outcome-only`
+/// no-artifacts default: the snapshot is still written.
+#[test]
+fn cli_tt_dump_path_overrides_outcome_only() {
+    let dump_path = "target/tt_snapshot_test_cli_outcome_only.bin";
+    let _ = std::fs::remove_file(dump_path);
+
+    let output = Command::new(cli_bin())
+        .args([
+            "--fen",
+            MATE_FEN,
+            "--timeout",
+            "1",
+            "--outcome-only",
+            "--tt-dump-path",
+            dump_path,
+        ])
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI failed: {stdout}");
+    assert!(
+        stdout.contains(&format!("tt_snapshot: {dump_path} ")),
+        "expected tt_snapshot line despite --outcome-only:\n{stdout}"
+    );
+    let bytes = std::fs::read(dump_path).expect("snapshot file should exist");
+    let (header, _solved, _unsolved) =
+        read_tt_snapshot(&mut std::io::Cursor::new(&bytes)).expect("snapshot should parse");
+    assert!(header.solved_count >= 1);
+    let _ = std::fs::remove_file(dump_path);
+}
+
+/// Without `--tt-dump-path` no snapshot line is printed (opt-in flag).
+#[test]
+fn cli_no_tt_dump_by_default() {
+    let output = Command::new(cli_bin())
+        .args(["--fen", MATE_FEN, "--timeout", "1", "--outcome-only"])
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI failed: {stdout}");
+    assert!(
+        !stdout.contains("tt_snapshot:"),
+        "default run must not print a tt_snapshot line:\n{stdout}"
     );
 }

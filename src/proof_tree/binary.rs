@@ -12,8 +12,6 @@
 use std::io::{self, Read, Write};
 use std::num::NonZeroU32;
 
-use atomic_movegen::types::{Move, MoveType, PROMOTION_PIECES, Square};
-
 use super::{ProofNode, ProofTree};
 use crate::position::Outcome;
 
@@ -21,59 +19,14 @@ const MAGIC: &[u8; 8] = b"ATOMTREE";
 const VERSION: u8 = 1;
 const ROOT_PARENT: u32 = u32::MAX;
 
-/// Encode an `atomic_movegen` `Move` into a 16-bit code using only the public
-/// API.
-///
-/// The bit layout matches `Move`'s documented encoding:
-/// - bits 0-5: `to_sq`
-/// - bits 6-11: `from_sq`
-/// - bits 12-13: move type
-/// - bits 14-15: promotion piece index
-#[must_use]
-pub fn move_to_bits(mv: Move) -> u16 {
-    let to = (mv.to_sq() as u16) & 0x3f;
-    let from = ((mv.from_sq() as u16) & 0x3f) << 6;
-    let type_bits = match mv.move_type() {
-        MoveType::Normal => 0u16,
-        MoveType::Promotion => 1u16 << 12,
-        MoveType::EnPassant => 2u16 << 12,
-        MoveType::Castling => 3u16 << 12,
-        _ => unreachable!(),
-    };
-    let promotion_bits = if mv.move_type() == MoveType::Promotion {
-        let idx = PROMOTION_PIECES
-            .iter()
-            .position(|&pt| pt == mv.promotion_type())
-            .unwrap_or(0) as u16;
-        idx << 14
-    } else {
-        0u16
-    };
-    from | to | type_bits | promotion_bits
-}
+// The 16-bit move encoding lives in `crate::notation` (it is shared with the
+// TT snapshot format); re-exported here so in-crate callers importing via
+// `super::binary` keep working.
+pub use crate::notation::{bits_to_move, move_to_bits};
 
-/// Decode a 16-bit move code back into a `Move` using only the public API.
-///
-/// Returns `None` for codes whose promotion index is out of range.
-pub fn bits_to_move(code: u16) -> Option<Move> {
-    let to = Square::from_u8((code & 0x3f) as u8);
-    let from = Square::from_u8(((code >> 6) & 0x3f) as u8);
-    let move_type_bits = (code >> 12) & 0x3;
-    let promotion_idx = ((code >> 14) & 0x3) as usize;
-
-    match move_type_bits {
-        0 => Some(Move::make_move(from, to)),
-        1 => {
-            let pt = *PROMOTION_PIECES.get(promotion_idx)?;
-            Some(Move::make_promotion(from, to, pt))
-        }
-        2 => Some(Move::make_enpassant(from, to)),
-        3 => Some(Move::make_castling(from, to)),
-        _ => unreachable!(),
-    }
-}
-
-fn outcome_to_u8(outcome: Outcome) -> u8 {
+// Outcome-byte encoding shared with the TT snapshot format (`tt_snapshot`),
+// so both artifacts interpret the root outcome byte identically.
+pub(crate) fn outcome_to_u8(outcome: Outcome) -> u8 {
     match outcome {
         Outcome::Draw => 0,
         Outcome::Win => 1,
@@ -81,7 +34,7 @@ fn outcome_to_u8(outcome: Outcome) -> u8 {
     }
 }
 
-fn outcome_from_u8(value: u8) -> Option<Outcome> {
+pub(crate) fn outcome_from_u8(value: u8) -> Option<Outcome> {
     match value {
         0 => Some(Outcome::Draw),
         1 => Some(Outcome::Win),

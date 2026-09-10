@@ -32,6 +32,9 @@ pub struct CliOptions {
     pub pt_size: usize,
     /// Path for the compact binary proof-tree dump.
     pub dump_path: String,
+    /// Optional path for the binary TT snapshot written after the search.
+    /// `None` disables snapshot writing (the default).
+    pub tt_dump_path: Option<String>,
     /// Path to a TOML config file overriding the default scorer parameters.
     pub config_path: Option<String>,
 }
@@ -52,6 +55,7 @@ impl Default for CliOptions {
             outcome_only: false,
             pt_size: 256,
             dump_path: "proof_tree.bin".to_string(),
+            tt_dump_path: None,
             config_path: None,
         }
     }
@@ -172,6 +176,13 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 opts.dump_path = value.clone();
                 i += 2;
             }
+            "--tt-dump-path" => {
+                let value = args
+                    .get(i + 1)
+                    .ok_or_else(|| "error: --tt-dump-path requires a value".to_string())?;
+                opts.tt_dump_path = Some(value.clone());
+                i += 2;
+            }
             "--config" => {
                 let value = args
                     .get(i + 1)
@@ -211,6 +222,7 @@ mod tests {
             outcome_only,
             pt_size,
             dump_path,
+            tt_dump_path,
             config_path,
         } = match parsed {
             ParseResult::Options(o) => o,
@@ -225,6 +237,7 @@ mod tests {
         assert!(!outcome_only);
         assert_eq!(pt_size, 256);
         assert_eq!(dump_path, "proof_tree.bin");
+        assert!(tt_dump_path.is_none());
         assert!(config_path.is_none());
     }
 
@@ -304,6 +317,16 @@ mod tests {
     }
 
     #[test]
+    fn tt_dump_path_is_parsed() {
+        let parsed =
+            parse_args(&args(&["atomic_solver", "--tt-dump-path", "/tmp/tt.bin"])).unwrap();
+        match parsed {
+            ParseResult::Options(o) => assert_eq!(o.tt_dump_path, Some("/tmp/tt.bin".to_string())),
+            ParseResult::Help => panic!("unexpected help"),
+        }
+    }
+
+    #[test]
     fn config_path_is_parsed() {
         let parsed = parse_args(&args(&["atomic_solver", "--config", "/tmp/scorer.toml"])).unwrap();
         match parsed {
@@ -363,6 +386,7 @@ mod tests {
         assert!(parse_args(&args(&["atomic_solver", "--timeout"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--pt-size"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--dump-path"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--tt-dump-path"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--config"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--refine-cap"])).is_err());
     }

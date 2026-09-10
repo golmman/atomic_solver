@@ -402,6 +402,17 @@ impl Search {
         self.proof_event_sender = sender;
     }
 
+    /// Read-only access to the transposition table, for snapshot/debug use.
+    ///
+    /// This exposes the raw table contents (all generations, native bucket
+    /// order via [`TranspositionTable::entries`]); the search itself only ever
+    /// probes current-generation entries. Intended for the TT snapshot writer
+    /// and debugging tools, not for search logic.
+    #[must_use]
+    pub fn tt(&self) -> &TranspositionTable {
+        &self.tt
+    }
+
     /// Aggregate transposition-table statistics after a search.
     ///
     /// Tuple fields are: `(buckets, live_entries, solved_entries, unsolved_entries, generation)`.

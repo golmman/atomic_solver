@@ -312,3 +312,58 @@ fn new_generation_prefers_stale_slot() {
         "new entry should overwrite a stale slot, not both live slots"
     );
 }
+
+#[test]
+fn entries_yields_all_valid_entries_in_bucket_order_across_generations() {
+    let mut tt = TranspositionTable::with_capacity(4);
+    assert_eq!(tt.entries().count(), 0, "fresh table has no valid entries");
+
+    // Keys land in distinct buckets (index = key & 3) but are stored out of
+    // bucket order on purpose.
+    tt.store(
+        0x33,
+        Move::NONE,
+        u8::MAX,
+        0,
+        Some(Outcome::Win),
+        0,
+        0,
+        0,
+        u32::MAX,
+    );
+    tt.new_generation();
+    tt.store(
+        0x11,
+        Move::NONE,
+        u8::MAX,
+        0,
+        Some(Outcome::Loss),
+        0,
+        0,
+        0,
+        u32::MAX,
+    );
+    tt.store(0x22, Move::NONE, u8::MAX, 0, None, 1, 1, 0, 0);
+
+    let keys: Vec<u64> = tt.entries().map(|e| e.key).collect();
+    assert_eq!(
+        keys,
+        vec![0x11, 0x22, 0x33],
+        "entries must be yielded in native bucket order, all generations"
+    );
+
+    let outcomes: Vec<bool> = tt.entries().map(|e| e.outcome.is_some()).collect();
+    assert_eq!(outcomes, vec![true, false, true]);
+}
+
+#[test]
+fn current_generation_reflects_new_generation_and_clear() {
+    let mut tt = TranspositionTable::with_capacity(2);
+    assert_eq!(tt.current_generation(), 1);
+    tt.new_generation();
+    assert_eq!(tt.current_generation(), 2);
+    tt.new_generation();
+    assert_eq!(tt.current_generation(), 3);
+    tt.clear();
+    assert_eq!(tt.current_generation(), 1);
+}

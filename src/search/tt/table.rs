@@ -146,6 +146,28 @@ impl TranspositionTable {
         self.insert_new(idx, new);
     }
 
+    /// The generation counter at the time of the call.
+    ///
+    /// Used by snapshot/debug tooling to partition entries by generation.
+    #[must_use]
+    pub fn current_generation(&self) -> u32 {
+        self.current_generation
+    }
+
+    /// Iterate over all `valid` entries in native bucket order, across all
+    /// generations.
+    ///
+    /// This is for snapshot/debug use; the search itself only ever looks at
+    /// entries via `probe` (current generation). Callers that need
+    /// generation-dependent semantics must filter by `current_generation()`
+    /// themselves.
+    pub fn entries(&self) -> impl Iterator<Item = &TtEntry> {
+        self.table
+            .iter()
+            .flat_map(|bucket| bucket.iter())
+            .filter(|e| e.valid)
+    }
+
     /// Return a distribution of stored `best_child` values among live entries.
     ///
     /// `u8::MAX` (the "unknown" sentinel) is excluded. This is useful for

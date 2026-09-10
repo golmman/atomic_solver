@@ -7,7 +7,7 @@ A pure solver for atomic chess in Rust.
 ## Architecture
 
 - `src/lib.rs` re-exports `notation`, `position`, `proof_event`, `proof_tree`,
-  `search`, and `zobrist`.
+  `search`, `tt_snapshot`, and `zobrist`.
 - `src/position.rs` wraps `atomic_movegen::board::Board` and tracks the
   `Outcome` (Win/Loss/Draw from the side-to-move perspective), undo state,
   and Zobrist hashing.
@@ -73,8 +73,11 @@ A pure solver for atomic chess in Rust.
   relative to the first-outcome child-eval count, `0` disables capping),
   `--outcome-only` (disables the pre-exit hook and stdin reader), `--pt-size <MB>`
   (default 256, max in-memory proof-tree size), `--dump-path <FILE>`
-  (default `proof_tree.bin`, binary dump of the full proven subtree), plus
-  `-h`/`--help`. Unknown options exit with an error. It prints the outcome and
+  (default `proof_tree.bin`, binary dump of the full proven subtree),
+  `--tt-dump-path <FILE>` (opt-in; writes a compact binary TT snapshot after
+  the search — solved entries from all generations, unsolved from the current
+  generation — as the transfer artifact for offline proof reconstruction),
+  plus `-h`/`--help`. Unknown options exit with an error. It prints the outcome and
   an informational PV when the result is decisive and, by default, logs
   proof-tree statistics and writes the binary dump before exit. For decisive
   outcomes it also prints `pv_status: proven-shortest | first-outcome |
