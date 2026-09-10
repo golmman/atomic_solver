@@ -1,0 +1,75 @@
+%% Status flow: bounded_search return values -> PvStatus -> CLI output.
+%% Companion to docs/plans/dfpn/plan8.md (Design sections 1-3).
+%% Render with: mmdc -i docs/diagrams/status_flow.mmd -o status_flow.svg
+%% (or any mermaid-compatible viewer).
+%% Legend:
+%%   n            = current PV length in plies (the bound refinement tries to beat)
+%%   round cap    = max(1,000,000, --refine-cap factor * phase-1 child evals)
+%%   child-eval budget = API-only (Search::set_child_eval_budget); no CLI flag
+flowchart TD
+
+    classDef proven fill:#d5f5d5,stroke:#2e7d32
+    classDef unproven fill:#fdebd0,stroke:#b9770e
+    classDef neutral fill:#e8e8e8,stroke:#666666
+
+    %% ============ bounded_search: break sites -> RoundTermination ============
+    subgraph bs["bounded_search(pos, max_depth, round_work_cap)"]
+        chunkReturn(["dfpn chunk returns"]) --> d1{"outcome != Draw?"}
+        d1 -- "yes" --> rtD["RoundTermination::Decisive"]
+        d1 -- "no" --> d2{"call_max_work == 0?"}
+        d2 -- "round_remaining was the min term<br/>(--refine-cap round cap reached)" --> rtC["RoundTermination::CapCut<br/>(only when round_work_cap is finite:<br/>phase 2 rounds; phase 1 passes u64::MAX)"]
+        d2 -- "remaining_budget was the min term" --> rtR["RoundTermination::ResourceCut"]
+        d2 -- "no" --> d3{"--timeout hit / stop flag /<br/>memory limit / child-eval budget spent?"}
+        d3 -- "yes" --> rtR
+        d3 -- "no" --> d4{"work_done < call_max_work?"}
+        d4 -- "yes" --> rtE["RoundTermination::Exhausted"]
+        d4 -- "no" --> grow["grow chunk, next iteration"] --> chunkReturn
+    end
+
+    %% ============ phase 1: first decisive outcome ============
+    subgraph p1["solve_with_progress, phase 1: bounded_search(pos, u32::MAX, u64::MAX)"]
+        f1["first decisive PV found<br/>n = PV length in plies"] --> q1{"--first-outcome set?"}
+        q1 -- "yes" --> stFO["PvStatus::FirstOutcome"]
+        draw1["outcome stays Draw<br/>(tree exhausted at unbounded depth:<br/>proven no win at any depth)"] --> stNone["PvStatus::None"]
+    end
+
+    %% ============ phase 2: refinement loop ============
+    subgraph rl["solve_with_progress, phase 2: iterative PV refinement<br/>round = bounded_search(pos, n - 2, round cap from --refine-cap)"]
+        q2{"n > 2 and no --timeout /<br/>child-eval budget cut?"}
+        q2 -- "no: n <= 2" --> stPS["PvStatus::ProvenShortest<br/>(1-move win, trivially shortest)"]
+        q2 -- "no: --timeout / budget cut<br/>(last round was decisive-improving)" --> stUnB["PvStatus::Unproven<br/>(cut between rounds)"]
+        q2 -- "yes" --> round(["run refinement round"]) --> rd{"RoundTermination"}
+        rd -- "Decisive, new PV shorter than n" --> imp["PV improves, n = new PV length"] --> q2
+        rd -- "Decisive, not shorter (defensive)" --> stUnD["PvStatus::Unproven<br/>(decisive but not shorter)"]
+        rd -- "Exhausted" --> stPS2["PvStatus::ProvenShortest<br/>(round proved: no win of length <= n - 2,<br/>so the n-ply PV is shortest)"]
+        rd -- "CapCut" --> stCC["PvStatus::Unproven<br/>(--refine-cap cut the round)"]
+        rd -- "ResourceCut" --> stUnB
+    end
+
+    %% ============ CLI output (main.rs) ============
+    subgraph cli["main.rs output"]
+        q3{"Unproven: was the last round cut by --refine-cap<br/>rather than by --timeout / budget?"}
+        q3 -- "yes" --> out3["pv_status: cap-cut"]
+        q3 -- "no" --> out4["pv_status: cut-short"]
+    end
+
+    %% ============ cross-subgraph edges ============
+    %% phase 1 consumes the first bounded_search result
+    rtD --> f1
+    rtE --> draw1
+    rtR --> draw1
+    rtC -. "phase 1 cannot produce CapCut<br/>(its cap is u64::MAX); phase 2 can" .-> draw1
+    %% phase 2 entry from phase 1
+    q1 -- "no" --> q2
+    %% CLI consumes the final status
+    stNone --> out0["no pv_status line<br/>(outcome: draw)"]
+    stFO --> out1["pv_status: first-outcome"]
+    stPS --> out2["pv_status: proven-shortest"]
+    stPS2 --> out2
+    stCC --> out3
+    stUnB --> q3
+    stUnD --> q3
+
+    class stPS,stPS2 proven
+    class stCC,stUnB,stUnD unproven
+    class stNone,stFO neutral
