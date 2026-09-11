@@ -43,6 +43,11 @@ const MIN_REFINE_ROUND_EVALS: u64 = 1_000_000;
 pub enum ExitReason {
     Timeout,
     Quit,
+    /// Memory-limit abort driven by `set_memory_limited`. Not wired by the
+    /// search CLI anymore (the search is resource-bounded: RAM = TT only);
+    /// this remains a reconstruct-side contract — the reconstruction walker
+    /// (`src/reconstruct/walker.rs`) sets the flag for the *builder's*
+    /// budget and aborts local prefix-solves on it.
     MemoryLimit,
     BudgetExhausted,
     Complete,
@@ -394,6 +399,9 @@ impl Search {
         self.stop_flag = stop_flag;
     }
 
+    /// Wire the memory-limit abort flag. Not used by the search CLI (which no
+    /// longer builds proof trees); the reconstruct walker sets it for the
+    /// builder's budget — see [`ExitReason::MemoryLimit`].
     pub fn set_memory_limited(&mut self, memory_limited: Option<Arc<AtomicBool>>) {
         self.memory_limited = memory_limited;
     }

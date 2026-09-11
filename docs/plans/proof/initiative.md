@@ -5,8 +5,10 @@
 Active, maintained **agile**: plans are single-lever and sized to one session,
 the backlog is re-ranked after every report, and the decisive experiment
 (plan5) gates the default-flipping plan (now plan7 after the 2026-09-11
-renumbering). Plans 1–6 are done (`report1.md`–`report6.md`). The initiative
-pivoted after plan3 (decision record 2026-09-10, below).
+renumbering). Plans 1–7 are done (`report1.md`–`report7.md`); the
+initiative's core goal (resource-bounded search + relocatable proof
+construction) is landed. The
+initiative pivoted after plan3 (decision record 2026-09-10, below).
 
 ## Motivation
 
@@ -113,7 +115,7 @@ maintainability.
 |---|------|-----------|-----------|---------|--------|--------|
 | 1 | TT snapshot writer | `--tt-dump-path`: bounded binary dump of live TT entries at exit (solved entries from all generations, unsolved from current). Format versioned like `binary.rs` | enables all downstream items; standalone-useful for debugging and TT seeding | new artifact module + CLI flag | S–M | **done (plan4, `report4.md`)** |
 | 2 | Offline reconstruction tool + go/no-go experiment | Top-down walk from FEN over the snapshot: static terminal classification, movegen expansion, hole filling via `search_depth_with_prefix` seeded with the snapshot | proves or refutes that a bounded artifact suffices to rebuild full proofs | new example/tool | M | **done (plan5, `report5.md`) — GO for #3, conditional on the finalize canonicalization fix found by the oracle** |
-| 3 | Flip the default: worker off during search | Search emits no proof events by default; retire `memory_limited` / `ExitReason::MemoryLimit` / `--pt-size` from the search CLI; proof construction moves entirely to #2's tool | restores the resource-bounded search invariant; removes the fatal MemoryLimit path | search CLI + docs + tests | M | **plan7 drafted (`plan7.md`)** (renumbered 2026-09-11, see History); **un-gated**: plan6 landed the finalize fix and the experiment now reports 46/46 oracle-isomorphic (`report6.md`) |
+| 3 | Flip the default: worker off during search | Search emits no proof events by default; retire `memory_limited` / `ExitReason::MemoryLimit` / `--pt-size` from the search CLI; proof construction moves entirely to #2's tool | restores the resource-bounded search invariant; removes the fatal MemoryLimit path | search CLI + docs + tests | M | **done (plan7, `report7.md`)** — full removal, no opt-in flag; `--tt-dump-path` stays opt-in; drift bit-identical (59/59 quick cases), experiment re-confirmed 46/46 oracle-isomorphic |
 | 4 | Pin solved TT entries | Solved entries become eviction-proof (they also prevent re-proving in the live search, but shrink frontier capacity) | reduces #2's hole rate if evictions dominate | search behavior — needs drift validation + nps measurement | S–M | deprioritized: plan5 measured `absent` = 2/91,470 proof nodes on the decisive suite — revisit only under deep multi-day eviction pressure |
 | 5 | Periodic TT checkpoint | Bounded-size snapshot written every N minutes (not just at exit) | crash resilience for multi-day runs (the event log's one advantage, at bounded cost) | artifact writer | S | stretch |
 | 6 | Builder-side validation tooling | `inspect_pt` / `verify_ppv` runs against reconstructed trees; root-outcome and bottom-up depth cross-checks against the snapshot before dumping | trust in the reconstruction | examples/tests | S | **done (plan6, `report6.md`)**: fully-expanded-twin preference in `finalize()` (sibling-chain child counts; `reconcile_children` leaves pruned children's parent links set — parent-link counts overcount), replay-based validator `validate_proof_tree` wired into `finalize()`/`main.rs` (`pt_validate:` line, exit 1 on defects, `ProofStats::validation_errors`); experiment now **46/46 oracle-isomorphic**, un-gating plan7 |
@@ -189,6 +191,16 @@ Done: plan1, plan2, plan3, plan4 (see History). Statuses reference plans under
   the plan), `--tt-dump-path` stays opt-in, validation gate moves to
   `reconstruct_pt`'s `validate:` line. The library search API and the
   builder-side `--pt-size` stay untouched.
+- **plan7** — worker-off search CLI (#3), done (`report7.md`). Result:
+  `--pt-size`/`--dump-path` removed (now unknown options), worker spawn /
+  proof-tree pre-exit hook / `MemoryLimit` abort arm deleted, pre-exit hook
+  reduced to stdin reader + `pre_exit:` line; drift bit-identical (59/59
+  quick-suite cases, only wall-clock differs), `make test` green with the
+  new `tests/test_plan7.rs` end-to-end gate, experiment re-confirmed
+  46/46 oracle-isomorphic. The initiative's core goal — a resource-bounded
+  search (RAM = TT only) with relocatable proof construction — is now
+  fully landed. Remaining: #5 checkpoint vs. #7 builder spike (report7
+  recommends #5 first), #4 deprioritized.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

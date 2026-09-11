@@ -54,7 +54,12 @@ A pure solver for atomic chess in Rust.
 - `src/proof_tree/mod.rs` provides a `Move`- and hash-based in-memory proof
   tree and a background worker that consumes `ProofEvent` messages, maintains
   the tree, enforces a memory budget, and serializes the full proven subtree
-  to a compact binary adjacency dump (`src/proof_tree/binary.rs`). Each
+  to a compact binary adjacency dump (`src/proof_tree/binary.rs`). The search
+  CLI no longer builds trees — proof-tree construction is an offline step and
+  the producer chain is: search → TT snapshot (`--tt-dump-path`) →
+  `src/reconstruct` / `examples/reconstruct_pt` (worker + finalize +
+  validator) → binary dump; tests and examples may still spawn the worker
+  directly. Each
   `ProofNode` carries the Zobrist hash of its position; the worker's
   `finalize()` pass copies fully expanded canonical subtrees onto unexpanded
   transpositions, making the tree authoritative without a transposition-table
@@ -66,7 +71,9 @@ A pure solver for atomic chess in Rust.
   `pt_validate: FAILED ...` stderr line per defect (capped at 20) and records
   the count in `ProofStats::validation_errors` (0 on success; a non-zero
   count must fail the run — the dump is still written as the debugging
-  artifact). The validator re-plays every path on a real `Position` and
+  artifact; the exit-1 contract is enforced by the reconstruct-side
+  producers, e.g. `reconstruct_pt`, not by the search CLI). The validator
+  re-plays every path on a real `Position` and
   checks the structural rules of a proof (Loss covers *all* legal replies,
   Win has exactly one winning child, depths bottom-up consistent, terminals
   statically correct); it therefore adds a `proof_tree → position`
@@ -74,7 +81,11 @@ A pure solver for atomic chess in Rust.
   `search`/`proof_tree` decoupling is unchanged). The worker exposes
   `ProofTreeWorkerHandle` with `event_sender()`, `stats()`, `tree()`,
   `finalize()`, and `dump_to_bin()` for querying.
-  External tools can import the binary dump into PostgreSQL.
+  External tools can import the binary dump into PostgreSQL. Note that
+  `Search::set_memory_limited` / `ExitReason::MemoryLimit` are not wired by
+  the search CLI; they remain a reconstruct-side contract — the
+  reconstruction walker sets the flag for the *builder's* budget and aborts
+  local prefix-solves on it (`src/reconstruct/walker.rs`).
 - `src/zobrist.rs` generates deterministic Zobrist keys for positions,
   including the halfmove clock for transposition-table lookup.
 - `src/notation.rs` provides UCI move helpers, including `moves_to_uci_path`
@@ -85,19 +96,20 @@ A pure solver for atomic chess in Rust.
   (stop after the first decisive line without iterative shortest-PV refinement),
   `--refine-cap <FACTOR>` (default 0.25; per-refinement-round work-cap factor
   relative to the first-outcome child-eval count, `0` disables capping),
-  `--outcome-only` (disables the pre-exit hook and stdin reader), `--pt-size <MB>`
-  (default 256, max in-memory proof-tree size), `--dump-path <FILE>`
-  (default `proof_tree.bin`, binary dump of the full proven subtree),
+  `--outcome-only` (no stdin reader, no pre-exit summary),
   `--tt-dump-path <FILE>` (opt-in; writes a compact binary TT snapshot after
   the search — solved entries from all generations, unsolved from the current
-  generation — as the transfer artifact for offline proof reconstruction),
-  plus `-h`/`--help`. Unknown options exit with an error. It prints the outcome and
-  an informational PV when the result is decisive and, by default, logs
-  proof-tree statistics and writes the binary dump before exit. On a normal
-  exit the pre-exit hook also prints `pt_validate: ok` or
-  `pt_validate: FAILED n defect(s)` (per-defect lines go to stderr from the
-  worker) and exits with code 1 on a defective tree; the dump is still
-  written as the debugging artifact. For decisive
+  generation),
+  plus `-h`/`--help`. Unknown options exit with an error. It prints the outcome
+  and an informational PV when the result is decisive. The search CLI is
+  **resource-bounded** (RAM = TT only): it never builds proof trees — no
+  worker thread, no proof-tree memory budget, no `MemoryLimit` abort path —
+  and prints no `proof_tree:`/`proof_tree_dump:`/`pt_validate:` lines. Proof
+  construction is an offline step: `--tt-dump-path` produces the TT snapshot
+  from which `examples/reconstruct_pt` (worker + finalize + replay validator,
+  exit 1 on a defective tree) rebuilds the validated binary dump. The
+  pre-exit hook reduces to the stdin reader (`q` quits) and one
+  `pre_exit: reason=… outcome=… nodes=…` line. For decisive
   outcomes it also prints `pv_status: proven-shortest | first-outcome |
   cap-cut | cut-short`, reporting whether the PV length is proven minimal
   (the last bounded refinement round exhausted naturally, or the win is 1
@@ -167,7 +179,9 @@ complexity, prefer them in this order:
 2. **Informational PV** returned by `Search::solve` as a best-effort line from
    the transposition table. It is not validated as a proof.
 3. **Proof tree dump** (`proof_tree.bin`) produced by the worker's `finalize()`
-   pass. The authoritative in-memory tree carries Zobrist hashes and copies
+   pass during offline reconstruction (`reconstruct_pt` over a TT snapshot —
+   the search CLI never builds a tree). The authoritative in-memory tree
+   carries Zobrist hashes and copies
    fully expanded canonical subtrees onto unexpanded transpositions before the
    dump is written. PPV extraction and validation are handled separately by
    the proof-tree layer.

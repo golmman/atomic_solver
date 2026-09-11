@@ -26,12 +26,8 @@ pub struct CliOptions {
     /// Per-refinement-round work-cap factor relative to the first-outcome
     /// phase's child evaluations. `0.0` disables capping.
     pub refine_cap: f64,
-    /// Print only the outcome/PV and skip stdin/proof-tree handling.
+    /// Print only the outcome/PV: no stdin reader, no pre-exit summary.
     pub outcome_only: bool,
-    /// Maximum in-memory proof-tree size in megabytes.
-    pub pt_size: usize,
-    /// Path for the compact binary proof-tree dump.
-    pub dump_path: String,
     /// Optional path for the binary TT snapshot written after the search.
     /// `None` disables snapshot writing (the default).
     pub tt_dump_path: Option<String>,
@@ -53,8 +49,6 @@ impl Default for CliOptions {
             first_outcome: false,
             refine_cap: 0.25,
             outcome_only: false,
-            pt_size: 256,
-            dump_path: "proof_tree.bin".to_string(),
             tt_dump_path: None,
             config_path: None,
         }
@@ -159,23 +153,6 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 opts.outcome_only = true;
                 i += 1;
             }
-            "--pt-size" => {
-                let value = args
-                    .get(i + 1)
-                    .ok_or_else(|| "error: --pt-size requires a value".to_string())?;
-                let v = value
-                    .parse::<usize>()
-                    .map_err(|e| format!("error: invalid --pt-size value: {e}"))?;
-                opts.pt_size = v;
-                i += 2;
-            }
-            "--dump-path" => {
-                let value = args
-                    .get(i + 1)
-                    .ok_or_else(|| "error: --dump-path requires a value".to_string())?;
-                opts.dump_path = value.clone();
-                i += 2;
-            }
             "--tt-dump-path" => {
                 let value = args
                     .get(i + 1)
@@ -220,8 +197,6 @@ mod tests {
             first_outcome,
             refine_cap,
             outcome_only,
-            pt_size,
-            dump_path,
             tt_dump_path,
             config_path,
         } = match parsed {
@@ -235,8 +210,6 @@ mod tests {
         assert!(!first_outcome);
         assert_eq!(refine_cap, 0.25);
         assert!(!outcome_only);
-        assert_eq!(pt_size, 256);
-        assert_eq!(dump_path, "proof_tree.bin");
         assert!(tt_dump_path.is_none());
         assert!(config_path.is_none());
     }
@@ -294,24 +267,6 @@ mod tests {
         let parsed = parse_args(&args(&["atomic_solver", "--timeout", "10"])).unwrap();
         match parsed {
             ParseResult::Options(o) => assert_eq!(o.timeout, 10),
-            ParseResult::Help => panic!("unexpected help"),
-        }
-    }
-
-    #[test]
-    fn pt_size_is_parsed() {
-        let parsed = parse_args(&args(&["atomic_solver", "--pt-size", "512"])).unwrap();
-        match parsed {
-            ParseResult::Options(o) => assert_eq!(o.pt_size, 512),
-            ParseResult::Help => panic!("unexpected help"),
-        }
-    }
-
-    #[test]
-    fn dump_path_is_parsed() {
-        let parsed = parse_args(&args(&["atomic_solver", "--dump-path", "/tmp/tree.bin"])).unwrap();
-        match parsed {
-            ParseResult::Options(o) => assert_eq!(o.dump_path, "/tmp/tree.bin"),
             ParseResult::Help => panic!("unexpected help"),
         }
     }
@@ -384,11 +339,21 @@ mod tests {
         assert!(parse_args(&args(&["atomic_solver", "--tt-size"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--epsilon"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--timeout"])).is_err());
-        assert!(parse_args(&args(&["atomic_solver", "--pt-size"])).is_err());
-        assert!(parse_args(&args(&["atomic_solver", "--dump-path"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--tt-dump-path"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--config"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--refine-cap"])).is_err());
+    }
+
+    /// `--pt-size` / `--dump-path` were removed from the search CLI with plan7:
+    /// the search no longer builds proof trees. Passing them must hit the
+    /// unknown-option error path (this pins the removal against accidental
+    /// re-adds).
+    #[test]
+    fn removed_proof_tree_options_rejected() {
+        let err = parse_args(&args(&["atomic_solver", "--pt-size", "64"])).unwrap_err();
+        assert!(err.contains("unknown option"), "got: {err}");
+        let err = parse_args(&args(&["atomic_solver", "--dump-path", "x.bin"])).unwrap_err();
+        assert!(err.contains("unknown option"), "got: {err}");
     }
 
     #[test]

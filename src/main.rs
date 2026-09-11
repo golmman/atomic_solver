@@ -1,8 +1,8 @@
 //! Command-line solver for atomic chess.
 //!
 //! This file is larger than 10 KiB because it contains the argument parsing,
-//! help text, search setup, proof-tree wiring, and pre-exit hook in one place
-//! so the binary is self-contained.
+//! help text, search setup, and pre-exit hook in one place so the binary is
+//! self-contained.
 //!
 //! Usage:
 //!   atomic_solver [OPTIONS]
@@ -26,16 +26,14 @@
 //!                              a round that hits the cap without a shorter
 //!                              decisive line is abandoned. `0` disables
 //!                              capping. Defaults to 0.25.
-//!   --outcome-only             Print only the outcome/PV and skip the pre-exit
-//!                              summary. No stdin reader is spawned.
-//!   --pt-size <MB>             Maximum in-memory proof-tree size in megabytes.
-//!                              Defaults to 256.
-//!   --dump-path <FILE>         Path for the compact binary proof-tree dump.
-//!                              Defaults to `proof_tree.bin`.
+//!   --outcome-only             Print only the outcome/PV: no stdin reader and
+//!                              no pre-exit summary.
 //!   --tt-dump-path <FILE>      Write a compact binary snapshot of the
 //!                              transposition table after the search finishes.
 //!                              Optional; the snapshot is the transfer
-//!                              artifact for offline proof reconstruction.
+//!                              artifact for offline proof reconstruction via
+//!                              `reconstruct_pt --snapshot` (the search CLI
+//!                              itself never builds proof trees).
 //!
 //! Output:
 //!   Each newly discovered decisive line is logged as
@@ -46,9 +44,8 @@
 //!   outcome (`first-outcome`), cut by the refinement work cap (`cap-cut`), or
 //!   cut by a global resource limit / not shorter (`cut-short`). `pv_status`
 //!   qualifies the PV length, not its validity. If the timeout is reached
-//!   after any result, `timeout` is printed on its own line. The pre-exit
-//!   hook finalizes the authoritative proof tree and writes it to
-//!   `proof_tree.bin`.
+//!   after any result, `timeout` is printed on its own line. Without
+//!   `--outcome-only` the pre-exit hook prints a `pre_exit:` summary line.
 //!
 //! Examples:
 //!   atomic_solver --help
@@ -60,7 +57,6 @@ use atomic_movegen::types::Move;
 use atomic_solver::config;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
-use atomic_solver::proof_tree::ProofTreeWorkerHandle;
 use atomic_solver::search::dfpn::{ExitReason, PvStatus, Search};
 use atomic_solver::search::ordering::StaticAtomicScorer;
 use atomic_solver::tt_snapshot::write_tt_snapshot;
@@ -95,14 +91,10 @@ fn print_help(program: &str) {
     println!("                             line is abandoned. 0 disables capping");
     println!("                             (default: 0.25)");
     println!("  --outcome-only             Print only the outcome/PV;");
-    println!("                             do not spawn stdin reader or pre-exit hook");
-    println!("  --pt-size <MB>             Maximum in-memory proof-tree size in megabytes");
-    println!("                             (default: 256)");
-    println!("  --dump-path <FILE>         Path for the compact binary proof-tree dump");
-    println!("                             (default: proof_tree.bin)");
+    println!("                             no stdin reader and no pre-exit summary");
     println!("  --tt-dump-path <FILE>      Write a binary TT snapshot after the search");
     println!("                             (transfer artifact for offline proof");
-    println!("                             reconstruction; optional)");
+    println!("                             reconstruction via reconstruct_pt; optional)");
     println!("  --config <FILE>            Path to a TOML file overriding scorer");
     println!("                             parameters; defaults to built-in values");
     println!();
@@ -147,8 +139,6 @@ fn main() {
         first_outcome,
         refine_cap,
         outcome_only,
-        pt_size,
-        dump_path,
         tt_dump_path,
         config_path,
     } = opts;
@@ -179,14 +169,6 @@ fn main() {
     search.set_refine_cap_factor(refine_cap);
 
     let stop_flag = Arc::new(AtomicBool::new(false));
-    let memory_limited = Arc::new(AtomicBool::new(false));
-    let (pt_handle, pt_join) = if outcome_only {
-        (None, None)
-    } else {
-        let (handle, join) =
-            ProofTreeWorkerHandle::spawn(fen.clone(), pt_size, Arc::clone(&memory_limited));
-        (Some(handle), Some(join))
-    };
 
     let hook: Option<PreExitHook> = if outcome_only {
         None
@@ -206,32 +188,8 @@ fn main() {
             }
         });
 
-        let hook_handle = pt_handle.as_ref().unwrap().clone();
-        Some(Box::new(move |reason, outcome, nodes, _pv: &[Move]| {
+        Some(Box::new(|reason, outcome, nodes, _pv: &[Move]| {
             println!("pre_exit: reason={reason} outcome={outcome} nodes={nodes}");
-
-            hook_handle.finalize();
-            let stats = hook_handle.stats();
-            println!(
-                "proof_tree: nodes={} win={} loss={} root_depth={}",
-                stats.nodes, stats.win_nodes, stats.loss_nodes, stats.root_depth
-            );
-
-            if let Err(e) = hook_handle.dump_to_bin(&dump_path) {
-                eprintln!("failed to write proof-tree dump to {dump_path}: {e}");
-            } else {
-                println!("proof_tree_dump: {dump_path}");
-            }
-
-            // The dump is still written when validation found defects — it is
-            // the debugging artifact — but a defective tree must fail the run
-            // instead of silently shipping an invalid proof. The per-defect
-            // `pt_validate: FAILED ...` lines went to stderr from the worker.
-            if stats.validation_errors > 0 {
-                println!("pt_validate: FAILED {} defect(s)", stats.validation_errors);
-                std::process::exit(1);
-            }
-            println!("pt_validate: ok");
         }))
     };
 
@@ -240,12 +198,6 @@ fn main() {
     } else {
         Some(Arc::clone(&stop_flag))
     });
-    search.set_memory_limited(if outcome_only {
-        None
-    } else {
-        Some(Arc::clone(&memory_limited))
-    });
-    search.set_proof_event_sender(pt_handle.as_ref().map(|h| h.event_sender()));
 
     let (outcome, pv, cut_short) = {
         let (outcome, pv, _nodes) = search.solve_with_progress(&mut pos, |o, line| {
@@ -274,13 +226,10 @@ fn main() {
         (outcome, pv, search.time_exceeded() || budget_exhausted)
     };
 
-    // Write the TT snapshot before any exit path (including the memory-limit
-    // `exit(1)` below): an explicit opt-in artifact must be produced even when
-    // the proof tree hit its memory limit — that is precisely the run where
-    // the snapshot is the rescue artifact for offline reconstruction.
-    // Written regardless of `--outcome-only`; a failed debug artifact must
-    // not turn a good search result into a failure, so I/O errors are logged
-    // and the exit status is unchanged.
+    // Write the TT snapshot on the normal exit path. Written regardless of
+    // `--outcome-only`; a failed debug artifact must not turn a good search
+    // result into a failure, so I/O errors are logged and the exit status is
+    // unchanged.
     if let Some(tt_dump_path) = &tt_dump_path {
         match std::fs::File::create(tt_dump_path) {
             Ok(file) => {
@@ -307,10 +256,6 @@ fn main() {
     if cut_short {
         match search.exit_reason() {
             ExitReason::Quit => println!("quit"),
-            ExitReason::MemoryLimit => {
-                eprintln!("error: proof-tree memory limit ({pt_size} MB) reached");
-                std::process::exit(1);
-            }
             ExitReason::BudgetExhausted => println!("budget exhausted"),
             _ => println!("timeout"),
         };
@@ -321,8 +266,4 @@ fn main() {
     }
 
     drop(search);
-    drop(pt_handle);
-    if let Some(join) = pt_join {
-        let _ = join.join();
-    }
 }
