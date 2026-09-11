@@ -4,9 +4,9 @@
 
 Active, maintained **agile**: plans are single-lever and sized to one session,
 the backlog is re-ranked after every report, and the decisive experiment
-(plan5) gates the default-flipping plan (plan6). Plans 1–4 are done
-(`report1.md`–`report4.md`). The initiative pivoted after plan3 (decision
-record 2026-09-10, below).
+(plan5) gates the default-flipping plan (now plan7 after the 2026-09-11
+renumbering). Plans 1–5 are done (`report1.md`–`report5.md`). The initiative
+pivoted after plan3 (decision record 2026-09-10, below).
 
 ## Motivation
 
@@ -113,10 +113,10 @@ maintainability.
 |---|------|-----------|-----------|---------|--------|--------|
 | 1 | TT snapshot writer | `--tt-dump-path`: bounded binary dump of live TT entries at exit (solved entries from all generations, unsolved from current). Format versioned like `binary.rs` | enables all downstream items; standalone-useful for debugging and TT seeding | new artifact module + CLI flag | S–M | **done (plan4, `report4.md`)** |
 | 2 | Offline reconstruction tool + go/no-go experiment | Top-down walk from FEN over the snapshot: static terminal classification, movegen expansion, hole filling via `search_depth_with_prefix` seeded with the snapshot | proves or refutes that a bounded artifact suffices to rebuild full proofs | new example/tool | M | **done (plan5, `report5.md`) — GO for #3, conditional on the finalize canonicalization fix found by the oracle** |
-| 3 | Flip the default: worker off during search | Search emits no proof events by default; retire `memory_limited` / `ExitReason::MemoryLimit` / `--pt-size` from the search CLI; proof construction moves entirely to #2's tool | restores the resource-bounded search invariant; removes the fatal MemoryLimit path | search CLI + docs + tests | M | open, **gated on #5-kill criteria; plan5 experiment verdict GO with the finalize fix as precondition** |
+| 3 | Flip the default: worker off during search | Search emits no proof events by default; retire `memory_limited` / `ExitReason::MemoryLimit` / `--pt-size` from the search CLI; proof construction moves entirely to #2's tool | restores the resource-bounded search invariant; removes the fatal MemoryLimit path | search CLI + docs + tests | M | open, **plan7** (renumbered 2026-09-11, see History); gated on #6 landing first — plan5 experiment verdict GO with the finalize fix as precondition |
 | 4 | Pin solved TT entries | Solved entries become eviction-proof (they also prevent re-proving in the live search, but shrink frontier capacity) | reduces #2's hole rate if evictions dominate | search behavior — needs drift validation + nps measurement | S–M | deprioritized: plan5 measured `absent` = 2/91,470 proof nodes on the decisive suite — revisit only under deep multi-day eviction pressure |
 | 5 | Periodic TT checkpoint | Bounded-size snapshot written every N minutes (not just at exit) | crash resilience for multi-day runs (the event log's one advantage, at bounded cost) | artifact writer | S | stretch |
-| 6 | Builder-side validation tooling | `inspect_pt` / `verify_ppv` runs against reconstructed trees; root-outcome and bottom-up depth cross-checks against the snapshot before dumping | trust in the reconstruction | examples/tests | S | **elevated**: plan5's oracle found the *live* event-built tree can be an incomplete proof (TT-hit re-emission is childless; `finalize()` canonical tie-break can pick an incompletely expanded twin — see `report5.md`); a Loss-completeness validator + a fully-expanded-twin preference in `finalize()` should land before plan6's flip |
+| 6 | Builder-side validation tooling | `inspect_pt` / `verify_ppv` runs against reconstructed trees; root-outcome and bottom-up depth cross-checks against the snapshot before dumping | trust in the reconstruction | examples/tests | S | **claimed (plan6, `plan6.md`)**: plan5's oracle found the *live* event-built tree can be an incomplete proof (TT-hit re-emission is childless; `finalize()` canonical tie-break can pick an incompletely expanded twin — see `report5.md`); plan6 = fully-expanded-twin preference in `finalize()` + replay-based Loss-completeness validator, with 46/46 oracle-isomorphic as the acceptance criterion that un-gates plan7 |
 | 7 | Deep-proof capacity of the builder | `finalize()` canonical expansion and the node store may still exceed a single machine's RAM for the deepest proofs | disk-backed finalize, or canonical expansion pushed into the import side | builder | L | open — needs a design spike only when deep proofs actually overflow the builder |
 
 Done: plan1, plan2, plan3, plan4 (see History). Statuses reference plans under
@@ -174,6 +174,10 @@ Done: plan1, plan2, plan3, plan4 (see History). Statuses reference plans under
   defect now tracked under #6. Verdict: **GO for plan6** (re-justified
   coverage criterion in `report5.md`), conditional on the finalize
   canonicalization fix.
+- **2026-09-11** — plan6 drafted (#6): the finalize/validator fix becomes its
+  own plan (one lever per plan), and the worker-off flip is renumbered from
+  "plan6" (report5's numbering) to **plan7**, gated on plan6's 46/46
+  oracle-isomorphic acceptance criterion.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
