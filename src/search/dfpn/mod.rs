@@ -413,6 +413,16 @@ impl Search {
         &self.tt
     }
 
+    /// Mutable transposition-table access for tooling that pre-populates the
+    /// table from a snapshot (see [`crate::tt_snapshot`] and
+    /// [`crate::reconstruct`]). Seeding uses the public
+    /// [`TranspositionTable::store`]; the search must not depend on seeded
+    /// entries being present (they are ordinary entries: evictable, and
+    /// subject to the same probe semantics as live ones).
+    pub fn tt_mut(&mut self) -> &mut TranspositionTable {
+        &mut self.tt
+    }
+
     /// Aggregate transposition-table statistics after a search.
     ///
     /// Tuple fields are: `(buckets, live_entries, solved_entries, unsolved_entries, generation)`.

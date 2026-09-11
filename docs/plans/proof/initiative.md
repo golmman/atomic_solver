@@ -112,11 +112,11 @@ maintainability.
 | # | Item | Mechanism | Potential | Affects | Effort | Status |
 |---|------|-----------|-----------|---------|--------|--------|
 | 1 | TT snapshot writer | `--tt-dump-path`: bounded binary dump of live TT entries at exit (solved entries from all generations, unsolved from current). Format versioned like `binary.rs` | enables all downstream items; standalone-useful for debugging and TT seeding | new artifact module + CLI flag | S–M | **done (plan4, `report4.md`)** |
-| 2 | Offline reconstruction tool + go/no-go experiment | Top-down walk from FEN over the snapshot: static terminal classification, movegen expansion, hole filling via `search_depth_with_prefix` seeded with the snapshot | proves or refutes that a bounded artifact suffices to rebuild full proofs | new example/tool | M | open, gated on #1 |
-| 3 | Flip the default: worker off during search | Search emits no proof events by default; retire `memory_limited` / `ExitReason::MemoryLimit` / `--pt-size` from the search CLI; proof construction moves entirely to #2's tool | restores the resource-bounded search invariant; removes the fatal MemoryLimit path | search CLI + docs + tests | M | open, **gated on #2 kill criteria** |
-| 4 | Pin solved TT entries | Solved entries become eviction-proof (they also prevent re-proving in the live search, but shrink frontier capacity) | reduces #2's hole rate if evictions dominate | search behavior — needs drift validation + nps measurement | S–M | conditional on #2's hole-rate breakdown |
+| 2 | Offline reconstruction tool + go/no-go experiment | Top-down walk from FEN over the snapshot: static terminal classification, movegen expansion, hole filling via `search_depth_with_prefix` seeded with the snapshot | proves or refutes that a bounded artifact suffices to rebuild full proofs | new example/tool | M | **done (plan5, `report5.md`) — GO for #3, conditional on the finalize canonicalization fix found by the oracle** |
+| 3 | Flip the default: worker off during search | Search emits no proof events by default; retire `memory_limited` / `ExitReason::MemoryLimit` / `--pt-size` from the search CLI; proof construction moves entirely to #2's tool | restores the resource-bounded search invariant; removes the fatal MemoryLimit path | search CLI + docs + tests | M | open, **gated on #5-kill criteria; plan5 experiment verdict GO with the finalize fix as precondition** |
+| 4 | Pin solved TT entries | Solved entries become eviction-proof (they also prevent re-proving in the live search, but shrink frontier capacity) | reduces #2's hole rate if evictions dominate | search behavior — needs drift validation + nps measurement | S–M | deprioritized: plan5 measured `absent` = 2/91,470 proof nodes on the decisive suite — revisit only under deep multi-day eviction pressure |
 | 5 | Periodic TT checkpoint | Bounded-size snapshot written every N minutes (not just at exit) | crash resilience for multi-day runs (the event log's one advantage, at bounded cost) | artifact writer | S | stretch |
-| 6 | Builder-side validation tooling | `inspect_pt` / `verify_ppv` runs against reconstructed trees; root-outcome and bottom-up depth cross-checks against the snapshot before dumping | trust in the reconstruction | examples/tests | S | open |
+| 6 | Builder-side validation tooling | `inspect_pt` / `verify_ppv` runs against reconstructed trees; root-outcome and bottom-up depth cross-checks against the snapshot before dumping | trust in the reconstruction | examples/tests | S | **elevated**: plan5's oracle found the *live* event-built tree can be an incomplete proof (TT-hit re-emission is childless; `finalize()` canonical tie-break can pick an incompletely expanded twin — see `report5.md`); a Loss-completeness validator + a fully-expanded-twin preference in `finalize()` should land before plan6's flip |
 | 7 | Deep-proof capacity of the builder | `finalize()` canonical expansion and the node store may still exceed a single machine's RAM for the deepest proofs | disk-backed finalize, or canonical expansion pushed into the import side | builder | L | open — needs a design spike only when deep proofs actually overflow the builder |
 
 Done: plan1, plan2, plan3, plan4 (see History). Statuses reference plans under
@@ -165,6 +165,15 @@ Done: plan1, plan2, plan3, plan4 (see History). Statuses reference plans under
   re-framed as surviving infrastructure for the offline builder. Backlog
   table created.
 - **plan4** — TT snapshot writer (#1), done (`report4.md`).
+- **plan5** — offline reconstruction tool + go/no-go experiment (#2), done
+  (`report5.md`). Result: hole rate 0.003% (hit 76% / terminal 24% of 91,470
+  proof nodes), median fill ratio F/C = 0.0, zero anomalies/unfillable, and
+  43/46 decisive-suite cases oracle-isomorphic — the 3 mismatches are the
+  *live* event-built tree being an incomplete proof at transpositions
+  (reconstruction is a strict superset), a pre-existing proof-tree-layer
+  defect now tracked under #6. Verdict: **GO for plan6** (re-justified
+  coverage criterion in `report5.md`), conditional on the finalize
+  canonicalization fix.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

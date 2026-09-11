@@ -7,7 +7,7 @@ A pure solver for atomic chess in Rust.
 ## Architecture
 
 - `src/lib.rs` re-exports `notation`, `position`, `proof_event`, `proof_tree`,
-  `search`, `tt_snapshot`, and `zobrist`.
+  `search`, `reconstruct`, `tt_snapshot`, and `zobrist`.
 - `src/position.rs` wraps `atomic_movegen::board::Board` and tracks the
   `Outcome` (Win/Loss/Draw from the side-to-move perspective), undo state,
   and Zobrist hashing.
@@ -120,6 +120,10 @@ The runnable examples are:
   benchmark position.
 - `play_and_solve` — Plays a user-specified move and then solves the resulting
   position. Useful for inspecting a particular line.
+- `reconstruct_pt` — Rebuilds a proof tree offline from the root FEN plus a TT
+  snapshot (`--snapshot`), synthesizing events into the regular proof-tree
+  worker; `--oracle` compares against an event-built dump, and `--experiment`
+  runs the go/no-go dual-build oracle over the decisive suite.
 - `replay` — Replay a UCI line from a FEN and solve the resulting position.
 - `solve_depth_limited` — Runs `Search::search_depth` with a fixed
   `max_depth` and no iterative-deepening bootstrap.
