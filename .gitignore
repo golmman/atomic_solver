@@ -22,8 +22,8 @@ target
 
 .DS_Store
 
-proof_tree.bin
-proof_tree.sql
+proof.bin
+proof.bin.tt
 
 # Local nn-era leftovers (archive lives on the nn branch)
 data/corpus/

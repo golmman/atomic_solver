@@ -16,7 +16,36 @@ The solver is built on top of [`atomic-movegen`](https://crates.io/crates/atomic
 cargo run -- --fen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 ```
 
-The default CLI search uses a 64 MB transposition table and a 5-second timeout. Use `--tt-size <MB>` to change the table size.
+The default CLI search uses a 128 MB transposition table and a 5-second timeout. Use `--tt-size <MB>` to change the table size.
+
+## Producing a proof tree
+
+Proof-tree construction is an **offline** step, decoupled from the search. The
+search CLI is resource-bounded (RAM = TT only) and never builds a tree; it can
+optionally write a bounded binary TT snapshot at exit, from which the proof
+tree is reconstructed. Given a FEN:
+
+```bash
+# 1. Solve the position and write a TT snapshot at exit.
+cargo run --release -- \
+    --fen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" \
+    --tt-dump-path proof.bin.tt
+
+# 2. Rebuild the proof tree from the snapshot (offline).
+#    finalize() canonicalization plus the replay-based validator run here;
+#    the tool exits non-zero if the tree has defects.
+cargo run --release --example reconstruct_pt -- \
+    --snapshot proof.bin.tt --out proof.bin
+```
+
+The root FEN is recorded in the snapshot header, so `reconstruct_pt` needs no
+`--fen`; if given, `--fen` must match the snapshot's root FEN. The result
+`proof.bin` is the compact binary adjacency dump (the contract for the
+external PostgreSQL importer) and can be inspected or re-validated with:
+
+```bash
+cargo run --release --example inspect_pt -- proof.bin --validate
+```
 
 ## Library usage
 
@@ -50,11 +79,13 @@ let (outcome, pv, nodes) = search.solve(&mut pos);
   shorter decisive line. Each probe is work-bounded, reusing the transposition
   table and heuristics across chunks, and the search terminates when a shorter
   line cannot be found or the timeout is reached.
-- **Proof-tree emission** — `dfpn` emits `ProofEvent` nodes (now carrying a
-  Zobrist hash) for every node it proves or disproves. A background proof-tree
-  worker consumes these events, accumulates the tree across the whole run, and
-  runs a `finalize()` pass that copies fully expanded canonical subtrees onto
-  unexpanded transpositions, producing an authoritative proven subtree.
+- **Proof-tree emission** — `dfpn` emits `ProofEvent` nodes (carrying a
+  Zobrist hash) for every node it proves or disproves. Proof-tree construction
+  is offline: the search CLI dumps a TT snapshot (`--tt-dump-path`), and
+  `examples/reconstruct_pt` synthesizes events into the background
+  proof-tree worker, whose `finalize()` pass copies fully expanded canonical
+  subtrees onto unexpanded transpositions, producing an authoritative proven
+  subtree.
 
 ### Transposition table and repetition
 
@@ -128,7 +159,8 @@ let (outcome, pv, nodes) = search.solve(&mut pos);
 Run with `cargo run --example <name> -- [args]`:
 
 - `benchmark` — reproducible benchmark over a fixed suite of positions. Supports
-  `--suite default|move-order|decisive|all`, `--first-outcome`, and `--runs N`.
+  `--suite default|move-order|decisive|quick|thorough|all`, `--first-outcome`,
+  `--runs N`, and `--json`.
 - `chunk_growth` — explore work-chunk growth settings.
 - `find_winning_child` — try every first move and report one that wins.
 - `inspect_pt` — dump a binary proof tree to human-readable JSON.
@@ -136,6 +168,9 @@ Run with `cargo run --example <name> -- [args]`:
 - `move_order_debug` — print static, history, killer and total move-ordering scores.
   Use `--name <case>` to inspect a move-order benchmark position.
 - `play_and_solve` — play a given move, then solve the resulting position.
+- `reconstruct_pt` — rebuild a proof tree offline from the root FEN plus a TT
+  snapshot (see [Producing a proof tree](#producing-a-proof-tree)); reports
+  `validate: ok|FAILED n` and exits non-zero on a defective tree.
 - `replay` — replay a UCI line from a FEN and solve the resulting position.
 - `solve_depth_limited` — solve with a fixed depth bound.
 - `static_move_scores` — print static move-ordering scores for a position.
