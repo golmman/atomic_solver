@@ -16,8 +16,8 @@ quick_check2:
 	cargo run --release -- --fen "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22" --timeout 10
 
 quick_check3:
-	cargo run --release -- --fen "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22" --timeout 10 --tt-dump-path proof.bin.tt
-	cargo run --release --example reconstruct_pt -- --snapshot proof.bin.tt --out proof.bin
+	cargo run --release -- --fen "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22" --timeout 10 --tt-dump-path proof_tree.bin.tt
+	cargo run --release --example reconstruct_pt -- --snapshot proof_tree.bin.tt --out proof_tree.bin
 
 macos_cleanup:
 	find . -name ".DS_Store" -print -delete
