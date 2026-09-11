@@ -113,7 +113,7 @@ maintainability.
 |---|------|-----------|-----------|---------|--------|--------|
 | 1 | TT snapshot writer | `--tt-dump-path`: bounded binary dump of live TT entries at exit (solved entries from all generations, unsolved from current). Format versioned like `binary.rs` | enables all downstream items; standalone-useful for debugging and TT seeding | new artifact module + CLI flag | S–M | **done (plan4, `report4.md`)** |
 | 2 | Offline reconstruction tool + go/no-go experiment | Top-down walk from FEN over the snapshot: static terminal classification, movegen expansion, hole filling via `search_depth_with_prefix` seeded with the snapshot | proves or refutes that a bounded artifact suffices to rebuild full proofs | new example/tool | M | **done (plan5, `report5.md`) — GO for #3, conditional on the finalize canonicalization fix found by the oracle** |
-| 3 | Flip the default: worker off during search | Search emits no proof events by default; retire `memory_limited` / `ExitReason::MemoryLimit` / `--pt-size` from the search CLI; proof construction moves entirely to #2's tool | restores the resource-bounded search invariant; removes the fatal MemoryLimit path | search CLI + docs + tests | M | open, **plan7** (renumbered 2026-09-11, see History); **un-gated**: plan6 landed the finalize fix and the experiment now reports 46/46 oracle-isomorphic (`report6.md`) |
+| 3 | Flip the default: worker off during search | Search emits no proof events by default; retire `memory_limited` / `ExitReason::MemoryLimit` / `--pt-size` from the search CLI; proof construction moves entirely to #2's tool | restores the resource-bounded search invariant; removes the fatal MemoryLimit path | search CLI + docs + tests | M | **plan7 drafted (`plan7.md`)** (renumbered 2026-09-11, see History); **un-gated**: plan6 landed the finalize fix and the experiment now reports 46/46 oracle-isomorphic (`report6.md`) |
 | 4 | Pin solved TT entries | Solved entries become eviction-proof (they also prevent re-proving in the live search, but shrink frontier capacity) | reduces #2's hole rate if evictions dominate | search behavior — needs drift validation + nps measurement | S–M | deprioritized: plan5 measured `absent` = 2/91,470 proof nodes on the decisive suite — revisit only under deep multi-day eviction pressure |
 | 5 | Periodic TT checkpoint | Bounded-size snapshot written every N minutes (not just at exit) | crash resilience for multi-day runs (the event log's one advantage, at bounded cost) | artifact writer | S | stretch |
 | 6 | Builder-side validation tooling | `inspect_pt` / `verify_ppv` runs against reconstructed trees; root-outcome and bottom-up depth cross-checks against the snapshot before dumping | trust in the reconstruction | examples/tests | S | **done (plan6, `report6.md`)**: fully-expanded-twin preference in `finalize()` (sibling-chain child counts; `reconcile_children` leaves pruned children's parent links set — parent-link counts overcount), replay-based validator `validate_proof_tree` wired into `finalize()`/`main.rs` (`pt_validate:` line, exit 1 on defects, `ProofStats::validation_errors`); experiment now **46/46 oracle-isomorphic**, un-gating plan7 |
@@ -184,6 +184,11 @@ Done: plan1, plan2, plan3, plan4 (see History). Statuses reference plans under
   quick-suite cases), dec46 live tree now validates clean (3001 → 3017
   nodes), and the decisive experiment reports **46/46 oracle-isomorphic**
   with hole stats unchanged from report5 — verdict GO, plan7 un-gated.
+- **2026-09-11** — plan7 drafted (#3, `plan7.md`): full removal of the
+  live-tree path from the search CLI (no opt-in flag; decision recorded in
+  the plan), `--tt-dump-path` stays opt-in, validation gate moves to
+  `reconstruct_pt`'s `validate:` line. The library search API and the
+  builder-side `--pt-size` stay untouched.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
