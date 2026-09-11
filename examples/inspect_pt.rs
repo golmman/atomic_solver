@@ -2,7 +2,7 @@ use std::fs;
 
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::Outcome;
-use atomic_solver::proof_tree::ProofTree;
+use atomic_solver::proof_tree::{ProofTree, validate_proof_tree};
 
 fn dump_tree(tree: &ProofTree, node: usize, prefix: &mut Vec<String>, max_ply: usize) {
     let n = &tree.nodes[node];
@@ -30,9 +30,18 @@ fn dump_tree(tree: &ProofTree, node: usize, prefix: &mut Vec<String>, max_ply: u
 }
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    let path = args.get(1).map(|s| s.as_str()).unwrap_or("proof_tree.bin");
-    let data = fs::read(path).expect("read proof tree");
+    let mut path = "proof_tree.bin".to_string();
+    let mut validate = false;
+    for arg in std::env::args().skip(1) {
+        match arg.as_str() {
+            "--validate" => validate = true,
+            other if other.starts_with("--") => {
+                panic!("unknown option '{other}' (usage: inspect_pt [--validate] [file])")
+            }
+            _ => path = arg,
+        }
+    }
+    let data = fs::read(&path).expect("read proof tree");
     let tree = ProofTree::from_bin(&mut &data[..]).expect("parse proof tree");
 
     println!("nodes: {}", tree.nodes.len());
@@ -65,4 +74,20 @@ fn main() {
     println!("--- leaves (max 20) ---");
     let mut prefix = Vec::new();
     dump_tree(&tree, 0, &mut prefix, 30);
+
+    // Replay-based structural validation. Off by default to keep the plain
+    // JSON dump cheap. Loaded trees carry hash == 0, so hash checks are
+    // skipped; cycle, terminal, depth, and completeness checks still run.
+    if validate {
+        match validate_proof_tree(&tree) {
+            Ok(()) => println!("pt_validate: ok"),
+            Err(defects) => {
+                for defect in &defects {
+                    println!("pt_validate: FAILED {defect}");
+                }
+                println!("pt_validate: FAILED {} defect(s)", defects.len());
+                std::process::exit(1);
+            }
+        }
+    }
 }

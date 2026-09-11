@@ -56,6 +56,10 @@ pub struct ProofStats {
     pub win_nodes: usize,
     pub loss_nodes: usize,
     pub root_depth: u32,
+    /// Number of defects the replay-based validator found in the finalized
+    /// tree during the last `finalize()` pass (0 on success). The tree is
+    /// installed and dumped regardless; a non-zero count must fail the run.
+    pub validation_errors: usize,
 }
 
 /// Public handle to a spawned proof-tree worker.
@@ -143,6 +147,8 @@ pub(crate) struct ProofTreeWorker {
     /// Expanded (terminal or internal) nodes indexed by `(hash, outcome)` for
     /// the final canonicalization pass. One canonical id is kept per key.
     expanded_by_hash: HashMap<(u64, Outcome), usize>,
+    /// Defect count reported by the last `finalize_tree` validation pass.
+    validation_errors: usize,
     budget: usize,
     memory_limited: Arc<AtomicBool>,
 }
@@ -154,6 +160,7 @@ impl ProofTreeWorker {
             tree: ProofTree::new(root_fen, 0, None, 0),
             child_index: HashMap::new(),
             expanded_by_hash: HashMap::new(),
+            validation_errors: 0,
             budget,
             memory_limited,
         }
@@ -215,6 +222,7 @@ impl ProofTreeWorker {
         self.tree = ProofTree::new(self.tree.root_fen.clone(), 0, None, 0);
         self.child_index.clear();
         self.expanded_by_hash.clear();
+        self.validation_errors = 0;
     }
 
     fn process_event(&mut self, event: NodeProven) {
@@ -346,8 +354,28 @@ impl ProofTreeWorker {
     /// Rebuild the `(hash, outcome) -> best node id` index used to
     /// canonicalise transpositions during finalisation. Only terminal nodes
     /// and internal nodes with children are considered "expanded".
+    ///
+    /// Twin preference (candidate vs. incumbent at the same key), in order:
+    /// consistency, shallower proven depth, more children, first created.
+    /// Child count is a completeness proxy for Loss twins — a Loss proof must
+    /// cover *all* legal replies, so the twin with more replies is closer to
+    /// complete. The proxy is neutral for Win twins (child count ≤ 1 after
+    /// `reconcile_children`) and cannot detect a missing reply when *both*
+    /// twins are incomplete; `validate_proof_tree` (run on the rebuilt tree)
+    /// is the authoritative completeness check.
     fn build_expanded_index(&mut self) {
         self.expanded_by_hash.clear();
+        // Count via the sibling chain: `reconcile_children` removes pruned
+        // children from the chain but leaves their parent link set, so a
+        // parent-link count would include pruned children.
+        let mut child_counts = vec![0u32; self.tree.nodes.len()];
+        for (id, node) in self.tree.nodes.iter().enumerate() {
+            let mut next = node.first_child;
+            while let Some(nz) = next {
+                child_counts[id] += 1;
+                next = self.tree.nodes[nz.get() as usize].next_sibling;
+            }
+        }
         for (id, node) in self.tree.nodes.iter().enumerate() {
             let Some(outcome) = node.outcome else {
                 continue;
@@ -366,8 +394,11 @@ impl ProofTreeWorker {
                     let other_consistent = other_node.depth == other_implied;
                     if consistent != other_consistent {
                         consistent
-                    } else {
+                    } else if node.depth != other_node.depth {
                         node.depth < other_node.depth
+                    } else {
+                        // Strict: equal child count keeps the first created.
+                        child_counts[id] > child_counts[other]
                     }
                 }
             };
@@ -554,6 +585,24 @@ impl ProofTreeWorker {
             }
         }
 
+        // Authoritative completeness check on the rebuilt tree. Defects do
+        // not prevent installation or the dump: the tree is the debugging
+        // artifact, and the failure surfaces via `ProofStats::
+        // validation_errors` plus the caller's non-zero exit.
+        self.validation_errors = match super::validate::validate_proof_tree(&new_tree) {
+            Ok(()) => 0,
+            Err(defects) => {
+                const MAX_LISTED: usize = 20;
+                for defect in defects.iter().take(MAX_LISTED) {
+                    eprintln!("pt_validate: FAILED {defect}");
+                }
+                if defects.len() > MAX_LISTED {
+                    eprintln!("pt_validate: ... {} more", defects.len() - MAX_LISTED);
+                }
+                defects.len()
+            }
+        };
+
         self.tree = new_tree;
         self.expanded_by_hash.clear();
 
@@ -602,6 +651,7 @@ impl ProofTreeWorker {
             win_nodes,
             loss_nodes,
             root_depth,
+            validation_errors: self.validation_errors,
         }
     }
 }

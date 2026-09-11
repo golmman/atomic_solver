@@ -16,7 +16,7 @@ mod common;
 
 use atomic_solver::notation::{bits_to_move, moves_to_uci_path};
 use atomic_solver::position::{Outcome, Position};
-use atomic_solver::proof_tree::{ProofTree, ProofTreeWorkerHandle};
+use atomic_solver::proof_tree::{ProofTree, ProofTreeWorkerHandle, validate_proof_tree};
 use atomic_solver::reconstruct::{ReconstructConfig, reconstruct, tree_signature};
 use atomic_solver::search::dfpn::Search;
 use atomic_solver::tt_snapshot::{read_tt_snapshot, write_tt_snapshot};
@@ -280,6 +280,9 @@ fn run_single(opts: &Options) {
         }
     });
 
+    // Replay-based structural validation of the reconstructed tree.
+    let validate = output.tree.as_ref().map(validate_status);
+
     if opts.json {
         #[derive(Serialize)]
         struct SingleJson<'a> {
@@ -292,6 +295,7 @@ fn run_single(opts: &Options) {
             error: Option<&'a str>,
             dump: Option<&'a str>,
             oracle: Option<String>,
+            validate: Option<String>,
         }
         let json = SingleJson {
             status: if output.tree.is_some() {
@@ -311,6 +315,7 @@ fn run_single(opts: &Options) {
                 None
             },
             oracle,
+            validate: validate.clone(),
         };
         println!("{}", serde_json::to_string_pretty(&json).unwrap());
     } else {
@@ -330,11 +335,20 @@ fn run_single(opts: &Options) {
         if let Some(line) = oracle {
             println!("{line}");
         }
+        if let Some(status) = &validate {
+            println!("validate: {status}");
+        }
         if let Some(error) = &output.error {
             eprintln!("error: {error}");
         }
     }
     if output.tree.is_none() {
+        std::process::exit(1);
+    }
+    if validate.as_deref().is_some_and(|v| v != "ok") {
+        // The per-defect `pt_validate: FAILED ...` lines went to stderr from
+        // the worker's finalize pass inside `reconstruct`.
+        eprintln!("reconstruction failed proof-tree validation");
         std::process::exit(1);
     }
 }
@@ -353,6 +367,9 @@ struct CaseRow {
     holes: Option<HoleRow>,
     a_only_paths: Option<usize>,
     b_only_paths: Option<usize>,
+    /// Live-tree finalize validation status ("ok" / "FAILED n"); absent for
+    /// skipped cases.
+    validate: Option<String>,
     error: Option<String>,
 }
 
@@ -364,6 +381,7 @@ struct Summary {
     recon_ok: usize,
     oracle_isomorphic: usize,
     coverage_failures: usize,
+    validate_failures: usize,
     holes: HoleRow,
     total_child_evals_c: u64,
     total_fill_evals_f: u64,
@@ -378,6 +396,8 @@ struct LiveBuild {
     snapshot: Vec<u8>,
     tree: Option<ProofTree>,
     memory_limited: bool,
+    /// Defect count from the worker's finalize validation pass (0 = clean).
+    validation_errors: usize,
 }
 
 fn live_build(fen: &str, tt_mb: usize, timeout: u64, pt_size: usize) -> LiveBuild {
@@ -400,8 +420,10 @@ fn live_build(fen: &str, tt_mb: usize, timeout: u64, pt_size: usize) -> LiveBuil
     )
     .expect("snapshot write cannot fail into a Vec");
     let mut tree = None;
+    let mut validation_errors = 0;
     if outcome != Outcome::Draw && !memory_flag.load(Ordering::Acquire) {
         handle.finalize();
+        validation_errors = handle.stats().validation_errors;
         tree = Some(handle.tree());
     }
     drop(search);
@@ -413,6 +435,16 @@ fn live_build(fen: &str, tt_mb: usize, timeout: u64, pt_size: usize) -> LiveBuil
         snapshot,
         tree,
         memory_limited: memory_flag.load(Ordering::Acquire),
+        validation_errors,
+    }
+}
+
+/// Run the replay-based validator on a finished tree and return the
+/// `validate:` status string ("ok" or "FAILED n").
+fn validate_status(tree: &ProofTree) -> String {
+    match validate_proof_tree(tree) {
+        Ok(()) => "ok".to_string(),
+        Err(defects) => format!("FAILED {}", defects.len()),
     }
 }
 
@@ -458,9 +490,15 @@ fn run_experiment(opts: &Options) {
             holes: None,
             a_only_paths: None,
             b_only_paths: None,
+            validate: None,
             error: None,
         };
         if status == "live_ok" {
+            row.validate = Some(if live.validation_errors == 0 {
+                "ok".to_string()
+            } else {
+                format!("FAILED {}", live.validation_errors)
+            });
             let (header, solved, _unsolved) =
                 read_tt_snapshot(&mut Cursor::new(&live.snapshot)).expect("fresh snapshot parses");
             let output = reconstruct(&header.root_fen, &solved, &config);
@@ -522,6 +560,10 @@ fn run_experiment(opts: &Options) {
         .filter(|r| r.status != "skipped_live_draw" && r.status != "skipped_memory")
         .count();
     let skipped = rows.len() - live_ok;
+    let validate_failures = rows
+        .iter()
+        .filter(|r| r.validate.as_deref().is_some_and(|v| v != "ok"))
+        .count();
 
     let verdict = if coverage_failures > 0 {
         "NO-GO (coverage): reconstruction failed where the live worker succeeded"
@@ -539,6 +581,7 @@ fn run_experiment(opts: &Options) {
         recon_ok: oracle_isomorphic,
         oracle_isomorphic,
         coverage_failures,
+        validate_failures,
         holes,
         total_child_evals_c: rows.iter().map(|r| r.child_evals_c).sum(),
         total_fill_evals_f: rows.iter().map(|r| r.fill_evals_f).sum(),
@@ -562,11 +605,11 @@ fn run_experiment(opts: &Options) {
             .unwrap()
         );
     } else {
-        println!("| name | status | outcome | C | F | F/C | recon_nodes | holes |");
-        println!("|------|--------|---------|---:|---:|----:|----:|-------|");
+        println!("| name | status | outcome | C | F | F/C | recon_nodes | validate | holes |");
+        println!("|------|--------|---------|---:|---:|----:|----:|------|-------|");
         for r in &rows {
             println!(
-                "| {} | {} | {} | {} | {} | {} | {} | {} |",
+                "| {} | {} | {} | {} | {} | {} | {} | {} | {} |",
                 r.name,
                 r.status,
                 r.outcome.map(|o| o.as_str()).unwrap_or("-"),
@@ -574,6 +617,7 @@ fn run_experiment(opts: &Options) {
                 r.fill_evals_f,
                 r.fill_ratio.map_or("-".to_string(), |v| format!("{v:.3}")),
                 r.recon_nodes.map_or("-".to_string(), |v| v.to_string()),
+                r.validate.as_deref().unwrap_or("-"),
                 r.holes
                     .map(|h| format!(
                         "hit={} term={} clock_hit={} miss_draw={} rep={} absent={} filled={} unfill={} anom={}",
@@ -585,7 +629,7 @@ fn run_experiment(opts: &Options) {
         }
         println!();
         println!(
-            "live_ok={live_ok} skipped={skipped} recon_ok={recon_ok} coverage_failures={coverage_failures}",
+            "live_ok={live_ok} skipped={skipped} recon_ok={recon_ok} coverage_failures={coverage_failures} validate_failures={validate_failures}",
             recon_ok = summary.recon_ok,
         );
         println!(
@@ -608,6 +652,10 @@ fn run_experiment(opts: &Options) {
             max.map_or("-".to_string(), |v| format!("{v:.4}")),
         );
         println!("verdict: {verdict}");
+    }
+    if validate_failures > 0 {
+        eprintln!("experiment: {validate_failures} live-tree validation failure(s)");
+        std::process::exit(1);
     }
     if coverage_failures > 0 {
         eprintln!("experiment: {coverage_failures} coverage failure(s)");

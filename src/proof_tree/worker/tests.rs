@@ -421,6 +421,10 @@ fn solve_populates_proof_tree_with_nodes() {
         "proof tree should contain at least the root node and proven children"
     );
     assert!(tree.validate_ppv(&pv), "proof tree should validate the PV");
+    assert_eq!(
+        stats.validation_errors, 0,
+        "a finalized live proof tree must validate clean"
+    );
 
     drop(search);
     drop(handle);
@@ -618,6 +622,180 @@ fn finalize_prunes_dummy_subtree() {
     assert_eq!(tree.children(e2e4_id).count(), 1);
     assert!(child_by_move(&tree, 0, d2d4).is_none());
     assert!(!tree.nodes.iter().any(|n| n.mv == d7d5));
+
+    drop(handle);
+    join.join().unwrap();
+}
+
+/// Deterministic reproduction of the dec46 defect mechanism (report5): two
+/// same-hash transposition twins, the first created expanded with 1 of 2
+/// replies, the second with both, then a childless TT-hit re-emission of the
+/// first. The complete twin must become canonical.
+///
+/// Twin layout: the two branches a2a3 / b2b3 end in Win nodes whose Loss
+/// child is the same position (hash 10); Loss parents keep every Win child,
+/// so both twins coexist. (Win twins would be pruned to one child by
+/// `reconcile_children`, so the completeness proxy is a Loss-twin property.)
+#[test]
+fn finalize_prefers_more_expanded_twin() {
+    let (handle, join) =
+        ProofTreeWorkerHandle::spawn("fen".to_string(), 256, Arc::new(AtomicBool::new(false)));
+    let a2a3 = Move::make_move(Square::A2, Square::A3);
+    let b2b3 = Move::make_move(Square::B2, Square::B3);
+    let a7a6 = Move::make_move(Square::A7, Square::A6);
+    let b7b6 = Move::make_move(Square::B7, Square::B6);
+    let c1c2 = Move::make_move(Square::C1, Square::C2);
+    let d1d2 = Move::make_move(Square::D1, Square::D2);
+
+    let events: Vec<(Vec<Move>, u64, Outcome, u32)> = vec![
+        (vec![], 0, Outcome::Loss, 3),
+        (vec![a2a3], 1, Outcome::Win, 2),
+        (vec![b2b3], 2, Outcome::Win, 2),
+        // Twin A: incomplete (1 of 2 replies).
+        (vec![a2a3, a7a6], 10, Outcome::Loss, 1),
+        (vec![a2a3, a7a6, c1c2], 20, Outcome::Win, 0),
+        // Twin B: complete (both replies).
+        (vec![b2b3, b7b6], 10, Outcome::Loss, 1),
+        (vec![b2b3, b7b6, c1c2], 20, Outcome::Win, 0),
+        (vec![b2b3, b7b6, d1d2], 21, Outcome::Win, 0),
+        // TT-hit re-emission of twin A, childless.
+        (vec![a2a3, a7a6], 10, Outcome::Loss, 1),
+    ];
+    let sender = handle.event_sender();
+    for (path, hash, outcome, depth) in events {
+        sender
+            .send(ProofEvent::NodeProven(NodeProven::new(
+                path, hash, outcome, depth,
+            )))
+            .unwrap();
+    }
+    drop(sender);
+
+    handle.finalize();
+    let tree = handle.tree();
+    assert_eq!(tree.children(0).count(), 2);
+    for branch in tree.children(0) {
+        let twins: Vec<usize> = tree.children(branch).collect();
+        assert_eq!(twins.len(), 1);
+        let twin = twins[0];
+        assert_eq!(tree.nodes[twin].outcome, Some(Outcome::Loss));
+        assert_eq!(tree.nodes[twin].depth, 1);
+        assert_eq!(
+            tree.children(twin).count(),
+            2,
+            "the complete twin's subtree must be canonical"
+        );
+    }
+    assert_eq!(tree.nodes[0].depth, 3);
+
+    drop(handle);
+    join.join().unwrap();
+}
+
+/// The incumbent must not be displaced by an incomplete challenger: the
+/// first-created complete twin stays canonical even after the incomplete
+/// twin is re-emitted (TT-hit pattern).
+#[test]
+fn finalize_keeps_first_created_complete_twin() {
+    let (handle, join) =
+        ProofTreeWorkerHandle::spawn("fen".to_string(), 256, Arc::new(AtomicBool::new(false)));
+    let a2a3 = Move::make_move(Square::A2, Square::A3);
+    let b2b3 = Move::make_move(Square::B2, Square::B3);
+    let a7a6 = Move::make_move(Square::A7, Square::A6);
+    let b7b6 = Move::make_move(Square::B7, Square::B6);
+    let c1c2 = Move::make_move(Square::C1, Square::C2);
+    let d1d2 = Move::make_move(Square::D1, Square::D2);
+
+    let events: Vec<(Vec<Move>, u64, Outcome, u32)> = vec![
+        (vec![], 0, Outcome::Loss, 3),
+        (vec![a2a3], 1, Outcome::Win, 2),
+        (vec![b2b3], 2, Outcome::Win, 2),
+        // Twin A: complete (both replies).
+        (vec![a2a3, a7a6], 10, Outcome::Loss, 1),
+        (vec![a2a3, a7a6, c1c2], 20, Outcome::Win, 0),
+        (vec![a2a3, a7a6, d1d2], 21, Outcome::Win, 0),
+        // Twin B: incomplete (1 of 2 replies).
+        (vec![b2b3, b7b6], 10, Outcome::Loss, 1),
+        (vec![b2b3, b7b6, c1c2], 20, Outcome::Win, 0),
+        // TT-hit re-emission of twin B, childless.
+        (vec![b2b3, b7b6], 10, Outcome::Loss, 1),
+    ];
+    let sender = handle.event_sender();
+    for (path, hash, outcome, depth) in events {
+        sender
+            .send(ProofEvent::NodeProven(NodeProven::new(
+                path, hash, outcome, depth,
+            )))
+            .unwrap();
+    }
+    drop(sender);
+
+    handle.finalize();
+    let tree = handle.tree();
+    assert_eq!(tree.children(0).count(), 2);
+    for branch in tree.children(0) {
+        let twins: Vec<usize> = tree.children(branch).collect();
+        assert_eq!(twins.len(), 1);
+        assert_eq!(
+            tree.children(twins[0]).count(),
+            2,
+            "the first-created complete twin must stay canonical"
+        );
+    }
+
+    drop(handle);
+    join.join().unwrap();
+}
+
+/// Consistency outranks the child-count tie-break: a stale-depth twin with
+/// more children must lose to a consistent twin with fewer children.
+#[test]
+fn finalize_consistency_outranks_child_count() {
+    let (handle, join) =
+        ProofTreeWorkerHandle::spawn("fen".to_string(), 256, Arc::new(AtomicBool::new(false)));
+    let a2a3 = Move::make_move(Square::A2, Square::A3);
+    let b2b3 = Move::make_move(Square::B2, Square::B3);
+    let a7a6 = Move::make_move(Square::A7, Square::A6);
+    let b7b6 = Move::make_move(Square::B7, Square::B6);
+    let c1c2 = Move::make_move(Square::C1, Square::C2);
+    let d1d2 = Move::make_move(Square::D1, Square::D2);
+
+    let events: Vec<(Vec<Move>, u64, Outcome, u32)> = vec![
+        (vec![], 0, Outcome::Loss, 3),
+        (vec![a2a3], 1, Outcome::Win, 2),
+        (vec![b2b3], 2, Outcome::Win, 2),
+        // Twin A: consistent depth 1, only 1 child.
+        (vec![a2a3, a7a6], 10, Outcome::Loss, 1),
+        (vec![a2a3, a7a6, c1c2], 20, Outcome::Win, 0),
+        // Twin B: stale stored depth 4 (implied 1), 2 children.
+        (vec![b2b3, b7b6], 10, Outcome::Loss, 4),
+        (vec![b2b3, b7b6, c1c2], 20, Outcome::Win, 0),
+        (vec![b2b3, b7b6, d1d2], 21, Outcome::Win, 0),
+    ];
+    let sender = handle.event_sender();
+    for (path, hash, outcome, depth) in events {
+        sender
+            .send(ProofEvent::NodeProven(NodeProven::new(
+                path, hash, outcome, depth,
+            )))
+            .unwrap();
+    }
+    drop(sender);
+
+    handle.finalize();
+    let tree = handle.tree();
+    assert_eq!(tree.children(0).count(), 2);
+    for branch in tree.children(0) {
+        let twins: Vec<usize> = tree.children(branch).collect();
+        assert_eq!(twins.len(), 1);
+        assert_eq!(
+            tree.children(twins[0]).count(),
+            1,
+            "the consistent twin (fewer children) must win"
+        );
+        assert_eq!(tree.nodes[twins[0]].depth, 1);
+    }
+    assert_eq!(tree.nodes[0].depth, 3);
 
     drop(handle);
     join.join().unwrap();

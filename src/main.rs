@@ -222,6 +222,16 @@ fn main() {
             } else {
                 println!("proof_tree_dump: {dump_path}");
             }
+
+            // The dump is still written when validation found defects — it is
+            // the debugging artifact — but a defective tree must fail the run
+            // instead of silently shipping an invalid proof. The per-defect
+            // `pt_validate: FAILED ...` lines went to stderr from the worker.
+            if stats.validation_errors > 0 {
+                println!("pt_validate: FAILED {} defect(s)", stats.validation_errors);
+                std::process::exit(1);
+            }
+            println!("pt_validate: ok");
         }))
     };
 

@@ -58,8 +58,22 @@ A pure solver for atomic chess in Rust.
   `ProofNode` carries the Zobrist hash of its position; the worker's
   `finalize()` pass copies fully expanded canonical subtrees onto unexpanded
   transpositions, making the tree authoritative without a transposition-table
-  reconstruction step. The worker exposes `ProofTreeWorkerHandle` with
-  `event_sender()`, `stats()`, `tree()`, `finalize()`, and `dump_to_bin()` for querying.
+  reconstruction step. Twin selection per `(hash, outcome)` prefers, in
+  order: consistency, shallower proven depth, more children (a completeness
+  proxy for Loss twins), then first created. The worker validates the
+  rebuilt tree with the replay-based validator in `src/proof_tree/validate.rs`
+  (`validate_proof_tree`) during `finalize()`, prints one
+  `pt_validate: FAILED ...` stderr line per defect (capped at 20) and records
+  the count in `ProofStats::validation_errors` (0 on success; a non-zero
+  count must fail the run — the dump is still written as the debugging
+  artifact). The validator re-plays every path on a real `Position` and
+  checks the structural rules of a proof (Loss covers *all* legal replies,
+  Win has exactly one winning child, depths bottom-up consistent, terminals
+  statically correct); it therefore adds a `proof_tree → position`
+  dependency (position is a base layer below `search`, so the
+  `search`/`proof_tree` decoupling is unchanged). The worker exposes
+  `ProofTreeWorkerHandle` with `event_sender()`, `stats()`, `tree()`,
+  `finalize()`, and `dump_to_bin()` for querying.
   External tools can import the binary dump into PostgreSQL.
 - `src/zobrist.rs` generates deterministic Zobrist keys for positions,
   including the halfmove clock for transposition-table lookup.
@@ -79,7 +93,11 @@ A pure solver for atomic chess in Rust.
   generation — as the transfer artifact for offline proof reconstruction),
   plus `-h`/`--help`. Unknown options exit with an error. It prints the outcome and
   an informational PV when the result is decisive and, by default, logs
-  proof-tree statistics and writes the binary dump before exit. For decisive
+  proof-tree statistics and writes the binary dump before exit. On a normal
+  exit the pre-exit hook also prints `pt_validate: ok` or
+  `pt_validate: FAILED n defect(s)` (per-defect lines go to stderr from the
+  worker) and exits with code 1 on a defective tree; the dump is still
+  written as the debugging artifact. For decisive
   outcomes it also prints `pv_status: proven-shortest | first-outcome |
   cap-cut | cut-short`, reporting whether the PV length is proven minimal
   (the last bounded refinement round exhausted naturally, or the win is 1
@@ -113,7 +131,9 @@ The runnable examples are:
 - `find_winning_child` — Enumerates every legal first move, solves the resulting
   child with a short timeout, and reports the first move that is winning for
   the root side (a child `Loss`).
-- `inspect_pt` — Dump a binary `proof_tree.bin` to human-readable JSON.
+- `inspect_pt` — Dump a binary `proof_tree.bin` to human-readable JSON;
+  `--validate` additionally runs the replay-based proof validator on the
+  loaded tree and exits non-zero on defects.
 - `list_legal` — List all legal UCI moves and the terminal outcome for a FEN.
 - `move_order_debug` — Print static, history, killer, and total move-ordering
   scores for every legal move. Use `--name <case>` to inspect a move-order
@@ -122,8 +142,10 @@ The runnable examples are:
   position. Useful for inspecting a particular line.
 - `reconstruct_pt` — Rebuilds a proof tree offline from the root FEN plus a TT
   snapshot (`--snapshot`), synthesizing events into the regular proof-tree
-  worker; `--oracle` compares against an event-built dump, and `--experiment`
-  runs the go/no-go dual-build oracle over the decisive suite.
+  worker; reports `validate: ok|FAILED n` for the reconstructed tree and
+  exits non-zero on validation failure; `--oracle` compares against an
+  event-built dump, and `--experiment` runs the go/no-go dual-build oracle
+  over the decisive suite (per-case live-tree `validate` column included).
 - `replay` — Replay a UCI line from a FEN and solve the resulting position.
 - `solve_depth_limited` — Runs `Search::search_depth` with a fixed
   `max_depth` and no iterative-deepening bootstrap.
