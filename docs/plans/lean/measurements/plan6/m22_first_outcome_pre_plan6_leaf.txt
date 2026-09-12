@@ -1,0 +1,39 @@
+35.15%   [.] <atomic_solver::position::Position>::do_move
+21.67%   [.] <atomic_solver::search::dfpn::Search>::evaluate_child
+13.78%   [.] <atomic_solver::search::dfpn::Search>::dfpn
+5.36%    [.] <atomic_solver::search::ordering::StaticAtomicScorer>::score_with_context
+4.41%    [.] atomic_movegen::movegen::has_legal_move_with_state
+4.15%    [.] <atomic_movegen::board::Board>::populate_state
+3.44%    [.] <atomic_movegen::board::Board>::undo_move
+2.68%    [.] <atomic_movegen::board::Board>::legal
+2.28%    [.] 0x0000000000000518
+2.24%    [.] atomic_movegen::movegen::generate_legal_with_state
+0.98%    [.] core::slice::sort::shared::smallsort::insertion_sort_shift_left::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+0.68%    [.] core::slice::sort::stable::quicksort::quicksort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+0.42%    [.] __memcpy_generic
+0.37%    [.] clock_gettime@@GLIBC_2.17
+0.34%    [.] core::slice::sort::stable::drift::sort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+0.28%    [.] atomic_solver::search::dfpn::selection::selection_for_child
+0.27%    [.] <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapters::filter::filter_try_fold<&atomic_solver::search::dfpn::children::ChildInfo, (), core::ops::control_flow::ControlFlow<()>, atomic_solver::search::dfpn::selection::select_from_children::{closure#4}, core::iter::traits::iterator::Iterator::all::check<&atomic_solver::search::dfpn::children::ChildInfo, atomic_solver::search::dfpn::selection::select_from_children::{closure#5}>::{closure#0}>::{closure#0}, core::ops::control_flow::ControlFlow<()>>
+0.27%    [.] __memset_zva64
+0.26%    [.] atomic_solver::main
+0.17%    [.] core::slice::sort::shared::smallsort::sort8_stable::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+0.14%    [.] __memmove_generic
+0.13%    [.] <atomic_solver::search::tt::table::TranspositionTable>::store
+0.09%    [.] compiler_builtins::int::specialized_div_rem::u128_div_rem
+0.06%    [.] <atomic_solver::search::dfpn::Search>::best_move_repeats_path
+0.05%    [.] <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapters::filter::filter_try_fold<&atomic_solver::search::dfpn::children::ChildInfo, (), core::ops::control_flow::ControlFlow<()>, atomic_solver::search::dfpn::selection::select_from_children::{closure#6}, core::iter::traits::iterator::Iterator::all::check<&atomic_solver::search::dfpn::children::ChildInfo, atomic_solver::search::dfpn::selection::select_from_children::{closure#7}>::{closure#0}>::{closure#0}, core::ops::control_flow::ControlFlow<()>>
+0.05%    [.] memcpy@plt
+0.04%    [.] 0x000000000000050c
+0.04%    [.] __udivti3
+0.04%    [.] clock_gettime@plt
+0.03%    [.] __kernel_clock_gettime
+0.02%    [.] 0x00000000000004e8
+0.02%    [.] <std::sys::pal::unix::time::Timespec>::now
+0.02%    [.] 0x00000000000004e0
+0.02%    [.] 0x0000000000000510
+0.02%    [.] 0x0000000000000564
+0.02%    [.] memset@plt
+0.01%    [.] 0x00000000000004f8
+0.01%    [.] <atomic_solver::search::dfpn::Search>::emit_proof_node
+0.01%    [.] core::slice::sort::stable::driftsort_main::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}, alloc::vec::Vec<(atomic_movegen::types::Move, i32)>>

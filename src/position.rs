@@ -128,6 +128,41 @@ impl Position {
         self.refresh_zobrist();
     }
 
+    /// Play a move without touching the undo stack, reusing a caller-supplied
+    /// scratch `StateInfo`.
+    ///
+    /// This is the hot-path variant of [`Position::do_move`]: it skips both the
+    /// fresh `StateInfo::new()` zeroing (the caller's slot is reused dirty) and
+    /// the undo-stack push. Use [`Position::undo_move_with_scratch`] as the
+    /// symmetric inverse with the *same* slot.
+    ///
+    /// # Soundness contract
+    ///
+    /// - `state` may contain stale bytes: [`Board::do_move`] writes every field
+    ///   [`Board::undo_move`] reads (`castling_rights`, `ep_square`, `rule50`,
+    ///   `captured_count`, the `captured[..captured_count]` entries,
+    ///   `cap_sq`/`cap_piece`/`cap_pt`, `hash`), so nothing is read from an
+    ///   unwritten field. This also holds for a slot initialized once with
+    ///   `StateInfo::new()` and reused dirty: the only stale bytes are ones a
+    ///   previous `do_move` (or an explicit `populate_state`) wrote.
+    /// - The caller must strictly pair the two calls around the move (LIFO)
+    ///   and must not consume `checkers`/`pinned` from the slot between them:
+    ///   `do_move` only writes undo data, the cached attack fields stay stale.
+    ///   Because the undo stack is not touched, a regular
+    ///   [`Position::do_move`]/[`Position::undo_move`] pair (or a
+    ///   [`Position::clone`]) may legally nest *inside* the scratch pair.
+    pub(crate) fn do_move_with_scratch(&mut self, m: Move, state: &mut StateInfo) {
+        self.board.do_move(m, state);
+        self.refresh_zobrist();
+    }
+
+    /// Symmetric inverse of [`Position::do_move_with_scratch`] over the same
+    /// caller-supplied slot. See the soundness contract there.
+    pub(crate) fn undo_move_with_scratch(&mut self, m: Move, state: &StateInfo) {
+        self.board.undo_move(m, state);
+        self.refresh_zobrist();
+    }
+
     /// Recompute the full Zobrist key from the board hash and rule50 key.
     ///
     /// `Board::hash()` is maintained incrementally; only the rule50 key changes.
@@ -270,6 +305,7 @@ impl Clone for Position {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use atomic_movegen::types::Square;
 
     #[test]
     fn outcome_prefers_own_commoner_extinction_over_rule50() {
@@ -365,5 +401,45 @@ mod tests {
             1,
             "illegal move must not change state"
         );
+    }
+
+    #[test]
+    fn scratch_make_unmake_matches_regular_pair() {
+        // The `do_move_with_scratch`/`undo_move_with_scratch` pair must be an
+        // exact drop-in for `do_move`/`undo_move`: identical board, hash, and
+        // rule50 after make and after the full round-trip, for a quiet move
+        // and for a capture with its atomic blast (the paths where the undo
+        // fields differ most).
+        let fen = "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22";
+        let base = Position::from_fen(fen).unwrap();
+        let quiet = Move::make_move(Square::B1, Square::B8);
+        let capture = Move::make_move(Square::G4, Square::H5);
+        for mv in [quiet, capture] {
+            let mut regular = base.clone();
+            regular.do_move(mv);
+            let made_fen = regular.fen();
+            let made_hash = regular.hash();
+            regular.undo_move(mv);
+            assert_eq!(regular.fen(), base.fen(), "regular pair must round-trip");
+
+            let mut scratch_pos = base.clone();
+            let mut state = StateInfo::new();
+            scratch_pos.do_move_with_scratch(mv, &mut state);
+            assert_eq!(scratch_pos.fen(), made_fen, "scratch make == regular make");
+            assert_eq!(
+                scratch_pos.hash(),
+                made_hash,
+                "scratch make == regular make"
+            );
+            // The undo stack is untouched by the scratch pair.
+            assert_eq!(scratch_pos.undo_stack.len(), 0);
+            scratch_pos.undo_move_with_scratch(mv, &state);
+            assert_eq!(
+                scratch_pos.fen(),
+                base.fen(),
+                "scratch pair must round-trip"
+            );
+            assert_eq!(scratch_pos.hash(), base.hash());
+        }
     }
 }

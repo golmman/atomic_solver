@@ -5,8 +5,8 @@
 Active, maintained **agile**: the backlog is a living document re-ranked
 after every profile, plans are single-lever and sized to one session, and
 nothing larger than one lever is planned before a fresh profile justifies
-it. Plans 1–5 are done (`report1.md`–`report5.md`); the post-plan4 profile
-(2026-09-09) is the current baseline for ranking.
+it. Plans 1–6 are done (`report1.md`–`report6.md`); the post-plan6 profile
+(2026-09-12) is the current baseline for ranking.
 
 ## Motivation
 
@@ -19,6 +19,39 @@ showed **90.6% of OR-node work is already spent on the decisive child**
 permanently. Anything that only ranks the winning OR child earlier — NN
 round 2, win-length-aware rankers — cannot beat that ceiling and is out
 of scope.
+
+### Post-plan6 profile (m22_white, first-outcome, default 128 MB TT, 2026-09-12)
+
+After plan6 (micro-wins bundle: #14 wrapper slimming, #13 clock sampling,
+#12a TT non-terminal skip) the existence-check cluster collapsed and the
+pie re-ranked (leaf attribution, raw table under `measurements/plan6/`;
+post-plan4 shares in parentheses; wall −7.1% m22, −5.9% shuffle-win):
+
+| cluster | leaves | share post-plan6 (post-plan4) |
+| --- | --- | --- |
+| child-eval loop | `evaluate_child` (incl. inlined scans) | 26.9% (26.6%) |
+| move make/unmake | `do_move` 29.4% + `undo_move` 2.5% | 31.9% (26.9%) |
+| frame overhead | `dfpn` | 15.5% (9.9%) |
+| static scoring | `score_with_context` | 5.5% (4.3%) |
+| existence check | `populate_state` 2.1% + `has_legal_move_with_state` 5.4% | 7.5% (20.7%) |
+| full movegen | `Board::legal` 3.1% + `generate_legal_with_state` 0.8% | 3.9% (4.0%) |
+| clock sampling | `vdso` (`Instant::now`) | <0.1% top-leaf (~2.2%) |
+| move sort | `sort_moves` sort leaves | ~2.6% (~2.2%) |
+
+Notes (numbers only, no promotions without spikes):
+
+- **#12a over-delivered relative to its ~2.5% ceiling**: `populate_state`
+  dropped 17.8% → 2.1% because the skip removes the 64-byte zeroing *and*
+  the populate/existence work on the ~15% of checks that hit `None`
+  entries — the cluster fell from 20.7% to 7.5% of a smaller pie.
+- **#13 removed clock sampling from the leaf table** (<0.1%; was ~2.2%).
+- **#14's win shows as a smaller absolute `do_move`/`undo_move`** (the
+  wrapper fat is gone; what remains is the raw upstream core, 29.4% of a
+  −7% smaller pie).
+- Make/unmake is now the top cluster again; it is the measured-tight
+  upstream core (~7.6 ns/round-trip) — #14's solver-side fat cannot be
+  re-cut. Further moves there need an upstream round (out of scope) or
+  fewer calls (algorithmic, `docs/plans/dfpn/initiative.md`).
 
 ### Post-plan4 profile (m22_white, first-outcome, default 128 MB TT, 2026-09-09)
 
@@ -93,6 +126,23 @@ Killing the zeroing without `unsafe` needs an upstream constructor
 (e.g. a documented `undo_scratch()` that leaves stale bytes, sound because
 `do_move` writes every field `undo_move` reads).
 
+### Spike 2026-09-12 — #17 path-membership sizing (plan6 phase 0)
+
+Temporary counters on `Search` (reverted after measuring): on m22_white
+first-outcome, `path_contains` is called 15.0M times (14.2M child evals +
+0.83M `dfpn` entries) scanning 141.5M path-stack elements total (mean 9.4,
+max 107); `best_move_repeats_path` runs 113k do/undo round-trips with 7
+hits (0.006%). On the shuffle-win study position: 371.3M calls scanning
+3.43G elements (mean 9.3, max 406); 2.04M repeat-guard calls, 40 hits
+(0.002%). Calibration micro-benchmark (`slice::contains` on u64, miss
+path, matching scan lengths): ~2.2 ns/call at mean length 9 (the
+vectorized compare dominates short scans, ~0.24 ns/element) up to
+~4.5 ns/call at length 40. Wall estimate: **~1.0% on m22, ≤ ~2.2% on the
+shuffle-win case** (all 371M scans at the deep-path per-call cost) —
+below the ~3% bar on both validation cases. The repeat-guard hit rates
+(~0.01%) make `best_move_repeats_path` negligible. Verdict: **#17
+demoted — spiked, below bar**; a hash-set path stack is not justified.
+
 ### Position study 2026-09-11 — deep shuffle win (`4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21`)
 
 A 60+ ply tempo/conversion win against a shuffling rook defense (sibling of
@@ -149,11 +199,11 @@ memory, maintainability.
 |---|------|-----------|-----------|---------|--------|--------|
 | 16 | TT capacity default | Default `--tt-size` 64 MB is capacity-starved on hard searches (m22 first-outcome: 2.6× work, 2.0× wall at 128 MB; quick suite insensitive ±2%). See `research_tt_capacity.md` | ~2× wall on m22-class hard cases at default settings | wall + behavior (drift protocol N/A; move-order suite is the validator) | S + re-baseline | **done (plan4)**: default now 128 MB; m22 first-outcome −49% wall, default-mode −74%; see `report4.md` |
 | 2 | Parallel search | Lazy-SMP-style parallel sibling children or parallel refinement roots over the shared TT | 2–8× wall on multicore | wall | L–XL | open — the only other multiplicative lever; needs a determinism design spike for the `child_eval_budget` contract first |
-| 12 | Existence-check cost | (a) solver-side: skip `populate_state` + `has_legal_move` when the child TT entry already proves the position non-terminal (`outcome == None` ⇒ it was expanded); (b) upstream: fused populate+existence API | ceiling measured **~2.5% wall** (spike 2026-09-09, see below) | wall | S (a) / M (b) | **claimed (plan6, phase 3)** — folded into the micro-wins bundle |
-| 14 | Upstream make/unmake cost | `do_move`+`undo_move` **26.9% post-plan4** (13.8% post-plan3; per-eval ~31→~59 ns, TT cache pressure — see profile above); upstream core ~7.6 ns/round-trip and inherently tight; solver wrapper ~4.3 ns (64 B `StateInfo` zeroing + undo-stack push/pop) | ~1–3% wall (wrapper slimming only; absolute ceiling unchanged) | wall | S | **claimed (plan6, phase 1, anchor)** — solver-side scratch-slot wrapper slimming, no upstream round |
-| 17 | Path-membership cost | `path_contains` is an O(depth) linear scan over `path_stack` (`children.rs`, `core.rs`), called per child eval and per `dfpn` entry; `best_move_repeats_path` adds a full do/undo round-trip per TT-resolved hit | unmeasured — sizing spike first; hides inside `evaluate_child`'s ~48.5% share, and the 2026-09-11 shuffle-win study position exercises it harder than any suite case (depth 51+, 41 root moves, cycle-heavy lines) | wall | S | open — spike: instrument scan lengths / repeat-guard hit rate on m22 + the study position; **claimed (plan6, phase 0)** |
+| 12 | Existence-check cost | (a) solver-side: skip `populate_state` + `has_legal_move` when the child TT entry already proves the position non-terminal (`outcome == None` ⇒ it was expanded); (b) upstream: fused populate+existence API | ceiling measured **~2.5% wall** (spike 2026-09-09, see below) | wall | S (a) / M (b) | **done (plan6, phase 3)**: skip implemented behind the outcome-None invariant; existence cluster 20.7% → 7.5% of the profile pie; see `report6.md` |
+| 14 | Upstream make/unmake cost | `do_move`+`undo_move` **26.9% post-plan4** (13.8% post-plan3; per-eval ~31→~59 ns, TT cache pressure — see profile above); upstream core ~7.6 ns/round-trip and inherently tight; solver wrapper ~4.3 ns (64 B `StateInfo` zeroing + undo-stack push/pop) | ~1–3% wall (wrapper slimming only; absolute ceiling unchanged) | wall | S | **done (plan6, phase 1)**: `do_move_with_scratch`/`undo_move_with_scratch` over a pooled dirty slot; wrapper round-trip 12.2 → ~7.0 ns in the micro-benchmark; see `report6.md` |
+| 17 | Path-membership cost | `path_contains` is an O(depth) linear scan over `path_stack` (`children.rs`, `core.rs`), called per child eval and per `dfpn` entry; `best_move_repeats_path` adds a full do/undo round-trip per TT-resolved hit | **spiked, below bar**: ~1.0% wall on m22, ≤ ~2.2% on the shuffle-win case (see spike 2026-09-12 above); repeat-guard hit rate ~0.01% | wall | S | **demoted (plan6, phase 0 spike)** — a hash-set path stack is not justified at these costs |
 | 8 | Cheaper static scoring | `StaticAtomicScorer` does 2–5 sliding-attack scans per quiet move; precomputed/incremental attacks | ~3–5% wall (was 5–15% pre-plan3; `score_with_context` now 5.4%) | wall | M | open |
-| 13 | Clock sampling | `time_exceeded()` calls `Instant::now()` at every `dfpn` entry; sample every N nodes (budget mode is eval-count-based and unaffected) | ~2% wall (2.2% post-plan4, unchanged) | wall | S | open — good agile warm-up; **claimed (plan6, phase 2)** |
+| 13 | Clock sampling | `time_exceeded()` calls `Instant::now()` at every `dfpn` entry; sample every N nodes (budget mode is eval-count-based and unaffected) | ~2% wall (2.2% post-plan4, unchanged) | wall | S | **done (plan6, phase 2)**: `Instant::now()` sampled every 4096 dfpn entries behind the unchanged `time_exceeded` call sites; clock leaves <0.1% in the post-plan6 profile; see `report6.md` |
 | 15 | `has_legal_move` playout cross-check | Random-playout property test: `Position::has_legal_move` vs `legal_moves_with_state` + `outcome_from_state` (report3 "missing tests") | correctness hardening, no speed | correctness | S | **done (plan5)**: `tests/test_playout_crosscheck.rs`, P1–P4 green in both tiers; see `report5.md` |
 | 5 | AND-side ordering signal (non-NN) | Counter-moves, AND-specific history, TT `work` feedback — disproving work concentrates in 1–2 replies per AND node (median max child-share 52.9%) | ~5–20% evals, regression risk (oracle hurt m24_white 2.1×) | nodes | M | open |
 | 7 | Lazy/staged child evaluation | Min-heap: evaluate children in rank order as needed instead of all on first iteration | ~3–10% evals | nodes | M | open |
@@ -223,9 +273,13 @@ until a plan claims it.
   Leading candidates: #2 parallelism design spike (the only remaining
   multiplicative lever) or the micro-wins bundle (#13, #12a, #14 — #14
   now the top candidate after the post-plan4 re-rank).
-- **plan6** — micro-wins bundle opened: #14 scratch-slot wrapper
-  slimming (anchor), #13 clock sampling, #12a TT non-terminal skip,
-  plus the #17 sizing spike as phase 0 (written, `plan6.md`).
+- **plan6** — micro-wins bundle: #14 scratch-slot wrapper slimming
+  (anchor; wrapper round-trip 12.2 → ~7.0 ns), #13 clock sampling (4096-entry
+  sampler), #12a TT non-terminal skip, plus the #17 sizing spike as
+  phase 0 (verdict: below bar, demoted). Drift protocol fully green
+  (quick suite bit-identical, m22/shuffle stdout byte-identical, lean3
+  golden byte-identical); wall −7.1% m22, −5.9% shuffle-win first-outcome
+  (done, `report6.md`).
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

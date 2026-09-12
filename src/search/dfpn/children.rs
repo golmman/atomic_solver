@@ -37,6 +37,21 @@ use super::{INF, Search};
 /// among active frames, so no two frames can share a slot. Any future change
 /// that lets a frame outlive its slot or access a different depth's slot
 /// must revisit this.
+///
+/// # Eval-scratch slots
+///
+/// Besides the frame slot above, each depth also owns one make/unmake scratch
+/// `StateInfo` in `Search::eval_state_pool` (`eval_state_pool[frame_depth]`),
+/// used by `evaluate_child` for the
+/// `do_move_with_scratch`/`undo_move_with_scratch` pair: the slot is
+/// initialized once with `StateInfo::new()` and reused dirty (soundness:
+/// `Board::do_move` writes every field `Board::undo_move` reads, and the undo
+/// stack is not touched — see `Position::do_move_with_scratch`). The slot is
+/// distinct from the frame slot's `state` (which feeds the parent's
+/// movegen/`sort_moves`) and from the local existence-check `StateInfo`
+/// inside `evaluate_child`; `evaluate_child` never recurses, so one slot per
+/// depth cannot alias an in-flight call. Any change that makes child
+/// evaluation recursive must revisit this.
 pub(super) struct ChildPrecompute {
     pub moves: MoveList,
     pub state: StateInfo,
@@ -131,7 +146,18 @@ impl Search {
         is_or_node: bool,
     ) -> ChildInfo {
         self.child_evals += 1;
-        pos.do_move(mv);
+        // Per-frame pooled make/unmake scratch (see the `ChildPrecompute`
+        // "Eval-scratch slots" docs): skips the fresh `StateInfo::new()`
+        // zeroing and the 64-byte undo-stack push/pop on every evaluated
+        // child. Distinct from the frame slot's `state` and from the local
+        // existence-check states below; `evaluate_child` never recurses.
+        let scratch_depth = self.path_stack.len();
+        if self.eval_state_pool.len() <= scratch_depth {
+            self.eval_state_pool
+                .resize_with(scratch_depth + 1, StateInfo::new);
+        }
+        let mut scratch = std::mem::take(&mut self.eval_state_pool[scratch_depth]);
+        pos.do_move_with_scratch(mv, &mut scratch);
         let child_key = pos.hash();
         let child_rep_key = pos.repetition_key();
         let child_is_or = !is_or_node;
@@ -236,29 +262,46 @@ impl Search {
                     explored: false,
                 }
             } else {
-                // Still undecided: the terminal check is now an early-exit
-                // existence query (upstream `has_legal_move_with_state`) fed
-                // by a caller-populated `StateInfo` — no move list is
-                // generated here. Classification mirrors `outcome_from_state`
-                // precedence: moves-empty (checkmate/stalemate via the
-                // checkers bit) first, then the board-static occupied == 2
-                // draw; the extinction and rule50 branches already returned.
-                let mut state = StateInfo::new();
-                pos.populate_state(&mut state);
-                let terminal_outcome = if !pos.has_legal_move(&state) {
-                    // No legal move: checkmate (Loss) vs stalemate (Draw).
-                    Some(if state.checkers.is_empty() {
-                        Outcome::Draw
-                    } else {
-                        Outcome::Loss
-                    })
-                } else if pos.board().occupied().count() == 2 {
-                    // `occupied == 2` follows the moves-empty branch in
-                    // `outcome_from_state`, so a K-vs-K child with legal
-                    // moves is a draw without any move list.
-                    Some(Outcome::Draw)
-                } else {
+                // #12a TT non-terminal skip: a live entry with `outcome ==
+                // None` was only ever stored after the node passed the
+                // entry-level `outcome_from_state` full-movegen check
+                // (`core.rs` terminal store, depth-0 leaf store, and
+                // GHI-draw-suppressed stores alike), which means the position
+                // had legal moves, `rule50 < 100`, and `occupied > 2`. The
+                // extinction and rule50 branches above already returned, so
+                // the existence query + `occupied == 2` recheck can be
+                // skipped: the child is non-terminal by the invariant.
+                // Deliberately *not* keyed off `remaining_depth` shape; the
+                // degeneracy guard in the bounds reuse below already excludes
+                // suppressed (`remaining_depth == u32::MAX`) entries.
+                let terminal_outcome = if entry.as_ref().is_some_and(|e| e.outcome.is_none()) {
                     None
+                } else {
+                    // Still undecided: the terminal check is now an early-exit
+                    // existence query (upstream `has_legal_move_with_state`)
+                    // fed by a caller-populated `StateInfo` — no move list is
+                    // generated here. Classification mirrors
+                    // `outcome_from_state` precedence: moves-empty
+                    // (checkmate/stalemate via the checkers bit) first, then
+                    // the board-static occupied == 2 draw; the extinction and
+                    // rule50 branches already returned.
+                    let mut state = StateInfo::new();
+                    pos.populate_state(&mut state);
+                    if !pos.has_legal_move(&state) {
+                        // No legal move: checkmate (Loss) vs stalemate (Draw).
+                        Some(if state.checkers.is_empty() {
+                            Outcome::Draw
+                        } else {
+                            Outcome::Loss
+                        })
+                    } else if pos.board().occupied().count() == 2 {
+                        // `occupied == 2` follows the moves-empty branch in
+                        // `outcome_from_state`, so a K-vs-K child with legal
+                        // moves is a draw without any move list.
+                        Some(Outcome::Draw)
+                    } else {
+                        None
+                    }
                 };
                 if let Some(outcome) = terminal_outcome {
                     let (pn, dn) = outcome.pn_dn_for(child_is_or);
@@ -319,7 +362,8 @@ impl Search {
             )));
         }
 
-        pos.undo_move(mv);
+        pos.undo_move_with_scratch(mv, &scratch);
+        self.eval_state_pool[scratch_depth] = scratch;
         info
     }
 }

@@ -22,6 +22,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
+use atomic_movegen::board::StateInfo;
 use atomic_movegen::types::Move;
 
 use crate::position::{Outcome, Position};
@@ -37,6 +38,10 @@ const DEFAULT_REFINE_CAP_FACTOR: f64 = 0.25;
 /// Floor for the per-refinement-round child-eval cap, so searches with tiny
 /// first-outcome work stay effectively uncapped.
 const MIN_REFINE_ROUND_EVALS: u64 = 1_000_000;
+/// Wall-clock sampler: `time_exceeded` re-reads `Instant::now()` only once
+/// every this many `dfpn` entries (`self.nodes`); between reads it reuses the
+/// cached `Instant`. See [`Search::time_exceeded`] for the contract.
+const CLOCK_SAMPLE_INTERVAL: u64 = 4096;
 
 /// Reason the search stopped, recorded for the pre-exit hook.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -170,6 +175,11 @@ pub struct Search {
     chunk_multiplier_den: u64,
     stop_flag: Option<Arc<AtomicBool>>,
     memory_limited: Option<Arc<AtomicBool>>,
+    /// Next `self.nodes` value at which `time_exceeded` re-reads the wall
+    /// clock (`Cell` because the hot call site takes `&self`).
+    clock_sample_at: std::cell::Cell<u64>,
+    /// Last wall-clock reading taken by `time_exceeded`.
+    last_clock: std::cell::Cell<Instant>,
     proof_event_sender: Option<std::sync::mpsc::Sender<ProofEvent>>,
     move_stack: Vec<Move>,
     /// Per-depth pool of `ChildInfo` tables (`dfpn` frames borrow their
@@ -179,6 +189,11 @@ pub struct Search {
     /// entry of the `dfpn` frame at depth `d` generates its own legal moves
     /// into `precompute_pool[d]` and returns it at frame exit.
     precompute_pool: Vec<ChildPrecompute>,
+    /// Per-depth pool of make/unmake scratch `StateInfo` slots for
+    /// `evaluate_child` (see the `ChildPrecompute` "Eval-scratch slots"
+    /// docs): the child evaluation at frame depth `d` plays/unplays its probe
+    /// move on `eval_state_pool[d]` without touching the undo stack.
+    eval_state_pool: Vec<StateInfo>,
     /// Reusable `(move, score)` scratch for `sort_moves`.
     sort_scratch: Vec<(Move, i32)>,
 }
@@ -222,10 +237,13 @@ impl Search {
             chunk_multiplier_den: 1,
             stop_flag: None,
             memory_limited: None,
+            clock_sample_at: std::cell::Cell::new(0),
+            last_clock: std::cell::Cell::new(Instant::now()),
             proof_event_sender: None,
             move_stack: Vec::new(),
             child_pool: Vec::new(),
             precompute_pool: Vec::new(),
+            eval_state_pool: Vec::new(),
             sort_scratch: Vec::new(),
         }
     }
@@ -736,6 +754,9 @@ impl Search {
         self.last_round_cap_cut = false;
         self.start = Instant::now();
         self.deadline = self.start + self.timeout;
+        // Clock sampler: read once immediately, then every CLOCK_SAMPLE_INTERVAL.
+        self.last_clock.set(self.start);
+        self.clock_sample_at.set(0);
     }
 
     /// Total number of nodes (positions) visited by the search.
@@ -786,6 +807,23 @@ impl Search {
         self.path_stack.pop();
     }
 
+    /// Whether the wall-clock deadline, stop flag, or memory flag has fired.
+    ///
+    /// All call sites keep calling this; the `stop_flag` / `memory_limited`
+    /// atomics are loaded on **every** call, but the `Instant::now()` read is
+    /// sampled: the clock is only re-read when `self.nodes` has advanced by
+    /// `CLOCK_SAMPLE_INTERVAL` dfpn entries since the last read, and the
+    /// cached `Instant` is compared against the deadline otherwise.
+    ///
+    /// # Contract
+    ///
+    /// - Sampling only *delays* wall-deadline detection by at most
+    ///   `CLOCK_SAMPLE_INTERVAL` dfpn entries: [`ExitReason::Timeout`]
+    ///   granularity is coarse (previous behavior was exact). Wall-clock
+    ///   tests use generous margins, so this is acceptable.
+    /// - Budget mode is unaffected: [`Search::child_eval_budget_exceeded`] is
+    ///   a pure integer compare, and [`ExitReason`] checks `BudgetExhausted`
+    ///   before `Timeout`.
     #[must_use]
     pub fn time_exceeded(&self) -> bool {
         if let Some(flag) = &self.stop_flag
@@ -798,6 +836,10 @@ impl Search {
         {
             return true;
         }
-        Instant::now() >= self.deadline
+        if self.nodes >= self.clock_sample_at.get() {
+            self.last_clock.set(Instant::now());
+            self.clock_sample_at.set(self.nodes + CLOCK_SAMPLE_INTERVAL);
+        }
+        self.last_clock.get() >= self.deadline
     }
 }

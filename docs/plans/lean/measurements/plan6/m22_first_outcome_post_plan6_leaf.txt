@@ -1,0 +1,22 @@
+29.37%   [.] <atomic_movegen::board::Board>::do_move
+26.93%   [.] <atomic_solver::search::dfpn::Search>::evaluate_child
+15.52%   [.] <atomic_solver::search::dfpn::Search>::dfpn
+5.46%    [.] <atomic_solver::search::ordering::StaticAtomicScorer>::score_with_context
+5.42%    [.] atomic_movegen::movegen::has_legal_move_with_state
+3.07%    [.] <atomic_movegen::board::Board>::legal
+2.48%    [.] <atomic_movegen::board::Board>::undo_move
+2.27%    [.] <atomic_movegen::board::Board>::compute_checkers
+2.11%    [.] <atomic_movegen::board::Board>::populate_state
+1.46%    [.] atomic_movegen::movegen::generate_pseudo_legal
+0.97%    [.] core::slice::sort::shared::smallsort::insertion_sort_shift_left::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+0.95%    [.] core::slice::sort::stable::quicksort::quicksort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+0.81%    [.] atomic_movegen::movegen::generate_legal_with_state
+0.56%    [.] core::slice::sort::stable::drift::sort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+0.56%    [.] __memcpy_generic
+0.41%    [.] <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapters::filter::filter_try_fold<&atomic_solver::search::dfpn::children::ChildInfo, (), core::ops::control_flow::ControlFlow<()>, atomic_solver::search::dfpn::selection::select_from_children::{closure#4}, core::iter::traits::iterator::Iterator::all::check<&atomic_solver::search::dfpn::children::ChildInfo, atomic_solver::search::dfpn::selection::select_from_children::{closure#5}>::{closure#0}>::{closure#0}, core::ops::control_flow::ControlFlow<()>>
+0.33%    [.] <atomic_solver::search::tt::table::TranspositionTable>::with_mb
+0.33%    [.] atomic_solver::search::dfpn::selection::selection_for_child
+0.24%    [.] __memset_zva64
+0.13%    [.] <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapters::filter::filter_try_fold<&atomic_solver::search::dfpn::children::ChildInfo, (), core::ops::control_flow::ControlFlow<()>, atomic_solver::search::dfpn::selection::select_from_children::{closure#6}, core::iter::traits::iterator::Iterator::all::check<&atomic_solver::search::dfpn::children::ChildInfo, atomic_solver::search::dfpn::selection::select_from_children::{closure#7}>::{closure#0}>::{closure#0}, core::ops::control_flow::ControlFlow<()>>
+0.13%    [.] <atomic_solver::search::tt::table::TranspositionTable>::store
+0.11%    [.] core::slice::sort::shared::smallsort::sort8_stable::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>

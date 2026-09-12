@@ -1,0 +1,11 @@
+[bounded_search] chunk done: work_done=500002 next_chunk=1000000 elapsed=0.101s max_depth=15 nodes=24732 nps=245605
+[bounded_search] chunk done: work_done=1000024 next_chunk=2000000 elapsed=0.321s max_depth=11 nodes=76362 nps=238243
+[bounded_search] chunk done: work_done=2000017 next_chunk=4000000 elapsed=0.773s max_depth=16 nodes=183840 nps=237940
+[bounded_search] chunk done: work_done=4000016 next_chunk=8000000 elapsed=1.672s max_depth=19 nodes=397333 nps=237647
+[bounded_search] chunk done: work_done=8000008 next_chunk=16000000 elapsed=3.423s max_depth=20 nodes=797468 nps=232943
+[bounded_search] chunk done: work_done=16000000 next_chunk=32000000 elapsed=7.079s max_depth=22 nodes=1619208 nps=228733
+[bounded_search] chunk done: work_done=32000003 next_chunk=64000000 elapsed=14.453s max_depth=35 nodes=3335987 nps=230818
+[bounded_search] chunk done: work_done=64000030 next_chunk=128000000 elapsed=28.730s max_depth=43 nodes=6903653 nps=240298
+[bounded_search] chunk done: work_done=128000006 next_chunk=256000000 elapsed=56.899s max_depth=51 nodes=14065291 nps=247199
+outcome: win length: 405
+spike17: path_calls=371253625 path_scan_sum=3434503881 path_scan_max=406 repeat_calls=2041489 repeat_hits=40 child_evals=351297052

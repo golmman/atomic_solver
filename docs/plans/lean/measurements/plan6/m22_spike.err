@@ -1,0 +1,6 @@
+[bounded_search] chunk done: work_done=500009 next_chunk=1000000 elapsed=0.104s max_depth=15 nodes=24281 nps=233848
+[bounded_search] chunk done: work_done=1000010 next_chunk=2000000 elapsed=0.319s max_depth=15 nodes=75862 nps=237744
+[bounded_search] chunk done: work_done=2000006 next_chunk=4000000 elapsed=0.756s max_depth=22 nodes=185599 nps=245490
+[bounded_search] chunk done: work_done=4000000 next_chunk=8000000 elapsed=1.666s max_depth=72 nodes=420788 nps=252572
+outcome: win length: 95
+spike17: path_calls=14989706 path_scan_sum=141450218 path_scan_max=107 repeat_calls=113005 repeat_hits=7 child_evals=14158593
