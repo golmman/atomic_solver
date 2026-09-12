@@ -1,4 +1,4 @@
-.PHONY: quick_check quick_check2 quick_check3 macos_cleanup test test-full test-lite
+.PHONY: stress quick_check quick_check2 quick_check3 macos_cleanup test test-full test-lite
 
 test:       ## fast gate: unit + fast integration tests (~1 min of test time)
 	CARGO_PROFILE_RELEASE_LTO=thin cargo test --release
@@ -18,6 +18,10 @@ quick_check2:
 quick_check3:
 	cargo run --release -- --fen "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22" --timeout 10 --tt-dump-path proof_tree.bin.tt
 	cargo run --release --example reconstruct_pt -- --snapshot proof_tree.bin.tt --out proof_tree.bin
+
+
+stress:
+	cargo run --release -- --fen "4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21" --timeout 60
 
 macos_cleanup:
 	find . -name ".DS_Store" -print -delete

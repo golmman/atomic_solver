@@ -45,7 +45,14 @@ A pure solver for atomic chess in Rust.
    its own depth (one slot per active frame; the pool no longer scales with
    branching) and shares the node `StateInfo` with `sort_moves` instead of
    rebuilding it. Per-frame child vectors and the `sort_moves` score buffer
-   are pooled on `Search`.
+   are pooled on `Search`. Repetition-dependent draw proofs (the ones the
+   first-player-loss shortcut keeps out of the TT) are additionally cached
+   per search run in `src/search/dfpn/repetition_cache.rs`, keyed by
+   (position hash, order-independent ancestor repetition-key context hash)
+   and storing only `Draw` payloads; the cache is cleared once per run in
+   `Search::begin_run` (never per chunk or refinement round) and is never
+   serialized into TT snapshots or proof artifacts, so only work, never
+   outcomes, changes.
 - `src/search/tt/` holds the transposition table with path-independent base
   entries. Repetition-dependent results are not cached, following the
   first-player-loss GHI shortcut.

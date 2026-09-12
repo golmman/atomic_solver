@@ -8,6 +8,7 @@ mod children;
 mod core;
 mod history;
 mod pv;
+mod repetition_cache;
 mod selection;
 
 #[cfg(test)]
@@ -30,6 +31,8 @@ use crate::proof_event::{NodeProven, ProofEvent};
 
 use super::ordering::StaticAtomicScorer;
 use super::tt::TranspositionTable;
+
+use repetition_cache::RepetitionCache;
 
 const DEFAULT_EPSILON: f64 = 0.125;
 const TIMEOUT_SECS: u64 = 5;
@@ -196,6 +199,13 @@ pub struct Search {
     eval_state_pool: Vec<StateInfo>,
     /// Reusable `(move, score)` scratch for `sort_moves`.
     sort_scratch: Vec<(Move, i32)>,
+    /// Per-search cache of repetition-dependent draw proofs (plan9), outside
+    /// the TT: keyed by (full position hash, order-independent ancestor
+    /// repetition-key context hash); stores only `Outcome::Draw` payloads
+    /// (the proven depth). Cleared once per run in [`Search::begin_run`] —
+    /// never per work chunk, never per refinement round — and never
+    /// serialized into TT snapshots or proof artifacts.
+    repetition_cache: RepetitionCache,
 }
 
 impl Search {
@@ -245,6 +255,7 @@ impl Search {
             precompute_pool: Vec::new(),
             eval_state_pool: Vec::new(),
             sort_scratch: Vec::new(),
+            repetition_cache: RepetitionCache::new(),
         }
     }
 
@@ -745,6 +756,13 @@ impl Search {
 
     fn begin_run(&mut self) {
         self.reset_search_state();
+        // Per-search repetition cache (plan9): cleared once per run, before
+        // every entry point (`search_depth`, `search_depth_with_prefix`,
+        // `solve_with_progress` all route through here). `reset_search_state`
+        // re-seeds `path_stack` from `prefix_path`, but the cache is keyed by
+        // (position, ancestor set) pairs recorded during the run itself, so it
+        // must be dropped regardless of prefix presence.
+        self.repetition_cache.clear();
         self.nodes = 0;
         self.child_evals = 0;
         self.first_outcome_evals = 0;

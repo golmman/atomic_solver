@@ -1,9 +1,55 @@
 //! Cross-module DF-PN unit tests.
 
+use super::repetition_cache::RepetitionCache;
 use super::{PvStatus, RoundTermination};
 use crate::position::{Outcome, Position};
 use crate::search::dfpn::Search;
 use atomic_movegen::types::{Move, Square};
+
+#[test]
+fn repetition_cache_reused_within_a_run() {
+    // plan9: a second bounded search over the cyclic rook position within the
+    // same run (same `Search` instance, no `begin_run` in between) must hit
+    // the per-search repetition cache — the draw proofs cached by the first
+    // search are reused instead of being re-walked — and both searches must
+    // return `Draw`, never `Win`. The cache is cleared only per run in
+    // `begin_run`, so within-run reuse across work chunks is the mechanism
+    // the stress case pays on.
+    const FEN: &str = "8/8/8/8/2k5/8/8/4KR2 w - - 0 1";
+    const ROUND_CAP: u64 = 2_000_000;
+
+    let mut pos = Position::from_fen(FEN).unwrap();
+    let mut search = Search::new(64);
+    search.begin_run();
+
+    let (first, _, _) = search.bounded_search(&mut pos, u32::MAX, ROUND_CAP);
+    assert_eq!(first, Outcome::Draw, "the cyclic position must not be won");
+    assert!(
+        !search.repetition_cache.is_empty(),
+        "the first search must have proven repetition-dependent draws"
+    );
+    let hits_before = search.repetition_cache.hits;
+
+    // Second bounded search in the same run: the cached entries must be
+    // probed and reused (no `begin_run` in between, so no cache clear).
+    let (second, _, _) = search.bounded_search(&mut pos, u32::MAX, ROUND_CAP);
+    assert_eq!(second, Outcome::Draw, "the second search must stay a draw");
+    assert!(
+        search.repetition_cache.hits > hits_before,
+        "the second bounded search must reuse cached repetition draws"
+    );
+
+    // A cache-disabled run over the same protocol must agree on the outcome:
+    // the cache may only reduce work, never change the decisive result.
+    let mut pos = Position::from_fen(FEN).unwrap();
+    let mut search = Search::new(64);
+    search.repetition_cache = RepetitionCache::with_capacity(0);
+    search.begin_run();
+    let (first, _, _) = search.bounded_search(&mut pos, u32::MAX, ROUND_CAP);
+    let (second, _, _) = search.bounded_search(&mut pos, u32::MAX, ROUND_CAP);
+    assert_eq!(first, Outcome::Draw);
+    assert_eq!(second, Outcome::Draw);
+}
 
 #[test]
 fn local_repetition_in_prefix_returns_draw() {

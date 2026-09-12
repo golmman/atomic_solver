@@ -12,7 +12,7 @@ const RULE50_KEY_SEED: u64 = 0x9e37_79b9_7f4a_7c15;
 
 /// A single 64-bit SplitMix64 mixing round.
 /// This is a bijection on `u64`, so each distinct input maps to a distinct output.
-const fn mix(z: u64) -> u64 {
+pub(crate) const fn mix(z: u64) -> u64 {
     let z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
     let z = (z ^ (z >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
     z ^ (z >> 31)

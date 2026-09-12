@@ -12,6 +12,7 @@ use atomic_movegen::types::Move;
 use crate::position::{Outcome, Position};
 
 use super::children::{ChildPrecompute, ChildSelection};
+use super::repetition_cache::RepetitionCache;
 use super::selection::select_from_children;
 use super::{INF, Search};
 use crate::search::tt::TtEntry;
@@ -121,6 +122,31 @@ impl Search {
             self.emit_proof_node(pos, resolved.outcome, resolved.depth);
             self.precompute_pool[slot_depth] = slot;
             return resolved.outcome;
+        }
+
+        // Per-search repetition cache (plan9): a position whose proven value
+        // depends on the ancestor repetition set is uncacheable in the TT
+        // (first-player-loss shortcut), so its whole draw chain is re-walked
+        // on every re-entry within a run. The (position, ancestor-set) cache
+        // short-circuits those re-descents. Kept *after* the TT solved-result
+        // check so path-independent results behave byte-identically, and
+        // before `sort_moves` so a hit skips the re-descent entirely.
+        //
+        // The context is the order-independent hash of the repetition keys
+        // strictly above this node — exactly `path_stack` before this frame's
+        // `path_push` below. `context_hash` is reused by the store site at
+        // frame exit: the symmetric push/pop of this and every descendant
+        // frame restores the stack to the same contents there.
+        let context_hash = RepetitionCache::context_hash(&self.path_stack);
+        if let Some(cached_depth) = self.repetition_cache.probe(tt_key, context_hash) {
+            // Soundness contract: a hit behaves exactly like a freshly proven
+            // repetition-dependent draw — returned as `Draw` and routed
+            // through the same proof-event emission (which, like every Draw,
+            // sends no `NodeProven`; see `emit_proof_node`). A hit consumes
+            // no child-eval budget.
+            self.emit_proof_node(pos, Outcome::Draw, cached_depth);
+            self.precompute_pool[slot_depth] = slot;
+            return Outcome::Draw;
         }
 
         // Ordering hint: replicate the old `probe_best_move` rule exactly —
@@ -293,6 +319,16 @@ impl Search {
         // (1, 1) entry so the next search re-expands it and sees the local Draw.
         let suppress_draw =
             outcome_to_store == Some(Outcome::Draw) && outcome_to_store_repetition_seen;
+        if suppress_draw {
+            // plan9: the same proof is cacheable per-search outside the TT.
+            // Key = (position hash, ancestor repetition-key context); the
+            // context hash was computed at the probe site before this frame's
+            // `path_push` and matches it. Only `Draw` entries ever enter the
+            // cache, and every hit returns under an identical ancestor set,
+            // so the reuse is the exact value the search would recompute.
+            self.repetition_cache
+                .store(tt_key, context_hash, outcome_to_store_depth);
+        }
         let store_outcome = if suppress_draw {
             None
         } else {
