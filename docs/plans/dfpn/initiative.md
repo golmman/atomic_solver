@@ -98,7 +98,7 @@ maintainability.
 
 | # | Item | Mechanism | Potential | Affects | Effort | Status |
 |---|------|-----------|-----------|---------|--------|--------|
-| 1 | Per-search repetition cache | Report7's named follow-up: cache repetition-dependent draw results **within a single search run, outside the TT**, keyed by (repetition key, path context), discarded at `reset_search_state`. Recovers plan7's "cyclic drawn positions are slower" cost without polluting path-independent TT entries | unmeasured; largest suspected lever for this class (the 14.1M-eval decisive phase is dominated by re-proving shuffle subtrees). Sizing spike: count repetition-draw `suppress_draw` stores and their subtree re-entry work | nodes | M–L | open — soundness design spike first: must state why per-search scoping cannot reintroduce the plan5 false win |
+| 1 | Per-search repetition cache | Report7's named follow-up: cache repetition-dependent draw results **within a single search run, outside the TT**, keyed by (position hash, ancestor repetition-key set), discarded at `begin_run`. Recovers plan7's "cyclic drawn positions are slower" cost without polluting path-independent TT entries | spike measured (2026-09-12, `research_repetition_cache.md` §2): 31,620 of 33,087 repetition-draw proofs on the stress case are re-proofs of 1,467 distinct positions; the direct proof frames are cheap, so the win must come from making the whole draw chain cacheable | nodes | M–L | soundness design spike done (`research_repetition_cache.md` §3–§5); **plan9 written** — implementation pending |
 | 2 | Clock-budget-aware solved-entry reuse | Keep rule50 in the key (per research_ghi §7.2). Store solved Win/Loss with a conservative budget `100 − rule50` at store time; on probe, reuse across clocks only when the new position's budget covers the stored proof depth (ignores mid-line pawn/capture resets — conservative by construction) | unmeasured; shuffle lines revisit the same boards at many clock values, so TT hit rate in exactly the dominant subtrees should rise. Sizing spike: instrument "same board, different clock" probe misses | nodes | M | open |
 | 3 | Continue refinement after cap-cut | Report8's named next step: when a refinement round ends `CapCut` and global budget remains, resume bounded refinement instead of stopping, while keeping the deterministic budget contract intact | recovers part of the 24.6M-node refinement tail that currently ends `cap-cut` at PV 115; outcome-finding unaffected | behavior (`PvStatus` semantics; possibly a new label) | M | open |
 | 4 | Bounded cross-path verification (research_ghi §9 "Option A") | When a cached solved result's path does not match the current prefix, run a bounded fresh `dfpn` call at `max_depth = entry.depth` under the current path and accept only on agreement | strengthens the one-ply guard toward full cross-path soundness; enables safer reuse in cyclic regions | correctness first, nodes second | L | open — pairs with #1; do not attempt before #1's spike lands |
@@ -139,12 +139,10 @@ changes *when* refinement stops, not how lines are labeled.
   cyclic-repetition regression tests (`rook_alone_does_not_claim_win_against_safe_king`,
   `reversible_cycle_keeps_repetition_key_and_stays_draw`; moved from
   `test_ghi.rs` by testability plan1). They must pass on every plan that
-  touches repetition handling. Note: they are currently gated with
-  `#[cfg_attr(debug_assertions, ignore = ...)]`, which AGENTS.md forbids
-  ("the build profile must not select which tests run") — converting them to
-  plain `#[ignore = "slow: ..."]` is a pending convention fix that changes
-  which tier runs them and must be a deliberate decision, not a side effect
-  of a repetition-handling plan.
+  touches repetition handling. Their gating was converted to plain
+  `#[ignore = "slow: ..."]` on 2026-09-12 (the former
+  `#[cfg_attr(debug_assertions, ignore)]` violated AGENTS.md; recorded in
+  History).
 - **Drift check**: `benchmark --suite quick --json --first-outcome`
   bit-identical before vs. after, except on the search surface a plan
   explicitly changes (then the plan lists the intended deltas and validates
@@ -160,6 +158,20 @@ changes *when* refinement stops, not how lines are labeled.
   position study (Motivation). Backlog #1–#4 opened from the study's
   algorithmic findings plus report7/report8's named follow-ups; baseline
   recorded under Measurement conventions.
+- **2026-09-12** — Convention fix preceding plan9: the two
+  `tests/test_repetition.rs` gates converted from
+  `#[cfg_attr(debug_assertions, ignore)]` to plain
+  `#[ignore = "slow: cyclic GHI regression; run with -- --include-ignored"]`
+  per AGENTS.md. No grep-matchable occurrence of
+  `cfg_attr(debug_assertions` remains under `tests/`, `src/`, or
+  `examples/`. Verified: excluded by the fast gate, passing with
+  `--include-ignored` in release (both tests pass, ~5 s).
+- **2026-09-12** — Backlog #1 soundness design + sizing spike
+  (`research_repetition_cache.md`, temporary instrumentation reverted after
+  measuring) and `plan9.md` written. Key refinement surfaced by the spike:
+  the cache key uses the *full position hash* (not the repetition key) for
+  the node component, because boards sharing a repetition key can differ in
+  halfmove clock and value.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
