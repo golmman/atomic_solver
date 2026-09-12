@@ -99,7 +99,7 @@ maintainability.
 | # | Item | Mechanism | Potential | Affects | Effort | Status |
 |---|------|-----------|-----------|---------|--------|--------|
 | 1 | Per-search repetition cache | Report7's named follow-up: cache repetition-dependent draw results **within a single search run, outside the TT**, keyed by (position hash, ancestor repetition-key set), discarded at `begin_run`. Recovers plan7's "cyclic drawn positions are slower" cost without polluting path-independent TT entries | spike measured (2026-09-12, `research_repetition_cache.md` §2): 31,620 of 33,087 repetition-draw proofs on the stress case are re-proofs of 1,467 distinct positions; the direct proof frames are cheap, so the win must come from making the whole draw chain cacheable | nodes | M–L | **done (plan9, `report9.md`)**: stress case first-outcome 351M → 249M child evals (−29%), default mode 466M → 338M (−27%); quick-suite drift limited to the 14 repetition-heavy cases (all outcomes unchanged); capacity default `1 << 18` after measuring the 1.6k-entry working set |
-| 2 | Clock-budget-aware solved-entry reuse | Keep rule50 in the key (per research_ghi §7.2). Store solved Win/Loss with a conservative budget `100 − rule50` at store time; on probe, reuse across clocks only when the new position's budget covers the stored proof depth (ignores mid-line pawn/capture resets — conservative by construction) | unmeasured; shuffle lines revisit the same boards at many clock values, so TT hit rate in exactly the dominant subtrees should rise. Sizing spike: instrument "same board, different clock" probe misses | nodes | M | open |
+| 2 | Clock-budget-aware solved-entry reuse | Keep rule50 in the key (per research_ghi §7.2). Store solved Win/Loss with a conservative budget `100 − rule50` at store time; on probe, reuse across clocks only when the new position's budget covers the stored proof depth (ignores mid-line pawn/capture resets — conservative by construction) | unmeasured; shuffle lines revisit the same boards at many clock values, so TT hit rate in exactly the dominant subtrees should rise. Sizing spike: instrument "same board, different clock" probe misses | nodes | M | open — plan10.md drafted (2026-09-12); its Phase 0 sizing spike is a hard go/no-go |
 | 3 | Continue refinement after cap-cut | Report8's named next step: when a refinement round ends `CapCut` and global budget remains, resume bounded refinement instead of stopping, while keeping the deterministic budget contract intact | recovers part of the 24.6M-node refinement tail that currently ends `cap-cut` at PV 115; outcome-finding unaffected | behavior (`PvStatus` semantics; possibly a new label) | M | open |
 | 4 | Bounded cross-path verification (research_ghi §9 "Option A") | When a cached solved result's path does not match the current prefix, run a bounded fresh `dfpn` call at `max_depth = entry.depth` under the current path and accept only on agreement | strengthens the one-ply guard toward full cross-path soundness; enables safer reuse in cyclic regions | correctness first, nodes second | L | open — pairs with #1; do not attempt before #1's spike lands |
 
@@ -184,6 +184,19 @@ changes *when* refinement stops, not how lines are labeled.
   (outcomes unchanged; dec10 first line 49 → 41 plies, stress-case first
   line 405 → 477 plies — both verified legal wins). Next ranked lever:
   backlog #2 (clock-budget-aware solved-entry reuse).
+- **2026-09-12** — **plan10 drafted** (backlog #2, clock-budget-aware
+  solved-entry reuse): a cross-clock shadow index keyed by the board-only
+  repetition key, storing `(best_move, outcome, depth)` for fully solved
+  Win/Loss facts only, probed at both reuse sites (`dfpn` node entry and
+  `evaluate_child`) after the exact-key solved check misses, under the
+  adoption rule `rule50 + proven_depth ≤ 100` plus the existing one-ply
+  guard. Soundness rests on a shift lemma (plan §Soundness contract): Win/Loss
+  proof trees replay identically across clocks because interior nodes stay
+  ≤ clock 99 under the budget rule and leaf values (mate/extinction, both
+  outranking rule50) are clock-independent. The lever is unmeasured, so the
+  plan's Phase 0 is a temporary-instrumentation sizing spike with a hard
+  go/no-go before implementation; a negative result closes the item and
+  re-ranks to #3. Next ranked lever after #2's outcome: backlog #3.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
