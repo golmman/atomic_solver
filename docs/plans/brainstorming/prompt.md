@@ -126,3 +126,10 @@ on cap-cut with time left, one could argue for continuing). Currently
 nothing in the output distinguishes the two cases.
 
 Is there an existing initative where we can add an implementation plan?
+
+---
+
+I choose the algorithmic and throughput paths.
+The throughput insight could be added to the lean initative.
+The algorithmic items go to the dfpn initative.
+What do you think?

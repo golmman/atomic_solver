@@ -93,6 +93,21 @@ Killing the zeroing without `unsafe` needs an upstream constructor
 (e.g. a documented `undo_scratch()` that leaves stale bytes, sound because
 `do_move` writes every field `undo_move` reads).
 
+### Position study 2026-09-11 — deep shuffle win (`4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21`)
+
+A 60+ ply tempo/conversion win against a shuffling rook defense (sibling of
+`m22_white`, pawns still on). First-outcome: **20,313,879 nodes / ~65 s**
+(first line 405 plies); default mode **38,694,766 nodes / ~95 s**, PV 405 →
+115 `cap-cut`. The decisive point is invariant across ε ∈ {0, 0.5} and TT ∈
+{32 MB, 2 GB} — the cost is algorithmic, not tuning; the algorithmic items
+spun out to `docs/plans/dfpn/initiative.md` (backlog #1–#4). Profile shares
+match the post-plan4 m22 profile closely (`evaluate_child` 48.5% self,
+`populate_state` 15.6%, make/unmake ~10.2%, full movegen ~5%), so the pie
+ranking below carries over to this class. One
+unprofiled cost is new to the backlog (#17): the O(depth) path-membership
+scans, which this position exercises harder than any suite case (depth 51+,
+41 root moves, cycle-heavy lines).
+
 ### Research round 2026-09-09 — TT capacity (`research_tt_capacity.md`)
 
 The #12 spike's 512 MB observation was sized properly: at the 64 MB
@@ -136,6 +151,7 @@ memory, maintainability.
 | 2 | Parallel search | Lazy-SMP-style parallel sibling children or parallel refinement roots over the shared TT | 2–8× wall on multicore | wall | L–XL | open — the only other multiplicative lever; needs a determinism design spike for the `child_eval_budget` contract first |
 | 12 | Existence-check cost | (a) solver-side: skip `populate_state` + `has_legal_move` when the child TT entry already proves the position non-terminal (`outcome == None` ⇒ it was expanded); (b) upstream: fused populate+existence API | ceiling measured **~2.5% wall** (spike 2026-09-09, see below) | wall | S (a) / M (b) | **spiked, demoted** — only worth folding into a micro-wins bundle |
 | 14 | Upstream make/unmake cost | `do_move`+`undo_move` **26.9% post-plan4** (13.8% post-plan3; per-eval ~31→~59 ns, TT cache pressure — see profile above); upstream core ~7.6 ns/round-trip and inherently tight; solver wrapper ~4.3 ns (64 B `StateInfo` zeroing + undo-stack push/pop) | ~1–3% wall (wrapper slimming only; absolute ceiling unchanged) | wall | S | **spiked, re-scoped** — no upstream round; wrapper slimming is now the top micro-wins candidate |
+| 17 | Path-membership cost | `path_contains` is an O(depth) linear scan over `path_stack` (`children.rs`, `core.rs`), called per child eval and per `dfpn` entry; `best_move_repeats_path` adds a full do/undo round-trip per TT-resolved hit | unmeasured — sizing spike first; hides inside `evaluate_child`'s ~48.5% share, and the 2026-09-11 shuffle-win study position exercises it harder than any suite case (depth 51+, 41 root moves, cycle-heavy lines) | wall | S | open — spike: instrument scan lengths / repeat-guard hit rate on m22 + the study position |
 | 8 | Cheaper static scoring | `StaticAtomicScorer` does 2–5 sliding-attack scans per quiet move; precomputed/incremental attacks | ~3–5% wall (was 5–15% pre-plan3; `score_with_context` now 5.4%) | wall | M | open |
 | 13 | Clock sampling | `time_exceeded()` calls `Instant::now()` at every `dfpn` entry; sample every N nodes (budget mode is eval-count-based and unaffected) | ~2% wall (2.2% post-plan4, unchanged) | wall | S | open — good agile warm-up |
 | 15 | `has_legal_move` playout cross-check | Random-playout property test: `Position::has_legal_move` vs `legal_moves_with_state` + `outcome_from_state` (report3 "missing tests") | correctness hardening, no speed | correctness | S | **done (plan5)**: `tests/test_playout_crosscheck.rs`, P1–P4 green in both tiers; see `report5.md` |
@@ -179,6 +195,12 @@ until a plan claims it.
 - Live measurements for reports use `m22_white`
   (`tests/fixtures/move_order_positions.txt`) as the dominant case;
   raw outputs go under `docs/plans/lean/measurements/`.
+- The deep shuffle win studied on 2026-09-11
+  (`4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21`, baseline in
+  the Motivation section above) is the secondary hard case for micro-wins
+  validation (#13, #12a, #14, #17): m22 no longer stresses the
+  per-child fixed costs at depth. Algorithmic levers for it live in
+  `docs/plans/dfpn/initiative.md`, not here.
 - Profiling follows the "Profiling in this container" section of
   `AGENTS.md` (`perf record -e cpu-clock -g`, leaf attribution).
 
