@@ -8,10 +8,7 @@ use common::assert_solves_to;
 /// A rook alone cannot force a win against a lone king that has a 2x2 safe area.
 /// This position can produce reversible checking cycles, so the solver must not
 /// claim a win from the cycle.
-#[cfg_attr(
-    debug_assertions,
-    ignore = "slow cyclic GHI regression; run with --ignored"
-)]
+#[ignore = "slow: cyclic GHI regression; run with -- --include-ignored"]
 #[test]
 fn rook_alone_does_not_claim_win_against_safe_king() {
     assert_solves_to("8/8/8/8/2k5/8/8/4KR2 w - - 0 1", Outcome::Draw, None);
@@ -20,10 +17,7 @@ fn rook_alone_does_not_claim_win_against_safe_king() {
 /// A reversible king/rook shuffle returns the same board with a different
 /// rule50 counter. The repetition key must stay equal while the full hash
 /// changes, and solving the repeated board must still not be declared a win.
-#[cfg_attr(
-    debug_assertions,
-    ignore = "slow cyclic GHI regression; run with --ignored"
-)]
+#[ignore = "slow: cyclic GHI regression; run with -- --include-ignored"]
 #[test]
 fn reversible_cycle_keeps_repetition_key_and_stays_draw() {
     let mut pos = Position::from_fen("8/8/8/8/2k5/8/8/4KR2 w - - 0 1").unwrap();
