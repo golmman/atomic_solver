@@ -133,3 +133,12 @@ I choose the algorithmic and throughput paths.
 The throughput insight could be added to the lean initative.
 The algorithmic items go to the dfpn initative.
 What do you think?
+
+---
+
+The outcome for the position tested via `make stress` is hard to find.
+In `docs/plans/dfpn/` and `docs/plans/lean/` we explored ways to improve but
+the result is still slow compared to non proof number search approaches like fairy-stockfish.
+Is there research we missed?
+Take your time to analyze and come up with ideas.
+Feel free to propose new ideas we could try out in a dedicated initative.
