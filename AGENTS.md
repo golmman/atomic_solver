@@ -309,6 +309,10 @@ in sync if the launcher changes.
   `docs/spec/optimizer_interface.md`), where such references dangle.
   Rationale and history belong in `docs/plans/`; a spec may reference other
   files under `docs/spec/` only.
+- Literature references are indexed in `docs/bibliography.md` (status +
+  pointer per paper). Full paper extractions live in the initiative
+  directories as `research_*.md`, written by the plan that mines the paper;
+  when a plan mines an entry, update its status in the bibliography.
 - Boy Scout principle: you should leave the codebase as clean or cleaner than you found it
 
 ## Conversational Guidelines

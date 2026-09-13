@@ -1,0 +1,91 @@
+# Bibliography
+
+Index of literature referenced by the solver's plans and initiatives. This
+is a pointer file, not a summary: the deep-dive extractions live in the
+initiative directories as `research_*.md` (created by the plan that mines
+the paper — do not preemptively write one). When a plan mines an entry,
+update its **Status** here.
+
+Status values:
+
+- **mined** — a full extraction exists; the link points to it.
+- **cited** — used inside a plan/report without a dedicated extraction.
+- **open** — identified as relevant, not yet mined; the feeding backlog
+  item is named.
+
+## Proof-number search foundations
+
+- L. V. Allis, M. van der Meulen, H. J. van den Herik (1994). *Proof-Number
+  Search*. Artificial Intelligence 66(1). — Original PNS. **Cited**
+  (`dfpn/research_parallel.md`).
+- A. Nagai (2002). *Df-pn Algorithm for Searching AND/OR Trees and Its
+  Applications*. Ph.D. dissertation, University of Tokyo. — DF-PN and
+  DF-PN+; source of the PDS variant. **Cited**
+  (`dfpn/research_ghi.md`, `dfpn/research_epsilon.md`).
+- J. Pawlewicz, L. Lew (2007). *Improving Depth-first PN-Search: 1 + ε
+  Trick*. Warsaw University. — Implemented in the solver. **Mined**
+  (`dfpn/research_epsilon.md`).
+- C. Gao (2021). *On Computation Complexity of True Proof Number Search*.
+  [arXiv:2102.04907](https://arxiv.org/abs/2102.04907). — True pn/dn in
+  arbitrary DAGs is NP-hard; framing for why DAG-aware pn/dn must remain
+  heuristic. **Open** (`conversion` backlog #5e).
+
+## GHI / repetitions
+
+- A. Kishimoto, M. Müller (2004). *A General Solution to the Graph History
+  Interaction Problem*. AAAI-04. — PDF in repo: `docs/plans/dfpn/ghi.pdf`.
+  **Mined** (`dfpn/research_ghi.md`).
+- A. Kishimoto, M. Müller (2005). *A Solution to the GHI Problem for
+  Depth-First Proof-Number Search*. Information Sciences 175(4). — Journal
+  version of the above with the complete algorithm; the AAAI-04 PDF is
+  abbreviated. Reference for bounded cross-path verification. **Open**
+  (`dfpn` backlog #4, `conversion` backlog #5d).
+- Y. Kawano (1996). *Using Similar Positions to Search Game Trees*. Games
+  of No Chance, MSRI. — Kawano simulation; the plan5 twin mechanism and
+  `conversion` backlog #2 (root-scale candidate verification) both derive
+  from it. **Cited** (`dfpn/research_ghi.md`).
+- A. Kishimoto (2005). *Correct and Efficient Search Algorithms in the
+  Presence of Repetitions*. Ph.D. dissertation, University of Alberta. —
+  **Cited** (`dfpn/research_parallel.md`).
+- A. Kishimoto (2011). *Multiple-Outcome Proof Number Search*. IJCAI-11. —
+  Formal win/loss/draw PNS framework; cross-check of the solver's draw
+  propagation. **Open** (`conversion` backlog #5b).
+
+## Parallelism
+
+- T. Kaneko (2010). *Parallel Depth First Proof Number Search*. AAAI-10. —
+  PDF in repo: `docs/plans/dfpn/parallel.pdf`. **Mined**
+  (`dfpn/research_parallel.md`).
+- A. Saffidine, N. Jouandeau, T. Cazenave (2011). *Solving Breakthrough
+  with Race Patterns and Job-Level Proof Number Search*. ACG 13. —
+  Job-level parallel PNS. **Open** (`conversion` backlog #4).
+- K. Young, R. B. Hayward (2016). *A Reverse Hex Solver*. CG 2016.
+  [arXiv:1707.00627](https://arxiv.org/abs/1707.00627). — Scalable parallel
+  DF-PN in practice (Solrex). **Open** (`conversion` backlog #4).
+- T. Čížek, M. Balko, M. Schmid (2025). *Massively Parallel Proof-Number
+  Search for Impartial Games and Beyond*.
+  [arXiv:2511.10339](https://arxiv.org/abs/2511.10339). — Two-level
+  parallelization + shared worker info; 333× on 1024 cores; supersedes
+  Kaneko-10's scaling assumptions. **Open** (`conversion` backlog #4/#5c).
+
+## Recent solving paradigms
+
+- O. Randall, M. Müller, T.-H. Wei, R. Hayward (2024). *Expected Work
+  Search: Combining Win Rate and Proof Size Estimation*.
+  [arXiv:2405.05594](https://arxiv.org/abs/2405.05594). — Work-minimizing
+  selection; solved 5×5 Go under positional superko (repetition-dominated)
+  and 8×8 Hex. **Open** (`conversion` backlog #5a).
+
+## Adjacent (play, not exact solving)
+
+- J. Kowalski, D. J. N. J. Soemers, S. Kosakowski, M. H. M. Winands
+  (2025). *Generalized Proof-Number Monte-Carlo Tree Search*.
+  [arXiv:2506.13249](https://arxiv.org/abs/2506.13249). — PNS-biased MCTS
+  for move decisions, not proofs; background only. **Cited**
+  (`conversion/initiative.md` Motivation).
+
+## Domain tools
+
+- Fairy-Stockfish (F. Fichter) — variant-capable alpha-beta engine with
+  NNUE support; the intended line oracle for `conversion` backlog #2.
+  Not literature; listed because the backlog depends on it.
