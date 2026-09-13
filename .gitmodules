@@ -1,0 +1,3 @@
+[submodule "libs/Fairy-Stockfish"]
+	path = libs/Fairy-Stockfish
+	url = https://github.com/fairy-stockfish/Fairy-Stockfish.git
