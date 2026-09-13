@@ -4,10 +4,11 @@
 
 Active, maintained **agile**: plans are single-lever and sized to one session;
 the backlog is re-ranked after every report. Plans 1–9 are done
-(`report1.md`–`report9.md`) and predate this file. This `initiative.md` was
+(`report1.md`–`report9.md`) and predate this file; plan10 was executed as a
+Phase 0 no-go with no code changes (`report10.md`). This `initiative.md` was
 created on 2026-09-11 (after the position study below) to host the open
 algorithmic backlog; until then the initiative was plan/report-driven only.
-The next plan number is **plan10**.
+The next plan number is **plan11**.
 
 ## Motivation
 
@@ -99,7 +100,7 @@ maintainability.
 | # | Item | Mechanism | Potential | Affects | Effort | Status |
 |---|------|-----------|-----------|---------|--------|--------|
 | 1 | Per-search repetition cache | Report7's named follow-up: cache repetition-dependent draw results **within a single search run, outside the TT**, keyed by (position hash, ancestor repetition-key set), discarded at `begin_run`. Recovers plan7's "cyclic drawn positions are slower" cost without polluting path-independent TT entries | spike measured (2026-09-12, `research_repetition_cache.md` §2): 31,620 of 33,087 repetition-draw proofs on the stress case are re-proofs of 1,467 distinct positions; the direct proof frames are cheap, so the win must come from making the whole draw chain cacheable | nodes | M–L | **done (plan9, `report9.md`)**: stress case first-outcome 351M → 249M child evals (−29%), default mode 466M → 338M (−27%); quick-suite drift limited to the 14 repetition-heavy cases (all outcomes unchanged); capacity default `1 << 18` after measuring the 1.6k-entry working set |
-| 2 | Clock-budget-aware solved-entry reuse | Keep rule50 in the key (per research_ghi §7.2). Store solved Win/Loss with a conservative budget `100 − rule50` at store time; on probe, reuse across clocks only when the new position's budget covers the stored proof depth (ignores mid-line pawn/capture resets — conservative by construction) | unmeasured; shuffle lines revisit the same boards at many clock values, so TT hit rate in exactly the dominant subtrees should rise. Sizing spike: instrument "same board, different clock" probe misses | nodes | M | open — plan10.md drafted (2026-09-12); its Phase 0 sizing spike is a hard go/no-go |
+| 2 | Clock-budget-aware solved-entry reuse | Keep rule50 in the key (per research_ghi §7.2). Store solved Win/Loss with a conservative budget `100 − rule50` at store time; on probe, reuse across clocks only when the new position's budget covers the stored proof depth (ignores mid-line pawn/capture resets — conservative by construction) | unmeasured; shuffle lines revisit the same boards at many clock values, so TT hit rate in exactly the dominant subtrees should rise. Sizing spike: instrument "same board, different clock" probe misses | nodes | M | **closed — measured no-go (plan10, `report10.md`, 2026-09-12)**: sound (444/444 adopted-claim re-verifications, 59/59 quick outcomes unchanged) and large on the target (stress first-outcome −37.7%, default −41.6%), but the benefit and a DF-PN destabilization are one mechanism (solved children's 0/INF bounds folded into unsolved parents' thresholds); the m22_white control collapses 3.1 s win → 120 s timeout and 15/59 quick cases regress up to +185%. Flooring the folding rescues the control but eliminates the entire stress win. All instrumentation reverted; tree byte-identical to post-plan9 |
 | 3 | Continue refinement after cap-cut | Report8's named next step: when a refinement round ends `CapCut` and global budget remains, resume bounded refinement instead of stopping, while keeping the deterministic budget contract intact | recovers part of the 24.6M-node refinement tail that currently ends `cap-cut` at PV 115; outcome-finding unaffected | behavior (`PvStatus` semantics; possibly a new label) | M | open |
 | 4 | Bounded cross-path verification (research_ghi §9 "Option A") | When a cached solved result's path does not match the current prefix, run a bounded fresh `dfpn` call at `max_depth = entry.depth` under the current path and accept only on agreement | strengthens the one-ply guard toward full cross-path soundness; enables safer reuse in cyclic regions | correctness first, nodes second | L | open — pairs with #1; do not attempt before #1's spike lands |
 
@@ -197,6 +198,25 @@ changes *when* refinement stops, not how lines are labeled.
   plan's Phase 0 is a temporary-instrumentation sizing spike with a hard
   go/no-go before implementation; a negative result closes the item and
   re-ranks to #3. Next ranked lever after #2's outcome: backlog #3.
+- **2026-09-12** — **plan10 executed — backlog #2 closed as a measured
+  no-go** (`report10.md`). Phase 0 spike: the cross-clock shadow index
+  (rep_key → best_move/outcome/depth, adoption rule `rule50 + depth ≤ 100`
+  + one-ply guard, probed at `dfpn` node entry and `evaluate_child`) is
+  sound and delivered stress-case first-outcome child evals 249,480,478 →
+  155,394,450 (−37.7%) and default mode 338,094,183 → 197,745,729 (−41.6%)
+  with a 170k-entry working set. But the designated no-adoption control
+  m22_white collapsed (3.1 s win → 120 s timeout; root dn explodes
+  9.3k → 503k), and 15/59 quick cases regressed (up to +185%) — with all 59
+  outcomes unchanged and 444/444 sampled adopted Wins independently
+  re-verified, isolating the defect as search dynamics, not soundness.
+  Differential experiments (Win/Loss × OR/AND slices, gap-filling gate,
+  folded-bound flooring) showed the stress win and the destabilization are
+  inseparable: both come from solved children's (0, INF)/(INF, 0) bounds
+  folding into unsolved parents' DF-PN threshold arithmetic. No-go per the
+  plan's Phase 0 gate; all temporary instrumentation reverted (baseline
+  reproduced bit-for-bit after the revert). New diagnostic surfaced for a
+  possible future plan: solved-child bound-folding hygiene
+  (`select_from_children`). Next ranked lever: backlog #3.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
