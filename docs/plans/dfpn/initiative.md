@@ -100,7 +100,7 @@ maintainability.
 | # | Item | Mechanism | Potential | Affects | Effort | Status |
 |---|------|-----------|-----------|---------|--------|--------|
 | 1 | Per-search repetition cache | Report7's named follow-up: cache repetition-dependent draw results **within a single search run, outside the TT**, keyed by (position hash, ancestor repetition-key set), discarded at `begin_run`. Recovers plan7's "cyclic drawn positions are slower" cost without polluting path-independent TT entries | spike measured (2026-09-12, `research_repetition_cache.md` §2): 31,620 of 33,087 repetition-draw proofs on the stress case are re-proofs of 1,467 distinct positions; the direct proof frames are cheap, so the win must come from making the whole draw chain cacheable | nodes | M–L | **done (plan9, `report9.md`)**: stress case first-outcome 351M → 249M child evals (−29%), default mode 466M → 338M (−27%); quick-suite drift limited to the 14 repetition-heavy cases (all outcomes unchanged); capacity default `1 << 18` after measuring the 1.6k-entry working set |
-| 2 | Clock-budget-aware solved-entry reuse | Keep rule50 in the key (per research_ghi §7.2). Store solved Win/Loss with a conservative budget `100 − rule50` at store time; on probe, reuse across clocks only when the new position's budget covers the stored proof depth (ignores mid-line pawn/capture resets — conservative by construction) | unmeasured; shuffle lines revisit the same boards at many clock values, so TT hit rate in exactly the dominant subtrees should rise. Sizing spike: instrument "same board, different clock" probe misses | nodes | M | **closed — measured no-go (plan10, `report10.md`, 2026-09-12)**: sound (444/444 adopted-claim re-verifications, 59/59 quick outcomes unchanged) and large on the target (stress first-outcome −37.7%, default −41.6%), but the benefit and a DF-PN destabilization are one mechanism (solved children's 0/INF bounds folded into unsolved parents' thresholds); the m22_white control collapses 3.1 s win → 120 s timeout and 15/59 quick cases regress up to +185%. Flooring the folding rescues the control but eliminates the entire stress win. All instrumentation reverted; tree byte-identical to post-plan9 |
+| 2 | Clock-budget-aware solved-entry reuse | Keep rule50 in the key (per research_ghi §7.2). Store solved Win/Loss with a conservative budget `100 − rule50` at store time; on probe, reuse across clocks only when the new position's budget covers the stored proof depth (ignores mid-line pawn/capture resets — conservative by construction) | unmeasured; shuffle lines revisit the same boards at many clock values, so TT hit rate in exactly the dominant subtrees should rise. Sizing spike: instrument "same board, different clock" probe misses | nodes | M | **closed — measured no-go (plan10, `report10.md`, 2026-09-12)**: sound (444/444 adopted-claim re-verifications, 59/59 quick outcomes unchanged) and large on the target (stress first-outcome −37.7%, default −41.6%), but the benefit and a DF-PN destabilization are one mechanism (solved children's 0/INF bounds folded into unsolved parents' thresholds); the m22_white control collapses 3.1 s win → 120 s timeout and 15/59 quick cases regress up to +185%. Flooring the folding rescues the control but eliminates the entire stress win. All instrumentation reverted; tree byte-identical to post-plan9. **Reopened and re-closed as plan11** (2026-09-13, `report11.md`): the two decoupling mechanisms were measured in a seven-arm Phase 0 matrix — (A) frame-entry adoption with TT store-back (−8.8% stress FO / −2.6% default, m22 1.28×, quick suite byte-identical: sound and drift-free but below the 10% gate and useless in default mode), (B1–B3) site-2 direction split with quarantine (all fail: quarantining AND-parent Win facts kills the stress win, +110%; adopting them solved kills m22 via 10.55M folds), (AB) hybrid (+0.5%), (A2) site-2 prefetch store-back (timeout). The decisive diagnostic: **84.8% of the adoption mass is AND-parent Win facts — simultaneously the stress-win driver and the m22 destabilizer**; no tested decoupling separates them. Arm C (bounded verification) not run — negative prior documented in report11. Backlog #2 **closed permanently**; the sequential node count on this class is measured-optimal for DF-PN+ + plan9 cache under current repetition semantics |
 | 3 | Continue refinement after cap-cut | Report8's named next step: when a refinement round ends `CapCut` and global budget remains, resume bounded refinement instead of stopping, while keeping the deterministic budget contract intact | recovers part of the 24.6M-node refinement tail that currently ends `cap-cut` at PV 115; outcome-finding unaffected | behavior (`PvStatus` semantics; possibly a new label) | M | open |
 | 4 | Bounded cross-path verification (research_ghi §9 "Option A") | When a cached solved result's path does not match the current prefix, run a bounded fresh `dfpn` call at `max_depth = entry.depth` under the current path and accept only on agreement | strengthens the one-ply guard toward full cross-path soundness; enables safer reuse in cyclic regions | correctness first, nodes second | L | open — pairs with #1; do not attempt before #1's spike lands |
 
@@ -201,6 +201,43 @@ are labeled.
   plan's Phase 0 is a temporary-instrumentation sizing spike with a hard
   go/no-go before implementation; a negative result closes the item and
   re-ranks to #3. Next ranked lever after #2's outcome: backlog #3.
+- **2026-09-13** — **plan11 executed — backlog #2 closed permanently**
+  (`report11.md`). Phase 0 ran a seven-arm matrix (PLAN10 validation arm +
+  A, B1, B2, B3, plus two arms added mid-spike: AB hybrid and A2 prefetch)
+  after reproducing the post-plan9 baselines and report10's full-lever
+  numbers bit-for-bit. Results: B1/B3 timeout on stress (+110% — AND-side
+  quarantine stalls proof completion), B2 wins stress at −36.1% but the
+  m22 control times out via 10,553,135 AND-side folds, A is sound,
+  drift-free (quick suite byte-identical) and control-safe (1.28×) but
+  only −8.8% FO / −2.6% default, AB +0.5%, A2 timeout. The new
+  direction × parent-type histogram (report10's named missing diagnostic)
+  localized the pathology: 84.8% of adoptions are AND-parent Win facts,
+  which are both the stress win and the control's death. Arm C
+  (bounded verification) was skipped with a documented negative prior.
+  All spike instrumentation reverted; the restored binary reproduces the
+  stress baseline exactly (13,907,467 nodes, 477-ply line). Remaining
+  levers for the class: parallelism, EWS/MOPNS reading, clock-pressure
+  ordering, refinement-after-cap-cut.
+- **2026-09-13** — **backlog #2 reopened as plan11** (`plan11.md`): the
+  resurrection attempts plan10's −37.7% via two decoupling mechanisms,
+  grounded in two structural facts established by code reading. (1) The
+  parent's only child channel is `evaluate_child` (the recursive `dfpn`
+  return value is discarded; the TT is the channel), so a frame-entry-only
+  hit must store back into the TT and folds through the pre-existing
+  exact-key path at plan10's volume — mechanism A is measured as the
+  control arm. (2) report10's differential table shows the destabilizer is
+  direction-specific: adopted Loss facts (winning move found) were
+  m22-safe (3.1 s, 13.4M vs 14.2M baseline), adopted Win facts are the
+  pathology — so mechanism B quarantines Win facts at site 2 (`outcome:
+  None`, `explored: true`, conservative `(INF,1)`/`(1,INF)` bounds —
+  suppress-only, can never enable a decisive claim) and adopts Loss facts
+  solved, with parent-type topology sub-arms B1/B2/B3. Phase 0 is one arm
+  matrix (A, B1–B3, plus `PLAN10` as a spike-build validation arm) with
+  the direction × parent-type adoption histogram report10 named as the
+  missing diagnostic; contingency arm C (bounded cross-path verification
+  per research_ghi §9 Option A) is documented but not built in round 1.
+  Go gates: stress ≥ 10% improvement, m22 ≤ 2× baseline wall, all 59
+  quick outcomes unchanged, cyclic rook safe.
 - **2026-09-12** — **plan10 executed — backlog #2 closed as a measured
   no-go** (`report10.md`). Phase 0 spike: the cross-clock shadow index
   (rep_key → best_move/outcome/depth, adoption rule `rule50 + depth ≤ 100`
