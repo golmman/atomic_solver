@@ -47,9 +47,14 @@ Status values:
 - A. Kishimoto (2005). *Correct and Efficient Search Algorithms in the
   Presence of Repetitions*. Ph.D. dissertation, University of Alberta. —
   **Cited** (`dfpn/research_parallel.md`).
-- A. Kishimoto (2011). *Multiple-Outcome Proof Number Search*. IJCAI-11. —
-  Formal win/loss/draw PNS framework; cross-check of the solver's draw
-  propagation. **Open** (`conversion` backlog #5b).
+- A. Saffidine, T. Cazenave (2012). *Multiple-Outcome Proof Number
+  Search*. ECAI 2012, pp. 708–713.
+  [DOI 10.3233/978-1-61499-098-7-708](https://doi.org/10.3233/978-1-61499-098-7-708)
+  (author copy: `lamsade.dauphine.fr/~cazenave/papers/mopns.pdf`). —
+  Formal multi-outcome PNS (`G/S` effort numbers per outcome,
+  attracting/distracting descent, `pess/opti` interval pruning). Earlier
+  misattributed to "Kishimoto, IJCAI-11" — no such paper exists; corrected
+  during plan3. **Mined** (`conversion/research_mopns.md`).
 
 ## Parallelism
 
@@ -74,7 +79,8 @@ Status values:
   Search: Combining Win Rate and Proof Size Estimation*.
   [arXiv:2405.05594](https://arxiv.org/abs/2405.05594). — Work-minimizing
   selection; solved 5×5 Go under positional superko (repetition-dominated)
-  and 8×8 Hex. **Open** (`conversion` backlog #5a).
+  and 8×8 Hex. **Mined** (`conversion/research_ews.md`; no-go for a pure
+  solver — the win-rate estimator is the transfer blocker).
 
 ## Adjacent (play, not exact solving)
 

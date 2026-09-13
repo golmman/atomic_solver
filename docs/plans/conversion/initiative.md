@@ -5,11 +5,12 @@
 New initiative, opened 2026-09-13 after a missed-research review triggered by
 the `make stress` position remaining hard after `dfpn` plans 1–10 and the
 `lean` micro-optimization rounds. Plans are single-lever, sized to one
-session, agile like `dfpn`/`lean`. The next plan number is **plan5**
-(plan1/plan2/plan4 closed as no-gos; plan3 is the #5a/#5b reading round — EWS +
-MOPNS; the ordering-guidance half of #2a
-is parked behind plan3, its premise weakened by report2's budget-instability
-observation).
+session, agile like `dfpn`/`lean`. The next plan number is **plan6**
+(plan1/plan2/plan4 closed as no-gos; plan3 was the #5a/#5b reading round —
+EWS + MOPNS, both no-go; plan5 is the #5d reading round — journal GHI,
+drafted 2026-09-13; the ordering-guidance half of #2a
+is parked behind the reading rounds, its premise weakened by report2's
+budget-instability observation).
 
 ## Motivation
 
@@ -85,7 +86,7 @@ correctness first, then performance, memory, maintainability.
 | 2 | **Candidate-guided outcome search** (engine-hybrid) | Use a strong atomic engine (fairy-stockfish with NNUE) as a line oracle: (a) *ordering guidance* — seed `sort_moves`/killer/history so the candidate line's moves are searched first (zero soundness risk: ordering only); (b) *verification mode* — prove the candidate line as a PPV first (`search_depth_with_prefix` + the `verify_ppv` machinery already exist); only if verification fails, fall back to the unguided solve. Literature analog: Kawano simulation at root scale; standard practice in tsume-shogi solving (engine-guided DF-PN) | **Measured no-go for the verification lever 2b** (`report2.md`, 2026-09-13): on the stress case no engine candidate (1M/10M/100M nodes) verified — the 10M/100M PVs burned >1.0B/>1.4B verification evals at the 600/900 s budget with defender reply a5a4 unproven (resource-cut Draw), i.e. the engine's 15–19-ply "mate" lines are cooperative-horizon lines, not proofs; m22 control: engine 6.5 s + 300 s failed verification vs the 3.1 s unguided baseline; dec sample (6 cases): 6/6 verified in ≤0.55 s but the 1.2–5.3 s engine query makes guided ≈ unguided or worse on easy positions. Engine time alone is a real additive cost the unguided solve does not pay | nodes + behavior (new mode; drift protocol N/A for the mode, ordering-guidance variant must keep quick-suite outcomes) | M–L | **closed — no-go for 2b** (`plan2.md` Phase 0, `report2.md`); ordering guidance (2a) stays open but **parked behind plan3/plan4**: it pays engine cost only once per run as a seed and needs no verification loop, but its premise ("search the candidate's moves first") has weaker support — the engine's first moves on stress (g3g4@10M vs b1b8@100M vs solver's d6e5-class PVs) proved unstable across budgets |
 | 3 | **Clock-pressure ordering signal** | The stress win is a tempo conversion; the static scorer is blind to the clock. OR side: bonus for clock-resetting moves (pawn pushes/captures) once rule50 passes a threshold; AND side: prefer *reversible* (shuffling) defender moves — they are the actual drawing resource and where disproving work concentrates. DF-PN+ `H`/`Cost` flavor: frontier estimates scaled by remaining clock budget | unmeasured; S-effort spike (temporary counters: how often the AND refutation is a shuffle at high clock). Behavior-changing → validated like plan9 (outcomes unchanged, drift confined to repetition-heavy cases) | nodes | S–M | **closed — measured no-go, both halves** (`report4.md`, 2026-09-13): Phase 0 counter spike (`PLAN4_SPIKE=1`, reverted) on the stress case reproduced the inherited baselines exactly and showed the surface absent — at T=60, high-clock AND frames are 0.011% (FO) / 0.15% (default) of nodes with 0.002–0.02% of child evals; the selected child is already at rank 0 in 152/153 (FO) / 817/818 (default) of proven high-clock AND frames; composition is 90%+ all-shuffle so a uniform bonus cannot reorder. Clock distribution: AND expansions sit at clock 0–9 for 97–98% — the searched tree rarely sustains a high clock. The OR-side histogram (same spike) is equally empty (0.02% of OR expansions at clock ≥ 60), closing the OR half too; the DF-PN+ `H`/`Cost` clock flavor is recommended closed on the same evidence (plus the plan10 hazard class) |
 | 4 | **Parallel search design spike** | `lean` backlog #2 owns the lever; this initiative tracks the *new research inputs*: Kaneko AAAI-10 (already mined, `dfpn/research_parallel.md`) is 15 years old — the 2025 paper below (massively parallel PNS, two-level parallelization + shared worker info, 333× on 1024 cores) and JLPNS (Saffidine et al., ACG 2011) supersede its assumptions. Spike question: which design fits a shared fixed-size TT with per-shard locks, and what is the determinism story for `child_eval_budget` (sequential path stays bit-identical; `--threads > 1` is an explicitly nondeterministic opt-in that must be documented as such) | 2–8× wall on multicore (multiplicative; the only lever of that size left) | wall | L (spike first) | open — owned jointly with `lean` #2 |
-| 5 | **Research reading round** | Verified, not yet mined (canonical index with links: `docs/bibliography.md`): (a) *Expected Work Search* (Randall, Müller, Wei, Hayward, 2024, arXiv:2405.05594) — combines win-rate estimates with proof-size estimates, minimized expected work; solved 5×5 Go under positional superko (repetition-dominated!) and 8×8 Hex; evaluate as a child-selection/ordering paradigm against DF-PN thresholds; (b) *Multiple-Outcome Proof Number Search* (Kishimoto, IJCAI-11) — formal 3-outcome framework; cross-check our draw propagation for missing machinery; (c) *Massively Parallel Proof-Number Search* (Čížek, Balko, Schmid, 2025, arXiv:2511.10339) — feeds #4; (d) Kishimoto & Müller journal version (*Information Sciences* 175(4), 2005) of the GHI paper — the AAAI-04 PDF in `dfpn/` is abbreviated; the journal version's full algorithm is the reference for `dfpn` backlog #4; (e) Gao, *On Computation Complexity of True Proof Number Search* (arXiv:2102.04907) — true pn/dn in DAGs is NP-hard, useful framing for why DAG-aware pn/dn are heuristics | information | — | S | **plan3 drafted** (2026-09-13) for items (a)+(b): reading round producing `research_ews.md` + `research_mopns.md` and a re-ranked backlog; items (c)–(e) stay open with their owning backlogs (#4/#4, `dfpn` #4, `conversion` #5e) |
+| 5 | **Research reading round** | Verified, not yet mined (canonical index with links: `docs/bibliography.md`): (a) *Expected Work Search* (Randall, Müller, Wei, Hayward, 2024, arXiv:2405.05594) — combines win-rate estimates with proof-size estimates, minimized expected work; solved 5×5 Go under positional superko (repetition-dominated!) and 8×8 Hex; evaluate as a child-selection/ordering paradigm against DF-PN thresholds; (b) *Multiple-Outcome Proof Number Search* (Saffidine & Cazenave, ECAI-12 — earlier misattributed to Kishimoto IJCAI-11, corrected in plan3) — formal multi-outcome framework; cross-check our draw propagation for missing machinery; (c) *Massively Parallel Proof-Number Search* (Čížek, Balko, Schmid, 2025, arXiv:2511.10339) — feeds #4; (d) Kishimoto & Müller journal version (*Information Sciences* 175(4), 2005) of the GHI paper — the AAAI-04 PDF in `dfpn/` is abbreviated; the journal version's full algorithm is the reference for `dfpn` backlog #4; (e) Gao, *On Computation Complexity of True Proof Number Search* (arXiv:2102.04907) — true pn/dn in DAGs is NP-hard, useful framing for why DAG-aware pn/dn are heuristics | information | — | S | **items (a)+(b) mined, closed** (`plan3`, `research_ews.md` + `research_mopns.md`, 2026-09-13): (a) EWS — **documented no-go**, its measured benefit requires a win-rate estimator a pure solver lacks (paper's own EWS-WR ablation is 8.5× worse; estimator-free surrogates collapse to that form), its GHI handling is caching-everything + simulation-verified reuse (evidence for `dfpn` #4/#5d, not a new cacheable surface), and the ordering-layer salvage is blocked by `lean`'s oracle floor / plan4's empty AND surface; (b) MOPNS — **closed as a valuable negative result**: the paper is Saffidine & Cazenave ECAI-12 (the "Kishimoto IJCAI-11" attribution was wrong; corrected in `docs/bibliography.md`), our `Outcome`-based draw propagation is formally the MOPNS Draw-threshold slice (`G(n,Draw)=0 ∧ S(n,Draw)=0`), MOPNS explicitly defers repetitions to GHI (no published caching-soundness argument here), and df-MOPNS threshold targeting is in the plan10 hazard class. (d) **plan5 drafted** (2026-09-13): journal-GHI reading round producing `dfpn/research_ghi_journal.md` plus a soundness-contract sketch for `dfpn` #4. Items (c)/(e) stay open with their owning backlogs (#4/#4, `conversion` #5e) |
 
 Cross-references: `dfpn` backlog #3 (refinement after cap-cut) and #4
 (bounded cross-path verification) stay open there — #1 here changes the
@@ -205,6 +206,48 @@ signal. Wall-time micro-engineering stays in `lean`.
   `lean` #5 lane: history/killers already serve the AND-side refutation at
   rank 0 from move one on the stress profile. No ordering term, tests, or
   drift protocol were needed (no code survived Phase 0).
+
+- **2026-09-13** — backlog #5 items **(a)+(b) mined and closed** (plan3
+  reading round; `research_ews.md` + `research_mopns.md`). Verdicts:
+  **(a) EWS — documented no-go** (no new backlog item): the mechanism's
+  measured benefit requires a win-rate estimator (paper's own EWS-WR
+  ablation: 8.5× worse on average, »24 h on 5×5 Go vs 5.25 h); every
+  estimator-free surrogate collapses to that measured-weak form; EWS
+  changes neither cacheability (TT + Kishimoto–Müller
+  simulation-verified reuse, exactly the `dfpn` #4/#5d lever) nor any
+  threshold we run; the ordering-layer salvage is blocked by `lean`'s
+  OR oracle floor and plan4's measured-empty AND surface. **(b) MOPNS —
+  closed as a valuable negative result**: the solver's `Outcome`-based
+  draw propagation is formally the MOPNS Draw-threshold slice
+  (`G(n,Draw)=0 ∧ S(n,Draw)=0` ⇔ all-children-solved/no-win/some-draw);
+  the only cacheable-surface candidate (MOPNS `pess/opti` half-facts) has
+  a measured-thin stress surface (first proofs of repetition-draw chains
+  complete within ~1 child eval; `dfpn/research_repetition_cache.md` §2)
+  and no published soundness argument — MOPNS assumes acyclic games and
+  defers cycles to the journal GHI paper; df-MOPNS threshold targeting is
+  in the plan10 hazard class (same per-outcome sum/min folding). No new
+  backlog items opened. **Attribution correction:** MOPNS is Saffidine &
+  Cazenave, ECAI 2012, pp. 708–713 — the "Kishimoto, IJCAI-11" attribution
+  in the backlog and bibliography was wrong (no such paper exists; the
+  only Kishimoto IJCAI-11 entry is "Evaluations of Hash Distributed A\*").
+  `docs/bibliography.md` updated (both entries **Mined**; #5d/#5e links
+  kept open).
+
+- **2026-09-13** — `plan5.md` drafted for backlog #5d: a docs-only
+  reading round mining the **journal** GHI paper (Kishimoto & Müller,
+  *Information Sciences* 175(4), 2005 — the complete algorithm the AAAI-04
+  PDF only abbreviates). Five goal questions: the full twin/simulation
+  procedure (specifically whether simulation carries the twin's original
+  ancestor context — the concrete gap in `dfpn/research_ghi.md` §9), the
+  journal soundness theorem's preconditions, the first-player-loss →
+  repetition-as-draw mapping, the reuse-site economics against the plan10
+  hazard (frame-entry return vs child-bound folding), and the
+  soundness-contract sketch for `dfpn` #4 in the backlog #1 lemma shape.
+  Placement decision recorded in the plan: the extraction goes to
+  `docs/plans/dfpn/research_ghi_journal.md` (consumer is `dfpn` #4; direct
+  continuation of `dfpn/research_ghi.md`), cross-linked from both
+  initiatives. The plan ends at the contract; the `dfpn` #4 implementation
+  plan is not drafted here.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

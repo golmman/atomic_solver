@@ -147,3 +147,9 @@ Feel free to propose new ideas we could try out in a dedicated initative.
 
 Draft plans for the EWS/MOPNS reading round (could reshape child selection for    repetition-dominated solving), and  for the clock-pressure ordering (cheap AND-side signal).
 
+---
+
+* extend proof db with new proof_tree.bin
+* parallel
+* perf
+
