@@ -294,6 +294,9 @@ in sync if the launcher changes.
 - `docs/plans/` contains prompts, implementation plans and reports
   - each sub-directory in `docs/plans/` is treated as an initiative with a mutual high-level goal 
   - an initiative may be described by an `initiative.md`
+  - `docs/plans/README.md` is the status index of all initiatives; update
+    the affected row only when an initiative opens, pivots, or closes —
+    the per-initiative `initiative.md` stays authoritative
   - initiative work is agile not waterfall
   - you can ignore all `prompt.md` files, which are unfiltered user-thoughts
   - implementation plans can be found via `find . -type f -name 'plan*.md'`

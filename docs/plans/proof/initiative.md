@@ -120,6 +120,7 @@ maintainability.
 | 5 | Periodic TT checkpoint | Bounded-size snapshot written every N minutes (not just at exit) | crash resilience for multi-day runs (the event log's one advantage, at bounded cost) | artifact writer | S | stretch |
 | 6 | Builder-side validation tooling | `inspect_pt` / `verify_ppv` runs against reconstructed trees; root-outcome and bottom-up depth cross-checks against the snapshot before dumping | trust in the reconstruction | examples/tests | S | **done (plan6, `report6.md`)**: fully-expanded-twin preference in `finalize()` (sibling-chain child counts; `reconcile_children` leaves pruned children's parent links set — parent-link counts overcount), replay-based validator `validate_proof_tree` wired into `finalize()`/`main.rs` (`pt_validate:` line, exit 1 on defects, `ProofStats::validation_errors`); experiment now **46/46 oracle-isomorphic**, un-gating plan7 |
 | 7 | Deep-proof capacity of the builder | `finalize()` canonical expansion and the node store may still exceed a single machine's RAM for the deepest proofs | disk-backed finalize, or canonical expansion pushed into the import side | builder | L | open — needs a design spike only when deep proofs actually overflow the builder |
+| 8 | PPV from the finalized tree | The tree-layer minimax walk already exists (`ProofTree::extract_ppv`: Win nodes take the smallest-depth Loss child, Loss nodes the largest-depth Win child — the `pv/plan6` rule — plus `validate_ppv` path-to-terminal). Missing: surface a validated PPV from the offline-reconstructed dump (e.g. `inspect_pt --ppv` / a `reconstruct_pt` option), cross-checked by `validate_proof_tree`; carry over the `pv/report7` residues (`search_depth_with_prefix` proven-depth note for `verify_ppv`; remove the ignored `_max_pv_len` parameter) | a supplyable, independently validated winning line per proof — the product most consumers actually want | examples/tests (no search change) | M | open — absorbed from the `pv` initiative (closed 2026-09-13, see History) |
 
 Done: plan1, plan2, plan3, plan4 (see History). Statuses reference plans under
 `docs/plans/proof/`; an item is *open* until a plan claims it.
@@ -136,8 +137,10 @@ Done: plan1, plan2, plan3, plan4 (see History). Statuses reference plans under
   plan explicitly specifies and drift-validates it; the deterministic
   `child_evals` budget / `ExitReason::BudgetExhausted` contract must keep
   working exactly as documented.
-- **PPV extraction quality.** That is the `pv/` initiative's territory; this
-  initiative consumes `validate_ppv` as-is.
+- **PV-refinement semantics in the search** (`PvStatus`, `pv_status`,
+  refinement caps) — that is the search layer's (`dfpn` backlog #3) and the
+  information-PV contract stays as documented. PPV extraction *from the
+  proof tree* is in scope as backlog #8.
 
 ## Measurement conventions
 
@@ -201,6 +204,14 @@ Done: plan1, plan2, plan3, plan4 (see History). Statuses reference plans under
   search (RAM = TT only) with relocatable proof construction — is now
   fully landed. Remaining: #5 checkpoint vs. #7 builder spike (report7
   recommends #5 first), #4 deprioritized.
+
+- **2026-09-13** — The `pv/` initiative closed; its one open item (a
+  validated PPV from the proof artifact) absorbed here as backlog #8.
+  Discovery recorded: the tree-layer primitives already exist
+  (`ProofTree::extract_ppv` implements the `pv/plan6` minimax rule,
+  `validate_ppv` checks the path to a terminal), so #8 is a surfacing +
+  validation plan, not an algorithm port. `pv_status`/PV-refinement
+  semantics stay with the search layer.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

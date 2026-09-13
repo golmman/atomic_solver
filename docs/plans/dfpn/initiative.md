@@ -107,8 +107,11 @@ maintainability.
 Cross-references: AND-side move-ordering signals stay in `lean` backlog #5
 (duplicating them here would fork the oracle-floor constraints recorded
 there). Wall-time engineering (path-scan cost, StateInfo reuse, clock
-sampling) stays in `lean`. PV labeling itself is `pv/` territory; #3 only
-changes *when* refinement stops, not how lines are labeled.
+sampling) stays in `lean`. PV labeling and `PvStatus`/`pv_status`
+semantics are the search layer's own contract (the `pv/` initiative
+closed 2026-09-13; its PPV-from-proof-tree item moved to `proof`
+backlog #8); #3 only changes *when* refinement stops, not how lines
+are labeled.
 
 ## Non-goals
 
