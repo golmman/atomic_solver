@@ -142,3 +142,8 @@ the result is still slow compared to non proof number search approaches like fai
 Is there research we missed?
 Take your time to analyze and come up with ideas.
 Feel free to propose new ideas we could try out in a dedicated initative.
+
+---
+
+Draft plans for the EWS/MOPNS reading round (could reshape child selection for    repetition-dominated solving), and  for the clock-pressure ordering (cheap AND-side signal).
+

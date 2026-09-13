@@ -23,7 +23,7 @@ Status vocabulary:
 | [`dfpn`](dfpn/initiative.md) | Search semantics, algorithm-level node reduction (soundness-first) | #3 refinement after cap-cut, #4 bounded cross-path verification |
 | [`lean`](lean/initiative.md) | Wall time / nodes, bit-identical drift gate | #2 parallel search design spike, #8 static scoring, #5/#7/#9/#10 |
 | [`proof`](proof/initiative.md) | Independent, relocatable proofs for a discovered outcome | #8 PPV from the finalized tree, #5 TT checkpoint, #7 deep-proof builder spike |
-| [`conversion`](conversion/initiative.md) | Deep tempo/progression conversions (`make stress` class) | plan3 candidate: ordering guidance (2a) |
+| [`conversion`](conversion/initiative.md) | Deep tempo/progression conversions (`make stress` class) | plan3 reading round (#5a/#5b: EWS, MOPNS), plan4 clock-pressure AND-side ordering (#3); #2a ordering guidance parked |
 | [`cleanup`](cleanup/initiative.md) | Housekeeping: DRY, YAGNI, lints, module sizing | pedantic-lint triage, `selection.rs` size watch |
 | [`movegen`](movegen/initiative.md) | *Special case:* cross-repo plans for the `atomic_movegen` dependency | new upstream asks follow the same standalone-plan pattern |
 
