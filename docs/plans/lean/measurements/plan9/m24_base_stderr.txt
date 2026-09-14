@@ -1,0 +1,2 @@
+outcome: win length: 15
+spike9_base: nodes=22739 child_evals=406737

@@ -247,7 +247,7 @@ memory, maintainability.
 | 8 | Cheaper static scoring | `StaticAtomicScorer` does 2–5 sliding-attack scans per quiet move; precomputed/incremental attacks | ~3–5% wall (was 5–15% pre-plan3; `score_with_context` now 5.4%) | wall | M | **done (plan8)**: const Chebyshev-table `nearest_commoner_map` (48.5 → 0.7 ns/call at k=1; measured BFS alternative rejected), exact queen-ray/rook-alignment pre-filters (threat + rook blocks), bitboard blast aSEE; bit-identical trajectories; wall −3.0% m22, −2.2% shuffle-win first-outcome; see `report8.md` |
 | 13 | Clock sampling | `time_exceeded()` calls `Instant::now()` at every `dfpn` entry; sample every N nodes (budget mode is eval-count-based and unaffected) | ~2% wall (2.2% post-plan4, unchanged) | wall | S | **done (plan6, phase 2)**: `Instant::now()` sampled every 4096 dfpn entries behind the unchanged `time_exceeded` call sites; clock leaves <0.1% in the post-plan6 profile; see `report6.md` |
 | 15 | `has_legal_move` playout cross-check | Random-playout property test: `Position::has_legal_move` vs `legal_moves_with_state` + `outcome_from_state` (report3 "missing tests") | correctness hardening, no speed | correctness | S | **done (plan5)**: `tests/test_playout_crosscheck.rs`, P1–P4 green in both tiers; see `report5.md` |
-| 5 | AND-side ordering signal (non-NN) | Counter-moves, AND-specific history, TT `work` feedback — disproving work concentrates in 1–2 replies per AND node (median max child-share 52.9%) | ~5–20% evals, regression risk (oracle hurt m24_white 2.1×) | nodes | M | open |
+| 5 | AND-side ordering signal (non-NN) | Counter-moves, AND-specific history, TT `work` feedback — disproving work concentrates in 1–2 replies per AND node (median max child-share 52.9%) | **spiked (plan9), closed**: refuter already at final-sorted rank 0 in 100% of refuted AND frames (median rank 0), pre-refuter mass 0.00–0.02% of child evals (both cases), 99.7–99.9% of AND own evals in threshold-cut frames — see `report9.md` | nodes | M | **closed (plan9 spike, no-go)** |
 | 7 | Lazy/staged child evaluation | Min-heap: evaluate children in rank order as needed instead of all on first iteration | ~3–10% evals | nodes | M | open |
 | 9 | 2–3-man atomic endgame tablebases | Leaf probes in shallow-material positions | huge where covered, negligible elsewhere | nodes | M–L | open |
 | 10 | History/killer constant re-tuning | Never re-tuned after the GHI/twin removal; side-aware killers | ~0–5% evals | nodes | S–M | open |
@@ -338,6 +338,17 @@ until a plan claims it.
   (dfpn plan9's repetition-cache trajectory drift exceeded the fixture's
   200M-eval budget; bisect + explanation in `report8.md`) (done,
   `report8.md`).
+- **plan9** — #5 AND-side ordering measurement spike (no `src/` change;
+  `LEAN9_SPIKE=1` frame-level counters, reverted; `src/` byte-identical to
+  pre-spike): **no-go, #5 closed** — refuter rank 0 in 100% of refuted AND
+  frames on all cases, pre-refuter mass 0.00–0.02% of child evals (bar was
+  ≥5%), refuters are statically-ranked-0 terminal replies found in the
+  initial sweep; 99.7–99.9% of AND own evals sit in threshold-cut frames
+  (a dfpn-thresholds property, not ordering). M4 counter-move probe
+  recorded (~68–71% hit rate, moot). OR winning-child rank 0–1 in ~97% of
+  OR-Win frames (M1); the nn 90.6% work-share figure is a
+  population/attribution difference, not reopened OR headroom (done,
+  `report9.md`).
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

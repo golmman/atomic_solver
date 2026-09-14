@@ -104,13 +104,24 @@ maintainability.
 | 3 | Continue refinement after cap-cut | Report8's named next step: when a refinement round ends `CapCut` and global budget remains, resume bounded refinement instead of stopping, while keeping the deterministic budget contract intact | recovers part of the 24.6M-node refinement tail that currently ends `cap-cut` at PV 115; outcome-finding unaffected | behavior (`PvStatus` semantics; possibly a new label) | M | open |
 | 4 | Bounded cross-path verification (research_ghi §9 "Option A") | When a cached solved result's path does not match the current prefix, run a bounded fresh `dfpn` call at `max_depth = entry.depth` under the current path and accept only on agreement | strengthens the one-ply guard toward full cross-path soundness; enables safer reuse in cyclic regions | correctness first, nodes second | L | **closed — evidence-based no-go** (`research_ghi_journal.md`, 2026-09-13, mining round for `conversion` #5d): the journal GHI mechanism is the soundest reuse shape measured — node-entry return, verification-bounded volume, (1, 1) base re-init structurally exclude the plan10 hazard — but those same safety properties cap the win at plan11 arm A (−8.8% stress FO / −2.6% default, the unverified strict superset) and make draw-side reuse cost ≥ the ~1.1-eval re-proofs it saves (`research_repetition_cache.md` §2; plan9 already intercepts ~97% per `conversion/report1.md`). The paper's simulation is unavailable as machinery (our TT stores no proof trees) and its soundness is assumed there, not proven; the paper's framework extends to repetition-as-draw only vacuously for decisive facts and offers nothing for draw-proof reuse. The dependency "do not attempt before #1's spike lands" resolves to: `conversion` #1 closed no-go, its monotonicity lemma adopted by the contract as the value claim. Contract retained as (a) soundness-argument template, (b) design constraint for the parallel spike (`conversion` #4 / `lean` #2), where cross-worker contexts make the journal mechanism load-bearing |
 
-Cross-references: AND-side move-ordering signals stay in `lean` backlog #5
-(duplicating them here would fork the oracle-floor constraints recorded
-there). Wall-time engineering (path-scan cost, StateInfo reuse, clock
-sampling) stays in `lean`. PV labeling and `PvStatus`/`pv_status`
-semantics are the search layer's own contract (the `pv/` initiative
-closed 2026-09-13; its PPV-from-proof-tree item moved to `proof`
-backlog #8); #3 only changes *when* refinement stops, not how lines
+Cross-references: AND-side move-ordering signals lived in `lean` backlog #5
+— **closed no-go by the lean plan9 spike** (`lean/report9.md`, 2026-09-15):
+the refuter is already at final-sorted rank 0 in 100% of refuted AND frames
+and pre-refuter eval mass is 0.00–0.02% of child evals, so there is no
+ordering surface on the AND side at all. The same spike surfaced the one
+open AND-side observation that *does* belong here: **99.7–99.9% of AND-frame
+own child evals sit in threshold-cut frames** (frames exhausting their DF-PN
+thresholds without an outcome — 8,625,570 of 8,645,613 on m22, 148,390,289
+of 148,602,798 on the shuffle-win stress case). That is a threshold-dynamics
+property, not an ordering property: cut frames never reach a refutation
+exit, so no move-ordering signal can touch them; reducing that mass means
+changing how unsolved-subtree exploration is priced — the same DF-PN
+threshold-arithmetic territory as the plan10/plan11 bound-folding diagnostic
+and the EWS/MOPNS reading named below. Wall-time engineering (path-scan
+cost, StateInfo reuse, clock sampling) stays in `lean`. PV labeling and
+`PvStatus`/`pv_status` semantics are the search layer's own contract (the
+`pv/` initiative closed 2026-09-13; its PPV-from-proof-tree item moved to
+`proof` backlog #8); #3 only changes *when* refinement stops, not how lines
 are labeled.
 
 ## Non-goals
@@ -256,6 +267,25 @@ are labeled.
   (open access) — flagged if the parallel spike needs the full procedure.
   The contract's reuse rule is retained as a design constraint for the
   parallel-search spike (`conversion` #4 / `lean` #2).
+- **2026-09-15** — **`lean` plan9 measured the AND-side ordering surface empty
+  and handed this initiative one structural diagnostic** (`lean/report9.md`;
+  `LEAN9_SPIKE=1` frame-level counters, reverted, `src/` byte-identical).
+  At refuted AND frames the refuter sits at final-sorted rank 0 in ~100% of
+  frames and is found in the initial sweep in 100% of them (0 recursion
+  resolutions) — it is a statically-ranked-0 terminal reply (extinction
+  blast-capture or moves-empty mate) — so `lean` #5 is closed no-go and no
+  AND-side ordering lever exists. The transferable finding for this
+  initiative's next levers: the frame-level own-eval partition (exact, delta
+  0 vs `child_evals`) shows **99.7–99.9% of AND-frame own evals in
+  threshold-cut frames** (m22 8,625,570/8,645,613; shuffle-win
+  148,390,289/148,602,798), i.e. the AND-side cost is unsolved-subtree
+  exploration priced by DF-PN disproof thresholds. Any lever for the class
+  must therefore move threshold dynamics or pricing (backlog #3's bounded
+  refinement, the plan10-era bound-folding hygiene diagnostic, EWS/MOPNS
+  reading, parallelism), not ordering. Same-run M1 sanity: OR winning child
+  already at rank 0–1 in ~97% of OR-Win frames (rank-optimal; the nn 90.6%
+  work-share figure is a population/attribution difference, OR ordering
+  stays closed).
 - **2026-09-12** — **plan10 executed — backlog #2 closed as a measured
   no-go** (`report10.md`). Phase 0 spike: the cross-clock shadow index
   (rep_key → best_move/outcome/depth, adoption rule `rule50 + depth ≤ 100`

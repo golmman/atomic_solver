@@ -1,0 +1,30 @@
+[bounded_search] chunk done: work_done=500002 next_chunk=1000000 elapsed=0.087s max_depth=15 nodes=24732 nps=283209
+[bounded_search] chunk done: work_done=1000024 next_chunk=2000000 elapsed=0.261s max_depth=11 nodes=76362 nps=292254
+[bounded_search] chunk done: work_done=2000017 next_chunk=4000000 elapsed=0.627s max_depth=16 nodes=183840 nps=293173
+[bounded_search] chunk done: work_done=4000016 next_chunk=8000000 elapsed=1.351s max_depth=19 nodes=397333 nps=294123
+[bounded_search] chunk done: work_done=8000008 next_chunk=16000000 elapsed=2.830s max_depth=20 nodes=797468 nps=281806
+[bounded_search] chunk done: work_done=16000006 next_chunk=32000000 elapsed=5.920s max_depth=22 nodes=1619263 nps=273504
+[bounded_search] chunk done: work_done=32000000 next_chunk=64000000 elapsed=12.085s max_depth=38 nodes=3322654 nps=274941
+[bounded_search] chunk done: work_done=64000012 next_chunk=128000000 elapsed=24.064s max_depth=51 nodes=6853665 nps=284809
+outcome: win length: 477
+spike9: run nodes=13907467 child_evals=249480478 frames OR=2845274 AND=11054603 own OR=100877680 AND=148602798 sum=249480478 (delta vs child_evals: +0)
+spike9: M1 OR frames: win=212308 loss=80 draw=0 cut=2632886; OR-win frame work=138192924 winning-child work=49478014 concentration=35.8% (nn reference: 90.6%)
+spike9: M1 OR winning-child rank: r0=201860 r1=4890 r2-3=3731 r4-7=881 r8+=946 (r0-1=97.4% of 212308)
+spike9: M2 AND refuted frames=112608; refuter final-sorted rank: r0=112578 r1=22 r2-3=4 r4-7=4 r8+=0 (r0-1=100.0% of 112608)
+spike9: M2 refuter resolution: in-initial-sweep=112608 by-selection-recursion=0
+spike9: M3 AND own evals: refuted-own=112722 (pre-refuter-own=0 refuter-own=112722) proven-loss-own=96408 draw-own=1373 cut-own=148390289 | AND own total=148602798
+spike9: M3 fractions of total child evals: pre-refuter-own=0.00% refuter-own=0.05% proven-loss-own=0.04% | generous refuted-frame work=134186 refuter-attributed=114682 pre-refuter=0.01%
+spike9: M4 counter-move probe: probes=112608 no-entry=648 miss=35898 hit=76062 (hit rate over probed-with-entry 67.9%, over all 67.5%); hit rank: r0=76054 r1=6 r2-3=2 r4-7=0 r8+=0 (r0-1=100.0% of 76062)
+spike9: M4 stored-move rank (any entry): r0=76059 r1=428 r2-3=105 r4-7=8 r8+=5 (r0-1=99.8% of 76605)
+spike9: M4 concentration: attacker keys=648 distinct-refuters hist 1/2/3/4/5/6+=[198, 97, 58, 67, 48, 180]; top-refuter share over all refutations=53.8%; attackers whose top refuter covers >=50%: 465/648
+spike9: M5 refuter source (final eval): unsolved=0 extinction=106764 repetition=0 rule50=0 tt=85 terminal=5759
+spike9: M5b static x final rank at refuted AND frames: total=112608 static-rank0-1=100.0% final-rank0-1=100.0%
+spike9: M5b static_r0 -> final [r0 r1 r2-3 r4-7 r8+] = 112571 13 1 0 0
+spike9: M5b static_r1 -> final [r0 r1 r2-3 r4-7 r8+] = 7 9 1 0 0
+spike9: M5b static_r2 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 1 0 0
+spike9: M5b static_r3 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 1 3 0
+spike9: M5b static_r4 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 1 0
+spike9: M5b static_r5 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r6 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r7 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r8+ -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0

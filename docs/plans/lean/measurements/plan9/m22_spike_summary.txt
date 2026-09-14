@@ -1,0 +1,26 @@
+[bounded_search] chunk done: work_done=500009 next_chunk=1000000 elapsed=0.090s max_depth=15 nodes=24281 nps=270010
+[bounded_search] chunk done: work_done=1000010 next_chunk=2000000 elapsed=0.272s max_depth=15 nodes=75862 nps=279300
+[bounded_search] chunk done: work_done=2000003 next_chunk=4000000 elapsed=0.637s max_depth=22 nodes=185599 nps=291490
+[bounded_search] chunk done: work_done=4000017 next_chunk=8000000 elapsed=1.361s max_depth=72 nodes=420792 nps=309081
+outcome: win length: 95
+spike9: run nodes=858117 child_evals=14156269 frames OR=156596 AND=701357 own OR=5510656 AND=8645613 sum=14156269 (delta vs child_evals: +0)
+spike9: M1 OR frames: win=26026 loss=10 draw=0 cut=130560; OR-win frame work=8771031 winning-child work=7090773 concentration=80.8% (nn reference: 90.6%)
+spike9: M1 OR winning-child rank: r0=24963 r1=362 r2-3=460 r4-7=145 r8+=96 (r0-1=97.3% of 26026)
+spike9: M2 AND refuted frames=8258; refuter final-sorted rank: r0=8249 r1=5 r2-3=2 r4-7=2 r8+=0 (r0-1=100.0% of 8258)
+spike9: M2 refuter resolution: in-initial-sweep=8258 by-selection-recursion=0
+spike9: M3 AND own evals: refuted-own=8271 (pre-refuter-own=0 refuter-own=8271) proven-loss-own=11447 draw-own=93 cut-own=8625570 | AND own total=8645613
+spike9: M3 fractions of total child evals: pre-refuter-own=0.00% refuter-own=0.06% proven-loss-own=0.08% | generous refuted-frame work=11928 refuter-attributed=8650 pre-refuter=0.02%
+spike9: M4 counter-move probe: probes=8258 no-entry=307 miss=2333 hit=5618 (hit rate over probed-with-entry 70.7%, over all 68.0%); hit rank: r0=5616 r1=2 r2-3=0 r4-7=0 r8+=0 (r0-1=100.0% of 5618)
+spike9: M4 stored-move rank (any entry): r0=5616 r1=75 r2-3=3 r4-7=0 r8+=0 (r0-1=99.9% of 5694)
+spike9: M4 concentration: attacker keys=307 distinct-refuters hist 1/2/3/4/5/6+=[125, 106, 24, 19, 15, 18]; top-refuter share over all refutations=58.5%; attackers whose top refuter covers >=50%: 285/307
+spike9: M5 refuter source (final eval): unsolved=0 extinction=5407 repetition=0 rule50=0 tt=11 terminal=2840
+spike9: M5b static x final rank at refuted AND frames: total=8258 static-rank0-1=100.0% final-rank0-1=100.0%
+spike9: M5b static_r0 -> final [r0 r1 r2-3 r4-7 r8+] = 8247 0 0 0 0
+spike9: M5b static_r1 -> final [r0 r1 r2-3 r4-7 r8+] = 2 5 0 0 0
+spike9: M5b static_r2 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 2 1 0
+spike9: M5b static_r3 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 1 0
+spike9: M5b static_r4 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r5 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r6 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r7 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r8+ -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0

@@ -1,0 +1,22 @@
+outcome: win length: 15
+spike9: run nodes=22739 child_evals=406737 frames OR=4687 AND=18043 own OR=172130 AND=234607 sum=406737 (delta vs child_evals: +0)
+spike9: M1 OR frames: win=606 loss=0 draw=0 cut=4081; OR-win frame work=478116 winning-child work=128497 concentration=26.9% (nn reference: 90.6%)
+spike9: M1 OR winning-child rank: r0=559 r1=33 r2-3=10 r4-7=1 r8+=3 (r0-1=97.7% of 606)
+spike9: M2 AND refuted frames=23; refuter final-sorted rank: r0=23 r1=0 r2-3=0 r4-7=0 r8+=0 (r0-1=100.0% of 23)
+spike9: M2 refuter resolution: in-initial-sweep=23 by-selection-recursion=0
+spike9: M3 AND own evals: refuted-own=23 (pre-refuter-own=0 refuter-own=23) proven-loss-own=686 draw-own=2 cut-own=233896 | AND own total=234607
+spike9: M3 fractions of total child evals: pre-refuter-own=0.00% refuter-own=0.01% proven-loss-own=0.17% | generous refuted-frame work=23 refuter-attributed=23 pre-refuter=0.00%
+spike9: M4 counter-move probe: probes=23 no-entry=5 miss=0 hit=18 (hit rate over probed-with-entry 100.0%, over all 78.3%); hit rank: r0=18 r1=0 r2-3=0 r4-7=0 r8+=0 (r0-1=100.0% of 18)
+spike9: M4 stored-move rank (any entry): r0=18 r1=0 r2-3=0 r4-7=0 r8+=0 (r0-1=100.0% of 18)
+spike9: M4 concentration: attacker keys=5 distinct-refuters hist 1/2/3/4/5/6+=[5, 0, 0, 0, 0, 0]; top-refuter share over all refutations=100.0%; attackers whose top refuter covers >=50%: 5/5
+spike9: M5 refuter source (final eval): unsolved=0 extinction=19 repetition=0 rule50=0 tt=0 terminal=4
+spike9: M5b static x final rank at refuted AND frames: total=23 static-rank0-1=100.0% final-rank0-1=100.0%
+spike9: M5b static_r0 -> final [r0 r1 r2-3 r4-7 r8+] = 23 0 0 0 0
+spike9: M5b static_r1 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r2 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r3 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r4 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r5 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r6 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r7 -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
+spike9: M5b static_r8+ -> final [r0 r1 r2-3 r4-7 r8+] = 0 0 0 0 0
