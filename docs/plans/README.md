@@ -26,6 +26,7 @@ Status vocabulary:
 | [`conversion`](conversion/initiative.md) | Deep tempo/progression conversions (`make stress` class)             | plan3 reading round (#5a/#5b: EWS, MOPNS), plan4 clock-pressure AND-side ordering (#3); #2a ordering guidance parked |
 | [`cleanup`](cleanup/initiative.md)       | Housekeeping: DRY, YAGNI, lints, module sizing                       | pedantic-lint triage, `selection.rs` size watch                                                                      |
 | [`movegen`](movegen/initiative.md)       | _Special case:_ cross-repo plans for the `atomic_movegen` dependency | new upstream asks follow the same standalone-plan pattern                                                            |
+| [`egtb`](egtb/initiative.md)             | 4-man atomic endgame tablebase anchoring for faster solves           | plan1 go/no-go spike: men-count histogram + 3-man generator prototype                 |
 
 ## Dormant
 

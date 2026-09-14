@@ -249,7 +249,7 @@ memory, maintainability.
 | 15 | `has_legal_move` playout cross-check | Random-playout property test: `Position::has_legal_move` vs `legal_moves_with_state` + `outcome_from_state` (report3 "missing tests") | correctness hardening, no speed | correctness | S | **done (plan5)**: `tests/test_playout_crosscheck.rs`, P1–P4 green in both tiers; see `report5.md` |
 | 5 | AND-side ordering signal (non-NN) | Counter-moves, AND-specific history, TT `work` feedback — disproving work concentrates in 1–2 replies per AND node (median max child-share 52.9%) | **spiked (plan9), closed**: refuter already at final-sorted rank 0 in 100% of refuted AND frames (median rank 0), pre-refuter mass 0.00–0.02% of child evals (both cases), 99.7–99.9% of AND own evals in threshold-cut frames — see `report9.md` | nodes | M | **closed (plan9 spike, no-go)** |
 | 7 | Lazy/staged child evaluation | Min-heap: evaluate children in rank order as needed instead of all on first iteration | ~3–10% evals | nodes | M | open |
-| 9 | 2–3-man atomic endgame tablebases | Leaf probes in shallow-material positions | huge where covered, negligible elsewhere | nodes | M–L | open |
+| 9 | 2–3-man atomic endgame tablebases | Leaf probes in shallow-material positions | huge where covered, negligible elsewhere | nodes | M–L | **moved to [`egtb`](../egtb/initiative.md) (2026-09-14)**: opened as its own initiative with a generation story and a go/no-go spike; leaf probing is its backlog #3, 2-man layer dropped as degenerate |
 | 10 | History/killer constant re-tuning | Never re-tuned after the GHI/twin removal; side-aware killers | ~0–5% evals | nodes | S–M | open |
 
 Done: #1, #1a, #4 (**plan1**); #3, #6 (**plan2**); #11 (**plan3**, 46%

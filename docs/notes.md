@@ -154,5 +154,7 @@ Draft plans for the EWS/MOPNS reading round (could reshape child selection for  
 * test broken?
 * ghi / repetition?
 * perf
+* egtb
+  * how much work is spent in positions with less then or equal to 4/5/6 pieces?
 
 
