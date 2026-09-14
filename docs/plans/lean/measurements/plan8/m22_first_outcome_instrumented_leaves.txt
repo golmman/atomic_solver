@@ -1,0 +1,14 @@
+    28.82%  atomic_solver  atomic_solver     [.] <atomic_solver::search::dfpn::Search>::evaluate_child
+    25.34%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::populate_state
+    20.64%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::do_move
+     9.02%  atomic_solver  atomic_solver     [.] <atomic_solver::search::dfpn::Search>::dfpn
+     3.56%  atomic_solver  atomic_solver     [.] <atomic_solver::search::ordering::StaticAtomicScorer>::score_with_context
+     1.95%  atomic_solver  atomic_solver     [.] atomic_movegen::movegen::has_legal_move_with_state
+     1.79%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::legal
+     1.74%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::undo_move
+     1.36%  atomic_solver  atomic_solver     [.] atomic_movegen::movegen::generate_legal_with_state
+     0.96%  atomic_solver  atomic_solver     [.] __aarch64_ldadd8_relax
+     0.67%  atomic_solver  atomic_solver     [.] core::slice::sort::shared::smallsort::insertion_sort_shift_left::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.54%  atomic_solver  atomic_solver     [.] core::slice::sort::stable::quicksort::quicksort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.37%  atomic_solver  libc.so.6         [.] __memcpy_generic
+     0.29%  atomic_solver  atomic_solver     [.] <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapters::filter::filter_try_fold<&atomic_solver::search::dfpn::children::ChildInfo, (), core::ops::control_flow::ControlFlow<()>, atomic_solver::search::dfpn::selection::select_from_children::{closure#4}, core::iter::traits::iterator::Iterator::all::check<&atomic_solver::search::dfpn::children::ChildInfo, atomic_solver::search::dfpn::selection::select_from_children::{closure#5}>::{closure#0}>::{closure#0}, core::ops::control_flow::ControlFlow<()>>

@@ -8,70 +8,17 @@
 
 use atomic_movegen::attacks;
 use atomic_movegen::board::{Board, StateInfo};
-use atomic_movegen::types::{Bitboard, Color, Move, NO_PIECE, PieceType, Square};
+use atomic_movegen::types::{Color, Move, NO_PIECE, PieceType, Square};
 
+mod context;
 mod params;
+pub(crate) use context::ScoreContext;
+pub use context::nearest_commoner_map;
+use context::{chebyshev, queen_rays};
 pub use params::{PieceValues, ScorerParams, ScorerParamsError};
 
 pub trait MoveScorer {
     fn score(&self, board: &Board, m: Move, state: &StateInfo) -> i32;
-}
-
-/// Per-node invariants for the static scorer, hoisted out of the per-move
-/// scoring loop.
-///
-/// Every field is constant across all moves of one node, so building the
-/// context once per node (in `sort_moves`) replaces the per-move
-/// recomputation of `board.commoners(them)`, the lone-commoner bit scan, and
-/// the enemy back-rank mask. The values are identical to what
-/// [`StaticAtomicScorer::score_with_map`] would have computed per move.
-pub(crate) struct ScoreContext {
-    pub us: Color,
-    pub them: Color,
-    /// Enemy commoners bitboard (`board.commoners(them)`).
-    pub them_commoners: Bitboard,
-    /// `them_commoners.count()`, equal to `state.them_commoners_count`.
-    pub them_commoners_count: u32,
-    /// The single enemy commoner square when exactly one exists.
-    pub lone_commoner: Option<Square>,
-    /// Mask of the enemy back rank (rank 8 for White to move, rank 1 for Black).
-    pub enemy_back_rank: u32,
-    pub back_rank_mask: Bitboard,
-    /// Nearest enemy commoner Chebyshev distance per square.
-    pub nearest: [i8; 64],
-}
-
-impl ScoreContext {
-    /// Build the per-node invariants for `board` + `state` from a precomputed
-    /// `nearest` map (see [`nearest_commoner_map`]).
-    ///
-    /// `state` must be the `StateInfo` of `board` (its `them_commoners_count`
-    /// field is reused, exactly as the per-move path did).
-    #[must_use]
-    pub(crate) fn build(board: &Board, state: &StateInfo, nearest: [i8; 64]) -> Self {
-        let us = board.side_to_move();
-        let them = us.flip();
-        let them_commoners = board.commoners(them);
-        let lone_commoner = if state.them_commoners_count == 1 {
-            let mut c = them_commoners;
-            let sq = c.pop_lsb();
-            if sq != Square::NONE { Some(sq) } else { None }
-        } else {
-            None
-        };
-        let enemy_back_rank = if us == Color::White { 7u32 } else { 0u32 };
-        let back_rank_mask = Bitboard(0xFFu64 << (enemy_back_rank * 8));
-        Self {
-            us,
-            them,
-            them_commoners,
-            them_commoners_count: state.them_commoners_count,
-            lone_commoner,
-            enemy_back_rank,
-            back_rank_mask,
-            nearest,
-        }
-    }
 }
 
 #[derive(Clone)]
@@ -113,6 +60,12 @@ impl Default for StaticAtomicScorer {
 /// 3x3 blast zone are also lost; pawns are immune to the surrounding blast.
 /// The victim at ground zero is always lost. The origin square is excluded
 /// because the moving piece is leaving it.
+///
+/// Bitboard implementation: the blast zone is intersected with the per-type
+/// piece bitboards and the value sum accumulated by popcount instead of a
+/// per-square `piece_on` walk. Identical scores, verified by the exact-score
+/// pins and the drift gate (the per-square additions are commutative, so the
+/// `i32` totals match exactly).
 fn capture_net_value(scorer: &StaticAtomicScorer, board: &Board, m: Move) -> i32 {
     let params = &scorer.params;
     let from = m.from_sq();
@@ -129,24 +82,23 @@ fn capture_net_value(scorer: &StaticAtomicScorer, board: &Board, m: Move) -> i32
     let mut own_destroyed = moving_value;
     let mut enemy_destroyed = victim_value;
 
-    let blast = attacks::king_attacks(to) & !board.pieces_pt(PieceType::Pawn);
+    // Blast zone minus pawns and the origin square (the mover left `from`,
+    // and pawns are immune to the surrounding blast).
+    let blast = attacks::king_attacks(to)
+        & !board.pieces_pt(PieceType::Pawn)
+        & !atomic_movegen::types::Bitboard::square_bb(from);
+    let us = board.side_to_move();
 
-    let mut b = blast;
-    while !b.is_empty() {
-        let sq = b.pop_lsb();
-        if sq == from {
-            continue;
-        }
-        let p = board.piece_on(sq);
-        if p == NO_PIECE {
-            continue;
-        }
-        let value = params.piece_value(p.type_of().unwrap());
-        if p.color().unwrap() == board.side_to_move() {
-            own_destroyed += value;
-        } else {
-            enemy_destroyed += value;
-        }
+    for pt in [
+        PieceType::Knight,
+        PieceType::Bishop,
+        PieceType::Rook,
+        PieceType::Queen,
+        PieceType::Commoner,
+    ] {
+        let value = params.piece_value(pt);
+        own_destroyed += (blast & board.pieces_color_pt(us, pt)).count() as i32 * value;
+        enemy_destroyed += (blast & board.pieces_color_pt(us.flip(), pt)).count() as i32 * value;
     }
 
     enemy_destroyed - own_destroyed
@@ -155,33 +107,6 @@ fn capture_net_value(scorer: &StaticAtomicScorer, board: &Board, m: Move) -> i32
 fn file_rank_of(sq: Square) -> (i8, i8) {
     use atomic_movegen::types::{file_of, rank_of};
     (file_of(sq) as u8 as i8, rank_of(sq) as u8 as i8)
-}
-
-fn chebyshev(a: Square, b: Square) -> i8 {
-    let (af, ar) = file_rank_of(a);
-    let (bf, br) = file_rank_of(b);
-    (af - bf).abs().max((ar - br).abs())
-}
-
-/// Precompute the nearest enemy commoner distance for every square.
-///
-/// If the opponent has no commoners, every entry is set to `i8::MAX`.
-pub fn nearest_commoner_map(board: &Board, them: Color) -> [i8; 64] {
-    let mut map = [i8::MAX; 64];
-    let mut commoners = board.commoners(them);
-    if commoners.is_empty() {
-        return map;
-    }
-    while !commoners.is_empty() {
-        let c = commoners.pop_lsb();
-        for sq in 0..64 {
-            let d = chebyshev(Square::from_u8(sq), c);
-            if d < map[sq as usize] {
-                map[sq as usize] = d;
-            }
-        }
-    }
-    map
 }
 
 fn attacks_from(
@@ -319,10 +244,30 @@ impl StaticAtomicScorer {
 
         // 4. Direct commoner threat: after moving, the piece attacks an opponent commoner.
         {
-            let from_bb = atomic_movegen::types::Bitboard::square_bb(from);
-            let to_bb = atomic_movegen::types::Bitboard::square_bb(to);
-            let new_occupied = (board.occupied() & !from_bb) | to_bb;
-            let attack_bb = attacks_from(from_pt, us, to, new_occupied);
+            // Occupancy-independent movers (pawn/knight/commoner) attack from
+            // static tables, so the occupancy rewrite and dispatch are skipped;
+            // sliders keep the occupied-board query. For sliders the attack
+            // set is a subset of the queen rays through `to`, so when no enemy
+            // commoner is aligned the scan is provably skippable (exact
+            // filter, not a heuristic). Identical scores, verified by the
+            // exact-score pins and the drift gate.
+            let attack_bb = match from_pt {
+                PieceType::Pawn => attacks::pawn_attacks(us, to),
+                PieceType::Knight => attacks::knight_attacks(to),
+                PieceType::Commoner => attacks::king_attacks(to),
+                _ => {
+                    if (queen_rays(to) & ctx.them_commoners)
+                        == atomic_movegen::types::Bitboard::EMPTY
+                    {
+                        atomic_movegen::types::Bitboard::EMPTY
+                    } else {
+                        let from_bb = atomic_movegen::types::Bitboard::square_bb(from);
+                        let to_bb = atomic_movegen::types::Bitboard::square_bb(to);
+                        let new_occupied = (board.occupied() & !from_bb) | to_bb;
+                        attacks_from(from_pt, us, to, new_occupied)
+                    }
+                }
+            };
             if (attack_bb & ctx.them_commoners) != atomic_movegen::types::Bitboard::EMPTY {
                 let base = if ctx.them_commoners_count == 1 {
                     p.score_threat_last
@@ -331,6 +276,9 @@ impl StaticAtomicScorer {
                 };
                 // If the threatening piece can be immediately captured, the
                 // threat is less reliable; downgrade it.
+                let from_bb = atomic_movegen::types::Bitboard::square_bb(from);
+                let to_bb = atomic_movegen::types::Bitboard::square_bb(to);
+                let new_occupied = (board.occupied() & !from_bb) | to_bb;
                 let enemy_attackers =
                     board.attackers_to(to, new_occupied) & board.pieces_color(them);
                 let bonus = if enemy_attackers.is_empty() {
@@ -386,12 +334,25 @@ impl StaticAtomicScorer {
             let from_dist = nearest[from as usize];
             let to_dist = nearest[to as usize];
 
-            let from_bb = atomic_movegen::types::Bitboard::square_bb(from);
-            let occupied_without_from = board.occupied() & !from_bb;
-            let rook_attacks = attacks::rook_attacks(to, occupied_without_from);
-            if (rook_attacks & atomic_movegen::types::Bitboard::square_bb(commoner_sq))
-                != atomic_movegen::types::Bitboard::EMPTY
-            {
+            // Exact pre-filter: a rook attacks only along its file and rank,
+            // so `rook_attacks(to, _)` can contain `commoner_sq` only if the
+            // two squares are aligned. Skips the sliding scan for the ~98% of
+            // entries that are not aligned. Identical scores, verified by the
+            // exact-score pins and the drift gate.
+            let aligned = atomic_movegen::types::file_of(to)
+                == atomic_movegen::types::file_of(commoner_sq)
+                || atomic_movegen::types::rank_of(to)
+                    == atomic_movegen::types::rank_of(commoner_sq);
+            let mut first_hit = false;
+            if aligned {
+                let from_bb = atomic_movegen::types::Bitboard::square_bb(from);
+                let occupied_without_from = board.occupied() & !from_bb;
+                let rook_attacks = attacks::rook_attacks(to, occupied_without_from);
+                first_hit = (rook_attacks
+                    & atomic_movegen::types::Bitboard::square_bb(commoner_sq))
+                    != atomic_movegen::types::Bitboard::EMPTY;
+            }
+            if first_hit {
                 let reduction = (from_dist - to_dist).max(0);
                 score += rook_open_file + i32::from(reduction) * rook_open_file_step;
             } else {
@@ -410,16 +371,22 @@ impl StaticAtomicScorer {
                         0x0101_0101_0101_0101u64
                             << (atomic_movegen::types::file_of(to) as u8 as u32),
                     );
-                    let occupied_no_own_pawns =
-                        board.occupied() & !board.pieces_color_pt(us, PieceType::Pawn) & !from_bb;
-                    let rook_attacks_semi = attacks::rook_attacks(to, occupied_no_own_pawns);
+                    // Exact pre-filter: without an enemy piece on this file's
+                    // back rank the scan below cannot hit.
                     let enemy_back_rank_pieces =
                         board.pieces_color(them) & back_rank_mask & file_mask;
-                    if (rook_attacks_semi & enemy_back_rank_pieces)
-                        != atomic_movegen::types::Bitboard::EMPTY
-                    {
-                        let reduction = (from_dist - to_dist).max(0);
-                        score += rook_open_file + i32::from(reduction) * rook_open_file_step;
+                    if !enemy_back_rank_pieces.is_empty() {
+                        let from_bb = atomic_movegen::types::Bitboard::square_bb(from);
+                        let occupied_no_own_pawns = board.occupied()
+                            & !board.pieces_color_pt(us, PieceType::Pawn)
+                            & !from_bb;
+                        let rook_attacks_semi = attacks::rook_attacks(to, occupied_no_own_pawns);
+                        if (rook_attacks_semi & enemy_back_rank_pieces)
+                            != atomic_movegen::types::Bitboard::EMPTY
+                        {
+                            let reduction = (from_dist - to_dist).max(0);
+                            score += rook_open_file + i32::from(reduction) * rook_open_file_step;
+                        }
                     }
                 }
             }

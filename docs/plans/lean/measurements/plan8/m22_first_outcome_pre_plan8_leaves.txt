@@ -1,0 +1,12 @@
+    29.36%  atomic_solver  atomic_solver     [.] <atomic_solver::search::dfpn::Search>::evaluate_child
+    26.26%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::populate_state
+    20.61%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::do_move
+     9.29%  atomic_solver  atomic_solver     [.] <atomic_solver::search::dfpn::Search>::dfpn
+     3.30%  atomic_solver  atomic_solver     [.] <atomic_solver::search::ordering::StaticAtomicScorer>::score_with_context
+     2.09%  atomic_solver  atomic_solver     [.] atomic_movegen::movegen::has_legal_move_with_state
+     1.73%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::undo_move
+     1.53%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::legal
+     1.48%  atomic_solver  atomic_solver     [.] atomic_movegen::movegen::generate_legal_with_state
+     0.55%  atomic_solver  atomic_solver     [.] core::slice::sort::stable::quicksort::quicksort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.55%  atomic_solver  atomic_solver     [.] core::slice::sort::shared::smallsort::insertion_sort_shift_left::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.26%  atomic_solver  atomic_solver     [.] atomic_solver::search::dfpn::selection::selection_for_child

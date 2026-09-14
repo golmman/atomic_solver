@@ -20,6 +20,32 @@ permanently. Anything that only ranks the winning OR child earlier — NN
 round 2, win-length-aware rankers — cannot beat that ceiling and is out
 of scope.
 
+### Post-plan8 profile (m22_white, first-outcome, default 128 MB TT, aarch64 host, 2026-09-14)
+
+After plan8 (#8 cheaper static scoring) the static-scoring cluster shrank
+(score_with_context leaf 3.30% → 3.02%; the removed work also includes
+inlined fragments in the `dfpn`/`sort_moves` leaves). Raw tables under
+`measurements/plan8/`. Host caveat: this profile was taken on the aarch64
+container (≈10% slower, ±5% wall variance), where LTO inlining splits
+`populate_state` fragments into a separate `compute_checkers` leaf —
+compare clusters, not single leaves, and re-baseline on the reference host
+before ranking further upstream work:
+
+| cluster | leaves | share post-plan8 (post-plan6, reference host) |
+| --- | --- | --- |
+| child-eval loop | `evaluate_child` (incl. inlined scans) | 30.0% (26.9%) |
+| move make/unmake | `do_move` 25.3% + `undo_move` 2.0% | 27.3% (31.9%) |
+| existence check | `compute_checkers` 17.2% + `populate_state` 3.2% + `has_legal_move_with_state` 2.3% | 22.7% (7.5%) |
+| frame overhead | `dfpn` | 8.2% (15.5%) |
+| static scoring | `score_with_context` | 3.0% (5.5%) |
+| full movegen | `Board::legal` 1.7% + `generate_legal_with_state` 0.5% + `generate_pseudo_legal` 0.8% | 3.1% (3.9%) |
+| move sort | `sort_moves` sort leaves | ~1.2% (~2.6%) |
+
+The static-scoring lever is now spent: `score_with_context` sits at ~3% of
+the pie and the remaining cost is the per-move integer math itself, not
+attack scans. Remaining wall levers are #10 (ordering re-tune, behavior
+changing) or the `dfpn` algorithmic items.
+
 ### Post-plan6 profile (m22_white, first-outcome, default 128 MB TT, 2026-09-12)
 
 After plan6 (micro-wins bundle: #14 wrapper slimming, #13 clock sampling,
@@ -218,7 +244,7 @@ memory, maintainability.
 | 12 | Existence-check cost | (a) solver-side: skip `populate_state` + `has_legal_move` when the child TT entry already proves the position non-terminal (`outcome == None` ⇒ it was expanded); (b) upstream: fused populate+existence API | ceiling measured **~2.5% wall** (spike 2026-09-09, see below) | wall | S (a) / M (b) | **done (plan6, phase 3)**: skip implemented behind the outcome-None invariant; existence cluster 20.7% → 7.5% of the profile pie; see `report6.md` |
 | 14 | Upstream make/unmake cost | `do_move`+`undo_move` **26.9% post-plan4** (13.8% post-plan3; per-eval ~31→~59 ns, TT cache pressure — see profile above); upstream core ~7.6 ns/round-trip and inherently tight; solver wrapper ~4.3 ns (64 B `StateInfo` zeroing + undo-stack push/pop) | ~1–3% wall (wrapper slimming only; absolute ceiling unchanged) | wall | S | **done (plan6, phase 1)**: `do_move_with_scratch`/`undo_move_with_scratch` over a pooled dirty slot; wrapper round-trip 12.2 → ~7.0 ns in the micro-benchmark; see `report6.md` |
 | 17 | Path-membership cost | `path_contains` is an O(depth) linear scan over `path_stack` (`children.rs`, `core.rs`), called per child eval and per `dfpn` entry; `best_move_repeats_path` adds a full do/undo round-trip per TT-resolved hit | **spiked, below bar**: ~1.0% wall on m22, ≤ ~2.2% on the shuffle-win case (see spike 2026-09-12 above); repeat-guard hit rate ~0.01% | wall | S | **demoted (plan6, phase 0 spike)** — a hash-set path stack is not justified at these costs |
-| 8 | Cheaper static scoring | `StaticAtomicScorer` does 2–5 sliding-attack scans per quiet move; precomputed/incremental attacks | ~3–5% wall (was 5–15% pre-plan3; `score_with_context` now 5.4%) | wall | M | open |
+| 8 | Cheaper static scoring | `StaticAtomicScorer` does 2–5 sliding-attack scans per quiet move; precomputed/incremental attacks | ~3–5% wall (was 5–15% pre-plan3; `score_with_context` now 5.4%) | wall | M | **done (plan8)**: const Chebyshev-table `nearest_commoner_map` (48.5 → 0.7 ns/call at k=1; measured BFS alternative rejected), exact queen-ray/rook-alignment pre-filters (threat + rook blocks), bitboard blast aSEE; bit-identical trajectories; wall −3.0% m22, −2.2% shuffle-win first-outcome; see `report8.md` |
 | 13 | Clock sampling | `time_exceeded()` calls `Instant::now()` at every `dfpn` entry; sample every N nodes (budget mode is eval-count-based and unaffected) | ~2% wall (2.2% post-plan4, unchanged) | wall | S | **done (plan6, phase 2)**: `Instant::now()` sampled every 4096 dfpn entries behind the unchanged `time_exceeded` call sites; clock leaves <0.1% in the post-plan6 profile; see `report6.md` |
 | 15 | `has_legal_move` playout cross-check | Random-playout property test: `Position::has_legal_move` vs `legal_moves_with_state` + `outcome_from_state` (report3 "missing tests") | correctness hardening, no speed | correctness | S | **done (plan5)**: `tests/test_playout_crosscheck.rs`, P1–P4 green in both tiers; see `report5.md` |
 | 5 | AND-side ordering signal (non-NN) | Counter-moves, AND-specific history, TT `work` feedback — disproving work concentrates in 1–2 replies per AND node (median max child-share 52.9%) | ~5–20% evals, regression risk (oracle hurt m24_white 2.1×) | nodes | M | open |
@@ -301,6 +327,17 @@ until a plan claims it.
   (ceiling 1.47–1.48×, below bar); lazy-SMP parked dormant with reopen
   triggers. Next levers: #8, #10, or the `dfpn` algorithmic items
   (done, `report7.md`).
+- **plan8** — #8 cheaper static scoring: phase-0 counter spike sized the
+  sub-costs; const Chebyshev-table `nearest_commoner_map` (the plan's BFS
+  prescription was measured first and rejected at +8% wall), exact
+  queen-ray/rook-alignment pre-filters, bitboard blast aSEE. Bit-identical
+  trajectories (quick suite 59/59, m22/shuffle stdout byte-identical, lean3
+  golden, new differential scorer test against a verbatim pre-plan8
+  reference); wall −3.0% m22, −2.2% shuffle-win first-outcome. Also found:
+  `rem01` in `test_decisive_remaining` fails at HEAD independent of plan8
+  (dfpn plan9's repetition-cache trajectory drift exceeded the fixture's
+  200M-eval budget; bisect + explanation in `report8.md`) (done,
+  `report8.md`).
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

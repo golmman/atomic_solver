@@ -1,0 +1,29 @@
+[bounded_search] chunk done: work_done=500002 next_chunk=1000000 elapsed=0.125s max_depth=15 nodes=24732 nps=198238
+[bounded_search] chunk done: work_done=1000024 next_chunk=2000000 elapsed=0.376s max_depth=11 nodes=76362 nps=203273
+[bounded_search] chunk done: work_done=2000017 next_chunk=4000000 elapsed=0.868s max_depth=16 nodes=183840 nps=211878
+[bounded_search] chunk done: work_done=4000016 next_chunk=8000000 elapsed=1.873s max_depth=19 nodes=397333 nps=212152
+[bounded_search] chunk done: work_done=8000008 next_chunk=16000000 elapsed=3.896s max_depth=20 nodes=797468 nps=204698
+[bounded_search] chunk done: work_done=16000006 next_chunk=32000000 elapsed=8.089s max_depth=22 nodes=1619263 nps=200191
+[bounded_search] chunk done: work_done=32000000 next_chunk=64000000 elapsed=16.355s max_depth=38 nodes=3322654 nps=203161
+[bounded_search] chunk done: work_done=64000012 next_chunk=128000000 elapsed=32.293s max_depth=51 nodes=6853665 nps=212231
+outcome: win length: 477
+spike: SORT_CALLS=13899877
+spike: SORT_MOVES=244013611
+spike: SCORE_CALLS=244013611
+spike: THREAT_ATTACKS_FROM_SLIDER=114882190
+spike: THREAT_ATTACKS_FROM_STATIC=111859519
+spike: THREAT_FIRES=2161063
+spike: THREAT_ATTACKERS_TO=2161063
+spike: ROOK_BLOCK_ENTRIES=97412396
+spike: ROOK_FIRST_ATTACKS=97412396
+spike: ROOK_FIRST_HIT=994019
+spike: ROOK_SECOND_SCAN=60076703
+spike: ROOK_SECOND_HIT=3037843
+spike: CAPTURE_NET_CALLS=16971230
+spike: CAPTURE_NET_BLAST_SQ=88807527
+spike: CAPTURE_IS_ENPASSANT=4194
+spike: NCM_CALLS=13899877
+spike: NCM_COMMONER_TOTAL=13899877
+spike: NCM_ELEM_OPS=889592128
+spike: BLOCK1_CAPTURES=17262806
+spike: BLOCK8_ENTRIES=226741709
