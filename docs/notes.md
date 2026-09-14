@@ -151,5 +151,8 @@ Draft plans for the EWS/MOPNS reading round (could reshape child selection for  
 
 * append proof db with new proof_tree.bin
 * parallel
+* test broken?
+* ghi / repetition?
 * perf
+
 
