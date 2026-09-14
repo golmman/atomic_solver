@@ -149,7 +149,7 @@ Draft plans for the EWS/MOPNS reading round (could reshape child selection for  
 
 ---
 
-* extend proof db with new proof_tree.bin
+* append proof db with new proof_tree.bin
 * parallel
 * perf
 

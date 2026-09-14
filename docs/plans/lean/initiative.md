@@ -158,6 +158,22 @@ unprofiled cost is new to the backlog (#17): the O(depth) path-membership
 scans, which this position exercises harder than any suite case (depth 51+,
 41 root moves, cycle-heavy lines).
 
+### Spike 2026-09-14 — #2 parallel ceilings (plan7 phase 1)
+
+Temporary OR/AND counters on `Search` (reverted; post-revert stdout
+byte-identical). The OR/AND child-eval split is stable across both
+validation cases (~40% OR / ~60% AND: m22 5.51M/8.65M, shuffle-win
+100.9M/148.6M). With the nn oracle-floor 90.6% OR decisive-child
+concentration and the #5 median 52.9% AND max-reply share, the
+deterministic sibling-parallel ceiling is **1.48× (m22) / 1.47×
+(shuffle-win)** — below the ~1.5× bar with zero overhead assumed.
+Structural finding: `evaluate_all_children`'s break-on-first-decisive
+fires at AND nodes too (uniform child-`Loss` ⇒ parent-`Win` rule), so
+AND disproof early-exit is already harvested sequentially. Verdict:
+deterministic parallelism **no-go**; lazy-SMP survives only as opt-in
+nondeterministic `--threads N` and is **parked dormant** (plan7
+`report7.md` has the gate renegotiations and reopen triggers).
+
 ### Research round 2026-09-09 — TT capacity (`research_tt_capacity.md`)
 
 The #12 spike's 512 MB observation was sized properly: at the 64 MB
@@ -198,7 +214,7 @@ memory, maintainability.
 | # | Item | Mechanism | Potential | Affects | Effort | Status |
 |---|------|-----------|-----------|---------|--------|--------|
 | 16 | TT capacity default | Default `--tt-size` 64 MB is capacity-starved on hard searches (m22 first-outcome: 2.6× work, 2.0× wall at 128 MB; quick suite insensitive ±2%). See `research_tt_capacity.md` | ~2× wall on m22-class hard cases at default settings | wall + behavior (drift protocol N/A; move-order suite is the validator) | S + re-baseline | **done (plan4)**: default now 128 MB; m22 first-outcome −49% wall, default-mode −74%; see `report4.md` |
-| 2 | Parallel search | Lazy-SMP-style parallel sibling children or parallel refinement roots over the shared TT | 2–8× wall on multicore | wall | L–XL | open — the only other multiplicative lever; needs a determinism design spike for the `child_eval_budget` contract first |
+| 2 | Parallel search | Lazy-SMP-style parallel sibling children or parallel refinement roots over the shared TT | **spiked (plan7)**: deterministic sibling parallelism measured at 1.47–1.48× ceiling (below bar, demoted); lazy-SMP feasible only as opt-in nondeterministic mode — parked dormant with reopen triggers (`report7.md`) | wall | L–XL | **parked dormant (plan7 spike)** — reopen triggers in `report7.md` |
 | 12 | Existence-check cost | (a) solver-side: skip `populate_state` + `has_legal_move` when the child TT entry already proves the position non-terminal (`outcome == None` ⇒ it was expanded); (b) upstream: fused populate+existence API | ceiling measured **~2.5% wall** (spike 2026-09-09, see below) | wall | S (a) / M (b) | **done (plan6, phase 3)**: skip implemented behind the outcome-None invariant; existence cluster 20.7% → 7.5% of the profile pie; see `report6.md` |
 | 14 | Upstream make/unmake cost | `do_move`+`undo_move` **26.9% post-plan4** (13.8% post-plan3; per-eval ~31→~59 ns, TT cache pressure — see profile above); upstream core ~7.6 ns/round-trip and inherently tight; solver wrapper ~4.3 ns (64 B `StateInfo` zeroing + undo-stack push/pop) | ~1–3% wall (wrapper slimming only; absolute ceiling unchanged) | wall | S | **done (plan6, phase 1)**: `do_move_with_scratch`/`undo_move_with_scratch` over a pooled dirty slot; wrapper round-trip 12.2 → ~7.0 ns in the micro-benchmark; see `report6.md` |
 | 17 | Path-membership cost | `path_contains` is an O(depth) linear scan over `path_stack` (`children.rs`, `core.rs`), called per child eval and per `dfpn` entry; `best_move_repeats_path` adds a full do/undo round-trip per TT-resolved hit | **spiked, below bar**: ~1.0% wall on m22, ≤ ~2.2% on the shuffle-win case (see spike 2026-09-12 above); repeat-guard hit rate ~0.01% | wall | S | **demoted (plan6, phase 0 spike)** — a hash-set path stack is not justified at these costs |
@@ -280,6 +296,11 @@ until a plan claims it.
   (quick suite bit-identical, m22/shuffle stdout byte-identical, lean3
   golden byte-identical); wall −7.1% m22, −5.9% shuffle-win first-outcome
   (done, `report6.md`).
+- **plan7** — #2 parallelism determinism design spike (no `src/` change;
+  instrumented OR/AND split, reverted): deterministic parallelism no-go
+  (ceiling 1.47–1.48×, below bar); lazy-SMP parked dormant with reopen
+  triggers. Next levers: #8, #10, or the `dfpn` algorithmic items
+  (done, `report7.md`).
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
