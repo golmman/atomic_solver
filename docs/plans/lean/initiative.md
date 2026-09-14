@@ -349,6 +349,12 @@ until a plan claims it.
   OR-Win frames (M1); the nn 90.6% work-share figure is a
   population/attribution difference, not reopened OR headroom (done,
   `report9.md`).
+- **follow-up (report8):** the `rem01` fixture entry in
+  `tests/fixtures/decisive_remaining.txt` was re-categorized standalone:
+  budget raised 200M → 1.7B `solvable_evals` over the post-dfpn-plan9
+  measured effort (544,749,817 child evals, bit-identical across two runs),
+  referencing `dfpn/report9.md` (drift analysis). Slow tier green after the
+  change.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
