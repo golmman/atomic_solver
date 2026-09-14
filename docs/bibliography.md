@@ -36,10 +36,20 @@ Status values:
   Interaction Problem*. AAAI-04. — PDF in repo: `docs/plans/dfpn/ghi.pdf`.
   **Mined** (`dfpn/research_ghi.md`).
 - A. Kishimoto, M. Müller (2005). *A Solution to the GHI Problem for
-  Depth-First Proof-Number Search*. Information Sciences 175(4). — Journal
-  version of the above with the complete algorithm; the AAAI-04 PDF is
-  abbreviated. Reference for bounded cross-path verification. **Open**
-  (`dfpn` backlog #4, `conversion` backlog #5d).
+  Depth-First Proof-Number Search*. Information Sciences 175(4), pp.
+  296–314. [DOI 10.1016/j.ins.2004.04.012](https://doi.org/10.1016/j.ins.2004.04.012)
+  (author copy vendored: `dfpn/ghi_journal.pdf`, from
+  `www.cs.ualberta.ca/~mmueller/ps/kishimoto-mueller-infsci-ghi.pdf`). —
+  Journal version of the above: complete literature review, df-pn
+  pseudo-code, Theorems 3.1/3.2 with proofs, DUP/SIM/NOCYCLE ablation. The
+  soundness theorems assume a sound verification oracle; no step-by-step
+  simulation procedure and no ancestor-context carrying — the remaining
+  implementation-level source is Kishimoto's 2005 Ph.D. dissertation (open
+  access, UAlberta repository). **Mined** (`dfpn/research_ghi_journal.md`).
+  The bounded cross-path verification lever it feeds is closed as an
+  evidence-based no-go (`dfpn` backlog #4); the extracted soundness contract
+  lives on as a design constraint for the parallel-search spike
+  (`conversion` backlog #4 / `lean` #2).
 - Y. Kawano (1996). *Using Similar Positions to Search Game Trees*. Games
   of No Chance, MSRI. — Kawano simulation; the plan5 twin mechanism and
   `conversion` backlog #2 (root-scale candidate verification) both derive
