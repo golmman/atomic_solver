@@ -158,3 +158,37 @@ Draft plans for the EWS/MOPNS reading round (could reshape child selection for  
   * how much work is spent in positions with less then or equal to 4/5/6 pieces?
 
 
+---
+
+Thanks!
+
+**Comment 1**
+
+Shouldn't we clean up the men-count/histogram code?
+
+
+**Comment 2**
+
+Shouldn't we aim to fix the search then?
+To me it looks like a major issue that the search is virtually unable to find an outcome in such a simple position.
+
+I analyzed the position and played it out to get simpler versions.
+I ran the positions via ` cargo run --release -- --fen "$FEN" --timeout 600`.
+
+Here are my results:
+
+8/2K5/k7/8/8/8/8/4Q3 w - - 0 1
+optimal: white win in 15 half moves
+nodes to first outcome: more than 755986909
+
+8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2
+optimal: white win in 13 half moves
+nodes to first outcome: 42682820
+
+8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3
+optimal: white win in 11 half moves
+nodes to first outcome: 3874308
+
+8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4
+optimal: white win in 9 half moves
+nodes to outcome: less than 201482
