@@ -317,6 +317,33 @@ the egtb tables keep them in index space but exclude them from sampling)
 and classifies timeouts as unproven, never as proven Draws — per egtb
 plan1 cross-validation practice.
 
+## Execution: two sessions
+
+The plan is executed in **two sessions with a hard reflection stop between
+them** (agreed at plan review):
+
+- **Session A — Phase 0 only (T0–T2).** No arm is implemented, even if the
+  gates pass early. Deliverable: a Phase 0 report — `report12_phase0.md`
+  in this directory — with the G1/G2 outcomes, the R1 attribution table,
+  the item 2/item 5 fragmentation split, raw numbers committed under
+  `docs/plans/dfpn/measurements/plan12/`, and an explicit arm
+  recommendation (or the no-go closure per G1/G2). Spike instrumentation
+  fully reverted; the report records the revert state and any spike-build
+  quirks that would otherwise be lost. Update the initiative History
+  line.
+- **Checkpoint (user):** read the Phase 0 report, confirm or override the
+  arm recommendation. The no-go branches terminate the plan here.
+- **Session B — the selected arm.** Implementation per the plan's Phase 1
+  and the refinement section, the full Validation suite (`make test-full`
+  included), and the final `report12.md` (which subsumes the Phase 0
+  report's content), backlog re-rank, History update.
+
+Rationale: the decision value concentrates at the G1/G2 boundary (plan10
+and plan11 both died there), Phase 0 is a full session's work on its own,
+and the two-build constraint (spike reverted, clean Phase 1 diff) maps
+naturally onto the session boundary. Do not split finer (T1 and T2 share
+the spike build and belong in one session).
+
 ## Goal / success criteria
 
 - Ladder root: proven Win within 60 s and ≤ 20M child evals (from
