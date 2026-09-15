@@ -197,3 +197,8 @@ nodes to outcome: less than 201482
 ---
 
 solve_depth_limited with hardcoded 5 second timeout
+
+---
+
+Let's work with informed assumptions where sufficient and formulate decision where necessary.
+For the decisions we should refine the plan via a list of options and trade offs.

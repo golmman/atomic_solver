@@ -117,13 +117,22 @@ counters:
    `path_contains`.
 4. Child-eval mass by (OR/AND × resolved-unsolved) and the depth
    distribution of evaluated children.
+5. Clock fragmentation of the plan9 node key (R3): probe misses where the
+   same repetition key *and* same context hash were seen earlier in the run
+   at a different full hash (halfmove clock). In KQvK there are no captures
+   and no pawns, so the clock increments every ply and king/queen
+   triangulation reaches the same board at different clocks — a miss by
+   construction. This counter separates node-key fragmentation from true
+   context fragmentation (item 2).
 
-**Gate G2:** a dominant, cacheable mass exists — operationalized as: at
-least one of (1)–(3) accounts for ≥ 50% of the work gap between the
-measured ~1.1B nodes and the ~7.5M transposition upper bound, with a
-stated mechanism for caching it soundly. If the mass is diffuse or the
-dominant cost is none of these, close the plan with the diagnostics
-recorded (evidence-based no-go, the plan10/plan11 pattern).
+**Gate G2:** a dominant, cacheable mass exists — operationalized per R1
+below in child-eval units, not event counts: the attributed mass
+(outermost-cause attribution over the mechanisms (1), (2)+(5), (3)) must
+be ≥ 50% of the work gap between the measured ~1.1B child evals and the
+~7.5M transposition upper bound, with a stated mechanism for caching it
+soundly. If the mass is diffuse or the dominant cost is none of these,
+close the plan with the diagnostics recorded (evidence-based no-go, the
+plan10/plan11 pattern).
 
 ## Phase 1 — implementation (only on G1 ∧ G2, one selected arm)
 
@@ -164,10 +173,149 @@ not implementable.
   detector gates it), and its results must be provable by the existing
   replay validator semantics.
 
-Whichever arm is selected: implement, then run the full validation below.
+Whichever arm is selected (per the refinement section below, the candidate
+set is: Arm A2 conditionally, Arm C, Arm D): implement, then run the full
+validation below.
 If the selected arm fails its gates, close the plan as a measured no-go
 with the arm's numbers (the plan10/plan11 pattern) — do not iterate into a
 second arm inside the same session.
+
+## Pre-implementation refinement (plan review outcomes)
+
+Added after the pre-implementation plan review; all items were accepted by
+the user on review and are **[decided]** — binding for the implementation
+session. R1, R2, R3, and R5 each list the options considered with their
+trade-offs; the chosen option is marked. Deviations remain reportable in
+`report12.md`.
+
+### R1 — G2 attribution rule [decided: option (a), outermost-cause]
+
+Event counters cannot establish G2 (plan9's spike showed the re-proof
+frames themselves are cheap; the cost is the churn around them). The gate
+must be computed in child-eval units. Options considered:
+
+- **(a) Outermost-cause attribution — CHOSEN.** Each child evaluation
+  is counted exactly once, to the outermost applicable mechanism class:
+  (1) evaluated inside a subtree rooted at a frame whose result was
+  repetition-suppressed (contaminated region; implement via an
+  already-attributed-evals mark so nested suppressed frames do not double
+  count), (2) evaluated in a frame whose repetition-cache probe missed
+  while a same-node/different-context or same-rep-key/different-clock
+  entry existed (fragmentation, items 2 and 5), (3) otherwise.
+  Deterministic, cheap, matches the "what would sound caching have saved"
+  semantics; the slight undercount is acceptable for a ≥ 50% threshold.
+- (b) Multi-label overlap counting — fuller picture, but double counting
+  makes a 50% gate ill-defined. Rejected as the gate; may be reported
+  alongside as intelligence.
+- (c) Post-hoc tree replay attribution — precise but memory-unbounded and
+  a second implementation whose correctness would itself need validation.
+  Rejected.
+
+### R2 — Arm A fate [decided: option (b), Arm A2 on the inert-ancestor lemma]
+
+The plan's "defender can force" core criterion is unsound as written: a
+repetition-dependent draw proof can legitimately rely on attacker-side
+repetition escapes (at an OR node, "all attacker moves lead to draw"
+includes moves repeating an ancestor), so dropping defender-unreachable
+ancestors from the context can invalidate a cached Draw. Options
+considered:
+
+- (a) Drop Arm A outright — the fallback if T2 does not show the
+  fragmentation mass (see the build condition below).
+- **(b) Reformulate as Arm A2 on the inert-ancestor lemma — CHOSEN
+  (pre-registered sketch, sound by construction).** Claim: f(P, A) depends only on P and
+  A ∩ Reach(P), where Reach(P) is the set of ancestor repetition keys
+  reachable from P — an ancestor not reachable from P can never be
+  repeated by any board below P, so it is semantically inert. Corollary:
+  restricting the context key to any *over-approximation* of Reach(P)
+  preserves the key-determined value (equal over-approximated keys ⇒
+  equal exact reachable sets ⇒ equal f), so the reduction is sound
+  without a reachability oracle. Risk: on KQvK the queen plus both kings
+  reach nearly every square, so the over-approximation is likely ≈ A and
+  the lever vacuous on exactly the target class.
+- (c) Defender-only core as originally drafted — rejected (unsound, see
+  above).
+
+Build condition: Arm A2 is implemented only if T2 item 2 attributes the
+fragmentation mass to context fragmentation (not item 5's clock
+fragmentation, which is Arm D's territory); otherwise Arm A is dropped
+without code.
+
+### R3 — Clock fragmentation counter + Arm D [decided: option (a), Arm D pre-registered]
+
+T2 item 5 (above) is added unconditionally. The corresponding fix arm:
+
+- **(a) Pre-register Arm D — CHOSEN.** Change the plan9 cache node
+  component from the full hash to the repetition key, storing the proven
+  halfmove clock with each Draw; a probe at clock `c_probe` hits an entry
+  stored at clock `c_store ≤ c_probe` (same context). Soundness lemma
+  (to be written up in the report as the arm's contract): raising the
+  clock only adds rule50-expiry draw terminals and removes no repetition
+  edges or mate/extinction terminals; hence a Win at clock c′ implies a
+  Win at any clock c ≤ c′ (the same strategy runs strictly further from
+  expiry), and contrapositively a Draw at c is a Draw at any c′ ≥ c.
+  This is deliberately distinct from plan10's no-go: plan10 reused
+  *Win/Loss* facts across clocks into TT solved entries (the
+  bound-folding destabilizer); Arm D stays inside the plan9 draw-only
+  cache at the plan9 probe site — the integration point report9 already
+  validated as drift-safe. Side benefit: the coarser node key shrinks
+  the working set. Expected quick-suite drift: the 14 repetition-heavy
+  cases (per the drift protocol's delta-list clause).
+- (b) Counter only, decide post-T2 — rejected: costs an extra session if
+  the data demands the arm, and breaks the pre-registration pattern the
+  plan adopts from plan11 (arms sketched before the spike so results can
+  be compared against them).
+
+### R4 — Arm B removed [decided]
+
+Arm B is vacuous, not merely underspecified: a repetition-dependent Loss
+or Win cannot exist under the solver's semantics (a Loss requires every
+child to be a Win; repetition edges are Draw; `repetition_seen`
+propagates only alongside `Draw` — research_repetition_cache.md §4.1 and
+`selection.rs`). There is no "disproof-side" fact class for the cache to
+admit. The measurement half of Arm B (is the residual TT suppression
+load-bearing?) stays in T2 item 1 as a pure diagnostic.
+
+### R5 — Arm C storage channel [decided: option (a), separate pre-phase store]
+
+- **(a) Separate pre-phase store — CHOSEN.** Proven Wins from the
+  repetition-aware bounded pre-phase live outside the TT, keyed by (full
+  hash, pre-phase depth bound), consulted before recursion; a miss or a
+  bound mismatch defers to the normal search. The main search's DF-PN
+  threshold dynamics are untouched, so the plan10/11 bound-folding hazard
+  is excluded by construction; soundness rests on the pre-phase's
+  cycle-freedom check (T1b machinery) plus the small-space detector gate.
+- (b) Store into the TT as solved entries — maximum reuse, but re-imports
+  the plan10/11 hazard: Arm C manufactures exactly the AND-parent Win
+  facts that are simultaneously the stress-win driver and the m22
+  destabilizer (report11). Rejected.
+- (c) Do not pre-register; keep T1b as a Phase 0 oracle only — wastes the
+  machinery Phase 0 already builds. Rejected.
+
+### R6 — G1 instrument weighting [decided]
+
+The egtb generator's value iteration already certifies cycle-freedom: a
+position marked Win at pass k carries a strictly rank-decreasing strategy
+tree, i.e. the table's Win values are forced mates under
+repetition-as-draw semantics (rule50 is safe on the ladder: win-in-15
+from clocks 0–6 stays far under 100). T1a is therefore a confirmatory
+extraction cross-check, not an independent gate. T1b is the primary G1
+instrument; a T1a "no cycle-free strategy found within effort" never
+triggers a no-go on its own.
+
+### R7 — T0 reproducibility [decided]
+
+The addendum's baselines are wall-clock bounded; reproduce them as bands,
+record child evals as the deterministic metric, and reproduce completed
+(first-outcome) runs exactly. The bounded `search_depth(·, 15)` run uses
+the child-eval budget where a deterministic comparison is needed.
+
+### R8 — Oracle-check hygiene [decided]
+
+Validation item 4 filters illegal placements (side-not-to-move attackable;
+the egtb tables keep them in index space but exclude them from sampling)
+and classifies timeouts as unproven, never as proven Draws — per egtb
+plan1 cross-validation practice.
 
 ## Goal / success criteria
 
@@ -190,9 +338,11 @@ second arm inside the same session.
    legitimately changes a quick case; then the plan's delta list applies
    and the move-order suite is the regression check).
 4. KQvK oracle check: with the Phase 1 binary, sample ≥ 200 KQvK positions
-   stratified by the 3-man q-table outcome and verify the solver never
-   returns a decisive outcome contradicting the table, and every proven
-   Win survives the replay validator's structural rules on its PV.
+   stratified by the 3-man q-table outcome (legal placements only —
+   side-not-to-move attackable entries excluded, per R8) and verify the
+   solver never returns a decisive outcome contradicting the table
+   (timeouts classified as unproven, never as proven Draws), and every
+   proven Win survives the replay validator's structural rules on its PV.
 5. Deterministic budget contract: `set_child_eval_budget` /
    `ExitReason::BudgetExhausted` semantics unchanged (unit tests pass
    unchanged).
