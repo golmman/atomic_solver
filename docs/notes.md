@@ -156,6 +156,7 @@ Draft plans for the EWS/MOPNS reading round (could reshape child selection for  
 * perf
 * egtb
   * how much work is spent in positions with less then or equal to 4/5/6 pieces?
+* AGENTS.md prune
 
 
 ---
@@ -192,3 +193,7 @@ nodes to first outcome: 3874308
 8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4
 optimal: white win in 9 half moves
 nodes to outcome: less than 201482
+
+---
+
+solve_depth_limited with hardcoded 5 second timeout

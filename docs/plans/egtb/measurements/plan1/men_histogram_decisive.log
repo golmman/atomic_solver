@@ -1,0 +1,865 @@
+men_histogram suite=Decisive timeout=5s first_outcome=true positions=47
+case dec01 outcome=win child_evals=5713706 nonterminal=5647303 le4=0 (0.000%) wall=1.014s
+[case dec01] non-terminal child evals by men count (total 5647303):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            2   0.000%
+  men 7-8:          308   0.005%
+  men  9+:      5646993  99.995%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 2 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 2: clock0=2 (100.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec02 outcome=loss child_evals=138124 nonterminal=135347 le4=0 (0.000%) wall=0.018s
+[case dec02] non-terminal child evals by men count (total 135347):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:         3159   2.334%
+  men 7-8:       125809  92.953%
+  men  9+:         6379   4.713%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 3159 (2.334%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 2.334%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 3159: clock0=1606 (50.84%) 1-25=1553 (49.16%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec03 outcome=win child_evals=47068 nonterminal=46530 le4=0 (0.000%) wall=0.008s
+[case dec03] non-terminal child evals by men count (total 46530):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        46530  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec04 outcome=win child_evals=7352 nonterminal=7229 le4=0 (0.000%) wall=0.001s
+[case dec04] non-terminal child evals by men count (total 7229):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            8   0.111%
+  men  9+:         7221  99.889%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec05 outcome=win child_evals=314615 nonterminal=309214 le4=0 (0.000%) wall=0.051s
+[case dec05] non-terminal child evals by men count (total 309214):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:           36   0.012%
+  men  9+:       309178  99.988%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec06 outcome=loss child_evals=1507474 nonterminal=1484719 le4=0 (0.000%) wall=0.193s
+[case dec06] non-terminal child evals by men count (total 1484719):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:           40   0.003%
+  men 7-8:       114115   7.686%
+  men  9+:      1370564  92.311%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 40 (0.003%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.003%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 40: clock0=40 (100.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec07 outcome=win child_evals=4021 nonterminal=3977 le4=0 (0.000%) wall=0.001s
+[case dec07] non-terminal child evals by men count (total 3977):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:         3977  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec08 outcome=win child_evals=45 nonterminal=42 le4=0 (0.000%) wall=0.000s
+[case dec08] non-terminal child evals by men count (total 42):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:           42  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec09 outcome=win child_evals=1842 nonterminal=1820 le4=0 (0.000%) wall=0.000s
+[case dec09] non-terminal child evals by men count (total 1820):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:         1820  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec10 outcome=win child_evals=4262128 nonterminal=4143577 le4=0 (0.000%) wall=0.479s
+[case dec10] non-terminal child evals by men count (total 4143577):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            8   0.000%
+  men  9+:      4143569  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec11 outcome=win child_evals=253890 nonterminal=251696 le4=0 (0.000%) wall=0.043s
+[case dec11] non-terminal child evals by men count (total 251696):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:       251696  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec12 outcome=win child_evals=303191 nonterminal=299625 le4=0 (0.000%) wall=0.051s
+[case dec12] non-terminal child evals by men count (total 299625):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:       299625  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec13 outcome=win child_evals=3822602 nonterminal=3741773 le4=0 (0.000%) wall=0.717s
+[case dec13] non-terminal child evals by men count (total 3741773):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:      3741773  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec14 outcome=win child_evals=2397489 nonterminal=2352424 le4=0 (0.000%) wall=0.439s
+[case dec14] non-terminal child evals by men count (total 2352424):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:      2352424  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec15 outcome=win child_evals=1077420 nonterminal=1067160 le4=0 (0.000%) wall=0.173s
+[case dec15] non-terminal child evals by men count (total 1067160):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:           43   0.004%
+  men 7-8:        25893   2.426%
+  men  9+:      1041224  97.570%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 43 (0.004%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.004%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 43: clock0=43 (100.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec16 outcome=win child_evals=107110 nonterminal=106033 le4=0 (0.000%) wall=0.019s
+[case dec16] non-terminal child evals by men count (total 106033):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:       106033  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec17 outcome=win child_evals=539273 nonterminal=527834 le4=0 (0.000%) wall=0.099s
+[case dec17] non-terminal child evals by men count (total 527834):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:       527834  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec18 outcome=win child_evals=39549 nonterminal=39436 le4=0 (0.000%) wall=0.007s
+[case dec18] non-terminal child evals by men count (total 39436):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        39436  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec19 outcome=win child_evals=135708 nonterminal=134425 le4=0 (0.000%) wall=0.024s
+[case dec19] non-terminal child evals by men count (total 134425):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:       134425  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec20 outcome=win child_evals=148862 nonterminal=147582 le4=0 (0.000%) wall=0.026s
+[case dec20] non-terminal child evals by men count (total 147582):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:       147582  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec21 outcome=win child_evals=243842 nonterminal=239121 le4=0 (0.000%) wall=0.034s
+[case dec21] non-terminal child evals by men count (total 239121):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:          325   0.136%
+  men 7-8:        28167  11.779%
+  men  9+:       210629  88.085%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 325 (0.136%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.136%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 325: clock0=147 (45.23%) 1-25=178 (54.77%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec22 outcome=win child_evals=4894 nonterminal=4867 le4=0 (0.000%) wall=0.001s
+[case dec22] non-terminal child evals by men count (total 4867):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:         4867  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec23 outcome=win child_evals=3471 nonterminal=3420 le4=0 (0.000%) wall=0.001s
+[case dec23] non-terminal child evals by men count (total 3420):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:         3420  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec24 outcome=loss child_evals=32418 nonterminal=31827 le4=0 (0.000%) wall=0.006s
+[case dec24] non-terminal child evals by men count (total 31827):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        31827  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec25 outcome=win child_evals=30761 nonterminal=30298 le4=0 (0.000%) wall=0.005s
+[case dec25] non-terminal child evals by men count (total 30298):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        30298  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec26 outcome=win child_evals=151933 nonterminal=149742 le4=0 (0.000%) wall=0.026s
+[case dec26] non-terminal child evals by men count (total 149742):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:       149742  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec27 outcome=win child_evals=2277 nonterminal=2178 le4=0 (0.000%) wall=0.001s
+[case dec27] non-terminal child evals by men count (total 2178):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:         2178  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec28 outcome=loss child_evals=11665 nonterminal=11626 le4=0 (0.000%) wall=0.001s
+[case dec28] non-terminal child evals by men count (total 11626):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        11626  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec29 outcome=win child_evals=28040 nonterminal=27764 le4=0 (0.000%) wall=0.005s
+[case dec29] non-terminal child evals by men count (total 27764):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        27764  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec30 outcome=win child_evals=12041 nonterminal=11320 le4=0 (0.000%) wall=0.002s
+[case dec30] non-terminal child evals by men count (total 11320):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        11320  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec31 outcome=loss child_evals=510426 nonterminal=508837 le4=0 (0.000%) wall=0.046s
+[case dec31] non-terminal child evals by men count (total 508837):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:       508837  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec32 outcome=win child_evals=3342 nonterminal=3211 le4=0 (0.000%) wall=0.001s
+[case dec32] non-terminal child evals by men count (total 3211):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:         3211  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec33 outcome=win child_evals=11984 nonterminal=11735 le4=0 (0.000%) wall=0.002s
+[case dec33] non-terminal child evals by men count (total 11735):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        11735  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec34 outcome=win child_evals=26858 nonterminal=26555 le4=0 (0.000%) wall=0.005s
+[case dec34] non-terminal child evals by men count (total 26555):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        26555  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec35 outcome=win child_evals=1092 nonterminal=1076 le4=0 (0.000%) wall=0.000s
+[case dec35] non-terminal child evals by men count (total 1076):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:         1076  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec36 outcome=loss child_evals=20206 nonterminal=19914 le4=0 (0.000%) wall=0.003s
+[case dec36] non-terminal child evals by men count (total 19914):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:          475   2.385%
+  men  9+:        19439  97.615%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec37 outcome=loss child_evals=28257 nonterminal=27879 le4=0 (0.000%) wall=0.004s
+[case dec37] non-terminal child evals by men count (total 27879):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        27879  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec38 outcome=loss child_evals=1169070 nonterminal=1154744 le4=0 (0.000%) wall=0.197s
+[case dec38] non-terminal child evals by men count (total 1154744):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:           75   0.006%
+  men   6:          887   0.077%
+  men 7-8:        51376   4.449%
+  men  9+:      1102406  95.468%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 75 (0.006%)
+  cumulative <=6: 962 (0.083%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.006%
+  marginal coverage value: <=6 minus <=5 = 0.077%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 962: clock0=597 (62.06%) 1-25=365 (37.94%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec39 outcome=win child_evals=61552 nonterminal=60288 le4=0 (0.000%) wall=0.010s
+[case dec39] non-terminal child evals by men count (total 60288):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        60288  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec40 outcome=loss child_evals=852716 nonterminal=833406 le4=0 (0.000%) wall=0.143s
+[case dec40] non-terminal child evals by men count (total 833406):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            2   0.000%
+  men  9+:       833404  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec41 outcome=loss child_evals=27475 nonterminal=26907 le4=0 (0.000%) wall=0.004s
+[case dec41] non-terminal child evals by men count (total 26907):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        26907  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec42 outcome=loss child_evals=80849 nonterminal=80257 le4=0 (0.000%) wall=0.010s
+[case dec42] non-terminal child evals by men count (total 80257):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:        80257  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec43 outcome=loss child_evals=1506959 nonterminal=1495700 le4=0 (0.000%) wall=0.155s
+[case dec43] non-terminal child evals by men count (total 1495700):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:          109   0.007%
+  men  9+:      1495591  99.993%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec44 outcome=loss child_evals=102615 nonterminal=100144 le4=0 (0.000%) wall=0.015s
+[case dec44] non-terminal child evals by men count (total 100144):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            4   0.004%
+  men   6:            0   0.000%
+  men 7-8:         1474   1.472%
+  men  9+:        98666  98.524%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 4 (0.004%)
+  cumulative <=6: 4 (0.004%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.004%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 4: clock0=4 (100.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec45 outcome=win child_evals=3422 nonterminal=3384 le4=0 (0.000%) wall=0.001s
+[case dec45] non-terminal child evals by men count (total 3384):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            2   0.059%
+  men 7-8:          194   5.733%
+  men  9+:         3188  94.208%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 2 (0.059%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.059%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 2: clock0=2 (100.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case dec46 outcome=loss child_evals=128347 nonterminal=125042 le4=0 (0.000%) wall=0.017s
+[case dec46] non-terminal child evals by men count (total 125042):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:          123   0.098%
+  men 7-8:         1744   1.395%
+  men  9+:       123175  98.507%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 123 (0.098%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.098%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 123: clock0=77 (62.60%) 1-25=46 (37.40%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+case startpos outcome=draw child_evals=26045106 nonterminal=25471517 le4=0 (0.000%) wall=5.011s
+[case startpos] non-terminal child evals by men count (total 25471517):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:            0   0.000%
+  men   6:            0   0.000%
+  men 7-8:            0   0.000%
+  men  9+:     25471517  100.000%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 0 (0.000%)
+  cumulative <=6: 0 (0.000%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.000%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+aggregate positions=47 wall_total=9.070s child_evals=51923087 nonterminal=50910505
+[aggregate] non-terminal child evals by men count (total 50910505):
+  men   2:            0   0.000%
+  men   3:            0   0.000%
+  men   4:            0   0.000%
+  men   5:           79   0.000%
+  men   6:         4581   0.009%
+  men 7-8:       349718   0.687%
+  men  9+:     50556127  99.304%
+  cumulative <=3: 0 (0.000%)
+  cumulative <=4: 0 (0.000%)
+  cumulative <=5: 79 (0.000%)
+  cumulative <=6: 4660 (0.009%)
+  marginal coverage value: <=4 minus <=3 = 0.000%
+  marginal coverage value: <=5 minus <=4 = 0.000%
+  marginal coverage value: <=6 minus <=5 = 0.009%
+[clock men<=4] non-terminal evals total 0: clock0=0 (0.00%) 1-25=0 (0.00%) 26-50=0 (0.00%) 51-99=0 (0.00%)
+[clock men<=6] non-terminal evals total 4660: clock0=2518 (54.03%) 1-25=2142 (45.97%) 26-50=0 (0.00%) 51-99=0 (0.00%)

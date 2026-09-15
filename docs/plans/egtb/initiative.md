@@ -80,7 +80,7 @@ multi-TB disk-backed sets beyond 4 men.
 
 | # | Item                                                                                                                         | Notes                                                                                                                                                                                              | Size | Status            |
 | - | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ----------------- |
-| 1 | Go/no-go spike: men-count histogram at child-eval sites + 3-man generator prototype + solver cross-validation                | Metric: share of child evals with ≤4 men on the decisive/stress suites. Histogram is near-free (one `popcount` + increment). Cross-validation settles stalemate/rule50/explosion conventions empirically. | M    | **open (plan1)** |
+| 1 | Go/no-go spike: men-count histogram at child-eval sites + 3-man generator prototype + solver cross-validation                | Metric: share of child evals with ≤4 men on the decisive/stress suites. Histogram is near-free (one `popcount` + increment). Cross-validation settles stalemate/rule50/explosion conventions empirically. | M    | **done (plan1, `report1.md`): NO-GO on faster-solves (≤4-men share 0.000%); pivot-vs-close decision pending; oracle goal demonstrated (solver KQvK defect found)** |
 | 2 | 4-man generator + storage format + validator                                                                                 | Coverage decision (full set of ~40 material classes vs. frequent subset) and size verification land here. Estimate: ~30M entries/table, 2-bit WDL ≈ 8 MB raw/table, full set well under 100 MB compressed. | L    | open             |
 | 3 | Probe integration in `evaluate_child` + rule50 soundness scheme + resource-contract wording                                  | Tablebase held fully in **RAM** (decision 2026-09-14: RAM load, no mmap). "RAM = TT only" needs rewording to admit the tablebase (e.g. "RAM = TT + read-only tablebase"); at 4 men the full set fits easily (~300 MB raw at 2-bit WDL, less compressed). Drift protocol: trajectories may change **only inside tablebase coverage**. | M–L  | open             |
 | 4 | Ordering hints from tablebase wins (`move_order/ideas.md` #8)                                                                | Order moves that enter tablebase-won lines; only after #3.                                                                                                                                          | S–M  | open             |
@@ -183,3 +183,13 @@ not before.
   and keeps determinism trivial. mmap remains the fallback only if a
   future coverage extension (5+ men) outgrows RAM; revisit then, not
   before.
+- **2026-09-14 — plan1 go/no-go measured: NO-GO for faster solves.**
+  Non-terminal ≤4-men child-eval share: 0.000% on the decisive suite
+  (0/50,910,505) and 0.000% on the stress suite (0/2,132,711,633). The
+  probe-integration backlog items #2–#4 are dead as speed work unless the
+  initiative pivots. plan2's premise changes accordingly (see
+  `report1.md` Next steps). Ruleset findings that survive regardless:
+  `Board::outcome()` disagrees with the solver on checkmate (moves-empty
+  is classified Draw); kings cannot capture and do not attack, so
+  K+R/B/N vs K have no legal checkmates; kings are blast-immune, creating
+  fortress-draw regions in KQvK.

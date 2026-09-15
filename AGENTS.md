@@ -150,6 +150,13 @@ The runnable examples are:
 - `find_winning_child` — Enumerates every legal first move, solves the resulting
   child with a short timeout, and reports the first move that is winning for
   the root side (a child `Loss`).
+- `egtb_gen3` — 3-man atomic WDL tablebase generator prototype (K+x vs K, x ∈
+  {Q, R, B, N, P}, both strong-side colors): forward value iteration to
+  fixpoint over `atomic-movegen` semantics, raw byte-per-entry WDL dump, and
+  cross-validation against the solver plus an independent depth-limited proof
+  oracle (`--material q|r|b|n|p|all`, `--out`, `--samples`, `--prove-samples`).
+  Exit 1 on any cross-validation mismatch, proof contradiction, or symmetry
+  violation.
 - `inspect_pt` — Dump a binary `proof_tree.bin` to human-readable JSON;
   `--validate` additionally runs the replay-based proof validator on the
   loaded tree and exits non-zero on defects.
