@@ -1,0 +1,21 @@
+=== P ladder matrix (node-cap 8M, eval-cap 2B, wall 240s) ===
+plan13_t1: fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" cand=P horizons=[14, 15, 17] eval_cap=2000000000 wall_cap=240
+plan13_t1 cand=P fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=14 result=UNKNOWN evals=10260539 nodes=8000001 wall=20.45s win_hits=0 nw_hits=0 memo_stores=54476 cut_by_rep=68973 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=15 result=UNKNOWN evals=9443090 nodes=8000001 wall=21.54s win_hits=0 nw_hits=0 memo_stores=10378 cut_by_rep=68627 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=17 result=UNKNOWN evals=9712672 nodes=8000001 wall=22.62s win_hits=0 nw_hits=0 memo_stores=12457 cut_by_rep=63066 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P total wall=64.70s
+plan13_t1: fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" cand=P horizons=[12, 13, 15] eval_cap=2000000000 wall_cap=240
+plan13_t1 cand=P fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" horizon=12 result=UNKNOWN evals=9416155 nodes=8000001 wall=18.02s win_hits=0 nw_hits=0 memo_stores=48529 cut_by_rep=59441 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" horizon=13 result=UNKNOWN evals=9235264 nodes=8000001 wall=18.85s win_hits=0 nw_hits=0 memo_stores=11961 cut_by_rep=73545 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" horizon=15 result=UNKNOWN evals=9261549 nodes=8000001 wall=21.25s win_hits=0 nw_hits=0 memo_stores=9976 cut_by_rep=63425 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P total wall=58.20s
+plan13_t1: fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" cand=P horizons=[10, 11, 13] eval_cap=2000000000 wall_cap=240
+plan13_t1 cand=P fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" horizon=10 result=UNKNOWN evals=9019818 nodes=8000001 wall=16.59s win_hits=0 nw_hits=0 memo_stores=43469 cut_by_rep=51161 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" horizon=11 result=UNKNOWN evals=8785382 nodes=8000001 wall=17.14s win_hits=0 nw_hits=0 memo_stores=8593 cut_by_rep=53889 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" horizon=13 result=UNKNOWN evals=8681220 nodes=8000001 wall=18.67s win_hits=0 nw_hits=0 memo_stores=7730 cut_by_rep=61781 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P total wall=52.49s
+plan13_t1: fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" cand=P horizons=[8, 9, 11] eval_cap=2000000000 wall_cap=240
+plan13_t1 cand=P fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" horizon=8 result=UNKNOWN evals=9520984 nodes=8000001 wall=14.87s win_hits=0 nw_hits=0 memo_stores=50712 cut_by_rep=59170 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" horizon=9 result=WIN_CERTIFIED evals=81411 nodes=11071 wall=0.03s win_hits=0 nw_hits=0 memo_stores=349 cut_by_rep=396 cert_lines=23 cert_mates=12 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=9 cert_wall=0.00s reason=
+plan13_t1 cand=P fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" horizon=11 result=WIN_CERTIFIED evals=120173 nodes=16765 wall=0.05s win_hits=0 nw_hits=0 memo_stores=540 cut_by_rep=628 cert_lines=23 cert_mates=12 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=9 cert_wall=0.00s reason=
+plan13_t1 cand=P total wall=14.97s

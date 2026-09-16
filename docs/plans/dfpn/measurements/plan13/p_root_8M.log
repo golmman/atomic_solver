@@ -1,0 +1,5 @@
+plan13_t1: fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" cand=P horizons=[14, 15, 17] eval_cap=2000000000 wall_cap=600
+plan13_t1 cand=P fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=14 result=UNKNOWN evals=10260539 nodes=8000001 wall=20.68s win_hits=0 nw_hits=0 memo_stores=54476 cut_by_rep=68973 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=15 result=UNKNOWN evals=9443090 nodes=8000001 wall=22.26s win_hits=0 nw_hits=0 memo_stores=10378 cut_by_rep=68627 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=17 result=UNKNOWN evals=9712672 nodes=8000001 wall=23.12s win_hits=0 nw_hits=0 memo_stores=12457 cut_by_rep=63066 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P total wall=66.15s

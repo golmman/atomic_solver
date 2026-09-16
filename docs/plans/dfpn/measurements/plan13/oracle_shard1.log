@@ -1,0 +1,441 @@
+plan13_t1 oracle: shard=1/4 samples win=30 draw=30 attempts=615
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=132 total_evals=161 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=3013 total_evals=3174 facts=5 nw=0 fact_hits=0 nw_hits=0 pathbound=5 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=16549 total_evals=19723 facts=5 nw=0 fact_hits=5 nw_hits=0 pathbound=5 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=363545 total_evals=383268 facts=133 nw=0 fact_hits=6 nw_hits=0 pathbound=477 wall=0.21s
+plan13_t1 layer: d=6 root_val=0 layer_evals=1876938 total_evals=2260206 facts=133 nw=6 fact_hits=34 nw_hits=0 pathbound=886 wall=1.39s
+plan13_t1 oracle sample: shard=1 0 fen="2K5/8/k7/8/8/2Q5/8/8 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 0 fen="2K5/8/k7/8/8/2Q5/8/8 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=146 total_evals=175 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=2 layer_evals=56 total_evals=231 facts=3 nw=0 fact_hits=0 nw_hits=0 pathbound=3 wall=0.00s
+plan13_t1 oracle sample: shard=1 1 fen="7q/8/8/8/K7/8/3k4/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 7q/8/8/8/K7/8/3k4/8 b - - 0 1
+plan13_t1 oracle sample: shard=1 1 fen="7q/8/8/8/K7/8/3k4/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=148 total_evals=177 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=3456 total_evals=3633 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=19301 total_evals=22934 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=450553 total_evals=473487 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.24s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2526517 total_evals=3000004 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=1.56s
+plan13_t1 oracle sample: shard=1 2 fen="8/8/k4q2/8/4K3/8/8/8 b - - 0 1" kind=win R=UNKNOWN lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 2 fen="8/8/k4q2/8/4K3/8/8/8 b - - 0 1" kind=win R=UNKNOWN lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=35 total_evals=35 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=150 total_evals=185 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=3683 total_evals=3868 facts=4 nw=0 fact_hits=0 nw_hits=0 pathbound=4 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=20589 total_evals=24457 facts=4 nw=0 fact_hits=4 nw_hits=0 pathbound=4 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=472628 total_evals=497085 facts=166 nw=0 fact_hits=5 nw_hits=0 pathbound=561 wall=0.26s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2502922 total_evals=3000007 facts=166 nw=1 fact_hits=55 nw_hits=0 pathbound=1024 wall=1.86s
+plan13_t1 oracle sample: shard=1 3 fen="8/2K5/8/k7/4Q3/8/8/8 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 3 fen="8/2K5/8/k7/4Q3/8/8/8 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=28 total_evals=28 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=112 total_evals=140 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=2 layer_evals=57 total_evals=197 facts=3 nw=0 fact_hits=0 nw_hits=0 pathbound=3 wall=0.00s
+plan13_t1 oracle sample: shard=1 4 fen="8/3q4/7K/8/8/8/k7/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/3q4/7K/8/8/8/k7/8 b - - 0 1
+plan13_t1 oracle sample: shard=1 4 fen="8/3q4/7K/8/8/8/k7/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=35 total_evals=35 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=226 total_evals=261 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=2 layer_evals=99 total_evals=360 facts=4 nw=0 fact_hits=0 nw_hits=0 pathbound=4 wall=0.00s
+plan13_t1 oracle sample: shard=1 5 fen="8/1k6/8/4Q3/8/8/6K1/8 w - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/1k6/8/4Q3/8/8/6K1/8 w - - 0 1
+plan13_t1 oracle sample: shard=1 5 fen="8/1k6/8/4Q3/8/8/6K1/8 w - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=177 total_evals=206 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4275 total_evals=4481 facts=14 nw=0 fact_hits=0 nw_hits=0 pathbound=14 wall=0.03s
+plan13_t1 layer: d=4 root_val=0 layer_evals=22733 total_evals=27214 facts=14 nw=1 fact_hits=14 nw_hits=0 pathbound=14 wall=0.05s
+plan13_t1 layer: d=5 root_val=0 layer_evals=480770 total_evals=507984 facts=146 nw=1 fact_hits=18 nw_hits=0 pathbound=436 wall=0.45s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2492021 total_evals=3000005 facts=146 nw=5 fact_hits=85 nw_hits=0 pathbound=685 wall=2.83s
+plan13_t1 oracle sample: shard=1 6 fen="2Q5/4k3/8/4K3/8/8/8/8 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 6 fen="2Q5/4k3/8/4K3/8/8/8/8 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=25 total_evals=25 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=181 total_evals=206 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4437 total_evals=4643 facts=24 nw=0 fact_hits=0 nw_hits=0 pathbound=24 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=19364 total_evals=24007 facts=24 nw=0 fact_hits=24 nw_hits=0 pathbound=24 wall=0.04s
+plan13_t1 layer: d=5 root_val=2 layer_evals=10235 total_evals=34242 facts=50 nw=0 fact_hits=29 nw_hits=0 pathbound=58 wall=0.05s
+plan13_t1 oracle sample: shard=1 7 fen="8/1k6/8/8/7K/8/8/4Q3 w - - 0 1" kind=win R=WIN_CERTIFIED lh=5 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/1k6/8/8/7K/8/8/4Q3 w - - 0 1
+plan13_t1 oracle sample: shard=1 7 fen="8/1k6/8/8/7K/8/8/4Q3 w - - 0 1" kind=win R=WIN_CERTIFIED lh=5 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=24 total_evals=24 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=146 total_evals=170 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=3218 total_evals=3388 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=19311 total_evals=22699 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=411457 total_evals=434156 facts=66 nw=0 fact_hits=0 nw_hits=0 pathbound=396 wall=0.33s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2302100 total_evals=2736256 facts=66 nw=2 fact_hits=11 nw_hits=0 pathbound=761 wall=2.34s
+plan13_t1 oracle sample: shard=1 8 fen="K7/8/4k3/8/8/8/8/5Q2 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 8 fen="K7/8/4k3/8/8/8/8/5Q2 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=2 layer_evals=31 total_evals=31 facts=1 nw=0 fact_hits=0 nw_hits=0 pathbound=1 wall=0.00s
+plan13_t1 oracle sample: shard=1 9 fen="8/5q2/3k3K/8/8/8/8/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/5q2/3k3K/8/8/8/8/8 b - - 0 1
+plan13_t1 oracle sample: shard=1 9 fen="8/5q2/3k3K/8/8/8/8/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=26 total_evals=26 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=127 total_evals=153 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=2 layer_evals=187 total_evals=340 facts=4 nw=0 fact_hits=0 nw_hits=0 pathbound=4 wall=0.00s
+plan13_t1 oracle sample: shard=1 10 fen="8/k7/8/8/6QK/8/8/8 w - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/k7/8/8/6QK/8/8/8 w - - 0 1
+plan13_t1 oracle sample: shard=1 10 fen="8/k7/8/8/6QK/8/8/8 w - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=30 total_evals=30 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=167 total_evals=197 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4217 total_evals=4414 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=25813 total_evals=30227 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.02s
+plan13_t1 layer: d=5 root_val=2 layer_evals=20300 total_evals=50527 facts=35 nw=0 fact_hits=0 nw_hits=0 pathbound=50 wall=0.05s
+plan13_t1 oracle sample: shard=1 11 fen="8/8/8/4k3/4q3/2K5/8/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=5 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/8/8/4k3/4q3/2K5/8/8 b - - 0 1
+plan13_t1 oracle sample: shard=1 11 fen="8/8/8/4k3/4q3/2K5/8/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=5 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=28 total_evals=28 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=137 total_evals=165 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=2 layer_evals=268 total_evals=433 facts=6 nw=0 fact_hits=0 nw_hits=0 pathbound=6 wall=0.00s
+plan13_t1 oracle sample: shard=1 12 fen="8/7K/8/8/8/8/4q3/1k6 b - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/7K/8/8/8/8/4q3/1k6 b - - 0 1
+plan13_t1 oracle sample: shard=1 12 fen="8/7K/8/8/8/8/4q3/1k6 b - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=137 total_evals=166 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=2 layer_evals=89 total_evals=255 facts=3 nw=0 fact_hits=0 nw_hits=0 pathbound=3 wall=0.00s
+plan13_t1 oracle sample: shard=1 13 fen="8/K2k4/8/8/8/8/8/5q2 b - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/K2k4/8/8/8/8/8/5q2 b - - 0 1
+plan13_t1 oracle sample: shard=1 13 fen="8/K2k4/8/8/8/8/8/5q2 b - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=2 layer_evals=26 total_evals=26 facts=1 nw=0 fact_hits=0 nw_hits=0 pathbound=1 wall=0.00s
+plan13_t1 oracle sample: shard=1 14 fen="3K4/8/8/8/q7/8/8/5k2 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 3K4/8/8/8/q7/8/8/5k2 b - - 0 1
+plan13_t1 oracle sample: shard=1 14 fen="3K4/8/8/8/q7/8/8/5k2 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=148 total_evals=177 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=2 layer_evals=97 total_evals=274 facts=4 nw=0 fact_hits=0 nw_hits=0 pathbound=4 wall=0.00s
+plan13_t1 oracle sample: shard=1 15 fen="1Q6/3k4/8/8/8/8/4K3/8 w - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 1Q6/3k4/8/8/8/8/4K3/8 w - - 0 1
+plan13_t1 oracle sample: shard=1 15 fen="1Q6/3k4/8/8/8/8/4K3/8 w - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=26 total_evals=26 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=154 total_evals=180 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=3476 total_evals=3656 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=20483 total_evals=24139 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=427239 total_evals=451378 facts=93 nw=0 fact_hits=0 nw_hits=0 pathbound=477 wall=0.34s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2365059 total_evals=2816437 facts=93 nw=0 fact_hits=25 nw_hits=0 pathbound=895 wall=2.51s
+plan13_t1 oracle sample: shard=1 16 fen="k7/8/4K3/8/8/8/3q4/8 b - - 0 1" kind=win R=UNKNOWN lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 16 fen="k7/8/4K3/8/8/8/3q4/8 b - - 0 1" kind=win R=UNKNOWN lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=30 total_evals=30 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=166 total_evals=196 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4207 total_evals=4403 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.02s
+plan13_t1 layer: d=4 root_val=0 layer_evals=24639 total_evals=29042 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.04s
+plan13_t1 layer: d=5 root_val=0 layer_evals=550715 total_evals=579757 facts=187 nw=0 fact_hits=0 nw_hits=0 pathbound=586 wall=0.48s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2420248 total_evals=3000005 facts=187 nw=0 fact_hits=57 nw_hits=0 pathbound=972 wall=2.68s
+plan13_t1 oracle sample: shard=1 17 fen="8/5K2/5Q2/8/8/4k3/8/8 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 17 fen="8/5K2/5Q2/8/8/4k3/8/8 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=2 layer_evals=29 total_evals=29 facts=1 nw=0 fact_hits=0 nw_hits=0 pathbound=1 wall=0.00s
+plan13_t1 oracle sample: shard=1 18 fen="8/8/4k3/8/8/K7/8/3q4 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/8/4k3/8/8/K7/8/3q4 b - - 0 1
+plan13_t1 oracle sample: shard=1 18 fen="8/8/4k3/8/8/K7/8/3q4 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=202 total_evals=231 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5262 total_evals=5493 facts=7 nw=0 fact_hits=0 nw_hits=0 pathbound=7 wall=0.03s
+plan13_t1 layer: d=4 root_val=0 layer_evals=30355 total_evals=35848 facts=7 nw=0 fact_hits=7 nw_hits=0 pathbound=7 wall=0.05s
+plan13_t1 layer: d=5 root_val=0 layer_evals=599451 total_evals=635299 facts=194 nw=0 fact_hits=9 nw_hits=0 pathbound=563 wall=0.54s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2364705 total_evals=3000004 facts=194 nw=2 fact_hits=69 nw_hits=0 pathbound=824 wall=2.83s
+plan13_t1 oracle sample: shard=1 19 fen="8/3K4/8/4k3/8/2q5/8/8 b - - 0 1" kind=win R=UNKNOWN lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 19 fen="8/3K4/8/4k3/8/2q5/8/8 b - - 0 1" kind=win R=UNKNOWN lh=6 cand=P result=UNKNOWN
+plan13_t1 oracle progress: shard=1 20/60 contradictions=0
+plan13_t1 layer: d=1 root_val=0 layer_evals=31 total_evals=31 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=105 total_evals=136 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=2 layer_evals=99 total_evals=235 facts=4 nw=0 fact_hits=0 nw_hits=0 pathbound=4 wall=0.00s
+plan13_t1 oracle sample: shard=1 20 fen="8/8/6K1/8/8/1Q6/8/7k w - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/8/6K1/8/8/1Q6/8/7k w - - 0 1
+plan13_t1 oracle sample: shard=1 20 fen="8/8/6K1/8/8/1Q6/8/7k w - - 0 1" kind=win R=WIN_CERTIFIED lh=3 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=215 total_evals=244 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5405 total_evals=5649 facts=9 nw=0 fact_hits=0 nw_hits=0 pathbound=9 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=28783 total_evals=34432 facts=9 nw=0 fact_hits=9 nw_hits=0 pathbound=9 wall=0.02s
+plan13_t1 layer: d=5 root_val=2 layer_evals=27639 total_evals=62071 facts=66 nw=0 fact_hits=11 nw_hits=0 pathbound=84 wall=0.06s
+plan13_t1 oracle sample: shard=1 21 fen="8/4k3/8/8/8/8/2K5/6Q1 w - - 0 1" kind=win R=WIN_CERTIFIED lh=5 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/4k3/8/8/8/8/2K5/6Q1 w - - 0 1
+plan13_t1 oracle sample: shard=1 21 fen="8/4k3/8/8/8/8/2K5/6Q1 w - - 0 1" kind=win R=WIN_CERTIFIED lh=5 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=30 total_evals=30 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=201 total_evals=231 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5038 total_evals=5269 facts=12 nw=0 fact_hits=0 nw_hits=0 pathbound=12 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=25364 total_evals=30633 facts=12 nw=0 fact_hits=12 nw_hits=0 pathbound=12 wall=0.02s
+plan13_t1 layer: d=5 root_val=2 layer_evals=296 total_evals=30929 facts=20 nw=0 fact_hits=13 nw_hits=0 pathbound=20 wall=0.02s
+plan13_t1 oracle sample: shard=1 22 fen="3k4/8/8/5q2/8/1K6/8/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=5 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 3k4/8/8/5q2/8/1K6/8/8 b - - 0 1
+plan13_t1 oracle sample: shard=1 22 fen="3k4/8/8/5q2/8/1K6/8/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=5 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=2 layer_evals=28 total_evals=28 facts=1 nw=0 fact_hits=0 nw_hits=0 pathbound=1 wall=0.00s
+plan13_t1 oracle sample: shard=1 23 fen="8/5q2/k6K/8/8/8/8/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/5q2/k6K/8/8/8/8/8 b - - 0 1
+plan13_t1 oracle sample: shard=1 23 fen="8/5q2/k6K/8/8/8/8/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=2 layer_evals=29 total_evals=29 facts=1 nw=0 fact_hits=0 nw_hits=0 pathbound=1 wall=0.00s
+plan13_t1 oracle sample: shard=1 24 fen="8/8/8/8/1k6/8/q7/4K3 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/8/8/8/1k6/8/q7/4K3 b - - 0 1
+plan13_t1 oracle sample: shard=1 24 fen="8/8/8/8/1k6/8/q7/4K3 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=31 total_evals=31 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=192 total_evals=223 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4981 total_evals=5204 facts=9 nw=0 fact_hits=0 nw_hits=0 pathbound=9 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=26210 total_evals=31414 facts=9 nw=0 fact_hits=9 nw_hits=0 pathbound=9 wall=0.04s
+plan13_t1 layer: d=5 root_val=0 layer_evals=459341 total_evals=490755 facts=255 nw=0 fact_hits=10 nw_hits=0 pathbound=747 wall=0.39s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2509246 total_evals=3000001 facts=255 nw=2 fact_hits=116 nw_hits=0 pathbound=1237 wall=2.67s
+plan13_t1 oracle sample: shard=1 25 fen="8/2K5/8/8/8/1k6/6Q1/8 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 25 fen="8/2K5/8/8/8/1k6/6Q1/8 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=26 total_evals=26 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=169 total_evals=195 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=3982 total_evals=4177 facts=11 nw=0 fact_hits=0 nw_hits=0 pathbound=11 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=19612 total_evals=23789 facts=11 nw=0 fact_hits=11 nw_hits=0 pathbound=11 wall=0.04s
+plan13_t1 layer: d=5 root_val=2 layer_evals=290 total_evals=24079 facts=18 nw=0 fact_hits=12 nw_hits=0 pathbound=19 wall=0.04s
+plan13_t1 oracle sample: shard=1 26 fen="8/8/kq6/8/8/8/3K4/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=5 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/8/kq6/8/8/8/3K4/8 b - - 0 1
+plan13_t1 oracle sample: shard=1 26 fen="8/8/kq6/8/8/8/3K4/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=5 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=2 layer_evals=31 total_evals=31 facts=1 nw=0 fact_hits=0 nw_hits=0 pathbound=1 wall=0.00s
+plan13_t1 oracle sample: shard=1 27 fen="8/8/8/7K/8/3k4/6q1/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/8/8/7K/8/3k4/6q1/8 b - - 0 1
+plan13_t1 oracle sample: shard=1 27 fen="8/8/8/7K/8/3k4/6q1/8 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=27 total_evals=27 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=135 total_evals=162 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=3070 total_evals=3232 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=16868 total_evals=20100 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=387224 total_evals=407324 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.30s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2244839 total_evals=2652163 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=2.01s
+plan13_t1 oracle sample: shard=1 28 fen="8/K4Q2/8/4k3/8/8/8/8 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 28 fen="8/K4Q2/8/4k3/8/8/8/8 w - - 0 1" kind=win R=UNKNOWN lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=2 layer_evals=28 total_evals=28 facts=1 nw=0 fact_hits=0 nw_hits=0 pathbound=1 wall=0.00s
+plan13_t1 oracle sample: shard=1 29 fen="8/1k6/1q6/8/8/8/8/5K2 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=L result=CLAIM_UNCERTIFIED
+plan13_t1 oracle DOWNGRADED: L uncertified claim at 8/1k6/1q6/8/8/8/8/5K2 b - - 0 1
+plan13_t1 oracle sample: shard=1 29 fen="8/1k6/1q6/8/8/8/8/5K2 b - - 0 1" kind=win R=WIN_CERTIFIED lh=1 cand=P result=WIN_CERTIFIED
+plan13_t1 layer: d=1 root_val=0 layer_evals=24 total_evals=24 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=189 total_evals=213 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4666 total_evals=4879 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=31003 total_evals=35882 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=715325 total_evals=751207 facts=333 nw=0 fact_hits=0 nw_hits=0 pathbound=982 wall=0.60s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2248824 total_evals=3000031 facts=333 nw=5 fact_hits=37 nw_hits=0 pathbound=1468 wall=2.67s
+plan13_t1 oracle sample: shard=1 30 fen="7q/8/8/4k3/8/5K2/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 30 fen="7q/8/8/4k3/8/5K2/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=26 total_evals=26 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=92 total_evals=118 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=1768 total_evals=1886 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=9262 total_evals=11148 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=206037 total_evals=217185 facts=31 nw=0 fact_hits=0 nw_hits=0 pathbound=91 wall=0.18s
+plan13_t1 layer: d=6 root_val=0 layer_evals=1053367 total_evals=1270552 facts=31 nw=1 fact_hits=7 nw_hits=0 pathbound=169 wall=1.11s
+plan13_t1 oracle sample: shard=1 31 fen="1q6/8/8/8/8/k7/8/K7 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 31 fen="1q6/8/8/8/8/k7/8/K7 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=31 total_evals=31 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=221 total_evals=252 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5772 total_evals=6024 facts=5 nw=0 fact_hits=0 nw_hits=0 pathbound=5 wall=0.01s
+plan13_t1 layer: d=4 root_val=0 layer_evals=30715 total_evals=36739 facts=5 nw=0 fact_hits=5 nw_hits=0 pathbound=5 wall=0.03s
+plan13_t1 layer: d=5 root_val=0 layer_evals=700308 total_evals=737047 facts=102 nw=0 fact_hits=7 nw_hits=0 pathbound=318 wall=0.62s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2262955 total_evals=3000002 facts=102 nw=1 fact_hits=19 nw_hits=0 pathbound=458 wall=3.06s
+plan13_t1 oracle sample: shard=1 32 fen="8/2k1K3/8/8/6q1/8/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 32 fen="8/2k1K3/8/8/6q1/8/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=28 total_evals=28 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=199 total_evals=227 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4834 total_evals=5061 facts=3 nw=0 fact_hits=0 nw_hits=0 pathbound=3 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=25772 total_evals=30833 facts=3 nw=0 fact_hits=3 nw_hits=0 pathbound=3 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=563619 total_evals=594452 facts=76 nw=0 fact_hits=3 nw_hits=0 pathbound=371 wall=0.56s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2405551 total_evals=3000003 facts=76 nw=1 fact_hits=16 nw_hits=0 pathbound=624 wall=2.88s
+plan13_t1 oracle sample: shard=1 33 fen="5k2/3K4/8/8/8/1q6/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 33 fen="5k2/3K4/8/8/8/1q6/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=102 total_evals=131 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=2151 total_evals=2282 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=11900 total_evals=14182 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=287295 total_evals=301477 facts=71 nw=0 fact_hits=0 nw_hits=0 pathbound=248 wall=0.22s
+plan13_t1 layer: d=6 root_val=0 layer_evals=1469909 total_evals=1771386 facts=71 nw=1 fact_hits=2 nw_hits=0 pathbound=490 wall=1.61s
+plan13_t1 oracle sample: shard=1 34 fen="7K/5k2/8/8/8/8/8/1q6 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 34 fen="7K/5k2/8/8/8/8/8/1q6 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=160 total_evals=189 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=3873 total_evals=4062 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=23685 total_evals=27747 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.04s
+plan13_t1 layer: d=5 root_val=0 layer_evals=552675 total_evals=580422 facts=93 nw=0 fact_hits=0 nw_hits=0 pathbound=336 wall=0.47s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2419581 total_evals=3000003 facts=93 nw=2 fact_hits=5 nw_hits=0 pathbound=521 wall=2.74s
+plan13_t1 oracle sample: shard=1 35 fen="2Q5/8/8/8/8/6K1/8/5k2 w - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 35 fen="2Q5/8/8/8/8/6K1/8/5k2 w - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=31 total_evals=31 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=186 total_evals=217 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4720 total_evals=4937 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=28640 total_evals=33577 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=707302 total_evals=740879 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.62s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2259126 total_evals=3000005 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=2.62s
+plan13_t1 oracle sample: shard=1 36 fen="8/8/1Q6/4k3/6K1/8/8/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 36 fen="8/8/1Q6/4k3/6K1/8/8/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=178 total_evals=207 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4348 total_evals=4555 facts=10 nw=0 fact_hits=0 nw_hits=0 pathbound=10 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=24432 total_evals=28987 facts=10 nw=0 fact_hits=10 nw_hits=0 pathbound=10 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=489944 total_evals=518931 facts=201 nw=0 fact_hits=12 nw_hits=0 pathbound=496 wall=0.42s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2481072 total_evals=3000003 facts=201 nw=2 fact_hits=106 nw_hits=0 pathbound=754 wall=2.75s
+plan13_t1 oracle sample: shard=1 37 fen="Q7/8/3K4/8/1k6/8/8/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 37 fen="Q7/8/3K4/8/1k6/8/8/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=33 total_evals=33 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=200 total_evals=233 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5039 total_evals=5272 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=30230 total_evals=35502 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=747442 total_evals=782944 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.60s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2217061 total_evals=3000005 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=2.58s
+plan13_t1 oracle sample: shard=1 38 fen="8/4k3/8/4K3/8/5q2/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 38 fen="8/4k3/8/4K3/8/5q2/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=26 total_evals=26 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=117 total_evals=143 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=2511 total_evals=2654 facts=11 nw=0 fact_hits=0 nw_hits=0 pathbound=11 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=11496 total_evals=14150 facts=11 nw=0 fact_hits=11 nw_hits=0 pathbound=11 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=226719 total_evals=240869 facts=100 nw=0 fact_hits=14 nw_hits=0 pathbound=337 wall=0.20s
+plan13_t1 layer: d=6 root_val=0 layer_evals=1216705 total_evals=1457574 facts=100 nw=1 fact_hits=45 nw_hits=0 pathbound=585 wall=1.37s
+plan13_t1 oracle sample: shard=1 39 fen="8/8/8/7Q/8/8/8/4K1k1 w - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 39 fen="8/8/8/7Q/8/8/8/4K1k1 w - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 oracle progress: shard=1 40/60 contradictions=0
+plan13_t1 layer: d=1 root_val=0 layer_evals=31 total_evals=31 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=214 total_evals=245 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5538 total_evals=5783 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=34583 total_evals=40366 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=828771 total_evals=869137 facts=190 nw=0 fact_hits=0 nw_hits=0 pathbound=727 wall=0.80s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2130864 total_evals=3000001 facts=190 nw=2 fact_hits=19 nw_hits=0 pathbound=1022 wall=2.99s
+plan13_t1 oracle sample: shard=1 40 fen="8/8/4k3/8/5K2/8/2q5/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 40 fen="8/8/4k3/8/5K2/8/2q5/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=23 total_evals=23 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=179 total_evals=202 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4217 total_evals=4419 facts=2 nw=0 fact_hits=0 nw_hits=0 pathbound=2 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=24693 total_evals=29112 facts=2 nw=0 fact_hits=2 nw_hits=0 pathbound=2 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=525070 total_evals=554182 facts=94 nw=0 fact_hits=2 nw_hits=0 pathbound=312 wall=0.43s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2445827 total_evals=3000009 facts=94 nw=1 fact_hits=11 nw_hits=0 pathbound=504 wall=2.72s
+plan13_t1 oracle sample: shard=1 41 fen="Q7/8/8/8/8/K7/2k5/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 41 fen="Q7/8/8/8/8/K7/2k5/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=21 total_evals=21 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=106 total_evals=127 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=2290 total_evals=2417 facts=11 nw=0 fact_hits=0 nw_hits=0 pathbound=11 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=11178 total_evals=13595 facts=11 nw=0 fact_hits=11 nw_hits=0 pathbound=11 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=218747 total_evals=232342 facts=129 nw=0 fact_hits=17 nw_hits=0 pathbound=262 wall=0.20s
+plan13_t1 layer: d=6 root_val=0 layer_evals=1227040 total_evals=1459382 facts=130 nw=3 fact_hits=80 nw_hits=0 pathbound=427 wall=1.34s
+plan13_t1 oracle sample: shard=1 42 fen="7q/5K2/8/7k/8/8/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 42 fen="7q/5K2/8/7k/8/8/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=223 total_evals=252 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5613 total_evals=5865 facts=8 nw=0 fact_hits=0 nw_hits=0 pathbound=8 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=33241 total_evals=39106 facts=8 nw=0 fact_hits=8 nw_hits=0 pathbound=8 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=635137 total_evals=674243 facts=250 nw=0 fact_hits=10 nw_hits=0 pathbound=791 wall=0.53s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2325761 total_evals=3000004 facts=250 nw=2 fact_hits=55 nw_hits=0 pathbound=1162 wall=2.82s
+plan13_t1 oracle sample: shard=1 43 fen="8/4K3/8/3k4/8/8/8/q7 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 43 fen="8/4K3/8/3k4/8/8/8/q7 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=26 total_evals=26 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=117 total_evals=143 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=2521 total_evals=2664 facts=11 nw=0 fact_hits=0 nw_hits=0 pathbound=11 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=11705 total_evals=14369 facts=11 nw=0 fact_hits=11 nw_hits=0 pathbound=11 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=237432 total_evals=251801 facts=118 nw=0 fact_hits=11 nw_hits=0 pathbound=355 wall=0.20s
+plan13_t1 layer: d=6 root_val=0 layer_evals=1284650 total_evals=1536451 facts=118 nw=1 fact_hits=59 nw_hits=0 pathbound=615 wall=1.40s
+plan13_t1 oracle sample: shard=1 44 fen="8/8/8/8/7k/8/7K/1q6 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 44 fen="8/8/8/8/7k/8/7K/1q6 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=33 total_evals=33 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=200 total_evals=233 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5039 total_evals=5272 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.01s
+plan13_t1 layer: d=4 root_val=0 layer_evals=30230 total_evals=35502 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.03s
+plan13_t1 layer: d=5 root_val=0 layer_evals=747442 total_evals=782944 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.60s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2217057 total_evals=3000001 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=2.43s
+plan13_t1 oracle sample: shard=1 45 fen="8/8/8/8/1k1K4/5q2/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 45 fen="8/8/8/8/1k1K4/5q2/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=221 total_evals=250 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5636 total_evals=5886 facts=3 nw=0 fact_hits=0 nw_hits=0 pathbound=3 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=31416 total_evals=37302 facts=3 nw=0 fact_hits=3 nw_hits=0 pathbound=3 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=680762 total_evals=718064 facts=281 nw=0 fact_hits=3 nw_hits=0 pathbound=810 wall=0.55s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2281937 total_evals=3000001 facts=281 nw=1 fact_hits=34 nw_hits=0 pathbound=1149 wall=2.71s
+plan13_t1 oracle sample: shard=1 46 fen="8/2K1k3/8/8/8/8/q7/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 46 fen="8/2K1k3/8/8/8/8/q7/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=31 total_evals=31 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=144 total_evals=175 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=3446 total_evals=3621 facts=1 nw=0 fact_hits=0 nw_hits=0 pathbound=1 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=19953 total_evals=23574 facts=1 nw=0 fact_hits=1 nw_hits=0 pathbound=1 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=474719 total_evals=498293 facts=70 nw=0 fact_hits=1 nw_hits=0 pathbound=295 wall=0.40s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2501711 total_evals=3000004 facts=70 nw=0 fact_hits=17 nw_hits=0 pathbound=544 wall=2.72s
+plan13_t1 oracle sample: shard=1 47 fen="4k3/2K5/8/8/8/8/5Q2/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 47 fen="4k3/2K5/8/8/8/8/5Q2/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=26 total_evals=26 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=179 total_evals=205 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4148 total_evals=4353 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=26148 total_evals=30501 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=614047 total_evals=644548 facts=87 nw=0 fact_hits=0 nw_hits=0 pathbound=239 wall=0.59s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2355458 total_evals=3000006 facts=87 nw=3 fact_hits=38 nw_hits=0 pathbound=359 wall=3.00s
+plan13_t1 oracle sample: shard=1 48 fen="8/q7/5K1k/8/8/8/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 48 fen="8/q7/5K1k/8/8/8/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=26 total_evals=26 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=180 total_evals=206 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4227 total_evals=4433 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=26766 total_evals=31199 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=634061 total_evals=665260 facts=93 nw=0 fact_hits=0 nw_hits=0 pathbound=345 wall=0.53s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2334745 total_evals=3000005 facts=93 nw=2 fact_hits=7 nw_hits=0 pathbound=555 wall=2.76s
+plan13_t1 oracle sample: shard=1 49 fen="4q3/8/8/8/8/5K2/8/5k2 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 49 fen="4q3/8/8/8/8/5K2/8/5k2 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=32 total_evals=32 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=200 total_evals=232 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=4777 total_evals=5009 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=29736 total_evals=34745 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=671016 total_evals=705761 facts=168 nw=0 fact_hits=0 nw_hits=0 pathbound=776 wall=0.58s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2294243 total_evals=3000004 facts=168 nw=4 fact_hits=50 nw_hits=0 pathbound=1209 wall=2.71s
+plan13_t1 oracle sample: shard=1 50 fen="8/8/2K5/k7/3q4/8/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 50 fen="8/8/2K5/k7/3q4/8/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=27 total_evals=27 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=141 total_evals=168 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=3384 total_evals=3552 facts=3 nw=0 fact_hits=0 nw_hits=0 pathbound=3 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=19428 total_evals=22980 facts=3 nw=0 fact_hits=3 nw_hits=0 pathbound=3 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=444105 total_evals=467085 facts=113 nw=0 fact_hits=3 nw_hits=0 pathbound=487 wall=0.35s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2457941 total_evals=2925026 facts=113 nw=0 fact_hits=16 nw_hits=0 pathbound=925 wall=2.63s
+plan13_t1 oracle sample: shard=1 51 fen="8/8/8/8/q7/8/2k5/4K3 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 51 fen="8/8/8/8/q7/8/2k5/4K3 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=27 total_evals=27 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=198 total_evals=225 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5041 total_evals=5266 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.01s
+plan13_t1 layer: d=4 root_val=0 layer_evals=31311 total_evals=36577 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=771031 total_evals=807608 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.61s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2192393 total_evals=3000001 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=2.37s
+plan13_t1 oracle sample: shard=1 52 fen="8/8/8/4k1K1/8/8/8/2Q5 w - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 52 fen="8/8/8/4k1K1/8/8/8/2Q5 w - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=223 total_evals=252 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5613 total_evals=5865 facts=8 nw=0 fact_hits=0 nw_hits=0 pathbound=8 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=33241 total_evals=39106 facts=8 nw=0 fact_hits=8 nw_hits=0 pathbound=8 wall=0.06s
+plan13_t1 layer: d=5 root_val=0 layer_evals=635246 total_evals=674352 facts=249 nw=0 fact_hits=9 nw_hits=0 pathbound=792 wall=0.57s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2325650 total_evals=3000002 facts=249 nw=2 fact_hits=57 nw_hits=0 pathbound=1170 wall=2.78s
+plan13_t1 oracle sample: shard=1 53 fen="8/3k4/8/4K3/8/8/8/7Q w - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 53 fen="8/3k4/8/4K3/8/8/8/7Q w - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=26 total_evals=26 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=126 total_evals=152 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=2678 total_evals=2830 facts=4 nw=0 fact_hits=0 nw_hits=0 pathbound=4 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=14110 total_evals=16940 facts=4 nw=0 fact_hits=4 nw_hits=0 pathbound=4 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=295051 total_evals=311991 facts=53 nw=0 fact_hits=5 nw_hits=0 pathbound=291 wall=0.22s
+plan13_t1 layer: d=6 root_val=0 layer_evals=1534256 total_evals=1846247 facts=53 nw=1 fact_hits=15 nw_hits=0 pathbound=557 wall=1.62s
+plan13_t1 oracle sample: shard=1 54 fen="7K/8/7k/8/8/8/4Q3/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 54 fen="7K/8/7k/8/8/8/4Q3/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=31 total_evals=31 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=212 total_evals=243 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5489 total_evals=5732 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=33402 total_evals=39134 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=826139 total_evals=865273 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.64s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2134729 total_evals=3000002 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=2.41s
+plan13_t1 oracle sample: shard=1 55 fen="8/2Q5/8/8/4k3/8/4K3/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 55 fen="8/2Q5/8/8/4k3/8/4K3/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=30 total_evals=30 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=168 total_evals=198 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=3938 total_evals=4136 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=23254 total_evals=27390 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=548976 total_evals=576366 facts=56 nw=0 fact_hits=0 nw_hits=0 pathbound=253 wall=0.47s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2423638 total_evals=3000004 facts=56 nw=1 fact_hits=17 nw_hits=0 pathbound=454 wall=2.64s
+plan13_t1 oracle sample: shard=1 56 fen="8/8/K7/8/2k5/4Q3/8/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 56 fen="8/8/K7/8/2k5/4Q3/8/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=213 total_evals=242 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5368 total_evals=5610 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.01s
+plan13_t1 layer: d=4 root_val=0 layer_evals=34889 total_evals=40499 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.03s
+plan13_t1 layer: d=5 root_val=0 layer_evals=859215 total_evals=899714 facts=67 nw=0 fact_hits=0 nw_hits=0 pathbound=280 wall=0.73s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2100293 total_evals=3000007 facts=67 nw=2 fact_hits=1 nw_hits=0 pathbound=426 wall=2.75s
+plan13_t1 oracle sample: shard=1 57 fen="8/8/1k6/8/2K5/8/8/7q b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 57 fen="8/8/1k6/8/2K5/8/8/7q b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=28 total_evals=28 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=198 total_evals=226 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=5082 total_evals=5308 facts=9 nw=0 fact_hits=0 nw_hits=0 pathbound=9 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=27542 total_evals=32850 facts=9 nw=0 fact_hits=9 nw_hits=0 pathbound=9 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=612190 total_evals=645040 facts=136 nw=0 fact_hits=12 nw_hits=0 pathbound=383 wall=0.55s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2354961 total_evals=3000001 facts=136 nw=0 fact_hits=55 nw_hits=0 pathbound=597 wall=2.52s
+plan13_t1 oracle sample: shard=1 58 fen="8/4k3/6K1/8/6Q1/8/8/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 58 fen="8/4k3/6K1/8/6Q1/8/8/8 w - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 layer: d=1 root_val=0 layer_evals=33 total_evals=33 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=235 total_evals=268 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=6247 total_evals=6515 facts=6 nw=0 fact_hits=0 nw_hits=0 pathbound=6 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=33228 total_evals=39743 facts=6 nw=0 fact_hits=6 nw_hits=0 pathbound=6 wall=0.02s
+plan13_t1 layer: d=5 root_val=0 layer_evals=760208 total_evals=799951 facts=109 nw=0 fact_hits=8 nw_hits=0 pathbound=365 wall=0.45s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2200055 total_evals=3000006 facts=109 nw=1 fact_hits=12 nw_hits=0 pathbound=511 wall=1.88s
+plan13_t1 oracle sample: shard=1 59 fen="8/4K1k1/8/8/2q5/8/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=L result=UNKNOWN
+plan13_t1 oracle sample: shard=1 59 fen="8/4K1k1/8/8/2q5/8/8/8 b - - 0 1" kind=draw R=DRAW lh=6 cand=P result=UNKNOWN
+plan13_t1 oracle progress: shard=1 60/60 contradictions=0
+plan13_t1 oracle summary: shard=1/4 samples=60 contradictions=0 downgraded=20 R_win_cert=20 R_draw_claims=30 unknown_or_bounded=90

@@ -1,0 +1,55 @@
+=== plan13 T0 confirmation 2026-09-16T12:27:54+00:00 ===
+[bounded_search] chunk done: work_done=500009 next_chunk=1000000 elapsed=0.062s max_depth=11 nodes=201482 nps=3228898
+[bounded_search] chunk done: work_done=500011 next_chunk=1000000 elapsed=0.118s max_depth=9 nodes=369989 nps=3146697
+[bounded_search] chunk done: work_done=500000 next_chunk=1000000 elapsed=0.170s max_depth=7 nodes=526480 nps=3103465
+[bounded_search] chunk done: work_done=500012 next_chunk=2000000 elapsed=0.223s max_depth=7 nodes=741940 nps=3329242
+plan13_run result: fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" mode=default outcome=Win exit=Complete nodes=741940 child_evals=2047932 fo_child_evals=47830 refine_rounds=3 refine_evals=2000102 wall=0.22s pv_len=9 pv_status=Unproven
+plan13_run pv: e1e6 d5d4 e6e4 d4c3 e4d3 c3b2 d3c3 b2b1 c3b2
+[bounded_search] chunk done: work_done=500011 next_chunk=1000000 elapsed=0.066s max_depth=20 nodes=48268 nps=732059
+[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=0.204s max_depth=56 nodes=156808 nps=768535
+[bounded_search] chunk done: work_done=2000011 next_chunk=4000000 elapsed=0.434s max_depth=74 nodes=437016 nps=1007122
+[bounded_search] chunk done: work_done=4000001 next_chunk=8000000 elapsed=1.021s max_depth=93 nodes=858411 nps=840954
+[bounded_search] chunk done: work_done=8000004 next_chunk=16000000 elapsed=2.061s max_depth=96 nodes=1812648 nps=879696
+[bounded_search] chunk done: work_done=16000000 next_chunk=32000000 elapsed=3.950s max_depth=96 nodes=3874308 nps=980781
+[bounded_search] chunk done: work_done=500002 next_chunk=1000000 elapsed=4.001s max_depth=8 nodes=3950920 nps=987403
+[bounded_search] chunk done: work_done=1000002 next_chunk=2000000 elapsed=4.092s max_depth=8 nodes=4146485 nps=1013406
+[bounded_search] chunk done: work_done=2000011 next_chunk=4000000 elapsed=4.272s max_depth=8 nodes=4534533 nps=1061518
+[bounded_search] chunk done: work_done=4000001 next_chunk=8000000 elapsed=4.629s max_depth=8 nodes=5320471 nps=1149449
+[bounded_search] chunk done: work_done=375914 next_chunk=16000000 elapsed=4.668s max_depth=8 nodes=5395869 nps=1155822
+plan13_run result: fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" mode=default outcome=Win exit=Complete nodes=5395869 child_evals=39383178 fo_child_evals=31503722 refine_rounds=2 refine_evals=7879456 wall=4.67s pv_len=10 pv_status=Unproven
+plan13_run pv: e6f5 c6d6 f5g6 d6d5 e1e6 d5c5 e6e4 c5d6 e4e6 d6c5
+[bounded_search] chunk done: work_done=500000 next_chunk=1000000 elapsed=0.066s max_depth=25 nodes=49245 nps=749741
+[bounded_search] chunk done: work_done=1000001 next_chunk=2000000 elapsed=0.207s max_depth=36 nodes=154065 nps=743344
+[bounded_search] chunk done: work_done=2000003 next_chunk=4000000 elapsed=0.468s max_depth=44 nodes=398340 nps=851626
+[bounded_search] chunk done: work_done=4000001 next_chunk=8000000 elapsed=0.984s max_depth=78 nodes=893492 nps=907574
+[bounded_search] chunk done: work_done=8000021 next_chunk=16000000 elapsed=2.033s max_depth=98 nodes=1859228 nps=914427
+[bounded_search] chunk done: work_done=16000007 next_chunk=32000000 elapsed=3.864s max_depth=98 nodes=4222523 nps=1092683
+[bounded_search] chunk done: work_done=32000000 next_chunk=64000000 elapsed=7.142s max_depth=98 nodes=9314269 nps=1304195
+[bounded_search] chunk done: work_done=64000001 next_chunk=128000000 elapsed=13.465s max_depth=98 nodes=19860138 nps=1474972
+[bounded_search] chunk done: work_done=128000003 next_chunk=256000000 elapsed=25.719s max_depth=98 nodes=42682820 nps=1659607
+[bounded_search] chunk done: work_done=500007 next_chunk=1000000 elapsed=25.932s max_depth=23 nodes=43072812 nps=1661017
+[bounded_search] chunk done: work_done=500000 next_chunk=1000000 elapsed=26.080s max_depth=17 nodes=43443742 nps=1665815
+[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=26.170s max_depth=17 nodes=43733882 nps=1671174
+[bounded_search] chunk done: work_done=2000018 next_chunk=4000000 elapsed=26.351s max_depth=17 nodes=44235493 nps=1678711
+[bounded_search] chunk done: work_done=4000001 next_chunk=8000000 elapsed=26.739s max_depth=17 nodes=45477349 nps=1700759
+[bounded_search] chunk done: work_done=8000000 next_chunk=16000000 elapsed=27.522s max_depth=17 nodes=48138172 nps=1749090
+[bounded_search] chunk done: work_done=16000020 next_chunk=32000000 elapsed=29.088s max_depth=17 nodes=53685817 nps=1845631
+[bounded_search] chunk done: work_done=32000005 next_chunk=64000000 elapsed=32.354s max_depth=17 nodes=65248109 nps=2016692
+[bounded_search] chunk done: work_done=761536 next_chunk=128000000 elapsed=32.422s max_depth=17 nodes=65460435 nps=2019033
+plan13_run result: fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" mode=default outcome=Win exit=Complete nodes=65460435 child_evals=322826558 fo_child_evals=257046258 refine_rounds=3 refine_evals=65780300 wall=32.42s pv_len=19 pv_status=Unproven
+plan13_run pv: d7e7 b7c8 e7f8 c8d7 f8g7 d7c6 e1b4 c6d5 b4e4 d5c5 e4d4 c5b5 d4b4 b5c6 b4d6 c6b7 d6b6 b7c8 b6c7
+[bounded_search] chunk done: work_done=500000 next_chunk=1000000 elapsed=0.056s max_depth=15 nodes=100677 nps=1797639
+[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=0.167s max_depth=15 nodes=503253 nps=3009705
+[bounded_search] chunk done: work_done=2000011 next_chunk=4000000 elapsed=0.382s max_depth=15 nodes=1316867 nps=3444401
+[bounded_search] chunk done: work_done=4000000 next_chunk=8000000 elapsed=0.809s max_depth=15 nodes=2976082 nps=3677988
+[bounded_search] chunk done: work_done=8000007 next_chunk=16000000 elapsed=1.654s max_depth=15 nodes=6109274 nps=3694141
+[bounded_search] chunk done: work_done=16000013 next_chunk=32000000 elapsed=3.363s max_depth=15 nodes=12680495 nps=3770144
+[bounded_search] chunk done: work_done=32000005 next_chunk=64000000 elapsed=6.721s max_depth=15 nodes=25470550 nps=3789732
+[bounded_search] chunk done: work_done=64000000 next_chunk=128000000 elapsed=13.533s max_depth=15 nodes=50917613 nps=3762611
+[bounded_search] chunk done: work_done=128000025 next_chunk=256000000 elapsed=26.703s max_depth=15 nodes=98517479 nps=3689329
+[bounded_search] chunk done: work_done=256000000 next_chunk=512000000 elapsed=54.596s max_depth=15 nodes=199667791 nps=3657200
+[bounded_search] chunk done: work_done=512000000 next_chunk=1024000000 elapsed=109.758s max_depth=15 nodes=402436763 nps=3666581
+[bounded_search] chunk done: work_done=1024000005 next_chunk=2048000000 elapsed=214.165s max_depth=15 nodes=796353729 nps=3718411
+plan13_run result: fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" mode=depth-15 outcome=Draw exit=Timeout nodes=1138040832 child_evals=2915855192 fo_child_evals=0 refine_rounds=0 refine_evals=0 wall=300.00s pv_len=0 pv_status=None
+plan13_run pv: 
+=== T0 done 2026-09-16T12:33:31+00:00 ===

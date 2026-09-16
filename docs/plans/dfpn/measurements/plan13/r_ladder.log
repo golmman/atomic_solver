@@ -1,0 +1,42 @@
+=== R ladder matrix, table-free record (no --qtable) ===
+plan13_t1: fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" cand=R horizons=[14, 15, 17] eval_cap=400000000 wall_cap=120
+plan13_t1 cand=R fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=14 result=UNKNOWN evals=5827440 scans=117204533 region=420532 dtm=15 wall=0.67s cert_lines=7 cert_mates=5 cert_repeats=0 cert_exits=1 cert_maxplies=11 cert_wall=0.00s table_mismatches=0 reason=cert-fail
+plan13_t1 cand=R fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=15 result=WIN_CERTIFIED evals=5827440 scans=117204533 region=420532 dtm=15 wall=0.67s cert_lines=2815 cert_mates=1655 cert_repeats=0 cert_exits=0 cert_maxplies=15 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=17 result=WIN_CERTIFIED evals=5827440 scans=117204533 region=420532 dtm=15 wall=0.67s cert_lines=2815 cert_mates=1655 cert_repeats=0 cert_exits=0 cert_maxplies=15 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R total wall=0.67s
+plan13_t1: fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" cand=R horizons=[12, 13, 15] eval_cap=400000000 wall_cap=120
+plan13_t1 cand=R fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" horizon=12 result=UNKNOWN evals=5827440 scans=117094152 region=420532 dtm=13 wall=0.67s cert_lines=95 cert_mates=58 cert_repeats=0 cert_exits=1 cert_maxplies=11 cert_wall=0.00s table_mismatches=0 reason=cert-fail
+plan13_t1 cand=R fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" horizon=13 result=WIN_CERTIFIED evals=5827440 scans=117094152 region=420532 dtm=13 wall=0.67s cert_lines=800 cert_mates=472 cert_repeats=0 cert_exits=0 cert_maxplies=13 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" horizon=15 result=WIN_CERTIFIED evals=5827440 scans=117094152 region=420532 dtm=13 wall=0.67s cert_lines=800 cert_mates=472 cert_repeats=0 cert_exits=0 cert_maxplies=13 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R total wall=0.68s
+plan13_t1: fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" cand=R horizons=[10, 11, 13] eval_cap=400000000 wall_cap=120
+plan13_t1 cand=R fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" horizon=10 result=UNKNOWN evals=5827440 scans=111012717 region=420532 dtm=11 wall=0.75s cert_lines=76 cert_mates=46 cert_repeats=0 cert_exits=1 cert_maxplies=9 cert_wall=0.00s table_mismatches=0 reason=cert-fail
+plan13_t1 cand=R fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" horizon=11 result=WIN_CERTIFIED evals=5827440 scans=111012717 region=420532 dtm=11 wall=0.75s cert_lines=477 cert_mates=282 cert_repeats=0 cert_exits=0 cert_maxplies=11 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" horizon=13 result=WIN_CERTIFIED evals=5827440 scans=111012717 region=420532 dtm=11 wall=0.75s cert_lines=477 cert_mates=282 cert_repeats=0 cert_exits=0 cert_maxplies=11 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R total wall=0.75s
+plan13_t1: fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" cand=R horizons=[8, 9, 11] eval_cap=400000000 wall_cap=120
+plan13_t1 cand=R fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" horizon=8 result=UNKNOWN evals=5827440 scans=110771849 region=420532 dtm=9 wall=0.70s cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=1 cert_maxplies=0 cert_wall=0.00s table_mismatches=0 reason=cert-fail
+plan13_t1 cand=R fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" horizon=9 result=WIN_CERTIFIED evals=5827440 scans=110771849 region=420532 dtm=9 wall=0.70s cert_lines=23 cert_mates=12 cert_repeats=0 cert_exits=0 cert_maxplies=9 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" horizon=11 result=WIN_CERTIFIED evals=5827440 scans=110771849 region=420532 dtm=9 wall=0.70s cert_lines=23 cert_mates=12 cert_repeats=0 cert_exits=0 cert_maxplies=9 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R total wall=0.70s
+=== R ladder matrix, with qtable cross-check (validation oracle only) ===
+plan13_t1: fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" cand=R horizons=[14, 15, 17] eval_cap=400000000 wall_cap=120
+plan13_t1 cand=R fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=14 result=UNKNOWN evals=5827440 scans=117204533 region=420532 dtm=15 wall=0.70s cert_lines=7 cert_mates=5 cert_repeats=0 cert_exits=1 cert_maxplies=11 cert_wall=0.00s table_mismatches=0 reason=cert-fail
+plan13_t1 cand=R fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=15 result=WIN_CERTIFIED evals=5827440 scans=117204533 region=420532 dtm=15 wall=0.70s cert_lines=2815 cert_mates=1655 cert_repeats=0 cert_exits=0 cert_maxplies=15 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=17 result=WIN_CERTIFIED evals=5827440 scans=117204533 region=420532 dtm=15 wall=0.70s cert_lines=2815 cert_mates=1655 cert_repeats=0 cert_exits=0 cert_maxplies=15 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R total wall=0.71s
+plan13_t1: fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" cand=R horizons=[12, 13, 15] eval_cap=400000000 wall_cap=120
+plan13_t1 cand=R fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" horizon=12 result=UNKNOWN evals=5827440 scans=117094152 region=420532 dtm=13 wall=0.73s cert_lines=95 cert_mates=58 cert_repeats=0 cert_exits=1 cert_maxplies=11 cert_wall=0.00s table_mismatches=0 reason=cert-fail
+plan13_t1 cand=R fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" horizon=13 result=WIN_CERTIFIED evals=5827440 scans=117094152 region=420532 dtm=13 wall=0.73s cert_lines=800 cert_mates=472 cert_repeats=0 cert_exits=0 cert_maxplies=13 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" horizon=15 result=WIN_CERTIFIED evals=5827440 scans=117094152 region=420532 dtm=13 wall=0.73s cert_lines=800 cert_mates=472 cert_repeats=0 cert_exits=0 cert_maxplies=13 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R total wall=0.74s
+plan13_t1: fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" cand=R horizons=[10, 11, 13] eval_cap=400000000 wall_cap=120
+plan13_t1 cand=R fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" horizon=10 result=UNKNOWN evals=5827440 scans=111012717 region=420532 dtm=11 wall=0.73s cert_lines=76 cert_mates=46 cert_repeats=0 cert_exits=1 cert_maxplies=9 cert_wall=0.00s table_mismatches=0 reason=cert-fail
+plan13_t1 cand=R fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" horizon=11 result=WIN_CERTIFIED evals=5827440 scans=111012717 region=420532 dtm=11 wall=0.73s cert_lines=477 cert_mates=282 cert_repeats=0 cert_exits=0 cert_maxplies=11 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" horizon=13 result=WIN_CERTIFIED evals=5827440 scans=111012717 region=420532 dtm=11 wall=0.73s cert_lines=477 cert_mates=282 cert_repeats=0 cert_exits=0 cert_maxplies=11 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R total wall=0.73s
+plan13_t1: fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" cand=R horizons=[8, 9, 11] eval_cap=400000000 wall_cap=120
+plan13_t1 cand=R fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" horizon=8 result=UNKNOWN evals=5827440 scans=110771849 region=420532 dtm=9 wall=0.73s cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=1 cert_maxplies=0 cert_wall=0.00s table_mismatches=0 reason=cert-fail
+plan13_t1 cand=R fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" horizon=9 result=WIN_CERTIFIED evals=5827440 scans=110771849 region=420532 dtm=9 wall=0.73s cert_lines=23 cert_mates=12 cert_repeats=0 cert_exits=0 cert_maxplies=9 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" horizon=11 result=WIN_CERTIFIED evals=5827440 scans=110771849 region=420532 dtm=9 wall=0.73s cert_lines=23 cert_mates=12 cert_repeats=0 cert_exits=0 cert_maxplies=9 cert_wall=0.00s table_mismatches=0 reason=
+plan13_t1 cand=R total wall=0.73s

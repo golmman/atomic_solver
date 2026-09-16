@@ -1,0 +1,3 @@
+plan13_t1: fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" cand=P horizons=[15] eval_cap=2000000000 wall_cap=420
+plan13_t1 cand=P fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=15 result=UNKNOWN evals=17819690 nodes=16000001 wall=40.30s win_hits=0 nw_hits=0 memo_stores=17175 cut_by_rep=134754 cert_lines=0 cert_mates=0 cert_repeats=0 cert_exits=0 cert_bad=0 cert_maxplies=0 cert_wall=0.00s reason=node-cap
+plan13_t1 cand=P total wall=40.35s

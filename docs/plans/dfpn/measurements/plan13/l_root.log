@@ -1,0 +1,13 @@
+plan13_t1: fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" cand=L horizons=[14, 15, 17] eval_cap=400000000 wall_cap=240
+plan13_t1 layer: d=1 root_val=0 layer_evals=29 total_evals=29 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=2 root_val=0 layer_evals=147 total_evals=176 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=3 root_val=0 layer_evals=3552 total_evals=3728 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.00s
+plan13_t1 layer: d=4 root_val=0 layer_evals=21587 total_evals=25315 facts=0 nw=0 fact_hits=0 nw_hits=0 pathbound=0 wall=0.01s
+plan13_t1 layer: d=5 root_val=0 layer_evals=507783 total_evals=533098 facts=133 nw=0 fact_hits=0 nw_hits=0 pathbound=468 wall=0.28s
+plan13_t1 layer: d=6 root_val=0 layer_evals=2743403 total_evals=3276501 facts=133 nw=1 fact_hits=18 nw_hits=0 pathbound=891 wall=1.93s
+plan13_t1 layer: d=7 root_val=0 layer_evals=62417378 total_evals=65693879 facts=1077 nw=2 fact_hits=18 nw_hits=0 pathbound=39803 wall=34.74s
+plan13_t1 layer: d=8 root_val=0 layer_evals=334306124 total_evals=400000003 facts=1077 nw=30 fact_hits=31 nw_hits=0 pathbound=77034 wall=228.48s
+plan13_t1 cand=L fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=14 result=UNKNOWN evals=400000003 wall=228.48s fact_depth=0 cert_lines=0 cert_mates=0 cert_maxplies=0 cert_wall=0.00s reason=eval-cap
+plan13_t1 cand=L fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=15 result=UNKNOWN evals=400000003 wall=228.48s fact_depth=0 cert_lines=0 cert_mates=0 cert_maxplies=0 cert_wall=0.00s reason=eval-cap
+plan13_t1 cand=L fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" horizon=17 result=UNKNOWN evals=400000003 wall=228.48s fact_depth=0 cert_lines=0 cert_mates=0 cert_maxplies=0 cert_wall=0.00s reason=eval-cap
+plan13_t1 cand=L total wall=228.48s

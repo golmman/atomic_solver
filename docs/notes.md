@@ -201,4 +201,4 @@ solve_depth_limited with hardcoded 5 second timeout
 ---
 
 Let's work with informed assumptions where sufficient and formulate decision where necessary.
-For the decisions we should refine the plan via a list of options and trade offs.
+For the decisions compile a list options and trade offs.
