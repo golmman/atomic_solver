@@ -327,6 +327,31 @@ are labeled.
   arm-matrix + hard-gate pattern. The `egtb` 3-man tables are adopted as
   this initiative's ground-truth asset for the class (Measurement
   conventions).
+- **2026-09-15** — **plan12 Phase 0 executed (Session A; G1 GO, G2 FAIL,
+  no-go recommendation pending user checkpoint)** (`report12_phase0.md`, raw
+  logs + archived spike sources under `measurements/plan12/`, `src/`
+  byte-identical to HEAD after revert, post-revert baselines reproduce
+  bit-for-bit, fast gate green). T0: the addendum's ladder numbers are
+  last-chunk-boundary node counts and reproduce exactly (755,986,909 /
+  42,682,820 / 3,874,308 / <201,482); bounded `search_depth(·,15)` 1.106B
+  nodes Timeout (band). T1: both instruments agree — the ladder wins are
+  **genuine under path-repetition semantics**; T1a (exact-DTM retrograde
+  fixpoint over the ~420k-position region, 0 table mismatches per root)
+  certifies the rank-decreasing strategy cycle-free on every line (the naive
+  greedy winning-child strategy cycles on every root), exact dtm 15/13/11/9;
+  T1b (independent repetition-aware prover; subset-transfer memo +
+  monotonicity pruning after the planned exact-key memo measured useless)
+  proves WIN at depth = dtm on all four (root: 1.02B nodes at a 3B cap).
+  T2: the repetition machinery is inert on the class — 0% path-repetition
+  frame exits, ≤0.66% plan9-cache hits, class-1 mass ≈ 0.00%, clock
+  fragmentation = 0 events (Arm D dead); attributed mass on the G2 gate
+  object (bounded-15 root) = **8.08% of the ~2.83B-eval gap vs the ≥50%
+  gate** (Arm A2's lemma additionally vacuous: Reach(P) ≈ all ancestors on
+  the near-strongly-connected 3-man graph; Arm C fails its "cheaply"
+  precondition: T1b root proof ≈ the solver's own failing cost). The
+  dominant mass (91.3% class-3) is unsolved frontier churn — 79% of frames
+  are depth-0 leaves, 99% of evals unsolved, 0 TT-resolved frames — pointing
+  at bounded-search horizon/threshold pricing, not repetition semantics.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

@@ -1,0 +1,43 @@
+=== root dtm15 depths 15,16,17 2026-09-15T20:54:10+00:00 ===
+plan12_t1: fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" root_key=207364 table_value=2 (2=Win)
+debug: val counts UND/DRAW/WIN/LOSS = [0, 126372, 294160, 0], terminal = [0, 440, 1864, 0]
+plan12_t1 t1a: region=420532 root_value=WIN dtm=15 mismatches_vs_table=0 wall=6.60s
+plan12_t1 t1a ranked-strategy: cycle_free_all_lines=true lines=2815 mate_leaves=1655 cycles=0 budget_exhausted=0 nodes=5630 max_line_plies=16 wall=0.00s
+plan12_t1 t1a greedy-probe: cycle_free_all_lines=false lines=0 mate_leaves=0 cycles=1 budget_exhausted=0 nodes=10 max_line_plies=0 wall=0.00s
+plan12_t1 t1b: depth=15 result=UNKNOWN nodes=500000107 memo_win=7850 memo_nw=1405 win_subset_hits=0 nw_subset_hits=0 memo_resets=0 repetition_cuts=3257507 wall=238.95s
+plan12_t1 t1b: depth=16 result=UNKNOWN nodes=500000088 memo_win=5113 memo_nw=9534 win_subset_hits=0 nw_subset_hits=0 memo_resets=0 repetition_cuts=3884269 wall=262.25s
+plan12_t1 t1b: depth=17 result=UNKNOWN nodes=500000099 memo_win=9837 memo_nw=2425 win_subset_hits=0 nw_subset_hits=0 memo_resets=0 repetition_cuts=3211211 wall=237.77s
+=== step1 dtm13 depths 13,14,15 2026-09-15T21:06:36+00:00 ===
+plan12_t1: fen="8/1k1K4/8/8/8/8/8/4Q3 w - - 2 2" root_key=212036 table_value=2 (2=Win)
+debug: val counts UND/DRAW/WIN/LOSS = [0, 126372, 294160, 0], terminal = [0, 440, 1864, 0]
+plan12_t1 t1a: region=420532 root_value=WIN dtm=13 mismatches_vs_table=0 wall=6.74s
+plan12_t1 t1a ranked-strategy: cycle_free_all_lines=true lines=800 mate_leaves=472 cycles=0 budget_exhausted=0 nodes=1600 max_line_plies=14 wall=0.00s
+plan12_t1 t1a greedy-probe: cycle_free_all_lines=false lines=0 mate_leaves=0 cycles=1 budget_exhausted=0 nodes=12 max_line_plies=0 wall=0.00s
+plan12_t1 t1b: depth=13 result=WIN nodes=267181782 memo_win=10391 memo_nw=1699 win_subset_hits=0 nw_subset_hits=0 memo_resets=0 repetition_cuts=1953684 wall=127.16s
+plan12_t1 t1b: depth=14 result=UNKNOWN nodes=500000087 memo_win=5716 memo_nw=9638 win_subset_hits=0 nw_subset_hits=0 memo_resets=0 repetition_cuts=3985943 wall=252.88s
+plan12_t1 t1b: depth=15 result=UNKNOWN nodes=500000108 memo_win=9700 memo_nw=1987 win_subset_hits=0 nw_subset_hits=0 memo_resets=0 repetition_cuts=3522429 wall=234.21s
+=== step2 dtm11 depths 11,12,13 2026-09-15T21:16:57+00:00 ===
+plan12_t1: fen="8/8/2k1K3/8/8/8/8/4Q3 w - - 4 3" root_key=182916 table_value=2 (2=Win)
+debug: val counts UND/DRAW/WIN/LOSS = [0, 126372, 294160, 0], terminal = [0, 440, 1864, 0]
+plan12_t1 t1a: region=420532 root_value=WIN dtm=11 mismatches_vs_table=0 wall=6.25s
+plan12_t1 t1a ranked-strategy: cycle_free_all_lines=true lines=477 mate_leaves=282 cycles=0 budget_exhausted=0 nodes=954 max_line_plies=12 wall=0.00s
+plan12_t1 t1a greedy-probe: cycle_free_all_lines=false lines=0 mate_leaves=0 cycles=1 budget_exhausted=0 nodes=10 max_line_plies=0 wall=0.00s
+plan12_t1 t1b: depth=11 result=WIN nodes=81548321 memo_win=4595 memo_nw=671 win_subset_hits=0 nw_subset_hits=0 memo_resets=0 repetition_cuts=534237 wall=37.73s
+plan12_t1 t1b: depth=12 result=WIN nodes=426013500 memo_win=4594 memo_nw=8610 win_subset_hits=0 nw_subset_hits=0 memo_resets=0 repetition_cuts=3377367 wall=211.70s
+plan12_t1 t1b: depth=13 result=WIN nodes=485153605 memo_win=9174 memo_nw=2038 win_subset_hits=0 nw_subset_hits=0 memo_resets=0 repetition_cuts=3397016 wall=224.34s
+=== step3 dtm9 depths 9,10,11 2026-09-15T21:24:57+00:00 ===
+plan12_t1: fen="8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4" root_key=219332 table_value=2 (2=Win)
+debug: val counts UND/DRAW/WIN/LOSS = [0, 126372, 294160, 0], terminal = [0, 440, 1864, 0]
+plan12_t1 t1a: region=420532 root_value=WIN dtm=9 mismatches_vs_table=0 wall=5.87s
+plan12_t1 t1a ranked-strategy: cycle_free_all_lines=true lines=23 mate_leaves=12 cycles=0 budget_exhausted=0 nodes=46 max_line_plies=10 wall=0.00s
+plan12_t1 t1a greedy-probe: cycle_free_all_lines=false lines=0 mate_leaves=0 cycles=1 budget_exhausted=0 nodes=10 max_line_plies=0 wall=0.00s
+plan12_t1 t1b: depth=9 result=WIN nodes=30242510 memo_win=2978 memo_nw=363 win_subset_hits=0 nw_subset_hits=0 memo_resets=0 repetition_cuts=182067 wall=13.90s
+plan12_t1 t1b: depth=10 result=WIN nodes=159332944 memo_win=2978 memo_nw=6447 win_subset_hits=0 nw_subset_hits=0 memo_resets=0 repetition_cuts=1238257 wall=78.38s
+plan12_t1 t1b: depth=11 result=WIN nodes=153653412 memo_win=4229 memo_nw=836 win_subset_hits=0 nw_subset_hits=0 memo_resets=0 repetition_cuts=987225 wall=70.70s
+T1B DONE 2026-09-15T21:27:46+00:00
+plan12_t1: fen="8/2K5/k7/8/8/8/8/4Q3 w - - 0 1" root_key=207364 table_value=2 (2=Win)
+debug: val counts UND/DRAW/WIN/LOSS = [0, 126372, 294160, 0], terminal = [0, 440, 1864, 0]
+plan12_t1 t1a: region=420532 root_value=WIN dtm=15 mismatches_vs_table=0 wall=5.94s
+plan12_t1 t1a ranked-strategy: cycle_free_all_lines=true lines=2815 mate_leaves=1655 cycles=0 budget_exhausted=0 nodes=5630 max_line_plies=16 wall=0.00s
+plan12_t1 t1a greedy-probe: cycle_free_all_lines=false lines=0 mate_leaves=0 cycles=1 budget_exhausted=0 nodes=10 max_line_plies=0 wall=0.00s
+plan12_t1 t1b: depth=15 result=WIN nodes=1024541116 memo_win=13282 memo_nw=2721 win_subset_hits=1 nw_subset_hits=0 memo_resets=0 repetition_cuts=7195934 wall=486.62s

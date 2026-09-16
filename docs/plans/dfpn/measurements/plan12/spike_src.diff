@@ -1,0 +1,141 @@
+diff --git a/src/search/dfpn/children.rs b/src/search/dfpn/children.rs
+index e3b88c8..db23ca3 100644
+--- a/src/search/dfpn/children.rs
++++ b/src/search/dfpn/children.rs
+@@ -364,6 +364,9 @@ impl Search {
+ 
+         pos.undo_move_with_scratch(mv, &scratch);
+         self.eval_state_pool[scratch_depth] = scratch;
++        // TEMPORARY plan12 spike (T2 item 4): classify the eval by the
++        // parent's node type and whether the child resolved.
++        self.spike12_eval(is_or_node, info.outcome.is_some(), info.repetition_seen);
+         info
+     }
+ }
+diff --git a/src/search/dfpn/core.rs b/src/search/dfpn/core.rs
+index 3665b54..142077f 100644
+--- a/src/search/dfpn/core.rs
++++ b/src/search/dfpn/core.rs
+@@ -90,6 +90,7 @@ impl Search {
+                 u32::MAX,
+             );
+             self.emit_proof_node(pos, outcome, 0);
++            self.spike12_frame_terminal();
+             self.precompute_pool[slot_depth] = slot;
+             return outcome;
+         }
+@@ -100,12 +101,18 @@ impl Search {
+             // the horizon without re-expanding the entire subtree.
+             self.tt
+                 .store(tt_key, Move::NONE, u8::MAX, 0, None, 1, 1, 0, 0);
++            self.spike12_frame_leaf();
+             self.precompute_pool[slot_depth] = slot;
+             return Outcome::Draw;
+         }
+ 
++        // TEMPORARY plan12 spike: the frame record lives from here (all later
++        // exits go through a spike exit hook) to the main exit.
++        self.spike12_frame_entry();
++
+         // Local repetition: this board is already on the current search stack.
+         if self.path_contains(rep_key) {
++            self.spike12_frame_exit_early(0);
+             self.precompute_pool[slot_depth] = slot;
+             return Outcome::Draw;
+         }
+@@ -120,6 +127,7 @@ impl Search {
+             && (entry.best_move == Move::NONE || !self.best_move_repeats_path(pos, entry.best_move))
+         {
+             self.emit_proof_node(pos, resolved.outcome, resolved.depth);
++            self.spike12_frame_exit_early(1);
+             self.precompute_pool[slot_depth] = slot;
+             return resolved.outcome;
+         }
+@@ -145,9 +153,12 @@ impl Search {
+             // sends no `NodeProven`; see `emit_proof_node`). A hit consumes
+             // no child-eval budget.
+             self.emit_proof_node(pos, Outcome::Draw, cached_depth);
++            self.spike12_probe_hit();
++            self.spike12_frame_exit_early(2);
+             self.precompute_pool[slot_depth] = slot;
+             return Outcome::Draw;
+         }
++        self.spike12_probe_miss(tt_key, rep_key, context_hash);
+ 
+         // Ordering hint: replicate the old `probe_best_move` rule exactly —
+         // return the stored best move for solved entries (it may be
+@@ -328,6 +339,7 @@ impl Search {
+             // so the reuse is the exact value the search would recompute.
+             self.repetition_cache
+                 .store(tt_key, context_hash, outcome_to_store_depth);
++            self.spike12_store_suppressed(tt_key, context_hash);
+         }
+         let store_outcome = if suppress_draw {
+             None
+@@ -381,6 +393,7 @@ impl Search {
+         self.precompute_pool[slot_depth] = slot;
+ 
+         self.path_pop();
++        self.spike12_frame_exit_main(suppress_draw);
+ 
+         if let Some(outcome) = outcome_to_store {
+             self.emit_proof_node(pos, outcome, outcome_to_store_depth);
+diff --git a/src/search/dfpn/mod.rs b/src/search/dfpn/mod.rs
+index 70409d5..59691e8 100644
+--- a/src/search/dfpn/mod.rs
++++ b/src/search/dfpn/mod.rs
+@@ -10,6 +10,7 @@ mod history;
+ mod pv;
+ mod repetition_cache;
+ mod selection;
++mod spike12;
+ 
+ #[cfg(test)]
+ mod tests;
+@@ -33,6 +34,7 @@ use super::ordering::StaticAtomicScorer;
+ use super::tt::TranspositionTable;
+ 
+ use repetition_cache::RepetitionCache;
++use spike12::Spike12;
+ 
+ const DEFAULT_EPSILON: f64 = 0.125;
+ const TIMEOUT_SECS: u64 = 5;
+@@ -206,6 +208,9 @@ pub struct Search {
+     /// never per work chunk, never per refinement round — and never
+     /// serialized into TT snapshots or proof artifacts.
+     repetition_cache: RepetitionCache,
++    /// TEMPORARY plan12 Phase 0 spike instrumentation (T2), gated on
++    /// `DFPN12_SPIKE=1`; reverted after measuring. `None` = fully inert.
++    spike12: Option<Spike12>,
+ }
+ 
+ impl Search {
+@@ -256,6 +261,11 @@ impl Search {
+             eval_state_pool: Vec::new(),
+             sort_scratch: Vec::new(),
+             repetition_cache: RepetitionCache::new(),
++            spike12: if std::env::var("DFPN12_SPIKE").is_ok_and(|v| v == "1") {
++                Some(Spike12::default())
++            } else {
++                None
++            },
+         }
+     }
+ 
+@@ -754,6 +764,16 @@ impl Search {
+         (outcome, pv, self.nodes)
+     }
+ 
++    /// TEMPORARY plan12 Phase 0 spike (T2): human-readable summary of the
++    /// work-mass diagnostics collected during the last run, or `None` when
++    /// `DFPN12_SPIKE=1` is not set.
++    #[must_use]
++    pub fn spike12_summary(&self) -> Option<String> {
++        self.spike12
++            .as_ref()
++            .map(|s| s.summary(self.child_evals))
++    }
++
+     fn begin_run(&mut self) {
+         self.reset_search_state();
+         // Per-search repetition cache (plan9): cleared once per run, before
