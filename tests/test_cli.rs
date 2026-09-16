@@ -147,6 +147,35 @@ fn cli_prints_pv_for_decisive_position() {
 /// the PV is proven shortest.
 #[test]
 fn cli_prints_pv_status_proven_shortest_for_mate_in_one() {
+    // The mate-in-1 fixture is 3 men: the plan13 pre-phase gates on it and
+    // claims with `preflight-proof` by default (see the next test), so the
+    // DF-PN `proven-shortest` semantics are pinned via `--no-preflight`.
+    let output = Command::new(cli_bin())
+        .args([
+            "--fen",
+            "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1",
+            "--no-preflight",
+            "--timeout",
+            "1",
+            "--outcome-only",
+        ])
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI failed: {stdout}");
+    assert!(stdout.contains("outcome: win"), "expected a win outcome");
+    assert!(
+        stdout.contains("pv_status: proven-shortest"),
+        "expected a proven-shortest pv_status line:\n{stdout}"
+    );
+}
+
+/// The mate-in-1 fixture is 3 men: the pre-phase claims it, so the default
+/// CLI path reports the `preflight-proof` PV status and the claim is the
+/// exact-rank line (1 ply).
+#[test]
+fn cli_prints_pv_status_preflight_proof_for_mate_in_one() {
     let output = Command::new(cli_bin())
         .args([
             "--fen",
@@ -162,8 +191,16 @@ fn cli_prints_pv_status_proven_shortest_for_mate_in_one() {
     assert!(output.status.success(), "CLI failed: {stdout}");
     assert!(stdout.contains("outcome: win"), "expected a win outcome");
     assert!(
-        stdout.contains("pv_status: proven-shortest"),
-        "expected a proven-shortest pv_status line:\n{stdout}"
+        stdout.contains("pv: e1e8"),
+        "expected the mating move:\n{stdout}"
+    );
+    assert!(
+        stdout.contains("pv_status: preflight-proof"),
+        "expected a preflight-proof pv_status line:\n{stdout}"
+    );
+    assert!(
+        !stdout.contains("preflight:"),
+        "--outcome-only suppresses the preflight line\n{stdout}"
     );
 }
 

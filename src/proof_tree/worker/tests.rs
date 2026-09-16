@@ -404,7 +404,11 @@ fn solve_populates_proof_tree_with_nodes() {
     use crate::position::Position;
     use crate::search::dfpn::Search;
 
-    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+    // The two-rook mate is 4 men, outside the plan13 pre-phase detector's
+    // class, so the DF-PN search runs and populates the tree via proof
+    // events. (A 3-men fixture would be claimed by the pre-phase, which by
+    // design emits no ProofEvents — see the preflight module docs, R2.)
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
     let (handle, join) =
         ProofTreeWorkerHandle::spawn(pos.fen(), 64, Arc::new(AtomicBool::new(false)));
     let mut search = Search::new(64);

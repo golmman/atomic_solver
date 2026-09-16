@@ -28,6 +28,18 @@
 //!                              capping. Defaults to 0.25.
 //!   --outcome-only             Print only the outcome/PV: no stdin reader and
 //!                              no pre-exit summary.
+//!   --no-preflight             Disable the detector-gated bounded pre-phase
+//!                              (plan13): the region-closure fixpoint that
+//!                              decides small-space positions (occupied <= 3
+//!                              men, no pawns/castling) before the DF-PN loop.
+//!                              On such positions the pre-phase allocates a
+//!                              transient closure of up to 1,000,000 packed
+//!                              positions (~100–120 MB worst case) — the
+//!                              documented bounded exception to "RAM = TT
+//!                              only". Defers (and prints so) everywhere
+//!                              else; decisive claims are replay-verified
+//!                              cycle-free certificates and never touch the
+//!                              transposition table.
 //!   --tt-dump-path <FILE>      Write a compact binary snapshot of the
 //!                              transposition table after the search finishes.
 //!                              Optional; the snapshot is the transfer
@@ -41,11 +53,13 @@
 //!   line is followed by `pv: <UCI moves>`, an informational best-effort line
 //!   from the transposition table, and `pv_status: <label>` describing whether
 //!   the PV is proven shortest (`proven-shortest`), the unrefined first
-//!   outcome (`first-outcome`), cut by the refinement work cap (`cap-cut`), or
-//!   cut by a global resource limit / not shorter (`cut-short`). `pv_status`
-//!   qualifies the PV length, not its validity. If the timeout is reached
-//!   after any result, `timeout` is printed on its own line. Without
-//!   `--outcome-only` the pre-exit hook prints a `pre_exit:` summary line.
+//!   outcome (`first-outcome`), cut by the refinement work cap (`cap-cut`),
+//!   cut by a global resource limit / not shorter (`cut-short`), or extracted
+//!   from a replay-verified pre-phase certificate (`preflight-proof`).
+//!   `pv_status` qualifies the PV length, not its validity. Without
+//!   `--outcome-only` the pre-phase hook prints one
+//!   `preflight: decided|deferred ...` line before the outcome, and the
+//!   pre-exit hook prints a `pre_exit:` summary line.
 //!
 //! Examples:
 //!   atomic_solver --help
@@ -59,6 +73,7 @@ use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::{ExitReason, PvStatus, Search};
 use atomic_solver::search::ordering::StaticAtomicScorer;
+use atomic_solver::search::preflight::PreflightReport;
 use atomic_solver::tt_snapshot::write_tt_snapshot;
 use std::io::BufRead;
 use std::sync::Arc;
@@ -92,6 +107,10 @@ fn print_help(program: &str) {
     println!("                             (default: 0.25)");
     println!("  --outcome-only             Print only the outcome/PV;");
     println!("                             no stdin reader and no pre-exit summary");
+    println!("  --no-preflight             Disable the bounded pre-phase that");
+    println!("                             decides small-space positions (occupied");
+    println!("                             <= 3 men, no pawns/castling) before the");
+    println!("                             DF-PN loop");
     println!("  --tt-dump-path <FILE>      Write a binary TT snapshot after the search");
     println!("                             (transfer artifact for offline proof");
     println!("                             reconstruction via reconstruct_pt; optional)");
@@ -111,6 +130,25 @@ fn pv_str(pv: &[Move]) -> String {
         .map(move_to_uci)
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+/// One `preflight:` line for the pre-phase hook (plan13 R5), same spirit as
+/// the `pre_exit:` summary. Only printed in non-`--outcome-only` mode.
+fn print_preflight_line(report: &PreflightReport) {
+    if report.decided {
+        println!(
+            "preflight: decided outcome={} evals={} region={} rank={}",
+            report.outcome.map_or("none", |o| o.as_str()),
+            report.evals,
+            report.region,
+            report.rank,
+        );
+    } else {
+        println!(
+            "preflight: deferred reason={} evals={}",
+            report.reason, report.evals,
+        );
+    }
 }
 
 type PreExitHook = Box<dyn FnOnce(ExitReason, Outcome, u64, &[Move]) + Send>;
@@ -141,6 +179,7 @@ fn main() {
         outcome_only,
         tt_dump_path,
         config_path,
+        no_preflight,
     } = opts;
 
     let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
@@ -167,6 +206,7 @@ fn main() {
     search.set_epsilon(epsilon);
     search.set_first_outcome_only(first_outcome);
     search.set_refine_cap_factor(refine_cap);
+    search.set_preflight_enabled(!no_preflight);
 
     let stop_flag = Arc::new(AtomicBool::new(false));
 
@@ -204,6 +244,9 @@ fn main() {
             eprintln!("outcome: {} length: {}", o.as_str(), line.len());
         });
 
+        if !outcome_only && let Some(report) = search.preflight_report() {
+            print_preflight_line(&report);
+        }
         println!("outcome: {} length: {}", outcome.as_str(), pv.len());
         if outcome != Outcome::Draw {
             println!("pv: {}", pv_str(&pv));
@@ -213,6 +256,7 @@ fn main() {
             let label = match search.pv_status() {
                 PvStatus::ProvenShortest => "proven-shortest",
                 PvStatus::FirstOutcome => "first-outcome",
+                PvStatus::PreflightProof => "preflight-proof",
                 PvStatus::Unproven if search.last_refine_round_cap_cut() => "cap-cut",
                 PvStatus::Unproven => "cut-short",
                 // Unreachable for a decisive outcome; treat defensively as

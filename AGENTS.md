@@ -53,6 +53,34 @@ A pure solver for atomic chess in Rust.
    `Search::begin_run` (never per chunk or refinement round) and is never
    serialized into TT snapshots or proof artifacts, so only work, never
    outcomes, changes.
+- `src/search/preflight/` implements the detector-gated bounded pre-phase
+  (plan13, architecture R — region-closure fixpoint). On positions passing
+  the detector (at most 3 men, no pawns, no castling rights) it decides the
+  **root** before the DF-PN loop: forward BFS closure over the reachable
+  board-only region with exact, collision-free packed keys (position budget
+  `preflight::REGION_BUDGET`, default 1,000,000), AND/OR fixpoint with exact
+  mate distances (table-free; the undecided remainder is a board-only Draw),
+  a rule50 rank guard for decisive claims (`halfmove + rank ≤ 99`), and a
+  mandatory standalone replay verifier: a decisive claim is returned only
+  when its rank-decreasing strategy replays cycle-free and mates within the
+  rank from the real root position. On a claim, `solve`/`search_depth`
+  return the outcome plus the rank-decreasing principal-line PV (length =
+  exact DTM) directly — no refinement rounds run; on anything else it
+  defers and the ordinary search runs bit-identically. Draw claims (D2) are
+  possible and rest on the monotonicity lemma; they carry an empty PV and
+  `PvStatus::None`. The pre-phase has **no TT interaction of any kind** (the
+  plan10/11 hazard is excluded by construction), never consults the wall
+  clock (its caps are the eval budget and the region budget), counts its
+  child evaluations into `child_evals` / `child_eval_budget` (on exhaustion
+  the search reports `ExitReason::BudgetExhausted` as documented), and — a
+  documented round-1 gap (R2) — emits no `ProofEvent`s, so the offline
+  proof pipeline cannot reproduce a pre-phase proof and live worker-built
+  trees stay empty on pre-phase claims. `search_depth_with_prefix` skips
+  the pre-phase (the root-only closure does not model the supplied
+  repetition prefix). The closure is transient memory bounded by the region
+  budget (~100–120 MB worst case at 1M positions; the measured KQvK ladder
+  region is 420,532) — the documented bounded exception to the search CLI's
+  "RAM = TT only".
 - `src/search/tt/` holds the transposition table with path-independent base
   entries. Repetition-dependent results are not cached, following the
   first-player-loss GHI shortcut.
@@ -107,21 +135,30 @@ A pure solver for atomic chess in Rust.
   `--tt-dump-path <FILE>` (opt-in; writes a compact binary TT snapshot after
   the search — solved entries from all generations, unsolved from the current
   generation),
-  plus `-h`/`--help`. Unknown options exit with an error. It prints the outcome
+  plus `--no-preflight` (disable the detector-gated bounded pre-phase;
+  added to `-h`, unknown-option handling unchanged) and `-h`/`--help`.
+  Unknown options exit with an error. It prints the outcome
   and an informational PV when the result is decisive. The search CLI is
-  **resource-bounded** (RAM = TT only): it never builds proof trees — no
-  worker thread, no proof-tree memory budget, no `MemoryLimit` abort path —
-  and prints no `proof_tree:`/`proof_tree_dump:`/`pt_validate:` lines. Proof
+  **resource-bounded** (RAM = TT only, with the pre-phase closure as the
+  one documented bounded exception — see the `preflight` module): it never
+  builds proof trees — no worker thread, no proof-tree memory budget, no
+  `MemoryLimit` abort path — and prints no
+  `proof_tree:`/`proof_tree_dump:`/`pt_validate:` lines. Proof
   construction is an offline step: `--tt-dump-path` produces the TT snapshot
   from which `examples/reconstruct_pt` (worker + finalize + replay validator,
   exit 1 on a defective tree) rebuilds the validated binary dump. The
   pre-exit hook reduces to the stdin reader (`q` quits) and one
-  `pre_exit: reason=… outcome=… nodes=…` line. For decisive
+  `pre_exit: reason=… outcome=… nodes=…` line. In non-`--outcome-only`
+  mode the pre-phase hook additionally prints one
+  `preflight: decided outcome=… evals=… region=… rank=…` line (decisive
+  claim) or `preflight: deferred reason=… evals=…` line. For decisive
   outcomes it also prints `pv_status: proven-shortest | first-outcome |
-  cap-cut | cut-short`, reporting whether the PV length is proven minimal
-  (the last bounded refinement round exhausted naturally, or the win is 1
-  move) or why refinement stopped early; it qualifies the PV *length* within
-  the solver's search semantics, not the PV's validity as a proof.
+  preflight-proof | cap-cut | cut-short`, reporting whether the PV length
+  is proven minimal (the last bounded refinement round exhausted
+  naturally, or the win is 1 move), why refinement stopped early, or that
+  the PV is a replay-verified pre-phase certificate line (`preflight-proof`,
+  length = exact DTM); it qualifies the PV *length* within the solver's
+  search semantics, not the PV's validity as a proof.
 - `examples/` contains example binaries for exploring solver behavior.
 - `tests/` contains integration/regression tests.
 
@@ -334,6 +371,13 @@ in sync if the launcher changes.
 
 ## File size justifications
 
+- `src/search/preflight/mod.rs` and `src/search/preflight/region.rs` are
+  larger than the 10 KB guideline because the pre-phase's soundness contract
+  (mod.rs header) is the normative documentation reviewers rely on, and the
+  region closure, packed-key codec, exact-rank fixpoint, and strategy/PV
+  extraction share one indexing scheme (region.rs). Both stay under the
+  ~20 KB split threshold; unit tests are split out into
+  `src/search/preflight/tests.rs` and `verifier.rs`'s own test module.
 - `src/proof_tree/worker.rs` is larger than the 20 KB guideline because it
   contains the full proof-tree worker: the threaded handle, event loop,
   `find_or_create_node` path traversal, dummy-node reconciliation, canonical

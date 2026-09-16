@@ -30,6 +30,7 @@ use crate::position::{Outcome, Position};
 use crate::proof_event::{NodeProven, ProofEvent};
 
 use super::ordering::StaticAtomicScorer;
+use super::preflight::{self, PreflightExit, PreflightReport};
 use super::tt::TranspositionTable;
 
 use repetition_cache::RepetitionCache;
@@ -95,6 +96,15 @@ pub enum PvStatus {
     /// global resource limit, or ended decisive-but-not-shorter. A shorter
     /// win may exist.
     Unproven,
+    /// PV extracted from a replay-verified pre-phase certificate (plan13):
+    /// a winning, cycle-free line with exact ranks, so the length is the
+    /// exact mate distance for the region-closure architecture. This
+    /// qualifies the PV length like the other variants, never the validity
+    /// of the line as a proof (the certificate was verified, but by the
+    /// pre-phase's own replay, not by the proof-tree layer). Never returned
+    /// for a pre-phase Draw claim: draws keep `None` (no decisive outcome,
+    /// no PV to qualify) and are reported via `Search::preflight_report()`.
+    PreflightProof,
 }
 
 /// Why `bounded_search` returned. Only meaningful when `outcome == Draw` for
@@ -206,6 +216,13 @@ pub struct Search {
     /// never per work chunk, never per refinement round — and never
     /// serialized into TT snapshots or proof artifacts.
     repetition_cache: RepetitionCache,
+    /// Whether the detector-gated bounded pre-phase (plan13) may run before
+    /// the DF-PN loop. Default `true`; disabled by the `--no-preflight` CLI
+    /// flag.
+    preflight_enabled: bool,
+    /// Report of the last run's pre-phase hook, `None` when the hook has not
+    /// run in the current run.
+    preflight_report: Option<PreflightReport>,
 }
 
 impl Search {
@@ -256,7 +273,24 @@ impl Search {
             eval_state_pool: Vec::new(),
             sort_scratch: Vec::new(),
             repetition_cache: RepetitionCache::new(),
+            preflight_enabled: true,
+            preflight_report: None,
         }
+    }
+
+    /// Enable or disable the detector-gated bounded pre-phase (plan13).
+    /// Enabled by default; the `--no-preflight` CLI flag maps here.
+    pub fn set_preflight_enabled(&mut self, enabled: bool) {
+        self.preflight_enabled = enabled;
+    }
+
+    /// Report of the pre-phase hook of the last
+    /// [`Search::solve`]/[`Search::solve_with_progress`]/[`Search::search_depth`]
+    /// call: whether it decided the root (and as what) or deferred (and why).
+    /// `None` before the first call in a run.
+    #[must_use]
+    pub fn preflight_report(&self) -> Option<PreflightReport> {
+        self.preflight_report
     }
 
     pub fn set_first_outcome_only(&mut self, value: bool) {
@@ -603,6 +637,15 @@ impl Search {
         max_depth: u32,
     ) -> (Outcome, Vec<Move>, u64) {
         self.begin_run();
+        // Pre-phase (plan13): the certificate bound is the fixed `max_depth`.
+        if let Some((outcome, pv)) = self.preflight_phase(pos, Some(max_depth)) {
+            self.pv_status = if outcome == Outcome::Draw {
+                PvStatus::None
+            } else {
+                PvStatus::PreflightProof
+            };
+            return (outcome, pv, self.nodes);
+        }
         let (outcome, pv, _termination) = self.bounded_search(pos, max_depth, u64::MAX);
         (outcome, pv, self.nodes)
     }
@@ -613,6 +656,10 @@ impl Search {
     /// pushed onto the path stack. This is used by the `verify_ppv` example to
     /// check defender replies while preserving the history of the supplied PPV
     /// prefix.
+    ///
+    /// The pre-phase (plan13) deliberately does not run here: its root-only
+    /// closure does not model the repetition context of the supplied prefix
+    /// path, so the bounded search below runs instead.
     pub fn search_depth_with_prefix(
         &mut self,
         pos: &mut Position,
@@ -636,6 +683,12 @@ impl Search {
 
     /// Solve a position, returning the decisive outcome and the shortest PV
     /// found within the configured timeout.
+    ///
+    /// Before the DF-PN loop, the detector-gated bounded pre-phase (plan13)
+    /// may decide the root directly; a claim returns the outcome plus the
+    /// certificate's principal-line PV (see [`PvStatus::PreflightProof`] and
+    /// `Search::preflight_report`). On any deferral the ordinary search below
+    /// runs bit-identically to a pre-phase-disabled run.
     ///
     /// The returned PV is proven shortest (in the [`PvStatus::ProvenShortest`]
     /// sense: no shorter decisive line exists within the solver's search
@@ -662,6 +715,20 @@ impl Search {
         F: FnMut(Outcome, &[Move]),
     {
         self.begin_run();
+
+        // 0. Detector-gated bounded pre-phase (plan13): decides small-space
+        //    regions (occupied <= 3 men, no pawns/castling) via a
+        //    region-closure fixpoint with replay-verified certificates, and
+        //    defers everywhere else, bit-identically. Claims consume no TT
+        //    entries and return directly (no refinement rounds run).
+        if let Some((outcome, pv)) = self.preflight_phase(pos, None) {
+            self.pv_status = if outcome == Outcome::Draw {
+                PvStatus::None
+            } else {
+                PvStatus::PreflightProof
+            };
+            return (outcome, pv, self.nodes);
+        }
 
         // 1. First decisive outcome (work-chunked, unbounded depth).
         let (mut outcome, mut pv, _first_phase) = self.bounded_search(pos, u32::MAX, u64::MAX);
@@ -775,6 +842,66 @@ impl Search {
         // Clock sampler: read once immediately, then every CLOCK_SAMPLE_INTERVAL.
         self.last_clock.set(self.start);
         self.clock_sample_at.set(0);
+        self.preflight_report = None;
+    }
+
+    /// Run the detector-gated bounded pre-phase (plan13) before the DF-PN
+    /// loop and record its report.
+    ///
+    /// The hook is a no-op (report `disabled`/`detector`, zero evals) unless
+    /// the pre-phase is enabled and the detector predicate holds. Child
+    /// evaluations consumed by the pre-phase are added to the run's
+    /// `child_evals` counter and count against `child_eval_budget` (R4); on
+    /// budget exhaustion the pre-phase defers and the ordinary search
+    /// immediately reports `ExitReason::BudgetExhausted`, so the documented
+    /// budget contract holds verbatim. The pre-phase never consults the wall
+    /// clock; the global timeout stays the search's own.
+    fn preflight_phase(
+        &mut self,
+        pos: &mut Position,
+        bound: Option<u32>,
+    ) -> Option<(Outcome, Vec<Move>)> {
+        let mut claimed: Option<(Outcome, Vec<Move>)> = None;
+        let report = if !self.preflight_enabled {
+            PreflightReport::deferred("disabled", 0, 0)
+        } else if !preflight::detector_applies(pos.board()) {
+            PreflightReport::deferred("detector", 0, 0)
+        } else {
+            let budget = self.child_eval_budget.saturating_sub(self.child_evals);
+            let stop = self.stop_flag.as_deref();
+            match preflight::run(pos, bound, budget, stop) {
+                PreflightExit::Claimed(claim) => {
+                    self.child_evals += claim.evals;
+                    // Defense in depth on top of the replay verifier: the
+                    // principal-line PV itself must replay legally from the
+                    // root to a terminal with the claimed outcome at exactly
+                    // the claimed rank (cheap for certificate-length lines).
+                    let pv_ok = claim.outcome == Outcome::Draw
+                        || self.validate_pv(&claim.pv, pos, claim.outcome, Some(claim.rank));
+                    if pv_ok {
+                        claimed = Some((claim.outcome, claim.pv));
+                        PreflightReport::decided(
+                            claim.outcome,
+                            claim.evals,
+                            claim.region,
+                            claim.rank,
+                        )
+                    } else {
+                        PreflightReport::deferred("cert-fail", claim.evals, claim.region)
+                    }
+                }
+                PreflightExit::Deferred {
+                    reason,
+                    evals,
+                    region,
+                } => {
+                    self.child_evals += evals;
+                    PreflightReport::deferred(reason, evals, region)
+                }
+            }
+        };
+        self.preflight_report = Some(report);
+        claimed
     }
 
     /// Total number of nodes (positions) visited by the search.

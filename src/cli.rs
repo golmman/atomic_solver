@@ -33,6 +33,9 @@ pub struct CliOptions {
     pub tt_dump_path: Option<String>,
     /// Path to a TOML config file overriding the default scorer parameters.
     pub config_path: Option<String>,
+    /// Disable the detector-gated bounded pre-phase (plan13). The ordinary
+    /// DF-PN search then runs on every position.
+    pub no_preflight: bool,
 }
 
 impl Default for CliOptions {
@@ -51,6 +54,7 @@ impl Default for CliOptions {
             outcome_only: false,
             tt_dump_path: None,
             config_path: None,
+            no_preflight: false,
         }
     }
 }
@@ -167,6 +171,10 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 opts.config_path = Some(value.clone());
                 i += 2;
             }
+            "--no-preflight" => {
+                opts.no_preflight = true;
+                i += 1;
+            }
             _ => {
                 return Err(format!(
                     "error: unknown option '{arg}'\nRun with --help for usage."
@@ -199,6 +207,7 @@ mod tests {
             outcome_only,
             tt_dump_path,
             config_path,
+            no_preflight,
         } = match parsed {
             ParseResult::Options(o) => o,
             ParseResult::Help => panic!("unexpected help"),
@@ -212,6 +221,7 @@ mod tests {
         assert!(!outcome_only);
         assert!(tt_dump_path.is_none());
         assert!(config_path.is_none());
+        assert!(!no_preflight);
     }
 
     #[test]
@@ -329,6 +339,15 @@ mod tests {
         let parsed = parse_args(&args(&["atomic_solver", "--outcome-only"])).unwrap();
         match parsed {
             ParseResult::Options(o) => assert!(o.outcome_only),
+            ParseResult::Help => panic!("unexpected help"),
+        }
+    }
+
+    #[test]
+    fn no_preflight_is_parsed() {
+        let parsed = parse_args(&args(&["atomic_solver", "--no-preflight"])).unwrap();
+        match parsed {
+            ParseResult::Options(o) => assert!(o.no_preflight),
             ParseResult::Help => panic!("unexpected help"),
         }
     }

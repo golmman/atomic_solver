@@ -120,7 +120,10 @@ fn tt_resolved_rejects_win_when_best_move_repeats() {
 
 #[test]
 fn set_timeout_zero_causes_immediate_exit() {
-    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+    // 4 men (outside the plan13 pre-phase class): the pre-phase never
+    // consults the wall clock, so a timeout-0 run must be observed on an
+    // ungated fixture for the timeout semantics under test.
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
     let mut search = Search::new(64);
     search.set_timeout(0);
     let (outcome, _pv, _nodes) = search.solve(&mut pos);
@@ -154,7 +157,9 @@ fn first_outcome_only_skips_refinement() {
 
 #[test]
 fn solve_with_progress_calls_closure() {
-    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+    // 4 men (outside the plan13 pre-phase class): a pre-phase claim returns
+    // directly without invoking the progress closure.
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
     let mut search = Search::new(64);
     search.set_timeout(5);
 

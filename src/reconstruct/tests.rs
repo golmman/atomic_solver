@@ -94,7 +94,10 @@ fn seeded_entry_resolves_a_mate_in_1_search() {
     // confirm a small bounded search resolves from the seeded entry
     // (single-node work) — `resolved_from_entry` accepts it at a bound
     // >= its depth.
-    let fen = "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1";
+    // 4 men, outside the plan13 pre-phase detector's class: this test needs
+    // the live DF-PN search to store TT entries, which a pre-phase claim
+    // (no TT interaction) would bypass.
+    let fen = "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1";
     let mut live_pos = Position::from_fen(fen).unwrap();
     let mut live = Search::new(16);
     live.set_first_outcome_only(true);
