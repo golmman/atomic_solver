@@ -5,7 +5,10 @@
 **Active as-needed** (Boy-Scout maintenance, not a standing backlog).
 Plans 1–3 are done (`report1.md`–`report3.md`); a new plan is opened when
 a pass leaves named follow-ups or a convention lands that needs
-enforcement. Last activity 2026-09-04.
+enforcement. **plan4 drafted 2026-09-16** (`plan4.md`): post-plan13
+housekeeping — docs/bookkeeping sync, AGENTS.md condensation to ≤ 200
+lines (Conventions kept), `selection.rs` test split, report13's preflight
+test gaps, pedantic clippy triage.
 
 ## Goal
 
