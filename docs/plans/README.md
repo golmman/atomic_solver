@@ -22,7 +22,6 @@ Status vocabulary:
 | ---------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | [`dfpn`](dfpn/initiative.md)             | Search semantics, algorithm-level node reduction (soundness-first)   | #6 done: plan13 (architecture R, region-closure fixpoint) closed (`report13.md`); open levers: #3 refinement after cap-cut, threshold-cut-frame observation (lean plan9 diagnostic) |
 | [`lean`](lean/initiative.md)             | Wall time / nodes, bit-identical drift gate                          | #10 history/killer re-tune or the `dfpn` algorithmic items; #2 parked dormant (plan7 spike)                          |
-| [`proof`](proof/initiative.md)           | Independent, relocatable proofs for a discovered outcome             | #8 PPV from the finalized tree, #5 TT checkpoint, #7 deep-proof builder spike                                        |
 | [`conversion`](conversion/initiative.md) | Deep tempo/progression conversions (`make stress` class)             | plan3 reading round (#5a/#5b: EWS, MOPNS), plan4 clock-pressure AND-side ordering (#3); #2a ordering guidance parked |
 | [`cleanup`](cleanup/initiative.md)       | Housekeeping: DRY, YAGNI, lints, module sizing                       | pedantic-lint triage, `selection.rs` size watch                                                                      |
 | [`movegen`](movegen/initiative.md)       | _Special case:_ cross-repo plans for the `atomic_movegen` dependency | new upstream asks follow the same standalone-plan pattern                                                            |
@@ -31,6 +30,7 @@ Status vocabulary:
 
 | Initiative                   | Focus                                                                                                          | Reopen trigger(s)                                                                                                              |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [`proof`](proof/initiative.md) | Proof construction landed (search → TT snapshot → reconstruct → validated dump); PPV productization closed won't-fix | #5 TT checkpoint when multi-day runs need crash resilience; #7 deep-proof capacity spike when builder RAM overflows              |
 | [`egtb`](egtb/initiative.md) | Refocused to dormant (plan4): the 3-man generator lives on as the `egtb_gen3` correctness oracle; faster-solves is NO-GO | A future 4-man effort (coverage, DTZ granularity, probe integration, proof-tree anchoring) reopens the initiative with a fresh plan2 |
 
 ## Closed
@@ -45,4 +45,4 @@ Status vocabulary:
 | [`testability`](testability/initiative.md) | Test tiers, deterministic eval budgets                                | conventions now normative in AGENTS.md                              |
 | [`move_order`](move_order/initiative.md)   | Ordering heuristics for the m20–m29 class                             | closed by `lean`'s oracle-floor measurement; tuning via `tune`/spec |
 | [`tune`](tune/initiative.md)               | External optimizer interface (`benchmark --json`)                     | contract is normative in `docs/spec/optimizer_interface.md`         |
-| [`pv`](pv/initiative.md)                   | Shortest-PV / PPV correctness (pivoted)                               | `proof` #8                                                          |
+| [`pv`](pv/initiative.md)                   | Shortest-PV / PPV correctness (pivoted)                               | PPV productization closed won't-fix (proof decision record 2026-09-17); shortest-PV via refinement/`PvStatus` in the solver |

@@ -128,9 +128,9 @@ threshold-arithmetic territory as the plan10/plan11 bound-folding diagnostic
 and the EWS/MOPNS reading named below. Wall-time engineering (path-scan
 cost, StateInfo reuse, clock sampling) stays in `lean`. PV labeling and
 `PvStatus`/`pv_status` semantics are the search layer's own contract (the
-`pv/` initiative closed 2026-09-13; its PPV-from-proof-tree item moved to
-`proof` backlog #8); #3 only changes *when* refinement stops, not how lines
-are labeled.
+`pv/` initiative closed 2026-09-13; its PPV-from-proof-tree item was moved to
+`proof` backlog #8 and closed won't-fix there on 2026-09-17); #3 only
+changes *when* refinement stops, not how lines are labeled.
 
 ## Non-goals
 

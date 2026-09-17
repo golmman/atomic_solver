@@ -9,6 +9,10 @@ renumbering). Plans 1–7 are done (`report1.md`–`report7.md`); the
 initiative's core goal (resource-bounded search + relocatable proof
 construction) is landed. The
 initiative pivoted after plan3 (decision record 2026-09-10, below).
+**Backlog #8 (PPV) closed 2026-09-17 — see the decision record; with #5
+(stretch) and #7 (conditional spike) the remaining items, the initiative is
+effectively dormant** (reopen triggers: multi-day runs need crash resilience
+→ #5; deep proofs overflow builder RAM → #7).
 
 ## Motivation
 
@@ -109,6 +113,25 @@ maintainability.
    would refute the snapshot design; the fallback (pin solved entries) is its
    own measured lever, not a silent patch.
 
+## Decision record 2026-09-17 (backlog #8 closed, won't-fix)
+
+**#8 (PPV from the finalized tree) is closed without a plan.** Rationale:
+
+- The capability already exists where it is needed — `inspect_pt` prints
+  `extract_ppv` + `validate_ppv` on any `proof_tree.bin` and `--validate`
+  runs the replay validator (landed with plan7).
+- No consumer needs a first-class PPV output contract: the informational PV
+  plus `PvStatus::ProvenShortest` (refinement-by-exhaustion, when the bounded
+  round completes) is judged sufficient. The standing caveat stays: `pv:` is
+  informational and never validated as a proof.
+- The `pv/report7` residues are gone or already documented (`_max_pv_len`
+  removed; the `search_depth_with_prefix` proven-depth note is in its doc).
+
+What was consciously given up: an externally consumable, replay-validated
+winning line for offline consumers. `verify_ppv` remains usable for checking
+supplied lines. Consequence: with #5 (stretch) and #7 (conditional spike) the
+only open items, the initiative is effectively dormant.
+
 ## Backlog (re-ranked post-plan3; confidence-weighted)
 
 | # | Item | Mechanism | Potential | Affects | Effort | Status |
@@ -120,7 +143,7 @@ maintainability.
 | 5 | Periodic TT checkpoint | Bounded-size snapshot written every N minutes (not just at exit) | crash resilience for multi-day runs (the event log's one advantage, at bounded cost) | artifact writer | S | stretch |
 | 6 | Builder-side validation tooling | `inspect_pt` / `verify_ppv` runs against reconstructed trees; root-outcome and bottom-up depth cross-checks against the snapshot before dumping | trust in the reconstruction | examples/tests | S | **done (plan6, `report6.md`)**: fully-expanded-twin preference in `finalize()` (sibling-chain child counts; `reconcile_children` leaves pruned children's parent links set — parent-link counts overcount), replay-based validator `validate_proof_tree` wired into `finalize()`/`main.rs` (`pt_validate:` line, exit 1 on defects, `ProofStats::validation_errors`); experiment now **46/46 oracle-isomorphic**, un-gating plan7 |
 | 7 | Deep-proof capacity of the builder | `finalize()` canonical expansion and the node store may still exceed a single machine's RAM for the deepest proofs | disk-backed finalize, or canonical expansion pushed into the import side | builder | L | open — needs a design spike only when deep proofs actually overflow the builder |
-| 8 | PPV from the finalized tree | The tree-layer minimax walk already exists (`ProofTree::extract_ppv`: Win nodes take the smallest-depth Loss child, Loss nodes the largest-depth Win child — the `pv/plan6` rule — plus `validate_ppv` path-to-terminal). Missing: surface a validated PPV from the offline-reconstructed dump (e.g. `inspect_pt --ppv` / a `reconstruct_pt` option), cross-checked by `validate_proof_tree`; carry over the `pv/report7` residues (`search_depth_with_prefix` proven-depth note for `verify_ppv`; remove the ignored `_max_pv_len` parameter) | a supplyable, independently validated winning line per proof — the product most consumers actually want | examples/tests (no search change) | M | open — absorbed from the `pv` initiative (closed 2026-09-13, see History) |
+| 8 | PPV from the finalized tree | **closed (won't-fix, 2026-09-17)** — the capability already exists where it is needed: `inspect_pt` prints `extract_ppv` + `validate_ppv` on any dump and `--validate` runs the replay validator (landed with plan7, see `report7.md`). Productizing a first-class PPV output contract was judged to have no consumer: the informational PV plus `PvStatus::ProvenShortest` (refinement-by-exhaustion) is deemed sufficient, and the `pv/report7` residues are gone (`_max_pv_len` already removed; proven-depth note already in `search_depth_with_prefix`'s doc) | a supplyable, independently validated winning line per proof — the product most consumers actually want | examples/tests (no search change) | M | **closed — decision record 2026-09-17** |
 
 Done: plan1, plan2, plan3, plan4 (see History). Statuses reference plans under
 `docs/plans/proof/`; an item is *open* until a plan claims it.
