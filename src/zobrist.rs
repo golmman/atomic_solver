@@ -10,7 +10,7 @@ pub const INF: u64 = 1 << 60;
 const RULE50_KEY_COUNT: usize = 101;
 const RULE50_KEY_SEED: u64 = 0x9e37_79b9_7f4a_7c15;
 
-/// A single 64-bit SplitMix64 mixing round.
+/// A single 64-bit `SplitMix64` mixing round.
 /// This is a bijection on `u64`, so each distinct input maps to a distinct output.
 pub(crate) const fn mix(z: u64) -> u64 {
     let z = (z ^ (z >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
@@ -18,7 +18,7 @@ pub(crate) const fn mix(z: u64) -> u64 {
     z ^ (z >> 31)
 }
 
-/// Advance the SplitMix64 state and return the next output.
+/// Advance the `SplitMix64` state and return the next output.
 const fn splitmix64_next(state: &mut u64) -> u64 {
     *state = state.wrapping_add(RULE50_KEY_SEED);
     mix(*state)
@@ -38,10 +38,12 @@ const fn generate_rule50_keys() -> [u64; RULE50_KEY_COUNT] {
 /// Precomputed Zobrist keys for the halfmove clock.
 pub const RULE50_KEYS: [u64; RULE50_KEY_COUNT] = generate_rule50_keys();
 
+#[must_use]
 pub fn rule50_key(rule50: u16) -> u64 {
     RULE50_KEYS[rule50.min(100) as usize]
 }
 
+#[must_use]
 pub fn hash(board: &Board, rule50: u16) -> u64 {
     board.hash() ^ rule50_key(rule50)
 }
@@ -49,6 +51,7 @@ pub fn hash(board: &Board, rule50: u16) -> u64 {
 /// Board-only hash, ignoring the halfmove clock.  This is the same board
 /// representation for the purpose of repetition detection: a position reached
 /// by reversible moves with a higher `rule50` is a repetition.
+#[must_use]
 pub fn board_hash(board: &Board) -> u64 {
     board.hash()
 }

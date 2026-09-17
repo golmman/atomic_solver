@@ -1,6 +1,6 @@
 //! Integration tests for the detector-gated bounded pre-phase (plan13).
 //!
-//! The ladder-root tests close the full KQvK component (~420k positions,
+//! The ladder-root tests close the full `KQvK` component (~420k positions,
 //! ~5.9M child evals) and are therefore `#[ignore]`-marked slow tests per
 //! the tier conventions; the fast-tier unit tests live in
 //! `src/search/preflight/tests.rs`.
@@ -10,7 +10,7 @@ mod common;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::{PvStatus, Search};
 
-/// The plan12 KQvK ladder root: win in 15, unproven by the DF-PN solver at
+/// The plan12 `KQvK` ladder root: win in 15, unproven by the DF-PN solver at
 /// 756M+ nodes (plan12 T0). The pre-phase must decide it as a certified Win
 /// with the exact DTM as rank and PV length.
 const LADDER_ROOT_FEN: &str = "8/2K5/k7/8/8/8/8/4Q3 w - - 0 1";

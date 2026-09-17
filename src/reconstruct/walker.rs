@@ -209,15 +209,14 @@ impl Walker<'_> {
         // A filled Win descends via the best move harvested from the fill
         // search's TT; a filled Loss expands all legal replies like a hit.
         let best_move = if filled {
-            match self.map.get(&hash).filter(|r| r.outcome == outcome) {
-                Some(record) => record.best_move,
-                None => {
-                    self.stats.anomalies += 1;
-                    return Err(format!(
-                        "anomaly: filled node at {} has no harvested record",
-                        moves_to_uci_path(&self.path)
-                    ));
-                }
+            if let Some(record) = self.map.get(&hash).filter(|r| r.outcome == outcome) {
+                record.best_move
+            } else {
+                self.stats.anomalies += 1;
+                return Err(format!(
+                    "anomaly: filled node at {} has no harvested record",
+                    moves_to_uci_path(&self.path)
+                ));
             }
         } else {
             record_best

@@ -6,161 +6,45 @@ A pure solver for atomic chess in Rust.
 
 ## Architecture
 
-- `src/lib.rs` re-exports `notation`, `position`, `proof_event`, `proof_tree`,
-  `search`, `reconstruct`, `tt_snapshot`, and `zobrist`.
-- `src/position.rs` wraps `atomic_movegen::board::Board` and tracks the
-  `Outcome` (Win/Loss/Draw from the side-to-move perspective), undo state,
-  and Zobrist hashing.
-- `src/proof_event.rs` defines the neutral `ProofEvent` protocol (`Clear` and
+- `src/lib.rs` re-exports `notation`, `position`, `proof_event`, `proof_tree`, `search`, `reconstruct`, `tt_snapshot`, and `zobrist`.
+- `src/position.rs` wraps `atomic_movegen::board::Board` and tracks the `Outcome` (Win/Loss/Draw from the side-to-move perspective), undo state, and Zobrist hashing.
+- `src/proof_event.rs` defines the neutral `ProofEvent` protocol (`Clear`,
   `NodeProven`) that decouples the solver from the proof-tree implementation.
-  `NodeProven` carries a `Vec<Move>` path, the position Zobrist hash, the
-  proven `Outcome`, and a depth.
-- `src/search/dfpn/` implements the sequential DF-PN+ solver with iterative
-  bounded refinement, history/killer heuristics, and a 5-second default
-  timeout. Each PV-refinement round is work-capped at
-  `max(1,000,000, factor * first-outcome child evals)` (factor `0.25` by
-  default, configurable via `Search::set_refine_cap_factor` / CLI
-  `--refine-cap`; `0` disables capping) so a futile round is abandoned
-  deterministically instead of running to the global deadline; per-phase
-  counters are exposed via `first_outcome_evaluations()`,
-  `refinement_rounds()`, and `refinement_evaluations()`. `dfpn` emits
-  `ProofEvent` nodes for every node it proves or
-  disproves; the returned PV is an informational best-effort line from the
-  transposition table and is not guaranteed to be a valid proof. The solver
-  never clears proof events; proof-tree finalization is the responsibility of the
-  proof-tree layer. Searches can additionally be bounded by cumulative child
-  evaluations via `Search::set_child_eval_budget` (deterministic alternative
-  to the wall-clock timeout, used by the test tiers): a budget-exhausted
-   search returns `Draw`, stores only unsolved TT entries, and reports
-   `ExitReason::BudgetExhausted` — never `ExitReason::Timeout`, which stays
-   exclusively about wall time. The hot path never generates move lists for
-   terminal checks: `evaluate_child` decides child terminality with the
-   upstream early-exit existence query (`Position::has_legal_move` over
-   `atomic_movegen::movegen::has_legal_move_with_state`, fed by a
-   caller-populated `StateInfo`) plus board-static classification
-   (checkers bit, `occupied == 2`); no legal-move list is produced for the
-   ~95% of evaluated children that are never searched. Only searched
-   children generate their legal moves, once, into a frame-local pooled
-   slot: the `dfpn` entry takes its slot from `Search::precompute_pool` at
-   its own depth (one slot per active frame; the pool no longer scales with
-   branching) and shares the node `StateInfo` with `sort_moves` instead of
-   rebuilding it. Per-frame child vectors and the `sort_moves` score buffer
-   are pooled on `Search`. Repetition-dependent draw proofs (the ones the
-   first-player-loss shortcut keeps out of the TT) are additionally cached
-   per search run in `src/search/dfpn/repetition_cache.rs`, keyed by
-   (position hash, order-independent ancestor repetition-key context hash)
-   and storing only `Draw` payloads; the cache is cleared once per run in
-   `Search::begin_run` (never per chunk or refinement round) and is never
-   serialized into TT snapshots or proof artifacts, so only work, never
-   outcomes, changes.
-- `src/search/preflight/` implements the detector-gated bounded pre-phase
-  (plan13, architecture R — region-closure fixpoint). On positions passing
-  the detector (at most 3 men, no pawns, no castling rights) it decides the
-  **root** before the DF-PN loop: forward BFS closure over the reachable
-  board-only region with exact, collision-free packed keys (position budget
-  `preflight::REGION_BUDGET`, default 1,000,000), AND/OR fixpoint with exact
-  mate distances (table-free; the undecided remainder is a board-only Draw),
-  a rule50 rank guard for decisive claims (`halfmove + rank ≤ 99`), and a
-  mandatory standalone replay verifier: a decisive claim is returned only
-  when its rank-decreasing strategy replays cycle-free and mates within the
-  rank from the real root position. On a claim, `solve`/`search_depth`
-  return the outcome plus the rank-decreasing principal-line PV (length =
-  exact DTM) directly — no refinement rounds run; on anything else it
-  defers and the ordinary search runs bit-identically. Draw claims (D2) are
-  possible and rest on the monotonicity lemma; they carry an empty PV and
-  `PvStatus::None`. The pre-phase has **no TT interaction of any kind** (the
-  plan10/11 hazard is excluded by construction), never consults the wall
-  clock (its caps are the eval budget and the region budget), counts its
-  child evaluations into `child_evals` / `child_eval_budget` (on exhaustion
-  the search reports `ExitReason::BudgetExhausted` as documented), and — a
-  documented round-1 gap (R2) — emits no `ProofEvent`s, so the offline
-  proof pipeline cannot reproduce a pre-phase proof and live worker-built
-  trees stay empty on pre-phase claims. `search_depth_with_prefix` skips
-  the pre-phase (the root-only closure does not model the supplied
-  repetition prefix). The closure is transient memory bounded by the region
-  budget (~100–120 MB worst case at 1M positions; the measured KQvK ladder
-  region is 420,532) — the documented bounded exception to the search CLI's
-  "RAM = TT only".
-- `src/search/tt/` holds the transposition table with path-independent base
-  entries. Repetition-dependent results are not cached, following the
-  first-player-loss GHI shortcut.
-- `src/search/ordering.rs` provides the `MoveScorer` trait and the
-  `StaticAtomicScorer`.
-- `src/proof_tree/mod.rs` provides a `Move`- and hash-based in-memory proof
-  tree and a background worker that consumes `ProofEvent` messages, maintains
-  the tree, enforces a memory budget, and serializes the full proven subtree
-  to a compact binary adjacency dump (`src/proof_tree/binary.rs`). The search
-  CLI no longer builds trees — proof-tree construction is an offline step and
-  the producer chain is: search → TT snapshot (`--tt-dump-path`) →
-  `src/reconstruct` / `examples/reconstruct_pt` (worker + finalize +
-  validator) → binary dump; tests and examples may still spawn the worker
-  directly. Each
-  `ProofNode` carries the Zobrist hash of its position; the worker's
-  `finalize()` pass copies fully expanded canonical subtrees onto unexpanded
-  transpositions, making the tree authoritative without a transposition-table
-  reconstruction step. Twin selection per `(hash, outcome)` prefers, in
-  order: consistency, shallower proven depth, more children (a completeness
-  proxy for Loss twins), then first created. The worker validates the
-  rebuilt tree with the replay-based validator in `src/proof_tree/validate.rs`
-  (`validate_proof_tree`) during `finalize()`, prints one
-  `pt_validate: FAILED ...` stderr line per defect (capped at 20) and records
-  the count in `ProofStats::validation_errors` (0 on success; a non-zero
-  count must fail the run — the dump is still written as the debugging
-  artifact; the exit-1 contract is enforced by the reconstruct-side
-  producers, e.g. `reconstruct_pt`, not by the search CLI). The validator
-  re-plays every path on a real `Position` and
-  checks the structural rules of a proof (Loss covers *all* legal replies,
-  Win has exactly one winning child, depths bottom-up consistent, terminals
-  statically correct); it therefore adds a `proof_tree → position`
-  dependency (position is a base layer below `search`, so the
-  `search`/`proof_tree` decoupling is unchanged). The worker exposes
-  `ProofTreeWorkerHandle` with `event_sender()`, `stats()`, `tree()`,
-  `finalize()`, and `dump_to_bin()` for querying.
-  External tools can import the binary dump into PostgreSQL. Note that
-  `Search::set_memory_limited` / `ExitReason::MemoryLimit` are not wired by
-  the search CLI; they remain a reconstruct-side contract — the
-  reconstruction walker sets the flag for the *builder's* budget and aborts
-  local prefix-solves on it (`src/reconstruct/walker.rs`).
-- `src/zobrist.rs` generates deterministic Zobrist keys for positions,
-  including the halfmove clock for transposition-table lookup.
-- `src/notation.rs` provides UCI move helpers, including `moves_to_uci_path`
-  for converting a `Vec<Move>` path into the tree's string key format.
-- `src/main.rs` is the CLI entry point. It accepts `--fen <FEN>` (default
-  standard start position), `--tt-size <MB>` (default 128), `--epsilon <VALUE>`
-  (default 0.125), `--timeout <SECONDS>` (default 5), `--first-outcome`
-  (stop after the first decisive line without iterative shortest-PV refinement),
-  `--refine-cap <FACTOR>` (default 0.25; per-refinement-round work-cap factor
-  relative to the first-outcome child-eval count, `0` disables capping),
-  `--outcome-only` (no stdin reader, no pre-exit summary),
-  `--tt-dump-path <FILE>` (opt-in; writes a compact binary TT snapshot after
-  the search — solved entries from all generations, unsolved from the current
-  generation),
-  plus `--no-preflight` (disable the detector-gated bounded pre-phase;
-  added to `-h`, unknown-option handling unchanged) and `-h`/`--help`.
-  Unknown options exit with an error. It prints the outcome
-  and an informational PV when the result is decisive. The search CLI is
-  **resource-bounded** (RAM = TT only, with the pre-phase closure as the
-  one documented bounded exception — see the `preflight` module): it never
-  builds proof trees — no worker thread, no proof-tree memory budget, no
-  `MemoryLimit` abort path — and prints no
-  `proof_tree:`/`proof_tree_dump:`/`pt_validate:` lines. Proof
-  construction is an offline step: `--tt-dump-path` produces the TT snapshot
-  from which `examples/reconstruct_pt` (worker + finalize + replay validator,
-  exit 1 on a defective tree) rebuilds the validated binary dump. The
-  pre-exit hook reduces to the stdin reader (`q` quits) and one
-  `pre_exit: reason=… outcome=… nodes=…` line. In non-`--outcome-only`
-  mode the pre-phase hook additionally prints one
-  `preflight: decided outcome=… evals=… region=… rank=…` line (decisive
-  claim) or `preflight: deferred reason=… evals=…` line. For decisive
-  outcomes it also prints `pv_status: proven-shortest | first-outcome |
-  preflight-proof | cap-cut | cut-short`, reporting whether the PV length
-  is proven minimal (the last bounded refinement round exhausted
-  naturally, or the win is 1 move), why refinement stopped early, or that
-  the PV is a replay-verified pre-phase certificate line (`preflight-proof`,
-  length = exact DTM); it qualifies the PV *length* within the solver's
-  search semantics, not the PV's validity as a proof.
-- `examples/` contains example binaries for exploring solver behavior.
-- `tests/` contains integration/regression tests.
+- `src/search/dfpn/` — sequential DF-PN+ solver: iterative bounded refinement, history/killer
+  heuristics, 5 s default timeout; emits `ProofEvent`s for every proven/disproven node (the
+  returned PV is informational, from the TT; proof-tree finalization is the proof-tree layer's
+  job). Refinement rounds are deterministically work-capped (`set_refine_cap_factor` /
+  `--refine-cap`, default 0.25, `0` disables); searches can instead be bounded by cumulative
+  child evals (`set_child_eval_budget`: budget-exhausted → `Draw` +
+  `ExitReason::BudgetExhausted`, never `Timeout`). Hot-path terminal classification, pooled
+  movegen slots (`children.rs`), and the per-run repetition-draw cache (`repetition_cache.rs`)
+  are documented in their own module docs.
+- `src/search/preflight/` — detector-gated bounded pre-phase (plan13, architecture R): on
+  ≤3-men, pawnless, no-castling roots it decides the value via a region-closure AND/OR fixpoint
+  plus a mandatory replay verifier; a claim returns the exact-DTM principal-line PV, anything
+  else defers and the search runs bit-identically. Its soundness contract — no TT interaction,
+  no wall clock, no `ProofEvent`s (the documented R2 gap), budget accounting, and the
+  `REGION_BUDGET`-bounded closure memory (the one bounded exception to the search CLI's
+  "RAM = TT only") — is normative in the module header.
+- `src/search/tt/` — transposition table with path-independent base entries;
+  repetition-dependent results are not cached (first-player-loss GHI shortcut).
+- `src/search/ordering.rs` — the `MoveScorer` trait and `StaticAtomicScorer`.
+- `src/proof_tree/` — `Move`/hash-based proof tree plus a background worker consuming
+  `ProofEvent`s under a memory budget; `finalize()` copies canonical subtrees onto unexpanded
+  transpositions, validates the tree (replay-based `validate.rs`), and serializes it to a
+  compact binary dump (`binary.rs`, importable into PostgreSQL). Construction is an offline
+  step: search → TT snapshot (`--tt-dump-path`) → `src/reconstruct` /
+  `examples/reconstruct_pt` (worker + finalize + validator) → dump; the search CLI never
+  builds trees. `Search::set_memory_limited` / `ExitReason::MemoryLimit` are a
+  reconstruct-side contract only (`src/reconstruct/walker.rs`).
+- `src/zobrist.rs` — deterministic Zobrist keys, including the halfmove clock;
+  `src/notation.rs` — UCI move helpers, including `moves_to_uci_path`.
+- `src/main.rs` — the CLI (`--fen`, `--tt-size`, `--epsilon`, `--timeout`, `--first-outcome`,
+  `--refine-cap`, `--outcome-only`, `--tt-dump-path`, `--no-preflight`, `-h`; unknown options
+  exit with an error). Resource-bounded: RAM = TT only; it never builds proof trees and prints
+  no proof-tree lines. The full option, output (`pre_exit:` / `preflight:` / `pv_status:`
+  lines), and offline-proof contracts are in the module header.
+- `examples/` — example binaries (below); `tests/` — integration/regression tests.
 
 ## Dependency direction
 
@@ -172,82 +56,30 @@ A pure solver for atomic chess in Rust.
 
 ## Examples
 
-`examples/common.rs` provides shared helpers for the example binaries; it is
-not itself a runnable example.
+`examples/common.rs` holds shared helpers and is not runnable. Runnable:
 
-The runnable examples are:
-
-- `benchmark` — Reproducible benchmark harness over a fixed suite of positions.
-  Supports `--suite default|move-order|decisive|quick|thorough|all`, `--runs`,
-  `--timeout`, `--epsilon`, `--tt-size`, `--first-outcome`, `--config`, `--json`,
-  and `--output-file`. Prints a table by default and, with `--json`, emits a JSON
-  document suitable for an external optimizer.
-- `chunk_growth` — Explore work-chunk growth settings and their effect on
-  node counts.
-- `find_winning_child` — Enumerates every legal first move, solves the resulting
-  child with a short timeout, and reports the first move that is winning for
-  the root side (a child `Loss`).
-- `egtb_gen3` — 3-man atomic WDL tablebase generator prototype (K+x vs K, x ∈
-  {Q, R, B, N, P}, both strong-side colors): forward value iteration to
-  fixpoint over `atomic-movegen` semantics, raw byte-per-entry WDL dump, and
-  cross-validation against the solver plus an independent depth-limited proof
-  oracle (`--material q|r|b|n|p|all`, `--out`, `--samples`, `--prove-samples`).
-  Exit 1 on any cross-validation mismatch, proof contradiction, or symmetry
-  violation.
-- `inspect_pt` — Dump a binary `proof_tree.bin` to human-readable JSON;
-  `--validate` additionally runs the replay-based proof validator on the
-  loaded tree and exits non-zero on defects.
-- `list_legal` — List all legal UCI moves and the terminal outcome for a FEN.
-- `move_order_debug` — Print static, history, killer, and total move-ordering
-  scores for every legal move. Use `--name <case>` to inspect a move-order
-  benchmark position.
-- `play_and_solve` — Plays a user-specified move and then solves the resulting
-  position. Useful for inspecting a particular line.
-- `reconstruct_pt` — Rebuilds a proof tree offline from the root FEN plus a TT
-  snapshot (`--snapshot`), synthesizing events into the regular proof-tree
-  worker; reports `validate: ok|FAILED n` for the reconstructed tree and
-  exits non-zero on validation failure; `--oracle` compares against an
-  event-built dump, and `--experiment` runs the go/no-go dual-build oracle
-  over the decisive suite (per-case live-tree `validate` column included).
-- `replay` — Replay a UCI line from a FEN and solve the resulting position.
-- `solve_depth_limited` — Runs `Search::search_depth` with a fixed
-  `max_depth` and no iterative-deepening bootstrap.
-- `static_move_scores` — Prints the `StaticAtomicScorer` values for all legal
-  moves, sorted from highest to lowest. Use `--name <case>` to inspect a
-  move-order benchmark position.
-- `twin_stats` — Report transposition-table statistics for GHI-sensitive
-  positions.
-- `verify_ppv` — Verifies that a supplied UCI move list is a Proof Principal
-  Variation for a given FEN.
+- `benchmark` — reproducible benchmark harness (`--suite default|move-order|decisive|quick|thorough|all`, `--runs`, `--timeout`, `--epsilon`, `--tt-size`, `--first-outcome`, `--config`, `--json`, `--output-file`; `--json` feeds the external optimizer).
+- `chunk_growth` — work-chunk growth settings vs. node counts.
+- `find_winning_child` — solves every first-move child; reports the winning root move.
+- `egtb_gen3` — 3-man atomic WDL tablebase generator prototype: value iteration over `atomic-movegen` semantics, raw WDL dump, solver cross-validation, and an independent depth-limited proof oracle; exit 1 on any mismatch (`--material q|r|b|n|p|all`, `--out`, `--samples`, `--prove-samples`).
+- `inspect_pt` — dump `proof_tree.bin` to JSON; `--validate` runs the replay validator and exits non-zero on defects.
+- `list_legal` — all legal UCI moves and the terminal outcome for a FEN.
+- `move_order_debug` — static/history/killer/total ordering scores (`--name <case>`).
+- `play_and_solve` — play a given move, then solve the resulting position.
+- `reconstruct_pt` — rebuild a proof tree offline from a FEN + TT snapshot (`--snapshot`); reports `validate: ok|FAILED n`, exits non-zero on defects; `--oracle` and `--experiment` run the dual-build oracle.
+- `replay` — replay a UCI line from a FEN, then solve the resulting position.
+- `solve_depth_limited` — fixed-`max_depth` search without the iterative-deepening bootstrap.
+- `static_move_scores` — sorted `StaticAtomicScorer` values (`--name <case>`).
+- `twin_stats` — TT statistics for GHI-sensitive positions.
+- `verify_ppv` — verify a supplied UCI move list as a PPV for a FEN.
 
 ## Output priorities
 
-When the solver must trade off result quality against time or implementation
-complexity, prefer them in this order:
+1. **Decisive outcome** for deep positions (~30 full moves / 60 plies or more).
+2. **Informational PV** from `Search::solve` — best-effort from the TT, not validated as a proof.
+3. **Proof tree dump** (`proof_tree.bin`) from offline reconstruction (`reconstruct_pt` over a TT snapshot; the search CLI never builds a tree), finalized onto transpositions; PPV extraction and validation are the proof-tree layer's job.
 
-1. **Decisive outcome** for deep positions (roughly 30 full moves / 60 plies or
-   more).
-2. **Informational PV** returned by `Search::solve` as a best-effort line from
-   the transposition table. It is not validated as a proof.
-3. **Proof tree dump** (`proof_tree.bin`) produced by the worker's `finalize()`
-   pass during offline reconstruction (`reconstruct_pt` over a TT snapshot —
-   the search CLI never builds a tree). The authoritative in-memory tree
-   carries Zobrist hashes and copies
-   fully expanded canonical subtrees onto unexpanded transpositions before the
-   dump is written. PPV extraction and validation are handled separately by
-   the proof-tree layer.
-
-`Search::solve` returns the first decisive line quickly, then uses the
-remaining time budget to iteratively improve the informational PV. Use
-`Search::first_outcome_only` (or the CLI `--first-outcome` flag) to skip
-refinement when only a decisive outcome is needed. After a solve,
-`Search::pv_status()` reports whether the returned PV is proven shortest
-(PvStatus::ProvenShortest: the last bounded refinement round exhausted
-naturally at `bound = pv_len - 2`, or the win is 1 move) or why not
-(`FirstOutcome` / `Unproven`); this qualifies the PV length within the
-solver's search semantics, not the PV's validity as a proof. The proof tree is
-never cleared automatically and the root FEN is fixed for the lifetime of the
-program.
+`Search::solve` returns the first decisive line, then uses the remaining budget to shorten the PV (`Search::first_outcome_only` / `--first-outcome` skips this). `Search::pv_status()` qualifies the PV *length* (never its validity as a proof): `ProvenShortest` (last bounded refinement round exhausted naturally at `bound = pv_len - 2`, or the win is 1 move), `FirstOutcome`, `Unproven` (cap- or resource-cut round), `PreflightProof` (replay-verified pre-phase certificate, length = exact DTM), or `None`. The proof tree is never cleared automatically; the root FEN is fixed for the lifetime of the program.
 
 ## Testing tiers
 
@@ -271,25 +103,14 @@ someone chooses to run it.
 
 ## Profiling in this container
 
-`perf` is usable for per-process profiling of the container's own processes
-(made possible by host-side launcher flags: `CAP_PERFMON`, `SYS_PTRACE`,
-`seccomp=unconfined`, `label=disable`). Verified 2026-09-08 on the release
-build.
+`perf` works for per-process profiling of the container's own processes
+(host-side launcher flags: `CAP_PERFMON`, `SYS_PTRACE`, `seccomp=unconfined`,
+`label=disable`); verified 2026-09-08 on the release build.
 
-- Works: `perf record -e cpu-clock -g -- <cmd>` (statistical sampling with
-  call graphs), `perf stat -e task-clock,context-switches,page-faults`,
-  `perf report`, `perf top`, `perf trace`.
-- Not available: hardware PMU events (`cycles`, `instructions`, cache/branch
-  counters) — the guest has no virtual PMU — and system-wide/CPU-wide
-  profiling. `cpu-clock` software sampling is the profiling ceiling.
-- Kernel symbols do not resolve (`kptr_restrict`); user-space attribution is
-  unaffected.
-- The release build omits frame pointers. Use leaf attribution
-  (`perf report --no-children`) for hot-path work, or
-  `perf record --call-graph dwarf` / `RUSTFLAGS=-Cforce-frame-pointers=yes`
-  when full call chains are needed.
-
-Typical hot-path session:
+- Works: `perf record -e cpu-clock -g -- <cmd>` (sampling with call graphs), `perf stat -e task-clock,context-switches,page-faults`, `perf report`, `perf top`, `perf trace`.
+- Not available: hardware PMU events (`cycles`, `instructions`, cache/branch counters — the guest has no virtual PMU) and system-wide/CPU-wide profiling; `cpu-clock` software sampling is the ceiling.
+- Kernel symbols do not resolve (`kptr_restrict`); user-space attribution is unaffected.
+- The release build omits frame pointers: prefer leaf attribution (`perf report --no-children`), or `perf record --call-graph dwarf` / `RUSTFLAGS=-Cforce-frame-pointers=yes` for full call chains.
 
 ```bash
 perf record -e cpu-clock -g -o /tmp/opencode/prof.data -- \
@@ -297,11 +118,7 @@ perf record -e cpu-clock -g -o /tmp/opencode/prof.data -- \
 perf report -i /tmp/opencode/prof.data --stdio --no-children
 ```
 
-If these commands start failing (`EPERM`/`EACCES` on event open), the
-host-side launcher flags have regressed — the launcher lives outside this
-repo, so the fix is launcher-side; nothing in-repo can grant the missing
-permissions. This section is the only in-repo record of that setup; keep it
-in sync if the launcher changes.
+If these commands start failing (`EPERM`/`EACCES` on event open), the host-side launcher flags have regressed — the launcher lives outside this repo, so the fix is launcher-side; nothing in-repo can grant the missing permissions. This section is the only in-repo record of that setup; keep it in sync if the launcher changes.
 
 ## Conventions
 
@@ -371,43 +188,13 @@ in sync if the launcher changes.
 
 ## File size justifications
 
-- `src/search/preflight/mod.rs` and `src/search/preflight/region.rs` are
-  larger than the 10 KB guideline because the pre-phase's soundness contract
-  (mod.rs header) is the normative documentation reviewers rely on, and the
-  region closure, packed-key codec, exact-rank fixpoint, and strategy/PV
-  extraction share one indexing scheme (region.rs). Both stay under the
-  ~20 KB split threshold; unit tests are split out into
-  `src/search/preflight/tests.rs` and `verifier.rs`'s own test module.
-- `src/proof_tree/worker.rs` is larger than the 20 KB guideline because it
-  contains the full proof-tree worker: the threaded handle, event loop,
-  `find_or_create_node` path traversal, dummy-node reconciliation, canonical
-  finalization, and memory accounting. Splitting it further would fragment the
-  state machine and the shared `ProofTreeWorker` fields.
-- `src/search/ordering.rs` is larger than the 10 KB guideline because it holds
-  the complete `StaticAtomicScorer` move-ordering heuristics (kamikaze, threats,
-  atomic SEE, pawn-storm, rook centralization, and back-rank bonuses) and the
-  constants that are tuned together. The unit tests are split out into
-  `src/search/ordering/tests.rs` to keep the main file under the 20 KB limit.
-- `src/search/dfpn/children.rs` is larger than the 20 KB guideline because
-  `ChildPrecompute` (the per-depth pooled frame movegen slots), the
-  existence-query terminal classification in `evaluate_child`, TT reuse, and
-  proof-event emission share one `Position` move/undo sequence; the slot
-  reuse and staleness invariants are documented next to the type that owns
-  them.
+- `src/search/preflight/mod.rs` and `region.rs` — the pre-phase's soundness contract (mod.rs header) plus the region closure, packed-key codec, exact-rank fixpoint, and strategy/PV extraction share one indexing scheme; tests are split out (`preflight/tests.rs`, `verifier.rs` test module).
+- `src/proof_tree/worker.rs` — the full worker state machine (threaded handle, event loop, path traversal, dummy-node reconciliation, canonical finalization, memory accounting); splitting would fragment shared fields.
+- `src/search/ordering.rs` — the complete `StaticAtomicScorer` heuristics and their co-tuned constants; tests are split out (`ordering/tests.rs`).
+- `src/search/dfpn/children.rs` — `ChildPrecompute` pooled frame movegen slots, existence-query terminal classification, TT reuse, and proof-event emission share one `Position` move/undo sequence; slot invariants live next to the owning type.
+- `src/search/dfpn/selection.rs` — OR/AND selection and best/second-unsolved search over the `ChildInfo` table; tests are split out (`selection/tests.rs`).
+- `src/main.rs` — self-contained CLI: argument parsing, help text, search setup, and pre-exit hook in one place.
 
 ## Tuning workflow
 
-The optimizer interface contract in `docs/spec/optimizer_interface.md` defines
-how an external optimizer can evaluate candidate `ScorerParams` by invoking the
-`benchmark` example with `--json`. The contract is intentionally narrow:
-
-- `atomic_solver` provides the evaluator (`--suite quick` and `--suite thorough`),
-  validates the TOML config, and returns raw metrics as JSON.
-- The optimizer is responsible for generating its own baselines, choosing which
-  `ScorerParams` to vary, mapping the optimizer's parameter space onto the TOML
-  format, projecting invalid proposals back into the valid region, and computing
-  a scalar loss.
-
-Use `child_evals` as the preferred deterministic efficiency metric and ensure
-that any `WRONG_PENALTY` dominates the loss, reflecting correctness as the
-highest priority.
+`docs/spec/optimizer_interface.md` defines how an external optimizer evaluates candidate `ScorerParams` by invoking `benchmark --json`. The contract is narrow: `atomic_solver` provides the evaluator (`--suite quick` / `--suite thorough`), validates the TOML config, and returns raw metrics; the optimizer owns baselines, parameter space, TOML mapping, projection, and the scalar loss. Prefer `child_evals` (deterministic) as the efficiency metric; `WRONG_PENALTY` must dominate the loss (correctness first).

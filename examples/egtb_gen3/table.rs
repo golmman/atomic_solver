@@ -155,7 +155,7 @@ pub fn valid_placement(pt: PieceType, sk: usize, wk: usize, xs: usize) -> bool {
 
 /// Solver-equivalent terminal classification at clock 0 (rule50 excluded by
 /// construction): extinction, moves-empty with the checkers-bit mate/stalemate
-/// split, then the board-static KvK draw. Returns
+/// split, then the board-static `KvK` draw. Returns
 /// `(value, is_checkmate, is_stalemate)` on terminal positions.
 pub fn classify_terminal(board: &Board) -> Option<(u8, bool, bool)> {
     let us = board.side_to_move();
@@ -355,11 +355,11 @@ impl Table3 {
                 }
                 if any_loss {
                     value[i] = U_WIN;
-                    dtm[i] = pass.min(u8::MAX as u32) as u8;
+                    dtm[i] = pass.min(u32::from(u8::MAX)) as u8;
                     changed += 1;
                 } else if all_win && !any_unknown {
                     value[i] = U_LOSS;
-                    dtm[i] = pass.min(u8::MAX as u32) as u8;
+                    dtm[i] = pass.min(u32::from(u8::MAX)) as u8;
                     changed += 1;
                 }
             }
@@ -372,11 +372,11 @@ impl Table3 {
             match value[i] {
                 U_WIN => {
                     stats.wins[decode_index(i).0] += 1;
-                    stats.max_dtm = stats.max_dtm.max(dtm[i] as u32);
+                    stats.max_dtm = stats.max_dtm.max(u32::from(dtm[i]));
                 }
                 U_LOSS => {
                     stats.losses[decode_index(i).0] += 1;
-                    stats.max_dtm = stats.max_dtm.max(dtm[i] as u32);
+                    stats.max_dtm = stats.max_dtm.max(u32::from(dtm[i]));
                 }
                 U_DRAW => stats.draws[decode_index(i).0] += 1,
                 U_UNKNOWN => {
@@ -462,14 +462,14 @@ fn resolve_child(parent: &Board, m: Move, class: usize, strong: usize, deps: &[&
     let mut state = StateInfo::new();
     child.do_move(m, &mut state);
     if child.occupied().count() == 2 {
-        return TAG_CONST | U_DRAW as u32;
+        return TAG_CONST | u32::from(U_DRAW);
     }
     let cus = child.side_to_move();
     if child.commoners(cus).is_empty() {
-        return TAG_CONST | U_LOSS as u32;
+        return TAG_CONST | u32::from(U_LOSS);
     }
     if child.commoners(cus.flip()).is_empty() {
-        return TAG_CONST | U_WIN as u32;
+        return TAG_CONST | u32::from(U_WIN);
     }
     let strong_c = if strong == 0 {
         Color::White

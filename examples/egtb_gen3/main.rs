@@ -13,8 +13,8 @@
 //! Zero cross-validation mismatches is the merge gate of the spike.
 //!
 //! Run with:
-//!     cargo run --release --example egtb_gen3 -- --material q --out /tmp/kq3.bin
-//!     cargo run --release --example egtb_gen3 -- --material all --out /tmp/egtb3.bin --samples 32
+//!     cargo run --release --example `egtb_gen3` -- --material q --out /tmp/kq3.bin
+//!     cargo run --release --example `egtb_gen3` -- --material all --out /tmp/egtb3.bin --samples 32
 
 mod prove;
 mod table;
@@ -182,7 +182,7 @@ fn cross_validate_prove(
                 let table_v = t.value_at(i);
                 let consistent = match (table_v, pv) {
                     (U_WIN, Some(prove::P_WIN)) | (U_LOSS, Some(prove::P_LOSS)) => true,
-                    (U_DRAW, None) | (_, None) => true, // bound exhausted
+                    (U_DRAW | _, None) => true, // bound exhausted
                     (U_DRAW, Some(prove::P_DRAW)) => true,
                     _ => false,
                 };
@@ -246,13 +246,13 @@ fn cross_validate_edges(tables: &[Table3], timeout: u64, log: &mut Vec<String>) 
         // Table agreement where the position lives inside the q-table space.
         if let (Some(qt), Some(i)) = (q_table, resolve_fen(0, fen)) {
             let tv = table_outcome(qt.value_at(i));
-            if tv != Some(expected) {
+            if tv == Some(expected) {
+                log.push(format!("[edges] {label}: solver={expected} table ok"));
+            } else {
                 mismatches += 1;
                 log.push(format!(
                     "[edges] table mismatch ({label}): {fen} table={tv:?} solver={expected:?}"
                 ));
-            } else {
-                log.push(format!("[edges] {label}: solver={expected} table ok"));
             }
         } else if q_table.is_none() {
             log.push(format!(

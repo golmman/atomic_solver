@@ -368,9 +368,10 @@ pub fn assert_solves_with_first_move(fen: &str, expected: Outcome, first: &str) 
 
 /// Assert that `pv` is a valid PV from `fen` ending in `expected`.
 pub fn assert_pv_valid(fen: &str, expected: Outcome, pv: &[Move]) {
-    if pv.is_empty() && expected != Outcome::Draw {
-        panic!("expected a non-empty PV for decisive {expected:?} in {fen}");
-    }
+    assert!(
+        !(pv.is_empty() && expected != Outcome::Draw),
+        "expected a non-empty PV for decisive {expected:?} in {fen}"
+    );
 
     let pos =
         Position::from_fen(fen).unwrap_or_else(|e| panic!("failed to parse FEN '{fen}': {e}"));

@@ -360,7 +360,7 @@ mod reference {
         let lone_commoner = if state.them_commoners_count == 1 {
             let mut c = them_commoners;
             let sq = c.pop_lsb();
-            if sq != Square::NONE { Some(sq) } else { None }
+            if sq == Square::NONE { None } else { Some(sq) }
         } else {
             None
         };
@@ -433,16 +433,13 @@ mod reference {
             let from_bb = Bitboard::square_bb(from);
             let occupied_without_from = board.occupied() & !from_bb;
             let rook_attacks = attacks::rook_attacks(to, occupied_without_from);
-            if (rook_attacks & Bitboard::square_bb(commoner_sq)) != Bitboard::EMPTY {
-                let reduction = (from_dist - to_dist).max(0);
-                score += rook_open_file + i32::from(reduction) * rook_open_file_step;
-            } else {
+            if (rook_attacks & Bitboard::square_bb(commoner_sq)) == Bitboard::EMPTY {
                 let changed_file =
                     atomic_movegen::types::file_of(to) != atomic_movegen::types::file_of(from);
                 if changed_file {
                     let file_mask = Bitboard(
                         0x0101_0101_0101_0101u64
-                            << (atomic_movegen::types::file_of(to) as u8 as u32),
+                            << u32::from(atomic_movegen::types::file_of(to) as u8),
                     );
                     let occupied_no_own_pawns =
                         board.occupied() & !board.pieces_color_pt(us, PieceType::Pawn) & !from_bb;
@@ -454,9 +451,12 @@ mod reference {
                         score += rook_open_file + i32::from(reduction) * rook_open_file_step;
                     }
                 }
+            } else {
+                let reduction = (from_dist - to_dist).max(0);
+                score += rook_open_file + i32::from(reduction) * rook_open_file_step;
             }
 
-            if (to as u8 / 8) as u32 == enemy_back_rank && chebyshev(to, commoner_sq) <= 2 {
+            if u32::from(to as u8 / 8) == enemy_back_rank && chebyshev(to, commoner_sq) <= 2 {
                 score += rook_back_rank;
             }
         }

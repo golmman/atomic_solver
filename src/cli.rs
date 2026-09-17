@@ -296,7 +296,7 @@ mod tests {
         let parsed = parse_args(&args(&["atomic_solver", "--config", "/tmp/scorer.toml"])).unwrap();
         match parsed {
             ParseResult::Options(o) => {
-                assert_eq!(o.config_path, Some("/tmp/scorer.toml".to_string()))
+                assert_eq!(o.config_path, Some("/tmp/scorer.toml".to_string()));
             }
             ParseResult::Help => panic!("unexpected help"),
         }

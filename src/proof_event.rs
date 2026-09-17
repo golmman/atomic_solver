@@ -1,7 +1,10 @@
 //! Neutral search-to-worker event protocol.
 //!
 //! `ProofEvent` decouples the solver from the proof-tree implementation.
-//! The `search` module emits events; `proof_tree` consumes them.
+//! The `search` module emits events and never emits [`ProofEvent::Clear`] —
+//! the solver never clears proof events; finalizing the proof tree is the
+//! proof-tree layer's responsibility. `Clear` exists for workers and tests
+//! that need to reset their tree state.
 
 use atomic_movegen::types::Move;
 

@@ -28,7 +28,7 @@ use std::collections::HashMap;
 
 /// Order-independent mixing of one repetition key for the context hash.
 ///
-/// The same SplitMix64 finalizer that generates the Zobrist keys: a bijection
+/// The same `SplitMix64` finalizer that generates the Zobrist keys: a bijection
 /// on `u64`, so raw-key cancellation patterns do not survive mixing. The
 /// context hash is the wrapping *sum* of the mixed keys — a multiset hash,
 /// order-independent by construction (required for transposition reuse: the

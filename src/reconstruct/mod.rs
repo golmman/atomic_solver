@@ -334,6 +334,7 @@ fn dfs_signature(
 /// Reconstruct a proof tree from the root FEN plus the snapshot's solved
 /// records. See the module docs for the algorithm; on any failure the output
 /// carries the error and the stats collected so far (no tree, no finalize).
+#[must_use]
 pub fn reconstruct(
     root_fen: &str,
     solved: &[SolvedRecord],

@@ -20,19 +20,18 @@ Status vocabulary:
 
 | Initiative                               | Focus                                                                | Next lever(s)                                                                                                        |
 | ---------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| [`dfpn`](dfpn/initiative.md)             | Search semantics, algorithm-level node reduction (soundness-first)   | #6 plan13 checkpoint resolved (architecture R = region-closure fixpoint; Session B next, see `report13_phase0.md` checkpoint record); #3 refinement after cap-cut; AND-side eval mass is threshold-cut frames (lean plan9 diagnostic) |
+| [`dfpn`](dfpn/initiative.md)             | Search semantics, algorithm-level node reduction (soundness-first)   | #6 done: plan13 (architecture R, region-closure fixpoint) closed (`report13.md`); open levers: #3 refinement after cap-cut, threshold-cut-frame observation (lean plan9 diagnostic) |
 | [`lean`](lean/initiative.md)             | Wall time / nodes, bit-identical drift gate                          | #10 history/killer re-tune or the `dfpn` algorithmic items; #2 parked dormant (plan7 spike)                          |
 | [`proof`](proof/initiative.md)           | Independent, relocatable proofs for a discovered outcome             | #8 PPV from the finalized tree, #5 TT checkpoint, #7 deep-proof builder spike                                        |
 | [`conversion`](conversion/initiative.md) | Deep tempo/progression conversions (`make stress` class)             | plan3 reading round (#5a/#5b: EWS, MOPNS), plan4 clock-pressure AND-side ordering (#3); #2a ordering guidance parked |
 | [`cleanup`](cleanup/initiative.md)       | Housekeeping: DRY, YAGNI, lints, module sizing                       | pedantic-lint triage, `selection.rs` size watch                                                                      |
 | [`movegen`](movegen/initiative.md)       | _Special case:_ cross-repo plans for the `atomic_movegen` dependency | new upstream asks follow the same standalone-plan pattern                                                            |
-| [`egtb`](egtb/initiative.md)             | 4-man atomic endgame tablebase anchoring for faster solves           | plan1 go/no-go spike: men-count histogram + 3-man generator prototype                 |
 
 ## Dormant
 
-_(Currently none; the section exists because "dormant" is part of the
-status vocabulary — an initiative with no open items but a realistic
-reopen trigger belongs here.)_
+| Initiative                   | Focus                                                                                                          | Reopen trigger(s)                                                                                                              |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [`egtb`](egtb/initiative.md) | Refocused to dormant (plan4): the 3-man generator lives on as the `egtb_gen3` correctness oracle; faster-solves is NO-GO | A future 4-man effort (coverage, DTZ granularity, probe integration, proof-tree anchoring) reopens the initiative with a fresh plan2 |
 
 ## Closed
 

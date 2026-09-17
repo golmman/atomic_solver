@@ -422,8 +422,8 @@ impl Search {
         if x >= INF {
             return INF;
         }
-        let scaled =
-            (x as u128 * self.epsilon_num as u128).div_ceil(self.epsilon_den as u128) as u64;
+        let scaled = (u128::from(x) * u128::from(self.epsilon_num))
+            .div_ceil(u128::from(self.epsilon_den)) as u64;
         scaled.max(x.saturating_add(1)).min(INF)
     }
 }
@@ -434,6 +434,7 @@ impl Search {
 /// `Loss` and `Draw` both encode as `(INF, 0)`, so `(INF, 0)` returns `None`.
 /// The `outcome` field stored in the transposition table must be used as the
 /// source of truth when a distinction between `Loss` and `Draw` is required.
+#[must_use]
 pub fn outcome_from_pn_dn(pn: u64, dn: u64) -> Option<Outcome> {
     if pn == 0 && dn == INF {
         Some(Outcome::Win)

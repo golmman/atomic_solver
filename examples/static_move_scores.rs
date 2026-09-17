@@ -11,8 +11,8 @@
 //!
 //! Usage:
 //!     cargo run --example `static_move_scores`
-//!     cargo run --example `static_move_scores` -- --name m25_white
-//!     cargo run --example `static_move_scores` -- --name m25_white --and
+//!     cargo run --example `static_move_scores` -- --name `m25_white`
+//!     cargo run --example `static_move_scores` -- --name `m25_white` --and
 //!     cargo run --example `static_move_scores` -- --config /path/to/scorer.toml
 //!     cargo run --example `static_move_scores` -- "<fen>"
 

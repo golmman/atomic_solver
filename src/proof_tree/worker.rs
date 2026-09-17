@@ -94,6 +94,7 @@ impl ProofTreeWorkerHandle {
     }
 
     /// Request statistics from the worker.
+    #[must_use]
     pub fn stats(&self) -> ProofStats {
         let (tx, rx) = channel();
         self.query_tx
@@ -106,6 +107,7 @@ impl ProofTreeWorkerHandle {
     }
 
     /// Request a clone of the in-memory proof tree from the worker.
+    #[must_use]
     pub fn tree(&self) -> ProofTree {
         let (tx, rx) = channel();
         self.query_tx
@@ -254,7 +256,7 @@ impl ProofTreeWorker {
     fn find_or_create_node(&mut self, path: &[Move]) -> u32 {
         let mut id = 0u32;
         for &mv in path {
-            let key = ((id as u64) << 32) | (move_to_bits(mv) as u64);
+            let key = (u64::from(id) << 32) | u64::from(move_to_bits(mv));
             if let Some(&child_id) = self.child_index.get(&key) {
                 id = child_id;
                 continue;
@@ -324,7 +326,7 @@ impl ProofTreeWorker {
         for child_id in &old_children {
             if !kept_set.contains(child_id) {
                 let key = ((parent_id as u64) << 32)
-                    | (move_to_bits(self.tree.nodes[*child_id as usize].mv) as u64);
+                    | u64::from(move_to_bits(self.tree.nodes[*child_id as usize].mv));
                 self.child_index.remove(&key);
                 self.remove_child_index_subtree(*child_id);
             }
@@ -344,7 +346,8 @@ impl ProofTreeWorker {
         while let Some(id) = stack.pop() {
             let children: Vec<usize> = self.tree.children(id as usize).collect();
             for child_id in children {
-                let key = ((id as u64) << 32) | (move_to_bits(self.tree.nodes[child_id].mv) as u64);
+                let key =
+                    (u64::from(id) << 32) | u64::from(move_to_bits(self.tree.nodes[child_id].mv));
                 self.child_index.remove(&key);
                 stack.push(child_id as u32);
             }
@@ -611,7 +614,7 @@ impl ProofTreeWorker {
         for (i, node) in self.tree.nodes.iter().enumerate() {
             if let Some(p) = node.parent {
                 let parent_id = p.get() as usize - 1;
-                let key = ((parent_id as u64) << 32) | (move_to_bits(node.mv) as u64);
+                let key = ((parent_id as u64) << 32) | u64::from(move_to_bits(node.mv));
                 self.child_index.insert(key, i as u32);
             }
         }
@@ -645,7 +648,7 @@ impl ProofTreeWorker {
             .iter()
             .filter(|n| n.outcome == Some(Outcome::Loss))
             .count();
-        let root_depth = self.tree.nodes.first().map(|n| n.depth).unwrap_or(0);
+        let root_depth = self.tree.nodes.first().map_or(0, |n| n.depth);
         ProofStats {
             nodes,
             win_nodes,

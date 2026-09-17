@@ -93,7 +93,7 @@ fn promotion_shortest_pv_is_seven_plies() {
 }
 
 /// Shortest-PV refinement must find the 5-ply win in the epsilon regression
-/// position. This is the mate-in-two position from tests/test_epsilon.rs.
+/// position. This is the mate-in-two position from `tests/test_epsilon.rs`.
 #[ignore = "slow: shortest-PV refinement; run with -- --include-ignored"]
 #[test]
 fn epsilon_mate_shortest_pv_is_five_plies() {
@@ -101,7 +101,7 @@ fn epsilon_mate_shortest_pv_is_five_plies() {
     assert_solves_to(fen, Outcome::Win, Some(5));
 }
 
-/// The CLI must print exactly one final outcome:/pv: block on stdout.
+/// The CLI must print exactly one final <outcome:/pv>: block on stdout.
 /// Progress output goes to stderr, so only the final result lives in stdout.
 #[test]
 fn cli_does_not_duplicate_final_output() {

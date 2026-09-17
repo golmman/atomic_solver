@@ -154,7 +154,7 @@ impl ScoreContext {
         let lone_commoner = if state.them_commoners_count == 1 {
             let mut c = them_commoners;
             let sq = c.pop_lsb();
-            if sq != Square::NONE { Some(sq) } else { None }
+            if sq == Square::NONE { None } else { Some(sq) }
         } else {
             None
         };

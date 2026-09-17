@@ -54,7 +54,7 @@ pub(super) struct Abort {
 pub(super) struct Analysis {
     /// Region size (= `keys.len()` = number of BFS expansions).
     pub region: usize,
-    /// Child evaluations spent by the closure BFS (clone + do_move + key).
+    /// Child evaluations spent by the closure BFS (clone + `do_move` + key).
     pub evals: u64,
     /// Packed keys in BFS discovery order (index = node id).
     pub keys: Vec<u32>,
@@ -241,7 +241,7 @@ impl RunCtx<'_> {
     }
 }
 
-/// One child evaluation: clone + do_move + packed key (the solver's
+/// One child evaluation: clone + `do_move` + packed key (the solver's
 /// `evaluate_child` analogue for accounting purposes).
 fn child_key(board: &Board, mv: atomic_movegen::types::Move, ctx: &mut RunCtx) -> Option<u32> {
     ctx.evals += 1;

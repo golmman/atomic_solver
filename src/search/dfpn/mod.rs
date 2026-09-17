@@ -408,8 +408,8 @@ impl Search {
         if self.refine_cap_min == u64::MAX {
             return u64::MAX;
         }
-        let scaled = (self.first_outcome_evals as u128 * self.refine_cap_factor_num as u128
-            / self.refine_cap_factor_den as u128) as u64;
+        let scaled = (u128::from(self.first_outcome_evals) * u128::from(self.refine_cap_factor_num)
+            / u128::from(self.refine_cap_factor_den)) as u64;
         scaled.max(self.refine_cap_min)
     }
 
@@ -618,8 +618,8 @@ impl Search {
             chunk = if self.linear_chunks {
                 chunk.saturating_add(self.chunk_increment)
             } else {
-                ((chunk as u128 * self.chunk_multiplier_num as u128)
-                    / self.chunk_multiplier_den as u128) as u64
+                ((u128::from(chunk) * u128::from(self.chunk_multiplier_num))
+                    / u128::from(self.chunk_multiplier_den)) as u64
             };
             self.log_chunk(work_done, chunk, "bounded_search");
         }

@@ -35,7 +35,7 @@ fn main() {
     while i < args.len() {
         match args[i].as_str() {
             "--fen" => {
-                fen = args.get(i + 1).expect("--fen requires a value").to_string();
+                fen = args.get(i + 1).expect("--fen requires a value").clone();
                 i += 2;
             }
             "--timeout" => {

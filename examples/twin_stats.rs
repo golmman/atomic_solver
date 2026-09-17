@@ -8,8 +8,8 @@
 //! Default position is the `m19` regression FEN.
 //!
 //! Usage:
-//!     cargo run --example twin_stats
-//!     cargo run --example twin_stats -- "<fen>"
+//!     cargo run --example `twin_stats`
+//!     cargo run --example `twin_stats` -- "<fen>"
 
 mod common;
 

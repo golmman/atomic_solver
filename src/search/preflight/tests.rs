@@ -2,14 +2,14 @@
 //!
 //! Fast-tier by construction: claim tests use positions whose closure is
 //! tiny (terminal roots) or bounded-abort paths. Full-component closures
-//! (the KQvK ladder, the adjacency-immunity draw) are covered by the slow
+//! (the `KQvK` ladder, the adjacency-immunity draw) are covered by the slow
 //! integration tests in `tests/test_preflight.rs`, except one full-closure
 //! draw claim kept in the fast tier as end-to-end coverage of the D2 path.
 //!
 //! Engine-semantics note (discovered while calibrating these tests, and
 //! load-bearing for the class): commoners are pseudo-royal with
 //! *adjacency immunity* — a lone commoner adjacent to the enemy commoner is
-//! never "in check" (`atomic_movegen::board::Board::legal`). A KQvK position
+//! never "in check" (`atomic_movegen::board::Board::legal`). A `KQvK` position
 //! with the kings adjacent (`8/8/8/8/8/1K6/1Q6/k7 b`) is a genuine Draw
 //! (confirmed against `egtb3-q.bin`), which the pre-phase proves by full
 //! closure.

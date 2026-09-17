@@ -204,6 +204,62 @@ fn cli_prints_pv_status_preflight_proof_for_mate_in_one() {
     );
 }
 
+/// The `KQvK` ladder root is a gated ≤3-men position: by default the pre-phase
+/// decides it (one `preflight: decided …` line, `pv_status: preflight-proof`),
+/// while `--no-preflight` disables the pre-phase (the hook reports
+/// `deferred reason=disabled`, and no preflight-proof status appears; the
+/// plain search does not finish in the test timeout).
+#[test]
+fn cli_no_preflight_disables_prephase_on_gated_position() {
+    let fen = "8/2K5/k7/8/8/8/8/4Q3 w - - 0 1";
+
+    // Default run: the pre-phase claims the root. No `--outcome-only`, so the
+    // `preflight:` hook line is printed; stdin is closed so the reader exits.
+    let output = Command::new(cli_bin())
+        .args(["--fen", fen, "--timeout", "5"])
+        .stdin(Stdio::null())
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI failed: {stdout}");
+    assert!(stdout.contains("outcome: win"), "expected a win outcome");
+    assert!(
+        stdout.contains("preflight: decided "),
+        "expected a decided preflight line:\n{stdout}"
+    );
+    assert!(
+        stdout.contains("pv_status: preflight-proof"),
+        "expected a preflight-proof pv_status line:\n{stdout}"
+    );
+
+    // `--no-preflight`: the pre-phase is disabled. The hook still prints its
+    // one `preflight:` line (documented R5 behavior, `--outcome-only` aside),
+    // but it must be the `deferred reason=disabled` report — never a decided
+    // claim or a preflight-proof PV status. The plain search cannot finish on
+    // the ladder within the timeout, so the outcome itself is not asserted.
+    let output = Command::new(cli_bin())
+        .args(["--fen", fen, "--no-preflight", "--timeout", "1"])
+        .stdin(Stdio::null())
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI failed: {stdout}");
+    assert!(
+        stdout.contains("preflight: deferred reason=disabled"),
+        "--no-preflight must report the disabled pre-phase:\n{stdout}"
+    );
+    assert!(
+        !stdout.contains("preflight: decided"),
+        "--no-preflight must not decide the pre-phase:\n{stdout}"
+    );
+    assert!(
+        !stdout.contains("preflight-proof"),
+        "--no-preflight must not report a pre-phase PV status:\n{stdout}"
+    );
+}
+
 /// `--first-outcome` on the promotion fixture skips refinement: the PV came
 /// from the first-outcome phase and its length is informational.
 #[test]
@@ -288,7 +344,7 @@ fn cli_tt_dump_path_writes_parsable_snapshot() {
     assert!(header.solved_count >= 1, "expected solved entries");
     assert_eq!(header.solved_count as usize, solved.len());
     assert!(
-        bytes.len() as u64 <= header.tt_size_mb as u64 * 1_048_576,
+        bytes.len() as u64 <= u64::from(header.tt_size_mb) * 1_048_576,
         "snapshot size {} must stay within the TT bound",
         bytes.len()
     );

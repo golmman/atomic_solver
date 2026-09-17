@@ -7,8 +7,8 @@
 //! Default position is the `m19` regression FEN.
 //!
 //! Usage:
-//!     cargo run --example list_legal
-//!     cargo run --example list_legal -- "<fen>"
+//!     cargo run --example `list_legal`
+//!     cargo run --example `list_legal` -- "<fen>"
 
 mod common;
 
@@ -43,7 +43,7 @@ fn main() {
 
     let outcome = pos.outcome();
     println!("fen: {}", pos.fen());
-    println!("outcome: {:?}", outcome);
+    println!("outcome: {outcome:?}");
     println!("legal_moves ({}):", moves.len());
     for i in 0..moves.len() {
         println!("  {}", move_to_uci(moves[i]));

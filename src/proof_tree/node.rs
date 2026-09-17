@@ -37,6 +37,7 @@ pub struct ProofTree {
 
 impl ProofTree {
     /// Create a new proof tree with a single root node.
+    #[must_use]
     pub fn new(
         root_fen: String,
         root_hash: u64,

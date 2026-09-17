@@ -7,10 +7,10 @@
 //! modules would hide the experiment's data flow.
 //!
 //! Usage:
-//!     cargo run --release --example reconstruct_pt -- --snapshot proof.bin.tt
-//!     cargo run --release --example reconstruct_pt -- --snapshot s.tt \
-//!         --oracle proof_tree.bin --out recon.bin
-//!     cargo run --release --example reconstruct_pt -- --experiment --json
+//!     cargo run --release --example `reconstruct_pt` -- --snapshot proof.bin.tt
+//!     cargo run --release --example `reconstruct_pt` -- --snapshot s.tt \
+//!         --oracle `proof_tree.bin` --out recon.bin
+//!     cargo run --release --example `reconstruct_pt` -- --experiment --json
 
 mod common;
 
@@ -78,38 +78,38 @@ fn parse_args() -> Options {
                     need(&mut i, "--tt-size")
                         .parse()
                         .expect("--tt-size needs a number"),
-                )
+                );
             }
             "--pt-size" => {
                 o.pt_size = need(&mut i, "--pt-size")
                     .parse()
-                    .expect("--pt-size needs a number")
+                    .expect("--pt-size needs a number");
             }
             "--fill-base" => {
                 o.fill_base = need(&mut i, "--fill-base")
                     .parse()
-                    .expect("--fill-base needs a number")
+                    .expect("--fill-base needs a number");
             }
             "--fill-depth-cap" => {
                 o.fill_depth_cap = need(&mut i, "--fill-depth-cap")
                     .parse()
-                    .expect("--fill-depth-cap needs a number")
+                    .expect("--fill-depth-cap needs a number");
             }
             "--fill-attempt-budget" => {
                 o.fill_attempt_budget = need(&mut i, "--fill-attempt-budget")
                     .parse()
-                    .expect("--fill-attempt-budget needs a number")
+                    .expect("--fill-attempt-budget needs a number");
             }
             "--fill-total-budget" => {
                 o.fill_total_budget = need(&mut i, "--fill-total-budget")
                     .parse()
-                    .expect("--fill-total-budget needs a number")
+                    .expect("--fill-total-budget needs a number");
             }
             "--oracle" => o.oracle = Some(need(&mut i, "--oracle")),
             "--timeout" => {
                 o.timeout = need(&mut i, "--timeout")
                     .parse()
-                    .expect("--timeout needs a number")
+                    .expect("--timeout needs a number");
             }
             "--json" => {
                 o.json = true;
@@ -505,28 +505,25 @@ fn run_experiment(opts: &Options) {
             row.fill_evals_f = output.fill_evals;
             row.holes = Some(hole_row(&output.stats));
             row.recon_nodes = Some(output.stats.total());
-            match (&output.tree, &live.tree) {
-                (Some(t2), Some(t1)) => {
-                    let (iso, a_only, b_only) = oracle_report(t1, t2);
-                    row.a_only_paths = Some(a_only.len());
-                    row.b_only_paths = Some(b_only.len());
-                    if iso {
-                        row.status = "ok".to_string();
-                    } else {
-                        row.status = "oracle_differing".to_string();
-                        row.error = Some(format!(
-                            "a only-in-events: {}; b only-in-recon: {}; first a: {}; first b: {}",
-                            a_only.len(),
-                            b_only.len(),
-                            a_only.first().cloned().unwrap_or_default(),
-                            b_only.first().cloned().unwrap_or_default()
-                        ));
-                    }
+            if let (Some(t2), Some(t1)) = (&output.tree, &live.tree) {
+                let (iso, a_only, b_only) = oracle_report(t1, t2);
+                row.a_only_paths = Some(a_only.len());
+                row.b_only_paths = Some(b_only.len());
+                if iso {
+                    row.status = "ok".to_string();
+                } else {
+                    row.status = "oracle_differing".to_string();
+                    row.error = Some(format!(
+                        "a only-in-events: {}; b only-in-recon: {}; first a: {}; first b: {}",
+                        a_only.len(),
+                        b_only.len(),
+                        a_only.first().cloned().unwrap_or_default(),
+                        b_only.first().cloned().unwrap_or_default()
+                    ));
                 }
-                _ => {
-                    row.status = "recon_failed".to_string();
-                    row.error = output.error.clone();
-                }
+            } else {
+                row.status = "recon_failed".to_string();
+                row.error = output.error.clone();
             }
             if row.status == "ok" && row.child_evals_c > 0 {
                 row.fill_ratio = Some(row.fill_evals_f as f64 / row.child_evals_c as f64);
@@ -612,19 +609,17 @@ fn run_experiment(opts: &Options) {
                 "| {} | {} | {} | {} | {} | {} | {} | {} | {} |",
                 r.name,
                 r.status,
-                r.outcome.map(|o| o.as_str()).unwrap_or("-"),
+                r.outcome.map_or("-", |o| o.as_str()),
                 r.child_evals_c,
                 r.fill_evals_f,
                 r.fill_ratio.map_or("-".to_string(), |v| format!("{v:.3}")),
                 r.recon_nodes.map_or("-".to_string(), |v| v.to_string()),
                 r.validate.as_deref().unwrap_or("-"),
-                r.holes
-                    .map(|h| format!(
+                r.holes.map_or_else(|| "-".to_string(), |h| format!(
                         "hit={} term={} clock_hit={} miss_draw={} rep={} absent={} filled={} unfill={} anom={}",
                         h.hit, h.terminal, h.clock_hit, h.clock_miss_draw, h.repetition,
                         h.absent, h.filled, h.unfillable, h.anomalies
-                    ))
-                    .unwrap_or_else(|| "-".to_string()),
+                    )),
             );
         }
         println!();

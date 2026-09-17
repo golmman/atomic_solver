@@ -16,12 +16,12 @@
 //! one of the move-order benchmark positions from `tests/fixtures/move_order_positions.txt`.
 //!
 //! Usage:
-//!     cargo run --example move_order_debug
-//!     cargo run --example move_order_debug -- --name m25_white
-//!     cargo run --example move_order_debug -- --name m25_white --and
-//!     cargo run --example move_order_debug -- --config /path/to/scorer.toml
-//!     cargo run --example move_order_debug -- --solve "<fen>"
-//!     cargo run --example move_order_debug -- "<fen>"
+//!     cargo run --example `move_order_debug`
+//!     cargo run --example `move_order_debug` -- --name `m25_white`
+//!     cargo run --example `move_order_debug` -- --name `m25_white` --and
+//!     cargo run --example `move_order_debug` -- --config /path/to/scorer.toml
+//!     cargo run --example `move_order_debug` -- --solve "<fen>"
+//!     cargo run --example `move_order_debug` -- "<fen>"
 
 mod common;
 

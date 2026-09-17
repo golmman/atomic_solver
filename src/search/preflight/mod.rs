@@ -49,8 +49,9 @@
 //!   own caps are the deterministic eval budget and the region budget — it
 //!   never consults the wall clock (the global timeout stays the search's).
 //! - **Memory**: the closure is transient, bounded by [`REGION_BUDGET`]
-//!   positions (~100–120 MB worst case at the 1M budget; the measured KQvK
-//!   ladder region of 420,532 positions stays around ~60 MB). This is the
+//!   positions (~85 MB worst case at the 1M budget; the measured `KQvK`
+//!   ladder region of 420,532 positions stays around ~35 MB, measured as the
+//!   max-RSS delta against `--no-preflight` on the release build). This is the
 //!   documented bounded exception to the search CLI's "RAM = TT only".
 
 mod region;
@@ -70,7 +71,7 @@ pub(crate) use region::region_key;
 use verifier::verify_certificate;
 
 /// Maximum number of positions the closure may contain before aborting
-/// (D4). The default covers the entire legal 3-man space (the measured KQvK
+/// (D4). The default covers the entire legal 3-man space (the measured `KQvK`
 /// ladder region is 420,532 positions; larger components were observed in
 /// the Phase 0 oracle) and aborts — never claims — above it.
 pub const REGION_BUDGET: usize = 1_000_000;

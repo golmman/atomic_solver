@@ -27,11 +27,13 @@ pub struct MoveOrderCase {
 }
 
 /// Load the move-order benchmark suite from the embedded fixture.
+#[must_use]
 pub fn load_move_order_suite() -> Vec<MoveOrderCase> {
     parse_move_order_fixture(MOVE_ORDER_FIXTURE)
 }
 
 /// Look up a move-order benchmark position by name.
+#[must_use]
 pub fn move_order_case(name: &str) -> Option<MoveOrderCase> {
     load_move_order_suite()
         .into_iter()
@@ -39,11 +41,13 @@ pub fn move_order_case(name: &str) -> Option<MoveOrderCase> {
 }
 
 /// Load the decisive benchmark suite from the embedded fixture.
+#[must_use]
 pub fn load_decisive_suite() -> Vec<MoveOrderCase> {
     parse_move_order_fixture(DECISIVE_FIXTURE)
 }
 
 /// Look up a decisive benchmark position by name.
+#[must_use]
 pub fn decisive_case(name: &str) -> Option<MoveOrderCase> {
     load_decisive_suite()
         .into_iter()
@@ -83,6 +87,7 @@ fn parse_move_order_fixture(s: &str) -> Vec<MoveOrderCase> {
 
 /// Build a candidate UCI move from the supplied components, convert it to a
 /// string, and look it up in the legal moves of `pos`.
+#[must_use]
 pub fn parse_move(pos: &Position, from: &str, to: &str, promo: Option<&str>) -> Option<Move> {
     let from = parse_sq(from)?;
     let to = parse_sq(to)?;

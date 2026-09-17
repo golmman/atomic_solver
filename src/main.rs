@@ -5,7 +5,7 @@
 //! self-contained.
 //!
 //! Usage:
-//!   atomic_solver [OPTIONS]
+//!   `atomic_solver` [OPTIONS]
 //!
 //! Options:
 //!   -h, --help                 Show this help message and exit.
@@ -34,7 +34,7 @@
 //!                              men, no pawns/castling) before the DF-PN loop.
 //!                              On such positions the pre-phase allocates a
 //!                              transient closure of up to 1,000,000 packed
-//!                              positions (~100–120 MB worst case) — the
+//!                              positions (~85 MB worst case) — the
 //!                              documented bounded exception to "RAM = TT
 //!                              only". Defers (and prints so) everywhere
 //!                              else; decisive claims are replay-verified
@@ -62,10 +62,10 @@
 //!   pre-exit hook prints a `pre_exit:` summary line.
 //!
 //! Examples:
-//!   atomic_solver --help
-//!   atomic_solver --fen "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1"
-//!   atomic_solver --epsilon 0.5 --first-outcome
-//!   atomic_solver --timeout 10
+//!   `atomic_solver` --help
+//!   `atomic_solver` --fen "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1"
+//!   `atomic_solver` --epsilon 0.5 --first-outcome
+//!   `atomic_solver` --timeout 10
 
 use atomic_movegen::types::Move;
 use atomic_solver::config;
@@ -155,7 +155,7 @@ type PreExitHook = Box<dyn FnOnce(ExitReason, Outcome, u64, &[Move]) + Send>;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let program = args.first().map(String::as_str).unwrap_or("atomic_solver");
+    let program = args.first().map_or("atomic_solver", String::as_str);
 
     let opts = match parse_args(&args) {
         Ok(ParseResult::Help) => {
@@ -302,7 +302,7 @@ fn main() {
             ExitReason::Quit => println!("quit"),
             ExitReason::BudgetExhausted => println!("budget exhausted"),
             _ => println!("timeout"),
-        };
+        }
     }
 
     if let Some(hook) = hook {

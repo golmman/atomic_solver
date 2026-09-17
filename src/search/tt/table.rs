@@ -31,6 +31,7 @@ impl TranspositionTable {
         }
     }
 
+    #[must_use]
     pub fn with_mb(mb: usize) -> Self {
         let bytes = mb.saturating_mul(1024 * 1024);
         let entries = (bytes / std::mem::size_of::<TtEntry>()).next_power_of_two();
@@ -48,6 +49,7 @@ impl TranspositionTable {
         (key as usize) & self.mask
     }
 
+    #[must_use]
     pub fn probe(&self, key: u64) -> Option<&TtEntry> {
         self.table[self.index(key)]
             .iter()
@@ -223,7 +225,7 @@ impl TranspositionTable {
         let score = |e: &TtEntry| {
             let live = e.valid && e.generation == current_generation;
             let solved = e.outcome.is_some();
-            (live as u8, solved as u8, e.work, e.generation)
+            (u8::from(live), u8::from(solved), e.work, e.generation)
         };
 
         let bucket = &mut self.table[idx];
@@ -232,11 +234,7 @@ impl TranspositionTable {
         } else if !bucket[1].valid || bucket[1].generation != current_generation {
             bucket[1] = new;
         } else {
-            let evict = if score(&bucket[0]) < score(&bucket[1]) {
-                0
-            } else {
-                1
-            };
+            let evict = usize::from(score(&bucket[0]) >= score(&bucket[1]));
             bucket[evict] = new;
         }
     }

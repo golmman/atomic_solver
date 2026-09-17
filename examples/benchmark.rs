@@ -585,7 +585,7 @@ fn print_table(results: &[BenchResult], first_outcome: bool) {
     for r in results {
         let status = status_text(r);
         let outcome = r.outcome.as_str();
-        let expected = r.expected.map(|o| o.as_str()).unwrap_or("");
+        let expected = r.expected.map_or("", |o| o.as_str());
         let mean = r.mean.as_secs_f64();
         let min = r.min.as_secs_f64();
         let max = r.max.as_secs_f64();

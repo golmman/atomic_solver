@@ -2,9 +2,15 @@
 
 ## Status
 
-Active, opened 2026-09-14 (decision in session: goal = **faster solves**,
-depth = **4 men**). Plans are single-lever, sized to one session, agile like
-`dfpn`/`lean`/`conversion`. Next plan number: **plan1**.
+**Dormant (refocused, plan4 2026-09-16).** Opened 2026-09-14 (decision in
+session: goal = **faster solves**, depth = **4 men**); plan1 returned a
+measured **NO-GO for faster solves** (≤4-men child-eval share 0.000% on both
+suites, see `report1.md`). Per the plan4 decision the initiative is refocused
+to dormant, not closed: the generator lives on as the `egtb_gen3` example with
+correctness-oracle duties (it caught a solver KQvK defect and validated
+plan13's draw claims). The 4-man faster-solves goal stays closed; any future
+4-man work **reopens the initiative with a fresh plan2**. Next plan number if
+reopened: **plan2**.
 
 Absorbs `lean` backlog #9 (2–3-man tablebases), which was scoped too
 narrowly (leaf probes only, no generation story, 2-man layer is degenerate).
@@ -80,7 +86,7 @@ multi-TB disk-backed sets beyond 4 men.
 
 | # | Item                                                                                                                         | Notes                                                                                                                                                                                              | Size | Status            |
 | - | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ----------------- |
-| 1 | Go/no-go spike: men-count histogram at child-eval sites + 3-man generator prototype + solver cross-validation                | Metric: share of child evals with ≤4 men on the decisive/stress suites. Histogram is near-free (one `popcount` + increment). Cross-validation settles stalemate/rule50/explosion conventions empirically. | M    | **done (plan1, `report1.md`): NO-GO on faster-solves (≤4-men share 0.000%); pivot-vs-close decision pending; oracle goal demonstrated (solver KQvK defect found)** |
+| 1 | Go/no-go spike: men-count histogram at child-eval sites + 3-man generator prototype + solver cross-validation                | Metric: share of child evals with ≤4 men on the decisive/stress suites. Histogram is near-free (one `popcount` + increment). Cross-validation settles stalemate/rule50/explosion conventions empirically. | M    | **done (plan1, `report1.md`): NO-GO on faster-solves (≤4-men share 0.000%); pivot-vs-close resolved by plan4: refocused to dormant (see Status); oracle goal demonstrated (solver KQvK defect found)** |
 | 2 | 4-man generator + storage format + validator                                                                                 | Coverage decision (full set of ~40 material classes vs. frequent subset) and size verification land here. Estimate: ~30M entries/table, 2-bit WDL ≈ 8 MB raw/table, full set well under 100 MB compressed. | L    | open             |
 | 3 | Probe integration in `evaluate_child` + rule50 soundness scheme + resource-contract wording                                  | Tablebase held fully in **RAM** (decision 2026-09-14: RAM load, no mmap). "RAM = TT only" needs rewording to admit the tablebase (e.g. "RAM = TT + read-only tablebase"); at 4 men the full set fits easily (~300 MB raw at 2-bit WDL, less compressed). Drift protocol: trajectories may change **only inside tablebase coverage**. | M–L  | open             |
 | 4 | Ordering hints from tablebase wins (`move_order/ideas.md` #8)                                                                | Order moves that enter tablebase-won lines; only after #3.                                                                                                                                          | S–M  | open             |
@@ -177,6 +183,12 @@ not before.
 
 ## Decision records
 
+- **2026-09-16 — refocus-to-dormant (plan4).** After plan1's NO-GO the
+  pivot-vs-close decision is resolved as *refocus-to-dormant*: the generator
+  remains the `egtb_gen3` correctness oracle; the 4-man faster-solves goal is
+  closed; backlog items #2–#5 and the open decisions below are recorded as
+  reopen triggers, not active work. A future 4-man effort reopens the
+  initiative with a fresh plan2.
 - **2026-09-14 — loading strategy: full RAM load, no mmap.** At 4 men the
   whole set fits the search process budget with room to spare, which
   removes I/O failure modes and page-fault jitter from the hot probe path

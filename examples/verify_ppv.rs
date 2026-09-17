@@ -1,7 +1,7 @@
 //! Verify that a supplied move list is a Proof Principal Variation (PPV).
 //!
 //! Usage:
-//!     cargo run --example verify_ppv -- --fen <FEN> --moves "<UCI moves>" --timeout <SEC>
+//!     cargo run --example `verify_ppv` -- --fen <FEN> --moves "<UCI moves>" --timeout <SEC>
 //!
 //! The example prints `is_ppv: true` when every defender reply can be refuted
 //! within the remaining PPV length, and `is_ppv: false` otherwise.
@@ -31,7 +31,7 @@ fn print_help(program: &str) {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let program = args.first().map(String::as_str).unwrap_or("verify_ppv");
+    let program = args.first().map_or("verify_ppv", String::as_str);
 
     let mut fen = Position::STARTPOS_FEN.to_string();
     let mut timeout: u64 = 60;
@@ -118,10 +118,7 @@ fn main() {
     let n = move_args.len();
     for (i, token) in move_args.iter().enumerate() {
         if positions[i].outcome().is_some() && i < n {
-            eprintln!(
-                "error: position at ply {} is terminal before all moves are consumed",
-                i
-            );
+            eprintln!("error: position at ply {i} is terminal before all moves are consumed");
             println!("is_ppv: false");
             process::exit(1);
         }
@@ -200,7 +197,7 @@ fn main() {
 
             let prefix_keys: Vec<u64> = positions[0..=i]
                 .iter()
-                .map(|p| p.repetition_key())
+                .map(atomic_solver::position::Position::repetition_key)
                 .collect();
 
             let wall_remaining = global_deadline.saturating_duration_since(Instant::now());

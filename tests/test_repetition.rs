@@ -56,7 +56,7 @@ fn reversible_cycle_keeps_repetition_key_and_stays_draw() {
 /// The second `solve` routes through `begin_run`, which clears the per-search
 /// repetition cache and resets the run state; the solver must re-derive the
 /// same draw from scratch. Neither solve may ever yield `Outcome::Win`
-/// (research_repetition_cache.md §4 residual risk: a second solve on the same
+/// (`research_repetition_cache.md` §4 residual risk: a second solve on the same
 /// instance must not flip the result).
 #[ignore = "slow: cyclic GHI regression; run with -- --include-ignored"]
 #[test]

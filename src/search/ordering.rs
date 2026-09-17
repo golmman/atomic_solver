@@ -135,6 +135,7 @@ impl StaticAtomicScorer {
     /// `is_or_node` selects the scoring profile: OR nodes (attacker) use the
     /// full static bonuses, while AND nodes (defender) scale down speculative
     /// attacker-only bonuses such as pawn storms and rook lifts.
+    #[must_use]
     pub fn score_with_map(
         &self,
         board: &Board,
@@ -369,7 +370,7 @@ impl StaticAtomicScorer {
                     let back_rank_mask = ctx.back_rank_mask;
                     let file_mask = atomic_movegen::types::Bitboard(
                         0x0101_0101_0101_0101u64
-                            << (atomic_movegen::types::file_of(to) as u8 as u32),
+                            << u32::from(atomic_movegen::types::file_of(to) as u8),
                     );
                     // Exact pre-filter: without an enemy piece on this file's
                     // back rank the scan below cannot hit.
@@ -392,7 +393,7 @@ impl StaticAtomicScorer {
             }
 
             // Back-rank presence when the enemy commoner is on or near it.
-            if (to as u8 / 8) as u32 == ctx.enemy_back_rank && chebyshev(to, commoner_sq) <= 2 {
+            if u32::from(to as u8 / 8) == ctx.enemy_back_rank && chebyshev(to, commoner_sq) <= 2 {
                 score += rook_back_rank;
             }
         }

@@ -46,7 +46,7 @@ pub fn load_scorer_config<P: AsRef<Path>>(path: P) -> Result<ScorerParams, Confi
 mod tests {
     use super::*;
 
-    const DEFAULT_TOML: &str = r#"
+    const DEFAULT_TOML: &str = r"
 [scorer]
 score_winning_capture = 100_000_000
 score_promotion = 1_000_000
@@ -77,7 +77,7 @@ bishop = 330
 rook = 500
 queen = 900
 commoner = 20_000
-"#;
+";
 
     fn with_temp_config(contents: &str) -> std::path::PathBuf {
         use std::sync::atomic::{AtomicU64, Ordering};
