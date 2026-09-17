@@ -11,7 +11,9 @@ EWS + MOPNS, both no-go; plan5 was the #5d reading round — journal GHI,
 mined and closed 2026-09-13 with an evidence-based no-go for `dfpn` #4;
 the ordering-guidance half of #2a
 is parked behind the reading rounds, its premise weakened by report2's
-budget-instability observation).
+budget-instability observation). Backlog #6 (threshold-cut-frame pricing)
+was opened 2026-09-17, handed over from `dfpn` when that initiative was set
+dormant.
 
 ## Motivation
 
@@ -88,9 +90,13 @@ correctness first, then performance, memory, maintainability.
 | 3 | **Clock-pressure ordering signal** | The stress win is a tempo conversion; the static scorer is blind to the clock. OR side: bonus for clock-resetting moves (pawn pushes/captures) once rule50 passes a threshold; AND side: prefer *reversible* (shuffling) defender moves — they are the actual drawing resource and where disproving work concentrates. DF-PN+ `H`/`Cost` flavor: frontier estimates scaled by remaining clock budget | unmeasured; S-effort spike (temporary counters: how often the AND refutation is a shuffle at high clock). Behavior-changing → validated like plan9 (outcomes unchanged, drift confined to repetition-heavy cases) | nodes | S–M | **closed — measured no-go, both halves** (`report4.md`, 2026-09-13): Phase 0 counter spike (`PLAN4_SPIKE=1`, reverted) on the stress case reproduced the inherited baselines exactly and showed the surface absent — at T=60, high-clock AND frames are 0.011% (FO) / 0.15% (default) of nodes with 0.002–0.02% of child evals; the selected child is already at rank 0 in 152/153 (FO) / 817/818 (default) of proven high-clock AND frames; composition is 90%+ all-shuffle so a uniform bonus cannot reorder. Clock distribution: AND expansions sit at clock 0–9 for 97–98% — the searched tree rarely sustains a high clock. The OR-side histogram (same spike) is equally empty (0.02% of OR expansions at clock ≥ 60), closing the OR half too; the DF-PN+ `H`/`Cost` clock flavor is recommended closed on the same evidence (plus the plan10 hazard class) |
 | 4 | **Parallel search design spike** | `lean` backlog #2 owns the lever; this initiative tracks the *new research inputs*: Kaneko AAAI-10 (already mined, `dfpn/research_parallel.md`) is 15 years old — the 2025 paper below (massively parallel PNS, two-level parallelization + shared worker info, 333× on 1024 cores) and JLPNS (Saffidine et al., ACG 2011) supersede its assumptions. Spike question: which design fits a shared fixed-size TT with per-shard locks, and what is the determinism story for `child_eval_budget` (sequential path stays bit-identical; `--threads > 1` is an explicitly nondeterministic opt-in that must be documented as such) | 2–8× wall on multicore (multiplicative; the only lever of that size left) | wall | L (spike first) | open — owned jointly with `lean` #2 |
 | 5 | **Research reading round** | Verified, not yet mined (canonical index with links: `docs/bibliography.md`): (a) *Expected Work Search* (Randall, Müller, Wei, Hayward, 2024, arXiv:2405.05594) — combines win-rate estimates with proof-size estimates, minimized expected work; solved 5×5 Go under positional superko (repetition-dominated!) and 8×8 Hex; evaluate as a child-selection/ordering paradigm against DF-PN thresholds; (b) *Multiple-Outcome Proof Number Search* (Saffidine & Cazenave, ECAI-12 — earlier misattributed to Kishimoto IJCAI-11, corrected in plan3) — formal multi-outcome framework; cross-check our draw propagation for missing machinery; (c) *Massively Parallel Proof-Number Search* (Čížek, Balko, Schmid, 2025, arXiv:2511.10339) — feeds #4; (d) Kishimoto & Müller journal version (*Information Sciences* 175(4), 2005) of the GHI paper — the AAAI-04 PDF in `dfpn/` is abbreviated; the journal version's full algorithm is the reference for `dfpn` backlog #4; (e) Gao, *On Computation Complexity of True Proof Number Search* (arXiv:2102.04907) — true pn/dn in DAGs is NP-hard, useful framing for why DAG-aware pn/dn are heuristics | information | — | S | **items (a)+(b)+(d) mined, closed** ((a)+(b): `plan3`, `research_ews.md` + `research_mopns.md`, 2026-09-13; (d): `plan5`, `dfpn/research_ghi_journal.md`, 2026-09-13): (a) EWS — **documented no-go**, its measured benefit requires a win-rate estimator a pure solver lacks (paper's own EWS-WR ablation is 8.5× worse; estimator-free surrogates collapse to that form), its GHI handling is caching-everything + simulation-verified reuse (evidence for `dfpn` #4/#5d, not a new cacheable surface), and the ordering-layer salvage is blocked by `lean`'s oracle floor / plan4's empty AND surface; (b) MOPNS — **closed as a valuable negative result**: the paper is Saffidine & Cazenave ECAI-12 (the "Kishimoto IJCAI-11" attribution was wrong; corrected in `docs/bibliography.md`), our `Outcome`-based draw propagation is formally the MOPNS Draw-threshold slice (`G(n,Draw)=0 ∧ S(n,Draw)=0`), MOPNS explicitly defers repetitions to GHI (no published caching-soundness argument here), and df-MOPNS threshold targeting is in the plan10 hazard class. **(d) mined and closed** (`plan5`, `dfpn/research_ghi_journal.md`, 2026-09-13): the journal version adds the proofs (Theorems 3.1/3.2) but *not* a step-by-step simulation procedure — the twin's ancestor-context gap is in the paper's own specification; the framework maps onto repetition-as-draw only vacuously (our decisive facts are path-independent by rule; the paper has no machinery for path-dependent draws); the journal reuse path structurally excludes the plan10 hazard (node-entry return, verification-bounded volume, (1, 1) re-init) but is economically empty here (plan11 arm A ceiling −8.8% FO / −2.6% default; ~1.1-eval draw re-proofs) — **`dfpn` #4 closed as an evidence-based no-go**, the contract retained as soundness template + parallel-spike design constraint. Items (c)/(e) stay open with their owning backlogs (#4/#4, `conversion` #5e) |
+| 6 | **Threshold-cut-frame pricing** (handed over from `dfpn` at its dormancy, 2026-09-17) | `lean` plan9's diagnostic: 99.7–99.9% of AND-frame own child evals sit in **threshold-cut frames** (frames exhausting their DF-PN threshold without a refutation exit: m22 8,625,570/8,645,613; stress case 148,390,289/148,602,798). Cut frames never reach a refutation exit, so no move-ordering signal can touch them; reducing the mass means changing how unsolved-subtree exploration is **priced** (DF-PN threshold dynamics), the same territory as the plan10/11 bound-folding hazard and the EWS/MOPNS no-gos | unmeasured; Phase 0 must be a diagnostic-first sizing spike. Any candidate mechanism must state why it changes pricing *without* folding solved facts into unsolved parents' thresholds (plan10 hazard test) and without widening the reuse envelope (that is #1's closed lane) | nodes | M | open |
 
-Cross-references: `dfpn` backlog #3 (refinement after cap-cut) stays open
-there. `dfpn` #4 (bounded cross-path verification) closed as an
+Cross-references: `dfpn` backlog #3 (refinement after cap-cut) **closed 2026-09-17** as
+subsumed by `--refine-cap 0` (measured no-go; decision record in
+`dfpn/initiative.md`), and `dfpn` was set dormant the same day — its last
+live observation (threshold-cut-frame pricing) is tracked here as backlog
+#6. `dfpn` #4 (bounded cross-path verification) closed as an
 evidence-based no-go on 2026-09-13 (`dfpn/research_ghi_journal.md`, mined by
 plan5 here); the monotonicity lemma in this initiative's #1 is the value
 claim of the retained contract, which now lives on as a design constraint
@@ -277,6 +283,18 @@ signal. Wall-time micro-engineering stays in `lean`.
   `dfpn/research_ghi.md` §4.2's root-threshold claim was inverted (both
   papers: modified scheme initializes root thresholds to ∞ − 1). Items (c)
   and (e) remain open.
+
+- **2026-09-17** — **backlog #6 opened; handover from `dfpn`** (no code,
+  docs only): with `dfpn` #3 closed (subsumed by `--refine-cap 0`) and its
+  backlog empty, the initiative was set dormant and its one live lever —
+  the threshold-cut-frame pricing observation from the `lean` plan9 spike
+  (99.7–99.9% of AND-frame own child evals in threshold-cut frames) — moved
+  here as backlog #6. Scope guard recorded in the row: diagnostic-first
+  Phase 0; any candidate pricing mechanism must pass the plan10 hazard test
+  (no solved-fact folding into unsolved parents' threshold arithmetic) and
+  must not widen the reuse envelope (plan1's closed lane). The item is
+  class-native here: the diagnostic was measured on m22 and the stress
+  case, this initiative's objects.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

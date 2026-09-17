@@ -20,9 +20,8 @@ Status vocabulary:
 
 | Initiative                               | Focus                                                                | Next lever(s)                                                                                                        |
 | ---------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| [`dfpn`](dfpn/initiative.md)             | Search semantics, algorithm-level node reduction (soundness-first)   | #3 closed 2026-09-17 (subsumed by `--refine-cap 0`, measured no-go); open lever: threshold-cut-frame pricing observation (lean plan9 diagnostic); EWS/MOPNS + parallelism live in `conversion` |
-| [`lean`](lean/initiative.md)             | Wall time / nodes, bit-identical drift gate                          | #10 history/killer re-tune or the `dfpn` algorithmic items; #2 parked dormant (plan7 spike)                          |
-| [`conversion`](conversion/initiative.md) | Deep tempo/progression conversions (`make stress` class)             | plan3 reading round (#5a/#5b: EWS, MOPNS), plan4 clock-pressure AND-side ordering (#3); #2a ordering guidance parked |
+| [`lean`](lean/initiative.md)             | Wall time / nodes, bit-identical drift gate                          | #10 history/killer re-tune or the `dfpn`/`conversion` algorithmic items; #2 parked dormant (plan7 spike)             |
+| [`conversion`](conversion/initiative.md) | Deep tempo/progression conversions (`make stress` class)             | #6 threshold-cut-frame pricing (handed over from `dfpn`, diagnostic-first, plan10-hazard-gated); #4 parallel spike with `lean` #2; #5 items (c)/(e) reading; #2a ordering guidance parked |
 | [`cleanup`](cleanup/initiative.md)       | Housekeeping: DRY, YAGNI, lints, module sizing                       | pedantic-lint triage, `selection.rs` size watch                                                                      |
 | [`movegen`](movegen/initiative.md)       | _Special case:_ cross-repo plans for the `atomic_movegen` dependency | new upstream asks follow the same standalone-plan pattern                                                            |
 
@@ -31,6 +30,7 @@ Status vocabulary:
 | Initiative                   | Focus                                                                                                          | Reopen trigger(s)                                                                                                              |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | [`proof`](proof/initiative.md) | Proof construction landed (search → TT snapshot → reconstruct → validated dump); PPV productization closed won't-fix | #5 TT checkpoint when multi-day runs need crash resilience; #7 deep-proof capacity spike when builder RAM overflows              |
+| [`dfpn`](dfpn/initiative.md) | Backlog empty (#1–#6 closed; #3 subsumed by `--refine-cap 0` 2026-09-17); pricing observation moved to `conversion` #6 | A new measured search-semantics diagnostic for the deep, repetition-dominated class; or a soundness regression traced to DF-PN+ semantics |
 | [`egtb`](egtb/initiative.md) | Refocused to dormant (plan4): the 3-man generator lives on as the `egtb_gen3` correctness oracle; faster-solves is NO-GO | A future 4-man effort (coverage, DTZ granularity, probe integration, proof-tree anchoring) reopens the initiative with a fresh plan2 |
 
 ## Closed

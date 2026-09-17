@@ -2,8 +2,20 @@
 
 ## Status
 
-Active, maintained **agile**: plans are single-lever and sized to one session;
-the backlog is re-ranked after every report. Plans 1–9 are done
+**Dormant** (set 2026-09-17), maintained **agile** while open: plans are
+single-lever and sized to one session; the backlog is re-ranked after every
+report. **The backlog is empty** — every item is closed: #1 done (plan9),
+#2 closed permanently (plan10/plan11), #3 closed as subsumed by
+`--refine-cap 0` (2026-09-17, History), #4 closed no-go (the `conversion`
+plan5 mining round), #5 closed no-go (plan12), #6 done (plan13). The last
+live lever (threshold-cut-frame pricing) was handed to `conversion` backlog
+#6 at dormancy. **Reopen triggers**: (a) a new *measured* search-semantics
+diagnostic for the deep, repetition-dominated class that has no home in
+`lean` (wall time), `conversion` (the deep-conversion class: reuse
+envelope, line guidance, parallelism, threshold-cut pricing), or `egtb`
+(tablebase); (b) a soundness regression traced to DF-PN+ search semantics
+(e.g. `test_repetition`). On reopen, re-rank the backlog and open the next
+plan, **plan14**. Plans 1–9 are done
 (`report1.md`–`report9.md`) and predate this file; plan10 was executed as a
 Phase 0 no-go with no code changes (`report10.md`); plan11 closed backlog #2
 permanently (`report11.md`). This `initiative.md` was created on 2026-09-11
@@ -127,7 +139,8 @@ property, not an ordering property: cut frames never reach a refutation
 exit, so no move-ordering signal can touch them; reducing that mass means
 changing how unsolved-subtree exploration is priced — the same DF-PN
 threshold-arithmetic territory as the plan10/plan11 bound-folding diagnostic
-and the EWS/MOPNS reading named below. Wall-time engineering (path-scan
+and the EWS/MOPNS reading named below. **This observation moved to
+`conversion` backlog #6 on 2026-09-17** (dfpn dormancy handover). Wall-time engineering (path-scan
 cost, StateInfo reuse, clock sampling) stays in `lean`. PV labeling and
 `PvStatus`/`pv_status` semantics are the search layer's own contract (the
 `pv/` initiative closed 2026-09-13; its PPV-from-proof-tree item was moved to
@@ -385,7 +398,16 @@ changes *when* refinement stops, not how lines are labeled.
 
 - **2026-09-16** — **plan13 closed — backlog #6 implemented and done** (`report13.md`, Session B). Architecture R (region-closure pre-phase) implemented as `src/search/preflight/` per the checkpoint record: detector R3 (≤ 3 men, no pawns/castling — with the factual correction that the report7 cyclic-rook position is 3 men and gates; it is claimed Draw by full closure, sound and `test_repetition`-green), exact collision-free packed keys, AND/OR fixpoint with exact ranks, D3 rank guard (`halfmove + rank ≤ 99`, boundary-tested end-to-end at rank 15: clock 84 claims, 85/99 defer), standalone replay verifier with negative-case unit tests, A5 principal-line PV, D1 `PvStatus::PreflightProof`, D2 draw claims, D4 region budget 1,000,000, R4 eval-budget accounting, R5 `--no-preflight` + `preflight:` line. Validation: quick drift 59/59 byte-identical; m22/stress byte-identical to HEAD; G-B oracle on the release binary 240 samples / 0 contradictions (94 wins certified, 120/120 draws); `make test` and `make test-full` (387/0) green. Ladder root 5,866,690 child evals / 0.76 s, exact DTM 15 — the plan's goal met. New engine-semantics finding documented: commoner adjacency immunity makes adjacent-king KQvK positions genuine draws (table-confirmed), which the pre-phase now proves by closure. Four pre-existing tests recalibrated to non-gated 4-men fixtures (they exercised DF-PN invariants on 3-men positions now claimed by the pre-phase). Next plan number: plan14.
 
-- **2026-09-17** — **backlog #3 closed as subsumed by `--refine-cap 0`** (decision record; no code changes, `src/` untouched). A design walkthrough retracted both of the item's original justifications: (a) *capability* — refinement-resume as specified (a series of capped rounds at the same depth bound with the TT carrying over) explores exactly the nodes of cap-0's single long round, so `--refine-cap 0` is not an approximation of #3, it **is** #3; (b) *determinism* — in a plain CLI run both #3's loop and cap-0 stop on the wall clock, and under an eval budget both are equally deterministic (the budget is the stopping condition), so the deterministic-budget contract is untouched either way. The cap's real function is time-to-answer: a round cut at the timeout earns the identical `Unproven` label whether it ran 3 s or 60 s, so letting a hopeless bound burn the full remaining timeout only makes the user wait for an identically-labeled result — a dial `--refine-cap` already exposes at both ends. The report8 "next step" measurement was run before closing (default ε, 128 MB TT, reference host, post-plan9 binary — the pre-plan9 baseline numbers in Motivation are historical): stress case cap 0.25 → win, PV 129 plies, `cap-cut`, 19,943,731 nodes / 60.0 s; `--refine-cap 0 --timeout 300` → PV 109 plies, `cut-short`, 588,050,432 nodes / 300 s (29.5× nodes, 5× time, −20 plies, still not shortest). m22_white (`--timeout 60 --refine-cap 0`) → PV 91 plies, `cut-short`, 100,167,680 nodes vs the 95-ply `cap-cut` golden at ~20 s (3× time, −4 plies). Extra uncapped refinement marginally shortens the PV and never reaches `ProvenShortest` on this class — the tail is the shuffle re-proof churn plan12 localized as unsolved frontier churn with no repetition-semantics lever, so grinding it is exactly the "burns the clock" outcome. Option A adopted (close as subsumed; document nothing new); Option B (cap-0 default flip) rejected: the marginal gains do not justify making 5×/3× time-to-answer the default when the same thoroughness is one flag away. Remaining class levers: the threshold-cut-frame pricing observation (lean plan9 diagnostic — a threshold-dynamics change, the same territory as the plan10/11 bound-folding hazard); EWS/MOPNS reading and parallelism live in `conversion`.
+- **2026-09-17** — **backlog #3 closed as subsumed by `--refine-cap 0`** (decision record; no code changes, `src/` untouched). A design walkthrough retracted both of the item's original justifications: (a) *capability* — refinement-resume as specified (a series of capped rounds at the same depth bound with the TT carrying over) explores exactly the nodes of cap-0's single long round, so `--refine-cap 0` is not an approximation of #3, it **is** #3; (b) *determinism* — in a plain CLI run both #3's loop and cap-0 stop on the wall clock, and under an eval budget both are equally deterministic (the budget is the stopping condition), so the deterministic-budget contract is untouched either way. The cap's real function is time-to-answer: a round cut at the timeout earns the identical `Unproven` label whether it ran 3 s or 60 s, so letting a hopeless bound burn the full remaining timeout only makes the user wait for an identically-labeled result — a dial `--refine-cap` already exposes at both ends. The report8 "next step" measurement was run before closing (default ε, 128 MB TT, reference host, post-plan9 binary — the pre-plan9 baseline numbers in Motivation are historical): stress case cap 0.25 → win, PV 129 plies, `cap-cut`, 19,943,731 nodes / 60.0 s; `--refine-cap 0 --timeout 300` → PV 109 plies, `cut-short`, 588,050,432 nodes / 300 s (29.5× nodes, 5× time, −20 plies, still not shortest). m22_white (`--timeout 60 --refine-cap 0`) → PV 91 plies, `cut-short`, 100,167,680 nodes vs the 95-ply `cap-cut` golden at ~20 s (3× time, −4 plies). Extra uncapped refinement marginally shortens the PV and never reaches `ProvenShortest` on this class — the tail is the shuffle re-proof churn plan12 localized as unsolved frontier churn with no repetition-semantics lever, so grinding it is exactly the "burns the clock" outcome. Option A adopted (close as subsumed; document nothing new); Option B (cap-0 default flip) rejected: the marginal gains do not justify making 5×/3× time-to-answer the default when the same thoroughness is one flag away.
+
+- **2026-09-17** — **initiative set dormant** at the user checkpoint
+  following backlog #3's closure: no open backlog items remain. The one
+  live observation (threshold-cut-frame pricing, `lean` plan9 diagnostic)
+  was handed to `conversion` backlog #6, whose class mandate and plan10
+  hazard documentation make it the natural owner; scope guard there:
+  diagnostic-first Phase 0, no solved-fact folding into threshold
+  arithmetic. Reopen triggers recorded in Status; the next plan number
+  remains **plan14**. Remaining class levers: the threshold-cut-frame pricing observation (lean plan9 diagnostic — a threshold-dynamics change, the same territory as the plan10/11 bound-folding hazard); EWS/MOPNS reading and parallelism live in `conversion`.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
