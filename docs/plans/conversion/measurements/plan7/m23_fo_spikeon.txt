@@ -1,0 +1,23 @@
+[bounded_search] chunk done: work_done=500000 next_chunk=1000000 elapsed=0.076s max_depth=6 nodes=66609 nps=873055
+[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=0.218s max_depth=16 nodes=181522 nps=833095
+[bounded_search] chunk done: work_done=2000004 next_chunk=4000000 elapsed=0.503s max_depth=16 nodes=403152 nps=801761
+[bounded_search] chunk done: work_done=4000002 next_chunk=8000000 elapsed=1.043s max_depth=15 nodes=794939 nps=762122
+[bounded_search] chunk done: work_done=8000001 next_chunk=16000000 elapsed=2.182s max_depth=18 nodes=1628015 nps=746029
+outcome: win
+pv_len: 49
+nodes: 2443359
+child_evals: 22305542
+first_outcome_evals: 22305542
+refinement_rounds: 0
+refinement_evals: 0
+wall_s: 3.23
+pv_status_label: first-outcome-only=true
+== conv7 spike (partial-sum sweep short-circuit) ==
+early_cut_frames: OR=949544 AND=1384102 total=2333646
+evals_saved_in_sweep: OR=22442953 AND=12491278 total=34934231
+guard_blocked_crossings: OR=0 AND=112
+positions_with_early_cut: 521984 / 542093 mapped
+reentry_after_first_cut: reentries=1898388 evals=21205905
+skipped_children_per_frame OR: 0=7187 1=8608 2-3=19991 4-7=46810 8-15=131876 16-31=494086 32-63=240986crossing_overshoot OR: 0=945020 1=258 2-3=430 4-7=764 8-15=751 16-31=1664 32-63=569 64-1023=88stored_bound_vs_prev_tt OR: weaker=4990 same=867063 stronger=868091 no_prev=79472
+skipped_children_per_frame AND: 0=23960 1=39471 2-3=132803 4-7=341048 8-15=727695 16-31=119125crossing_overshoot AND: 0=1378330 1=2067 2-3=2084 4-7=921 8-15=199 16-31=8 1024+=493stored_bound_vs_prev_tt AND: weaker=17189 same=939612 stronger=925127 no_prev=443138
+attribution: map_evals=22305542 (delta-0 check against child_evals is the runner's job)

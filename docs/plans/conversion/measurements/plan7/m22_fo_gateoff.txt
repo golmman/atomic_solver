@@ -1,0 +1,14 @@
+[bounded_search] chunk done: work_done=500009 next_chunk=1000000 elapsed=0.089s max_depth=15 nodes=24281 nps=273110
+[bounded_search] chunk done: work_done=1000010 next_chunk=2000000 elapsed=0.274s max_depth=15 nodes=75862 nps=276438
+[bounded_search] chunk done: work_done=2000003 next_chunk=4000000 elapsed=0.642s max_depth=22 nodes=185599 nps=289021
+[bounded_search] chunk done: work_done=4000017 next_chunk=8000000 elapsed=1.398s max_depth=72 nodes=420792 nps=300998
+outcome: win
+pv_len: 95
+nodes: 858117
+child_evals: 14156269
+first_outcome_evals: 14156269
+refinement_rounds: 0
+refinement_evals: 0
+wall_s: 2.63
+pv_status_label: first-outcome-only=true
+conv7 spike: off

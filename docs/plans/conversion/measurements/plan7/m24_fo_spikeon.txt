@@ -1,0 +1,19 @@
+[bounded_search] chunk done: work_done=500010 next_chunk=1000000 elapsed=0.073s max_depth=7 nodes=66681 nps=914082
+outcome: win
+pv_len: 15
+nodes: 132638
+child_evals: 1101351
+first_outcome_evals: 1101351
+refinement_rounds: 0
+refinement_evals: 0
+wall_s: 0.16
+pv_status_label: first-outcome-only=true
+== conv7 spike (partial-sum sweep short-circuit) ==
+early_cut_frames: OR=33268 AND=93443 total=126711
+evals_saved_in_sweep: OR=796790 AND=927032 total=1723822
+guard_blocked_crossings: OR=0 AND=13
+positions_with_early_cut: 26981 / 27609 mapped
+reentry_after_first_cut: reentries=104651 evals=1043298
+skipped_children_per_frame OR: 0=278 1=354 2-3=715 4-7=1613 8-15=4649 16-31=16248 32-63=9411crossing_overshoot OR: 0=33240 1=1 2-3=6 4-7=6 8-15=5 16-31=10stored_bound_vs_prev_tt OR: weaker=78 same=29823 stronger=29805 no_prev=3415
+skipped_children_per_frame AND: 0=1039 1=1668 2-3=7054 4-7=18810 8-15=55735 16-31=9137crossing_overshoot AND: 0=93341 1=40 2-3=16 4-7=9 1024+=37stored_bound_vs_prev_tt AND: weaker=242 same=69875 stronger=69639 no_prev=23565
+attribution: map_evals=1101351 (delta-0 check against child_evals is the runner's job)

@@ -1,0 +1,28 @@
+[bounded_search] chunk done: work_done=500008 next_chunk=1000000 elapsed=0.068s max_depth=10 nodes=52833 nps=776140
+[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=0.227s max_depth=7 nodes=169588 nps=746793
+[bounded_search] chunk done: work_done=2000001 next_chunk=4000000 elapsed=0.547s max_depth=11 nodes=414917 nps=758316
+[bounded_search] chunk done: work_done=4000003 next_chunk=8000000 elapsed=1.156s max_depth=13 nodes=837554 nps=724766
+[bounded_search] chunk done: work_done=8000025 next_chunk=16000000 elapsed=2.238s max_depth=18 nodes=1593169 nps=711814
+[bounded_search] chunk done: work_done=16000005 next_chunk=32000000 elapsed=4.469s max_depth=20 nodes=3102778 nps=694287
+[bounded_search] chunk done: work_done=32000010 next_chunk=64000000 elapsed=9.614s max_depth=25 nodes=6534245 nps=679648
+[bounded_search] chunk done: work_done=64000001 next_chunk=128000000 elapsed=20.326s max_depth=26 nodes=13769085 nps=677396
+[bounded_search] chunk done: work_done=128000005 next_chunk=256000000 elapsed=40.329s max_depth=45 nodes=28404391 nps=704318
+[bounded_search] chunk done: work_done=256000001 next_chunk=512000000 elapsed=78.983s max_depth=47 nodes=57438628 nps=727225
+outcome: draw
+pv_len: 0
+nodes: 90546176
+child_evals: 794858304
+first_outcome_evals: 794858304
+refinement_rounds: 0
+refinement_evals: 0
+wall_s: 120.00
+pv_status_label: first-outcome-only=false
+== conv7 spike (partial-sum sweep short-circuit) ==
+early_cut_frames: OR=31831030 AND=54796716 total=86627746
+evals_saved_in_sweep: OR=692287663 AND=564111615 total=1256399278
+guard_blocked_crossings: OR=0 AND=3866
+positions_with_early_cut: 13802056 / 14243964 mapped
+reentry_after_first_cut: reentries=76169689 evals=765613092
+skipped_children_per_frame OR: 0=276578 1=329533 2-3=744279 4-7=1775187 8-15=5330093 16-31=18033538 32-63=5341822crossing_overshoot OR: 0=31475884 1=17098 2-3=33016 4-7=53883 8-15=70948 16-31=134245 32-63=35177 64-1023=10638 1024+=141stored_bound_vs_prev_tt OR: weaker=357369 same=28712741 stronger=28793830 no_prev=2899060
+skipped_children_per_frame AND: 0=880653 1=1161084 2-3=3532511 4-7=11268150 8-15=29742303 16-31=8212015crossing_overshoot AND: 0=54011155 1=277672 2-3=249364 4-7=185172 8-15=46239 16-31=3739 32-63=138 64-1023=15 1024+=23222stored_bound_vs_prev_tt AND: weaker=1038642 same=39040752 stronger=37297702 no_prev=16108168
+attribution: map_evals=794858304 (delta-0 check against child_evals is the runner's job)

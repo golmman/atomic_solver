@@ -203,6 +203,28 @@ For the decisions compile a list options and trade offs.
 
 ---
 
+Let's make an intermediate code review and refactoring round.
+The goal is to increase the maintainability and readability.
+
+Let's create a 3 step initiative:
+
+* First analyze and look for
+  * dead code
+  * outdated/unnecessary comments
+  * DRY and YAGNI
+  * consistency issues
+  * unnecessary coupling
+  * missing tests
+  * unnecessary tests
+  * other code smells ...
+* Next write a concise list of found issues
+* Next fix these issues
+  * if too much risk split it into multiple separate sessions
+
+Never compromise on performance or correctness though.
+
+---
+
 I want to start an intermediate research initative. The overall goal is to refine the
 search: reduced node count for finding the first decicive outcome.
 
