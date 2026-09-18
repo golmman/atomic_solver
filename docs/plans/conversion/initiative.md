@@ -296,5 +296,21 @@ signal. Wall-time micro-engineering stays in `lean`.
   class-native here: the diagnostic was measured on m22 and the stress
   case, this initiative's objects.
 
+- **2026-09-18** — `plan6.md` drafted for backlog #6, scoped (per the plan2/
+  plan4 scope-decision precedent) to **Phase 0 only**: a counter-only,
+  env-gated (`CONV6_SPIKE=1`) diagnostic spike, fully reverted after
+  measuring, with the mechanism implementation explicitly deferred to plan7
+  on a go. Phase 0 step 0 re-baselines at HEAD (the inherited post-plan9
+  stress numbers predate `dfpn` plans 12–13); the diagnostic battery covers
+  frame-exit classification with cut-gap anatomy (lean report9's method,
+  delta-0 attribution check), a per-position churn-vs-frontier map,
+  chunk-boundary waste, ε-sensitivity at cut exits, and the OR/AND split —
+  shaped to discriminate the three candidate pricing classes (A chunk
+  resumption, B threshold-growth shaping, C per-frame work allocation), each
+  pre-screened against the plan10 hazard (no solved-fact folding) and plan1's
+  closed reuse lane. Go bar: a measured addressable surface ≥ 10% of stress
+  FO child evals plus an eval-count-deterministic, hazard-passing mechanism
+  sketch confirmed on the m22 control.
+
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
