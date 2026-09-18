@@ -1,0 +1,85 @@
+outcome: win
+pv_len: 95
+nodes: 858117
+child_evals: 14156269
+first_outcome_evals: 14156269
+refinement_rounds: 0
+refinement_evals: 0
+wall_s: 2.95
+pv_status_label: first-outcome-only=true
+== conv6 frame exits (side: class: frames evals) ==
+OR solved: 26036 177451
+OR threshold-cut: 130252 5310211
+OR no-best-child: 293 21784
+OR work-cut: 15 1210
+OR time-cut: 0 0
+AND solved: 11474 20043
+AND threshold-cut: 689620 8624533
+AND no-best-child: 252 690
+AND work-cut: 11 347
+AND time-cut: 0 0
+attribution: child_evals=14156269 frame_sum=14156269 delta=0
+== depth buckets (side: class: d0-7 d8-15 d16-31 d32-63 d64-127 d128+) ==
+OR solved: 9182 13299 2030 1427 98 0
+OR threshold-cut: 63792 53329 8089 4817 225 0
+OR no-best-child: 0 59 205 29 0 0
+OR work-cut: 14 1 0 0 0 0
+OR time-cut: 0 0 0 0 0 0
+AND solved: 2763 7383 710 565 53 0
+AND threshold-cut: 199171 389412 67525 32263 1249 0
+AND no-best-child: 0 45 183 24 0 0
+AND work-cut: 10 1 0 0 0 0
+AND time-cut: 0 0 0 0 0 0
+== eval attribution: sweep vs reeval (OR sweep reeval | AND sweep reeval) ==
+sweep: OR 4809150 AND 8489033; reeval: OR 701506 AND 156580; reeval_unchanged: OR 10249 AND 306
+== cut anatomy (side: metric: histogram) ==
+OR fired: pn-only=16734 dn-only=113356 both=162
+OR eps_clamped=51241 second_inf=128
+OR gap_pn: 0=119883 1=2607 2-3=2720 4-7=3091 8-15=1898 16-63=39 64-1023=0 1k-32k=0 32k-4M=0 4M-16G=0 >16G=14 INF=0 
+OR gap_dn: 0=17254 1=490 2-3=1090 4-7=2728 8-15=6862 16-63=97505 64-1023=2381 1k-32k=999 32k-4M=464 4M-16G=448 >16G=31 INF=0 
+OR eps_step: 0=14 1=99149 2-3=11746 4-7=11577 8-15=7041 16-63=599 64-1023=12 1k-32k=0 32k-4M=0 4M-16G=0 >16G=114 INF=0 
+OR ratio_2nd_best: <1=0 1-1.25=106451 1.25-1.5=4841 1.5-2=3777 2-3=4318 3-5=6149 5-10=3200 10-100=1388 100-10k=0 >10k=0 INF=128 
+OR partial_sum_saving: frames_with_saving=112506 evals_saved_ceiling=3383398 hist(0 1-3 4-7 8-15 16-31 32+) = 0 1905 3157 7358 40482 59604
+AND fired: pn-only=664670 dn-only=24514 both=436
+AND eps_clamped=43862 second_inf=18372
+AND gap_pn: 0=43032 1=16438 2-3=58068 4-7=128325 8-15=302313 16-63=137951 64-1023=3 1k-32k=0 32k-4M=0 4M-16G=0 >16G=3490 INF=0 
+AND gap_dn: 0=664474 1=357 2-3=767 4-7=1628 8-15=3609 16-63=15957 64-1023=735 1k-32k=720 32k-4M=396 4M-16G=399 >16G=27 INF=551 
+AND eps_step: 0=0 1=645136 2-3=1021 4-7=14458 8-15=6074 16-63=3717 64-1023=509 1k-32k=325 32k-4M=8 4M-16G=0 >16G=18372 INF=0 
+AND ratio_2nd_best: <1=0 1-1.25=666344 1.25-1.5=2272 1.5-2=1064 2-3=177 3-5=137 5-10=112 10-100=1121 100-10k=21 >10k=0 INF=18372 
+AND partial_sum_saving: frames_with_saving=648255 evals_saved_ceiling=6884623 hist(0 1-3 4-7 8-15 16-31 32+) = 0 79336 127908 303534 137477 0
+== chunks/rounds ==
+rounds: 1
+round 0: chunks=5 evals=14156269 last_chunk_evals=6656230 last_decisive=true
+== per-position lifetime map ==
+positions=715067 entries=857953 map_evals=14156269 map_delta=0 later_chunk_evals=1468403 stable_best=690096
+entries-bucket: positions evals cut_evals solved_evals
+entries 1: 643358 9698440 9659446 38994
+entries 2: 47311 1918142 1829470 87825
+entries 3-4: 17290 1295030 1258339 35827
+entries 5-8: 4962 620016 594185 22011
+entries 9-16: 1475 317384 302717 8309
+entries 17-32: 588 201446 188339 3150
+entries 33-64: 67 73822 70486 1151
+entries 65-128: 15 31008 30788 220
+entries 129+: 1 981 974 7
+top-20 positions by own evals (evals cut_evals entries key best_same later_chunk_evals):
+  3841 3808 116 0x952ca62a13feca93 3 0
+  3751 3720 120 0x9a84cafa6eebc89e 3 3721
+  3739 3706 115 0xc09980afaa617abe 1 0
+  3559 3558 89 0xea6d724a8d961a25 9 3362
+  3516 3484 109 0xd6450b462d91b8ea 1 0
+  3268 3227 79 0xf26ac17ae1ed1bc6 7 3148
+  2621 2575 50 0x639e2b191496b1d2 22 2440
+  2577 2488 51 0x6b52e295114e8fb0 3 2399
+  2576 505 33 0x7398930ac2a1e8d4 5 1946
+  2499 2453 49 0x997fe8b4f975f662 4 2454
+  2406 2406 81 0x8a1567246d1fb8ab 2 0
+  2279 2236 64 0x3325c3b3fb847ba3 5 2182
+  2233 2200 66 0xeb1a2c652a95ee5f 7 2068
+  2130 2084 42 0x41ecd528d23e8791 11 1994
+  2097 2051 41 0x59eb6618be458672 11 1961
+  2058 2027 63 0xe4b240b55780ec52 4 1722
+  1907 1812 37 0xb4c613a81c8bb04f 1 1783
+  1815 1786 61 0x46c9a38fb97ab46b 8 1247
+  1815 1767 36 0x090a03ff02d6fe3f 1 1339
+  1814 0 24 0x702b529729827dd3 24 0

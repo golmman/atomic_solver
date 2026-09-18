@@ -1,0 +1,10 @@
+outcome: win
+pv_len: 477
+nodes: 13907467
+child_evals: 249480478
+first_outcome_evals: 249480478
+refinement_rounds: 0
+refinement_evals: 0
+wall_s: 48.99
+pv_status_label: first-outcome-only=true
+conv6 spike: off

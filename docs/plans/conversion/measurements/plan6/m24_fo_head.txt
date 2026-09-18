@@ -1,0 +1,3 @@
+outcome: win length: 33
+pv: b1b8 c6c5 c3d5 e8c8 d5e7 g8f8 g1b1 c8d8 e7g8 f8f7 g8h6 f7g7 d6e5 g7h7 b8d8 f4e3 b1b7 c5c4 c2c3 a5a4 b7d7 a4a3 d2d3 c4d3 h6f7 h7g8 e5g7 g8h7 f7h8 h7g8 g7f8 g8h7 h8g6
+pv_status: first-outcome

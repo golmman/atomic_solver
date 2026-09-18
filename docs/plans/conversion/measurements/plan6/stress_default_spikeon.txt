@@ -1,0 +1,119 @@
+outcome: win
+pv_len: 129
+nodes: 19943731
+child_evals: 338094183
+first_outcome_evals: 249480478
+refinement_rounds: 34
+refinement_evals: 88613705
+wall_s: 69.36
+pv_status_label: first-outcome-only=false
+== conv6 frame exits (side: class: frames evals) ==
+OR solved: 233925 1711857
+OR threshold-cut: 3448768 130249787
+OR no-best-child: 73346 5122776
+OR work-cut: 118 9587
+OR time-cut: 0 0
+AND solved: 159117 244549
+AND threshold-cut: 15654868 200579696
+AND no-best-child: 56269 174121
+AND work-cut: 95 1810
+AND time-cut: 0 0
+attribution: child_evals=338094183 frame_sum=338094183 delta=0
+== depth buckets (side: class: d0-7 d8-15 d16-31 d32-63 d64-127 d128+) ==
+OR solved: 63248 153421 9758 1977 1686 3835
+OR threshold-cut: 1940330 1422838 69127 10325 4314 1834
+OR no-best-child: 411 11496 37787 6985 2852 13815
+OR work-cut: 100 9 8 1 0 0
+OR time-cut: 0 0 0 0 0 0
+AND solved: 37003 106214 8278 1741 1713 4168
+AND threshold-cut: 3455474 9481265 1841410 792675 25387 58657
+AND no-best-child: 365 8949 25063 6208 2617 13067
+AND work-cut: 77 9 8 1 0 0
+AND time-cut: 0 0 0 0 0 0
+== eval attribution: sweep vs reeval (OR sweep reeval | AND sweep reeval) ==
+sweep: OR 120907532 AND 197243192; reeval: OR 16186475 AND 3756984; reeval_unchanged: OR 2398125 AND 70450
+== cut anatomy (side: metric: histogram) ==
+OR fired: pn-only=320911 dn-only=3124798 both=3059
+OR eps_clamped=1148028 second_inf=563
+OR gap_pn: 0=3214983 1=41555 2-3=53795 4-7=74990 8-15=61339 16-63=2052 64-1023=0 1k-32k=0 32k-4M=0 4M-16G=0 >16G=54 INF=0 
+OR gap_dn: 0=335809 1=12917 2-3=24448 4-7=56067 8-15=165604 16-63=2787091 64-1023=64589 1k-32k=1725 32k-4M=143 4M-16G=0 >16G=0 INF=375 
+OR eps_step: 0=54 1=2807691 2-3=247342 4-7=231467 8-15=149262 16-63=12378 64-1023=65 1k-32k=0 32k-4M=0 4M-16G=0 >16G=509 INF=0 
+OR ratio_2nd_best: <1=0 1-1.25=3045888 1.25-1.5=72583 1.5-2=65035 2-3=79096 3-5=107711 5-10=65355 10-100=12537 100-10k=0 >10k=0 INF=563 
+OR partial_sum_saving: frames_with_saving=3091959 evals_saved_ceiling=88926602 hist(0 1-3 4-7 8-15 16-31 32+) = 0 61856 68098 162907 1424897 1374201
+AND fired: pn-only=15179457 dn-only=452206 both=23205
+AND eps_clamped=984917 second_inf=209918
+AND gap_pn: 0=944038 1=460353 2-3=1297537 4-7=2822619 8-15=6782718 16-63=3257775 64-1023=1830 1k-32k=0 32k-4M=0 4M-16G=0 >16G=87998 INF=0 
+AND gap_dn: 0=15123584 1=7684 2-3=14128 4-7=28169 8-15=77958 16-63=333792 64-1023=4334 1k-32k=588 32k-4M=120 4M-16G=0 >16G=0 INF=64511 
+AND eps_step: 0=0 1=14707213 2-3=28295 4-7=454677 8-15=129673 16-63=111995 64-1023=12433 1k-32k=641 32k-4M=23 4M-16G=0 >16G=209918 INF=0 
+AND ratio_2nd_best: <1=0 1-1.25=15301833 1.25-1.5=51921 1.5-2=30850 2-3=3696 3-5=2548 5-10=4833 10-100=48429 100-10k=840 >10k=0 INF=209918 
+AND partial_sum_saving: frames_with_saving=14663668 evals_saved_ceiling=158157137 hist(0 1-3 4-7 8-15 16-31 32+) = 0 1807797 2822905 6819361 3213605 0
+== chunks/rounds ==
+rounds: 35
+round 0: chunks=9 evals=249480478 last_chunk_evals=121980393 last_decisive=true
+round 1: chunks=1 evals=35710 last_chunk_evals=35710 last_decisive=true
+round 2: chunks=1 evals=10528 last_chunk_evals=10528 last_decisive=true
+round 3: chunks=1 evals=20282 last_chunk_evals=20282 last_decisive=true
+round 4: chunks=1 evals=6587 last_chunk_evals=6587 last_decisive=true
+round 5: chunks=1 evals=12468 last_chunk_evals=12468 last_decisive=true
+round 6: chunks=1 evals=31267 last_chunk_evals=31267 last_decisive=true
+round 7: chunks=1 evals=9480 last_chunk_evals=9480 last_decisive=true
+round 8: chunks=1 evals=58539 last_chunk_evals=58539 last_decisive=true
+round 9: chunks=1 evals=12829 last_chunk_evals=12829 last_decisive=true
+round 10: chunks=1 evals=22105 last_chunk_evals=22105 last_decisive=true
+round 11: chunks=1 evals=9605 last_chunk_evals=9605 last_decisive=true
+round 12: chunks=1 evals=21080 last_chunk_evals=21080 last_decisive=true
+round 13: chunks=1 evals=6267 last_chunk_evals=6267 last_decisive=true
+round 14: chunks=1 evals=8511 last_chunk_evals=8511 last_decisive=true
+round 15: chunks=1 evals=24451 last_chunk_evals=24451 last_decisive=true
+round 16: chunks=1 evals=9270 last_chunk_evals=9270 last_decisive=true
+round 17: chunks=1 evals=42913 last_chunk_evals=42913 last_decisive=true
+round 18: chunks=1 evals=8702 last_chunk_evals=8702 last_decisive=true
+round 19: chunks=1 evals=16684 last_chunk_evals=16684 last_decisive=true
+round 20: chunks=6 evals=15951572 last_chunk_evals=451499 last_decisive=true
+round 21: chunks=1 evals=172600 last_chunk_evals=172600 last_decisive=true
+round 22: chunks=1 evals=2708 last_chunk_evals=2708 last_decisive=true
+round 23: chunks=3 evals=1500215 last_chunk_evals=183 last_decisive=true
+round 24: chunks=4 evals=3500201 last_chunk_evals=183 last_decisive=true
+round 25: chunks=1 evals=21068 last_chunk_evals=21068 last_decisive=true
+round 26: chunks=1 evals=26398 last_chunk_evals=26398 last_decisive=true
+round 27: chunks=1 evals=17816 last_chunk_evals=17816 last_decisive=true
+round 28: chunks=3 evals=1516219 last_chunk_evals=16202 last_decisive=true
+round 29: chunks=1 evals=14665 last_chunk_evals=14665 last_decisive=true
+round 30: chunks=1 evals=25345 last_chunk_evals=25345 last_decisive=true
+round 31: chunks=1 evals=97140 last_chunk_evals=97140 last_decisive=true
+round 32: chunks=3 evals=1513291 last_chunk_evals=13272 last_decisive=true
+round 33: chunks=3 evals=1517070 last_chunk_evals=17064 last_decisive=true
+round 34: chunks=7 evals=62370119 last_chunk_evals=30870076 last_decisive=false
+== per-position lifetime map ==
+positions=10628971 entries=19626506 map_evals=338094183 map_delta=0 later_chunk_evals=117298812 stable_best=9825505
+entries-bucket: positions evals cut_evals solved_evals
+entries 1: 7606634 126496838 126114732 381445
+entries 2: 1733198 63104653 62409336 690666
+entries 3-4: 885873 58589215 58150381 389754
+entries 5-8: 272612 34077550 33560655 225584
+entries 9-16: 87728 19178697 18528362 85024
+entries 17-32: 29913 12590552 11979272 109021
+entries 33-64: 9335 8084679 7548620 66330
+entries 65-128: 2461 3692682 3363212 8502
+entries 129+: 1217 12279317 9174913 80
+top-20 positions by own evals (evals cut_evals entries key best_same later_chunk_evals):
+  463099 30858 6258 0xf47f3199cd9df931 795 0
+  376850 62787 5493 0xedeb3064108a7484 828 0
+  319522 62232 4722 0xd0027ebf4a44bca7 720 0
+  310748 63115 4732 0xb12292886ee5c387 1 0
+  310108 61343 4707 0xa8b69375b3f24e32 3 0
+  296131 32333 3990 0xc9967f4297533112 38 0
+  157390 1776 2027 0x46f1587d99b158bf 48 0
+  141207 7141 1882 0x7b1816a6c37f909c 192 0
+  140871 18109 2024 0x628c175b1e681d29 268 0
+  132548 8780 1838 0x27d1b44abd10279f 5 0
+  130819 92 1516 0x2d18068678af78a7 3 0
+  128838 17069 1842 0x5f65598044a6d50a 124 0
+  125077 19783 1880 0x3e45b5b76007aa2a 243 0
+  74854 138 824 0xe50b093eca2fee27 1 0
+  68176 228 744 0x3e30e6cedc2499b6 4 0
+  57581 88 665 0xaa825bcaa3fd0a31 1 0
+  57046 1261 645 0x62915472117d9cb1 3 0
+  43792 43792 6256 0x690fdade8e399693 6256 0
+  40870 40870 8174 0xddccc3a8359c0c84 8174 0
+  40870 40870 8174 0xa313c3f948ba768e 8174 0

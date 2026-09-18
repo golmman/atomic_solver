@@ -1,0 +1,5 @@
+preflight: deferred reason=detector evals=0
+outcome: win length: 129
+pv: g3g4 f5f4 g4h5 a5a4 c3e4 f4e3 b1b8 g6g5 h4g5 h8h7 g1g7 h7h6 d6f4 h6h5 g7g5 h5h6 g5g6 h6h7 g6g7 h7h8 b8e8 d7d6 g7g8 h8h7 a2a3 c6c5 g8g7 h7h8 f4d6 c5c4 g7g8 h8h7 c2c3 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 f3f4 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 f4f5 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 h1h2 h7h6 g8g7 h6h5 g7g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 h2g3 h7h6 g8g5 h6h7 g5g6 h7h8 g6g8 h8h7 g3f4 h7h6 g8g5 h6h7 g5g6 h7h8 g6g8 h8h7 f4e3 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 f5f6 h8h7 f6f7 h7h8 f7f8q h8h7 f8h8
+pv_status: cap-cut
+pre_exit: reason=Complete outcome=win nodes=19943731

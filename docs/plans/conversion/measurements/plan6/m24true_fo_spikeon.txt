@@ -1,0 +1,85 @@
+outcome: win
+pv_len: 15
+nodes: 22739
+child_evals: 406737
+first_outcome_evals: 406737
+refinement_rounds: 0
+refinement_evals: 0
+wall_s: 0.08
+pv_status_label: first-outcome-only=true
+== conv6 frame exits (side: class: frames evals) ==
+OR solved: 606 9607
+OR threshold-cut: 4058 161439
+OR no-best-child: 23 1084
+OR work-cut: 0 0
+OR time-cut: 0 0
+AND solved: 212 711
+AND threshold-cut: 17813 233832
+AND no-best-child: 18 64
+AND work-cut: 0 0
+AND time-cut: 0 0
+attribution: child_evals=406737 frame_sum=406737 delta=0
+== depth buckets (side: class: d0-7 d8-15 d16-31 d32-63 d64-127 d128+) ==
+OR solved: 451 152 3 0 0 0
+OR threshold-cut: 3822 221 15 0 0 0
+OR no-best-child: 0 23 0 0 0 0
+OR work-cut: 0 0 0 0 0 0
+OR time-cut: 0 0 0 0 0 0
+AND solved: 104 106 2 0 0 0
+AND threshold-cut: 15019 2415 379 0 0 0
+AND no-best-child: 0 18 0 0 0 0
+AND work-cut: 0 0 0 0 0 0
+AND time-cut: 0 0 0 0 0 0
+== eval attribution: sweep vs reeval (OR sweep reeval | AND sweep reeval) ==
+sweep: OR 154078 AND 229921; reeval: OR 18052 AND 4686; reeval_unchanged: OR 536 AND 24
+== cut anatomy (side: metric: histogram) ==
+OR fired: pn-only=316 dn-only=3742 both=0
+OR eps_clamped=1070 second_inf=0
+OR gap_pn: 0=3826 1=45 2-3=59 4-7=68 8-15=60 16-63=0 64-1023=0 1k-32k=0 32k-4M=0 4M-16G=0 >16G=0 INF=0 
+OR gap_dn: 0=328 1=8 2-3=25 4-7=48 8-15=141 16-63=3500 64-1023=8 1k-32k=0 32k-4M=0 4M-16G=0 >16G=0 INF=0 
+OR eps_step: 0=0 1=3248 2-3=338 4-7=280 8-15=189 16-63=3 64-1023=0 1k-32k=0 32k-4M=0 4M-16G=0 >16G=0 INF=0 
+OR ratio_2nd_best: <1=0 1-1.25=3427 1.25-1.5=160 1.5-2=189 2-3=124 3-5=103 5-10=53 10-100=2 100-10k=0 >10k=0 INF=0 
+OR partial_sum_saving: frames_with_saving=3730 evals_saved_ceiling=113516 hist(0 1-3 4-7 8-15 16-31 32+) = 0 43 51 140 1481 2015
+AND fired: pn-only=17132 dn-only=677 both=4
+AND eps_clamped=1028 second_inf=243
+AND gap_pn: 0=966 1=405 2-3=1680 4-7=2928 8-15=7534 16-63=4175 64-1023=0 1k-32k=0 32k-4M=0 4M-16G=0 >16G=125 INF=0 
+AND gap_dn: 0=16852 1=7 2-3=16 4-7=35 8-15=100 16-63=516 64-1023=0 1k-32k=0 32k-4M=0 4M-16G=0 >16G=0 INF=287 
+AND eps_step: 0=0 1=16791 2-3=18 4-7=453 8-15=235 16-63=73 64-1023=0 1k-32k=0 32k-4M=0 4M-16G=0 >16G=243 INF=0 
+AND ratio_2nd_best: <1=0 1-1.25=17459 1.25-1.5=80 1.5-2=24 2-3=2 3-5=0 5-10=0 10-100=5 100-10k=0 >10k=0 INF=243 
+AND partial_sum_saving: frames_with_saving=16779 evals_saved_ceiling=187272 hist(0 1-3 4-7 8-15 16-31 32+) = 0 2092 2969 7527 4191 0
+== chunks/rounds ==
+rounds: 1
+round 0: chunks=1 evals=406737 last_chunk_evals=406737 last_decisive=true
+== per-position lifetime map ==
+positions=19751 entries=22730 map_evals=406737 map_delta=0 later_chunk_evals=0 stable_best=19076
+entries-bucket: positions evals cut_evals solved_evals
+entries 1: 18343 297622 296801 821
+entries 2: 827 41865 37421 4444
+entries 3-4: 373 37982 34935 3047
+entries 5-8: 163 20384 18837 1453
+entries 9-16: 44 8137 6568 515
+entries 17-32: 1 747 709 38
+entries 33-64: 0 0 0 0
+entries 65-128: 0 0 0 0
+entries 129+: 0 0 0 0
+top-20 positions by own evals (evals cut_evals entries key best_same later_chunk_evals):
+  747 709 18 0xc8965db635b8e44e 18 0
+  568 290 14 0x75e58bac128f3690 7 0
+  557 206 14 0x345b6fbcb13d425c 7 0
+  553 507 11 0x62ed021a090dba0e 3 0
+  506 145 15 0xe40e2a3c178cdab4 3 0
+  503 457 10 0x82acd8aa332ac599 1 0
+  465 426 12 0x139a1072f686e266 12 0
+  460 414 9 0x03376a96cd5cf8ad 1 0
+  459 413 9 0x070bf48c610969db 7 0
+  450 405 9 0x6782df2130255baa 1 0
+  436 392 9 0xd135b010b880b37b 1 0
+  412 366 8 0x9aab6b9a5f51c47a 1 0
+  411 365 8 0xb8d995ab99f9f239 2 0
+  406 360 8 0x9593a0aaed7afb61 1 0
+  392 348 8 0xef9cee19968981cf 8 0
+  379 379 8 0x5715bcdda38ddd4b 2 0
+  376 338 9 0x9af7fb7d38004efc 9 0
+  374 332 8 0xbc52a5b209f2f19e 8 0
+  355 315 8 0x21277e473f5288f1 8 0
+  345 301 7 0x6c67972713446dea 7 0

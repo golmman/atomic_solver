@@ -1,0 +1,4 @@
+[bounded_search] chunk done: work_done=500009 next_chunk=1000000 elapsed=0.093s max_depth=11 nodes=25153 nps=271565
+[bounded_search] chunk done: work_done=1000003 next_chunk=2000000 elapsed=0.284s max_depth=17 nodes=85398 nps=300588
+[bounded_search] chunk done: work_done=2000008 next_chunk=4000000 elapsed=0.672s max_depth=15 nodes=199173 nps=296539
+[bounded_search] chunk done: work_done=4000003 next_chunk=8000000 elapsed=1.467s max_depth=21 nodes=414815 nps=282834
