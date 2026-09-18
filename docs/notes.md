@@ -203,3 +203,13 @@ For the decisions compile a list options and trade offs.
 
 ---
 
+I want to start an intermediate research initative. The overall goal is to refine the
+search: reduced node count for finding the first decicive outcome.
+
+Goals for plans in this initiative:
+* list unsolved problems with this implementation
+* look for and find new ideas (web search -> research papers etc.)
+* rough ideas for quick POCs
+* taking measurements
+
+Please help me structurize the new initiative.

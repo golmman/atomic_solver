@@ -154,6 +154,7 @@ If these commands start failing (`EPERM`/`EACCES` on event open), the host-side 
   `git rm`, `git commit`, etc.).
 - `docs/plans/` contains prompts, implementation plans and reports
   - each sub-directory in `docs/plans/` is treated as an initiative with a mutual high-level goal 
+  - measurements (performance etc.) go to `docs/plans/<initiative>/measurements/`
   - an initiative may be described by an `initiative.md`
   - `docs/plans/README.md` is the status index of all initiatives; update
     the affected row only when an initiative opens, pivots, or closes —
@@ -177,6 +178,7 @@ If these commands start failing (`EPERM`/`EACCES` on event open), the host-side 
   pointer per paper). Full paper extractions live in the initiative
   directories as `research_*.md`, written by the plan that mines the paper;
   when a plan mines an entry, update its status in the bibliography.
+- you can ignore `docs/notes.md`: the users ideas and unfiltered notes go there
 - Boy Scout principle: you should leave the codebase as clean or cleaner than you found it
 
 ## Conversational Guidelines
