@@ -24,7 +24,7 @@ fn move_order_suite_no_misclassification() {
 /// `m22_white` is the target of the plan-aware ordering work. The former
 /// "decisive within a 10-second refined search" wall-clock assertion was
 /// machine-dependent (the proof needs ~37.5M child evals; see the
-/// deterministic `m22_white_wins` budget regression in `tests/test_plan6.rs`).
+/// deterministic `m22_white_wins` budget regression in `tests/test_deep_outcomes.rs`).
 /// This test keeps the machine-independent part: within a 10-second search
 /// the solver must never return a *wrong* decisive outcome, and a `Draw` is
 /// only acceptable on timeout.

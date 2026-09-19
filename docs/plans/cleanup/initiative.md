@@ -3,7 +3,7 @@
 ## Status
 
 **Active as-needed** (Boy-Scout maintenance, not a standing backlog).
-Plans 1–4 are done (`report1.md`–`report4.md`); a new plan is opened when
+Plans 1–5 are done (`report1.md`–`report5.md`); a new plan is opened when
 a pass leaves named follow-ups or a convention lands that needs
 enforcement.
 
@@ -31,6 +31,10 @@ one-off structural repairs.
   memory measured (docs corrected to ~35 MB ladder / ~85 MB worst case),
   pedantic clippy 308 → 167 with the remainder triaged as leave-as-is
   (`report4.md`).
+- **plan5** — intermediate code-review round: dead test helpers + dead
+  setters removed, `dfpn` public re-exports de-published, vestigial
+  `_max_pv_len` params dropped, plan/era-named test files renamed to
+  behavior names (`report5.md`).
 
 ## Open follow-ups (carried from report2/report3)
 

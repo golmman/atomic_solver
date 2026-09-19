@@ -18,7 +18,7 @@ fn queen_corner_mates_are_loss_for_black() {
         "7k/6Q1/8/8/8/8/8/K7 b - - 0 1",
     ];
     for fen in fens {
-        assert_solves_to(fen, Outcome::Loss, Some(1));
+        assert_solves_to(fen, Outcome::Loss);
     }
 }
 
@@ -31,7 +31,7 @@ fn stalemate_with_no_commoner_under_attack_is_draw() {
         "7K/8/8/8/8/8/2Q5/k7 b - - 0 1",
     ];
     for fen in fens {
-        assert_solves_to(fen, Outcome::Draw, None);
+        assert_solves_to(fen, Outcome::Draw);
     }
 }
 
@@ -40,7 +40,7 @@ fn stalemate_with_no_commoner_under_attack_is_draw() {
 /// solver must still find the forced win quickly.
 #[test]
 fn two_rook_transposition_still_wins() {
-    assert_solves_to("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1", Outcome::Win, Some(3));
+    assert_solves_to("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1", Outcome::Win);
 }
 
 /// A promotion transposition: both white pawns can promote to queen, and the
@@ -81,7 +81,7 @@ fn depth_zero_cutoff_is_not_reused_as_proven_draw() {
 /// The rooks can be developed in either order, so this exercises transpositions.
 #[test]
 fn two_rook_shortest_pv_is_three_plies() {
-    assert_solves_to("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1", Outcome::Win, Some(3));
+    assert_solves_to("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1", Outcome::Win);
 }
 
 /// Shortest-PV refinement must find the 7-ply win in the promotion-transposition
@@ -89,7 +89,7 @@ fn two_rook_shortest_pv_is_three_plies() {
 #[ignore = "slow: shortest-PV refinement; run with -- --include-ignored"]
 #[test]
 fn promotion_shortest_pv_is_seven_plies() {
-    assert_solves_to("4k3/PP6/8/8/8/8/8/4K3 w - - 0 1", Outcome::Win, Some(7));
+    assert_solves_to("4k3/PP6/8/8/8/8/8/4K3 w - - 0 1", Outcome::Win);
 }
 
 /// Shortest-PV refinement must find the 5-ply win in the epsilon regression
@@ -98,7 +98,7 @@ fn promotion_shortest_pv_is_seven_plies() {
 #[test]
 fn epsilon_mate_shortest_pv_is_five_plies() {
     let fen = "rnbqkbnr/ppppp2p/5pp1/7Q/8/4P3/PPPP1PPP/RNB1KBNR w KQkq - 0 3";
-    assert_solves_to(fen, Outcome::Win, Some(5));
+    assert_solves_to(fen, Outcome::Win);
 }
 
 /// The CLI must print exactly one final <outcome:/pv>: block on stdout.

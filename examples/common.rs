@@ -1,7 +1,8 @@
 //! Shared helpers for example binaries.
 //!
-//! `M19_FEN` is intentionally duplicated from `tests/common/mod.rs` because
-//! example binaries and integration tests cannot share modules.
+//! The fixture-parser helpers mirror `tests/common/mod.rs` because example
+//! binaries and integration tests cannot share modules; the fixture files
+//! themselves are single-sourced via `include_str!`.
 
 #![allow(dead_code)]
 
@@ -44,14 +45,6 @@ pub fn move_order_case(name: &str) -> Option<MoveOrderCase> {
 #[must_use]
 pub fn load_decisive_suite() -> Vec<MoveOrderCase> {
     parse_move_order_fixture(DECISIVE_FIXTURE)
-}
-
-/// Look up a decisive benchmark position by name.
-#[must_use]
-pub fn decisive_case(name: &str) -> Option<MoveOrderCase> {
-    load_decisive_suite()
-        .into_iter()
-        .find(|case| case.name == name)
 }
 
 fn parse_move_order_fixture(s: &str) -> Vec<MoveOrderCase> {

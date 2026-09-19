@@ -15,7 +15,6 @@ fn m23_white_wins() {
     assert_solves_to(
         "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R2R2K w - - 1 23",
         Outcome::Win,
-        None,
     );
 }
 
@@ -25,7 +24,6 @@ fn m23_black_loses() {
     assert_solves_to(
         "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R2R2K b - - 2 23",
         Outcome::Loss,
-        None,
     );
 }
 
@@ -35,7 +33,6 @@ fn m24_white_wins() {
     assert_solves_to(
         "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R2R2K w - - 0 24",
         Outcome::Win,
-        None,
     );
 }
 
@@ -46,7 +43,6 @@ fn m24_black_loses() {
     assert_solves_to(
         "4r1k1/3p4/2pB2p1/p5Pp/p4p1P/2N1PP2/P1PP4/1R2R2K b - - 0 24",
         Outcome::Loss,
-        None,
     );
 }
 
@@ -57,7 +53,6 @@ fn m25a_white_wins() {
     assert_solves_to(
         "4r1k1/3p4/2pB2p1/p5Pp/p6P/2N2P2/P1PP4/1R2R2K w - - 0 25",
         Outcome::Win,
-        None,
     );
 }
 
@@ -68,7 +63,6 @@ fn m25a_black_loses() {
     assert_solves_to(
         "4r1k1/3p4/2pB2p1/p5Pp/7P/p1N2P2/P1PP4/1R2R2K b - - 0 25",
         Outcome::Loss,
-        None,
     );
 }
 
@@ -77,7 +71,6 @@ fn m25b_white_wins() {
     assert_solves_to(
         "6k1/3p4/2pB2p1/6Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 25",
         Outcome::Win,
-        None,
     );
 }
 
@@ -90,7 +83,6 @@ fn m25b_black_loses() {
     assert_solves_to(
         "6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K b - - 0 25",
         Outcome::Loss,
-        None,
     );
 }
 
@@ -100,7 +92,6 @@ fn m26_black_loses() {
     assert_solves_to(
         "1R4k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/7K b - - 1 26",
         Outcome::Loss,
-        None,
     );
 }
 
@@ -109,7 +100,6 @@ fn m27_white_wins() {
     assert_solves_to(
         "1R6/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/7K w - - 2 27",
         Outcome::Win,
-        None,
     );
 }
 
@@ -185,7 +175,6 @@ fn m28_black_loses() {
     assert_solves_to(
         "5R2/3p4/3Bk1p1/2p3Pp/7P/p1N2P2/P1PP4/7K b - - 5 28",
         Outcome::Loss,
-        None,
     );
 }
 
@@ -194,7 +183,6 @@ fn m29_white_wins() {
     assert_solves_to(
         "5R2/3p4/3Bk1p1/6Pp/2p4P/p1N2P2/P1PP4/7K w - - 0 29",
         Outcome::Win,
-        None,
     );
 }
 
@@ -204,7 +192,6 @@ fn m29_black_loses() {
     assert_solves_to(
         "8/3p4/3BkRp1/6Pp/2p4P/p1N2P2/P1PP4/7K b - - 1 29",
         Outcome::Loss,
-        None,
     );
 }
 

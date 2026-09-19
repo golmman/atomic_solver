@@ -10,8 +10,8 @@ use atomic_movegen::types::Move;
 
 use crate::position::Outcome;
 
-use super::INF;
 use super::children::{ChildInfo, ChildSelection};
+use crate::zobrist::INF;
 
 /// Detect whether the children already determine the parent's outcome.
 ///

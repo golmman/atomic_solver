@@ -15,7 +15,8 @@ use atomic_movegen::types::{Move, MoveList};
 use crate::position::{Outcome, Position};
 use crate::proof_event::{NodeProven, ProofEvent};
 
-use super::{INF, Search};
+use super::Search;
+use crate::zobrist::INF;
 
 /// Movegen slot for one active `dfpn` frame: the legal-move list and node
 /// state the frame generates at its own entry and uses for the terminal

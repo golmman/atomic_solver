@@ -11,7 +11,7 @@ use common::assert_solves_to;
 #[ignore = "slow: cyclic GHI regression; run with -- --include-ignored"]
 #[test]
 fn rook_alone_does_not_claim_win_against_safe_king() {
-    assert_solves_to("8/8/8/8/2k5/8/8/4KR2 w - - 0 1", Outcome::Draw, None);
+    assert_solves_to("8/8/8/8/2k5/8/8/4KR2 w - - 0 1", Outcome::Draw);
 }
 
 /// A reversible king/rook shuffle returns the same board with a different

@@ -56,7 +56,7 @@ fn decisive_remaining_solvable_in_60s() {
         let expected = case
             .expected
             .expect("solvable_60s fixture entries should have an expected outcome");
-        assert_solves_to_timeout(&case.fen, expected, None, 60);
+        assert_solves_to_timeout(&case.fen, expected, 60);
     }
 }
 

@@ -14,9 +14,6 @@ mod selection;
 #[cfg(test)]
 mod tests;
 
-pub use crate::zobrist::INF;
-pub use core::outcome_from_pn_dn;
-
 use children::{ChildInfo, ChildPrecompute};
 
 use std::sync::Arc;
@@ -28,6 +25,7 @@ use atomic_movegen::types::Move;
 
 use crate::position::{Outcome, Position};
 use crate::proof_event::{NodeProven, ProofEvent};
+use crate::zobrist::INF;
 
 use super::ordering::StaticAtomicScorer;
 use super::preflight::{self, PreflightExit, PreflightReport};
@@ -427,10 +425,6 @@ impl Search {
 
     pub fn set_linear_chunks(&mut self, linear: bool) {
         self.linear_chunks = linear;
-    }
-
-    pub fn set_chunk_increment(&mut self, increment: u64) {
-        self.chunk_increment = increment.max(1);
     }
 
     /// Set the geometric chunk-growth factor from a floating-point value and

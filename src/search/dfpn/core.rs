@@ -11,11 +11,12 @@ use atomic_movegen::types::Move;
 
 use crate::position::{Outcome, Position};
 
+use super::Search;
 use super::children::{ChildPrecompute, ChildSelection};
 use super::repetition_cache::RepetitionCache;
 use super::selection::select_from_children;
-use super::{INF, Search};
 use crate::search::tt::TtEntry;
+use crate::zobrist::INF;
 
 pub(super) struct Resolved {
     pub outcome: Outcome,
@@ -428,25 +429,11 @@ impl Search {
     }
 }
 
-/// Convert solved `pn`/`dn` bounds back to an [`Outcome`].
-///
-/// This can only be done unambiguously for a Win (`pn == 0`, `dn == INF`).
-/// `Loss` and `Draw` both encode as `(INF, 0)`, so `(INF, 0)` returns `None`.
-/// The `outcome` field stored in the transposition table must be used as the
-/// source of truth when a distinction between `Loss` and `Draw` is required.
-#[must_use]
-pub fn outcome_from_pn_dn(pn: u64, dn: u64) -> Option<Outcome> {
-    if pn == 0 && dn == INF {
-        Some(Outcome::Win)
-    } else {
-        None
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::position::Outcome;
-    use crate::search::dfpn::{INF, Search, outcome_from_pn_dn};
+    use crate::zobrist::INF;
+
+    use super::Search;
 
     #[test]
     fn epsilon_ceil_scales_threshold() {
@@ -495,12 +482,5 @@ mod tests {
     fn set_epsilon_rejects_greater_than_one() {
         let mut search = Search::new(64);
         search.set_epsilon(1.1);
-    }
-
-    #[test]
-    fn outcome_from_pn_dn_only_recognizes_win() {
-        assert_eq!(outcome_from_pn_dn(0, INF), Some(Outcome::Win));
-        assert_eq!(outcome_from_pn_dn(INF, 0), None);
-        assert_eq!(outcome_from_pn_dn(1, 1), None);
     }
 }

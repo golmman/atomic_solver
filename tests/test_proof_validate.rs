@@ -3,7 +3,7 @@
 //! validator.
 //!
 //! This file does not reuse the plan number in its name because
-//! `tests/test_plan6.rs` is an unrelated, pre-existing m2x regression file.
+//! `tests/test_deep_outcomes.rs` is an unrelated, pre-existing m2x regression file.
 //!
 //! Fast tier: the two-rook mate fixture validated end-to-end on both build
 //! paths (live worker events and snapshot reconstruction). The slow-tier

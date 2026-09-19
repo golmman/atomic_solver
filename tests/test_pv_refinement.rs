@@ -9,7 +9,6 @@ fn black_root_report4_fen() {
     assert_solves_to(
         "6R1/3p1k2/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/7K b - - 3 27",
         Outcome::Loss,
-        None,
     );
 }
 
@@ -22,5 +21,5 @@ fn white_child_f7e6_short_win() {
 
 #[test]
 fn two_rook_mate_refinement_stays_short() {
-    assert_solves_to("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1", Outcome::Win, Some(3));
+    assert_solves_to("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1", Outcome::Win);
 }

@@ -86,14 +86,14 @@ fn incremental_hash_matches_full_hash_in_random_game() {
 /// over the 50-move draw rule.
 #[test]
 fn fifty_move_checkmate_is_loss() {
-    assert_solves_to("7K/8/8/8/8/8/1Q6/k7 b - - 100 1", Outcome::Loss, None);
+    assert_solves_to("7K/8/8/8/8/8/1Q6/k7 b - - 100 1", Outcome::Loss);
 }
 
 /// A 50-move stalemate is a draw: the side to move has no legal moves and is
 /// not in check, which is terminal before the 50-move draw rule.
 #[test]
 fn fifty_move_stalemate_is_draw() {
-    assert_solves_to("7k/8/8/8/8/8/2q5/K7 w - - 100 1", Outcome::Draw, None);
+    assert_solves_to("7k/8/8/8/8/8/2q5/K7 w - - 100 1", Outcome::Draw);
 }
 
 /// In standard atomic chess touching commoners (kings) are allowed and do not
@@ -101,5 +101,5 @@ fn fifty_move_stalemate_is_draw() {
 /// material, not a checkmate.
 #[test]
 fn touching_commoners_with_two_pieces_is_draw() {
-    assert_solves_to("8/8/8/8/8/8/1K6/k7 b - - 0 1", Outcome::Draw, None);
+    assert_solves_to("8/8/8/8/8/8/1K6/k7 b - - 0 1", Outcome::Draw);
 }
