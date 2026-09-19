@@ -1,0 +1,24 @@
+[bounded_search] chunk done: work_done=500009 next_chunk=1000000 elapsed=0.100s max_depth=15 nodes=24281 nps=243871
+[bounded_search] chunk done: work_done=1000010 next_chunk=2000000 elapsed=0.310s max_depth=15 nodes=75862 nps=244908
+[bounded_search] chunk done: work_done=2000003 next_chunk=4000000 elapsed=0.732s max_depth=22 nodes=185599 nps=253510
+[bounded_search] chunk done: work_done=4000017 next_chunk=8000000 elapsed=1.578s max_depth=72 nodes=420792 nps=266621
+outcome: win length: 95
+Profiler dump:
+  child_total            = 14156269
+  child_tt_solved        = 75572   0.53%
+  child_path_rep         = 15562   0.11%
+  child_terminal_fast    = 31644   0.22%
+  child_preflight        = 0   0.00%
+  child_searched_or_win  = 3130   0.02%
+  child_searched_or_loss = 8258   0.06%
+  child_searched_or_draw = 0   0.00%
+  child_searched_and_loss= 10   0.00%
+  child_searched_and_win = 26025   0.18%
+  child_searched_and_draw= 0   0.00%
+  frame_total            = 858117
+  frame_solved_evals     = 14291498  10.74%
+  frame_cut_evals        = 106824069  80.30%
+  frame_budget_evals     = 11910977   8.95%
+outcome: win length: 95
+pv: g4h5 h8g8 b1b8 g8h8 c3e4 f4e3 b8e8 h8g8 a2a4 g8h8 g1g5 h8g8 c2c3 g8h8 c3c4 h8g8 c4c5 g8h8 d2d3 h8g8 d3d4 g8h8 h1h2 h8g8 f3f4 g8h8 h2g2 h8g8 g2f3 g8h8 f3f2 h8g8 f2g1 g8h8 g1f1 h8g8 f1e2 g8h8 e2e1 h8g8 e1d2 g8h8 d2e2 h8g8 e2d3 g8h8 d3c4 h8g8 c4c3 g8h8 c3b3 h8g8 b3c4 g8h8 c4c3 h8g8 c3c2 g8h8 c2b2 h8g8 b2a3 g8h8 a3a2 h8g8 a2a1 g8h8 a1b1 h8g8 b1b2 g8h8 b2a3 h8g8 a3b3 g8h8 b3c2 h8g8 c2d1 g8h8 d1c1 h8g8 c1b1 g8h8 b1a1 h8g8 a1a2 g8h8 d6e5 h8g8 e5g7 d7d6 c5d6 c6c5 d4c5 g8f7 g5g6
+pv_status: first-outcome

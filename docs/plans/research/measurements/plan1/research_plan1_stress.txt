@@ -1,0 +1,28 @@
+[bounded_search] chunk done: work_done=500002 next_chunk=1000000 elapsed=0.096s max_depth=15 nodes=24732 nps=258543
+[bounded_search] chunk done: work_done=1000024 next_chunk=2000000 elapsed=0.300s max_depth=11 nodes=76362 nps=254685
+[bounded_search] chunk done: work_done=2000017 next_chunk=4000000 elapsed=0.717s max_depth=16 nodes=183840 nps=256359
+[bounded_search] chunk done: work_done=4000016 next_chunk=8000000 elapsed=1.547s max_depth=19 nodes=397333 nps=256836
+[bounded_search] chunk done: work_done=8000008 next_chunk=16000000 elapsed=3.236s max_depth=20 nodes=797468 nps=246442
+[bounded_search] chunk done: work_done=16000006 next_chunk=32000000 elapsed=6.763s max_depth=22 nodes=1619263 nps=239440
+[bounded_search] chunk done: work_done=32000000 next_chunk=64000000 elapsed=13.882s max_depth=38 nodes=3322654 nps=239355
+[bounded_search] chunk done: work_done=64000012 next_chunk=128000000 elapsed=27.770s max_depth=51 nodes=6853665 nps=246797
+outcome: win length: 477
+Profiler dump:
+  child_total            = 249480478
+  child_tt_solved        = 879110   0.35%
+  child_path_rep         = 122274   0.05%
+  child_terminal_fast    = 297046   0.12%
+  child_preflight        = 0   0.00%
+  child_searched_or_win  = 27165   0.01%
+  child_searched_or_loss = 112610   0.05%
+  child_searched_or_draw = 0   0.00%
+  child_searched_and_loss= 80   0.00%
+  child_searched_and_win = 212311   0.09%
+  child_searched_and_draw= 0   0.00%
+  frame_total            = 13907467
+  frame_solved_evals     = 186508752   8.65%
+  frame_cut_evals        = 1751854723  81.28%
+  frame_budget_evals     = 216875593  10.06%
+outcome: win length: 477
+pv: g3g4 f5f4 g4h5 a5a4 c3e4 f4e3 b1b8 g6g5 h4g5 h8h7 g1g7 h7h6 d6f4 h6h5 g7g5 h5h6 g5g6 h6h7 g6g7 h7h8 b8e8 d7d6 g7g8 h8h7 a2a3 c6c5 g8g7 h7h8 f4d6 c5c4 g7g8 h8h7 c2c3 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 f3f4 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 f4f5 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 h1h2 h7h6 g8g7 h6h5 g7g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 h2g3 h7h6 g8g5 h6h7 g5g6 h7h8 g6g8 h8h7 g3f4 h7h6 g8g5 h6h7 g5g6 h7h8 g6g8 h8h7 f4e3 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 e3e4 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 e4d5 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 d5e5 h7h6 g8g5 h6h7 g5g6 h7h8 g6g8 h8h7 f5f6 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 e5d6 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 f6f7 h7h6 f7f8n h6h5 g8g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g6 h6h5 d6e5 h5h4 g6g3 h4h5 g3g4 h5h6 g4g6 h6h5 e5e6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g6 h6h5 f8h7 h5h4 g6g3 h4h5 g3g4 h5h6 g4g6 h6h5 h7f6 h5h4 g6g4 h4h3 g4g2 h3h4 g2g5 h4h3 g5g4 h3h2 g4g3 h2h1 g3g1 h1h2 f6g4 h2h3 g1g3 h3h4 g4e3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 e3c4 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 d2d3 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 c3c4 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 c4c5 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 c5c6 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 d3d4 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 d4d5 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 d5d6 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 e6d5 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 d5e4 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 e4e5 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 e5f4 h7h6 g8g5 h6h7 g5g6 h7h8 g6g8 h8h7 f4e3 h7h6 g8g7 h6h5 g7g6 h5h4 g6g3 h4h5 g3g4 h5h6 g4g5 h6h7 g5g6 h7h8 g6g8 h8h7 e3d4 h7h6 g8g7 h6h5 g7g6 h5h4 g6g5 h4h3 g5g4 h3h2 g4g3 h2h1 c6c7 h1h2 c7c8q h2h1 c8h3
+pv_status: first-outcome
