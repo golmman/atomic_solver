@@ -1,0 +1,125 @@
+=== default ===
+  total cases: 8
+  solved: 8
+  timeouts: 0
+  median child_evals: 7,803
+  90th percentile: 294,599,281
+  outlier threshold: 294,599,281
+  outliers: 0
+
+
+=== move-order ===
+  total cases: 19
+  solved: 15
+  timeouts: 4
+  median child_evals: 5,146
+  90th percentile: 14,156,269
+  outlier threshold: 14,156,269
+  outliers: 5
+
+  m20_white: child_evals=275,777,343 timeout=True outcome=draw pv_len=0 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=4
+  m20_black: child_evals=276,188,883 timeout=True outcome=draw pv_len=0 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=5
+  m21_white: child_evals=249,480,478 timeout=False outcome=win pv_len=477 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=0
+  m21_black: child_evals=522,362,085 timeout=True outcome=draw pv_len=0 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=0
+  m22_black: child_evals=400,469,049 timeout=True outcome=draw pv_len=0 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=0
+
+=== decisive ===
+  total cases: 46
+  solved: 46
+  timeouts: 0
+  median child_evals: 71,200
+  90th percentile: 1,507,474
+  outlier threshold: 1,507,474
+  outliers: 4
+
+  dec01: child_evals=5,713,706 timeout=False outcome=win pv_len=27 mat=NPPPPQR vs BPPPPPPPRR men=19 pawnless=False preflight=False king_dist=6 rule50=0
+  dec10: child_evals=4,262,128 timeout=False outcome=win pv_len=41 mat=BPPPPPRR vs PPPPPPRR men=18 pawnless=False preflight=False king_dist=7 rule50=5
+  dec13: child_evals=3,822,602 timeout=False outcome=win pv_len=17 mat=BBNNPPPPPPQRR vs BBNNPPPPPPQRR men=28 pawnless=False preflight=False king_dist=7 rule50=1
+  dec14: child_evals=2,397,489 timeout=False outcome=win pv_len=21 mat=BBNPPPPPPPQRR vs BNPPPPPPPPQRR men=28 pawnless=False preflight=False king_dist=7 rule50=0
+
+=== quick ===
+  total cases: 59
+  solved: 59
+  timeouts: 0
+  median child_evals: 39,549
+  90th percentile: 2,397,489
+  outlier threshold: 2,397,489
+  outliers: 5
+
+  dec01: child_evals=5,713,706 timeout=False outcome=win pv_len=27 mat=NPPPPQR vs BPPPPPPPRR men=19 pawnless=False preflight=False king_dist=6 rule50=0
+  dec10: child_evals=4,262,128 timeout=False outcome=win pv_len=41 mat=BPPPPPRR vs PPPPPPRR men=18 pawnless=False preflight=False king_dist=7 rule50=5
+  dec13: child_evals=3,822,602 timeout=False outcome=win pv_len=17 mat=BBNNPPPPPPQRR vs BBNNPPPPPPQRR men=28 pawnless=False preflight=False king_dist=7 rule50=1
+  m23_white: child_evals=9,673,403 timeout=False outcome=win pv_len=33 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=1
+  m23_black: child_evals=2,892,606 timeout=False outcome=loss pv_len=24 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=2
+
+=== thorough ===
+  total cases: 65
+  solved: 61
+  timeouts: 4
+  median child_evals: 47,068
+  90th percentile: 2,892,606
+  outlier threshold: 2,892,606
+  outliers: 10
+
+  m20_white: child_evals=278,193,991 timeout=True outcome=draw pv_len=0 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=4
+  m20_black: child_evals=275,116,966 timeout=True outcome=draw pv_len=0 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=5
+  m21_white: child_evals=249,480,478 timeout=False outcome=win pv_len=477 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=0
+  m21_black: child_evals=522,114,077 timeout=True outcome=draw pv_len=0 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=0
+  m22_white: child_evals=14,156,269 timeout=False outcome=win pv_len=95 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=0
+  m22_black: child_evals=400,666,480 timeout=True outcome=draw pv_len=0 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=0
+  m23_white: child_evals=9,673,403 timeout=False outcome=win pv_len=33 mat=BNPPPPPPPRR vs PPPPPPR men=20 pawnless=False preflight=False king_dist=7 rule50=1
+  dec01: child_evals=5,713,706 timeout=False outcome=win pv_len=27 mat=NPPPPQR vs BPPPPPPPRR men=19 pawnless=False preflight=False king_dist=6 rule50=0
+  dec10: child_evals=4,262,128 timeout=False outcome=win pv_len=41 mat=BPPPPPRR vs PPPPPPRR men=18 pawnless=False preflight=False king_dist=7 rule50=5
+  dec13: child_evals=3,822,602 timeout=False outcome=win pv_len=17 mat=BBNNPPPPPPQRR vs BBNNPPPPPPQRR men=28 pawnless=False preflight=False king_dist=7 rule50=1
+
+Wrote 24 rows to /workspace/atomic_solver/docs/plans/research/measurements/plan2/outlier_features.csv
+
+=== Cross-suite outlier feature frequencies ===
+Material config:
+  BNPPPPPPPRR vs PPPPPPR: 14
+  NPPPPQR vs BPPPPPPPRR: 3
+  BPPPPPRR vs PPPPPPRR: 3
+  BBNNPPPPPPQRR vs BBNNPPPPPPQRR: 3
+  BBNPPPPPPPQRR vs BNPPPPPPPPQRR: 1
+
+Pawnless: 0/24 (0.0%)
+Pre-flight eligible (<=3 men, pawnless, no castling): 0/24 (0.0%)
+Total men <= 3: 0/24 (0.0%)
+Total men <= 4: 0/24 (0.0%)
+No castling: 20/24 (83.3%)
+Rule50 >= 50: 0/24 (0.0%)
+
+Outliers per suite:
+  default: 0
+  move-order: 5
+  decisive: 4
+  quick: 5
+  thorough: 10
+
+=== Outlier vs full-suite feature comparison ===
+Material config:
+  BNPPPPPPPRR vs PPPPPPR: 14/24 outliers (58.3%) vs 22/197 all (11.2%)
+  NPPPPQR vs BPPPPPPPRR: 3/24 outliers (12.5%) vs 3/197 all (1.5%)
+  BPPPPPRR vs PPPPPPRR: 3/24 outliers (12.5%) vs 3/197 all (1.5%)
+  BBNNPPPPPPQRR vs BBNNPPPPPPQRR: 3/24 outliers (12.5%) vs 3/197 all (1.5%)
+  BBNPPPPPPPQRR vs BNPPPPPPPPQRR: 1/24 outliers (4.2%) vs 3/197 all (1.5%)
+Total men:
+  20: 14/24 outliers (58.3%) vs 31/197 all (15.7%)
+  28: 4/24 outliers (16.7%) vs 15/197 all (7.6%)
+  19: 3/24 outliers (12.5%) vs 6/197 all (3.0%)
+  18: 3/24 outliers (12.5%) vs 18/197 all (9.1%)
+Pawnless:
+  False: 24/24 outliers (100.0%) vs 196/197 all (99.5%)
+Pre-flight eligible:
+  False: 24/24 outliers (100.0%) vs 197/197 all (100.0%)
+King Chebyshev distance:
+  7: 21/24 outliers (87.5%) vs 142/197 all (72.1%)
+  6: 3/24 outliers (12.5%) vs 33/197 all (16.8%)
+Rule-50 clock:
+  0: 11/24 outliers (45.8%) vs 119/197 all (60.4%)
+  5: 5/24 outliers (20.8%) vs 8/197 all (4.1%)
+  1: 5/24 outliers (20.8%) vs 40/197 all (20.3%)
+  4: 2/24 outliers (8.3%) vs 5/197 all (2.5%)
+  2: 1/24 outliers (4.2%) vs 13/197 all (6.6%)
+
+Correlation total_men vs log10(child_evals) among solved cases: r=0.189
