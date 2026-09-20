@@ -183,6 +183,18 @@ remains *candidate* until a plan scopes it.
   (`report4.md`). #11 closed with data; ε=0.375 spin-off handed to
   `conversion` as a sized note. Next plan: literature target #5
   (child-level early termination in DF-PN).
+- **2026-09-20** — plan5 drafted (literature target #5, child-level early
+  termination in DF-PN; the plan4 successor). Mining plan per the working
+  agreement: Phase 0 is a bounded survey that selects exactly one source
+  (clusters: df-pn cutoff variants, partial/selective expansion, solver
+  engineering; λ-search excluded as backlog #7 overlap, algorithm swaps as
+  #8), Phase 1 extracts it to `research_child_termination.md` mapped to
+  the concrete `dfpn` call sites, Phase 2 classifies every mechanism as
+  implemented / sound-and-unmeasured / unsound-here / equivalent-to-a-
+  closed-lever — with the `conversion` #6 deferral-asymmetry and the
+  repetition/TT contracts as hard filters. Gates: OPEN (a class-(b)
+  mechanism survives) → sized POC proposal as plan6 candidate; CLOSED →
+  close #5 and elevate the next literature target (#6/#7/#8).
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
