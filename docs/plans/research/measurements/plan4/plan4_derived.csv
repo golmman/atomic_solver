@@ -1,0 +1,45 @@
+plan4_derived,case,arm_or_epsilon,child_evals,delta_vs_baseline,outcome,pv_len,timeout
+phase0,stress,e0,1085531183,+335.1%,win,559,False
+phase0,stress,e0.0625,1083780750,+334.4%,win,559,False
+phase0,stress,e0.125 (baseline),249480478,0.0%,win,477,False
+phase0,stress,e0.25,347233661,+39.2%,win,235,False
+phase0,stress,e0.375,227834433,-8.7%,win,199,False
+phase0,stress,e0.5,156394866,-37.3%,win,261,False
+phase0,stress,e1.0,1960467649,timeout,draw,0,True
+phase0,m22,e0,20553440,+45.2%,win,35,False
+phase0,m22,e0.0625,16925024,+19.6%,win,133,False
+phase0,m22,e0.125 (baseline),14156269,0.0%,win,95,False
+phase0,m22,e0.25,21152291,+49.4%,win,373,False
+phase0,m22,e0.375,12351299,-12.7%,win,73,False
+phase0,m22,e0.5,15952085,+12.7%,win,18,False
+phase0,m22,e1.0,51843616,+266.2%,win,403,False
+phase0,dec13,e0,4224109,+10.5%,win,17,False
+phase0,dec13,e0.0625,4655699,+21.8%,win,35,False
+phase0,dec13,e0.125 (baseline),3822602,0.0%,win,17,False
+phase0,dec13,e0.25,3545815,-7.2%,win,17,False
+phase0,dec13,e0.375,3921011,+2.6%,win,29,False
+phase0,dec13,e0.5,5827389,+52.4%,win,35,False
+phase0,dec13,e1.0,7947572,+107.9%,win,25,False
+phase0,dec10,e0,4594131,+7.8%,win,33,False
+phase0,dec10,e0.0625,2748468,-35.5%,win,51,False
+phase0,dec10,e0.125 (baseline),4262128,0.0%,win,41,False
+phase0,dec10,e0.25,3102360,-27.2%,win,39,False
+phase0,dec10,e0.375,3642166,-14.5%,win,41,False
+phase0,dec10,e0.5,3273293,-23.2%,win,43,False
+phase0,dec10,e1.0,2367895,-44.4%,win,41,False
+phase1,stress,d_root,320435684,+28.4%,win,68,False
+phase1,stress,d_leaf,249480478,0.0% (never fires),win,477,False
+phase1,stress,r50,249480248,-0.0001%,win,477,False
+phase1,stress,linear,276802415,+11.0%,win,335,False
+phase1,m22,d_root,279104693,timeout,draw,0,True
+phase1,m22,d_leaf,14156269,0.0% (never fires),win,95,False
+phase1,m22,r50,14156210,-0.0004%,win,95,False
+phase1,m22,linear,63863508,+351.1%,win,73,False
+phase1,dec13,d_root,5521685,+44.5%,win,31,False
+phase1,dec13,d_leaf,3822602,0.0% (never fires),win,17,False
+phase1,dec13,r50,3822602,0.0% (never fires),win,17,False
+phase1,dec13,linear,3836614,+0.4%,win,17,False
+phase1,dec10,d_root,3290784,-22.8%,win,29,False
+phase1,dec10,d_leaf,4262128,0.0% (never fires),win,41,False
+phase1,dec10,r50,4262128,0.0% (never fires),win,41,False
+phase1,dec10,linear,6129011,+43.8%,win,47,False

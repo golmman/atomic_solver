@@ -1,0 +1,4 @@
+[bounded_search] chunk done: work_done=500014 next_chunk=1000000 elapsed=0.105s max_depth=26 nodes=32567 nps=309890
+[bounded_search] chunk done: work_done=1000002 next_chunk=2000000 elapsed=0.311s max_depth=46 nodes=98333 nps=316521
+outcome: win length: 43
+  child_evals         = 3273293

@@ -1,0 +1,10 @@
+[bounded_search] chunk done: work_done=500000 next_chunk=1000000 elapsed=0.106s max_depth=18 nodes=24459 nps=230090
+[bounded_search] chunk done: work_done=1000032 next_chunk=2000000 elapsed=0.317s max_depth=11 nodes=74942 nps=236392
+[bounded_search] chunk done: work_done=2000006 next_chunk=4000000 elapsed=0.731s max_depth=24 nodes=186594 nps=255106
+[bounded_search] chunk done: work_done=4000001 next_chunk=8000000 elapsed=1.570s max_depth=80 nodes=430230 nps=274118
+[bounded_search] chunk done: work_done=8000000 next_chunk=16000000 elapsed=3.272s max_depth=346 nodes=943310 nps=288339
+[bounded_search] chunk done: work_done=16000005 next_chunk=32000000 elapsed=5.588s max_depth=143 nodes=2059676 nps=368621
+[bounded_search] chunk done: work_done=32000010 next_chunk=64000000 elapsed=8.775s max_depth=58 nodes=4113655 nps=468778
+[bounded_search] chunk done: work_done=64000008 next_chunk=128000000 elapsed=15.103s max_depth=79 nodes=8225105 nps=544584
+[bounded_search] chunk done: work_done=128000000 next_chunk=256000000 elapsed=27.690s max_depth=54 nodes=16422238 nps=593078
+  child_evals         = 279104693

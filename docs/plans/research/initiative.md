@@ -105,7 +105,7 @@ remains *candidate* until a plan scopes it.
 | # | Candidate | What it tests | Sizing question | Likely owner |
 |---|-----------|---------------|-----------------|--------------|
 | 10 | **Node-classification profiler** — Instrument `evaluate_child` and `dfpn` to tag every eval as `OR-decisive`, `AND-refute`, `threshold-cut`, `TT-hit`, `preflight-hit`, `path-rep-draw`. Aggregate per-suite. | Whether the current "unknown" work mass is actually concentrated in one category. | < 1 session of temporary instrumentation | `research` (feeds #1) — **done (plan1)** |
-| 11 | **Dynamic epsilon scheduling** — Vary ε or the refinement cap based on depth or rule50 clock, rather than globally. | Deep conversions may need coarser thresholds early and finer later. | 1 session, flag-gated | `conversion` — **plan4 drafted** (plan3 NO-GO fallback; caveat: global ε measured inert 2026-09-11 pre-plan9, but that sweep was suite-aggregate and noise-dominated — plan4 re-measures per-case first, then tests depth/clock-scheduled arms) |
+| 11 | **Dynamic epsilon scheduling** — Vary ε or the refinement cap based on depth or rule50 clock, rather than globally. | Deep conversions may need coarser thresholds early and finer later. | 1 session, flag-gated | `conversion` — **done (plan4, NO-GO for scheduling)**: no depth/clock schedule arm beats the global default on any case (best arm 0.0%; the firing arms regress up to +351% and time out m22); the churn mass's threshold response is trajectory chaos with no regional structure (report4.md). Spin-off finding: global ε=0.375 Pareto-improves all four cases (stress −8.7%, m22 −12.7%, dec13 +2.6%, dec10 −14.5%) — handed to `conversion` as a sized default-ε candidate; the 2026-09-11 "global ε inert" claim is formally refuted (ε=0.5 wins stress −37.3% but regresses controls). |
 | 12 | **TT eviction priority** — Protect entries from the current PV or high-work subtrees instead of uniform replacement. | Does the current flat replacement discard useful solved entries prematurely? | 1 session, instrumentation only | `lean` |
 | 13 | **Frontier-node prediction prior** — Hand-craft or train a fast board-feature regression to predict `pn/dn` ratio for unexpanded children, using it as a pre-sort key before any search. | A lightweight alternative to the full `nn` branch; can be validated by oracle-floor comparison. | 1–2 sessions (data generation + micro-eval) | `lean` or `conversion` |
 
@@ -173,6 +173,16 @@ remains *candidate* until a plan scopes it.
   linear) against the stress gate object with m22/dec13/dec10 controls.
   Gates: GO ≥10% stress win at control parity → `conversion` hand-off;
   NO-GO closes #11 and elevates literature target #5 to next plan.
+- **2026-09-19** — plan4 done (backlog #11, scheduled-ε POC): **NO-GO for
+  scheduling**. Phase 0 refuted the "global ε inert" claim (ε=0.5 wins the
+  stress gate object −37.3% but regresses m22 +12.7% / dec13 +52.4%; ε=0.375
+  Pareto-improves all four cases at −8.7% stress, under the 10% GO bar);
+  Phase 1 found no depth/clock schedule beats the default (best arm 0.0%,
+  two arms never fire, near-root coarsening explodes m22). H1 and H2 both
+  rejected: the response is trajectory chaos, not regional structure
+  (`report4.md`). #11 closed with data; ε=0.375 spin-off handed to
+  `conversion` as a sized note. Next plan: literature target #5
+  (child-level early termination in DF-PN).
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
