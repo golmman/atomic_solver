@@ -95,7 +95,8 @@ Papers and sources to mine, with the question each answers:
 | 5 (cont.) | Status note: **answered (plan5, CLOSED)** — mined Henderson 2010 (FDFPN child limit); the surveyed child-level surface collapses into threshold increments (implemented/closed), count-based child limits (structurally equivalent to the closed `conversion` #6/#7 partial-sum lever *and* inverted relative to the threshold-cut churn mass), correlation/heuristic pruning (unsound here without a domain equivalence proof or an evaluator — #6/#7 dependency), and loop-avoidance/terminal-detection (already covered). No class-(b) mechanism; backlog #5 closed with the mapping as the no-go record (`report5.md`, `research_child_termination.md`). | | |
 | 6 | **Machine-learned node priors for PNS** — Can a tiny NN or logistic model predict `pn`/`dn` from board features, and has this been shown to reduce nodes in *any* PNS solver? | The `nn` branch (archived under `lean`) closed as oracle-floor; this is a lighter "prior" view (frontier prediction, not full ordering). | open |
 | 7 | **Pattern databases / mating-net recognizers in chess/shogi** — Are there small, exact recognizers for forced-mate or forced-extinction patterns that can return decisive outcomes without search? | Could shrink the search tree for common atomic-chess tactical motifs. | open |
-| 8 | **Alternative search algorithms: PDS, PN², or bounded variants** — Do Nagai's PDS or PN² have better repetition / deep-conversion scaling than DF-PN+ in recent solver competitions or publications? | The solver is committed to DF-PN+; a measured comparison on the stress case would quantify the lock-in cost. | open |
+| 8 | **Alternative search algorithms: PDS, PN², or bounded variants** — Do Nagai's PDS or PN² have better repetition / deep-conversion scaling than DF-PN+ in recent solver competitions or publications? | The solver is committed to DF-PN+; a measured comparison on the stress case would quantify the lock-in cost. | closed |
+| 8 (cont.) | Status note: **answered (plan6, CLOSED)** — mined van den Herik & Winands (PNS-variants chapter) with Pawlewicz & Lew 2007 §4 and the ICGA-2012 survey as corroborators: the only published direct df-pn-vs-PDS comparisons (Atari Go TT-sweep; 286 hard LOA) favor df-pn by 2.6–4.5×, largest in the tree-≫-TT regime matching the stress class; PN² is RAM-contract-fatal (best-first frontier outside the TT) with published memory-collapse; PDS-PN/DFPN-PN carry the same level-2 frontier plus a never-run df-pn comparison (the gap is recorded in the mined source itself); published PDS ignores GHI. No variant in class (b); backlog #8 closed with the 9-row head-to-head evidence table as the lock-in-cost record (`report6.md`, `research_alternative_algorithms.md`). | | |
 | 9 | **Job-level / massively parallel PNS (Saffidine 2011, Čížek 2025)** — Already tracked in `conversion` #4 / `lean` #2; this initiative mines only if a new parallel design surfaces that changes the node-count story (not wall time alone). | Hand-off to `conversion` #4 if actionable. | open |
 
 ### POC candidates
@@ -231,6 +232,22 @@ remains *candidate* until a plan scopes it.
   demoted (plan3's zero-harvestable-subgames data), #6 demoted (the
   sharpened no-heuristic-component blocker), leaving #8 as the only
   un-weakened open literature target.
+
+- **2026-09-20** — plan6 done (literature target #8, PDS/PN² algorithm-swap
+  scaling): **CLOSED (H0)**. Phase 0 obtained and vendored all three
+  plan5-identified author-copy sources; selected the van den Herik & Winands
+  PNS-variants chapter as the one qualifying source (PDS threshold rules,
+  NegaPDS/PDS-PN pseudo-code, PN² construction, LOA head-to-head tables, and
+  §7's df-pn-vs-PDS ratios). The evidence table (9 normalized rows) favors
+  df-pn in every measured regime — df-pn+1+ε is 4.17–4.46× faster than the
+  PDS variants on hard LOA and dominates the Atari Go tree-≫-TT sweep that
+  most resembles the stress class — while the comparisons that could overturn
+  this (df-pn vs PDS-PN; any repetition-dominated domain) were never run and
+  are recorded as gaps. Classification: PDS (d), PN² (c, RAM = TT only
+  fatal), PDS-PN/DFPN-PN (c+d), 1+ε df-pn+ (a, implemented). Backlog #8
+  closed with the evidence table as the lock-in-cost record; no POC. Next
+  plan: remaining targets #6/#7 (both pre-weakened) or POC candidates
+  #12/#13 per the CLOSED consequence (`report6.md`).
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

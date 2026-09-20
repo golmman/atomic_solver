@@ -23,8 +23,12 @@ Status values:
   DF-PN+; source of the PDS variant. **Cited**
   (`dfpn/research_ghi.md`, `dfpn/research_epsilon.md`).
 - J. Pawlewicz, L. Lew (2007). *Improving Depth-first PN-Search: 1 + ε
-  Trick*. Warsaw University. — Implemented in the solver. **Mined**
-  (`dfpn/research_epsilon.md`).
+  Trick*. Warsaw University. — Implemented in the solver. §4 is the primary
+  df-pn-vs-PDS head-to-head (Atari Go TT-size sweep; 488 easy + 286 hard LOA;
+  df-pn+1+ε 4.17× faster than PDS+1+ε); the 1+ε extraction covers the trick
+  only. Copy vendored: `docs/plans/dfpn/epsilon.pdf`. **Mined**
+  (`dfpn/research_epsilon.md`; §4 PDS comparison mined by
+  `research/research_alternative_algorithms.md`).
 - C. Gao (2021). *On Computation Complexity of True Proof Number Search*.
   [arXiv:2102.04907](https://arxiv.org/abs/2102.04907). — True pn/dn in
   arbitrary DAGs is NP-hard; framing for why DAG-aware pn/dn must remain
@@ -34,9 +38,29 @@ Status values:
 
 - H. J. van den Herik, M. H. M. Winands. *Proof-Number Search and its
   Variants* (chapter). — Survey of PN, PN², PDS, df-pn (threshold formulas
-  (3)–(6), 1+ε as Eq. (7)). Author copy:
-  `dke.maastrichtuniversity.nl/m.winands/documents/pnchapter.pdf`. **Cited**
-  (`research/research_child_termination.md`; Phase 0 survey).
+  (3)–(6), 1+ε as Eq. (7)); PDS's proof-like/disproof-like rules (Eqs. (8)–(9))
+  and NegaPDS/NegaPDS-PN pseudo-code; PN² construction (Eqs. (10)–(11)); LOA
+  comparison tables (Tables 3–9) and §7's df-pn-vs-PDS ratios with the recorded
+  df-pn-vs-PDS-PN comparison gap. Author copy:
+  `dke.maastrichtuniversity.nl/m.winands/documents/pnchapter.pdf`; copy
+  vendored: `docs/plans/research/measurements/plan6/vanherik_winands_pnchapter.pdf`.
+  **Mined** (`research/research_alternative_algorithms.md` — backlog #8
+  closed H0: no PDS/PN²-family variant beats df-pn in any published
+  comparison; PDS (d), PN² (c, RAM), PDS-PN (c+d)).
+- M. H. M. Winands, J. W. H. M. Uiterwijk, H. J. van den Herik (2002).
+  *PDS-PN: A New Proof-Number Search Algorithm — Application to Lines of
+  Action*. CG 2002. — Two-level PDS + best-first PN; Tables 1–5 head-to-heads;
+  PDS's GHI is explicitly ignored ("in the current PDS algorithm this problem
+  is ignored"); PN² memory-degradation curve. Author copy:
+  `dke.maastrichtuniversity.nl/m.winands/documents/PDSPNCG2002.pdf`; copy
+  vendored: `docs/plans/research/measurements/plan6/winands2002_pdspn.pdf`.
+  **Cited** (`research/research_child_termination.md`; corroborating source
+  in `research/research_alternative_algorithms.md`).
+- M. Sakuta, H. Iida (2001). *The Performance of PN*, PDS and PN Search on
+  6×6 Othello and Tsume-Shogi*. Advances in Computer Games 9. — Independent
+  measurement of PDS's node-generation overhead (7–8× slower than PN);
+  cited secondhand via the PNS-variants chapter (not obtained). **Cited**
+  (`research/research_alternative_algorithms.md`).
 - M. H. M. Winands, J. W. H. M. Uiterwijk, H. J. van den Herik (2002).
   *PDS-PN: A New Proof-Number Search Algorithm — Application to Lines of
   Action*. CG 2002. — Two-level PDS + best-first PN; no child-level cutoff
@@ -47,10 +71,13 @@ Status values:
   Search Using Proof Numbers: The First Twenty Years*. ICGA Journal 35(3).
   — Survey; §7 catalogues the PNS-variant enhancement space (heuristic init,
   correlated siblings, dynamic widening, threshold control, heuristic
-  threshold, simulation, early terminal detection). Author copy:
-  `webdocs.cs.ualberta.ca/~mmueller/ps/ICGA2012PNS.pdf`. **Cited**
-  (`research/research_child_termination.md`; the plan5 classification
-  backbone).
+  threshold, simulation, early terminal detection). Conclusion: "For larger
+  problems df-pn may be the best choice"; a comprehensive variant comparison
+  "is sorely missing". Author copy:
+  `webdocs.cs.ualberta.ca/~mmueller/ps/ICGA2012PNS.pdf`; copy vendored:
+  `docs/plans/research/measurements/plan6/kishimoto2012_icga_survey.pdf`.
+  **Cited** (`research/research_child_termination.md`; corroborating source
+  and regime statement in `research/research_alternative_algorithms.md`).
 - P. T. Henderson (2010). *Playing and Solving the Game of Hex*. Ph.D.
   dissertation, University of Alberta. — Source of Focused DFPN (FDFPN):
   child limit `l = base + ⌈fraction × |live children|⌉`, frontier dynamics,
