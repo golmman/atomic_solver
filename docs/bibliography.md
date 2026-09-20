@@ -30,6 +30,49 @@ Status values:
   arbitrary DAGs is NP-hard; framing for why DAG-aware pn/dn must remain
   heuristic. **Open** (`conversion` backlog #5e).
 
+## PNS variants and child-level termination
+
+- H. J. van den Herik, M. H. M. Winands. *Proof-Number Search and its
+  Variants* (chapter). — Survey of PN, PN², PDS, df-pn (threshold formulas
+  (3)–(6), 1+ε as Eq. (7)). Author copy:
+  `dke.maastrichtuniversity.nl/m.winands/documents/pnchapter.pdf`. **Cited**
+  (`research/research_child_termination.md`; Phase 0 survey).
+- M. H. M. Winands, J. W. H. M. Uiterwijk, H. J. van den Herik (2002).
+  *PDS-PN: A New Proof-Number Search Algorithm — Application to Lines of
+  Action*. CG 2002. — Two-level PDS + best-first PN; no child-level cutoff
+  rule beyond PDS's. Author copy:
+  `dke.maastrichtuniversity.nl/m.winands/documents/PDSPNCG2002.pdf`.
+  **Cited** (`research/research_child_termination.md`).
+- A. Kishimoto, M. H. M. Winands, M. Müller, J.-T. Saito (2012). *Game-Tree
+  Search Using Proof Numbers: The First Twenty Years*. ICGA Journal 35(3).
+  — Survey; §7 catalogues the PNS-variant enhancement space (heuristic init,
+  correlated siblings, dynamic widening, threshold control, heuristic
+  threshold, simulation, early terminal detection). Author copy:
+  `webdocs.cs.ualberta.ca/~mmueller/ps/ICGA2012PNS.pdf`. **Cited**
+  (`research/research_child_termination.md`; the plan5 classification
+  backbone).
+- P. T. Henderson (2010). *Playing and Solving the Game of Hex*. Ph.D.
+  dissertation, University of Alberta. — Source of Focused DFPN (FDFPN):
+  child limit `l = base + ⌈fraction × |live children|⌉`, frontier dynamics,
+  Observations 1–3 (§5.2.2–5.2.5). Copy vendored:
+  `docs/plans/research/measurements/plan5/henderson2010_playing_solving_hex.pdf`.
+  **Mined** (`research/research_child_termination.md`) — classified as
+  structurally equivalent to the closed partial-sum sweep lever for this
+  solver; backlog #5 closed.
+- K. Yoshizoe (2008). *A New Proof-Number Calculation Technique for
+  Proof-Number Search*. CG 2008 (Springer LNCS 5131, ch. 13,
+  DOI 10.1007/978-3-540-87608-3_13). — Dynamic widening (top-k / 1/k
+  children) with correctness guarantee. Closed access; no OA copy found
+  (Semantic Scholar/Unpaywall checked 2026-09-20). **Cited**
+  (`research/research_child_termination.md`).
+- C. Gao, M. Müller, R. Hayward (2017). *Focused Depth-first Proof Number
+  Search using Convolutional Neural Networks for the Game of Hex*. IJCAI-17.
+  — Restates FDFPN's child-limit rule externally (Eq. (1)); CNN-driven
+  widening size and policy ordering (learned components = backlog #6
+  territory). Author copy vendored:
+  `docs/plans/research/measurements/plan5/gao2017_fdfpncnn_ijcai17.pdf`.
+  **Cited** (`research/research_child_termination.md`).
+
 ## GHI / repetitions
 
 - A. Kishimoto, M. Müller (2004). *A General Solution to the Graph History
@@ -81,7 +124,9 @@ Status values:
   Search for Impartial Games and Beyond*.
   [arXiv:2511.10339](https://arxiv.org/abs/2511.10339). — Two-level
   parallelization + shared worker info; 333× on 1024 cores; supersedes
-  Kaneko-10's scaling assumptions. **Open** (`conversion` backlog #4/#5c).
+  Kaneko-10's scaling assumptions. Full-text check (plan5): no child-level
+  cutoff/widening content — parallel-layer only. **Open** (`conversion`
+  backlog #4/#5c).
 
 ## Recent solving paradigms
 

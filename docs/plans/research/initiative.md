@@ -91,7 +91,8 @@ Papers and sources to mine, with the question each answers:
 
 | # | Source / Topic | Question for the solver | Status |
 |---|----------------|--------------------------|--------|
-| 5 | **Selective search / child-level early termination in DF-PN** — Are there published ways to stop evaluating a child once its bound crosses a "hopeless" threshold, without breaking the soundness of the parent proof? | Related to the closed `conversion` #6 threshold-cut-frame pricing, but from the child-granularity side rather than the frame-granularity side. | open |
+| 5 | **Selective search / child-level early termination in DF-PN** — Are there published ways to stop evaluating a child once its bound crosses a "hopeless" threshold, without breaking the soundness of the parent proof? | Related to the closed `conversion` #6 threshold-cut-frame pricing, but from the child-granularity side rather than the frame-granularity side. | closed |
+| 5 (cont.) | Status note: **answered (plan5, CLOSED)** — mined Henderson 2010 (FDFPN child limit); the surveyed child-level surface collapses into threshold increments (implemented/closed), count-based child limits (structurally equivalent to the closed `conversion` #6/#7 partial-sum lever *and* inverted relative to the threshold-cut churn mass), correlation/heuristic pruning (unsound here without a domain equivalence proof or an evaluator — #6/#7 dependency), and loop-avoidance/terminal-detection (already covered). No class-(b) mechanism; backlog #5 closed with the mapping as the no-go record (`report5.md`, `research_child_termination.md`). | | |
 | 6 | **Machine-learned node priors for PNS** — Can a tiny NN or logistic model predict `pn`/`dn` from board features, and has this been shown to reduce nodes in *any* PNS solver? | The `nn` branch (archived under `lean`) closed as oracle-floor; this is a lighter "prior" view (frontier prediction, not full ordering). | open |
 | 7 | **Pattern databases / mating-net recognizers in chess/shogi** — Are there small, exact recognizers for forced-mate or forced-extinction patterns that can return decisive outcomes without search? | Could shrink the search tree for common atomic-chess tactical motifs. | open |
 | 8 | **Alternative search algorithms: PDS, PN², or bounded variants** — Do Nagai's PDS or PN² have better repetition / deep-conversion scaling than DF-PN+ in recent solver competitions or publications? | The solver is committed to DF-PN+; a measured comparison on the stress case would quantify the lock-in cost. | open |
@@ -195,6 +196,21 @@ remains *candidate* until a plan scopes it.
   repetition/TT contracts as hard filters. Gates: OPEN (a class-(b)
   mechanism survives) → sized POC proposal as plan6 candidate; CLOSED →
   close #5 and elevate the next literature target (#6/#7/#8).
+
+- **2026-09-20** — plan5 done (backlog #5, child-level early termination):
+  **CLOSED (H0)**. Phase 0 survey (13 sources, `measurements/plan5/`)
+  selected Henderson 2010's Focused DFPN child limit as the one qualifying,
+  obtainable, unmined source; the extraction maps it onto the verified
+  `dfpn` call sites and shows it is structurally equivalent to the closed
+  partial-sum sweep lever (subset-Σ stores, deferral asymmetry = the
+  source's own Observation 3) *and* inverted relative to the churn mass
+  (delays the Σ threshold cuts that carry ~80% of descendant evals instead
+  of accelerating them). Every surveyed mechanism classified (a)/(c)/(d)/
+  out-of-scope — none lands in (b). Backlog #5 closed with the mapping as
+  the no-go record; no POC. Next literature target: #6/#7 (both carry the
+  known no-heuristic-component transfer blocker this mining sharpened);
+  #8's algorithm-swap question remains separate (PDS's cutoff rule itself
+  was classified subsumed here) (`report5.md`).
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
