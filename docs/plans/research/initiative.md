@@ -105,7 +105,7 @@ remains *candidate* until a plan scopes it.
 | # | Candidate | What it tests | Sizing question | Likely owner |
 |---|-----------|---------------|-----------------|--------------|
 | 10 | **Node-classification profiler** — Instrument `evaluate_child` and `dfpn` to tag every eval as `OR-decisive`, `AND-refute`, `threshold-cut`, `TT-hit`, `preflight-hit`, `path-rep-draw`. Aggregate per-suite. | Whether the current "unknown" work mass is actually concentrated in one category. | < 1 session of temporary instrumentation | `research` (feeds #1) — **done (plan1)** |
-| 11 | **Dynamic epsilon scheduling** — Vary ε or the refinement cap based on depth or rule50 clock, rather than globally. | Deep conversions may need coarser thresholds early and finer later. | 1 session, flag-gated | `conversion` — **next plan** (plan3 NO-GO fallback; caveat: global ε measured inert 2026-09-11 pre-plan9, but plan11 showed threshold arithmetic is high-leverage) |
+| 11 | **Dynamic epsilon scheduling** — Vary ε or the refinement cap based on depth or rule50 clock, rather than globally. | Deep conversions may need coarser thresholds early and finer later. | 1 session, flag-gated | `conversion` — **plan4 drafted** (plan3 NO-GO fallback; caveat: global ε measured inert 2026-09-11 pre-plan9, but that sweep was suite-aggregate and noise-dominated — plan4 re-measures per-case first, then tests depth/clock-scheduled arms) |
 | 12 | **TT eviction priority** — Protect entries from the current PV or high-work subtrees instead of uniform replacement. | Does the current flat replacement discard useful solved entries prematurely? | 1 session, instrumentation only | `lean` |
 | 13 | **Frontier-node prediction prior** — Hand-craft or train a fast board-feature regression to predict `pn/dn` ratio for unexpanded children, using it as a pre-sort key before any search. | A lightweight alternative to the full `nn` branch; can be validated by oracle-floor comparison. | 1–2 sessions (data generation + micro-eval) | `lean` or `conversion` |
 
@@ -165,6 +165,14 @@ remains *candidate* until a plan scopes it.
   recognizer direction is closed for the outlier family with data
   (`report3.md`). Next plan falls back to #11 (depth-scheduled ε POC),
   with the ε-invariance caveat documented in the plan and report.
+- **2026-09-19** — plan4 drafted (backlog #11, scheduled-ε POC; the
+  documented plan3 fallback). Phase 0 re-establishes the global-ε inert
+  claim with a clean per-case first-outcome sweep (the 2026-09-11 sweep was
+  suite-aggregate and dominated by timeout noise); Phase 1 measures four
+  env-gated schedule arms (path depth, remaining depth, rule50 clock,
+  linear) against the stress gate object with m22/dec13/dec10 controls.
+  Gates: GO ≥10% stress win at control parity → `conversion` hand-off;
+  NO-GO closes #11 and elevates literature target #5 to next plan.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
