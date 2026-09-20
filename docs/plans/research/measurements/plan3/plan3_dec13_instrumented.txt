@@ -1,0 +1,14 @@
+[bounded_search] chunk done: work_done=500019 next_chunk=1000000 elapsed=0.104s max_depth=14 nodes=20964 nps=202547
+[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=0.324s max_depth=17 nodes=65009 nps=200829
+[bounded_search] chunk done: work_done=2000020 next_chunk=4000000 elapsed=0.768s max_depth=23 nodes=150917 nps=196547
+outcome: win length: 17
+  child_evals         = 3822602
+  men_buckets         = [1-3, 4-5, 6-8, 9-12, 13-16, 17+]
+  frame_bucket_counts = [0, 0, 0, 0, 356, 164524]
+  frame_bucket_evals  = [0, 0, 0, 0, 9873, 32397615]
+  frame_bucket_cuts   = [0, 0, 0, 0, 9873, 25667353]
+  frame_harv_counts   = 0
+  frame_harv_evals    = 0
+outcome: win length: 17
+pv: d1f3 d8h4 h1h4 b4d6 c1h6 f8g8 g4f5 d6g3 e1e2 g3f4 f3g4 f4g5 c7e8 e6e5 e8f6 g8f7 g4e6
+pv_status: first-outcome

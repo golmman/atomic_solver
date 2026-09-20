@@ -82,7 +82,7 @@ maintainability.
 | 2 | Which positions in the benchmark suites are "outlier hard" (`child_evals` >> median) and what structural features do they share? | Hard positions drive the metric; clustering them may reveal an unaddressed class. | `conversion` or new initiative |
 | 3 | Is there a material-rich class where the pre-flight phase does not fire but the solver still spends > 10 M evals on a subgame? | The pre-flight detector (≤3 men, no pawns, no castling) is narrow; a wider recognizer class may exist. | `dfpn` (reopen) or `conversion` |
 
-Status notes: #1 **answered (plan1)** — >98% of child evals are unsolved, ~80% of frame evals sit in threshold-cut frames (`report1.md`); #2 **answered (plan2)** — the outlier tail is one position family (m20–m23), decisive-suite outliers structurally diverse, no pre-flight misses at the roots (`report2.md`); #3 **claimed by plan3** (subgame material-mass diagnostic, `plan3.md`).
+Status notes: #1 **answered (plan1)** — >98% of child evals are unsolved, ~80% of frame evals sit in threshold-cut frames (`report1.md`); #2 **answered (plan2)** — the outlier tail is one position family (m20–m23), decisive-suite outliers structurally diverse, no pre-flight misses at the roots (`report2.md`); #3 **answered (plan3, NO-GO)** — the searched tree does not simplify: zero `dfpn` frames below 6 men on m22/stress/dec13, 99.93–99.97% of frame-eval mass at ≥9 men, harvestable (≤5-men, pawnless, no-castling) frames exactly 0; the mid-search recognizer direction is closed for the outlier family (`report3.md`).
 | 4 | What is the cumulative cost of the `dfpn` frame overhead cluster (~8–15% of wall time in `lean` profiles) at the child-eval granularity? | Frame overhead is not child-evals; separating it lets us count "real" search work vs. control flow. | `lean` |
 
 ### Literature targets
@@ -105,7 +105,7 @@ remains *candidate* until a plan scopes it.
 | # | Candidate | What it tests | Sizing question | Likely owner |
 |---|-----------|---------------|-----------------|--------------|
 | 10 | **Node-classification profiler** — Instrument `evaluate_child` and `dfpn` to tag every eval as `OR-decisive`, `AND-refute`, `threshold-cut`, `TT-hit`, `preflight-hit`, `path-rep-draw`. Aggregate per-suite. | Whether the current "unknown" work mass is actually concentrated in one category. | < 1 session of temporary instrumentation | `research` (feeds #1) — **done (plan1)** |
-| 11 | **Dynamic epsilon scheduling** — Vary ε or the refinement cap based on depth or rule50 clock, rather than globally. | Deep conversions may need coarser thresholds early and finer later. | 1 session, flag-gated | `conversion` |
+| 11 | **Dynamic epsilon scheduling** — Vary ε or the refinement cap based on depth or rule50 clock, rather than globally. | Deep conversions may need coarser thresholds early and finer later. | 1 session, flag-gated | `conversion` — **next plan** (plan3 NO-GO fallback; caveat: global ε measured inert 2026-09-11 pre-plan9, but plan11 showed threshold arithmetic is high-leverage) |
 | 12 | **TT eviction priority** — Protect entries from the current PV or high-work subtrees instead of uniform replacement. | Does the current flat replacement discard useful solved entries prematurely? | 1 session, instrumentation only | `lean` |
 | 13 | **Frontier-node prediction prior** — Hand-craft or train a fast board-feature regression to predict `pn/dn` ratio for unexpanded children, using it as a pre-sort key before any search. | A lightweight alternative to the full `nn` branch; can be validated by oracle-floor comparison. | 1–2 sessions (data generation + micro-eval) | `lean` or `conversion` |
 
@@ -157,6 +157,14 @@ remains *candidate* until a plan scopes it.
   the `dfpn` TT-invariance study; #11 stays the documented fallback.
   Plan measures whether first-outcome work descends into ≤5-men subgames
   where a plan13-style mid-search recognizer could fire.
+
+- **2026-09-19** — plan3 done (backlog #3, subgame material-mass
+  diagnostic): **NO-GO**. Zero `dfpn` frames below 6 men were ever entered
+  and 99.93–99.97% of frame-eval mass sits at ≥9 men (m22, stress, dec13);
+  harvestable (≤5-men, pawnless, no-castling) frames: 0. The mid-search
+  recognizer direction is closed for the outlier family with data
+  (`report3.md`). Next plan falls back to #11 (depth-scheduled ε POC),
+  with the ε-invariance caveat documented in the plan and report.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
