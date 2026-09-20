@@ -249,5 +249,20 @@ remains *candidate* until a plan scopes it.
   plan: remaining targets #6/#7 (both pre-weakened) or POC candidates
   #12/#13 per the CLOSED consequence (`report6.md`).
 
+- **2026-09-20** — plan7 drafted (POC candidate #12, TT eviction/turnover
+  measurement with a conditional replacement-priority POC; the plan6 CLOSED
+  successor). Measurement-first per the working agreement: Phase 0 is
+  counter-only turnover instrumentation (store/probe classes, occupancy) at
+  128 MB default + 32 MB pressure on stress/m22/dec13/dec10, with a cheap
+  kill gate; Phase 1 (only if harmful churn materializes) is an env-gated
+  replacement-variant POC (solved-slot immunity, steeper work priority)
+  against the pre-registered ≥10%-stress-FO gate. Premise correction
+  documented: the candidate's "uniform replacement" premise is stale —
+  `insert_new` already scores (live, solved, work, generation); the open
+  question is whether new-unsolved stores evict live-solved entries (or
+  high-work unsolved churn) and whether that costs child evals. #12's
+  pre-weakening (TT-size invariance study) is addressed by converting the
+  indirect inference into a direct eviction measurement.
+
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
