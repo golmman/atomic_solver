@@ -212,5 +212,25 @@ remains *candidate* until a plan scopes it.
   #8's algorithm-swap question remains separate (PDS's cutoff rule itself
   was classified subsumed here) (`report5.md`).
 
+- **2026-09-20** — plan6 drafted (literature target #8, PDS/PN²
+  algorithm-swap scaling; the plan5 successor). Mining plan per the
+  working agreement: Phase 0 is a bounded survey over the
+  PDS/PN²/hybrid/head-to-head clusters (availability caveat: Nagai 2002
+  recorded unobtainable in plan5; the evidence core is expected to come
+  from the Winands 2002 author copy, the PNS-variants chapter, and the
+  Kishimoto 2012 survey), Phase 1 extracts one source to
+  `research_alternative_algorithms.md` with a normalized head-to-head
+  evidence table mapped to the `dfpn` call sites, Phase 2 classifies every
+  variant as (a) structurally covered / (b) sound-and-unmeasured /
+  (c) contract-breaking / (d) evidence-absent-or-against — with the GHI
+  first-player-loss shortcut, TT path-independence, and the search CLI's
+  RAM = TT only contract as hard filters (expected fatal for PN²'s
+  best-first frontier). Gates: OPEN (a class-(b) variant with comparable-
+  regime evidence) → sized POC proposal as plan7 candidate; CLOSED →
+  close #8 with the evidence table as the lock-in-cost record. #7 was
+  demoted (plan3's zero-harvestable-subgames data), #6 demoted (the
+  sharpened no-heuristic-component blocker), leaving #8 as the only
+  un-weakened open literature target.
+
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
