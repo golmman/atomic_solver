@@ -99,6 +99,22 @@ Status values:
   territory). Author copy vendored:
   `docs/plans/research/measurements/plan5/gao2017_fdfpncnn_ijcai17.pdf`.
   **Cited** (`research/research_child_termination.md`).
+- T. Ishitobi, A. Plaat, H. Iida, J. van den Herik (2015). *Reducing the
+  Seesaw Effect with Deep Proof-Number Search*. ACG 2015, LNCS 9525,
+  pp. 185–197. — DeepPN: best-first PNS plus a "deep value" (parameter R)
+  against the seesaw effect; keeps PN-search's open frontier, so
+  RAM = TT only is fatal (same family plan6 closed; the 2017 paper's §1
+  records its storage/update drawbacks). Full text in-repo:
+  `docs/theory/deep-pns-2015/`. **Cited** (background to Zhang 2017;
+  `research` plan9 scope decision: not mined separately).
+- S. Zhang, H. Iida, H. J. van den Herik (2017). *Deep df-pn and Its
+  Efficient Implementations*. ACG 2017, LNCS 10664, pp. 73–89. — Seesaw
+  reduction in df-pn by replacing the unsolved-leaf pn/dn = 1 with
+  `D_dfpn(depth) = E^(D−depth)` (parameters E, D). The mechanism site
+  differs from the 1+ε trick (leaf values vs thresholds), so it is not a
+  closed-lever re-run; the core open question is TT path-independence
+  (`n.depth` is a path-dependent quantity). Full text in-repo:
+  `docs/theory/deep-dfpn-2017/`. **Open** (`research` backlog #15, plan9).
 
 ## GHI / repetitions
 

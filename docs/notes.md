@@ -238,9 +238,6 @@ Please help me structurize the new initiative.
 
 ---
 
- 2. Pivot research's goal rather than close it — e.g., re-scope from "reduce node count" to "characterize the structural floor": a closing report that consolidates   
-    the no-go record into a single document (what the solver is locked into, and why, with evidence pointers). Useful for the external-optimizer story and future     
-    reopenings, one session of work.                                                                                                                                  
 
 ---
 
@@ -249,3 +246,19 @@ Use the pdf-skill to transform the following pdf-files to markdown:
 * `docs/theory/deep-dfpn-2017/deep-dfpn-2017.pdf`
 
 Put the extracted files right next to their originals.
+
+---
+
+Evalutate the following papers:
+* `docs/theory/deep-pns-2015/deep-pns-2015.md`
+* `docs/theory/deep-dfpn-2017/deep-dfpn-2017.md`
+
+Is it worth opening a new item in the research initiative for this?
+
+---
+
+I tend to option 2: I know it is grasping at straws, but it is worth the cheap try.
+
+Then i'd pivot research's goal rather than close it.
+E.g., re-scope from "reduce node count" to "characterize the structural floor":
+A closing report that consolidates the no-go record into a single document (what the solver is locked into, and why, with evidence pointers)    

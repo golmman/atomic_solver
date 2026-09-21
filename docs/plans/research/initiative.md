@@ -51,6 +51,17 @@ Reduce `child_evals` to the first decisive outcome on hard positions by:
 Priorities follow AGENTS.md: correctness first, then performance, memory,
 maintainability.
 
+> **Re-scoped 2026-09-21 (pivot, not closure):** the node-count program is
+> closed — every backlog row answered, closed, or pre-weakened; the ε
+> surface has four closure legs (plan4/plan8); plan8 recommended closure.
+> Instead of closing outright, the initiative pivots to **characterizing
+> the structural floor**: one final cheap literature lever is mined
+> (Deep df-pn 2017, #15/plan9), then the no-go record is consolidated into
+> a single closing document stating what the solver is locked into and
+> why, with evidence pointers (#16/plan10). The original goal text above
+> is preserved for the record; hand-offs already made (ε=0.375 note,
+> rescue-mass observation) are unaffected.
+
 ## Working agreement (research cadence)
 
 1. **One discovery per plan.** A plan either inventories problems, mines one
@@ -98,6 +109,7 @@ Papers and sources to mine, with the question each answers:
 | 8 | **Alternative search algorithms: PDS, PN², or bounded variants** — Do Nagai's PDS or PN² have better repetition / deep-conversion scaling than DF-PN+ in recent solver competitions or publications? | The solver is committed to DF-PN+; a measured comparison on the stress case would quantify the lock-in cost. | closed |
 | 8 (cont.) | Status note: **answered (plan6, CLOSED)** — mined van den Herik & Winands (PNS-variants chapter) with Pawlewicz & Lew 2007 §4 and the ICGA-2012 survey as corroborators: the only published direct df-pn-vs-PDS comparisons (Atari Go TT-sweep; 286 hard LOA) favor df-pn by 2.6–4.5×, largest in the tree-≫-TT regime matching the stress class; PN² is RAM-contract-fatal (best-first frontier outside the TT) with published memory-collapse; PDS-PN/DFPN-PN carry the same level-2 frontier plus a never-run df-pn comparison (the gap is recorded in the mined source itself); published PDS ignores GHI. No variant in class (b); backlog #8 closed with the 9-row head-to-head evidence table as the lock-in-cost record (`report6.md`, `research_alternative_algorithms.md`). | | |
 | 9 | **Job-level / massively parallel PNS (Saffidine 2011, Čížek 2025)** — Already tracked in `conversion` #4 / `lean` #2; this initiative mines only if a new parallel design surfaces that changes the node-count story (not wall time alone). | Hand-off to `conversion` #4 if actionable. | open |
+| 15 | **Seesaw-effect reducers: DeepPN (Ishitobi 2015) / Deep df-pn (Zhang 2017)** — Can Deep df-pn's depth-dependent unsolved-leaf pn/dn (`E^(D−depth)`) be mapped onto DF-PN+ in a path-independent, GHI-safe, RAM-bounded way, and does any of its Connect6 evidence transfer to the stress class? | The one unexamined mechanism class; both full texts in-repo (`docs/theory/deep-{pns-2015,dfpn-2017}/`), so a half-session desk exercise. Scope decision: DeepPN 2015 is **not** mined separately (best-first frontier family closed by #8/plan6; RAM = TT only fatal) — only the 2017 df-pn variant. | open — plan9 |
 
 ### POC candidates
 
@@ -111,6 +123,16 @@ remains *candidate* until a plan scopes it.
 | 12 | **TT eviction priority** — Protect entries from the current PV or high-work subtrees instead of uniform replacement. | Does the current flat replacement discard useful solved entries prematurely? | 1 session, instrumentation only | `lean` — **done (plan7, CLOSED per H2)**: premise corrected twice — priority replacement `(live, solved, work, generation)` already exists in `insert_new` (the "uniform replacement" wording was stale), and the TT-size invariance study cited as pre-weakening does not transfer to the post-plan9 solver (32 MB stress unsolved at 3.33 B evals vs solved at 249 M on 128 MB, deterministic). Phase 0: harmful-class churn (new-unsolved evicting live-solved) 0–0.146% of stores at the 128 MB default, ≤1.21% of probes on evicted keys; Phase 1: both pre-registered policy arms fail — solved-slot immunity (V1) drops 15 M unsolved stores on stress and never terminates (unsolved bounds *are* the working set), steeper work priority (V2) +38.2% stress / +23.7% m22. The incumbent two-slot priority layout is a measured local optimum; eviction-policy work would need a layout change, fixed out of scope by RAM = TT only (`report7.md`, `measurements/plan7/`). |
 | 13 | **Frontier-node prediction prior** — Hand-craft or train a fast board-feature regression to predict `pn/dn` ratio for unexpanded children, using it as a pre-sort key before any search. | A lightweight alternative to the full `nn` branch; can be validated by oracle-floor comparison. | 1–2 sessions (data generation + micro-eval) | `lean` or `conversion` |
 | 14 | **Per-node confidence-conditioned ε** — At the threshold-computation site, pad more where node-local features (side × depth × static top-2 margin, clamp state) predict the cut child will resolve anyway, pad less where they predict a dead end; tests whether rescue-vs-waste of threshold padding is predictable from features observable at the node — the plan4-mandated *new mechanism* (node-local, not a path schedule). | Whether the rescue outcome of a threshold cut is separable by cheap node-local features, and whether conditioning converts that into a first-outcome `child_evals` win over the best global constant (ε=0.375). | Phase 0 separation study + Phase 1 arm POC, one session | `conversion` — **done (plan8, CLOSED per H2)**: no single feature separates (best ≥5%-mass lift 1.94× < 2×); composite buckets do (OR ∧ shallow, 2.19–2.73×), but the ε mix-shift shows the separation is trajectory-relative (absent at ε=0.125), and all three conditioned-ε arms fail catastrophically (OR pad-more stress +300%, AND pad-less timeout at 2.71 B evals). #14 closed with the separation + arm tables; the confidence feature is non-exploitable for node counts (`report8.md`, `measurements/plan8/`). |
+
+## Closing deliverables (2026-09-21 re-scope)
+
+With the node-count program closed (plan8), the initiative's remaining
+purpose is to characterize the **structural floor**: one authoritative
+document consolidating the no-go record.
+
+| # | Deliverable | Content | Status |
+|---|-------------|---------|--------|
+| 16 | **`structural_floor.md`** — the consolidating no-go record | What the solver is locked into, and why, with evidence pointers: the DF-PN+ commitment and plan6's lock-in-cost evidence table; the 1+ε threshold mechanism and the four ε closure legs (no constant, no schedule, no regional structure, no node-local signal — plan4/plan8); GHI first-player-loss shortcut and path-independent TT; RAM = TT only and the best-first/PN² exclusion; ordering and TT-eviction local optima (`lean` plan9, plan7); the seesaw-thread closure (#15/plan9, if it closes); child-level termination surface (#5/plan5). Every claim links to its report or `research_*.md`. | open — plan10 (after plan9) |
 
 ## Non-goals
 
@@ -318,3 +340,11 @@ Per repo convention, every plan ends with the task of writing its
   initiative's node-count program** per report7's next-steps — all
   backlog rows answered/closed/pre-weakened; note the shallow-OR rescue
   mass for the `conversion` #4 parallel-spike constraint discussion.
+- **2026-09-21** — Initiative **re-scoped (pivot, not closure)** per the
+  report8 recommendation discussion: the node-count program stays closed,
+  but the initiative continues as "characterize the structural floor"
+  (new Closing deliverables section, #16 — the consolidating no-go
+  document, `structural_floor.md`, planned as plan10). One final cheap
+  lever admitted before consolidation: literature target **#15** opened
+  (seesaw-effect reducers; plan9 drafted — Deep df-pn 2017 desk mining,
+  with DeepPN 2015 explicitly not mined separately).
