@@ -1,0 +1,34 @@
+{
+  "suite": "thorough",
+  "mode": "first-outcome",
+  "timeout": 60,
+  "runs": 1,
+  "epsilon": 0.375,
+  "tt_size": 128,
+  "config_path": null,
+  "results": [
+    {
+      "name": "dec10",
+      "status": "ok",
+      "outcome": "win",
+      "expected": "win",
+      "nodes": 558845,
+      "child_evals": 3642166,
+      "time_mean": 0.386999247,
+      "time_min": 0.386999247,
+      "time_max": 0.386999247,
+      "pv_len": 41,
+      "timeout": false,
+      "wrong": false
+    }
+  ],
+  "aggregates": {
+    "total_nodes": 558845,
+    "total_child_evals": 3642166,
+    "total_time": 0.386999247,
+    "solved": 1,
+    "timeouts": 0,
+    "wrong": 0,
+    "mean_pv_len": 41.0
+  }
+}

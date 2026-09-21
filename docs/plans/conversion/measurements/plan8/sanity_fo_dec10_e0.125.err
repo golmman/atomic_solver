@@ -1,0 +1,7 @@
+benchmarking dec10 ...
+[bounded_search] chunk done: work_done=500011 next_chunk=1000000 elapsed=0.077s max_depth=30 nodes=33865 nps=440764
+[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=0.233s max_depth=44 nodes=101818 nps=436378
+[bounded_search] chunk done: work_done=2000001 next_chunk=4000000 elapsed=0.416s max_depth=62 nodes=456149 nps=1097134
+[bounded_search] chunk done: work_done=500011 next_chunk=1000000 elapsed=0.075s max_depth=30 nodes=33865 nps=450513
+[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=0.230s max_depth=44 nodes=101818 nps=443106
+[bounded_search] chunk done: work_done=2000001 next_chunk=4000000 elapsed=0.412s max_depth=62 nodes=456149 nps=1106925

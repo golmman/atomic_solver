@@ -1,0 +1,17 @@
+benchmarking m22_white ...
+[bounded_search] chunk done: work_done=500009 next_chunk=1000000 elapsed=0.087s max_depth=15 nodes=24281 nps=279173
+[bounded_search] chunk done: work_done=1000010 next_chunk=2000000 elapsed=0.266s max_depth=15 nodes=75862 nps=284708
+[bounded_search] chunk done: work_done=2000003 next_chunk=4000000 elapsed=0.613s max_depth=22 nodes=185599 nps=302553
+[bounded_search] chunk done: work_done=4000017 next_chunk=8000000 elapsed=1.322s max_depth=72 nodes=420792 nps=318297
+[bounded_search] chunk done: work_done=500018 next_chunk=1000000 elapsed=2.574s max_depth=9 nodes=881482 nps=342414
+[bounded_search] chunk done: work_done=1000004 next_chunk=2000000 elapsed=2.752s max_depth=30 nodes=935803 nps=340049
+[bounded_search] chunk done: work_done=2000022 next_chunk=4000000 elapsed=3.048s max_depth=70 nodes=1109253 nps=363882
+[bounded_search] chunk done: work_done=39023 next_chunk=8000000 elapsed=3.057s max_depth=9 nodes=1111321 nps=363552
+[bounded_search] chunk done: work_done=500009 next_chunk=1000000 elapsed=0.082s max_depth=15 nodes=24281 nps=294420
+[bounded_search] chunk done: work_done=1000010 next_chunk=2000000 elapsed=0.257s max_depth=15 nodes=75862 nps=294962
+[bounded_search] chunk done: work_done=2000003 next_chunk=4000000 elapsed=0.615s max_depth=22 nodes=185599 nps=301721
+[bounded_search] chunk done: work_done=4000017 next_chunk=8000000 elapsed=1.334s max_depth=72 nodes=420792 nps=315406
+[bounded_search] chunk done: work_done=500018 next_chunk=1000000 elapsed=2.583s max_depth=9 nodes=881482 nps=341284
+[bounded_search] chunk done: work_done=1000004 next_chunk=2000000 elapsed=2.763s max_depth=30 nodes=935803 nps=338676
+[bounded_search] chunk done: work_done=2000022 next_chunk=4000000 elapsed=3.062s max_depth=70 nodes=1109253 nps=362288
+[bounded_search] chunk done: work_done=39023 next_chunk=8000000 elapsed=3.070s max_depth=9 nodes=1111321 nps=361980

@@ -1,0 +1,9 @@
+benchmarking m22_white ...
+[bounded_search] chunk done: work_done=500027 next_chunk=1000000 elapsed=0.092s max_depth=16 nodes=24329 nps=264518
+[bounded_search] chunk done: work_done=1000014 next_chunk=2000000 elapsed=0.275s max_depth=15 nodes=75544 nps=274852
+[bounded_search] chunk done: work_done=2000002 next_chunk=4000000 elapsed=0.618s max_depth=18 nodes=188350 nps=304898
+[bounded_search] chunk done: work_done=4000000 next_chunk=8000000 elapsed=1.312s max_depth=91 nodes=431442 nps=328762
+[bounded_search] chunk done: work_done=500027 next_chunk=1000000 elapsed=0.086s max_depth=16 nodes=24329 nps=282397
+[bounded_search] chunk done: work_done=1000014 next_chunk=2000000 elapsed=0.265s max_depth=15 nodes=75544 nps=285463
+[bounded_search] chunk done: work_done=2000002 next_chunk=4000000 elapsed=0.614s max_depth=18 nodes=188350 nps=306930
+[bounded_search] chunk done: work_done=4000000 next_chunk=8000000 elapsed=1.355s max_depth=91 nodes=431442 nps=318422

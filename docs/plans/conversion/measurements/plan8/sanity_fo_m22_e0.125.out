@@ -1,0 +1,34 @@
+{
+  "suite": "thorough",
+  "mode": "first-outcome",
+  "timeout": 30,
+  "runs": 1,
+  "epsilon": 0.125,
+  "tt_size": 128,
+  "config_path": null,
+  "results": [
+    {
+      "name": "m22_white",
+      "status": "ok",
+      "outcome": "win",
+      "expected": "win",
+      "nodes": 858117,
+      "child_evals": 14156269,
+      "time_mean": 2.548073005,
+      "time_min": 2.548073005,
+      "time_max": 2.548073005,
+      "pv_len": 95,
+      "timeout": false,
+      "wrong": false
+    }
+  ],
+  "aggregates": {
+    "total_nodes": 858117,
+    "total_child_evals": 14156269,
+    "total_time": 2.548073005,
+    "solved": 1,
+    "timeouts": 0,
+    "wrong": 0,
+    "mean_pv_len": 95.0
+  }
+}

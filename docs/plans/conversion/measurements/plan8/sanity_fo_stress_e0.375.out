@@ -1,0 +1,34 @@
+{
+  "suite": "thorough",
+  "mode": "first-outcome",
+  "timeout": 300,
+  "runs": 1,
+  "epsilon": 0.375,
+  "tt_size": 128,
+  "config_path": null,
+  "results": [
+    {
+      "name": "m21_white",
+      "status": "ok",
+      "outcome": "win",
+      "expected": "win",
+      "nodes": 13102712,
+      "child_evals": 227834433,
+      "time_mean": 40.941197993,
+      "time_min": 40.941197993,
+      "time_max": 40.941197993,
+      "pv_len": 199,
+      "timeout": false,
+      "wrong": false
+    }
+  ],
+  "aggregates": {
+    "total_nodes": 13102712,
+    "total_child_evals": 227834433,
+    "total_time": 40.941197993,
+    "solved": 1,
+    "timeouts": 0,
+    "wrong": 0,
+    "mean_pv_len": 199.0
+  }
+}
