@@ -108,7 +108,7 @@ remains *candidate* until a plan scopes it.
 |---|-----------|---------------|-----------------|--------------|
 | 10 | **Node-classification profiler** — Instrument `evaluate_child` and `dfpn` to tag every eval as `OR-decisive`, `AND-refute`, `threshold-cut`, `TT-hit`, `preflight-hit`, `path-rep-draw`. Aggregate per-suite. | Whether the current "unknown" work mass is actually concentrated in one category. | < 1 session of temporary instrumentation | `research` (feeds #1) — **done (plan1)** |
 | 11 | **Dynamic epsilon scheduling** — Vary ε or the refinement cap based on depth or rule50 clock, rather than globally. | Deep conversions may need coarser thresholds early and finer later. | 1 session, flag-gated | `conversion` — **done (plan4, NO-GO for scheduling)**: no depth/clock schedule arm beats the global default on any case (best arm 0.0%; the firing arms regress up to +351% and time out m22); the churn mass's threshold response is trajectory chaos with no regional structure (report4.md). Spin-off finding: global ε=0.375 Pareto-improves all four cases (stress −8.7%, m22 −12.7%, dec13 +2.6%, dec10 −14.5%) — handed to `conversion` as a sized default-ε candidate; the 2026-09-11 "global ε inert" claim is formally refuted (ε=0.5 wins stress −37.3% but regresses controls). |
-| 12 | **TT eviction priority** — Protect entries from the current PV or high-work subtrees instead of uniform replacement. | Does the current flat replacement discard useful solved entries prematurely? | 1 session, instrumentation only | `lean` |
+| 12 | **TT eviction priority** — Protect entries from the current PV or high-work subtrees instead of uniform replacement. | Does the current flat replacement discard useful solved entries prematurely? | 1 session, instrumentation only | `lean` — **done (plan7, CLOSED per H2)**: premise corrected twice — priority replacement `(live, solved, work, generation)` already exists in `insert_new` (the "uniform replacement" wording was stale), and the TT-size invariance study cited as pre-weakening does not transfer to the post-plan9 solver (32 MB stress unsolved at 3.33 B evals vs solved at 249 M on 128 MB, deterministic). Phase 0: harmful-class churn (new-unsolved evicting live-solved) 0–0.146% of stores at the 128 MB default, ≤1.21% of probes on evicted keys; Phase 1: both pre-registered policy arms fail — solved-slot immunity (V1) drops 15 M unsolved stores on stress and never terminates (unsolved bounds *are* the working set), steeper work priority (V2) +38.2% stress / +23.7% m22. The incumbent two-slot priority layout is a measured local optimum; eviction-policy work would need a layout change, fixed out of scope by RAM = TT only (`report7.md`, `measurements/plan7/`). |
 | 13 | **Frontier-node prediction prior** — Hand-craft or train a fast board-feature regression to predict `pn/dn` ratio for unexpanded children, using it as a pre-sort key before any search. | A lightweight alternative to the full `nn` branch; can be validated by oracle-floor comparison. | 1–2 sessions (data generation + micro-eval) | `lean` or `conversion` |
 
 ## Non-goals
@@ -263,6 +263,26 @@ remains *candidate* until a plan scopes it.
   high-work unsolved churn) and whether that costs child evals. #12's
   pre-weakening (TT-size invariance study) is addressed by converting the
   indirect inference into a direct eviction measurement.
+
+- **2026-09-20** — plan7 done (POC candidate #12, TT eviction/turnover
+  measurement + conditional replacement-priority POC): **CLOSED (H2)**.
+  Phase 0 counter-only instrumentation (trajectory-neutral: stress baseline
+  249,480,478 reproduced exactly, quick suite bit-identical before/after)
+  found harmful-class churn (new-unsolved evicting live-solved) of 0–0.146%
+  of stores at the 128 MB default and ≤1.21% of probes on evicted keys, with
+  case-dependent occupancy (stress 95.4% full, controls <5%). The pre-registered
+  kill gate failed (stress: 0.146% > 0.1% and 95.4% > 80%; 32 MB pressure
+  diverges catastrophically), so Phase 1 ran: V1 solved-slot immunity
+  (stress timeout, m22 +3400% — dropped unsolved bounds force re-search)
+  and V2 steeper work priority (stress +38.2%, m22 +23.7%) both fail the
+  ≥10% GO bar with 59/59 quick outcomes preserved; the incumbent priority
+  replacement is a measured local optimum within the two-slot layout.
+  Spin-off finding: the 2026-09-11 TT-size invariance claim does not
+  transfer to the post-plan9 solver (32 MB stress unsolved at 3.33 B evals,
+  deterministic) — recorded for future capacity work. #12 closed; no
+  hand-off (`report7.md`, `measurements/plan7/`). Next plan: remaining
+  targets #6/#7/#13 are all pre-weakened; the initiative should consider
+  re-scope or closure of the node-count program (see report7 Next steps).
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

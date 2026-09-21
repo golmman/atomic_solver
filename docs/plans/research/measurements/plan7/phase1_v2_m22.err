@@ -1,0 +1,11 @@
+[bounded_search] chunk done: work_done=500009 next_chunk=1000000 elapsed=0.103s max_depth=15 nodes=24281 nps=234884
+[bounded_search] chunk done: work_done=1000010 next_chunk=2000000 elapsed=0.320s max_depth=15 nodes=75862 nps=236896
+[bounded_search] chunk done: work_done=2000003 next_chunk=4000000 elapsed=0.755s max_depth=22 nodes=185599 nps=245776
+[bounded_search] chunk done: work_done=4000014 next_chunk=8000000 elapsed=1.609s max_depth=72 nodes=420779 nps=261509
+[bounded_search] chunk done: work_done=8000009 next_chunk=16000000 elapsed=3.343s max_depth=144 nodes=896388 nps=268149
+outcome: win length: 143
+research7: child_evals=17507076 nodes=1054753
+tt_turnover: stores=1054459 upd_solved=7249 upd_unsolved=163573 free_solved=38624 free_unsolved=821587 stale_solved=0 stale_unsolved=0
+tt_turnover: ev_live_unsol_by_solved=972 ev_live_unsol_by_unsolved=22387 ev_live_solved_by_solved=5 ev_live_solved_by_unsolved=62 v1_dropped=0
+tt_turnover: probe_hit=2917303 probe_miss_evicted=6879 probe_miss_other=15586830 miss_total=15593709
+tt_turnover: buckets=2097152 full=140675 half=578861 empty=1377616 live=860211 live_solved=46783

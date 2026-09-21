@@ -1,0 +1,9 @@
+[bounded_search] chunk done: work_done=500011 next_chunk=1000000 elapsed=0.101s max_depth=30 nodes=33865 nps=335284
+[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=0.307s max_depth=44 nodes=101818 nps=331781
+[bounded_search] chunk done: work_done=2000001 next_chunk=4000000 elapsed=0.571s max_depth=62 nodes=456149 nps=798533
+outcome: win length: 41
+research7: child_evals=4262128 nodes=617048
+tt_turnover: stores=606762 upd_solved=2793 upd_unsolved=513675 free_solved=6750 free_unsolved=83517 stale_solved=0 stale_unsolved=0
+tt_turnover: ev_live_unsol_by_solved=1 ev_live_unsol_by_unsolved=26 ev_live_solved_by_solved=0 ev_live_solved_by_unsolved=0 v1_dropped=0
+tt_turnover: probe_hit=2243746 probe_miss_evicted=14 probe_miss_other=2577846 miss_total=2577860
+tt_turnover: buckets=2097152 full=1872 half=86523 empty=2008757 live=90267 live_solved=9544
