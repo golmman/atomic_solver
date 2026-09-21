@@ -367,3 +367,18 @@ Per repo convention, every plan ends with the task of writing its
   lever admitted before consolidation: literature target **#15** opened
   (seesaw-effect reducers; plan9 drafted — Deep df-pn 2017 desk mining,
   with DeepPN 2015 explicitly not mined separately).
+- **2026-09-21** — plan10 drafted (closing deliverable **#16**, the
+  `structural_floor.md` consolidation; the documented successor of plan9).
+  A consolidation plan per the re-scope: Phase 0 is an evidence inventory
+  (claim → pointer → verified table, `measurements/plan10/claims.md`),
+  Phase 1 writes the document with the nine content sections fixed by the
+  plan (DF-PN+ lock-in cost, the four ε closure legs, GHI/path-independent
+  TT, RAM = TT only, ordering/eviction local optima, the seesaw thread,
+  child-level termination, the hard-class characterization, open threads
+  after closure), Phase 2 cross-checks every pointer against the source
+  reports. Scope decision recorded up front: the document lives under
+  `docs/plans/research/`, not `docs/spec/` (its claims link to
+  process artifacts, which specs must not reference). Gates: COMPLETE →
+  close the initiative; GAP → record untraceable claims in an evidence-gaps
+  subsection and still close; DEFER → surface blocked sections as a
+  potential new initiative, never fabricated.
