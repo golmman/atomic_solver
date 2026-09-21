@@ -262,3 +262,24 @@ I tend to option 2: I know it is grasping at straws, but it is worth the cheap t
 Then i'd pivot research's goal rather than close it.
 E.g., re-scope from "reduce node count" to "characterize the structural floor":
 A closing report that consolidates the no-go record into a single document (what the solver is locked into, and why, with evidence pointers)    
+
+---
+
+Please search the code and initiatives and tell me
+* how are repetition handled?
+* what impact do repetitions have on the search algorithm?
+* is GHI implemented?
+* are there open questions to solve?
+
+---
+
+epsilon 0.375
+
+---
+
+I want to profile the application and improve raw performance, i.e. nodes per second.
+Is this worth a new initiative?
+
+
+
+

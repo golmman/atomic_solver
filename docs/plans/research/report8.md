@@ -230,6 +230,8 @@ schedule family plan4 already rejected.
   answered, closed, or pre-weakened. Recommend initiative closure per
   report7's next-steps, with the rescue-mass/shallow-OR observation noted
   in the `conversion` #4 parallel-spike constraint discussion.
-- The ε=0.375 default-ε decision remains pending in `conversion`
-  (unchanged by this plan; nothing here presupposes or alters it — Phase 1
-  used it only as the gate baseline).
+- The ε=0.375 default-ε decision remains open (unchanged by this plan;
+  nothing here presupposes or alters it — Phase 1 used it only as the
+  gate baseline). Registered 2026-09-21 as `conversion` backlog #7 after
+  it was found to be referenced-but-unregistered on the receiving side;
+  the decision (adopt / won't-fix / park) belongs to a `conversion` plan.
