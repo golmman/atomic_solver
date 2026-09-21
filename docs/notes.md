@@ -235,3 +235,10 @@ Goals for plans in this initiative:
 * taking measurements
 
 Please help me structurize the new initiative.
+
+---
+
+ 2. Pivot research's goal rather than close it — e.g., re-scope from "reduce node count" to "characterize the structural floor": a closing report that consolidates   
+    the no-go record into a single document (what the solver is locked into, and why, with evidence pointers). Useful for the external-optimizer story and future     
+    reopenings, one session of work.                                                                                                                                  
+
