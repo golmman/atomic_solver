@@ -109,7 +109,8 @@ Papers and sources to mine, with the question each answers:
 | 8 | **Alternative search algorithms: PDS, PN², or bounded variants** — Do Nagai's PDS or PN² have better repetition / deep-conversion scaling than DF-PN+ in recent solver competitions or publications? | The solver is committed to DF-PN+; a measured comparison on the stress case would quantify the lock-in cost. | closed |
 | 8 (cont.) | Status note: **answered (plan6, CLOSED)** — mined van den Herik & Winands (PNS-variants chapter) with Pawlewicz & Lew 2007 §4 and the ICGA-2012 survey as corroborators: the only published direct df-pn-vs-PDS comparisons (Atari Go TT-sweep; 286 hard LOA) favor df-pn by 2.6–4.5×, largest in the tree-≫-TT regime matching the stress class; PN² is RAM-contract-fatal (best-first frontier outside the TT) with published memory-collapse; PDS-PN/DFPN-PN carry the same level-2 frontier plus a never-run df-pn comparison (the gap is recorded in the mined source itself); published PDS ignores GHI. No variant in class (b); backlog #8 closed with the 9-row head-to-head evidence table as the lock-in-cost record (`report6.md`, `research_alternative_algorithms.md`). | | |
 | 9 | **Job-level / massively parallel PNS (Saffidine 2011, Čížek 2025)** — Already tracked in `conversion` #4 / `lean` #2; this initiative mines only if a new parallel design surfaces that changes the node-count story (not wall time alone). | Hand-off to `conversion` #4 if actionable. | open |
-| 15 | **Seesaw-effect reducers: DeepPN (Ishitobi 2015) / Deep df-pn (Zhang 2017)** — Can Deep df-pn's depth-dependent unsolved-leaf pn/dn (`E^(D−depth)`) be mapped onto DF-PN+ in a path-independent, GHI-safe, RAM-bounded way, and does any of its Connect6 evidence transfer to the stress class? | The one unexamined mechanism class; both full texts in-repo (`docs/theory/deep-{pns-2015,dfpn-2017}/`), so a half-session desk exercise. Scope decision: DeepPN 2015 is **not** mined separately (best-first frontier family closed by #8/plan6; RAM = TT only fatal) — only the 2017 df-pn variant. | open — plan9 |
+| 15 | **Seesaw-effect reducers: DeepPN (Ishitobi 2015) / Deep df-pn (Zhang 2017)** — Can Deep df-pn's depth-dependent unsolved-leaf pn/dn (`E^(D−depth)`) be mapped onto DF-PN+ in a path-independent, GHI-safe, RAM-bounded way, and does any of its Connect6 evidence transfer to the stress class? | The one unexamined mechanism class; both full texts in-repo (`docs/theory/deep-{pns-2015,dfpn-2017}/`), so a half-session desk exercise. Scope decision: DeepPN 2015 is **not** mined separately (best-first frontier family closed by #8/plan6; RAM = TT only fatal) — only the 2017 df-pn variant. | closed |
+| 15 (cont.) | Status note: **answered (plan9, CLOSED per H0)** — mined Zhang et al. 2017 (`research_deep_dfpn.md`): the mechanism replaces the unsolved-leaf (1, 1) with `D_dfpn(depth) = E^(D−depth)`; a depth source does exist at the leaf sites (`path_stack.len()`), but the faithful mapping makes the frame-exit-stored unsolved bounds `(pn.max(1), dn.max(1))` path-relative — breaking the `src/search/tt/` path-independent base-entry contract — and the `evaluate_child` reuse guard then imports foreign-path valuations, voiding Theorem 1's own consistency premise. Every workaround measured- or evidence-fatal (no-store = plan7-V1 analog, +3400% m22; depth-tagged entries collapse transposition reuse; position-only proxies mutate the mechanism directionally). Behavioral target already covered: 1+ε is the paper's own "method (1)" for the same stay-deeper dial, and the dial is measured-closed (plan4/plan8). Evidence: 8 Connect6 openings ≤ 500 k nodes, per-position best-of-300 tuning, VCDT confound, and best-tuned 1+ε matches or beats Deep df-pn on nodes in 4/8 positions. No class-(b) variant; #15 closed as the seesaw-thread no-go record (`report9.md`, `measurements/plan9/`). | |
 
 ### POC candidates
 
@@ -306,6 +307,24 @@ document consolidating the no-go record.
   hand-off (`report7.md`, `measurements/plan7/`). Next plan: remaining
   targets #6/#7/#13 are all pre-weakened; the initiative should consider
   re-scope or closure of the node-count program (see report7 Next steps).
+
+- **2026-09-21** — plan9 done (literature target #15, Deep df-pn 2017 desk
+  mining): **CLOSED (H0)**. Phase 1 extraction
+  (`research_deep_dfpn.md`) with all code sites verified by reading
+  (`measurements/plan9/code-sites.md`): a depth source exists at the leaf
+  sites (`path_stack.len()`), so the crux resolved to the TT store/reuse
+  sites — the faithful path-depth-keyed mechanism makes the frame-exit
+  unsolved bounds path-relative, breaking the path-independent base-entry
+  contract, and every workaround (no-store, depth-tagged entries,
+  position-only proxies) is measured- or evidence-fatal. The behavioral
+  target is the 1+ε dial (the paper's own "method (1)"), measured-closed by
+  plan4/plan8; the published evidence (8 Connect6 openings, ≤ 500 k nodes,
+  per-position tuning, VCDT confound; 1+ε ≥ Deep on nodes in 4/8 positions)
+  does not transfer to the stress class. No variant in class (b); no POC.
+  Backlog #15 closed as the seesaw-thread no-go record; DeepPN 2015 stays
+  not-mined-separately (bibliography `Cited`). Next (and likely last) plan:
+  **plan10** — #16 `structural_floor.md` consolidation
+  (`report9.md`, `measurements/plan9/`).
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

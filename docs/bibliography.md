@@ -114,7 +114,10 @@ Status values:
   differs from the 1+ε trick (leaf values vs thresholds), so it is not a
   closed-lever re-run; the core open question is TT path-independence
   (`n.depth` is a path-dependent quantity). Full text in-repo:
-  `docs/theory/deep-dfpn-2017/`. **Open** (`research` backlog #15, plan9).
+  `docs/theory/deep-dfpn-2017/`. **Mined**
+  (`research/research_deep_dfpn.md`; `research` backlog #15 closed by plan9
+  — faithful mapping contract-breaking at the TT store/reuse sites, all
+  variants (c)/(d), evidence regime 2–3 orders below the stress class).
 
 ## GHI / repetitions
 
