@@ -8,7 +8,7 @@ The solver must find the exact game-theoretic outcome (`win`/`loss`/`draw`) for 
 
 ### 1.1 DF-PN / DF-PN+
 
-From the literature in `plans/dfpn/parallel.pdf` and `plans/dfpn/epsilon.pdf`:
+From the literature in `docs/theory/pdfpn-2010/pdfpn-2010.pdf` and `docs/theory/epsilon-trick-2007/epsilon-trick-2007.pdf`:
 
 - An OR node is the attacker to move. It tries to prove the position.
 - An AND node is the defender to move. It tries to disprove the position.
@@ -45,7 +45,7 @@ For the first implementation, `H = (1, 1)` and `Cost = 0` for both. This is clas
 
 ### 1.2 Epsilon trick
 
-From `plans/dfpn/epsilon.pdf`:
+From `docs/theory/epsilon-trick-2007/epsilon-trick-2007.pdf`:
 
 Standard DF-PN sets the child `pn` threshold to `pn(n2) + 1` (or `dn(n2) + 1` in an AND node). When the transposition table is small relative to the search tree, the same child is revisited many times, and the tree must be rebuilt repeatedly. The epsilon trick uses a multiplicative factor instead of an additive one, reducing the number of recursive calls from `O(threshold)` to `O(log threshold)`.
 
@@ -67,7 +67,7 @@ Choose `epsilon = 1/4` as the initial default. The paper found this value effect
 
 ### 1.3 GHI fix
 
-From `plans/dfpn/ghi.pdf` and `plans/dfpn/research_ghi.md`:
+From `docs/theory/ghi-2004/ghi-2004.pdf` and `plans/dfpn/research_ghi.md`:
 
 The transposition table is keyed by position. In a cyclic graph, a proven or disproven result may depend on the path. The Kishimoto & Müller fix:
 

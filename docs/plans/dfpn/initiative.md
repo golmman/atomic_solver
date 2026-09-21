@@ -281,7 +281,7 @@ changes *when* refinement stops, not how lines are labeled.
 - **2026-09-13** — **backlog #4 closed as an evidence-based no-go**
   (`research_ghi_journal.md`): the journal GHI paper (Kishimoto & Müller,
   *Information Sciences* 175(4), 2005; author copy vendored as
-  `ghi_journal.pdf`) was mined for `conversion` #5d. Key findings: the journal
+  `docs/theory/ghi-journal-2005/ghi-journal-2005.pdf`) was mined for `conversion` #5d. Key findings: the journal
   version adds the proofs (Theorems 3.1/3.2) but **not** a step-by-step
   simulation procedure — the twin's ancestor-context gap
   (`research_ghi.md` §9) is in the paper's own specification; the theorems

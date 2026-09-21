@@ -4,7 +4,9 @@ Index of literature referenced by the solver's plans and initiatives. This
 is a pointer file, not a summary: the deep-dive extractions live in the
 initiative directories as `research_*.md` (created by the plan that mines
 the paper — do not preemptively write one). When a plan mines an entry,
-update its **Status** here.
+update its **Status** here. Paper originals (PDF) and their full-text
+extractions are vendored under `docs/theory/<slug>/`; the library index
+with conventions is `docs/theory/README.md`.
 
 Status values:
 
@@ -26,7 +28,7 @@ Status values:
   Trick*. Warsaw University. — Implemented in the solver. §4 is the primary
   df-pn-vs-PDS head-to-head (Atari Go TT-size sweep; 488 easy + 286 hard LOA;
   df-pn+1+ε 4.17× faster than PDS+1+ε); the 1+ε extraction covers the trick
-  only. Copy vendored: `docs/plans/dfpn/epsilon.pdf`. **Mined**
+  only. Copy vendored: `docs/theory/epsilon-trick-2007/epsilon-trick-2007.pdf`. **Mined**
   (`dfpn/research_epsilon.md`; §4 PDS comparison mined by
   `research/research_alternative_algorithms.md`).
 - C. Gao (2021). *On Computation Complexity of True Proof Number Search*.
@@ -122,12 +124,12 @@ Status values:
 ## GHI / repetitions
 
 - A. Kishimoto, M. Müller (2004). *A General Solution to the Graph History
-  Interaction Problem*. AAAI-04. — PDF in repo: `docs/plans/dfpn/ghi.pdf`.
+  Interaction Problem*. AAAI-04. — PDF in repo: `docs/theory/ghi-2004/ghi-2004.pdf`.
   **Mined** (`dfpn/research_ghi.md`).
 - A. Kishimoto, M. Müller (2005). *A Solution to the GHI Problem for
   Depth-First Proof-Number Search*. Information Sciences 175(4), pp.
   296–314. [DOI 10.1016/j.ins.2004.04.012](https://doi.org/10.1016/j.ins.2004.04.012)
-  (author copy vendored: `dfpn/ghi_journal.pdf`, from
+  (author copy vendored: `docs/theory/ghi-journal-2005/ghi-journal-2005.pdf`, from
   `www.cs.ualberta.ca/~mmueller/ps/kishimoto-mueller-infsci-ghi.pdf`). —
   Journal version of the above: complete literature review, df-pn
   pseudo-code, Theorems 3.1/3.2 with proofs, DUP/SIM/NOCYCLE ablation. The
@@ -158,21 +160,27 @@ Status values:
 ## Parallelism
 
 - T. Kaneko (2010). *Parallel Depth First Proof Number Search*. AAAI-10. —
-  PDF in repo: `docs/plans/dfpn/parallel.pdf`. **Mined**
+  PDF in repo: `docs/theory/pdfpn-2010/pdfpn-2010.pdf`. **Mined**
   (`dfpn/research_parallel.md`).
 - A. Saffidine, N. Jouandeau, T. Cazenave (2011). *Solving Breakthrough
   with Race Patterns and Job-Level Proof Number Search*. ACG 13. —
-  Job-level parallel PNS. **Open** (`parallel` backlog #1).
+  Job-level parallel PNS (the paper itself proposes PPN₂, the JLPNS
+  extension with PN-search jobs; JLPNS proper is Wu et al.). **Mined**
+  (`parallel/research_jlpns.md`; author copy via HAL vendored as
+  `docs/theory/ppn2-2011/ppn2-2011.pdf`).
 - K. Young, R. B. Hayward (2016). *A Reverse Hex Solver*. CG 2016.
   [arXiv:1707.00627](https://arxiv.org/abs/1707.00627). — Scalable parallel
-  DF-PN in practice (Solrex). **Open** (`parallel` backlog #1).
+  DF-PN in practice (Solrex). **Mined** (`parallel/research_solrex.md`;
+  vendored as `docs/theory/solrex-2016/solrex-2016.pdf`).
 - T. Čížek, M. Balko, M. Schmid (2025). *Massively Parallel Proof-Number
   Search for Impartial Games and Beyond*.
   [arXiv:2511.10339](https://arxiv.org/abs/2511.10339). — Two-level
   parallelization + shared worker info; 333× on 1024 cores; supersedes
   Kaneko-10's scaling assumptions. Full-text check (plan5): no child-level
-  cutoff/widening content — parallel-layer only. **Open** (`parallel`
-  backlog #1; moved from `conversion` #4/#5c, 2026-09-21).
+  cutoff/widening content — parallel-layer only. **Mined**
+  (`parallel/research_cizek2025.md`; arXiv v2 vendored as
+  `docs/theory/pns-pdfpn-2025/pns-pdfpn-2025.pdf`; headline refined: 332.97× with heuristic,
+  208.67× without).
 
 ## Recent solving paradigms
 

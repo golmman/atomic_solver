@@ -1,6 +1,6 @@
 # Report: Fixing the Graph-History Interaction Problem for DF-PN
 
-This report is based on the paper **"A General Solution to the Graph History Interaction Problem"** by Akihiro Kishimoto and Martin Müller (`plans/dfpn/ghi.pdf`). It extracts the parts of the paper that are directly relevant to making a depth-first proof-number (df-pn) search reuse its transposition table safely in the presence of repeated positions.
+This report is based on the paper **"A General Solution to the Graph History Interaction Problem"** by Akihiro Kishimoto and Martin Müller (`docs/theory/ghi-2004/ghi-2004.pdf`). It extracts the parts of the paper that are directly relevant to making a depth-first proof-number (df-pn) search reuse its transposition table safely in the presence of repeated positions.
 
 ## 1. Source summary
 

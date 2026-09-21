@@ -1,6 +1,6 @@
 # Report: Building a Parallel Depth-First Proof-Number Search in Rust
 
-This report is based on the paper **"Parallel Depth First Proof Number Search"** by Tomoyuki Kaneko (AAAI-10, `plans/dfpn_parallel/AAAI10-027.pdf`). The paper presents a shared-memory multi-agent parallelization of the depth-first proof-number search (DF-PN) algorithm. The goal is to provide a practical guide to implementing the algorithm in Rust, using the data structures and concurrency patterns that naturally map to the paper's design.
+This report is based on the paper **"Parallel Depth First Proof Number Search"** by Tomoyuki Kaneko (AAAI-10, now vendored at `docs/theory/pdfpn-2010/pdfpn-2010.pdf`). The paper presents a shared-memory multi-agent parallelization of the depth-first proof-number search (DF-PN) algorithm. The goal is to provide a practical guide to implementing the algorithm in Rust, using the data structures and concurrency patterns that naturally map to the paper's design.
 
 ## 1. Source summary
 

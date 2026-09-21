@@ -42,9 +42,9 @@ The only behavioral change is that a solved `Outcome::Draw` whose proof depended
 
 Kishimoto & Müller classify GHI into two scenarios:
 
-> **first-player-loss:** A repetition is a loss for the first player (the player to move at the root). In checkmating problems a repetition is a draw, which is a disproof for the attacker. The paper says: "In the first-player-loss scenario, the GHI problem only causes invalid disproofs (first-player losses). Programs can avoid the GHI problem, accepting a loss of performance, by not storing any disproofs caused by repetitions." <ref_snippet file="/workspace/atomic_solver/docs/plans/dfpn/ghi.pdf" lines="1-1" />
+> **first-player-loss:** A repetition is a loss for the first player (the player to move at the root). In checkmating problems a repetition is a draw, which is a disproof for the attacker. The paper says: "In the first-player-loss scenario, the GHI problem only causes invalid disproofs (first-player losses). Programs can avoid the GHI problem, accepting a loss of performance, by not storing any disproofs caused by repetitions." <ref_snippet file="/workspace/atomic_solver/docs/theory/ghi-2004/ghi-2004.pdf" lines="1-1" />
 
-> **current-player-loss:** A repetition is a loss for the player who repeats the position (Go situational super-ko). "This scenario does not occur in checkmating problems where only one player's king is under attack." <ref_snippet file="/workspace/atomic_solver/docs/plans/dfpn/ghi.pdf" lines="1-1" />
+> **current-player-loss:** A repetition is a loss for the player who repeats the position (Go situational super-ko). "This scenario does not occur in checkmating problems where only one player's king is under attack." <ref_snippet file="/workspace/atomic_solver/docs/theory/ghi-2004/ghi-2004.pdf" lines="1-1" />
 
 The current code stores a repeated board as `Outcome::Draw` in `Search::path_contains` <ref_snippet file="/workspace/atomic_solver/src/search/dfpn/core.rs" lines="99-101" />. That is a disproof for the root attacker, so we are in the first-player-loss case. The `Outcome::Draw` values that come from `path_contains` are the only disproofs caused by repetitions; stalemate, 50-move, and two-piece draws are path-independent and can still be cached safely.
 

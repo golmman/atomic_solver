@@ -3,7 +3,7 @@
 **Verdict: docs-only round complete. `dfpn` #4 closed as an evidence-based
 no-go.** The journal paper was located, read in full, and mined into
 `docs/plans/dfpn/research_ghi_journal.md` (author copy vendored alongside as
-`dfpn/ghi_journal.pdf`). The soundness contract for bounded cross-path
+`docs/theory/ghi-journal-2005/ghi-journal-2005.pdf`). The soundness contract for bounded cross-path
 verification was written as planned — and the evidence says the lever is
 economically empty on our position class, so the contract closes `dfpn` #4
 instead of opening an implementation plan. No production code changed;
@@ -25,10 +25,10 @@ docs files only.
   `http://www.cs.ualberta.ca/~mmueller/ps/kishimoto-mueller-infsci-ghi.pdf`
   — which still serves the PDF (254,275 bytes, application/pdf). Same
   resolution pattern as plan3 (canonical index → location records → author
-  copy). The copy is vendored as `docs/plans/dfpn/ghi_journal.pdf` (same
-  precedent as `ghi.pdf`, `parallel.pdf`, `epsilon.pdf`) so the round is
+  copy). The copy is vendored as `docs/theory/ghi-journal-2005/ghi-journal-2005.pdf` (same
+  precedent as `docs/theory/ghi-2004/ghi-2004.pdf`, `docs/theory/pdfpn-2010/pdfpn-2010.pdf`, `docs/theory/epsilon-trick-2007/epsilon-trick-2007.pdf`) so the round is
   reproducible if the URL rots.
-- **Cross-check**: the AAAI-04 version (`docs/plans/dfpn/ghi.pdf`), read
+- **Cross-check**: the AAAI-04 version (`docs/theory/ghi-2004/ghi-2004.pdf`), read
   side-by-side for the delta, and the already-mined `dfpn/research_ghi.md`.
 
 ## What the journal version actually adds (vs plan5's expectations)
@@ -199,7 +199,7 @@ loop opened by report10 rather than contradicting it.
 ## Sanity checks
 
 - `git status --porcelain`: two new docs files
-  (`dfpn/research_ghi_journal.md`, `dfpn/ghi_journal.pdf`) + three modified
+  (`dfpn/research_ghi_journal.md`, `docs/theory/ghi-journal-2005/ghi-journal-2005.pdf`) + three modified
   docs files (`docs/bibliography.md`,
   `docs/plans/conversion/initiative.md`, `docs/plans/dfpn/initiative.md`).
   Nothing under `src/`, `tests/`, `examples/`.

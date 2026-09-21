@@ -6,7 +6,7 @@ algorithm-swap scaling vs DF-PN+). Selected in Phase 0 per
 `measurements/plan6/query_log.md`. Vendored sources:
 `measurements/plan6/vanherik_winands_pnchapter.pdf` (primary),
 `winands2002_pdspn.pdf`, `kishimoto2012_icga_survey.pdf`; the Pawlewicz &
-Lew 2007 paper is vendored in-repo at `docs/plans/dfpn/epsilon.pdf`.
+Lew 2007 paper is vendored in-repo at `docs/theory/epsilon-trick-2007/epsilon-trick-2007.pdf`.
 
 Primary source: **H. J. van den Herik, M. H. M. Winands, *Proof-Number
 Search and its Variants* (chapter), §§2–8** — the only obtainable source

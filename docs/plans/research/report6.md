@@ -65,7 +65,7 @@ Backlog #8 closes with the head-to-head evidence table
   Extraction: `research_alternative_algorithms.md`; vendored:
   `measurements/plan6/vanherik_winands_pnchapter.pdf`.
 - Corroborating: Pawlewicz & Lew 2007 §4 (primary head-to-head data;
-  in-repo `docs/plans/dfpn/epsilon.pdf` — its §4 PDS comparison was not
+  in-repo `docs/theory/epsilon-trick-2007/epsilon-trick-2007.pdf` — its §4 PDS comparison was not
   covered by the earlier 1+ε extraction), Winands 2002 CG paper (GHI note,
   memory curve), ICGA-2012 survey (regime statement, threshold-control
   catalogue, missing-study concession), Sakuta & Iida 2001 (secondhand

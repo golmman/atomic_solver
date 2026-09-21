@@ -33,7 +33,7 @@ plan must not re-litigate but must distinguish itself from).
 Answer, from the primary source, one question per aspect:
 
 1. **The complete algorithm.** The AAAI-04 paper (PDF in repo:
-   `docs/plans/dfpn/ghi.pdf`) is abbreviated; the journal version contains
+   `docs/theory/ghi-2004/ghi-2004.pdf`) is abbreviated; the journal version contains
    the full algorithm. Extract the exact base/twin entry structure, path
    encoding, twin-creation rule, and **the simulation procedure in full** —
    in particular whether and how simulation carries or reconstructs the
@@ -123,7 +123,7 @@ does not "fix" it back.
   Semantic Scholar/OpenAlex `open_access` locations — the MOPNS and plan3
   rounds both resolved copies this way). Record the exact version read
   (journal PDF vs author manuscript) in the research file and report.
-- Cross-check: the AAAI-04 version, `docs/plans/dfpn/ghi.pdf` (in repo),
+- Cross-check: the AAAI-04 version, `docs/theory/ghi-2004/ghi-2004.pdf` (in repo),
   already mined in `dfpn/research_ghi.md` — use it to identify precisely
   what the journal version adds (expected: complete proofs, the full
   simulation procedure, df-pn-specific threshold details), not to

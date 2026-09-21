@@ -272,7 +272,7 @@ signal. Wall-time micro-engineering stays in `lean`. The ε-surface decision
 
 - **2026-09-13** — backlog #5 **item (d) mined and closed** (plan5 reading
   round; `dfpn/research_ghi_journal.md`; author-copy PDF vendored as
-  `dfpn/ghi_journal.pdf` — located via the OpenAlex CiteSeerX location
+  `docs/theory/ghi-journal-2005/ghi-journal-2005.pdf` — located via the OpenAlex CiteSeerX location
   record preserving Müller's Alberta page URL). Verdict: the journal version
   adds the complete literature review, the df-pn pseudo-code, and the
   soundness proofs (Theorems 3.1/3.2) — but **not** the step-by-step

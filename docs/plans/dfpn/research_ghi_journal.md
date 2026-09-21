@@ -15,10 +15,12 @@ simulation, first-player-loss, current-player-loss) is reused from
   served from the first author's co-author's Alberta page:
   `http://www.cs.ualberta.ca/~mmueller/ps/kishimoto-mueller-infsci-ghi.pdf`
   (located via OpenAlex location record `oai:CiteSeerX.psu:10.1.1.69.818`,
-  which preserves the raw source URL). A copy is vendored in this directory as
-  `ghi_journal.pdf` (same precedent as `ghi.pdf`). Paywalled at the publisher;
+  which preserves the raw source URL). A copy is vendored at
+  `docs/theory/ghi-journal-2005/ghi-journal-2005.pdf` (same precedent as
+  `docs/theory/ghi-2004/ghi-2004.pdf`). Paywalled at the publisher;
   OpenAlex/Semantic Scholar/Unpaywall all report `oa_status: closed`.
-- **Cross-check**: the AAAI-04 version, `ghi.pdf` (in this directory), 6 pages,
+- **Cross-check**: the AAAI-04 version, `docs/theory/ghi-2004/ghi-2004.pdf`
+  (full-text extraction alongside it), 6 pages,
   already mined in `research_ghi.md`.
 - Text-extraction note: the journal PDF's symbol font subset carries a broken
   ToUnicode map (the ∞ glyph extracts as `1`, the minus as an unmapped `/C01`).
@@ -462,9 +464,9 @@ Theorem 1 unproven and defers to the journal).
 
 - A. Kishimoto, M. Müller, "A solution to the GHI problem for depth-first
   proof-number search," *Information Sciences* 175(4), pp. 296–314, 2005.
-  Author copy vendored: `ghi_journal.pdf` (this directory).
+  Author copy vendored: `docs/theory/ghi-journal-2005/ghi-journal-2005.pdf`.
 - A. Kishimoto, M. Müller, "A general solution to the graph history
-  interaction problem," AAAI-04. Vendored: `ghi.pdf`. Mined:
+  interaction problem," AAAI-04. Vendored: `docs/theory/ghi-2004/ghi-2004.pdf`. Mined:
   `research_ghi.md`.
 - A. Kishimoto, *Correct and Efficient Search Algorithms in the Presence of
   Repetitions*, Ph.D. dissertation, University of Alberta, 2005 — the

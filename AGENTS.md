@@ -175,9 +175,13 @@ If these commands start failing (`EPERM`/`EACCES` on event open), the host-side 
   Rationale and history belong in `docs/plans/`; a spec may reference other
   files under `docs/spec/` only.
 - Literature references are indexed in `docs/bibliography.md` (status +
-  pointer per paper). Full paper extractions live in the initiative
-  directories as `research_*.md`, written by the plan that mines the paper;
+  pointer per paper). Analytical mining files (`research_*.md`) live in
+  the initiative directories, written by the plan that mines the paper;
   when a plan mines an entry, update its status in the bibliography.
+  Paper originals (PDF) and full-text extractions are vendored under
+  `docs/theory/<slug>/` (slug = algorithm-name-year; see
+  `docs/theory/README.md`) — never vendor PDFs inside `docs/plans/`;
+  link to the theory library instead.
 - you can ignore `docs/notes.md`: the users ideas and unfiltered notes go there
 - Boy Scout principle: you should leave the codebase as clean or cleaner than you found it
 

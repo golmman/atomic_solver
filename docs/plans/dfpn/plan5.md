@@ -2,7 +2,7 @@
 
 ## Summary
 
-This plan implements the full Kishimoto & Müller solution to the Graph-History Interaction (GHI) problem for the sequential `DF-PN+` solver in `src/search/dfpn.rs`. It replaces the current first-layer fix (`path` set returns `Draw` on a local cycle, `try_use_tt` trusts a single `path_code` match) with the complete base/twin transposition-table design and Kawano simulation described in `plans/dfpn/ghi.pdf` and `plans/dfpn/research_ghi.md`.
+This plan implements the full Kishimoto & Müller solution to the Graph-History Interaction (GHI) problem for the sequential `DF-PN+` solver in `src/search/dfpn.rs`. It replaces the current first-layer fix (`path` set returns `Draw` on a local cycle, `try_use_tt` trusts a single `path_code` match) with the complete base/twin transposition-table design and Kawano simulation described in `docs/theory/ghi-2004/ghi-2004.pdf` and `plans/dfpn/research_ghi.md`.
 
 The main regression is the black-to-move position
 
