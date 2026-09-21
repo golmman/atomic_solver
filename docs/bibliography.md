@@ -162,17 +162,17 @@ Status values:
   (`dfpn/research_parallel.md`).
 - A. Saffidine, N. Jouandeau, T. Cazenave (2011). *Solving Breakthrough
   with Race Patterns and Job-Level Proof Number Search*. ACG 13. —
-  Job-level parallel PNS. **Open** (`conversion` backlog #4).
+  Job-level parallel PNS. **Open** (`parallel` backlog #1).
 - K. Young, R. B. Hayward (2016). *A Reverse Hex Solver*. CG 2016.
   [arXiv:1707.00627](https://arxiv.org/abs/1707.00627). — Scalable parallel
-  DF-PN in practice (Solrex). **Open** (`conversion` backlog #4).
+  DF-PN in practice (Solrex). **Open** (`parallel` backlog #1).
 - T. Čížek, M. Balko, M. Schmid (2025). *Massively Parallel Proof-Number
   Search for Impartial Games and Beyond*.
   [arXiv:2511.10339](https://arxiv.org/abs/2511.10339). — Two-level
   parallelization + shared worker info; 333× on 1024 cores; supersedes
   Kaneko-10's scaling assumptions. Full-text check (plan5): no child-level
-  cutoff/widening content — parallel-layer only. **Open** (`conversion`
-  backlog #4/#5c).
+  cutoff/widening content — parallel-layer only. **Open** (`parallel`
+  backlog #1; moved from `conversion` #4/#5c, 2026-09-21).
 
 ## Recent solving paradigms
 

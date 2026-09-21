@@ -240,7 +240,7 @@ memory, maintainability.
 | # | Item | Mechanism | Potential | Affects | Effort | Status |
 |---|------|-----------|-----------|---------|--------|--------|
 | 16 | TT capacity default | Default `--tt-size` 64 MB is capacity-starved on hard searches (m22 first-outcome: 2.6× work, 2.0× wall at 128 MB; quick suite insensitive ±2%). See `research_tt_capacity.md` | ~2× wall on m22-class hard cases at default settings | wall + behavior (drift protocol N/A; move-order suite is the validator) | S + re-baseline | **done (plan4)**: default now 128 MB; m22 first-outcome −49% wall, default-mode −74%; see `report4.md` |
-| 2 | Parallel search | Lazy-SMP-style parallel sibling children or parallel refinement roots over the shared TT | **spiked (plan7)**: deterministic sibling parallelism measured at 1.47–1.48× ceiling (below bar, demoted); lazy-SMP feasible only as opt-in nondeterministic mode — parked dormant with reopen triggers (`report7.md`) | wall | L–XL | **parked dormant (plan7 spike)** — reopen triggers in `report7.md` |
+| 2 | Parallel search | Lazy-SMP-style parallel sibling children or parallel refinement roots over the shared TT | **spiked (plan7)**: deterministic sibling parallelism measured at 1.47–1.48× ceiling (below bar, demoted); lazy-SMP feasible only as opt-in nondeterministic mode — parked dormant with reopen triggers (`report7.md`) | wall | L–XL | **moved 2026-09-21** to the new `parallel` initiative (which absorbed `conversion` #4); the deterministic no-go and the plan7 reopen triggers are recorded there |
 | 12 | Existence-check cost | (a) solver-side: skip `populate_state` + `has_legal_move` when the child TT entry already proves the position non-terminal (`outcome == None` ⇒ it was expanded); (b) upstream: fused populate+existence API | ceiling measured **~2.5% wall** (spike 2026-09-09, see below) | wall | S (a) / M (b) | **done (plan6, phase 3)**: skip implemented behind the outcome-None invariant; existence cluster 20.7% → 7.5% of the profile pie; see `report6.md` |
 | 14 | Upstream make/unmake cost | `do_move`+`undo_move` **26.9% post-plan4** (13.8% post-plan3; per-eval ~31→~59 ns, TT cache pressure — see profile above); upstream core ~7.6 ns/round-trip and inherently tight; solver wrapper ~4.3 ns (64 B `StateInfo` zeroing + undo-stack push/pop) | ~1–3% wall (wrapper slimming only; absolute ceiling unchanged) | wall | S | **done (plan6, phase 1)**: `do_move_with_scratch`/`undo_move_with_scratch` over a pooled dirty slot; wrapper round-trip 12.2 → ~7.0 ns in the micro-benchmark; see `report6.md` |
 | 17 | Path-membership cost | `path_contains` is an O(depth) linear scan over `path_stack` (`children.rs`, `core.rs`), called per child eval and per `dfpn` entry; `best_move_repeats_path` adds a full do/undo round-trip per TT-resolved hit | **spiked, below bar**: ~1.0% wall on m22, ≤ ~2.2% on the shuffle-win case (see spike 2026-09-12 above); repeat-guard hit rate ~0.01% | wall | S | **demoted (plan6, phase 0 spike)** — a hash-set path stack is not justified at these costs |
@@ -355,6 +355,12 @@ until a plan claims it.
   measured effort (544,749,817 child evals, bit-identical across two runs),
   referencing `dfpn/report9.md` (drift analysis). Slow tier green after the
   change.
+
+- **2026-09-21** — **backlog #2 moved; handover to `parallel`** (no code,
+  docs only): the parallel-search item left the backlog for the newly
+  opened `docs/plans/parallel/`, which also absorbed `conversion` #4.
+  The plan7 measurements stand; the report7 reopen triggers are carried
+  and consciously renegotiated in the new initiative's Status.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

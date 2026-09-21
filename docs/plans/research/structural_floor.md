@@ -327,9 +327,9 @@ now, reopen trigger X, owner Y*.
 |---|---|---|
 | `research` backlog #6 — ML node priors for PNS | No heuristic/NN component exists in a pure solver; the blocker sharpened by the plan5 mining (every learned mechanism surveyed needs an evaluator this solver does not have) | `research` (closed); reopen with a sound pure-solver surrogate or an explicit decision to add one |
 | `research` backlog #7 — mating-net recognizers | Zero harvestable subgames (plan3): no ≤5-men pawnless frames are ever entered; the pre-flight detector covers the only eligible roots | `research` (closed); reopen only with a recognizer class that fires at ≥9 men |
-| `research` backlog #9 — job-level parallel PNS | Not a node-count lever (wall-time only); the actionable design work is owned by `conversion` #4 | `conversion` #4 (open), jointly with `lean` #2 |
+| `research` backlog #9 — job-level parallel PNS | Not a node-count lever (wall-time only); the actionable design work is owned by `conversion` #4 (moved to the `parallel` initiative 2026-09-21) | `conversion` #4 (open), jointly with `lean` #2 |
 | `research` backlog #13 — frontier prediction priors | Pre-weakened by the ordering oracle floor (lean plan9): the separated signal classes are already rank-optimal; rescue mass concentrates where confidence conditioning was measured non-exploitable (plan8) | `research` (closed); reopen only with a new signal class outside plan8's feature set |
-| `conversion` #4 — parallel search design spike | Open, owned jointly with `lean` #2 (parked dormant after its 1.47–1.48× deterministic-ceiling spike; reopen triggers recorded there) | `conversion` + `lean` |
+| `conversion` #4 — parallel search design spike | Open, owned jointly with `lean` #2 (parked dormant after its 1.47–1.48× deterministic-ceiling spike; reopen triggers recorded there) — moved to the new `parallel` initiative 2026-09-21 | `conversion` + `lean` |
 | `lean` #10 — history/killer constant re-tuning | Open, S–M effort, ~0–5% evals estimate; never re-tuned since the GHI/twin removal | `lean` |
 | Gao 2021 — true pn/dn in DAGs is NP-hard (`conversion` #5e) | Information-only framing: DAG-aware pn/dn must remain heuristic; no mechanism | `conversion` #5e (open, reading item) |
 
