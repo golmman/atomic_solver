@@ -1,0 +1,16 @@
+[bounded_search] chunk done: work_done=500002 next_chunk=1000000 elapsed=0.087s max_depth=15 nodes=24732 nps=285535
+[bounded_search] chunk done: work_done=1000024 next_chunk=2000000 elapsed=0.279s max_depth=11 nodes=76362 nps=273615
+[bounded_search] chunk done: work_done=2000017 next_chunk=4000000 elapsed=0.645s max_depth=16 nodes=183840 nps=285110
+[bounded_search] chunk done: work_done=4000016 next_chunk=8000000 elapsed=1.373s max_depth=19 nodes=397333 nps=289426
+[bounded_search] chunk done: work_done=8000008 next_chunk=16000000 elapsed=2.861s max_depth=20 nodes=797468 nps=278762
+[bounded_search] chunk done: work_done=16000006 next_chunk=32000000 elapsed=5.981s max_depth=22 nodes=1619263 nps=270751
+[bounded_search] chunk done: work_done=32000000 next_chunk=64000000 elapsed=12.224s max_depth=38 nodes=3322654 nps=271821
+[bounded_search] chunk done: work_done=64000012 next_chunk=128000000 elapsed=24.446s max_depth=51 nodes=6853665 nps=280359
+outcome: win length: 477
+[plan8] outcome=Win child_evals=249480478 first_outcome_evals=249480478 nodes=13907467 pv_len=477
+[plan8] total_cuts=13520001 cut_eval_mass=1710835713 cut_keys=7355377
+[plan8] overflow_dropped=0 table_used=7594163
+[plan8] rescued_keys=40765 dead_keys=7314032 drawres_keys=257 resbefore_keys=323
+[plan8] rescued_mass=242180536 dead_mass=1468040034 drawres_mass=531195
+[plan8] base_rescue_rate_keys=0.005543 base_rescue_rate_mass=0.141608
+[plan8] dump=docs/plans/research/measurements/plan8/stats_stress_e0.125.csv

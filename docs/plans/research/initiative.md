@@ -110,6 +110,7 @@ remains *candidate* until a plan scopes it.
 | 11 | **Dynamic epsilon scheduling** — Vary ε or the refinement cap based on depth or rule50 clock, rather than globally. | Deep conversions may need coarser thresholds early and finer later. | 1 session, flag-gated | `conversion` — **done (plan4, NO-GO for scheduling)**: no depth/clock schedule arm beats the global default on any case (best arm 0.0%; the firing arms regress up to +351% and time out m22); the churn mass's threshold response is trajectory chaos with no regional structure (report4.md). Spin-off finding: global ε=0.375 Pareto-improves all four cases (stress −8.7%, m22 −12.7%, dec13 +2.6%, dec10 −14.5%) — handed to `conversion` as a sized default-ε candidate; the 2026-09-11 "global ε inert" claim is formally refuted (ε=0.5 wins stress −37.3% but regresses controls). |
 | 12 | **TT eviction priority** — Protect entries from the current PV or high-work subtrees instead of uniform replacement. | Does the current flat replacement discard useful solved entries prematurely? | 1 session, instrumentation only | `lean` — **done (plan7, CLOSED per H2)**: premise corrected twice — priority replacement `(live, solved, work, generation)` already exists in `insert_new` (the "uniform replacement" wording was stale), and the TT-size invariance study cited as pre-weakening does not transfer to the post-plan9 solver (32 MB stress unsolved at 3.33 B evals vs solved at 249 M on 128 MB, deterministic). Phase 0: harmful-class churn (new-unsolved evicting live-solved) 0–0.146% of stores at the 128 MB default, ≤1.21% of probes on evicted keys; Phase 1: both pre-registered policy arms fail — solved-slot immunity (V1) drops 15 M unsolved stores on stress and never terminates (unsolved bounds *are* the working set), steeper work priority (V2) +38.2% stress / +23.7% m22. The incumbent two-slot priority layout is a measured local optimum; eviction-policy work would need a layout change, fixed out of scope by RAM = TT only (`report7.md`, `measurements/plan7/`). |
 | 13 | **Frontier-node prediction prior** — Hand-craft or train a fast board-feature regression to predict `pn/dn` ratio for unexpanded children, using it as a pre-sort key before any search. | A lightweight alternative to the full `nn` branch; can be validated by oracle-floor comparison. | 1–2 sessions (data generation + micro-eval) | `lean` or `conversion` |
+| 14 | **Per-node confidence-conditioned ε** — At the threshold-computation site, pad more where node-local features (side × depth × static top-2 margin, clamp state) predict the cut child will resolve anyway, pad less where they predict a dead end; tests whether rescue-vs-waste of threshold padding is predictable from features observable at the node — the plan4-mandated *new mechanism* (node-local, not a path schedule). | Whether the rescue outcome of a threshold cut is separable by cheap node-local features, and whether conditioning converts that into a first-outcome `child_evals` win over the best global constant (ε=0.375). | Phase 0 separation study + Phase 1 arm POC, one session | `conversion` — **done (plan8, CLOSED per H2)**: no single feature separates (best ≥5%-mass lift 1.94× < 2×); composite buckets do (OR ∧ shallow, 2.19–2.73×), but the ε mix-shift shows the separation is trajectory-relative (absent at ε=0.125), and all three conditioned-ε arms fail catastrophically (OR pad-more stress +300%, AND pad-less timeout at 2.71 B evals). #14 closed with the separation + arm tables; the confidence feature is non-exploitable for node counts (`report8.md`, `measurements/plan8/`). |
 
 ## Non-goals
 
@@ -286,3 +287,34 @@ remains *candidate* until a plan scopes it.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
+
+- **2026-09-21** — plan8 drafted (POC candidate **#14** opened as a new
+  backlog row; the documented successor of plan7, admitted under plan4's
+  escape clause because it tests a *new mechanism*: ε conditioned on
+  node-local features read at the threshold-computation site, not a path
+  schedule). Phase 0 is a counter-only, env-gated separation study —
+  per-key rescue/dead labeling of threshold-cut frames with node-local
+  features (side, depth, second/best ratio, ε(second)−best, clamp state,
+  exiting gap, static top-2 margin) and a pre-registered kill gate (no
+  ≥2× rescue-lift on any bucket covering ≥5% of stress-ε=0.375 cut-frame
+  eval mass); Phase 1 (only if the gate fails) runs ≤3 env-gated
+  conditioned-ε arms against the ε=0.375 baseline with the ≥10% stress /
+  +5% controls / zero-quick-flips GO gate.
+- **2026-09-21** — plan8 done (POC candidate #14, per-node
+  confidence-conditioned ε): **CLOSED per H2**. Phase 0 (counter-only,
+  trajectory-neutral: both stress baselines and all controls reproduced
+  exactly, quick suite bit-identical, zero log overflow) found no single
+  feature separating (best ≥5%-mass lift 1.94× < 2×; plan6's degenerate
+  tie-region signal replicated), but composite buckets passed the gate
+  (OR ∧ depth 1–4 at 2.42×/8.5% mass), so Phase 1 ran: all three arms
+  failed — OR pad-more +300% stress / +76.7% m22, AND pad-less timeout at
+  2.71 B evals, quick outcomes flipped via timeouts. Key diagnostic: the
+  separation is trajectory-relative (the same buckets collapse to base
+  rate at ε=0.125), so node-local confidence conditioning re-instantiates
+  plan4's trajectory chaos at node granularity. #14 closed with both
+  tables; the ε surface now has four closure legs (no constant, no
+  schedule, no regional structure, no exploitable node-local signal)
+  (`report8.md`, `measurements/plan8/`). **Recommendation: close the
+  initiative's node-count program** per report7's next-steps — all
+  backlog rows answered/closed/pre-weakened; note the shallow-OR rescue
+  mass for the `conversion` #4 parallel-spike constraint discussion.

@@ -242,3 +242,10 @@ Please help me structurize the new initiative.
     the no-go record into a single document (what the solver is locked into, and why, with evidence pointers). Useful for the external-optimizer story and future     
     reopenings, one session of work.                                                                                                                                  
 
+---
+
+Use the pdf-skill to transform the following pdf-files to markdown:
+* `docs/theory/deep-pns-2015/deep-pns-2015.pdf`
+* `docs/theory/deep-dfpn-2017/deep-dfpn-2017.pdf`
+
+Put the extracted files right next to their originals.

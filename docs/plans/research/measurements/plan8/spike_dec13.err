@@ -1,0 +1,11 @@
+[bounded_search] chunk done: work_done=500006 next_chunk=1000000 elapsed=0.093s max_depth=14 nodes=19925 nps=214173
+[bounded_search] chunk done: work_done=1000007 next_chunk=2000000 elapsed=0.280s max_depth=16 nodes=63912 nps=228061
+[bounded_search] chunk done: work_done=2000019 next_chunk=4000000 elapsed=0.669s max_depth=25 nodes=149825 nps=224005
+outcome: win length: 29
+[plan8] outcome=Win child_evals=3921011 first_outcome_evals=3921011 nodes=169865 pv_len=29
+[plan8] total_cuts=143730 cut_eval_mass=28174480 cut_keys=125435
+[plan8] overflow_dropped=0 table_used=147614
+[plan8] rescued_keys=2226 dead_keys=123204 drawres_keys=0 resbefore_keys=5
+[plan8] rescued_mass=3991557 dead_mass=24182741 drawres_mass=0
+[plan8] base_rescue_rate_keys=0.017747 base_rescue_rate_mass=0.141674
+[plan8] dump=docs/plans/research/measurements/plan8/stats_dec13.csv
