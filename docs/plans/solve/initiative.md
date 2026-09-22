@@ -4,7 +4,15 @@
 
 Opened 2026-09-21 as the repo's umbrella for the ultimate goal: establish
 the game-theoretic value of the atomic chess starting position, delivered
-as a **machine-verifiable proof artifact**. Next plan number: **plan1**.
+as a **machine-verifiable proof artifact**. Next plan number: **plan3**.
+
+**Pivot (2026-09-22, after plan1's RETHINK verdict):** the campaign
+mechanism is the **Solved-Set Frontier Push (SSFP)** with the
+proof-cost gradient (backlog #6) — demand-driven solved-set growth, not
+enumerative layers and not the ply-frontier ladder. Enumerative
+bottom-up is rejected by counting (layer sizes ×16/man vs. a proof
+population at 19–23 men); mechanism spec and pre-registered gates in
+`plan2.md`.
 
 This initiative renegotiates the scope of two standing no-gos (both remain
 valid *in their recorded scope*):
@@ -100,10 +108,11 @@ worker corner of it.
 | # | Item | Mechanism | Potential | Affects | Effort | Status |
 |---|------|-----------|-----------|---------|--------|--------|
 | 1 | **Reach-vs-depth spike + leaf profile** | Solve positions at increasing game depth (and the deepest reachable startpos-frontier positions); measure child-eval growth vs depth and the men-count distribution at leaves | sizes everything: EGTB depth requirement, growth-curve go/rethink gate, hardware sizing | #2, #5 | S | **executed** (`report1.md`, 2026-09-22): pre-registered gate fired **RETHINK** (reach arm: 7/8 lines terminate before ply 30; growth factor not estimable — cost is bimodal, not depth-driven). Leaf profile: ≤6-men share 0.000009% of 507M leaf sites, median 19 men ⇒ no generable EGTB depth anchors top-down leaves. First verify/find datapoint: 1.18 wall ratio. Decision pending (report1 §10) |
-| 2 | **EGTB depth push 4→5 (→6) men** | GHI-correct generation (value iteration / retrograde over `atomic-movegen` semantics) with the independent proof-oracle cross-validation discipline at every layer; **reopens `egtb` per its handover rule** with the campaign's requirements | proof anchors; first hardware-consuming parallel workload (billions of independent positions) | #5 | M–L | **measured against by plan1**: no generable table depth (≤6 men) covers ≥0.001% of top-down leaf sites — as a *search anchor* this is dead; oracle-role or bottom-up-frontier scoping would need a new plan (report1 §4) |
-| 3 | **Distributed job-level PNS prototype** | Master + persistent workers (one process each), durable job store, partial pn/dn feedback, TT retention measured over hundreds of jobs; runs at 10 workers in the sandbox unchanged at 100+ on a cluster | the campaign engine; tests the one architecture the no-go record never touched | #5 | L | open after #1 read |
+| 2 | **EGTB depth push 4→5 (→6) men** | GHI-correct generation (value iteration / retrograde over `atomic-movegen` semantics) with the independent proof-oracle cross-validation discipline at every layer; **reopens `egtb` per its handover rule** with the campaign's requirements | proof anchors; first hardware-consuming parallel workload (billions of independent positions) | #5 | M–L | **closed (2026-09-22 pivot decision)**: report1 §4 measured no generable table depth (≤6 men) covering ≥0.001% of top-down leaf sites, and plan2 §1 rejects enumerative layer-push by counting; tables survive only as SSFP's eventual low-men anchor class (DTZ-class clock-aware semantics, not v0) |
+| 3 | **Distributed job-level PNS prototype** | Master + persistent workers (one process each), durable job store, partial pn/dn feedback, TT retention measured over hundreds of jobs; runs at 10 workers in the sandbox unchanged at 100+ on a cluster | the campaign engine; tests the one architecture the no-go record never touched | #6 | L | rescope: the Čížek job-level shape is the **successor** to plan2's sequential v0 queue runner, not a parallel DFPN over one root; work starts after the SSFP pilot substrate gate (plan2 §4) |
 | 4 | **Artifact pipeline at scale** | Checkpoint/restart semantics for all levels (per constraint 4); proof-tree event aggregation from N workers; storage sizing (TT snapshots, proof-tree dumps) | makes months-scale runs survivable | #5 | M | open |
-| 5 | **Startpos frontier campaign** | Iterative deepening from the start: solve the value frontier at ply k with verified artifacts, push k; anchored by #2's tables, driven by #3's engine | the solve itself | — | XL | gated by #1–#4 |
+| 5 | **Startpos frontier campaign** | The SSFP campaign proper: solved-set growth until the startpos's residual proof fits one run; verified artifacts composed offline per constraint 1 | the solve itself | #6 | XL | gated by #6's pilot | 
+| 6 | **Solved-Set Frontier Push (SSFP) — substrate gate + mechanism + pilot** | Persistent solved set S (verified/provisional provenance classes, exact clock-ful keys, TT snapshot solved-section discipline); proof-cost gradient (cheapest frontier targets first); `--tt-load-path` / `--frontier-dump` product hooks; pre-registered M1 transposition-substrate gate and 2 h pilot | the campaign mechanism; replaces the RETHINKed ply-frontier ladder (#5's old shape) | #3, #5 | M | **plan2 drafted 2026-09-22** (not yet executed): M1 GO threshold 5% / NO-GO <1%; pilot root d4d5 p2 |
 
 ## Non-goals
 
@@ -152,6 +161,13 @@ worker corner of it.
   d_e (EGTB anchor depth covering ≥95% of leaf sites) for the `egtb`
   reopening plan and the first verify/find wall ratio datapoint for the
   combined metric.
+- **2026-09-22** — **pivot decision + plan2 drafted**: user accepted the SSFP
+  reframing (demand-driven solved-set push; enumerative bottom-up rejected by
+  counting; product surface opened for `--tt-load-path`/`--frontier-dump`),
+  chose the proof-cost gradient (easy proofs and disproofs first). Backlog
+  #2 closed, #3 rescoped, #5 reshaped, #6 added. Pre-registered M1 substrate
+  gate (cross-system value share: GO ≥5%, NO-GO <1%) fixed in `plan2.md`
+  before any runs.
 - **2026-09-22** — **plan1 executed** (`report1.md`): 200-game
   random-playout control; 8 self-play ladders (all terminal at ply 6–38,
   PV-steered reach ≤ 38); 79 cost runs — 48 censored at a flat

@@ -296,3 +296,38 @@ Here are my answers:
 ---
 
 Execute docs/plans/solve/plan1.md — prerequisite reading is the plan itself plus egtb/report1.md (instrumentation method), with research/structural_floor.md and parallel/measurements/plan2/README.md as layout/baseline references.
+
+---
+
+
+1. **Decision needed (user):** apply the RETHINK verdict to the `solve`
+   initiative. Options, with the evidence each would need:
+   - **Pivot to sharpness-first scoping:** re-estimate campaign width as
+     "number of best-defense systems to tactical shots" (the §3 caveat);
+     cheap to explore further with targeted solves (no ladder needed).
+   - **Pivot to bottom-up frontier-push:** needs a new plan defining the
+     push mechanism (solve-the-value-frontier-at-ply-k from the
+     low-material end) — note §4's caveat that leaf probing inside
+     top-down searches is measured dead, so this is an architecture
+     change, not a table generation task.
+   - **Close with the artifact:** the spike's bimodal work landscape,
+     leaf profile, verify/find ratio, and TT sensitivity are the sized
+     inputs any future revival starts from.
+
+
+Last session we finished with `docs/plans/solve/report1.md`.
+We came to the conclusion that we need to rethink the goals.
+
+I'd like to pivot to bottom-up frontier-push. Let's try to define the push mechanism in this session.
+
+
+---
+
+I really like the SSFP mechanism. My favorite gradient is (b).
+I am completely open for changes to the product surface.
+
+Let me frame it in my own words, so we see if our understandings align:
+* there is not one solve but many solve runs
+* each solve run adds to the shared global proof
+* we focus on easy proofs and disproofs first
+
