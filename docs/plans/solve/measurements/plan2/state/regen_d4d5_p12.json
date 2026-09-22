@@ -1,0 +1,14 @@
+{
+ "line": "d4d5",
+ "ply": 12,
+ "fen": "rnbqkbnr/2p1pppp/1p6/3p4/3P4/P1P1PP2/6PP/RNBQKBNR w KQkq - 0 7",
+ "plan1_nodes": 21766144,
+ "wall": 123.257,
+ "rc": 0,
+ "cmd": "/workspace/atomic_solver/target/release/atomic_solver --fen rnbqkbnr/2p1pppp/1p6/3p4/3P4/P1P1PP2/6PP/RNBQKBNR w KQkq - 0 7 --timeout 120 --first-outcome --tt-dump-path /workspace/atomic_solver/docs/plans/solve/measurements/plan2/snaps/d4d5_p12.tt",
+ "tt_bytes": 144118543,
+ "tt_solved": 1157656,
+ "tt_unsolved": 3017943,
+ "exit_reason": "Timeout",
+ "nodes": 22237184
+}

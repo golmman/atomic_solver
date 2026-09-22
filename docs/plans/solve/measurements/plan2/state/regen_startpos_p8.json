@@ -1,0 +1,14 @@
+{
+ "line": "startpos",
+ "ply": 8,
+ "fen": "rnbqkbnr/1ppppppp/8/8/8/P1PP4/4PPPP/RNBQKBNR w KQkq - 0 5",
+ "plan1_nodes": 25411584,
+ "wall": 122.879,
+ "rc": 0,
+ "cmd": "/workspace/atomic_solver/target/release/atomic_solver --fen rnbqkbnr/1ppppppp/8/8/8/P1PP4/4PPPP/RNBQKBNR w KQkq - 0 5 --timeout 120 --first-outcome --tt-dump-path /workspace/atomic_solver/docs/plans/solve/measurements/plan2/snaps/startpos_p8.tt",
+ "tt_bytes": 131470250,
+ "tt_solved": 1642222,
+ "tt_unsolved": 2543734,
+ "exit_reason": "Timeout",
+ "nodes": 26517504
+}

@@ -1,0 +1,96 @@
+m1: 48 snapshots
+  loaded d4_p11: solved=1394432
+  loaded d4_p13: solved=1181276
+  loaded d4_p15: solved=1406119
+  loaded d4_p17: solved=1358688
+  loaded d4_p19: solved=1267493
+  loaded d4_p21: solved=1508648
+  loaded d4_p3: solved=1617421
+  loaded d4_p5: solved=1626982
+  loaded d4_p7: solved=1615289
+  loaded d4_p9: solved=1633457
+  loaded d4d5_p10: solved=1479381
+  loaded d4d5_p12: solved=1157656
+  loaded d4d5_p14: solved=1135203
+  loaded d4d5_p16: solved=1255423
+  loaded d4d5_p18: solved=1399391
+  loaded d4d5_p2: solved=1653272
+  loaded d4d5_p20: solved=1272467
+  loaded d4d5_p22: solved=1657277
+  loaded d4d5_p24: solved=1632081
+  loaded d4d5_p26: solved=1311757
+  loaded d4d5_p28: solved=1582899
+  loaded d4d5_p4: solved=1607549
+  loaded d4d5_p6: solved=1606964
+  loaded d4d5_p8: solved=1545122
+  loaded e4_p11: solved=1433426
+  loaded e4_p13: solved=1413330
+  loaded e4_p15: solved=1429040
+  loaded e4_p17: solved=1223557
+  loaded e4_p19: solved=1293455
+  loaded e4_p21: solved=1549995
+  loaded e4_p3: solved=1866312
+  loaded e4_p5: solved=1885317
+  loaded e4_p7: solved=1805983
+  loaded e4_p9: solved=1675334
+  loaded nf3_p11: solved=1425072
+  loaded nf3_p13: solved=1268012
+  loaded nf3_p15: solved=1289049
+  loaded nf3_p17: solved=1293060
+  loaded nf3_p19: solved=1368898
+  loaded nf3_p21: solved=1653864
+  loaded nf3_p3: solved=1686250
+  loaded nf3_p5: solved=1686738
+  loaded nf3_p7: solved=1564204
+  loaded nf3_p9: solved=1611065
+  loaded startpos_p2: solved=1884718
+  loaded startpos_p4: solved=1870561
+  loaded startpos_p6: solved=1730855
+  loaded startpos_p8: solved=1642222
+  paired d4_p11
+  paired d4_p13
+  paired d4_p15
+  paired d4_p17
+  paired d4_p19
+  paired d4_p21
+  paired d4_p3
+  paired d4_p5
+  paired d4_p7
+  paired d4_p9
+  paired d4d5_p10
+  paired d4d5_p12
+  paired d4d5_p14
+  paired d4d5_p16
+  paired d4d5_p18
+  paired d4d5_p2
+  paired d4d5_p20
+  paired d4d5_p22
+  paired d4d5_p24
+  paired d4d5_p26
+  paired d4d5_p28
+  paired d4d5_p4
+  paired d4d5_p6
+  paired d4d5_p8
+  paired e4_p11
+  paired e4_p13
+  paired e4_p15
+  paired e4_p17
+  paired e4_p19
+  paired e4_p21
+  paired e4_p3
+  paired e4_p5
+  paired e4_p7
+  paired e4_p9
+  paired nf3_p11
+  paired nf3_p13
+  paired nf3_p15
+  paired nf3_p17
+  paired nf3_p19
+  paired nf3_p21
+  paired nf3_p3
+  paired nf3_p5
+  paired nf3_p7
+  paired nf3_p9
+M1 = 0.0000% over 1440 directed pairs (min 0.00%, max 95.89%) -> NO-GO
+secondary p30: median 0.00%, max 10.75% at d4d5_p28 (13078 tree keys)
+secondary p32: median 0.00%, max 78.95% at d4d5_p28 (38 tree keys)

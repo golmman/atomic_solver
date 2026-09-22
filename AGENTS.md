@@ -64,6 +64,9 @@ A pure solver for atomic chess in Rust.
 - `egtb_gen3` — 3-man atomic WDL tablebase generator prototype: value iteration over `atomic-movegen` semantics, raw WDL dump, solver cross-validation, and an independent depth-limited proof oracle; exit 1 on any mismatch (`--material q|r|b|n|p|all`, `--out`, `--samples`, `--prove-samples`).
 - `inspect_pt` — dump `proof_tree.bin` to JSON; `--validate` runs the replay validator and exits non-zero on defects.
 - `list_legal` — all legal UCI moves and the terminal outcome for a FEN.
+- `pt_keys` — dump each proof-tree node's replayed Zobrist key + outcome + depth
+  (`solve` initiative measurement helper for the M1 metric; the binary tree dump
+  format stores no hashes, so keys are recomputed by replay).
 - `move_order_debug` — static/history/killer/total ordering scores (`--name <case>`).
 - `play_and_solve` — play a given move, then solve the resulting position.
 - `reconstruct_pt` — rebuild a proof tree offline from a FEN + TT snapshot (`--snapshot`); reports `validate: ok|FAILED n`, exits non-zero on defects; `--oracle` and `--experiment` run the dual-build oracle.

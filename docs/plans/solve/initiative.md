@@ -4,7 +4,7 @@
 
 Opened 2026-09-21 as the repo's umbrella for the ultimate goal: establish
 the game-theoretic value of the atomic chess starting position, delivered
-as a **machine-verifiable proof artifact**. Next plan number: **plan3**.
+as a **machine-verifiable proof artifact**. Next plan number: **plan4**.
 
 **Pivot (2026-09-22, after plan1's RETHINK verdict):** the campaign
 mechanism is the **Solved-Set Frontier Push (SSFP)** with the
@@ -112,7 +112,7 @@ worker corner of it.
 | 3 | **Distributed job-level PNS prototype** | Master + persistent workers (one process each), durable job store, partial pn/dn feedback, TT retention measured over hundreds of jobs; runs at 10 workers in the sandbox unchanged at 100+ on a cluster | the campaign engine; tests the one architecture the no-go record never touched | #6 | L | rescope: the Čížek job-level shape is the **successor** to plan2's sequential v0 queue runner, not a parallel DFPN over one root; work starts after the SSFP pilot substrate gate (plan2 §4) |
 | 4 | **Artifact pipeline at scale** | Checkpoint/restart semantics for all levels (per constraint 4); proof-tree event aggregation from N workers; storage sizing (TT snapshots, proof-tree dumps) | makes months-scale runs survivable | #5 | M | open |
 | 5 | **Startpos frontier campaign** | The SSFP campaign proper: solved-set growth until the startpos's residual proof fits one run; verified artifacts composed offline per constraint 1 | the solve itself | #6 | XL | gated by #6's pilot | 
-| 6 | **Solved-Set Frontier Push (SSFP) — substrate gate + mechanism + pilot** | Persistent solved set S (verified/provisional provenance classes, exact clock-ful keys, TT snapshot solved-section discipline); proof-cost gradient (cheapest frontier targets first); `--tt-load-path` / `--frontier-dump` product hooks; pre-registered M1 transposition-substrate gate and 2 h pilot | the campaign mechanism; replaces the RETHINKed ply-frontier ladder (#5's old shape) | #3, #5 | M | **plan2 drafted 2026-09-22** (not yet executed): M1 GO threshold 5% / NO-GO <1%; pilot root d4d5 p2 |
+| 6 | **Solved-Set Frontier Push (SSFP) — substrate gate + mechanism + pilot** | Persistent solved set S (verified/provisional provenance classes, exact clock-ful keys, TT snapshot solved-section discipline); proof-cost gradient (cheapest frontier targets first); `--tt-load-path` / `--frontier-dump` product hooks; pre-registered M1 transposition-substrate gate and 2 h pilot | the campaign mechanism; replaces the RETHINKed ply-frontier ladder (#5's old shape) | #3, #5 | M | **executed (report2.md, 2026-09-22): pre-registered M1 gate fired NO-GO** (median cross-system value share 0.0000% over 1,438 pairs; even ±2-ply same-system pairs ~0% — censored-run solved sections are search-local, not substrate). §3 product surface not landed (gated on GO); pilot not run. Rethink pending: close-with-artifact vs. sharpness-first rescoping (report2 §9) |
 
 ## Non-goals
 
@@ -180,6 +180,23 @@ worker corner of it.
   1.18 at the deep boundary. **Pre-registered gate: RETHINK** (reach arm;
   W not defensibly estimable). Backlog #2/#3/#5 gated on the user's
   pivot/close decision — see `report1.md` §10.
-
+- **2026-09-22** — **plan2 executed** (`report2.md`): the 48 censored plan1
+  snapshots regenerated sequentially (98.4 min; node fidelity 0.94–1.17×);
+  pre-registered M1 substrate gate fired **NO-GO** — median directed value
+  share 0.0000% over 1,438 cross-system pairs (zero-inflated: 75% of pairs
+  share no keys at all), and the sharper finding: even ±2-ply same-system
+  pairs are ~0% (d4_p9→d4_p11 0.08%), so censored-run TT solved sections are
+  search-local, not a reusable solved-set substrate; secondary p30-tree key
+  coverage ≤ 10.75%. §3 product hooks implemented early during the regen
+  window, reverted after the verdict (fast gate green); pilot not run.
+  Rethink pending per report2 §9 (close with the artifact vs. sharpness-first
+  rescoping; recommendation: the latter).
+- **2026-09-22** — **plan3 drafted** (not yet executed): the report2 session
+  discussion (step-by-step proof/disproof narrowing) reduced to two untested
+  assumptions; plan3 pre-registers their measurements: Task A = 2 h
+  finishability probe of the d4d5-p2 quiet root (arms at 128 MB and 1 GB TT,
+  gates FINISHABLE / NOT-FINISHABLE-at-10× / SPLIT), Task B = the ±1-ply
+  parent→child substrate measurement plan2 skipped (median `avail` gate 5% /
+  1%). No product changes; ~4.5 h sequential wall.
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

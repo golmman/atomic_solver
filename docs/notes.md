@@ -331,3 +331,36 @@ Let me frame it in my own words, so we see if our understandings align:
 * each solve run adds to the shared global proof
 * we focus on easy proofs and disproofs first
 
+---
+
+Let's discuss the results, please continue in simple language.
+So the results show that there is basically no tree overlap in the test positions?
+
+---
+
+Nice reasoning, very insightful!
+I expect the overlap for positions with exactly 1 ply distance to be more considerable though and the SSFP not dead for that reason.
+We could explore positions step by step with exactly one ply distance each run.
+
+---
+
+what do you think of this idea:
+Proof and disproof side lines step by step and add them to the global proof.
+That way the hard to prove main line gets narrower.
+
+Example:
+* Let's say the root split into 10 children
+* Each child has always (for the sake of simplicity) 10 children
+* so we can use the notation 0567 to uniquely identify the path where child 0, then child 5, then child 6, then child 7 was chosen
+* now let's say from the root the child 0 is the (unknown) winning path
+* so we explore 0 a while without a decicive outcome and we give up for now
+* then we explore 1, which has a shallow decicive win, add it to the global proof
+* then we explore 2, also hard so we put it aside for now
+* 3 to 9 are easy, so we add them to the global proof
+* we are left with 0 and 2 to proof
+* go to 00: easy in this example, add to the global proof
+* go to 01, hard -> skip
+* 02 easy -> global proof
+* and so on
+
+
