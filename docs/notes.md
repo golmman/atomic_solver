@@ -208,18 +208,18 @@ The goal is to increase the maintainability and readability.
 
 Let's create a 3 step initiative:
 
-* First analyze and look for
-  * dead code
-  * outdated/unnecessary comments
-  * DRY and YAGNI
-  * consistency issues
-  * unnecessary coupling
-  * missing tests
-  * unnecessary tests
-  * other code smells ...
-* Next write a concise list of found issues
-* Next fix these issues
-  * if too much risk split it into multiple separate sessions
+- First analyze and look for
+  - dead code
+  - outdated/unnecessary comments
+  - DRY and YAGNI
+  - consistency issues
+  - unnecessary coupling
+  - missing tests
+  - unnecessary tests
+  - other code smells ...
+- Next write a concise list of found issues
+- Next fix these issues
+  - if too much risk split it into multiple separate sessions
 
 Never compromise on performance or correctness though.
 
@@ -229,29 +229,31 @@ I want to start an intermediate research initative. The overall goal is to refin
 search: reduced node count for finding the first decicive outcome.
 
 Goals for plans in this initiative:
-* list unsolved problems with this implementation
-* look for and find new ideas (web search -> research papers etc.)
-* rough ideas for quick POCs
-* taking measurements
+
+- list unsolved problems with this implementation
+- look for and find new ideas (web search -> research papers etc.)
+- rough ideas for quick POCs
+- taking measurements
 
 Please help me structurize the new initiative.
 
 ---
 
-
 ---
 
 Use the pdf-skill to transform the following pdf-files to markdown:
-* `docs/theory/deep-pns-2015/deep-pns-2015.pdf`
-* `docs/theory/deep-dfpn-2017/deep-dfpn-2017.pdf`
+
+- `docs/theory/deep-pns-2015/deep-pns-2015.pdf`
+- `docs/theory/deep-dfpn-2017/deep-dfpn-2017.pdf`
 
 Put the extracted files right next to their originals.
 
 ---
 
 Evalutate the following papers:
-* `docs/theory/deep-pns-2015/deep-pns-2015.md`
-* `docs/theory/deep-dfpn-2017/deep-dfpn-2017.md`
+
+- `docs/theory/deep-pns-2015/deep-pns-2015.md`
+- `docs/theory/deep-dfpn-2017/deep-dfpn-2017.md`
 
 Is it worth opening a new item in the research initiative for this?
 
@@ -261,15 +263,16 @@ I tend to option 2: I know it is grasping at straws, but it is worth the cheap t
 
 Then i'd pivot research's goal rather than close it.
 E.g., re-scope from "reduce node count" to "characterize the structural floor":
-A closing report that consolidates the no-go record into a single document (what the solver is locked into, and why, with evidence pointers)    
+A closing report that consolidates the no-go record into a single document (what the solver is locked into, and why, with evidence pointers)
 
 ---
 
 Please search the code and initiatives and tell me
-* how are repetition handled?
-* what impact do repetitions have on the search algorithm?
-* is GHI implemented?
-* are there open questions to solve?
+
+- how are repetition handled?
+- what impact do repetitions have on the search algorithm?
+- is GHI implemented?
+- are there open questions to solve?
 
 ---
 
@@ -285,6 +288,11 @@ Is this worth a new initiative?
 Sounds good to me.
 
 Here are my answers:
+
 1. We prepare for the cluster. For now our testing hardware is limited to the capabilities of this sandbox. The sandboxes limits can be increased to a max of ~10 cpu cores, 32G ram, gpu if needed. More than that is costly. Tell me if this is insufficient and what we needed instead.
 2. I confirm. The ulimate metric to optimize is the wall time of finding the outcome and verifying the proof combined.
 3. I fine with lots of researching, trying out, learning. In the end we have version control so little risk in breaking things permanently and our knowledge only grows until we find the right way.
+
+---
+
+Execute docs/plans/solve/plan1.md — prerequisite reading is the plan itself plus egtb/report1.md (instrumentation method), with research/structural_floor.md and parallel/measurements/plan2/README.md as layout/baseline references.

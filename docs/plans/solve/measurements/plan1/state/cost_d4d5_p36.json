@@ -1,0 +1,22 @@
+{
+ "fen": "rnbq1bnr/3Pkppp/4p3/P7/4PPPP/2p5/8/2BQKBNR w K - 1 19",
+ "wall": 0.021,
+ "rc": 0,
+ "outcome": "win",
+ "pv": [
+  "d1d6",
+  "e7f6",
+  "d6e6"
+ ],
+ "pv_status": "first-outcome",
+ "exit_reason": "Complete",
+ "exit_outcome": "win",
+ "nodes": 7,
+ "tt_bytes": 175,
+ "timeout_flag": false,
+ "censored": false,
+ "line": "d4d5",
+ "ply": 36,
+ "informational_seed_position": false,
+ "tt_size_mb": 128
+}

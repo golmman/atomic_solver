@@ -1,0 +1,11 @@
+# cmd: /workspace/atomic_solver/target/release/atomic_solver --fen rnbqkbnr/3ppppp/2p5/8/P1PPPP2/6PP/8/2BQKBNR b Kkq - 0 12 --timeout 8 --first-outcome
+# wall: 0.011
+## stdout
+preflight: deferred reason=detector evals=0
+outcome: win length: 5
+pv: d8a5 e1e2 a5d2 e2f3 d2f4
+pv_status: first-outcome
+pre_exit: reason=Complete outcome=win nodes=71
+
+## stderr
+outcome: win length: 5

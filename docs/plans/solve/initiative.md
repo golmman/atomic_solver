@@ -99,8 +99,8 @@ worker corner of it.
 
 | # | Item | Mechanism | Potential | Affects | Effort | Status |
 |---|------|-----------|-----------|---------|--------|--------|
-| 1 | **Reach-vs-depth spike + leaf profile** | Solve positions at increasing game depth (and the deepest reachable startpos-frontier positions); measure child-eval growth vs depth and the men-count distribution at leaves | sizes everything: EGTB depth requirement, growth-curve go/rethink gate, hardware sizing | #2, #5 | S | **plan1 drafted** (`plan1.md`: self-play mainline ladder to ply 44, random-playout control, temporary men-count instrumentation per the egtb plan1 method, pre-registered W ≤ 10^15 go / > 10^17 rethink gate on the fitted per-ply growth factor b) — not yet executed |
-| 2 | **EGTB depth push 4→5 (→6) men** | GHI-correct generation (value iteration / retrograde over `atomic-movegen` semantics) with the independent proof-oracle cross-validation discipline at every layer; **reopens `egtb` per its handover rule** with the campaign's requirements | proof anchors; first hardware-consuming parallel workload (billions of independent positions) | #5 | M–L | gated by #1's men-count sizing |
+| 1 | **Reach-vs-depth spike + leaf profile** | Solve positions at increasing game depth (and the deepest reachable startpos-frontier positions); measure child-eval growth vs depth and the men-count distribution at leaves | sizes everything: EGTB depth requirement, growth-curve go/rethink gate, hardware sizing | #2, #5 | S | **executed** (`report1.md`, 2026-09-22): pre-registered gate fired **RETHINK** (reach arm: 7/8 lines terminate before ply 30; growth factor not estimable — cost is bimodal, not depth-driven). Leaf profile: ≤6-men share 0.000009% of 507M leaf sites, median 19 men ⇒ no generable EGTB depth anchors top-down leaves. First verify/find datapoint: 1.18 wall ratio. Decision pending (report1 §10) |
+| 2 | **EGTB depth push 4→5 (→6) men** | GHI-correct generation (value iteration / retrograde over `atomic-movegen` semantics) with the independent proof-oracle cross-validation discipline at every layer; **reopens `egtb` per its handover rule** with the campaign's requirements | proof anchors; first hardware-consuming parallel workload (billions of independent positions) | #5 | M–L | **measured against by plan1**: no generable table depth (≤6 men) covers ≥0.001% of top-down leaf sites — as a *search anchor* this is dead; oracle-role or bottom-up-frontier scoping would need a new plan (report1 §4) |
 | 3 | **Distributed job-level PNS prototype** | Master + persistent workers (one process each), durable job store, partial pn/dn feedback, TT retention measured over hundreds of jobs; runs at 10 workers in the sandbox unchanged at 100+ on a cluster | the campaign engine; tests the one architecture the no-go record never touched | #5 | L | open after #1 read |
 | 4 | **Artifact pipeline at scale** | Checkpoint/restart semantics for all levels (per constraint 4); proof-tree event aggregation from N workers; storage sizing (TT snapshots, proof-tree dumps) | makes months-scale runs survivable | #5 | M | open |
 | 5 | **Startpos frontier campaign** | Iterative deepening from the start: solve the value frontier at ply k with verified artifacts, push k; anchored by #2's tables, driven by #3's engine | the solve itself | — | XL | gated by #1–#4 |
@@ -152,6 +152,18 @@ worker corner of it.
   d_e (EGTB anchor depth covering ≥95% of leaf sites) for the `egtb`
   reopening plan and the first verify/find wall ratio datapoint for the
   combined metric.
+- **2026-09-22** — **plan1 executed** (`report1.md`): 200-game
+  random-playout control; 8 self-play ladders (all terminal at ply 6–38,
+  PV-steered reach ≤ 38); 79 cost runs — 48 censored at a flat
+  20.5–46.6M-node/120 s plateau, 27 uncensored of which 26 are cheap
+  tactical proofs (several opening mainlines are forced wins ≤ 9 plies);
+  temporary men-count instrumentation applied/reverted with byte-identical
+  drift captures (507M non-terminal leaf sites: median 19 men, ≤6 men
+  0.000009%, ≥95% coverage = 23 men); 1 GB-TT addendum −22.6% nodes;
+  `reconstruct_pt --validate` ok on 5 positions, verify/find wall ratio
+  1.18 at the deep boundary. **Pre-registered gate: RETHINK** (reach arm;
+  W not defensibly estimable). Backlog #2/#3/#5 gated on the user's
+  pivot/close decision — see `report1.md` §10.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

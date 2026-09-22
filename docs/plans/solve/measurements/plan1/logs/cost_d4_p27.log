@@ -1,0 +1,12 @@
+# cmd: /workspace/atomic_solver/target/release/atomic_solver --fen rnb1kbnr/3ppppp/2p5/8/P1PPPP2/5KPP/3q4/2BQ1BNR b kq - 4 14 --timeout 120 --first-outcome --tt-dump-path /workspace/atomic_solver/docs/plans/solve/measurements/plan1/snaps/d4_p27.tt
+# wall: 0.025
+## stdout
+preflight: deferred reason=detector evals=0
+outcome: win length: 1
+pv: d2f4
+pv_status: proven-shortest
+tt_snapshot: /workspace/atomic_solver/docs/plans/solve/measurements/plan1/snaps/d4_p27.tt solved=1 unsolved=0 bytes=108
+pre_exit: reason=Complete outcome=win nodes=1
+
+## stderr
+outcome: win length: 1

@@ -1,0 +1,18 @@
+{
+ "fen": "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1",
+ "wall": 123.095,
+ "rc": 0,
+ "outcome": "draw",
+ "pv": [],
+ "pv_status": null,
+ "exit_reason": "Timeout",
+ "exit_outcome": "draw",
+ "nodes": 21692416,
+ "tt_bytes": 132728596,
+ "timeout_flag": true,
+ "censored": true,
+ "line": "d4",
+ "ply": 1,
+ "informational_seed_position": true,
+ "tt_size_mb": 128
+}

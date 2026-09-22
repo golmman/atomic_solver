@@ -1,0 +1,8 @@
+ladder startpos: 8 positions, stop=terminal
+ladder e4: 14 positions, stop=terminal
+ladder d4: 14 positions, stop=terminal
+ladder nf3: 13 positions, stop=terminal
+ladder e4e5: 5 positions, stop=terminal
+ladder e4c5: 3 positions, stop=terminal
+ladder d4d5: 19 positions, stop=terminal
+ladder nf3d5: 3 positions, stop=terminal

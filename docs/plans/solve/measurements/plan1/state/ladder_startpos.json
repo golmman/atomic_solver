@@ -1,0 +1,224 @@
+{
+ "seed": [],
+ "positions": [
+  {
+   "ply": 0,
+   "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+   "men": 32,
+   "stm": "w",
+   "step": {
+    "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    "wall": 8.019,
+    "rc": 0,
+    "outcome": "draw length: 0",
+    "pv": [],
+    "pv_status": null,
+    "exit_reason": "Timeout",
+    "exit_outcome": "draw",
+    "nodes": 1658880,
+    "tt_bytes": null,
+    "timeout_flag": true,
+    "censored": true
+   },
+   "moves_played": [
+    "a2a3",
+    "a7a6"
+   ],
+   "stop_reason": null,
+   "steer": "capped"
+  },
+  {
+   "ply": 2,
+   "fen": "rnbqkbnr/1ppppppp/p7/8/8/P7/1PPPPPPP/RNBQKBNR w KQkq - 0 2",
+   "men": 32,
+   "stm": "w",
+   "step": {
+    "fen": "rnbqkbnr/1ppppppp/p7/8/8/P7/1PPPPPPP/RNBQKBNR w KQkq - 0 2",
+    "wall": 8.015,
+    "rc": 0,
+    "outcome": "draw length: 0",
+    "pv": [],
+    "pv_status": null,
+    "exit_reason": "Timeout",
+    "exit_outcome": "draw",
+    "nodes": 1744896,
+    "tt_bytes": null,
+    "timeout_flag": true,
+    "censored": true
+   },
+   "moves_played": [
+    "b2b3",
+    "a6a5"
+   ],
+   "stop_reason": null,
+   "steer": "capped"
+  },
+  {
+   "ply": 4,
+   "fen": "rnbqkbnr/1ppppppp/8/p7/8/PP6/2PPPPPP/RNBQKBNR w KQkq - 0 3",
+   "men": 32,
+   "stm": "w",
+   "step": {
+    "fen": "rnbqkbnr/1ppppppp/8/p7/8/PP6/2PPPPPP/RNBQKBNR w KQkq - 0 3",
+    "wall": 8.029,
+    "rc": 0,
+    "outcome": "draw length: 0",
+    "pv": [],
+    "pv_status": null,
+    "exit_reason": "Timeout",
+    "exit_outcome": "draw",
+    "nodes": 1683456,
+    "tt_bytes": null,
+    "timeout_flag": true,
+    "censored": true
+   },
+   "moves_played": [
+    "c2c3",
+    "a5a4"
+   ],
+   "stop_reason": null,
+   "steer": "capped"
+  },
+  {
+   "ply": 6,
+   "fen": "rnbqkbnr/1ppppppp/8/8/p7/PPP5/3PPPPP/RNBQKBNR w KQkq - 0 4",
+   "men": 32,
+   "stm": "w",
+   "step": {
+    "fen": "rnbqkbnr/1ppppppp/8/8/p7/PPP5/3PPPPP/RNBQKBNR w KQkq - 0 4",
+    "wall": 8.03,
+    "rc": 0,
+    "outcome": "draw length: 0",
+    "pv": [],
+    "pv_status": null,
+    "exit_reason": "Timeout",
+    "exit_outcome": "draw",
+    "nodes": 1589248,
+    "tt_bytes": null,
+    "timeout_flag": true,
+    "censored": true
+   },
+   "moves_played": [
+    "d2d3",
+    "a4b3"
+   ],
+   "stop_reason": null,
+   "steer": "capped"
+  },
+  {
+   "ply": 8,
+   "fen": "rnbqkbnr/1ppppppp/8/8/8/P1PP4/4PPPP/RNBQKBNR w KQkq - 0 5",
+   "men": 30,
+   "stm": "w",
+   "step": {
+    "fen": "rnbqkbnr/1ppppppp/8/8/8/P1PP4/4PPPP/RNBQKBNR w KQkq - 0 5",
+    "wall": 8.01,
+    "rc": 0,
+    "outcome": "draw length: 0",
+    "pv": [],
+    "pv_status": null,
+    "exit_reason": "Timeout",
+    "exit_outcome": "draw",
+    "nodes": 1613824,
+    "tt_bytes": null,
+    "timeout_flag": true,
+    "censored": true
+   },
+   "moves_played": [
+    "e2e3",
+    "b7b6"
+   ],
+   "stop_reason": null,
+   "steer": "capped"
+  },
+  {
+   "ply": 10,
+   "fen": "rnbqkbnr/2pppppp/1p6/8/8/P1PPP3/5PPP/RNBQKBNR w KQkq - 0 6",
+   "men": 30,
+   "stm": "w",
+   "step": {
+    "fen": "rnbqkbnr/2pppppp/1p6/8/8/P1PPP3/5PPP/RNBQKBNR w KQkq - 0 6",
+    "wall": 0.012,
+    "rc": 0,
+    "outcome": "win length: 5",
+    "pv": [
+     "d1h5",
+     "g7g6",
+     "h5d5",
+     "a8a3",
+     "d5d7"
+    ],
+    "pv_status": "first-outcome",
+    "exit_reason": "Complete",
+    "exit_outcome": "win",
+    "nodes": 516,
+    "tt_bytes": null,
+    "timeout_flag": false,
+    "censored": false
+   },
+   "moves_played": [
+    "d1h5",
+    "g7g6"
+   ],
+   "stop_reason": null,
+   "steer": "pv"
+  },
+  {
+   "ply": 12,
+   "fen": "rnbqkbnr/2pppp1p/1p4p1/7Q/8/P1PPP3/5PPP/RNB1KBNR w KQkq - 0 7",
+   "men": 30,
+   "stm": "w",
+   "step": {
+    "fen": "rnbqkbnr/2pppp1p/1p4p1/7Q/8/P1PPP3/5PPP/RNB1KBNR w KQkq - 0 7",
+    "wall": 0.013,
+    "rc": 0,
+    "outcome": "win length: 3",
+    "pv": [
+     "h5d5",
+     "a8a3",
+     "d5d7"
+    ],
+    "pv_status": "first-outcome",
+    "exit_reason": "Complete",
+    "exit_outcome": "win",
+    "nodes": 366,
+    "tt_bytes": null,
+    "timeout_flag": false,
+    "censored": false
+   },
+   "moves_played": [
+    "h5d5",
+    "a8a3"
+   ],
+   "stop_reason": null,
+   "steer": "pv"
+  },
+  {
+   "ply": 14,
+   "fen": "1nbqkbnr/2pppp1p/1p4p1/3Q4/8/2PPP3/5PPP/RNB1KBNR w KQk - 0 8",
+   "men": 28,
+   "stm": "w",
+   "step": {
+    "fen": "1nbqkbnr/2pppp1p/1p4p1/3Q4/8/2PPP3/5PPP/RNB1KBNR w KQk - 0 8",
+    "wall": 0.01,
+    "rc": 0,
+    "outcome": "win length: 1",
+    "pv": [
+     "d5d7"
+    ],
+    "pv_status": "proven-shortest",
+    "exit_reason": "Complete",
+    "exit_outcome": "win",
+    "nodes": 1,
+    "tt_bytes": null,
+    "timeout_flag": false,
+    "censored": false
+   },
+   "moves_played": [
+    "d5d7"
+   ],
+   "stop_reason": "terminal",
+   "steer": "pv"
+  }
+ ]
+}

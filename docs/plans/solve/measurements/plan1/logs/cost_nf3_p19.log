@@ -1,0 +1,20 @@
+# cmd: /workspace/atomic_solver/target/release/atomic_solver --fen rnbqkbnr/2pppppp/8/8/P1P5/3PPNPP/1p3P2/RNBQKB1R b KQkq - 0 10 --timeout 120 --first-outcome --tt-dump-path /workspace/atomic_solver/docs/plans/solve/measurements/plan1/snaps/nf3_p19.tt
+# wall: 123.215
+## stdout
+preflight: deferred reason=detector evals=0
+outcome: draw length: 0
+tt_snapshot: /workspace/atomic_solver/docs/plans/solve/measurements/plan1/snaps/nf3_p19.tt solved=1357890 unsolved=2821047 bytes=138852420
+timeout
+pre_exit: reason=Timeout outcome=draw nodes=23089152
+
+## stderr
+[bounded_search] chunk done: work_done=500018 next_chunk=1000000 elapsed=0.080s max_depth=13 nodes=18533 nps=231642
+[bounded_search] chunk done: work_done=1000022 next_chunk=2000000 elapsed=0.244s max_depth=15 nodes=54757 nps=224270
+[bounded_search] chunk done: work_done=2000002 next_chunk=4000000 elapsed=0.588s max_depth=18 nodes=126127 nps=214345
+[bounded_search] chunk done: work_done=4000012 next_chunk=8000000 elapsed=1.305s max_depth=20 nodes=264864 nps=202999
+[bounded_search] chunk done: work_done=8000008 next_chunk=16000000 elapsed=2.738s max_depth=22 nodes=533347 nps=194826
+[bounded_search] chunk done: work_done=16000010 next_chunk=32000000 elapsed=5.685s max_depth=25 nodes=1089234 nps=191588
+[bounded_search] chunk done: work_done=32000002 next_chunk=64000000 elapsed=11.810s max_depth=25 nodes=2198834 nps=186189
+[bounded_search] chunk done: work_done=64000030 next_chunk=128000000 elapsed=23.948s max_depth=28 nodes=4433826 nps=185146
+[bounded_search] chunk done: work_done=128000026 next_chunk=256000000 elapsed=47.293s max_depth=30 nodes=8937197 nps=188976
+[bounded_search] chunk done: work_done=256000006 next_chunk=512000000 elapsed=93.304s max_depth=35 nodes=17860404 nps=191421

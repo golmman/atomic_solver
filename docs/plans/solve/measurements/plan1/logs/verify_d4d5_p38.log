@@ -1,0 +1,8 @@
+outcome: win
+nodes: 2
+holes: hit=1 terminal=1 clock_hit=0 clock_miss_draw=0 repetition=0 absent=0 filled=0 unfillable=0 anomalies=0
+fill_evals: 0 duplicate_keys: 0
+dump: /workspace/atomic_solver/docs/plans/solve/measurements/plan1/reconstructed_d4d5_p38.bin
+validate: ok
+
+## stderr

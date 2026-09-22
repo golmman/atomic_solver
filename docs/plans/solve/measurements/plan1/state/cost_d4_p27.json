@@ -1,0 +1,20 @@
+{
+ "fen": "rnb1kbnr/3ppppp/2p5/8/P1PPPP2/5KPP/3q4/2BQ1BNR b kq - 4 14",
+ "wall": 0.025,
+ "rc": 0,
+ "outcome": "win",
+ "pv": [
+  "d2f4"
+ ],
+ "pv_status": "proven-shortest",
+ "exit_reason": "Complete",
+ "exit_outcome": "win",
+ "nodes": 1,
+ "tt_bytes": 108,
+ "timeout_flag": false,
+ "censored": false,
+ "line": "d4",
+ "ply": 27,
+ "informational_seed_position": false,
+ "tt_size_mb": 128
+}

@@ -1,0 +1,57 @@
+[
+ {
+  "line": "d4d5",
+  "ply": 30,
+  "fen": "rnbqkbnr/4pppp/8/P7/2pPPPPP/8/8/2BQKBNR w Kkq - 0 16",
+  "snapshot": "/workspace/atomic_solver/docs/plans/solve/measurements/plan1/snaps/d4d5_p30.tt",
+  "wall": 120.263,
+  "rc": 0,
+  "recon_outcome": "win",
+  "recon_nodes": 32942,
+  "validate": "ok"
+ },
+ {
+  "line": "d4d5",
+  "ply": 32,
+  "fen": "rnbqkbnr/4pppp/8/P2P4/4PPPP/2p5/8/2BQKBNR w Kkq - 0 17",
+  "snapshot": "/workspace/atomic_solver/docs/plans/solve/measurements/plan1/snaps/d4d5_p32.tt",
+  "wall": 0.014,
+  "rc": 0,
+  "recon_outcome": "win",
+  "recon_nodes": 68,
+  "validate": "ok"
+ },
+ {
+  "line": "d4d5",
+  "ply": 34,
+  "fen": "rnbqkbnr/5ppp/3Pp3/P7/4PPPP/2p5/8/2BQKBNR w Kkq - 0 18",
+  "snapshot": "/workspace/atomic_solver/docs/plans/solve/measurements/plan1/snaps/d4d5_p34.tt",
+  "wall": 0.012,
+  "rc": 0,
+  "recon_outcome": "win",
+  "recon_nodes": 6,
+  "validate": "ok"
+ },
+ {
+  "line": "d4d5",
+  "ply": 36,
+  "fen": "rnbq1bnr/3Pkppp/4p3/P7/4PPPP/2p5/8/2BQKBNR w K - 1 19",
+  "snapshot": "/workspace/atomic_solver/docs/plans/solve/measurements/plan1/snaps/d4d5_p36.tt",
+  "wall": 0.012,
+  "rc": 0,
+  "recon_outcome": "win",
+  "recon_nodes": 4,
+  "validate": "ok"
+ },
+ {
+  "line": "d4d5",
+  "ply": 38,
+  "fen": "rnbq1bnr/3P1ppp/3Qpk2/P7/4PPPP/2p5/8/2B1KBNR w K - 3 20",
+  "snapshot": "/workspace/atomic_solver/docs/plans/solve/measurements/plan1/snaps/d4d5_p38.tt",
+  "wall": 0.012,
+  "rc": 0,
+  "recon_outcome": "win",
+  "recon_nodes": 2,
+  "validate": "ok"
+ }
+]

@@ -1,0 +1,15 @@
+# cmd: /workspace/atomic_solver/target/release/atomic_solver --fen rnbqkbnr/2pppppp/8/8/1p2P3/P1PP1PPP/8/RNBQKBNR b KQkq - 0 8 --timeout 8 --first-outcome
+# wall: 8.029
+## stdout
+preflight: deferred reason=detector evals=0
+outcome: draw length: 0
+timeout
+pre_exit: reason=Timeout outcome=draw nodes=1662976
+
+## stderr
+[bounded_search] chunk done: work_done=500012 next_chunk=1000000 elapsed=0.085s max_depth=8 nodes=19013 nps=222834
+[bounded_search] chunk done: work_done=1000001 next_chunk=2000000 elapsed=0.261s max_depth=8 nodes=57152 nps=219166
+[bounded_search] chunk done: work_done=2000004 next_chunk=4000000 elapsed=0.622s max_depth=9 nodes=135572 nps=217868
+[bounded_search] chunk done: work_done=4000008 next_chunk=8000000 elapsed=1.349s max_depth=10 nodes=290782 nps=215521
+[bounded_search] chunk done: work_done=8000025 next_chunk=16000000 elapsed=2.837s max_depth=13 nodes=608385 nps=214416
+[bounded_search] chunk done: work_done=16000024 next_chunk=32000000 elapsed=5.915s max_depth=13 nodes=1239795 nps=209608

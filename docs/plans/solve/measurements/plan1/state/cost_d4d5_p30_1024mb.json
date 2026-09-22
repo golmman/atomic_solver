@@ -1,0 +1,11 @@
+{
+ "line": "d4d5",
+ "ply": 30,
+ "tt_size_mb": 1024,
+ "fen": "rnbqkbnr/4pppp/8/P7/2pPPPPP/8/8/2BQKBNR w Kkq - 0 16",
+ "note": "1 GB TT addendum, same command as cost run except --tt-size 1024",
+ "pv_len": 33,
+ "tt_bytes": 502805985,
+ "exit_reason": "Complete",
+ "nodes": 17983230
+}
