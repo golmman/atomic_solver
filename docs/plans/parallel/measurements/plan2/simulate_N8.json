@@ -1,0 +1,38 @@
+{
+ "order": {
+  "workers": 8,
+  "projected_wall_s": 8.704,
+  "proven_move": "a2a4",
+  "speedup_vs_seq": 0.3,
+  "tail_s": 0.0,
+  "aggregate_nodes_prorated": 88336357,
+  "started": [
+   "a2a3",
+   "a2a4",
+   "d2d3",
+   "d2d4",
+   "e3e4",
+   "e3f4",
+   "g4g5",
+   "g4h5"
+  ]
+ },
+ "sjf": {
+  "workers": 8,
+  "projected_wall_s": 8.704,
+  "proven_move": "a2a4",
+  "speedup_vs_seq": 0.3,
+  "tail_s": 0.0,
+  "aggregate_nodes_prorated": 87492629,
+  "started": [
+   "a2a4",
+   "c3e4",
+   "e3f4",
+   "d6b8",
+   "b1b5",
+   "e3e4",
+   "c3d1",
+   "c3a4"
+  ]
+ }
+}

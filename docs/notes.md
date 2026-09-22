@@ -280,6 +280,11 @@ epsilon 0.375
 I want to profile the application and improve raw performance, i.e. nodes per second.
 Is this worth a new initiative?
 
+---
 
+Sounds good to me.
 
-
+Here are my answers:
+1. We prepare for the cluster. For now our testing hardware is limited to the capabilities of this sandbox. The sandboxes limits can be increased to a max of ~10 cpu cores, 32G ram, gpu if needed. More than that is costly. Tell me if this is insufficient and what we needed instead.
+2. I confirm. The ulimate metric to optimize is the wall time of finding the outcome and verifying the proof combined.
+3. I fine with lots of researching, trying out, learning. In the end we have version control so little risk in breaking things permanently and our knowledge only grows until we find the right way.

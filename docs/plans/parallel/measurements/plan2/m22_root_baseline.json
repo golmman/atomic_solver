@@ -1,0 +1,17 @@
+{
+ "fen": "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+ "wall_pass": {
+  "outcome": "win",
+  "pv_len": 95,
+  "wall_s": 2.629,
+  "nodes": null,
+  "reason": null
+ },
+ "work_pass": {
+  "outcome": "win",
+  "pv_len": 95,
+  "wall_s": 2.623,
+  "nodes": 858117,
+  "reason": "Complete"
+ }
+}

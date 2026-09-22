@@ -6,6 +6,21 @@ Opened 2026-09-21 as the consolidated home for the parallelization effort,
 absorbing `conversion` backlog #4 and `lean` backlog #2 (joint ownership
 split across two initiatives until now). The next plan number is **plan1**.
 
+**2026-09-21, plan2: architecture selection closed as measured NO-GO.**
+The option space is now closed by measurement on both sides: the
+shared-state architectures (A/B/D) are excluded by soundness/economics
+(plan1 mining; `design_space.md` §1), and the only constraint-satisfying
+shape — option C, a harness over unmodified solver processes — measured
+**0.27× wall speedup** (a 3.7× slowdown) at 4 workers on m22 with
+15.5× work inflation, far outside the pre-registered GO/MARGINAL bands
+(`design_space.md` §6, `measurements/plan2/`). The mechanism is
+structural: per-child process isolation forfeits the root search's
+cross-child transposition sharing and best-first proof interleaving
+(858 k nodes for the whole root vs 8.59 M for the winning child alone).
+No opt-in parallel mode ships; the initiative moves toward closure
+(backlog #3 never unblocks). The Pawlewicz & Hayward 2014 bibliography
+entry stays **Open** for a hypothetical future A-stage.
+
 The recorded evidence stands and is not reopened: deterministic parallelism
 is a **measured no-go** (`lean` plan7 spike — sibling-parallel ceiling
 1.47–1.48×, below the ~1.5× bar; the AND early-exit is already harvested
@@ -141,8 +156,8 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
 | # | Item | Mechanism | Potential | Affects | Effort | Status |
 |---|------|-----------|-----------|---------|--------|--------|
 | 1 | **Reading round: parallel PNS (2025-era)** | Mine the three open bibliography entries into `research_*.md` here: (a) Čížek, Balko, Schmid 2025 (*Massively Parallel Proof-Number Search*, arXiv:2511.10339 — two-level parallelization + shared worker info, 333× on 1024 cores); (b) Saffidine, Jouandeau, Cazenave 2011 (JLPNS, ACG-13); (c) Young, Hayward 2016 (*A Reverse Hex Solver*, scalable parallel DF-PN, Solrex). Extract per paper: cooperation protocol, TT sharing/sharding model, GHI/repetition handling under concurrency, scaling regime (where the gains saturate on 4–16 cores, not 1024) | information (feeds #2) | — | S | **mined 2026-09-21** (plan1): `research_cizek2025.md`, `research_jlpns.md`, `research_solrex.md` (+ vendored PDFs); all three silent on repetitions under concurrency (monotone domains) — the finding; small-pool evidence favors C over A; D's shared-DB layer has no safe payload here |
-| 2 | **Design-space note: architecture selection** | Weigh options A–D above against the design constraints; include the API/consumer story (opt-in `--threads N` vs a process-portfolio harness vs both). Sizing spike allowed per lean's cadence (temporary instrumentation, reverted) | selects the 2–8× lever's shape | — | M | open — plan1 synthesis input: C first (harness over unmodified processes), A behind it (mine Pawlewicz & Hayward 2014 first), B as adjunct, D dead (shared-DB payload unsafe here); spike order: C tail/`child_evals` inflation at 4–16 workers on m22/shuffle-win, decisive-composition agreement, N×TT RAM |
-| 3 | **Staged implementation** | Gated on #2 GO; one lever per plan; sequential drift protocol green at every stage; parallel mode documented as nondeterministic (or not shipped, per #2) | the actual speedup | wall | L–XL | blocked by #2 |
+| 2 | **Design-space note: architecture selection** | Weigh options A–D above against the design constraints; include the API/consumer story (opt-in `--threads N` vs a process-portfolio harness vs both). Sizing spike allowed per lean's cadence (temporary instrumentation, reverted) | selects the 2–8× lever's shape | — | M | **closed 2026-09-21 (plan2): measured NO-GO** — `design_space.md` + `measurements/plan2/`: option C (root-child race over unmodified processes) measured 0.27× wall (3.7× slowdown) at N=4 on m22, 15.5× work inflation, zero soundness violations; deficit structural (forfeited cross-child TT sharing/interleaving); ship-shape verdict recorded (harness-only, moot); no parallel mode ships |
+| 3 | **Staged implementation** | Gated on #2 GO; one lever per plan; sequential drift protocol green at every stage; parallel mode documented as nondeterministic (or not shipped, per #2) | the actual speedup | wall | L–XL | **closed 2026-09-21** — unblocking condition (#2 GO) failed on the pre-registered rules; no staged implementation exists to stage |
 
 ## Non-goals
 
@@ -169,6 +184,24 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
   and outcome agreement across repeated runs (no `wrong` ever).
 
 ## History
+
+- **2026-09-21** — **plan2 complete: architecture selection → measured
+  NO-GO** (no `src/`/`examples/` change; spike drove the release binary
+  as a black box): `design_space.md` written (A–D × constraints matrix,
+  ship-shape space, measured cells, decision); sizing spike executed in
+  the pre-registered order — perspective-mapping validation vs
+  `find_winning_child` (exact agreement, dec08/dec03), sequential
+  baselines (m22 2.63 s/858 k nodes; shuffle-win 47.8 s/13.9 M),
+  per-child tables (43+41 children, 120 s caps), races at N=2/3/4 ×
+  5 reps (0.29×/0.28×/0.27×; 11.6–15.5× inflation; zero decisive
+  disagreements), shuffle-win probe (race cannot reproduce the root
+  proof), RAM (≈230 MB/worker; N×TT restatement vs the enforced 8 GiB
+  cgroup), N=8/16 schedule simulations (0.30×, N- and order-insensitive;
+  labeled simulated). Bibliography: Pawlewicz & Hayward 2014 added as
+  **Open**. Backlogs #2/#3 closed; `docs/plans/README.md` row updated
+  (close event). Finding that closes the door: root-level cross-child
+  transposition sharing + best-first interleaving are worth ≈10× on
+  m22 and are structurally inaccessible to process-per-child workers.
 
 - **2026-09-21** — **plan1 reading round complete** (docs only, no code):
   backlog #1 mined — `research_cizek2025.md`, `research_jlpns.md`,

@@ -1,0 +1,163 @@
+{
+ "fen": "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+ "workers": 2,
+ "cap": 120,
+ "reps": [
+  {
+   "rep": 0,
+   "wall_s": 9.108,
+   "proven_move": "a2a4",
+   "winner_nodes": 8196035,
+   "aggregate_nodes_lower_bound": 9928244,
+   "started": [
+    "a2a3",
+    "a2a4"
+   ],
+   "workers": [
+    {
+     "move": "a2a3",
+     "outcome": null,
+     "pv_len": null,
+     "wall_s": 9.108,
+     "nodes": 1732209,
+     "reason": "killed",
+     "peak_rss_mb": 227.3
+    },
+    {
+     "move": "a2a4",
+     "outcome": "loss",
+     "pv_len": 448,
+     "wall_s": 9.105,
+     "nodes": 8196035,
+     "reason": "killed",
+     "peak_rss_mb": 228.3
+    }
+   ]
+  },
+  {
+   "rep": 1,
+   "wall_s": 8.976,
+   "proven_move": "a2a4",
+   "winner_nodes": 8196035,
+   "aggregate_nodes_lower_bound": 9928244,
+   "started": [
+    "a2a3",
+    "a2a4"
+   ],
+   "workers": [
+    {
+     "move": "a2a3",
+     "outcome": null,
+     "pv_len": null,
+     "wall_s": 8.976,
+     "nodes": 1732209,
+     "reason": "killed",
+     "peak_rss_mb": 227.3
+    },
+    {
+     "move": "a2a4",
+     "outcome": "loss",
+     "pv_len": 448,
+     "wall_s": 8.974,
+     "nodes": 8196035,
+     "reason": "killed",
+     "peak_rss_mb": 229.7
+    }
+   ]
+  },
+  {
+   "rep": 2,
+   "wall_s": 8.999,
+   "proven_move": "a2a4",
+   "winner_nodes": 8196035,
+   "aggregate_nodes_lower_bound": 9928244,
+   "started": [
+    "a2a3",
+    "a2a4"
+   ],
+   "workers": [
+    {
+     "move": "a2a3",
+     "outcome": null,
+     "pv_len": null,
+     "wall_s": 8.999,
+     "nodes": 1732209,
+     "reason": "killed",
+     "peak_rss_mb": 227.3
+    },
+    {
+     "move": "a2a4",
+     "outcome": "loss",
+     "pv_len": 448,
+     "wall_s": 8.997,
+     "nodes": 8196035,
+     "reason": "killed",
+     "peak_rss_mb": 228.3
+    }
+   ]
+  },
+  {
+   "rep": 3,
+   "wall_s": 9.383,
+   "proven_move": "a2a4",
+   "winner_nodes": 8196035,
+   "aggregate_nodes_lower_bound": 9928244,
+   "started": [
+    "a2a3",
+    "a2a4"
+   ],
+   "workers": [
+    {
+     "move": "a2a3",
+     "outcome": null,
+     "pv_len": null,
+     "wall_s": 9.383,
+     "nodes": 1732209,
+     "reason": "killed",
+     "peak_rss_mb": 227.3
+    },
+    {
+     "move": "a2a4",
+     "outcome": "loss",
+     "pv_len": 448,
+     "wall_s": 9.381,
+     "nodes": 8196035,
+     "reason": "killed",
+     "peak_rss_mb": 228.3
+    }
+   ]
+  },
+  {
+   "rep": 4,
+   "wall_s": 9.051,
+   "proven_move": "a2a4",
+   "winner_nodes": 8196035,
+   "aggregate_nodes_lower_bound": 9928244,
+   "started": [
+    "a2a3",
+    "a2a4"
+   ],
+   "workers": [
+    {
+     "move": "a2a3",
+     "outcome": null,
+     "pv_len": null,
+     "wall_s": 9.05,
+     "nodes": 1732209,
+     "reason": "killed",
+     "peak_rss_mb": 227.3
+    },
+    {
+     "move": "a2a4",
+     "outcome": "loss",
+     "pv_len": 448,
+     "wall_s": 9.049,
+     "nodes": 8196035,
+     "reason": "killed",
+     "peak_rss_mb": 229.9
+    }
+   ]
+  }
+ ],
+ "median_wall_s": 9.051
+}

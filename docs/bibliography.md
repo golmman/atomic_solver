@@ -172,6 +172,12 @@ Status values:
   [arXiv:1707.00627](https://arxiv.org/abs/1707.00627). — Scalable parallel
   DF-PN in practice (Solrex). **Mined** (`parallel/research_solrex.md`;
   vendored as `docs/theory/solrex-2016/solrex-2016.pdf`).
+- J. Pawlewicz, R. Hayward (2014). *Scalable Parallel DFPN Search*.
+  CG 2013, LNCS 8427, [arXiv:1503.07698](https://arxiv.org/abs/1503.07698).
+  — The SPDFPN mechanism paper behind Solrex's concurrency model (sharding/
+  locking/focussed children); the best few-thread shared-TT figures published
+  trace here. **Open** — mining deferred to the A-stage plan that would need
+  it (see `parallel/initiative.md` backlog #2; report1 next steps).
 - T. Čížek, M. Balko, M. Schmid (2025). *Massively Parallel Proof-Number
   Search for Impartial Games and Beyond*.
   [arXiv:2511.10339](https://arxiv.org/abs/2511.10339). — Two-level

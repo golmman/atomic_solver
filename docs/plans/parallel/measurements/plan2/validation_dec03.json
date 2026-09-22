@@ -1,0 +1,13 @@
+{
+ "fen": "r4r2/pp2p1Bk/2p3p1/1B1pP1bp/3P3P/1PN5/2P5/5R1K w - - 1 21",
+ "harness_proven_in_order": [
+  "b5d3"
+ ],
+ "harness_proven_set": [
+  "b5d3"
+ ],
+ "find_winning_child": [
+  "b5d3"
+ ],
+ "exact_agreement": true
+}
