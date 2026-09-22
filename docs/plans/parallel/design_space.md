@@ -13,6 +13,16 @@ Sizing-spike evidence: `measurements/plan2/` (harness script, raw
 captures, README with the command table). The spike drives the release
 binary as a black box; nothing in `src/` or `examples/` changed.
 
+**Scope note (2026-09-21):** everything below decides the *product
+solver's* opt-in single-position parallel mode against the product
+contracts (bit-identical sequential path, deterministic budgets,
+interactive RAM envelope). It does **not** bind the startpos-solve
+campaign (initiative `solve`), whose soundness contract is the
+verifiability of the final artifact and whose architecture — job-level
+PNS over persistent workers with retention and master feedback —
+operates at a point this spike deliberately did not measure (one job per
+worker, no retention opportunity).
+
 Related: `initiative.md` (constraints, normative), `plan1.md` /
 `report1.md` (reading round), `research_cizek2025.md`,
 `research_jlpns.md`, `research_solrex.md`, `../lean/report7.md`

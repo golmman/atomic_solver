@@ -148,6 +148,14 @@ to be the *smaller* half of the problem; the floor is the bigger one.
 - Initiative `parallel`: moves toward closure — update the
   `docs/plans/README.md` status at the next initiative audit if any
   residue remains (row already updated as a close event).
+- **Scope note (added 2026-09-21):** this report's NO-GO is scoped to
+  the product solver's opt-in single-position mode. The revealed
+  ultimate workload — solving atomic chess from the starting position —
+  is a different computational object (verifiable-artifact soundness,
+  throughput-oriented, cluster-scale) and is now owned by the
+  `solve` initiative (`docs/plans/solve/initiative.md`), whose
+  architecture (job-level PNS over persistent workers) operates at the
+  retention/feedback point this spike intentionally did not measure.
 - If a real consumer for fast single-position solves ever appears:
   start from `design_space.md` §5–6 and the reopen conditions there —
   the A-stage gate (mine SPDFPN 2014, inert TT-concurrency refactor,
