@@ -260,5 +260,22 @@ worker corner of it.
   gates FINISHABLE / NOT-FINISHABLE-at-10× / SPLIT), Task B = the ±1-ply
   parent→child substrate measurement plan2 skipped (median `avail` gate 5% /
   1%). No product changes; ~4.5 h sequential wall.
+- **2026-09-23** — **plan5 drafted** (not yet executed): the roadmap's Phase-1
+  intellectual gate, resolving the recorded open question (scope = with
+  prototype, per the recommendation on record). Deliverables: D1
+  `campaign_architecture.md` (GHI-correct job-level soundness contract:
+  job = (subposition, clock, deterministic budget, context); split = proof
+  events only, no repetition-dependent fact crosses a boundary; merge =
+  global-context replay verification, per plan4's proven position-keyed
+  composition contract; anchor clock-safety classes; checkpointability;
+  cluster readiness) and D2 the two-job prototype (`examples/campaign*`,
+  campaign code only). Pre-registered gates: SOUND hard (zero false
+  decisive facts, artifact validates, dual-check) and ECON (C2: GO ≥ 1.2×
+  wall AND ≤ 3.0× work inflation, calibrated against Kaneko/Čížek 2-worker
+  figures vs the parallel-plan2 0.27×/15.5× corner and discounted for
+  untuned-v0 overhead; NO-GO beyond MARGINAL bands) plus retention/feedback
+  attribution ablations (C2-nr / C2-nf) gating GO alongside the economics.
+  Independent of plan6; verdicts feed the plan7 threshold per the
+  initiative's status rule.
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
