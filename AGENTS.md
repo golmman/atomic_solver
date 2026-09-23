@@ -170,6 +170,18 @@ If these commands start failing (`EPERM`/`EACCES` on event open), the host-side 
   - the final task of an implementation plan is creating the corresponding implementation report
   - a report should include additional tools/examples used, problems encountered, unresolved parts, missing tests, next steps
   - older plans and reports may not reflect the current state of the application or its goals
+- Measurement data under `docs/plans/<initiative>/measurements/` follows a
+  fixed layout so that a plain `git add .` stays clean:
+  - commit: per-plan `README.md` (provenance table), `env.json`, the
+    driver scripts (`*.py`, `*.rs`, patches), parsed results
+    (`state/*.json`, result `*.json`/`*.csv`), and expensive reusable
+    binaries (e.g. validated proof-tree artifacts, tablebase dumps);
+  - never commit: raw solver run transcripts (`logs/`, `*.out`, `*.err`,
+    `*.log`, `.time`, captured stdout/stderr) and TT-snapshot tombstones
+    (`*.tt.keep`). These are `.gitignore`d; the committed drivers plus
+    the parsed results are the reproducible record. To preserve a
+    transcript that is not regenerable (one-off instrumented build,
+    perf profile), commit it explicitly with `git add -f`.
 - Specifications in `docs/spec/` must be standalone documents: no references
   to `docs/plans/`, reports, or repo-internal process vocabulary (gate names,
   fixture/case names). They are normative contracts copied verbatim into

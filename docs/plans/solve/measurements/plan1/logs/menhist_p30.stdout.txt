@@ -1,6 +1,0 @@
-preflight: deferred reason=detector evals=0
-outcome: win length: 29
-pv: c1a3 d8d6 e4e5 d6a3 d4d5 e8d8 f1c4 c8a6 e5e6 a6c4 d5d6 d8c8 d1b1 c4b5 b1c1 b5c4 d6d7 c8b7 c1b2 c4b3 b2g2 b3d5 a5a6 b7b6 d7d8q b6b5 d8b6 b5c4 g2d5
-pv_status: first-outcome
-tt_snapshot: snaps/menhist_p30.tt solved=1467392 unsolved=2716349 bytes=136097625
-pre_exit: reason=Complete outcome=win nodes=23228233

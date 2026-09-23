@@ -29,9 +29,16 @@ proof_tree.bin.tt
 data/corpus/
 data/oracle/
 
-# Raw measurement run data: solver run transcripts (.out/.err, superseded
-# by the parsed results in measurements/*/state/*.json) and empty
-# TT-snapshot tombstones (*.tt.keep). Summaries live in the per-plan
-# measurements/*/README.md; the drivers + env.json + state are committed.
-docs/plans/**/measurements/*/logs/
+# Raw measurement run data: solver run transcripts (.out/.err/.log/.time,
+# captured stdout/stderr, superseded by the parsed results in
+# measurements/*/state/*.json) and empty TT-snapshot tombstones
+# (*.tt.keep). Summaries live in the per-plan measurements/*/README.md;
+# the drivers + env.json + parsed results are committed. See the
+# measurement-data convention in AGENTS.md; commit exceptions via
+# `git add -f`.
+docs/plans/**/measurements/**/logs/
+docs/plans/**/measurements/**/*.log
+docs/plans/**/measurements/**/*.out
+docs/plans/**/measurements/**/*.err
+docs/plans/**/measurements/**/*.time
 *.tt.keep

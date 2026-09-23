@@ -1,6 +1,0 @@
-preflight: deferred reason=detector evals=0
-outcome: win length: 7
-pv: d5d6 e7e6 d6d7 e8e7 d1d6 e7f6 d6e6
-pv_status: first-outcome
-tt_snapshot: snaps/menhist_p32.tt solved=190 unsolved=659 bytes=30617
-pre_exit: reason=Complete outcome=win nodes=900

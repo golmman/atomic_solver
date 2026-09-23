@@ -1,9 +1,0 @@
-[bounded_search] chunk done: work_done=500005 next_chunk=1000000 elapsed=0.099s max_depth=15 nodes=24274 nps=245477
-[bounded_search] chunk done: work_done=1000020 next_chunk=2000000 elapsed=0.312s max_depth=13 nodes=74830 nps=239978
-[bounded_search] chunk done: work_done=2000013 next_chunk=4000000 elapsed=0.732s max_depth=19 nodes=188719 nps=257793
-[bounded_search] chunk done: work_done=4000004 next_chunk=8000000 elapsed=1.593s max_depth=24 nodes=411321 nps=258125
-[bounded_search] chunk done: work_done=8000011 next_chunk=16000000 elapsed=3.303s max_depth=73 nodes=884028 nps=267680
-[bounded_search] chunk done: work_done=16000001 next_chunk=32000000 elapsed=5.577s max_depth=144 nodes=3087621 nps=553684
-[bounded_search] chunk done: work_done=32000006 next_chunk=64000000 elapsed=9.069s max_depth=91 nodes=8383783 nps=924474
-outcome: win length: 73
-  child_evals         = 63863508

@@ -1,8 +1,0 @@
-outcome: win
-nodes: 32942
-holes: hit=16832 terminal=13404 clock_hit=704 clock_miss_draw=0 repetition=0 absent=2002 filled=2002 unfillable=0 anomalies=0
-fill_evals: 2243 duplicate_keys: 0
-dump: /workspace/atomic_solver/docs/plans/solve/measurements/plan1/reconstructed_d4d5_p30.bin
-validate: ok
-
-## stderr

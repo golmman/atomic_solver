@@ -1,9 +1,0 @@
-[bounded_search] chunk done: work_done=500012 next_chunk=1000000 elapsed=0.082s max_depth=16 nodes=24900 nps=302328
-[bounded_search] chunk done: work_done=1000000 next_chunk=2000000 elapsed=0.257s max_depth=15 nodes=76444 nps=297184
-[bounded_search] chunk done: work_done=2000004 next_chunk=4000000 elapsed=0.600s max_depth=19 nodes=187111 nps=311766
-[bounded_search] chunk done: work_done=4000028 next_chunk=8000000 elapsed=1.293s max_depth=20 nodes=402548 nps=311334
-[bounded_search] chunk done: work_done=8000007 next_chunk=16000000 elapsed=2.710s max_depth=21 nodes=817820 nps=301832
-[bounded_search] chunk done: work_done=16000015 next_chunk=32000000 elapsed=5.703s max_depth=31 nodes=1648353 nps=289016
-[bounded_search] chunk done: work_done=32000014 next_chunk=64000000 elapsed=11.822s max_depth=40 nodes=3380667 nps=285974
-[bounded_search] chunk done: work_done=64000022 next_chunk=128000000 elapsed=23.616s max_depth=83 nodes=6932782 nps=293561
-outcome: win length: 199
