@@ -28,3 +28,10 @@ proof_tree.bin.tt
 # Local nn-era leftovers (archive lives on the nn branch)
 data/corpus/
 data/oracle/
+
+# Raw measurement run data: solver run transcripts (.out/.err, superseded
+# by the parsed results in measurements/*/state/*.json) and empty
+# TT-snapshot tombstones (*.tt.keep). Summaries live in the per-plan
+# measurements/*/README.md; the drivers + env.json + state are committed.
+docs/plans/**/measurements/*/logs/
+*.tt.keep

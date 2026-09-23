@@ -1,0 +1,28 @@
+{
+ "outcome": "win",
+ "pv": [
+  "d8a5",
+  "d1d2",
+  "a5d2"
+ ],
+ "pv_status": "first-outcome",
+ "exit_reason": "Complete",
+ "exit_outcome": "win",
+ "nodes": 29,
+ "tt_bytes": 1107,
+ "tt_solved": 6,
+ "tt_unsolved": 22,
+ "timeout_flag": false,
+ "censored": false,
+ "fen": "rnbqkbnr/3ppppp/2p5/8/P1PPP3/5NPP/5P2/2BQKB1R b Kkq - 0 12",
+ "wall": 0.025,
+ "rc": 0,
+ "rss_kb": 234404,
+ "tt_size_flag": null,
+ "cmd": "/workspace/atomic_solver/target/release/atomic_solver --fen rnbqkbnr/3ppppp/2p5/8/P1PPP3/5NPP/5P2/2BQKB1R b Kkq - 0 12 --timeout 120 --first-outcome --tt-dump-path /workspace/atomic_solver/docs/plans/solve/measurements/plan3/snaps/tb_nf3_p23.tt",
+ "line": "nf3",
+ "ply": 23,
+ "pv_move": "d8a5",
+ "steer_outcome": "win length: 3",
+ "steer_nodes": 29
+}

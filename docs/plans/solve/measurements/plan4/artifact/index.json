@@ -1,0 +1,2227 @@
+{
+ "n_members": 95,
+ "validate_ok": 95,
+ "outcome_match": 95,
+ "total_tree_nodes": 12592,
+ "total_unique_keys": 11669,
+ "members_with_duplicate_keys": 34,
+ "total_find_wall": 14.637,
+ "total_verify_wall": 2.407,
+ "artifact_bytes": 82644,
+ "entries": [
+  {
+   "tag": "p2_c2c3_g7g5",
+   "fen": "rnbqkbnr/pppppp1p/8/6p1/8/2P5/PP1PPPPP/RNBQKBNR w KQkq g6 0 2",
+   "moves": [
+    "c2c3",
+    "g7g5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 7,
+   "nodes": 20737,
+   "wall": 0.159,
+   "plan1_nodes": null,
+   "pv": [
+    "d1a4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.029,
+   "outcome_match": true,
+   "tree_nodes": 334,
+   "tree_unique_keys": 314
+  },
+  {
+   "tag": "p2_e2e3_a7a5",
+   "fen": "rnbqkbnr/1ppppppp/8/p7/8/4P3/PPPP1PPP/RNBQKBNR w KQkq a6 0 2",
+   "moves": [
+    "e2e3",
+    "a7a5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 1035,
+   "wall": 0.031,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 80,
+   "tree_unique_keys": 80
+  },
+  {
+   "tag": "p2_e2e3_a7a6",
+   "fen": "rnbqkbnr/1ppppppp/p7/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+   "moves": [
+    "e2e3",
+    "a7a6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 636,
+   "wall": 0.029,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 72,
+   "tree_unique_keys": 72
+  },
+  {
+   "tag": "p2_e2e3_b7b5",
+   "fen": "rnbqkbnr/p1pppppp/8/1p6/8/4P3/PPPP1PPP/RNBQKBNR w KQkq b6 0 2",
+   "moves": [
+    "e2e3",
+    "b7b5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 445,
+   "wall": 0.029,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 80,
+   "tree_unique_keys": 80
+  },
+  {
+   "tag": "p2_e2e3_b7b6",
+   "fen": "rnbqkbnr/p1pppppp/1p6/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+   "moves": [
+    "e2e3",
+    "b7b6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 908,
+   "wall": 0.029,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 80,
+   "tree_unique_keys": 80
+  },
+  {
+   "tag": "p2_e2e3_b8a6",
+   "fen": "r1bqkbnr/pppppppp/n7/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 1 2",
+   "moves": [
+    "e2e3",
+    "b8a6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 929,
+   "wall": 0.029,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.019,
+   "outcome_match": true,
+   "tree_nodes": 76,
+   "tree_unique_keys": 76
+  },
+  {
+   "tag": "p2_e2e3_b8c6",
+   "fen": "r1bqkbnr/pppppppp/2n5/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 1 2",
+   "moves": [
+    "e2e3",
+    "b8c6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 265,
+   "wall": 0.028,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 84,
+   "tree_unique_keys": 84
+  },
+  {
+   "tag": "p2_e2e3_c7c5",
+   "fen": "rnbqkbnr/pp1ppppp/8/2p5/8/4P3/PPPP1PPP/RNBQKBNR w KQkq c6 0 2",
+   "moves": [
+    "e2e3",
+    "c7c5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 722,
+   "wall": 0.028,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 84,
+   "tree_unique_keys": 84
+  },
+  {
+   "tag": "p2_e2e3_f7f6",
+   "fen": "rnbqkbnr/ppppp1pp/5p2/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+   "moves": [
+    "e2e3",
+    "f7f6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 7,
+   "nodes": 531,
+   "wall": 0.029,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 42,
+   "tree_unique_keys": 42
+  },
+  {
+   "tag": "p2_e2e3_g7g5",
+   "fen": "rnbqkbnr/pppppp1p/8/6p1/8/4P3/PPPP1PPP/RNBQKBNR w KQkq g6 0 2",
+   "moves": [
+    "e2e3",
+    "g7g5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 158,
+   "wall": 0.026,
+   "plan1_nodes": null,
+   "pv": [
+    "f1b5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 114,
+   "tree_unique_keys": 112
+  },
+  {
+   "tag": "p2_e2e3_g7g6",
+   "fen": "rnbqkbnr/pppppp1p/6p1/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+   "moves": [
+    "e2e3",
+    "g7g6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 9,
+   "nodes": 1047199,
+   "wall": 6.045,
+   "plan1_nodes": null,
+   "pv": [
+    "d1f3"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.421,
+   "outcome_match": true,
+   "tree_nodes": 1044,
+   "tree_unique_keys": 860
+  },
+  {
+   "tag": "p2_e2e3_g8h6",
+   "fen": "rnbqkb1r/pppppppp/7n/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 1 2",
+   "moves": [
+    "e2e3",
+    "g8h6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 830,
+   "wall": 0.032,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.019,
+   "outcome_match": true,
+   "tree_nodes": 76,
+   "tree_unique_keys": 76
+  },
+  {
+   "tag": "p2_e2e3_h7h5",
+   "fen": "rnbqkbnr/ppppppp1/8/7p/8/4P3/PPPP1PPP/RNBQKBNR w KQkq h6 0 2",
+   "moves": [
+    "e2e3",
+    "h7h5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 11,
+   "nodes": 900365,
+   "wall": 5.039,
+   "plan1_nodes": null,
+   "pv": [
+    "d1f3"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.369,
+   "outcome_match": true,
+   "tree_nodes": 1112,
+   "tree_unique_keys": 955
+  },
+  {
+   "tag": "p2_e2e3_h7h6",
+   "fen": "rnbqkbnr/ppppppp1/7p/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+   "moves": [
+    "e2e3",
+    "h7h6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 704,
+   "wall": 0.028,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 70,
+   "tree_unique_keys": 70
+  },
+  {
+   "tag": "p2_e2e4_a7a5",
+   "fen": "rnbqkbnr/1ppppppp/8/p7/4P3/8/PPPP1PPP/RNBQKBNR w KQkq a6 0 2",
+   "moves": [
+    "e2e4",
+    "a7a5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 1087,
+   "wall": 0.031,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 80,
+   "tree_unique_keys": 80
+  },
+  {
+   "tag": "p2_e2e4_a7a6",
+   "fen": "rnbqkbnr/1ppppppp/p7/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+   "moves": [
+    "e2e4",
+    "a7a6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 685,
+   "wall": 0.03,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 72,
+   "tree_unique_keys": 72
+  },
+  {
+   "tag": "p2_e2e4_b7b5",
+   "fen": "rnbqkbnr/p1pppppp/8/1p6/4P3/8/PPPP1PPP/RNBQKBNR w KQkq b6 0 2",
+   "moves": [
+    "e2e4",
+    "b7b5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 494,
+   "wall": 0.028,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 80,
+   "tree_unique_keys": 80
+  },
+  {
+   "tag": "p2_e2e4_b7b6",
+   "fen": "rnbqkbnr/p1pppppp/1p6/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+   "moves": [
+    "e2e4",
+    "b7b6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 959,
+   "wall": 0.03,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 80,
+   "tree_unique_keys": 80
+  },
+  {
+   "tag": "p2_e2e4_b8a6",
+   "fen": "r1bqkbnr/pppppppp/n7/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2",
+   "moves": [
+    "e2e4",
+    "b8a6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 981,
+   "wall": 0.031,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 76,
+   "tree_unique_keys": 76
+  },
+  {
+   "tag": "p2_e2e4_b8c6",
+   "fen": "r1bqkbnr/pppppppp/2n5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2",
+   "moves": [
+    "e2e4",
+    "b8c6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 316,
+   "wall": 0.028,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 84,
+   "tree_unique_keys": 84
+  },
+  {
+   "tag": "p2_e2e4_c7c5",
+   "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2",
+   "moves": [
+    "e2e4",
+    "c7c5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 774,
+   "wall": 0.029,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 84,
+   "tree_unique_keys": 84
+  },
+  {
+   "tag": "p2_e2e4_e7e5",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2",
+   "moves": [
+    "e2e4",
+    "e7e5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 9,
+   "nodes": 4749,
+   "wall": 0.049,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.019,
+   "outcome_match": true,
+   "tree_nodes": 176,
+   "tree_unique_keys": 168
+  },
+  {
+   "tag": "p2_e2e4_f7f5",
+   "fen": "rnbqkbnr/ppppp1pp/8/5p2/4P3/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 2",
+   "moves": [
+    "e2e4",
+    "f7f5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 7,
+   "nodes": 3695,
+   "wall": 0.047,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.019,
+   "outcome_match": true,
+   "tree_nodes": 86,
+   "tree_unique_keys": 86
+  },
+  {
+   "tag": "p2_e2e4_f7f6",
+   "fen": "rnbqkbnr/ppppp1pp/5p2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+   "moves": [
+    "e2e4",
+    "f7f6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 7,
+   "nodes": 531,
+   "wall": 0.029,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 42,
+   "tree_unique_keys": 42
+  },
+  {
+   "tag": "p2_e2e4_g7g5",
+   "fen": "rnbqkbnr/pppppp1p/8/6p1/4P3/8/PPPP1PPP/RNBQKBNR w KQkq g6 0 2",
+   "moves": [
+    "e2e4",
+    "g7g5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 158,
+   "wall": 0.028,
+   "plan1_nodes": null,
+   "pv": [
+    "f1b5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 114,
+   "tree_unique_keys": 112
+  },
+  {
+   "tag": "p2_e2e4_g8h6",
+   "fen": "rnbqkb1r/pppppppp/7n/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2",
+   "moves": [
+    "e2e4",
+    "g8h6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 831,
+   "wall": 0.032,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 76,
+   "tree_unique_keys": 76
+  },
+  {
+   "tag": "p2_e2e4_h7h6",
+   "fen": "rnbqkbnr/ppppppp1/7p/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+   "moves": [
+    "e2e4",
+    "h7h6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 752,
+   "wall": 0.03,
+   "plan1_nodes": null,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 70,
+   "tree_unique_keys": 70
+  },
+  {
+   "tag": "p2_g1f3_a7a5",
+   "fen": "rnbqkbnr/1ppppppp/8/p7/8/5N2/PPPPPPPP/RNBQKB1R w KQkq a6 0 2",
+   "moves": [
+    "g1f3",
+    "a7a5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 85,
+   "wall": 0.027,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.015,
+   "outcome_match": true,
+   "tree_nodes": 42,
+   "tree_unique_keys": 42
+  },
+  {
+   "tag": "p2_g1f3_a7a6",
+   "fen": "rnbqkbnr/1ppppppp/p7/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+   "moves": [
+    "g1f3",
+    "a7a6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 82,
+   "wall": 0.027,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 38,
+   "tree_unique_keys": 38
+  },
+  {
+   "tag": "p2_g1f3_b7b5",
+   "fen": "rnbqkbnr/p1pppppp/8/1p6/8/5N2/PPPPPPPP/RNBQKB1R w KQkq b6 0 2",
+   "moves": [
+    "g1f3",
+    "b7b5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 86,
+   "wall": 0.027,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 42,
+   "tree_unique_keys": 42
+  },
+  {
+   "tag": "p2_g1f3_b7b6",
+   "fen": "rnbqkbnr/p1pppppp/1p6/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+   "moves": [
+    "g1f3",
+    "b7b6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 86,
+   "wall": 0.026,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 42,
+   "tree_unique_keys": 42
+  },
+  {
+   "tag": "p2_g1f3_b8a6",
+   "fen": "r1bqkbnr/pppppppp/n7/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 2 2",
+   "moves": [
+    "g1f3",
+    "b8a6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 84,
+   "wall": 0.028,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 40,
+   "tree_unique_keys": 40
+  },
+  {
+   "tag": "p2_g1f3_b8c6",
+   "fen": "r1bqkbnr/pppppppp/2n5/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 2 2",
+   "moves": [
+    "g1f3",
+    "b8c6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 3124,
+   "wall": 0.042,
+   "plan1_nodes": null,
+   "pv": [
+    "f3g5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 126,
+   "tree_unique_keys": 126
+  },
+  {
+   "tag": "p2_g1f3_c7c5",
+   "fen": "rnbqkbnr/pp1ppppp/8/2p5/8/5N2/PPPPPPPP/RNBQKB1R w KQkq c6 0 2",
+   "moves": [
+    "g1f3",
+    "c7c5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 133,
+   "wall": 0.028,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 44,
+   "tree_unique_keys": 44
+  },
+  {
+   "tag": "p2_g1f3_c7c6",
+   "fen": "rnbqkbnr/pp1ppppp/2p5/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+   "moves": [
+    "g1f3",
+    "c7c6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 86,
+   "wall": 0.027,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 42,
+   "tree_unique_keys": 42
+  },
+  {
+   "tag": "p2_g1f3_d7d5",
+   "fen": "rnbqkbnr/ppp1pppp/8/3p4/8/5N2/PPPPPPPP/RNBQKB1R w KQkq d6 0 2",
+   "moves": [
+    "g1f3",
+    "d7d5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 194,
+   "wall": 0.026,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 128,
+   "tree_unique_keys": 127
+  },
+  {
+   "tag": "p2_g1f3_e7e6",
+   "fen": "rnbqkbnr/pppp1ppp/4p3/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+   "moves": [
+    "g1f3",
+    "e7e6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 203,
+   "wall": 0.029,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 60,
+   "tree_unique_keys": 58
+  },
+  {
+   "tag": "p2_g1f3_f7f5",
+   "fen": "rnbqkbnr/ppppp1pp/8/5p2/8/5N2/PPPPPPPP/RNBQKB1R w KQkq f6 0 2",
+   "moves": [
+    "g1f3",
+    "f7f5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 179,
+   "wall": 0.028,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 114,
+   "tree_unique_keys": 113
+  },
+  {
+   "tag": "p2_g1f3_g7g5",
+   "fen": "rnbqkbnr/pppppp1p/8/6p1/8/5N2/PPPPPPPP/RNBQKB1R w KQkq g6 0 2",
+   "moves": [
+    "g1f3",
+    "g7g5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 126,
+   "wall": 0.027,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 42,
+   "tree_unique_keys": 42
+  },
+  {
+   "tag": "p2_g1f3_g7g6",
+   "fen": "rnbqkbnr/pppppp1p/6p1/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+   "moves": [
+    "g1f3",
+    "g7g6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 86,
+   "wall": 0.027,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.015,
+   "outcome_match": true,
+   "tree_nodes": 42,
+   "tree_unique_keys": 42
+  },
+  {
+   "tag": "p2_g1f3_g8f6",
+   "fen": "rnbqkb1r/pppppppp/5n2/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 2 2",
+   "moves": [
+    "g1f3",
+    "g8f6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 88,
+   "wall": 0.026,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.015,
+   "outcome_match": true,
+   "tree_nodes": 44,
+   "tree_unique_keys": 44
+  },
+  {
+   "tag": "p2_g1f3_g8h6",
+   "fen": "rnbqkb1r/pppppppp/7n/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 2 2",
+   "moves": [
+    "g1f3",
+    "g8h6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 84,
+   "wall": 0.026,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 40,
+   "tree_unique_keys": 40
+  },
+  {
+   "tag": "p2_g1f3_h7h5",
+   "fen": "rnbqkbnr/ppppppp1/8/7p/8/5N2/PPPPPPPP/RNBQKB1R w KQkq h6 0 2",
+   "moves": [
+    "g1f3",
+    "h7h5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 86,
+   "wall": 0.027,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 42,
+   "tree_unique_keys": 42
+  },
+  {
+   "tag": "p2_g1f3_h7h6",
+   "fen": "rnbqkbnr/ppppppp1/7p/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+   "moves": [
+    "g1f3",
+    "h7h6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 82,
+   "wall": 0.026,
+   "plan1_nodes": null,
+   "pv": [
+    "f3e5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 38,
+   "tree_unique_keys": 38
+  },
+  {
+   "tag": "p2_g1h3_a7a5",
+   "fen": "rnbqkbnr/1ppppppp/8/p7/8/7N/PPPPPPPP/RNBQKB1R w KQkq a6 0 2",
+   "moves": [
+    "g1h3",
+    "a7a5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 1804,
+   "wall": 0.037,
+   "plan1_nodes": null,
+   "pv": [
+    "h3g5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 120,
+   "tree_unique_keys": 120
+  },
+  {
+   "tag": "p2_g1h3_a7a6",
+   "fen": "rnbqkbnr/1ppppppp/p7/8/8/7N/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+   "moves": [
+    "g1h3",
+    "a7a6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 1762,
+   "wall": 0.037,
+   "plan1_nodes": null,
+   "pv": [
+    "h3g5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 108,
+   "tree_unique_keys": 108
+  },
+  {
+   "tag": "p2_g1h3_b7b5",
+   "fen": "rnbqkbnr/p1pppppp/8/1p6/8/7N/PPPPPPPP/RNBQKB1R w KQkq b6 0 2",
+   "moves": [
+    "g1h3",
+    "b7b5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 1792,
+   "wall": 0.038,
+   "plan1_nodes": null,
+   "pv": [
+    "h3g5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 120,
+   "tree_unique_keys": 120
+  },
+  {
+   "tag": "p2_g1h3_b7b6",
+   "fen": "rnbqkbnr/p1pppppp/1p6/8/8/7N/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+   "moves": [
+    "g1h3",
+    "b7b6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 1797,
+   "wall": 0.035,
+   "plan1_nodes": null,
+   "pv": [
+    "h3g5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 120,
+   "tree_unique_keys": 120
+  },
+  {
+   "tag": "p2_g1h3_b8a6",
+   "fen": "r1bqkbnr/pppppppp/n7/8/8/7N/PPPPPPPP/RNBQKB1R w KQkq - 2 2",
+   "moves": [
+    "g1h3",
+    "b8a6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 1808,
+   "wall": 0.035,
+   "plan1_nodes": null,
+   "pv": [
+    "h3g5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 114,
+   "tree_unique_keys": 114
+  },
+  {
+   "tag": "p2_g1h3_b8c6",
+   "fen": "r1bqkbnr/pppppppp/2n5/8/8/7N/PPPPPPPP/RNBQKB1R w KQkq - 2 2",
+   "moves": [
+    "g1h3",
+    "b8c6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 1884,
+   "wall": 0.037,
+   "plan1_nodes": null,
+   "pv": [
+    "h3g5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 126,
+   "tree_unique_keys": 126
+  },
+  {
+   "tag": "p2_g1h3_g7g5",
+   "fen": "rnbqkbnr/pppppp1p/8/6p1/8/7N/PPPPPPPP/RNBQKB1R w KQkq g6 0 2",
+   "moves": [
+    "g1h3",
+    "g7g5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 11,
+   "nodes": 36660,
+   "wall": 0.223,
+   "plan1_nodes": null,
+   "pv": [
+    "e2e3"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.031,
+   "outcome_match": true,
+   "tree_nodes": 2356,
+   "tree_unique_keys": 1970
+  },
+  {
+   "tag": "p2_g1h3_g7g6",
+   "fen": "rnbqkbnr/pppppp1p/6p1/8/8/7N/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+   "moves": [
+    "g1h3",
+    "g7g6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 1781,
+   "wall": 0.036,
+   "plan1_nodes": null,
+   "pv": [
+    "h3g5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 120,
+   "tree_unique_keys": 119
+  },
+  {
+   "tag": "p2_g1h3_g8f6",
+   "fen": "rnbqkb1r/pppppppp/5n2/8/8/7N/PPPPPPPP/RNBQKB1R w KQkq - 2 2",
+   "moves": [
+    "g1h3",
+    "g8f6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 84,
+   "wall": 0.026,
+   "plan1_nodes": null,
+   "pv": [
+    "h3g5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 44,
+   "tree_unique_keys": 44
+  },
+  {
+   "tag": "p2_g1h3_g8h6",
+   "fen": "rnbqkb1r/pppppppp/7n/8/8/7N/PPPPPPPP/RNBQKB1R w KQkq - 2 2",
+   "moves": [
+    "g1h3",
+    "g8h6"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 1040,
+   "wall": 0.032,
+   "plan1_nodes": null,
+   "pv": [
+    "h3g5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 114,
+   "tree_unique_keys": 114
+  },
+  {
+   "tag": "p2_g1h3_h7h5",
+   "fen": "rnbqkbnr/ppppppp1/8/7p/8/7N/PPPPPPPP/RNBQKB1R w KQkq h6 0 2",
+   "moves": [
+    "g1h3",
+    "h7h5"
+   ],
+   "tier": "p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 1746,
+   "wall": 0.037,
+   "plan1_nodes": null,
+   "pv": [
+    "h3g5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.019,
+   "outcome_match": true,
+   "tree_nodes": 120,
+   "tree_unique_keys": 120
+  },
+  {
+   "tag": "sib_d4d5_p32_c1d2",
+   "fen": "rnbqkbnr/4pppp/8/P2P4/4PPPP/2p5/3B4/3QKBNR b Kkq - 1 17",
+   "moves": [
+    "c1d2"
+   ],
+   "tier": "sib_d4d5_p32",
+   "outcome": "win",
+   "dtm_length": 1,
+   "nodes": 1,
+   "wall": 0.026,
+   "plan1_nodes": null,
+   "pv": [
+    "c3d2"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 2,
+   "tree_unique_keys": 2
+  },
+  {
+   "tag": "sib_d4d5_p32_d1d2",
+   "fen": "rnbqkbnr/4pppp/8/P2P4/4PPPP/2p5/3Q4/2B1KBNR b Kkq - 1 17",
+   "moves": [
+    "d1d2"
+   ],
+   "tier": "sib_d4d5_p32",
+   "outcome": "win",
+   "dtm_length": 1,
+   "nodes": 1,
+   "wall": 0.028,
+   "plan1_nodes": null,
+   "pv": [
+    "c3d2"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 2,
+   "tree_unique_keys": 2
+  },
+  {
+   "tag": "sib_d4d5_p32_d5d6",
+   "fen": "rnbqkbnr/4pppp/3P4/P7/4PPPP/2p5/8/2BQKBNR b Kkq - 0 17",
+   "moves": [
+    "d5d6"
+   ],
+   "tier": "sib_d4d5_p32",
+   "outcome": "loss",
+   "dtm_length": 6,
+   "nodes": 43,
+   "wall": 0.027,
+   "plan1_nodes": null,
+   "pv": [
+    "e7e6"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "loss",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 67,
+   "tree_unique_keys": 65
+  },
+  {
+   "tag": "sib_d4d5_p32_e1e2",
+   "fen": "rnbqkbnr/4pppp/8/P2P4/4PPPP/2p5/4K3/2BQ1BNR b kq - 1 17",
+   "moves": [
+    "e1e2"
+   ],
+   "tier": "sib_d4d5_p32",
+   "outcome": "win",
+   "dtm_length": 13,
+   "nodes": 6863,
+   "wall": 0.07,
+   "plan1_nodes": null,
+   "pv": [
+    "c8a6"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.019,
+   "outcome_match": true,
+   "tree_nodes": 174,
+   "tree_unique_keys": 169
+  },
+  {
+   "tag": "sib_d4d5_p32_f1b5",
+   "fen": "rnbqkbnr/4pppp/8/PB1P4/4PPPP/2p5/8/2BQK1NR b Kkq - 1 17",
+   "moves": [
+    "f1b5"
+   ],
+   "tier": "sib_d4d5_p32",
+   "outcome": "loss",
+   "dtm_length": 8,
+   "nodes": 739,
+   "wall": 0.031,
+   "plan1_nodes": null,
+   "pv": [
+    "d8a5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "loss",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 151,
+   "tree_unique_keys": 144
+  },
+  {
+   "tag": "sib_e4e5_p2_a2a3",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/P7/1PPP1PPP/RNBQKBNR b KQkq - 0 2",
+   "moves": [
+    "a2a3"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 9,
+   "nodes": 3978,
+   "wall": 0.053,
+   "plan1_nodes": null,
+   "pv": [
+    "d8h4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 170,
+   "tree_unique_keys": 162
+  },
+  {
+   "tag": "sib_e4e5_p2_a2a4",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/P3P3/8/1PPP1PPP/RNBQKBNR b KQkq a3 0 2",
+   "moves": [
+    "a2a4"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 9,
+   "nodes": 5549,
+   "wall": 0.06,
+   "plan1_nodes": null,
+   "pv": [
+    "d8h4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.021,
+   "outcome_match": true,
+   "tree_nodes": 182,
+   "tree_unique_keys": 174
+  },
+  {
+   "tag": "sib_e4e5_p2_b1a3",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/N7/PPPP1PPP/R1BQKBNR b KQkq - 1 2",
+   "moves": [
+    "b1a3"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 9,
+   "nodes": 5473,
+   "wall": 0.057,
+   "plan1_nodes": null,
+   "pv": [
+    "d8h4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.019,
+   "outcome_match": true,
+   "tree_nodes": 176,
+   "tree_unique_keys": 168
+  },
+  {
+   "tag": "sib_e4e5_p2_b1c3",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 1 2",
+   "moves": [
+    "b1c3"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 9,
+   "nodes": 4517,
+   "wall": 0.056,
+   "plan1_nodes": null,
+   "pv": [
+    "d8h4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 188,
+   "tree_unique_keys": 178
+  },
+  {
+   "tag": "sib_e4e5_p2_b2b3",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/1P6/P1PP1PPP/RNBQKBNR b KQkq - 0 2",
+   "moves": [
+    "b2b3"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 9,
+   "nodes": 5322,
+   "wall": 0.059,
+   "plan1_nodes": null,
+   "pv": [
+    "d8h4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 182,
+   "tree_unique_keys": 174
+  },
+  {
+   "tag": "sib_e4e5_p2_b2b4",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/1P2P3/8/P1PP1PPP/RNBQKBNR b KQkq b3 0 2",
+   "moves": [
+    "b2b4"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 9,
+   "nodes": 3764,
+   "wall": 0.051,
+   "plan1_nodes": null,
+   "pv": [
+    "d8h4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 182,
+   "tree_unique_keys": 174
+  },
+  {
+   "tag": "sib_e4e5_p2_c2c3",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/2P5/PP1P1PPP/RNBQKBNR b KQkq - 0 2",
+   "moves": [
+    "c2c3"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 9,
+   "nodes": 4451,
+   "wall": 0.054,
+   "plan1_nodes": null,
+   "pv": [
+    "d8h4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.019,
+   "outcome_match": true,
+   "tree_nodes": 182,
+   "tree_unique_keys": 172
+  },
+  {
+   "tag": "sib_e4e5_p2_c2c4",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq c3 0 2",
+   "moves": [
+    "c2c4"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 9,
+   "nodes": 6275,
+   "wall": 0.065,
+   "plan1_nodes": null,
+   "pv": [
+    "d8h4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.02,
+   "outcome_match": true,
+   "tree_nodes": 170,
+   "tree_unique_keys": 160
+  },
+  {
+   "tag": "sib_e4e5_p2_d1h5",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 1 2",
+   "moves": [
+    "d1h5"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "loss",
+   "dtm_length": 8,
+   "nodes": 4472,
+   "wall": 0.052,
+   "plan1_nodes": null,
+   "pv": [
+    "g7g6"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "loss",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 175,
+   "tree_unique_keys": 167
+  },
+  {
+   "tag": "sib_e4e5_p2_e1e2",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPPKPPP/RNBQ1BNR b kq - 1 2",
+   "moves": [
+    "e1e2"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 7,
+   "nodes": 419,
+   "wall": 0.031,
+   "plan1_nodes": null,
+   "pv": [
+    "d8f6"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 98,
+   "tree_unique_keys": 97
+  },
+  {
+   "tag": "sib_e4e5_p2_f1b5",
+   "fen": "rnbqkbnr/pppp1ppp/8/1B2p3/4P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2",
+   "moves": [
+    "f1b5"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "loss",
+   "dtm_length": 10,
+   "nodes": 8371,
+   "wall": 0.084,
+   "plan1_nodes": null,
+   "pv": [
+    "b8c6"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "loss",
+   "reconstruct_wall": 0.019,
+   "outcome_match": true,
+   "tree_nodes": 413,
+   "tree_unique_keys": 393
+  },
+  {
+   "tag": "sib_e4e5_p2_f1d3",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/3B4/PPPP1PPP/RNBQK1NR b KQkq - 1 2",
+   "moves": [
+    "f1d3"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 11,
+   "nodes": 7589,
+   "wall": 0.066,
+   "plan1_nodes": null,
+   "pv": [
+    "d8h4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.019,
+   "outcome_match": true,
+   "tree_nodes": 194,
+   "tree_unique_keys": 183
+  },
+  {
+   "tag": "sib_e4e5_p2_f2f3",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5P2/PPPP2PP/RNBQKBNR b KQkq - 0 2",
+   "moves": [
+    "f2f3"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 9,
+   "nodes": 8835,
+   "wall": 0.078,
+   "plan1_nodes": null,
+   "pv": [
+    "d8h4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.02,
+   "outcome_match": true,
+   "tree_nodes": 124,
+   "tree_unique_keys": 120
+  },
+  {
+   "tag": "sib_e4e5_p2_g2g4",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P1P1/8/PPPP1P1P/RNBQKBNR b KQkq g3 0 2",
+   "moves": [
+    "g2g4"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 227,
+   "wall": 0.028,
+   "plan1_nodes": null,
+   "pv": [
+    "f8b4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 156,
+   "tree_unique_keys": 144
+  },
+  {
+   "tag": "sib_e4e5_p2_h2h3",
+   "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/7P/PPPP1PP1/RNBQKBNR b KQkq - 0 2",
+   "moves": [
+    "h2h3"
+   ],
+   "tier": "sib_e4e5_p2",
+   "outcome": "win",
+   "dtm_length": 9,
+   "nodes": 5955,
+   "wall": 0.063,
+   "plan1_nodes": null,
+   "pv": [
+    "d8h4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.019,
+   "outcome_match": true,
+   "tree_nodes": 166,
+   "tree_unique_keys": 158
+  },
+  {
+   "tag": "lad_d4_p23",
+   "fen": "rnbqkbnr/3ppppp/2p5/8/P1PPPP2/6PP/8/2BQKBNR b Kkq - 0 12",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 71,
+   "wall": 0.03,
+   "plan1_nodes": 71,
+   "pv": [
+    "d8a5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 16,
+   "tree_unique_keys": 14
+  },
+  {
+   "tag": "lad_d4_p25",
+   "fen": "rnb1kbnr/3ppppp/2p5/q7/P1PPPP2/6PP/4K3/2BQ1BNR b kq - 2 13",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 3,
+   "wall": 0.027,
+   "plan1_nodes": 3,
+   "pv": [
+    "a5d2"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.015,
+   "outcome_match": true,
+   "tree_nodes": 4,
+   "tree_unique_keys": 4
+  },
+  {
+   "tag": "lad_d4_p27",
+   "fen": "rnb1kbnr/3ppppp/2p5/8/P1PPPP2/5KPP/3q4/2BQ1BNR b kq - 4 14",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 1,
+   "nodes": 1,
+   "wall": 0.025,
+   "plan1_nodes": 1,
+   "pv": [
+    "d2f4"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 2,
+   "tree_unique_keys": 2
+  },
+  {
+   "tag": "lad_d4d5_p32",
+   "fen": "rnbqkbnr/4pppp/8/P2P4/4PPPP/2p5/8/2BQKBNR w Kkq - 0 17",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 7,
+   "nodes": 900,
+   "wall": 0.032,
+   "plan1_nodes": 900,
+   "pv": [
+    "d5d6"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 68,
+   "tree_unique_keys": 66
+  },
+  {
+   "tag": "lad_d4d5_p34",
+   "fen": "rnbqkbnr/5ppp/3Pp3/P7/4PPPP/2p5/8/2BQKBNR w Kkq - 0 18",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 9,
+   "wall": 0.027,
+   "plan1_nodes": 9,
+   "pv": [
+    "d6d7"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 6,
+   "tree_unique_keys": 6
+  },
+  {
+   "tag": "lad_d4d5_p36",
+   "fen": "rnbq1bnr/3Pkppp/4p3/P7/4PPPP/2p5/8/2BQKBNR w K - 1 19",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 7,
+   "wall": 0.027,
+   "plan1_nodes": 7,
+   "pv": [
+    "d1d6"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 4,
+   "tree_unique_keys": 4
+  },
+  {
+   "tag": "lad_d4d5_p38",
+   "fen": "rnbq1bnr/3P1ppp/3Qpk2/P7/4PPPP/2p5/8/2B1KBNR w K - 3 20",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 1,
+   "nodes": 1,
+   "wall": 0.027,
+   "plan1_nodes": 1,
+   "pv": [
+    "d6e6"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 2,
+   "tree_unique_keys": 2
+  },
+  {
+   "tag": "lad_e4c5_p4",
+   "fen": "rnbqkbnr/pp1ppp1p/6p1/2p4Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 0 3",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 621,
+   "wall": 0.029,
+   "plan1_nodes": 621,
+   "pv": [
+    "h5d5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 46,
+   "tree_unique_keys": 46
+  },
+  {
+   "tag": "lad_e4c5_p6",
+   "fen": "rnbqkbnr/pp1ppp1p/6p1/3Q4/2p1P3/8/PPPP1PPP/RNB1KBNR w KQkq - 0 4",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 1,
+   "nodes": 1,
+   "wall": 0.025,
+   "plan1_nodes": 1,
+   "pv": [
+    "d5d7"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 2,
+   "tree_unique_keys": 2
+  },
+  {
+   "tag": "lad_e4e5_p4",
+   "fen": "rnbqkbnr/pppp1p1p/6p1/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 0 3",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 7,
+   "nodes": 4445,
+   "wall": 0.052,
+   "plan1_nodes": 4445,
+   "pv": [
+    "h5h3"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.018,
+   "outcome_match": true,
+   "tree_nodes": 124,
+   "tree_unique_keys": 120
+  },
+  {
+   "tag": "lad_e4e5_p6",
+   "fen": "rnbqkbnr/pppp3p/6p1/4pp2/4P3/7Q/PPPP1PPP/RNB1KBNR w KQkq f6 0 4",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 479,
+   "wall": 0.029,
+   "plan1_nodes": 479,
+   "pv": [
+    "e4f5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 64,
+   "tree_unique_keys": 62
+  },
+  {
+   "tag": "lad_e4e5_p8",
+   "fen": "rnbq1bnr/pppp1k1p/6p1/4p3/8/7Q/PPPP1PPP/RNB1KBNR w KQ - 1 5",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 3,
+   "wall": 0.026,
+   "plan1_nodes": 3,
+   "pv": [
+    "h3e6"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 4,
+   "tree_unique_keys": 4
+  },
+  {
+   "tag": "lad_e4e5_p10",
+   "fen": "rnbq1bnr/pppp2kp/4Q1p1/4p3/8/8/PPPP1PPP/RNB1KBNR w KQ - 3 6",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 1,
+   "nodes": 1,
+   "wall": 0.026,
+   "plan1_nodes": 1,
+   "pv": [
+    "e6g6"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 2,
+   "tree_unique_keys": 2
+  },
+  {
+   "tag": "lad_nf3_p23",
+   "fen": "rnbqkbnr/3ppppp/2p5/8/P1PPP3/5NPP/5P2/2BQKB1R b Kkq - 0 12",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 29,
+   "wall": 0.027,
+   "plan1_nodes": 29,
+   "pv": [
+    "d8a5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.015,
+   "outcome_match": true,
+   "tree_nodes": 10,
+   "tree_unique_keys": 9
+  },
+  {
+   "tag": "lad_nf3_p25",
+   "fen": "rnb1kbnr/3ppppp/2p5/q7/P1PPP3/5NPP/3Q1P2/2B1KB1R b Kkq - 2 13",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 1,
+   "nodes": 1,
+   "wall": 0.026,
+   "plan1_nodes": 1,
+   "pv": [
+    "a5d2"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.015,
+   "outcome_match": true,
+   "tree_nodes": 2,
+   "tree_unique_keys": 2
+  },
+  {
+   "tag": "lad_nf3d5_p4",
+   "fen": "rnbqkbnr/ppp1p1pp/8/3pNp2/8/8/PPPPPPPP/RNBQKB1R w KQkq f6 0 3",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 48,
+   "wall": 0.026,
+   "plan1_nodes": 48,
+   "pv": [
+    "e5d7"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 40,
+   "tree_unique_keys": 40
+  },
+  {
+   "tag": "lad_nf3d5_p6",
+   "fen": "rnbqkbnr/pppNp1pp/8/5p2/3p4/8/PPPPPPPP/RNBQKB1R w KQkq - 0 4",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 1,
+   "nodes": 1,
+   "wall": 0.025,
+   "plan1_nodes": 1,
+   "pv": [
+    "d7f8"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.015,
+   "outcome_match": true,
+   "tree_nodes": 2,
+   "tree_unique_keys": 2
+  },
+  {
+   "tag": "lad_startpos_p10",
+   "fen": "rnbqkbnr/2pppppp/1p6/8/8/P1PPP3/5PPP/RNBQKBNR w KQkq - 0 6",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 5,
+   "nodes": 516,
+   "wall": 0.03,
+   "plan1_nodes": 516,
+   "pv": [
+    "d1h5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 92,
+   "tree_unique_keys": 92
+  },
+  {
+   "tag": "lad_startpos_p12",
+   "fen": "rnbqkbnr/2pppp1p/1p4p1/7Q/8/P1PPP3/5PPP/RNB1KBNR w KQkq - 0 7",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 3,
+   "nodes": 366,
+   "wall": 0.027,
+   "plan1_nodes": 366,
+   "pv": [
+    "h5d5"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.017,
+   "outcome_match": true,
+   "tree_nodes": 50,
+   "tree_unique_keys": 50
+  },
+  {
+   "tag": "lad_startpos_p14",
+   "fen": "1nbqkbnr/2pppp1p/1p4p1/3Q4/8/2PPP3/5PPP/RNB1KBNR w KQk - 0 8",
+   "moves": null,
+   "tier": "ladder",
+   "outcome": "win",
+   "dtm_length": 1,
+   "nodes": 1,
+   "wall": 0.025,
+   "plan1_nodes": 1,
+   "pv": [
+    "d5d7"
+   ],
+   "reconstruct_rc": 0,
+   "validate": "ok",
+   "reconstruct_outcome": "win",
+   "reconstruct_wall": 0.016,
+   "outcome_match": true,
+   "tree_nodes": 2,
+   "tree_unique_keys": 2
+  }
+ ],
+ "total_unique_keys_union": 10177,
+ "dtm_distribution": {
+  "1": 9,
+  "3": 22,
+  "5": 37,
+  "6": 1,
+  "7": 7,
+  "8": 2,
+  "9": 12,
+  "10": 1,
+  "11": 3,
+  "13": 1
+ },
+ "n_pairs_sharing_keys": 421
+}

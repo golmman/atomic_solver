@@ -1,0 +1,26 @@
+{
+ "outcome": "win",
+ "pv": [
+  "d5d7"
+ ],
+ "pv_status": "proven-shortest",
+ "exit_reason": "Complete",
+ "exit_outcome": "win",
+ "nodes": 1,
+ "tt_bytes": 114,
+ "tt_solved": 1,
+ "tt_unsolved": 0,
+ "timeout_flag": false,
+ "censored": false,
+ "fen": "rnbqkbnr/pp1ppp1p/6p1/3Q4/2p1P3/8/PPPP1PPP/RNB1KBNR w KQkq - 0 4",
+ "wall": 0.025,
+ "rc": 0,
+ "rss_kb": 236100,
+ "cmd": "/workspace/atomic_solver/target/release/atomic_solver --fen rnbqkbnr/pp1ppp1p/6p1/3Q4/2p1P3/8/PPPP1PPP/RNB1KBNR w KQkq - 0 4 --timeout 120 --first-outcome --tt-dump-path /workspace/atomic_solver/docs/plans/solve/measurements/plan4/snaps/lad_e4c5_p6.tt",
+ "tier": "ladder",
+ "moves": null,
+ "line": "e4c5",
+ "ply": 6,
+ "plan1_nodes": 1,
+ "plan1_outcome": "win length: 1"
+}

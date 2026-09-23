@@ -1,0 +1,25 @@
+{
+ "outcome": "draw",
+ "pv": [],
+ "pv_status": null,
+ "exit_reason": "Timeout",
+ "exit_outcome": "draw",
+ "nodes": 1536000,
+ "tt_bytes": 48942412,
+ "tt_solved": 266852,
+ "tt_unsolved": 1069989,
+ "timeout_flag": true,
+ "censored": true,
+ "fen": "r1bqkbnr/pppppppp/2n5/8/8/7P/PPPPPPP1/RNBQKBNR w KQkq - 1 2",
+ "wall": 9.192,
+ "rc": 0,
+ "rss_kb": 234492,
+ "cmd": "/workspace/atomic_solver/target/release/atomic_solver --fen r1bqkbnr/pppppppp/2n5/8/8/7P/PPPPPPP1/RNBQKBNR w KQkq - 1 2 --timeout 8 --first-outcome --tt-dump-path /workspace/atomic_solver/docs/plans/solve/measurements/plan4/snaps/p2_h2h3_b8c6.tt",
+ "tier": "p2",
+ "moves": [
+  "h2h3",
+  "b8c6"
+ ],
+ "tag": "p2_h2h3_b8c6",
+ "plan1_nodes": null
+}

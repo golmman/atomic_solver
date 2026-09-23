@@ -4,7 +4,69 @@
 
 Opened 2026-09-21 as the repo's umbrella for the ultimate goal: establish
 the game-theoretic value of the atomic chess starting position, delivered
-as a **machine-verifiable proof artifact**. Next plan number: **plan4**.
+as a **machine-verifiable proof artifact**. Next plan number: **plan5**.
+
+**Pilot (2026-09-23, plan4):** the sharpness-first rescope (report2 §9
+option 2) was tested before pivoting and passed both pre-registered
+gates (DENSITY GO, VALIDATE 100%) — the cheap class is real, one-sided
+and patterned (55 ply-2 refutations, 1.Nf3 refutes 17/20 replies), and
+the pilot built a validated 10,177-position proof artifact (83 KB).
+But it also **saturates**: deeper reach crosses the quiet plateau that
+plans 1–3 measured blocked. The full four-option matrix is in
+`report4.md` §4.
+
+**Decision (2026-09-23, session close): the campaign line closes; the
+initiative stays ACTIVE, re-scoped** — it is the project's umbrella, so
+it never closes while the startpos value is the goal, and it does not
+go dormant either: plans 5–7 are pending work (the status legend's
+"active"). What closed is the plan1–4 **campaign line**: the measured
+mechanisms (PV-ladder, SSFP anchors, step-by-step narrowing at sandbox
+budgets) are dead, and the sharpness-first rescope, as piloted,
+saturated. The plan4 artifact is frozen as the interim deliverable.
+`solve` falls to **dormant** only if plan5 and plan6 both fire
+negative — at that point it has no open items, just reopeners
+(mechanism innovation or a resource step-change). `report4.md` §7
+records the amended recommendation.
+
+## Roadmap (2026-09-23) — return path to the startpos value
+
+The campaign line is closed; the initiative is re-scoped onto the
+following pending plans (status: active).
+
+Phase 0 (start of next session): publish the human-readable refutation
+book (report4 §1 expanded with PVs) as `docs/plans/solve/book.md`.
+
+Phase 1 — the work before `solve` returns (two independent tracks):
+
+- **plan5 — campaign architecture design spike (intellectual gate).**
+  GHI-correct job-level DF-PN: job = (subposition, clock context);
+  soundness contract for split/merge; anchor-key clock safety;
+  position-keyed artifact composition (contract proven by plan4's
+  census). Theory already mined: `docs/theory/pdfpn-2010`,
+  `pns-pdfpn-2025`, `ppn2-2011`, `ghi-journal-2005`. Must answer the
+  `parallel` plan2 lesson: work inflation far below the measured 15.5×.
+  Pre-registered feasibility gates required; recommended: include a
+  small two-job prototype of one quiet subtree.
+- **plan6 — resource sizing (economic gate, off-sandbox).** One
+  20–24 h rerun of the d4d5-p2 probe on a larger machine; plan3's
+  linear rate makes this the next doubling datapoint; converts
+  "bottomless" into a number.
+
+Phase 2 (only on plan5 GO + plan6 pricing): plan7 = campaign product
+surface (`--tt-load-path` to the plan5 soundness spec — built once and
+reverted in plan2, rebuild to spec —, frontier dump, deterministic
+resume, S-store v1 promoted out of `measurements/`); then a one-quiet-
+system campaign pilot (gate: wall-time beat vs. single sequential run
+at acceptable work inflation).
+
+Not on the critical path (no-work recommendations): `egtb` stays
+oracle-only (anchoring at generable depths is measured dead);
+`parallel` stays closed (campaign scope delegated here); node-rate
+work (`lean`/`tune`) only after plan6 prices the campaign.
+
+**Open questions carried into the next session:** (a) hardware/cloud
+access for the plan6 sizing run; (b) plan5 scope — design-only vs.
+with two-job prototype (recommendation on record: with prototype);
 
 **Pivot (2026-09-22, after plan1's RETHINK verdict):** the campaign
 mechanism is the **Solved-Set Frontier Push (SSFP)** with the

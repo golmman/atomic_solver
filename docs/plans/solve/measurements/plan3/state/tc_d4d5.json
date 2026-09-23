@@ -1,0 +1,31 @@
+{
+ "outcome": "loss",
+ "pv": [
+  "e7e6",
+  "d6d7",
+  "e8e7",
+  "d1d6",
+  "e7f6",
+  "d6e6"
+ ],
+ "pv_status": "first-outcome",
+ "exit_reason": "Complete",
+ "exit_outcome": "loss",
+ "nodes": 43,
+ "tt_bytes": 686,
+ "tt_solved": 37,
+ "tt_unsolved": 1,
+ "timeout_flag": false,
+ "censored": false,
+ "fen": "rnbqkbnr/4pppp/3P4/P7/4PPPP/2p5/8/2BQKBNR b Kkq - 0 17",
+ "wall": 0.025,
+ "rc": 0,
+ "rss_kb": 234364,
+ "tt_size_flag": null,
+ "cmd": "/workspace/atomic_solver/target/release/atomic_solver --fen rnbqkbnr/4pppp/3P4/P7/4PPPP/2p5/8/2BQKBNR b Kkq - 0 17 --timeout 120 --first-outcome --tt-dump-path /workspace/atomic_solver/docs/plans/solve/measurements/plan3/snaps/tc_d4d5.tt",
+ "line": "d4d5",
+ "parent_ply": 32,
+ "parent_fen": "rnbqkbnr/4pppp/8/P2P4/4PPPP/2p5/8/2BQKBNR w Kkq - 0 17",
+ "pv_move": "d5d6",
+ "child_fen": "rnbqkbnr/4pppp/3P4/P7/4PPPP/2p5/8/2BQKBNR b Kkq - 0 17"
+}

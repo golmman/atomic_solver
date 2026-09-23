@@ -68,6 +68,14 @@ fn main() {
                 } else {
                     node.parent.unwrap().get() as i64 - 1
                 };
+                // The node's key is the position AFTER its incoming move
+                // (`node.mv`; the validator replays the same way), so apply
+                // the move before printing. Printing before the move was an
+                // off-by-one: every non-root node reported its parent's
+                // position key (found in plan4's Task C key census).
+                if node.mv != atomic_movegen::types::Move::NONE {
+                    pos.do_move(node.mv);
+                }
                 println!(
                     "{} {parent_id} {} {outcome} {} {}",
                     id,
@@ -76,9 +84,6 @@ fn main() {
                     move_to_bits(node.mv)
                 );
                 stack.push(Frame::Exit { mv: node.mv });
-                if node.mv != atomic_movegen::types::Move::NONE {
-                    pos.do_move(node.mv);
-                }
                 for child in tree.children(id).collect::<Vec<_>>().into_iter().rev() {
                     stack.push(Frame::Enter { id: child });
                 }

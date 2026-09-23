@@ -363,4 +363,8 @@ Example:
 * 02 easy -> global proof
 * and so on
 
+---
+
+The solve initiative is the umbrella and describes the ultimate goal of this project.
+We can't simply close it without abandoning the project. Is this your recommendation?
 

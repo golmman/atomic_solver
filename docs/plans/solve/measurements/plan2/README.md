@@ -28,6 +28,14 @@ the S store under `store/`.
   M1 substrate data).
 - The M1 gate is pre-registered in `../../plan2.md` §4 (GO ≥ 5%, NO-GO
   < 1%) and was fixed before any run; `m1.json` records the verdict.
+- **Post-plan4 caveat (2026-09-23):** `examples/pt_keys` had an
+  off-by-one — it printed each node's hash *before* applying the
+  node's incoming move, so every non-root node reported its parent's
+  position key. The primary M1 metric (TT-snapshot keys only) is
+  unaffected; the secondary proof-tree key-coverage numbers in
+  `m1.json` (`report2.md` §5) used shifted keys and are qualitatively
+  but not exactly comparable to position-true keys. Fixed in plan4
+  (see `../../report4.md` §deviations).
 
 ## Command table
 
