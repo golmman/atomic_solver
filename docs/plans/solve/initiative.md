@@ -13,8 +13,15 @@ execution established that item 7 (campaign product surface) is not
 draftable, so item 8 (resource sizing) is drafted as plan7 instead; the
 earlier plan7 name is retired with it.
 
-Next plan number: **plan7** (item 8, stage 1 — the in-sandbox sequential
-d4d5-p2 sizing ladder; no hardware blocker). plan6 (the bounded
+Next plan number: **plan8** (item 8, stage 2 — campaign arms at 4
+workers; drafted only after plan7 executes). **plan7 is drafted (not
+yet executed, 2026-09-24)**: item 8, stage 1 — the in-sandbox
+sequential d4d5-p2 sizing ladder (fresh 1 h / 4 h arms; plan3's 2 h A1
+admitted as the ladder midpoint under a ±10% rate-comparability gate
+to fit the hard 6 h compute cap) plus the **item-8 combination rule
+pre-registered in plan7 §4** (unit = dfpn nodes; R_seq / R_camp / ρ
+per stage; horizon table T(W); POSITIVE = ρ ≥ 0.7 ∧ m2 ≥ 1, NEGATIVE
+(dormant) = ρ < 0.4, between = MARGINAL). plan6 (the bounded
 scheduler/budget iteration) executed 2026-09-24 and fired **Not-GO**
 (`report6.md`): item 7 (campaign product surface) is cancelled — not
 draftable under the pre-registered gate semantics.
@@ -361,6 +368,20 @@ Per repo convention, every plan ends with the task of writing its
   the coverage race over the root's ~41 children; the registered
   scheduler/budget family is falsified as the fix. Compute ≈ 3 h 50 m of
   the 4.5 h cap; item 7 (campaign product surface) not draftable.
+- **2026-09-24** — **plan7 drafted** (not yet executed): item 8,
+  stage 1 — the sequential d4d5-p2 sizing ladder. Fresh arms L1 (1 h)
+  and L4 (4 h) at the reference config, command-identical to plan3 A1;
+  plan3's 2 h A1 reused as the ladder midpoint (three fresh arms = 7 h
+  breach the 6 h compute cap) under a pre-registered ±10%
+  rate-comparability gate. Stage-1 gate: COMPLETED / LINEAR /
+  DEGRADING / SUPERLINEAR on the work-growth exponent η. §4
+  pre-registers the item-8 combination rule binding plan8/plan9:
+  dfpn-node unit, R_seq → R_camp/m2 → ρ per stage, the conditional
+  horizon table T(W ∈ {10^14, 10^15, 10^17}), and the verdict bands
+  (POSITIVE ρ ≥ 0.7 ∧ m2 ≥ 1; NEGATIVE/dormant ρ < 0.4; MARGINAL
+  between). Registered secondary: TT occupancy/fill point (not a
+  progress metric — plan3's capacity fact). Compute ≈ 5.25 h of the
+  6 h cap; no product changes.
 - **2026-09-24** — **item/plan numbering adopted; item 8 rescoped.** The
   roadmap's plan7 name (campaign product surface) is retired — cancelled
   by plan6's execution; roadmap entries become *items* and execution
