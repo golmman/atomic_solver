@@ -119,6 +119,14 @@ Work is done in short, single-goal sessions of two types:
   closes. Scope changes discovered mid-work go into the report as findings, not
   into silent scope expansion.
 
+**Item vs. plan numbering.** Roadmap entries inside an initiative are
+*items* (`item 7`, `item 8`, … — stable semantic identity); execution
+plans are numbered sequentially as `planN.md`, independent of item
+numbers. Each plan's header states which item it executes. A plan number
+whose idea is cancelled is retired, not reused for a different idea; the
+initiative's `initiative.md` records the item↔plan mapping and any
+renumbering.
+
 Every session ends with a structured closure block:
 
 ```

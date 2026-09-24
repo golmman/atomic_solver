@@ -4,11 +4,20 @@
 
 Opened 2026-09-21 as the repo's umbrella for the ultimate goal: establish
 the game-theoretic value of the atomic chess starting position, delivered
-as a **machine-verifiable proof artifact**. Next plan number: **plan8**
-(off-sandbox resource sizing; blocked on the hardware-access question).
-plan6 (the bounded scheduler/budget iteration) executed 2026-09-24 and
-fired **Not-GO** (`report6.md`): plan7 (campaign product surface) is
-cancelled — not draftable under the pre-registered gate semantics.
+as a **machine-verifiable proof artifact**.
+
+**Numbering.** Roadmap entries are *items* (item 7, item 8, …); execution
+plans are numbered sequentially as `planN.md`, independent of item
+numbers — each plan's header states which item it executes. plan6's
+execution established that item 7 (campaign product surface) is not
+draftable, so item 8 (resource sizing) is drafted as plan7 instead; the
+earlier plan7 name is retired with it.
+
+Next plan number: **plan7** (item 8, stage 1 — the in-sandbox sequential
+d4d5-p2 sizing ladder; no hardware blocker). plan6 (the bounded
+scheduler/budget iteration) executed 2026-09-24 and fired **Not-GO**
+(`report6.md`): item 7 (campaign product surface) is cancelled — not
+draftable under the pre-registered gate semantics.
 
 **Pilot (2026-09-23, plan4):** the sharpness-first rescope (report2 §9
 option 2) was tested before pivoting and passed both pre-registered
@@ -22,15 +31,16 @@ plans 1–3 measured blocked. The full four-option matrix is in
 **Decision (2026-09-23, session close): the campaign line closes; the
 initiative stays ACTIVE, re-scoped** — it is the project's umbrella, so
 it never closes while the startpos value is the goal, and it does not
-go dormant either: plans 5–7 are pending work (the status legend's
-"active"). What closed is the plan1–4 **campaign line**: the measured
-mechanisms (PV-ladder, SSFP anchors, step-by-step narrowing at sandbox
-budgets) are dead, and the sharpness-first rescope, as piloted,
-saturated. The plan4 artifact is frozen as the interim deliverable.
-`solve` falls to **dormant** only if the plan6 iteration and the plan8
-sizing run both fire
-negative — at that point it has no open items, just reopeners(mechanism innovation or a resource step-change). `report4.md` §7
-records the amended recommendation.
+go dormant either: item 8 (the sizing ladder, drafted as plans 7–9) is
+the pending work (the status legend's "active"). What closed is the
+plan1–4 **campaign line**: the measured mechanisms (PV-ladder, SSFP
+anchors, step-by-step narrowing at sandbox budgets) are dead, and the
+sharpness-first rescope, as piloted, saturated. The plan4 artifact is
+frozen as the interim deliverable. `solve` falls to **dormant** only if
+the plan6 iteration and the item-8 sizing ladder (plans 7–9) both fire
+negative — at that point it has no open items, just reopeners (mechanism
+innovation or a resource step-change). `report4.md` §7 records the
+amended recommendation.
 
 ## Roadmap (2026-09-23) — return path to the startpos value
 
@@ -52,28 +62,35 @@ Phase 1 — the work before `solve` returns (two independent tracks):
   at 4 workers). Attribution recorded as **A5** in
   `campaign_architecture.md` §11: budget ladders price but cannot win the
   coverage race over the root's ~41 children; the registered
-  scheduler/budget family is falsified as the fix. **plan7 cancelled**
+  scheduler/budget family is falsified as the fix. **item 7 cancelled**
   (not draftable under the pre-registered semantics).
-- **plan8 — resource sizing (economic gate, off-sandbox; renumbered from
-  roadmap plan6, 2026-09-24). THE REMAINING LEVER.** One 20–24 h rerun of
-  the d4d5-p2 probe on a larger machine; plan3's linear rate makes this
-  the next doubling datapoint; converts "bottomless" into a number.
-  Independent of plan6; was to combine with it only at plan7's threshold
-  — with plan6 negative and plan7 cancelled, plan8 now decides between
-  "active, blocked on hardware" and "dormant" per the status rule.
+- **item 8 — resource sizing (economic gate; rescoped 2026-09-24 from the
+  off-sandbox 20–24 h single run into three ≤6 h in-sandbox stages).
+  THE REMAINING LEVER.** The sandbox (4 CPUs, 8 GiB cgroup memory limit)
+  is the reference environment; the offered step-up envelope (8 CPUs,
+  16 GB, 12 h — for exceptional experiments) is the first scale-up
+  target, not a prerequisite. Stages (each one session, hard 6 h cap):
+  sequential d4d5-p2 ladder (1 h / 2 h / 4 h censoring arms) → **plan7**;
+  campaign arms (4 workers, memory-checked, 2 h / 4 h caps) → **plan8**;
+  multi-session checkpoint-resume accumulation → **plan9**. The
+  combination rule (what the stages jointly imply for the finishability
+  number) is pre-registered in plan7. plan3's linear rate makes the
+  ladder the growth datapoint; converts "bottomless" into a number on
+  the hardware actually available. Decides between "active" and
+  "dormant" per the status rule.
 
 (plan5 — the architecture design spike — is executed: `report5.md`,
 `campaign_architecture.md`, the two-job prototype, and the bounded-
 iteration recommendation that plan6 now carries.)
 
-Phase 2 (only on plan6 GO + plan8 pricing, per report5 §4): plan7 =
+Phase 2 (only on plan6 GO + item-8 pricing, per report5 §4): item 7 =
 campaign product surface (`--tt-load-path` to the plan5 soundness spec — built once and
 reverted in plan2, rebuild to spec —, frontier dump, deterministic
 resume, S-store v1 promoted out of `measurements/`); then a one-quiet-
 system campaign pilot (gate: wall-time beat vs. single sequential run
 at acceptable work inflation).
 
-**Cancelled 2026-09-24: plan6 fired Not-GO (`report6.md`), so plan7 is
+**Cancelled 2026-09-24: plan6 fired Not-GO (`report6.md`), so item 7 is
 not draftable and Phase 2 is dead.** The campaign architecture's
 confirmed mechanisms (retention, complete-job scheduling) and its open
 problem (the coverage race, A5.4) are recorded in
@@ -82,11 +99,13 @@ problem (the coverage race, A5.4) are recorded in
 Not on the critical path (no-work recommendations): `egtb` stays
 oracle-only (anchoring at generable depths is measured dead);
 `parallel` stays closed (campaign scope delegated here); node-rate
-work (`lean`/`tune`) only after plan8 prices the campaign.
+work (`lean`/`tune`) only after item 8 prices the campaign.
 
-**Open questions carried into the next session:** (a) hardware/cloud
-access for the plan8 sizing run; (b) ~~plan5 scope~~ — resolved 2026-09-23:
-executed with the two-job prototype (plan5).
+**Open questions carried into the next session:** (a) ~~hardware/cloud
+access for the sizing run~~ — resolved 2026-09-24: item 8 rescoped to
+in-sandbox stages (the offered step-up envelope — 8 CPUs, 16 GB, 12 h —
+is the first scale-up target, not a blocker); (b) ~~plan5 scope~~ —
+resolved 2026-09-23: executed with the two-job prototype (plan5).
 
 **Pivot (2026-09-22, after plan1's RETHINK verdict):** the campaign
 mechanism is the **Solved-Set Frontier Push (SSFP)** with the
@@ -331,3 +350,27 @@ Per repo convention, every plan ends with the task of writing its
   **plan8** (independent; combines only at plan7's threshold). A negative
   verdict falsifies the recorded scheduler diagnosis and is a valid
   completion; dormancy then follows the status rule.
+- **2026-09-24** — **plan6 executed** (`report6.md`, `measurements/plan6/`):
+  SOUND PASS (all artifacts validate, 144 dual-checked facts, 0
+  contradictions); ECON NO-GO (winner V1 one-step ladder completes 5/5
+  but at 0.63× sequential wall — the completeness clause exposed
+  work-vs-wall substitution); C4′ FAIL (4/5, 0.18× wall, ~26×
+  inflation); V3's registered abandon triggers structurally inert
+  (0 fires in 30 reps). Attribution recorded as **A5** in
+  `campaign_architecture.md` §11: budget ladders price but cannot win
+  the coverage race over the root's ~41 children; the registered
+  scheduler/budget family is falsified as the fix. Compute ≈ 3 h 50 m of
+  the 4.5 h cap; item 7 (campaign product surface) not draftable.
+- **2026-09-24** — **item/plan numbering adopted; item 8 rescoped.** The
+  roadmap's plan7 name (campaign product surface) is retired — cancelled
+  by plan6's execution; roadmap entries become *items* and execution
+  plans stay sequential `planN.md` (each plan's header states which item
+  it executes; convention also recorded in `AGENTS.md`). The off-sandbox
+  20–24 h sizing run (old plan8) is split into three ≤6 h in-sandbox
+  stages under **item 8**, to be drafted as plans 7 (sequential d4d5-p2
+  ladder, 1 h / 2 h / 4 h censoring arms), 8 (campaign arms at 4
+  workers, memory-checked, 2 h / 4 h caps), and 9 (multi-session
+  checkpoint-resume accumulation); the sandbox (4 CPUs, 8 GiB cgroup) is
+  the reference environment and the offered step-up envelope (8 CPUs /
+  16 GB / 12 h, for exceptional experiments) the first scale-up target.
+  Plan drafting happens in its own session (plan7 draft pending).

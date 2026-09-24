@@ -376,3 +376,27 @@ So each session should be self contained with a clean handoff and the ai agent s
 
 - if and when everything is in place to close the session
 - options for follow up sessions, how to kick them off
+
+---
+
+**Point 1**
+
+Plan 8 is too uncertain and costly in my opinion.
+I can offer these limits for exceptional experiments for now:
+* 16G memory
+* 8 cpus
+* 12h time
+
+**Point 2**
+
+We need to explore more options.
+The solve initiative is the umbrella and describes the ultimate goal of this project.
+We can't let it go dormant it without abandoning the project.
+
+I don't mind if we find out that it would take years to solve on this hardware.
+It's ok to have the limitations in sight and then work on reducing them step by step.
+
+---
+
+I would prefer to chop up what is currently called "plan8" into smaller runs which run well in this current sandbox and take max 6h.
+Is this possible?
