@@ -104,6 +104,35 @@ There is no CI (project decision): the make targets plus these conventions are
 the enforcement point. Regressions caught only by the slow tier surface when
 someone chooses to run it.
 
+## Session protocol
+
+Work is done in short, single-goal sessions of two types:
+
+- **Plan session** — reads the initiative (`initiative.md`, prior plans/reports),
+  may run *read-only* probes (measurements, small scripts, existing tests) but no
+  code changes, and writes `docs/plans/<initiative>/planN.md`. A plan is sized so
+  a fresh session can execute it in one sitting; anything larger is split into
+  planN/planN+1 up front.
+- **Execution session** — starts from `planN.md`, implements, runs the gate
+  (`make test` by default), writes `reportN.md` (final plan task), and updates
+  the affected `docs/plans/README.md` row when an initiative opens, pivots, or
+  closes. Scope changes discovered mid-work go into the report as findings, not
+  into silent scope expansion.
+
+Every session ends with a structured closure block:
+
+```
+SESSION COMPLETE
+- <deliverables: planN.md written / reportN.md written, gate result, index updated>
+Follow-up options:
+  1. <kickoff prompt for the recommended next session, with a one-line reason>
+  2. <alternative: pivot / defer / close, with reason>
+```
+
+Option 1 must be copy-pasteable as the next session's kickoff prompt. A negative
+measured result is a valid completion — the closure block reports state, it does
+not enforce optimism.
+
 ## Profiling in this container
 
 `perf` works for per-process profiling of the container's own processes

@@ -299,7 +299,6 @@ Execute docs/plans/solve/plan1.md — prerequisite reading is the plan itself pl
 
 ---
 
-
 1. **Decision needed (user):** apply the RETHINK verdict to the `solve`
    initiative. Options, with the evidence each would need:
    - **Pivot to sharpness-first scoping:** re-estimate campaign width as
@@ -314,12 +313,10 @@ Execute docs/plans/solve/plan1.md — prerequisite reading is the plan itself pl
      leaf profile, verify/find ratio, and TT sensitivity are the sized
      inputs any future revival starts from.
 
-
 Last session we finished with `docs/plans/solve/report1.md`.
 We came to the conclusion that we need to rethink the goals.
 
 I'd like to pivot to bottom-up frontier-push. Let's try to define the push mechanism in this session.
-
 
 ---
 
@@ -327,9 +324,10 @@ I really like the SSFP mechanism. My favorite gradient is (b).
 I am completely open for changes to the product surface.
 
 Let me frame it in my own words, so we see if our understandings align:
-* there is not one solve but many solve runs
-* each solve run adds to the shared global proof
-* we focus on easy proofs and disproofs first
+
+- there is not one solve but many solve runs
+- each solve run adds to the shared global proof
+- we focus on easy proofs and disproofs first
 
 ---
 
@@ -349,22 +347,32 @@ Proof and disproof side lines step by step and add them to the global proof.
 That way the hard to prove main line gets narrower.
 
 Example:
-* Let's say the root split into 10 children
-* Each child has always (for the sake of simplicity) 10 children
-* so we can use the notation 0567 to uniquely identify the path where child 0, then child 5, then child 6, then child 7 was chosen
-* now let's say from the root the child 0 is the (unknown) winning path
-* so we explore 0 a while without a decicive outcome and we give up for now
-* then we explore 1, which has a shallow decicive win, add it to the global proof
-* then we explore 2, also hard so we put it aside for now
-* 3 to 9 are easy, so we add them to the global proof
-* we are left with 0 and 2 to proof
-* go to 00: easy in this example, add to the global proof
-* go to 01, hard -> skip
-* 02 easy -> global proof
-* and so on
+
+- Let's say the root split into 10 children
+- Each child has always (for the sake of simplicity) 10 children
+- so we can use the notation 0567 to uniquely identify the path where child 0, then child 5, then child 6, then child 7 was chosen
+- now let's say from the root the child 0 is the (unknown) winning path
+- so we explore 0 a while without a decicive outcome and we give up for now
+- then we explore 1, which has a shallow decicive win, add it to the global proof
+- then we explore 2, also hard so we put it aside for now
+- 3 to 9 are easy, so we add them to the global proof
+- we are left with 0 and 2 to proof
+- go to 00: easy in this example, add to the global proof
+- go to 01, hard -> skip
+- 02 easy -> global proof
+- and so on
 
 ---
 
 The solve initiative is the umbrella and describes the ultimate goal of this project.
 We can't simply close it without abandoning the project. Is this your recommendation?
 
+---
+
+Let's talk a bit about the collaboration model with ai agents.  
+I'd like to keep sessions shortish and the model context focussed on a clearly defined goal.  
+Most goals for sessions fall in two categories "create a plan" or "execute a plan".  
+So each session should be self contained with a clean handoff and the ai agent should signal:
+
+- if and when everything is in place to close the session
+- options for follow up sessions, how to kick them off
