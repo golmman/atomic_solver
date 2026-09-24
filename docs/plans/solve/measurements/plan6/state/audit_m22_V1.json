@@ -1,0 +1,469 @@
+{
+  "position": "m22_V1",
+  "artifact": "state/m22_V1_rep0_proof_tree.bin",
+  "inspect_pt_validate": "ok",
+  "artifact_nodes": 39538,
+  "root_outcome": "win",
+  "seq_outcome": "win",
+  "root_outcome_matches_seq": true,
+  "dual_check": {
+    "sampled": 24,
+    "contradictions": 0,
+    "inconclusive": 0,
+    "checks": [
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "g8h8",
+          "e7h7",
+          "h8g8",
+          "h7g7",
+          "g8h8",
+          "g7g8",
+          "h8h7"
+        ],
+        "fen": "4r1R1/3p3k/2pB2p1/7p/p5PP/2N2P2/P1PP4/1R5K w - - 10 28",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "g8f8"
+        ],
+        "fen": "4rk2/3pR3/2pB2p1/7p/p5PP/2N2P2/P1PP4/1R5K w - - 4 25",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8f8",
+          "e7g7",
+          "g8h8",
+          "g7g8",
+          "h8h7"
+        ],
+        "fen": "5rR1/3p3k/2pB2p1/7p/p5PP/2N2P2/P1PP4/1R5K w - - 8 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8d8",
+          "e7g7",
+          "g8h8",
+          "g7g8",
+          "h8h7"
+        ],
+        "fen": "3r2R1/3p3k/2pB2p1/7p/p5PP/2N2P2/P1PP4/1R5K w - - 8 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8c8",
+          "e7g7",
+          "g8h8",
+          "g7g8",
+          "h8h7"
+        ],
+        "fen": "2r3R1/3p3k/2pB2p1/7p/p5PP/2N2P2/P1PP4/1R5K w - - 8 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8b8",
+          "e7g7",
+          "g8h8",
+          "g7g8",
+          "h8h7"
+        ],
+        "fen": "1r4R1/3p3k/2pB2p1/7p/p5PP/2N2P2/P1PP4/1R5K w - - 8 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8a8",
+          "e7g7",
+          "g8h8",
+          "g7g8",
+          "h8h7"
+        ],
+        "fen": "r5R1/3p3k/2pB2p1/7p/p5PP/2N2P2/P1PP4/1R5K w - - 8 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8e7",
+          "b1b8",
+          "g8h7",
+          "b8h8",
+          "h7g7",
+          "h8g8",
+          "g7h7"
+        ],
+        "fen": "6R1/3p3k/2p3p1/7p/p5PP/2N2P2/P1PP4/7K w - - 6 28",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8e7",
+          "b1b8",
+          "g8h7",
+          "b8h8",
+          "h7g7",
+          "h8g8",
+          "g7f7"
+        ],
+        "fen": "6R1/3p1k2/2p3p1/7p/p5PP/2N2P2/P1PP4/7K w - - 6 28",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8e7",
+          "b1b8",
+          "g8h7",
+          "b8h8",
+          "h7g7",
+          "h8g8",
+          "g7h6"
+        ],
+        "fen": "6R1/3p4/2p3pk/7p/p5PP/2N2P2/P1PP4/7K w - - 6 28",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8e7",
+          "b1b8",
+          "g8h7",
+          "b8h8",
+          "h7g7",
+          "h8g8",
+          "g7f6"
+        ],
+        "fen": "6R1/3p4/2p2kp1/7p/p5PP/2N2P2/P1PP4/7K w - - 6 28",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8e7",
+          "b1b8",
+          "g8g7",
+          "b8g8",
+          "g7h7"
+        ],
+        "fen": "6R1/3p3k/2p3p1/7p/p5PP/2N2P2/P1PP4/7K w - - 4 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8e7",
+          "b1b8",
+          "g8g7",
+          "b8g8",
+          "g7f7"
+        ],
+        "fen": "6R1/3p1k2/2p3p1/7p/p5PP/2N2P2/P1PP4/7K w - - 4 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8e7",
+          "b1b8",
+          "g8g7",
+          "b8g8",
+          "g7h6"
+        ],
+        "fen": "6R1/3p4/2p3pk/7p/p5PP/2N2P2/P1PP4/7K w - - 4 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "e8f8",
+          "d6f8",
+          "a5a4",
+          "g4h5",
+          "d7d5"
+        ],
+        "fen": "7k/8/2p3p1/3p4/p6P/2N2P2/P1PP4/1R4RK w - d6 0 25",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "g6g5",
+          "g1e1",
+          "h8g7",
+          "b1b8",
+          "e8d8",
+          "e1e7",
+          "g7h8",
+          "e7h7",
+          "h8g8",
+          "h7g7",
+          "g8h8",
+          "g7g8",
+          "h8h7",
+          "g8h8",
+          "h7g7",
+          "h8d8",
+          "h5g4",
+          "d6e5",
+          "g7h6"
+        ],
+        "fen": "1R6/3p4/2p4k/p3B1p1/7P/2N2P2/P1PP4/7K w - - 2 32",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "a4a3",
+          "e1e7",
+          "e8d8",
+          "e7h7",
+          "h8g8",
+          "h7g7",
+          "g8h8"
+        ],
+        "fen": "3r3k/3p2R1/2pB2p1/7p/6PP/p1N2P2/P1PP4/1R5K w - - 6 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "h8g8",
+          "g4h5",
+          "e8b8",
+          "d6b8",
+          "c6c5"
+        ],
+        "fen": "6k1/3p4/6p1/p1p5/7P/2N2P2/P1PP4/1R4RK w - - 0 25",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "g6g5",
+          "g1e1",
+          "h8g7",
+          "b1b8",
+          "e8d8",
+          "e1e7",
+          "g7h8",
+          "e7h7",
+          "h8g8",
+          "h7g7",
+          "g8h8",
+          "g7g8",
+          "h8h7",
+          "g8h8",
+          "h7g7",
+          "h8d8",
+          "g7h7",
+          "b8h8",
+          "h7g7",
+          "d6e5",
+          "g7f7",
+          "h8f8",
+          "f7g6"
+        ],
+        "fen": "5R2/3p4/2p3k1/p3B1pp/6PP/2N2P2/P1PP4/7K w - - 7 34",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "e8e7",
+          "g4h5",
+          "e7e3",
+          "b1b8",
+          "e3e8",
+          "d6e5",
+          "h8g8",
+          "c3e4",
+          "d7d6"
+        ],
+        "fen": "1R2r1k1/8/2pp2p1/p3B3/4N2P/5P2/P1PP4/6RK w - - 0 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "g8h8",
+          "e7h7",
+          "h8g8",
+          "h7g7",
+          "g8h8",
+          "g7g8"
+        ],
+        "fen": "4r1Rk/3p4/2pB2p1/7p/p5PP/2N2P2/P1PP4/1R5K b - - 9 27",
+        "claimed": "loss",
+        "rederived": "loss",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8f8",
+          "e7g7",
+          "g8h8",
+          "g7g8"
+        ],
+        "fen": "5rRk/3p4/2pB2p1/7p/p5PP/2N2P2/P1PP4/1R5K b - - 7 26",
+        "claimed": "loss",
+        "rederived": "loss",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8d8",
+          "e7g7",
+          "g8h8",
+          "g7g8"
+        ],
+        "fen": "3r2Rk/3p4/2pB2p1/7p/p5PP/2N2P2/P1PP4/1R5K b - - 7 26",
+        "claimed": "loss",
+        "rederived": "loss",
+        "status": "match"
+      },
+      {
+        "path": [
+          "e3f4",
+          "a5a4",
+          "g1e1",
+          "h8g8",
+          "e1e7",
+          "e8c8",
+          "e7g7",
+          "g8h8",
+          "g7g8"
+        ],
+        "fen": "2r3Rk/3p4/2pB2p1/7p/p5PP/2N2P2/P1PP4/1R5K b - - 7 26",
+        "claimed": "loss",
+        "rederived": "loss",
+        "status": "match"
+      }
+    ]
+  },
+  "sound": true
+}

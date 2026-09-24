@@ -138,6 +138,33 @@ pub fn find_job_loc(children: &mut [Child], job_id: &str) -> Option<(usize, usiz
     None
 }
 
+/// V3 abandon sweep (plan6 §2, the one registered code change): at a
+/// result-merge boundary the master may abandon an in-flight job iff
+/// (a) the job's leaf was resolved by a merged result, or (b) the job's
+/// root child became resolved/refuted. Returns the cancelled job ids and
+/// releases their leaf locks so dispatch continues immediately; the
+/// abandoned worker keeps its TT (retention semantics unchanged) and picks
+/// up the next dispatch. No partial result crosses the boundary: a result
+/// for a cancelled job is work-counted but never merged (advisory pn/dn
+/// dropped). Deterministic: derived only from proof-state facts, never the
+/// wall clock.
+pub fn abandon_in_flight(children: &mut [Child]) -> Vec<String> {
+    let mut cancelled = Vec::new();
+    for child in children.iter_mut() {
+        let child_dead = child.resolved || child.refuted;
+        for leaf in &mut child.replies {
+            let Some((job_id, _, _)) = &leaf.job else {
+                continue;
+            };
+            if child_dead || leaf.status != LeafStatus::Open {
+                cancelled.push(job_id.clone());
+                leaf.job = None;
+            }
+        }
+    }
+    cancelled
+}
+
 pub fn pending_jobs(children: &[Child]) -> usize {
     children
         .iter()
@@ -261,6 +288,7 @@ pub fn finish(
     pt_join: std::thread::JoinHandle<()>,
     per_worker: HashMap<usize, u64>,
     jobs_dispatched: u64,
+    jobs_abandoned: u64,
     jobs_completed: u64,
     job_errors: u64,
     verify_failures: u64,
@@ -280,6 +308,7 @@ pub fn finish(
         outcome: root_outcome.map(|o| o.as_str().to_string()),
         wall_s: t0.elapsed().as_secs_f64(),
         jobs_dispatched,
+        jobs_abandoned,
         jobs_completed,
         job_errors,
         verify_failures,
@@ -378,6 +407,9 @@ pub struct Args {
     pub slice: u64,
     pub max_slice: u64,
     pub nf: bool,
+    /// V3: abandon in-flight jobs whose leaf/child became dead at a merge
+    /// boundary (plan6 §2); off reproduces the plan5 dispatch exactly.
+    pub abandon: bool,
     pub max_wall: u64,
     pub mode: String,
     pub out: String,
@@ -398,6 +430,7 @@ pub struct Summary {
     pub outcome: Option<String>,
     pub wall_s: f64,
     pub jobs_dispatched: u64,
+    pub jobs_abandoned: u64,
     pub jobs_completed: u64,
     pub job_errors: u64,
     pub verify_failures: u64,
@@ -447,6 +480,8 @@ pub fn run_campaign(args: &Args) -> i32 {
     let pt_tx = pt.event_sender();
 
     let mut jobs_dispatched: u64 = 0;
+    let mut jobs_abandoned = 0u64;
+    let mut cancelled: std::collections::HashSet<String> = Default::default();
     let mut processed: Vec<String> = Vec::new();
     let mut per_worker: HashMap<usize, u64> = HashMap::new();
     let mut jobs_completed = 0u64;
@@ -509,6 +544,16 @@ pub fn run_campaign(args: &Args) -> i32 {
                 .and_then(|w| w.parse::<usize>().ok())
                 .unwrap_or(usize::MAX);
             *per_worker.entry(worker).or_insert(0) += result.child_evals;
+            if cancelled.contains(&result.job_id) {
+                // Abandoned job (V3): its work is counted above, but no
+                // partial result crosses the boundary — dropped, never
+                // merged (plan6 §2; the leaf lock was already released).
+                let _ = std::fs::remove_file(format!(
+                    "{}/{}/{}.cancel",
+                    args.session, JOBS_DIR, result.job_id
+                ));
+                continue;
+            }
             let Some((ci, li)) = find_job_loc(&mut children, &result.job_id) else {
                 continue;
             };
@@ -564,6 +609,7 @@ pub fn run_campaign(args: &Args) -> i32 {
                                 pt_join,
                                 per_worker,
                                 jobs_dispatched,
+                                jobs_abandoned,
                                 jobs_completed,
                                 job_errors,
                                 verify_failures,
@@ -633,6 +679,18 @@ pub fn run_campaign(args: &Args) -> i32 {
             }
         }
         let mut dispatched = false;
+        if args.abandon {
+            let swept = abandon_in_flight(&mut children);
+            for job_id in swept {
+                jobs_abandoned += 1;
+                cancelled.insert(job_id.clone());
+                eprintln!("master: abandoning job {job_id}");
+                let _ = std::fs::write(
+                    format!("{}/{}/{job_id}.cancel", args.session, JOBS_DIR),
+                    b"cancel",
+                );
+            }
+        }
         for w in 0..args.workers {
             let busy = children
                 .iter()
@@ -710,6 +768,7 @@ pub fn run_campaign(args: &Args) -> i32 {
         pt_join,
         per_worker,
         jobs_dispatched,
+        jobs_abandoned,
         jobs_completed,
         job_errors,
         verify_failures,
@@ -720,4 +779,66 @@ pub fn run_campaign(args: &Args) -> i32 {
         t0,
         children_total,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use atomic_movegen::types::Square;
+
+    fn open_leaf(mv: Move) -> Leaf {
+        Leaf {
+            mv,
+            status: LeafStatus::Open,
+            depth: 0,
+            pn: 1,
+            dn: 1,
+            work: 0,
+            slices: 0,
+            last_worker: None,
+            job: None,
+            static_rank: 0,
+        }
+    }
+
+    fn child_with(replies: Vec<Leaf>) -> Child {
+        let mut c = Child {
+            mv: Move::NONE,
+            terminal: None,
+            hash: 0,
+            replies,
+            resolved: false,
+            refuted: false,
+            depth: 0,
+            synthesized: false,
+            static_rank: 0,
+        };
+        // refresh() with an empty replies set would resolve/refute via the
+        // terminal classification; keep the child artificially live here.
+        c.terminal = None;
+        c
+    }
+
+    #[test]
+    fn abandon_sweep_cancels_jobs_of_dead_children_and_keeps_live_ones() {
+        let mut l1 = open_leaf(Move::make_move(Square::A2, Square::A3));
+        l1.job = Some(("w0_7".into(), 0, Instant::now()));
+        let mut l2 = open_leaf(Move::make_move(Square::B2, Square::B3));
+        l2.job = Some(("w1_3".into(), 1, Instant::now()));
+        let mut dead = child_with(vec![l1]);
+        dead.refuted = true;
+        let mut live = child_with(vec![l2]);
+
+        let mut children = vec![dead, live];
+        let cancelled = abandon_in_flight(&mut children);
+        assert_eq!(cancelled, vec!["w0_7".to_string()]);
+        assert!(children[0].replies[0].job.is_none(), "lock released");
+        assert!(children[1].replies[0].job.is_some(), "live job untouched");
+
+        // (a): a resolved leaf on a live child is abandoned too.
+        children[1].replies[0].status = LeafStatus::Lost;
+        let cancelled = abandon_in_flight(&mut children);
+        assert_eq!(cancelled, vec!["w1_3".to_string()]);
+        assert!(children[1].replies[0].job.is_none());
+    }
 }

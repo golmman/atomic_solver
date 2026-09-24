@@ -333,6 +333,22 @@ fn main() {
         let job = claim_job(&args.session, args.worker);
         match job {
             Some(job) => {
+                // V3 cancellation (plan6 §2): a job the master abandoned at a
+                // merge boundary is dropped un-run; the TT is kept (retention
+                // semantics unchanged) and the worker picks up the next
+                // dispatch. If the marker appears after the claim, the job
+                // runs to completion and the master drops the result.
+                let cancel = format!("{}/{}/{}.cancel", args.session, JOBS_DIR, job.job_id);
+                if std::path::Path::new(&cancel).exists() {
+                    eprintln!(
+                        "worker{}: job {} cancelled before start; dropped",
+                        args.worker, job.job_id
+                    );
+                    let claim = format!("{}/{}/{}.claim", args.session, JOBS_DIR, job.job_id);
+                    let _ = std::fs::remove_file(&claim);
+                    let _ = std::fs::remove_file(&cancel);
+                    continue;
+                }
                 let result = run_job(
                     &job,
                     &config.root_fen,

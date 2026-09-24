@@ -1,0 +1,469 @@
+{
+  "position": "shuffle_V2",
+  "artifact": "state/shuffle_V2_rep0_proof_tree.bin",
+  "inspect_pt_validate": "ok",
+  "artifact_nodes": 91574,
+  "root_outcome": "win",
+  "seq_outcome": "win",
+  "root_outcome_matches_seq": true,
+  "dual_check": {
+    "sampled": 24,
+    "contradictions": 0,
+    "inconclusive": 0,
+    "checks": [
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "h8g7",
+          "d6f8",
+          "g7h8"
+        ],
+        "fen": "4rB1k/3p4/2p2Np1/5p1p/p6P/4PPP1/P1PP4/1R4RK w - - 4 24",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "h8g7",
+          "d6f8",
+          "g7f7"
+        ],
+        "fen": "4rB2/3p1k2/2p2Np1/5p1p/p6P/4PPP1/P1PP4/1R4RK w - - 4 24",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8g8"
+        ],
+        "fen": "6rk/3p4/2pB1Np1/5p1p/p6P/4PPP1/P1PP4/1R4RK w - - 2 23",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "g7f7",
+          "b8f8",
+          "f7g7",
+          "f8g8",
+          "g7f7"
+        ],
+        "fen": "6R1/3p1k2/2p2Np1/5p1p/p6P/4PPP1/P1PP4/6RK w - - 7 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "g7f7",
+          "b8f8",
+          "f7g7",
+          "f8g8",
+          "g7h6"
+        ],
+        "fen": "6R1/3p4/2p2Npk/5p1p/p6P/4PPP1/P1PP4/6RK w - - 7 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "g7f7",
+          "b8f8",
+          "f7e7"
+        ],
+        "fen": "5R2/3pk3/2p2Np1/5p1p/p6P/4PPP1/P1PP4/6RK w - - 5 26",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "g7f7",
+          "b8f8",
+          "f7e6"
+        ],
+        "fen": "5R2/3p4/2p1kNp1/5p1p/p6P/4PPP1/P1PP4/6RK w - - 5 26",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "g7h6"
+        ],
+        "fen": "1R6/3p4/2p2Npk/5p1p/p6P/4PPP1/P1PP4/6RK w - - 3 25",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "d7d5",
+          "b8g8",
+          "g7f7"
+        ],
+        "fen": "6R1/5k2/2p2Np1/3p1p1p/p6P/4PPP1/P1PP4/6RK w - - 2 26",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "d7d5",
+          "b8g8",
+          "g7h6"
+        ],
+        "fen": "6R1/8/2p2Npk/3p1p1p/p6P/4PPP1/P1PP4/6RK w - - 2 26",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "d7d6",
+          "b8g8",
+          "g7f7"
+        ],
+        "fen": "6R1/5k2/2pp1Np1/5p1p/p6P/4PPP1/P1PP4/6RK w - - 2 26",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "d7d6",
+          "b8g8",
+          "g7h6"
+        ],
+        "fen": "6R1/8/2pp1Npk/5p1p/p6P/4PPP1/P1PP4/6RK w - - 2 26",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "g6g5",
+          "b8g8",
+          "g7f7",
+          "g8g7",
+          "f7f8"
+        ],
+        "fen": "5k2/3p2R1/2p2N2/5ppp/p6P/4PPP1/P1PP4/6RK w - - 4 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "g6g5",
+          "b8g8",
+          "g7f7",
+          "g8g7",
+          "f7e6"
+        ],
+        "fen": "8/3p2R1/2p1kN2/5ppp/p6P/4PPP1/P1PP4/6RK w - - 4 27",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "f5e4",
+          "b1b8",
+          "c6c5",
+          "g1b1",
+          "h8g7",
+          "d6e5",
+          "g7g8",
+          "b8e8",
+          "d7d5",
+          "b1b8",
+          "g8f7",
+          "b8e8",
+          "d5d4",
+          "e8e7",
+          "f7f8",
+          "e5g7",
+          "f8g8",
+          "e7f7",
+          "d4e3"
+        ],
+        "fen": "6k1/5RB1/6p1/p1p4p/7P/5PP1/P1PP4/7K w - - 0 31",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "f5e4",
+          "b1b8",
+          "a5a4",
+          "b8e8",
+          "g6g5",
+          "g1b1",
+          "h8g7",
+          "b1b8",
+          "g5h4",
+          "b8g8",
+          "g7f6",
+          "g8g6",
+          "f6f7",
+          "g6g7",
+          "f7e8"
+        ],
+        "fen": "4k3/3p2R1/2pB4/7p/p7/4PPP1/P1PP4/7K w - - 6 29",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "f5e4",
+          "b1b8",
+          "h8h7",
+          "b8e8",
+          "c6c5",
+          "g1b1",
+          "c5c4",
+          "b1b8",
+          "a5a4",
+          "b8h8",
+          "h7g7",
+          "h8h7",
+          "g7f6"
+        ],
+        "fen": "8/3p3R/3B1kp1/7p/p1p4P/4PPP1/P1PP4/7K w - - 4 28",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "h8g7",
+          "d6f8",
+          "g7f7",
+          "b1b8",
+          "e8c8",
+          "e4g5",
+          "f7g8",
+          "b8c8",
+          "f5f4"
+        ],
+        "fen": "5Bk1/3p4/2p3p1/p5Np/5p1P/4PPP1/P1PP4/6RK w - - 0 26",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "f5e4",
+          "b1b8",
+          "a5a4",
+          "b8e8",
+          "g6g5",
+          "g1b1",
+          "h8h7",
+          "b1b8",
+          "a4a3",
+          "b8h8",
+          "h7g7",
+          "d6e5",
+          "g7f7",
+          "h8f8",
+          "f7e6",
+          "f8f6",
+          "e6d5"
+        ],
+        "fen": "8/3p4/2p2R2/3kB1pp/7P/p3PPP1/P1PP4/7K w - - 8 30",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "f5e4",
+          "b1b8",
+          "c6c5",
+          "g1b1",
+          "c5c4",
+          "b8e8",
+          "h8g7",
+          "b1b8",
+          "g7f6",
+          "d6e5",
+          "f6e6",
+          "b8e8",
+          "e6f7",
+          "e8f8",
+          "f7e7"
+        ],
+        "fen": "5R2/3pk3/6p1/p3B2p/2p4P/4PPP1/P1PP4/7K w - - 9 29",
+        "claimed": "win",
+        "rederived": "win",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "h8g7",
+          "d6f8"
+        ],
+        "fen": "4rB2/3p2k1/2p2Np1/5p1p/p6P/4PPP1/P1PP4/1R4RK b - - 3 23",
+        "claimed": "loss",
+        "rederived": "loss",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "g7f7",
+          "b8f8",
+          "f7g7",
+          "f8g8"
+        ],
+        "fen": "6R1/3p2k1/2p2Np1/5p1p/p6P/4PPP1/P1PP4/6RK b - - 6 26",
+        "claimed": "loss",
+        "rederived": "loss",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "d7d5",
+          "b8g8"
+        ],
+        "fen": "6R1/6k1/2p2Np1/3p1p1p/p6P/4PPP1/P1PP4/6RK b - - 1 25",
+        "claimed": "loss",
+        "rederived": "loss",
+        "status": "match"
+      },
+      {
+        "path": [
+          "c3e4",
+          "a5a4",
+          "e4f6",
+          "e8f8",
+          "d6f8",
+          "h8g7",
+          "b1b8",
+          "d7d6",
+          "b8g8"
+        ],
+        "fen": "6R1/6k1/2pp1Np1/5p1p/p6P/4PPP1/P1PP4/6RK b - - 1 25",
+        "claimed": "loss",
+        "rederived": "loss",
+        "status": "match"
+      }
+    ]
+  },
+  "sound": true
+}

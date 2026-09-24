@@ -4,11 +4,11 @@
 
 Opened 2026-09-21 as the repo's umbrella for the ultimate goal: establish
 the game-theoretic value of the atomic chess starting position, delivered
-as a **machine-verifiable proof artifact**. Next plan number: **plan7**
-(reserved: campaign product surface, gated on plan6's verdict); plan6 =
-the bounded scheduler/budget iteration (drafted 2026-09-24); the
-roadmap's resource-sizing run renumbers to **plan8** (2026-09-24 — the
-plan6 number went to the iteration).
+as a **machine-verifiable proof artifact**. Next plan number: **plan8**
+(off-sandbox resource sizing; blocked on the hardware-access question).
+plan6 (the bounded scheduler/budget iteration) executed 2026-09-24 and
+fired **Not-GO** (`report6.md`): plan7 (campaign product surface) is
+cancelled — not draftable under the pre-registered gate semantics.
 
 **Pilot (2026-09-23, plan4):** the sharpness-first rescope (report2 §9
 option 2) was tested before pivoting and passed both pre-registered
@@ -29,8 +29,7 @@ budgets) are dead, and the sharpness-first rescope, as piloted,
 saturated. The plan4 artifact is frozen as the interim deliverable.
 `solve` falls to **dormant** only if the plan6 iteration and the plan8
 sizing run both fire
-negative — at that point it has no open items, just reopeners
-(mechanism innovation or a resource step-change). `report4.md` §7
+negative — at that point it has no open items, just reopeners(mechanism innovation or a resource step-change). `report4.md` §7
 records the amended recommendation.
 
 ## Roadmap (2026-09-23) — return path to the startpos value
@@ -44,17 +43,24 @@ book (report4 §1 expanded with PVs) as `docs/plans/solve/book.md`.
 Phase 1 — the work before `solve` returns (two independent tracks):
 
 - **plan6 — bounded campaign iteration (scheduler/budget policy; report5
-  §4 recommendation).** Same harness, same gates with C4 as the registered
-  design point; registered variants = V0 incumbent (complete jobs), V1
-  one-step budget ladder, V3 nf + abandon trigger (the one campaign-side
-  code change); pre-registered ECON completeness clause (5/5 proven), C4′
-  no-regression, and the A5 attribution amendment. GO → plan7 draftable;
-  not-GO → no plan7, continuation per the status rule.
+  §4 recommendation). EXECUTED 2026-09-24, Not-GO (`report6.md`).** Same
+  harness, same gates; variants V0 incumbent (2/5, 0.90× wall), V1
+  one-step ladder (**winner, 5/5 but 0.63× wall / 2.64× inflation → ECON
+  NO-GO**), V2 two-step ladder (3/5, 0.95× / 1.57×), V3 nf + abandon
+  trigger (triggers structurally inert, 0 fires in 30 reps). SOUND PASS
+  (144 dual-checked facts, 0 contradictions); C4′ FAIL (0.18× wall, ~26×
+  at 4 workers). Attribution recorded as **A5** in
+  `campaign_architecture.md` §11: budget ladders price but cannot win the
+  coverage race over the root's ~41 children; the registered
+  scheduler/budget family is falsified as the fix. **plan7 cancelled**
+  (not draftable under the pre-registered semantics).
 - **plan8 — resource sizing (economic gate, off-sandbox; renumbered from
-  roadmap plan6, 2026-09-24).** One 20–24 h rerun of the d4d5-p2 probe on
-  a larger machine; plan3's linear rate makes this the next doubling
-  datapoint; converts "bottomless" into a number. Independent of plan6;
-  combines with it only at plan7's threshold.
+  roadmap plan6, 2026-09-24). THE REMAINING LEVER.** One 20–24 h rerun of
+  the d4d5-p2 probe on a larger machine; plan3's linear rate makes this
+  the next doubling datapoint; converts "bottomless" into a number.
+  Independent of plan6; was to combine with it only at plan7's threshold
+  — with plan6 negative and plan7 cancelled, plan8 now decides between
+  "active, blocked on hardware" and "dormant" per the status rule.
 
 (plan5 — the architecture design spike — is executed: `report5.md`,
 `campaign_architecture.md`, the two-job prototype, and the bounded-
@@ -66,6 +72,12 @@ reverted in plan2, rebuild to spec —, frontier dump, deterministic
 resume, S-store v1 promoted out of `measurements/`); then a one-quiet-
 system campaign pilot (gate: wall-time beat vs. single sequential run
 at acceptable work inflation).
+
+**Cancelled 2026-09-24: plan6 fired Not-GO (`report6.md`), so plan7 is
+not draftable and Phase 2 is dead.** The campaign architecture's
+confirmed mechanisms (retention, complete-job scheduling) and its open
+problem (the coverage race, A5.4) are recorded in
+`campaign_architecture.md` §11; any future campaign work starts there.
 
 Not on the critical path (no-work recommendations): `egtb` stays
 oracle-only (anchoring at generable depths is measured dead);

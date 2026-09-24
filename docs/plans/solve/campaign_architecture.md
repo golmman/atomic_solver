@@ -329,3 +329,35 @@ assumed. They are binding for plan7.
   public `TtEntry::advisory_pn_dn()` (read-only, behavior-neutral; no
   search logic uses it). Recorded here because it is the only lib-surface
   addition the prototype needed.
+- **A5 — plan6 scheduler/budget attribution: no registered feedback shape
+  meets the GO band at 2 workers; the abandon trigger as registered is
+  structurally inert.** plan6 ran the pre-registered variants on the plan5
+  harness (shuffle, 2 workers, 5 reps each, 600 s arm cap): V0 = the
+  C2-nf shape (flat 8M jobs), V1 = one-step ladder (4M→8M, feedback on),
+  V2 = two-step ladder (2M→8M), V3 = V0 + the registered abandon triggers
+  (leaf resolved elsewhere / root child resolved-refuted at a merge
+  boundary). Results (proven reps; S = 45.95 s / 249.5M child evals):
+  V0 2/5 at 0.90× wall, 1.91× inflation; **V1 5/5 at 0.63× wall, 2.64×**
+  (the completeness clause exposed that its proven count is bought with
+  work, not wall); V2 3/5 at 0.95× wall, 1.57×; V3 2/5 at 0.30×, 7.3×.
+  Censored reps burn 9–13B evals in every arm — the bimodality plan5
+  recorded persists. Findings, binding for any future campaign work:
+  (1) **the abandon triggers never fired** (0 abandonments in 30 reps):
+  on these positions proofs come exclusively from an all-replies-won
+  child resolution — no leaf ever loses (children only refute via
+  terminal classification, already known at build) and locked leaves
+  cannot be resolved by another worker — so the registered trigger shape
+  is provably inert and must not be shipped; a useful trigger would need
+  a different deadness signal (e.g. master-side pn bounds), which is
+  *not* validated by any measurement here. (2) The pre-registered ECON
+  gate (5/5 proven, wall ≥ 1.2×, inflation ≤ 3×) fails for the winner
+  (V1) on the wall band → **ECON NO-GO**; MARGINAL fails too (wall
+  < 1.0×). (3) C4′ (V1 at 4 workers) failed both scaling criteria
+  (4/5, 0.18× wall, ~26× inflation); plan5's C4 (1.29× / 1.98×) stands
+  as the upper tail of a high-variance process, not a reproducible
+  operating point. (4) The plan5 diagnosis ("which jobs get which
+  budgets") is refined: budget ladders change the *price* of losing the
+  coverage race over the root's ~41 children / 640+ open leaves (static
+  priors do not identify the proof-bearing child), never its *outcome*;
+  no scheduling policy within the registered family fixes that, which is
+  why the iteration fired negative and plan7 is not draftable.

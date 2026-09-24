@@ -23,7 +23,7 @@
 //! Usage:
 //!     campaign_master --session <dir> --fen <FEN> [--mode campaign|seq]
 //!         [--workers 2] [--tt-mb 128] [--pt-mb 512] [--slice 2000000]
-//!         [--max-slice 64000000] [--nf] [--max-wall 1800]
+//!         [--max-slice 64000000] [--nf] [--abandon] [--max-wall 1800]
 //!         [--out proof_tree.bin] [--tree-json tree.json] [--state-every 30]
 //!
 //! `--mode seq` is the in-process sequential baseline (first-outcome solve;
@@ -49,6 +49,7 @@ fn parse_args() -> Args {
         slice: 2_000_000,
         max_slice: 64_000_000,
         nf: false,
+        abandon: false,
         max_wall: 1800,
         mode: "campaign".into(),
         out: "proof_tree.bin".into(),
@@ -77,6 +78,10 @@ fn parse_args() -> Args {
             "--max-slice" => a.max_slice = need(&mut i, "--max-slice").parse().expect("number"),
             "--nf" => {
                 a.nf = true;
+                i += 1;
+            }
+            "--abandon" => {
+                a.abandon = true;
                 i += 1;
             }
             "--max-wall" => a.max_wall = need(&mut i, "--max-wall").parse().expect("number"),
@@ -110,6 +115,7 @@ fn run_seq(args: &Args) -> i32 {
         outcome: Some(outcome.as_str().into()),
         wall_s: wall,
         jobs_dispatched: 0,
+        jobs_abandoned: 0,
         jobs_completed: 0,
         job_errors: 0,
         verify_failures: 0,

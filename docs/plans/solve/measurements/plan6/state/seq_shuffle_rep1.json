@@ -1,0 +1,9 @@
+{
+  "rep": 1,
+  "fen": "4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21",
+  "outcome": "win",
+  "wall_s": 45.957688142,
+  "nodes": 13907467,
+  "child_evals": 249480478,
+  "wall_incl_startup_s": 45.96755242347717
+}
