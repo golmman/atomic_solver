@@ -4,7 +4,11 @@
 
 Opened 2026-09-21 as the repo's umbrella for the ultimate goal: establish
 the game-theoretic value of the atomic chess starting position, delivered
-as a **machine-verifiable proof artifact**. Next plan number: **plan5**.
+as a **machine-verifiable proof artifact**. Next plan number: **plan7**
+(reserved: campaign product surface, gated on plan6's verdict); plan6 =
+the bounded scheduler/budget iteration (drafted 2026-09-24); the
+roadmap's resource-sizing run renumbers to **plan8** (2026-09-24 — the
+plan6 number went to the iteration).
 
 **Pilot (2026-09-23, plan4):** the sharpness-first rescope (report2 §9
 option 2) was tested before pivoting and passed both pre-registered
@@ -23,7 +27,8 @@ go dormant either: plans 5–7 are pending work (the status legend's
 mechanisms (PV-ladder, SSFP anchors, step-by-step narrowing at sandbox
 budgets) are dead, and the sharpness-first rescope, as piloted,
 saturated. The plan4 artifact is frozen as the interim deliverable.
-`solve` falls to **dormant** only if plan5 and plan6 both fire
+`solve` falls to **dormant** only if the plan6 iteration and the plan8
+sizing run both fire
 negative — at that point it has no open items, just reopeners
 (mechanism innovation or a resource step-change). `report4.md` §7
 records the amended recommendation.
@@ -38,22 +43,25 @@ book (report4 §1 expanded with PVs) as `docs/plans/solve/book.md`.
 
 Phase 1 — the work before `solve` returns (two independent tracks):
 
-- **plan5 — campaign architecture design spike (intellectual gate).**
-  GHI-correct job-level DF-PN: job = (subposition, clock context);
-  soundness contract for split/merge; anchor-key clock safety;
-  position-keyed artifact composition (contract proven by plan4's
-  census). Theory already mined: `docs/theory/pdfpn-2010`,
-  `pns-pdfpn-2025`, `ppn2-2011`, `ghi-journal-2005`. Must answer the
-  `parallel` plan2 lesson: work inflation far below the measured 15.5×.
-  Pre-registered feasibility gates required; recommended: include a
-  small two-job prototype of one quiet subtree.
-- **plan6 — resource sizing (economic gate, off-sandbox).** One
-  20–24 h rerun of the d4d5-p2 probe on a larger machine; plan3's
-  linear rate makes this the next doubling datapoint; converts
-  "bottomless" into a number.
+- **plan6 — bounded campaign iteration (scheduler/budget policy; report5
+  §4 recommendation).** Same harness, same gates with C4 as the registered
+  design point; registered variants = V0 incumbent (complete jobs), V1
+  one-step budget ladder, V3 nf + abandon trigger (the one campaign-side
+  code change); pre-registered ECON completeness clause (5/5 proven), C4′
+  no-regression, and the A5 attribution amendment. GO → plan7 draftable;
+  not-GO → no plan7, continuation per the status rule.
+- **plan8 — resource sizing (economic gate, off-sandbox; renumbered from
+  roadmap plan6, 2026-09-24).** One 20–24 h rerun of the d4d5-p2 probe on
+  a larger machine; plan3's linear rate makes this the next doubling
+  datapoint; converts "bottomless" into a number. Independent of plan6;
+  combines with it only at plan7's threshold.
 
-Phase 2 (only on plan5 GO + plan6 pricing): plan7 = campaign product
-surface (`--tt-load-path` to the plan5 soundness spec — built once and
+(plan5 — the architecture design spike — is executed: `report5.md`,
+`campaign_architecture.md`, the two-job prototype, and the bounded-
+iteration recommendation that plan6 now carries.)
+
+Phase 2 (only on plan6 GO + plan8 pricing, per report5 §4): plan7 =
+campaign product surface (`--tt-load-path` to the plan5 soundness spec — built once and
 reverted in plan2, rebuild to spec —, frontier dump, deterministic
 resume, S-store v1 promoted out of `measurements/`); then a one-quiet-
 system campaign pilot (gate: wall-time beat vs. single sequential run
@@ -62,10 +70,10 @@ at acceptable work inflation).
 Not on the critical path (no-work recommendations): `egtb` stays
 oracle-only (anchoring at generable depths is measured dead);
 `parallel` stays closed (campaign scope delegated here); node-rate
-work (`lean`/`tune`) only after plan6 prices the campaign.
+work (`lean`/`tune`) only after plan8 prices the campaign.
 
 **Open questions carried into the next session:** (a) hardware/cloud
-access for the plan6 sizing run; (b) ~~plan5 scope~~ — resolved 2026-09-23:
+access for the plan8 sizing run; (b) ~~plan5 scope~~ — resolved 2026-09-23:
 executed with the two-job prototype (plan5).
 
 **Pivot (2026-09-22, after plan1's RETHINK verdict):** the campaign
@@ -297,5 +305,17 @@ Per repo convention, every plan ends with the task of writing its
   steady leaf-level progress (2,356 jobs, 21 leaf proofs) without child
   resolution. Recommendation: **one bounded iteration** (scheduler/budget
   policy — the C2 failure is diagnosed as a worker-coverage pathology, not
-  an architecture dead-end) before any plan7 work; plan6 proceeds
-  independently.
+  an architecture dead-end) before any plan7 work; the sizing run
+  proceeds independently.
+- **2026-09-24** — **plan6 drafted** (not yet executed): the bounded
+  campaign iteration per report5 §4's recommendation — scheduler/budget
+  policy only, same harness and gates, C4 as the registered design point.
+  Registered variants: V0 (nf, incumbent), V1 (one-step budget ladder,
+  `--slice 4M --max-slice 8M`), V3 (nf + narrow abandon trigger, the one
+  campaign-side code change); V2 (two-step ladder) optional. New
+  pre-registrations: ECON completeness clause (5/5 proven within the arm
+  cap), C4′ no-regression, mandatory A5 attribution amendment to the
+  architecture doc. The off-sandbox resource-sizing run renumbers to
+  **plan8** (independent; combines only at plan7's threshold). A negative
+  verdict falsifies the recorded scheduler diagnosis and is a valid
+  completion; dormancy then follows the status rule.
