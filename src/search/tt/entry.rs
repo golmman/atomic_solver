@@ -38,6 +38,14 @@ impl Default for TtEntry {
 }
 
 impl TtEntry {
+    /// Read-only advisory bounds (pn, dn) for external tooling (the campaign
+    /// prototype's worker progress feedback; architecture doc §6 — advisory
+    /// numbers are never trusted for composition). No search logic uses this.
+    #[must_use]
+    pub fn advisory_pn_dn(&self) -> (u64, u64) {
+        (self.pn, self.dn)
+    }
+
     /// Return the cached result for `expected` if the base entry stores one.
     #[must_use]
     pub fn result_for(&self, expected: Outcome) -> Option<EntryResult> {

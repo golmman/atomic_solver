@@ -1,0 +1,8 @@
+{
+  "rep": 1,
+  "outcome": "win",
+  "wall_s": 52.845168431,
+  "nodes": 13907467,
+  "child_evals": 249480478,
+  "wall_incl_startup_s": 52.86935758590698
+}

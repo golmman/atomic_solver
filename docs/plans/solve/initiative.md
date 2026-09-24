@@ -65,8 +65,8 @@ oracle-only (anchoring at generable depths is measured dead);
 work (`lean`/`tune`) only after plan6 prices the campaign.
 
 **Open questions carried into the next session:** (a) hardware/cloud
-access for the plan6 sizing run; (b) plan5 scope — design-only vs.
-with two-job prototype (recommendation on record: with prototype);
+access for the plan6 sizing run; (b) ~~plan5 scope~~ — resolved 2026-09-23:
+executed with the two-job prototype (plan5).
 
 **Pivot (2026-09-22, after plan1's RETHINK verdict):** the campaign
 mechanism is the **Solved-Set Frontier Push (SSFP)** with the
@@ -279,3 +279,23 @@ worker corner of it.
   initiative's status rule.
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
+- **2026-09-23** — **plan5 executed** (`report5.md`, `measurements/plan5/`):
+  D1 `campaign_architecture.md` written first (normative for plan7, §11
+  records the prototype's four amendments — A1 worker-export
+  self-containedness via the reconstruct pipeline, A2 hard merge tripwire,
+  A3 job-local fill repetition residual, A4 read-only pn/dn accessor — the
+  only lib-surface addition). D2 two-job prototype
+  (`examples/campaign_{master,worker}`): SOUND gate **PASS** (0 verify
+  failures post-fix, all proven-rep artifacts `validate: ok`, 96 dual-checked
+  facts, 0 contradictions). ECON as pre-registered (**C2, primary**) fired
+  **NO-GO** (1/5 proven, 0.76× wall, ~25× inflation); the **C4 scaling gate
+  passed with GO-band economics** (5/5 proven, 1.29× wall, 1.98× inflation,
+  all artifacts valid). Attribution: **retention pays decisively** (C2-nr
+  0/10 proven, 227×/25× inflation); the v0 slice-and-rerank feedback loop
+  does **not** pay (C2-nf beats C2 on m22) — recorded per the plan's rule.
+  Exploratory d4d5-p2 pair: both censor at 30 min; the campaign shows
+  steady leaf-level progress (2,356 jobs, 21 leaf proofs) without child
+  resolution. Recommendation: **one bounded iteration** (scheduler/budget
+  policy — the C2 failure is diagnosed as a worker-coverage pathology, not
+  an architecture dead-end) before any plan7 work; plan6 proceeds
+  independently.

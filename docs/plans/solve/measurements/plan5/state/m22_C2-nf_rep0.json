@@ -1,0 +1,57 @@
+{
+  "mode": "campaign",
+  "fen": "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+  "workers": 2,
+  "feedback": false,
+  "exit": "proven",
+  "outcome": "win",
+  "wall_s": 10.96308322,
+  "jobs_dispatched": 18,
+  "jobs_completed": 17,
+  "job_errors": 0,
+  "verify_failures": 0,
+  "worker_nodes": 3738200,
+  "worker_child_evals": 43276596,
+  "children_total": 43,
+  "children_resolved": 1,
+  "children_refuted": 0,
+  "leaves_open": 786,
+  "leaves_won": 15,
+  "leaves_lost": 0,
+  "tree_nodes": 145066,
+  "tree_root_depth": 553,
+  "validate": "ok",
+  "per_worker_child_evals": {
+    "0": 18629391,
+    "1": 24647205
+  },
+  "rep": 0,
+  "arm": "C2-nf",
+  "position": "m22",
+  "wall_incl_startup_s": 11.283452987670898,
+  "worker_logs": {
+    "w0": [
+      "job w0_0 outcome=win exit=Complete evals=2683 nodes=264 wall=0.001 events=24",
+      "job w0_10 outcome=win exit=Complete evals=2883495 nodes=230229 wall=0.648 events=25584",
+      "job w0_11 outcome=win exit=Complete evals=2172 nodes=173 wall=0.001 events=24",
+      "job w0_13 outcome=win exit=Complete evals=1 nodes=3 wall=0.000 events=2",
+      "job w0_14 outcome=win exit=Complete evals=30662 nodes=9649 wall=0.007 events=7808",
+      "job w0_15 outcome=win exit=Complete evals=53295 nodes=17071 wall=0.011 events=12550",
+      "job w0_16 outcome=win exit=Complete evals=220439 nodes=37699 wall=0.077 events=23772",
+      "job w0_2 outcome=draw exit=BudgetExhausted evals=8000037 nodes=424488 wall=1.607 events=0",
+      "job w0_5 outcome=win exit=Complete evals=1444320 nodes=112674 wall=0.285 events=3434",
+      "job w0_6 outcome=win exit=Complete evals=5805608 nodes=422610 wall=0.881 events=8648",
+      "job w0_8 outcome=win exit=Complete evals=186679 nodes=16287 wall=0.083 events=860"
+    ],
+    "w1": [
+      "job w1_1 outcome=win exit=Complete evals=4882328 nodes=284338 wall=0.915 events=5408",
+      "job w1_12 outcome=win exit=Complete evals=2410634 nodes=435736 wall=0.275 events=45132",
+      "job w1_17 outcome=draw exit=BudgetExhausted evals=8000007 nodes=474322 wall=1.799 events=0",
+      "job w1_3 outcome=win exit=Complete evals=462927 nodes=30061 wall=0.132 events=636",
+      "job w1_4 outcome=win exit=Complete evals=3709582 nodes=265193 wall=0.731 events=9292",
+      "job w1_7 outcome=win exit=Complete evals=5181734 nodes=380416 wall=1.044 events=27190",
+      "job w1_9 outcome=draw exit=BudgetExhausted evals=8000000 nodes=1071309 wall=1.118 events=0"
+    ]
+  },
+  "master_verify_failures": []
+}

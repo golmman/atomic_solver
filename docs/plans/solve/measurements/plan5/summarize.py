@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""Aggregate plan5 arm results: medians, speedup, inflation, gates."""
+import glob
+import json
+import os
+import statistics
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+STATE = os.path.join(HERE, "state")
+
+
+def load(pattern):
+    rows = []
+    for f in sorted(glob.glob(os.path.join(STATE, pattern))):
+        d = json.load(open(f))
+        if "rep" in d:
+            rows.append(d)
+    return rows
+
+
+def med(xs):
+    return statistics.median(xs) if xs else None
+
+
+def arm_rows(pos, arm):
+    return load(f"{pos}_{arm}_rep*.json")
+
+
+def main():
+    out = {}
+    for pos in ["m22", "shuffle", "d4d5"]:
+        seq = load(f"seq_{pos}_rep*.json")
+        if not seq:
+            continue
+        s = {
+            "wall_med": med([r["wall_s"] for r in seq]),
+            "nodes_med": med([r.get("nodes") or r.get("worker_nodes") or 0 for r in seq]),
+            "child_evals_med": med([r.get("child_evals") or r.get("worker_child_evals") or 0 for r in seq]),
+            "outcome": seq[0]["outcome"],
+            "reps": len(seq),
+            "censored": sum(1 for r in seq if r.get("exit") == "timeout"),
+        }
+        out[f"{pos}/S"] = s
+        for arm, workers in [("C2", 2), ("C4", 4), ("C2-nr", 2), ("C2-nf", 2)]:
+            rows = arm_rows(pos, arm)
+            if not rows:
+                continue
+            proven = [r for r in rows if r.get("exit") == "proven"]
+            a = {
+                "workers": workers,
+                "reps": len(rows),
+                "proven": len(proven),
+                "censored": len(rows) - len(proven),
+                "wall_med_all": med([r["wall_s"] for r in rows]),
+                "wall_med_proven": med([r["wall_s"] for r in proven]) if proven else None,
+                "child_evals_med": med([r["worker_child_evals"] for r in rows]),
+                "verify_failures_total": sum(r.get("verify_failures", 0) for r in rows),
+                "job_errors_total": sum(r.get("job_errors", 0) for r in rows),
+                "validate_ok_reps": sum(1 for r in rows if r.get("validate") == "ok"),
+            }
+            if s["wall_med"] and a["wall_med_proven"]:
+                a["wall_speedup_proven"] = s["wall_med"] / a["wall_med_proven"]
+            if s["child_evals_med"] and a["child_evals_med"]:
+                a["work_inflation"] = a["child_evals_med"] / s["child_evals_med"]
+            out[f"{pos}/{arm}"] = a
+    with open(os.path.join(STATE, "summary.json"), "w") as f:
+        json.dump(out, f, indent=2)
+    print(json.dumps(out, indent=2))
+
+
+if __name__ == "__main__":
+    main()
