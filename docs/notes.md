@@ -400,3 +400,35 @@ It's ok to have the limitations in sight and then work on reducing them step by 
 
 I would prefer to chop up what is currently called "plan8" into smaller runs which run well in this current sandbox and take max 6h.
 Is this possible?
+
+---
+
+In my own words, so you can check if i understood:
+
+The leading idea is not to build parallelity into this application,
+instead have an orchestrator which runs multiple instances at once and then
+combines the results into one proof.
+
+---
+
+what do you think of this idea:
+
+Let's call it orchestrator-PNS.
+The orchestrator starts with an initial (low) work budget for each worker.
+Then it traverses the tree of positions breadth first and adds nodes to its bookkeeping tree.
+Each node is assigned a pns
+* 0 - the node is proven/disproven
+* the work budget - the work budget was exceeded in this node
+* INF - node not yet explored by a worker
+
+It takes the first N children of the root and assigns them to the workers.
+If a worker gets a proof/disproof inside the budget add it to the global proof and flag it OUTCOME.
+If not flag the node EXCEEDED.
+Repeat until there a no UNKNOWN nodes left.
+Then increase the work budget and explore the EXCEEDED nodes again.
+Repeat.
+
+
+---
+
+what if the orchestrator implemented a breadth-first PNS where it assigns the workers the nodes to be explored?
