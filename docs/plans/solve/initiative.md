@@ -13,9 +13,14 @@ execution established that item 7 (campaign product surface) is not
 draftable, so item 8 (resource sizing) is drafted as plan7 instead; the
 earlier plan7 name is retired with it.
 
-Next plan number: **plan9** (item 8, stage 3 — multi-session
-checkpoint-resume accumulation; to be drafted in its own session).
-**plan7 executed 2026-09-24 (`report7.md`)**: stage-1 gate **LINEAR**
+**plan9 drafted 2026-09-25 (`plan9.md`, not yet executed)** — item 8,
+stage 3: multi-session checkpoint-resume accumulation. It completes the
+item-8 ladder; the item-8 verdict (plan7 §4 bands) fires at plan9's
+report, and with m2 locked in GO band it hinges on ρ alone. plan9 also
+builds the campaign's constraint-4 checkpoint/resume machinery
+(examples/-side: master state v2 + worker TT dump/restore) — the
+instrument stage 3 measures with. **plan7 executed 2026-09-24
+(`report7.md`)**: stage-1 gate **LINEAR**
 (η = 1.0081; R_seq = 198,229 nodes/s certified over 1–4 h; N_floor =
 2.87 G; max-RSS flat 234.7 MB; TT fill ≤ 1 h). **plan8 is drafted and
 executed (2026-09-25, `report8.md`)**: stage-2 gate **FEASIBLE,
@@ -426,3 +431,27 @@ Per repo convention, every plan ends with the task of writing its
   frozen at 0/27 children, 698 open leaves in every arm — plan9's ρ
   (multi-session accumulation) is the only remaining input to the
   item-8 verdict (POSITIVE needs ρ ≥ 0.7 ∧ m2 ≥ 1; m2 is in GO band).
+- **2026-09-25 — plan9 drafted** (not yet executed): item 8, stage 3 —
+  the checkpoint-resume accumulation measurement and the item-8 verdict
+  stage. Grounded in a code audit: the plan5 prototype has no resume
+  path (master_state.json dumped, never loaded; no worker TT
+  dump/restore), so plan9 §2 builds the minimal constraint-4 machinery
+  examples/-side (master state v2 with depth/last_worker/synthesized;
+  `--resume` with durable-results re-drain rebuilding the fresh proof
+  tree; `--job-seed` namespacing; worker `--tt-dump`/`--tt-load` via the
+  public `read_tt_snapshot` + `Table::store` — no lib changes; product
+  binary byte-identity check registered). Arms: SMOKE (not a datapoint),
+  S1 fresh 1 h + checkpoint (fresh control on the new binaries), S2/S3
+  warm-resume 1 h each (two boundaries — stacking), RC cold-resume 1 h
+  (attribution control, C2-nr analog). ρ fixed per plan7 §4's "defined
+  precisely in plan9": ρ_k = Δfacts(S_k)/Δfacts(S1), headline over the
+  two resumed sessions; degenerate rules pre-registered against
+  report8 §3's frozen-frontier prior (Δfacts(S1) = 0 → halt-and-
+  investigate; zero resumed numerators with a live denominator →
+  measured ρ = 0 → NEGATIVE with failure-mode attribution:
+  frozen-frontier vs resume-mechanics, via the registered work-to-censor
+  substrate metric). NEGATIVE → `solve` dormant per the status rule;
+  POSITIVE → horizon table's accumulated rows fill; MARGINAL → judgment
+  call, no A5 re-tread. Compute ≈ 4.8 h of the 6 h cap. Verdict bands
+  and deliverables per plan7 §4; mandatory `campaign_architecture.md`
+  §11 amendment (A6) at the report.
