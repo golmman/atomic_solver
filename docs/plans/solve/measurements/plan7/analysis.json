@@ -1,0 +1,86 @@
+{
+ "root_fen": "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq d6 0 2",
+ "gate_constants": {
+  "comparability_band_pm": 0.1,
+  "eta_linear": [
+   0.9,
+   1.1
+  ]
+ },
+ "m2_reused": {
+  "source": "../plan3/state/arm_a1.json",
+  "budget_secs": 7200,
+  "nodes": 1428643840,
+  "wall": 7202.531,
+  "rate_nodes_per_s": 198353.0,
+  "rss_kb": 234476,
+  "tt_solved": 2455496,
+  "tt_unsolved": 1738808
+ },
+ "arms": {
+  "ladder1": {
+   "budget_secs": 3600,
+   "nodes": 709693440,
+   "wall": 3602.555,
+   "rate_nodes_per_s": 196997.3,
+   "censored": true,
+   "rss_kb": 234668,
+   "tt_stdout_solved": 2368731,
+   "tt_stdout_unsolved": 1825573,
+   "tt_snap_solved": 2368731,
+   "tt_snap_unsolved": 1825573,
+   "tt_occupancy": 4194304,
+   "tt_fill_point_bounded": "<= 3603s (table at capacity at censoring)",
+   "validate": null
+  },
+  "ladder4": {
+   "budget_secs": 14400,
+   "nodes": 2870968320,
+   "wall": 14402.545,
+   "rate_nodes_per_s": 199337.6,
+   "censored": true,
+   "rss_kb": 234668,
+   "tt_stdout_solved": 2370041,
+   "tt_stdout_unsolved": 1824263,
+   "tt_snap_solved": 2370041,
+   "tt_snap_unsolved": 1824263,
+   "tt_occupancy": 4194304,
+   "tt_fill_point_bounded": "<= 14403s (table at capacity at censoring)",
+   "validate": null
+  }
+ },
+ "comparability_check": {
+  "a1_rate_nodes_per_s": 198353.0,
+  "per_arm_within_band": {
+   "ladder1": true,
+   "ladder4": true
+  },
+  "a1_admitted_as_midpoint": true
+ },
+ "gate": {
+  "verdict": "LINEAR",
+  "detail": {
+   "eta_two_point": 1.0081,
+   "two_point_max_log_residual": 0.0,
+   "monotone_floors": true,
+   "eta_three_point": 1.0081,
+   "three_point_max_log_residual": 0.0006
+  }
+ },
+ "r_seq": {
+  "certified_band": [
+   3600,
+   14400
+  ],
+  "rates_nodes_per_s": {
+   "L1": 196997.3,
+   "M2(plan3 A1)": 198353.0,
+   "L4": 199337.6
+  },
+  "floor_nodes": {
+   "N_L1": 709693440,
+   "N_M2": 1428643840,
+   "N_L4": 2870968320
+  }
+ }
+}

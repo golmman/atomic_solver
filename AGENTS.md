@@ -219,6 +219,13 @@ If these commands start failing (`EPERM`/`EACCES` on event open), the host-side 
     the parsed results are the reproducible record. To preserve a
     transcript that is not regenerable (one-off instrumented build,
     perf profile), commit it explicitly with `git add -f`.
+  - clean up after each measurement session, before committing: prune
+    snapshots to *empty* `*.tt.keep` tombstones (renaming a `.tt` to
+    `.keep` does not prune it — there is no `*.tt` ignore rule),
+    delete `__pycache__` litter (drivers that import a sibling plan's
+    module should set `sys.dont_write_bytecode`), and confirm with
+    `git add --dry-run` that only the commit list above would be
+    added.
 - Specifications in `docs/spec/` must be standalone documents: no references
   to `docs/plans/`, reports, or repo-internal process vocabulary (gate names,
   fixture/case names). They are normative contracts copied verbatim into
