@@ -13,18 +13,15 @@ execution established that item 7 (campaign product surface) is not
 draftable, so item 8 (resource sizing) is drafted as plan7 instead; the
 earlier plan7 name is retired with it.
 
-Next plan number: **plan8** (item 8, stage 2 — campaign arms at 4
-workers; drafted only after plan7 executes). **plan7 is drafted (not
-yet executed, 2026-09-24)**: item 8, stage 1 — the in-sandbox
-sequential d4d5-p2 sizing ladder (fresh 1 h / 4 h arms; plan3's 2 h A1
-admitted as the ladder midpoint under a ±10% rate-comparability gate
-to fit the hard 6 h compute cap) plus the **item-8 combination rule
-pre-registered in plan7 §4** (unit = dfpn nodes; R_seq / R_camp / ρ
-per stage; horizon table T(W); POSITIVE = ρ ≥ 0.7 ∧ m2 ≥ 1, NEGATIVE
-(dormant) = ρ < 0.4, between = MARGINAL). plan6 (the bounded
-scheduler/budget iteration) executed 2026-09-24 and fired **Not-GO**
-(`report6.md`): item 7 (campaign product surface) is cancelled — not
-draftable under the pre-registered gate semantics.
+Next plan number: **plan9** (item 8, stage 3 — multi-session
+checkpoint-resume accumulation; to be drafted in its own session).
+**plan7 executed 2026-09-24 (`report7.md`)**: stage-1 gate **LINEAR**
+(η = 1.0081; R_seq = 198,229 nodes/s certified over 1–4 h; N_floor =
+2.87 G; max-RSS flat 234.7 MB; TT fill ≤ 1 h). **plan8 is drafted and
+executed (2026-09-25, `report8.md`)**: stage-2 gate **FEASIBLE,
+GO-band** — m2 = 2.8176 (R_camp = 558,529 nodes/s, DECAY not fired,
+N_floor′ = 8.043 G, memory check passed at 4 workers); m2 is locked in
+GO band, so the item-8 verdict (plan7 §4 bands) hinges on ρ alone.
 
 **Pilot (2026-09-23, plan4):** the sharpness-first rescope (report2 §9
 option 2) was tested before pivoting and passed both pre-registered
@@ -77,9 +74,18 @@ Phase 1 — the work before `solve` returns (two independent tracks):
   is the reference environment; the offered step-up envelope (8 CPUs,
   16 GB, 12 h — for exceptional experiments) is the first scale-up
   target, not a prerequisite. Stages (each one session, hard 6 h cap):
-  sequential d4d5-p2 ladder (1 h / 2 h / 4 h censoring arms) → **plan7**;
-  campaign arms (4 workers, memory-checked, 2 h / 4 h caps) → **plan8**;
-  multi-session checkpoint-resume accumulation → **plan9**. The
+  sequential d4d5-p2 ladder (1 h / 2 h / 4 h censoring arms) →
+  **plan7, executed 2026-09-24 (`report7.md`): gate LINEAR** (η =
+  1.0081; R_seq = 198,229 nodes/s certified over 1–4 h; N_floor =
+  2.87 G; RSS flat 234.7 MB; TT fill ≤ 1 h);
+  campaign arms (4 workers, memory-checked; executed as 1 h / 4 h caps
+  — amended from the original "2 h / 4 h" wording at plan8 execution
+  close, report8 §6, to fit the stage cap) → **plan8, executed
+  2026-09-25 (`report8.md`): FEASIBLE, GO-band** — m2 = 2.8176,
+  R_camp = 558,529 nodes/s, no DECAY, N_floor′ = 8.043 G nodes,
+  κ ≈ 27.5 both sides, memory check passed (≈ 1 GiB tree-RSS vs the
+  7 GiB watermark); multi-session checkpoint-resume accumulation →
+  **plan9** (the verdict hinges on ρ: m2 is already ≥ 1). The
   combination rule (what the stages jointly imply for the finishability
   number) is pre-registered in plan7. plan3's linear rate makes the
   ladder the growth datapoint; converts "bottomless" into a number on
@@ -395,3 +401,28 @@ Per repo convention, every plan ends with the task of writing its
   the reference environment and the offered step-up envelope (8 CPUs /
   16 GB / 12 h, for exceptional experiments) the first scale-up target.
   Plan drafting happens in its own session (plan7 draft pending).
+- **2026-09-24** — **plan7 executed** (`report7.md`,
+  `measurements/plan7/`): stage-1 gate **LINEAR** — all three arms
+  censor (L1 709.7M / M2 1,428.6M / L4 2,870.9M nodes at 1 h / 2 h /
+  4 h), η = 1.0081, floors monotone, rates within ±0.7% (L1 −0.68%, L4
+  +0.50% vs plan3 A1, admitted as midpoint); **R_seq = 198,229
+  nodes/s certified over 1–4 h**, N_floor = 2.87 G, max-RSS flat at
+  234.7 MB, TT fill point ≤ 1 h (128 MB table at capacity; TT keys
+  confirmed non-metric). Stage-2/3 inputs and the §4 horizon table
+  delivered with the campaign rows pending plan8.
+- **2026-09-25** — **plan8 drafted and executed** (`plan8.md`,
+  `report8.md`, `measurements/plan8/`): stage 2 = campaign arms at 4
+  workers on d4d5-p2 (registered V1 shape, no variants; arms SM 600 s /
+  S600 seq / **C4 4 h headline** / C1 1 h — the initiative's "2 h / 4 h
+  caps" wording amended to 1 h / 4 h at close, report8 §6, to fit the
+  stage cap). Gate: **FEASIBLE, GO-band** — m2(C4) = 2.8176
+  (R_camp = 558,529 nodes/s = 2.82× R_seq; per-worker ≈ 0.70× R_seq,
+  mildly declining with session length but above the 0.8 DECAY
+  threshold), A5.4 falsified in throughput terms on this root (the §1
+  private-TT economics confirmed); floor extended to N_floor′ =
+  8.043 G nodes; κ ≈ 27.5 on both sides (conversion fixed);
+  **memory check passed** (≈ 0.97 GiB peak tree-RSS, workers ≤ 609 MB,
+  oom_kill 0 — no INFEASIBLE signal, CONFw2 not run). Proof state
+  frozen at 0/27 children, 698 open leaves in every arm — plan9's ρ
+  (multi-session accumulation) is the only remaining input to the
+  item-8 verdict (POSITIVE needs ρ ≥ 0.7 ∧ m2 ≥ 1; m2 is in GO band).

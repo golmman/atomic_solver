@@ -1,0 +1,17 @@
+{
+ "tag": "S600",
+ "arm": "S600",
+ "mode": "seq",
+ "workers": 0,
+ "budget_secs": 600,
+ "wall_s": 600.029,
+ "outcome": "draw",
+ "exit": "done",
+ "nodes": 118788096,
+ "child_evals": 3266512119,
+ "kappa": 27.5,
+ "nodes_per_s": 197970.6,
+ "ru_maxrss_kb": 232564,
+ "censored": false,
+ "master_exitcode": 0
+}
