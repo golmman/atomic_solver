@@ -432,3 +432,69 @@ Repeat.
 ---
 
 what if the orchestrator implemented a breadth-first PNS where it assigns the workers the nodes to be explored?
+
+---
+
+* pivot: database of prroven positions bradth first
+* selfplay against stockfish?
+  * measured in conversion initative: no-go
+* pns mit attacker der eigentlich loser ist?
+  * funktioniert, ist aber in der theorie aufwändiger
+  * position wird immer als attacker OR ausgeführt
+  * -> alle OR nodes müssen durchsucht werden
+* nextn step solve?
+   1. A5.4 — the coverage race: a mechanism innovation that wins the root's ~41-children coverage race (the one open architectural problem, since budget ladders were falsified as the fix). Requires 
+      a fresh pre-registered plan.
+  2. A6 — budget-aware early-censor certificates: mechanism innovation targeting the resume/accumulation failure mode (no warm work-to-censor discount).
+* solve: no-go parallel?
+  * "Read parallel/report2.md, solve/report8–9, and campaign_architecture.md §11 (A5.4/A6); assess whether a 
+ TT-seeded race probe or an A6 certificate design justifies a fresh pre-registered plan, and write plan10.md or a closure note."
+
+---
+
+
+## Goal
+
+Build a database of proven and disproven lines from the starting position.
+Results are added to a global proof.
+Can be started and stopped at will.
+
+## Idea
+
+Breadth-first PNS orchestrator runs this solver with N instances parallel.
+
+## Questions
+
+* new initiative?
+* as an example or external?
+* directly to db or append proof_tree.bin?
+
+---
+
+Thank you, let's brainstorm this a little further.
+
+What is this database for:
+I imagine a small website which allows to explore the proven and disproven lines.
+The website is definitely not the scope of this project though.
+
+We could merge proof_tree.bin files into the global proof.
+But what structure / format is the global proof then?
+
+If it is built as an example/ we should worry about the size. Maybe an external project is preferred?
+
+---
+
+My feedback / thoughts follow.
+
+The website allows the user to replay the positions.
+So i'd argue the database is a tree where certain nodes are no further expanded
+since no decisive outcome was found yet.
+
+What do you mean by "PG"?
+
+SQLite sounds like the right tool, agreed.
+
+Where the code lives, also agreed.
+
+Where does the merger live though? If it is part of this project we need not to share the proof_tree_dump.md but only the global_proof_store.md.
+When we store directly to and SQLite db the global_proof_store.md should only explain the structure of the stored data, right?
