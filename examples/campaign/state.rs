@@ -2,6 +2,13 @@
 //! checkpoint dumps, and session finalization. Split out of the
 //! `campaign_master` bin to keep both files under the size guideline; the
 //! dispatch loop lives in the bin, the state machine lives here.
+//!
+//! Plan 9 extends this module with the checkpoint/resume machinery
+//! (master-state dump format v2 + `load_state` + job-id namespacing): the
+//! file carries the complete `Leaf`/`Child` field sets, the selection and
+//! merge code paths, and the resume overlay in one place — splitting the
+//! resume logic out would fragment the private state types it overlays.
+//! Campaign-side only (initiative non-goal scope).
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -173,6 +180,24 @@ pub fn pending_jobs(children: &[Child]) -> usize {
         .count()
 }
 
+/// Locate a result's leaf by its echoed job path (2-ply from the campaign
+/// root). Fallback for in-flight straggler results of a prior session:
+/// their job locks were dropped at resume, so the id-based lookup misses;
+/// their verified facts still merge (counted toward the new session).
+pub fn find_loc_by_path(children: &[Child], path_uci: &[String]) -> Option<(usize, usize)> {
+    if path_uci.len() != 2 {
+        return None;
+    }
+    let ci = children
+        .iter()
+        .position(|c| move_to_uci(c.mv) == path_uci[0])?;
+    let li = children[ci]
+        .replies
+        .iter()
+        .position(|l| move_to_uci(l.mv) == path_uci[1])?;
+    Some((ci, li))
+}
+
 // ----------------------------------------------------------------- dumps ---
 
 pub fn dump_tree_json(tree: &ProofTree, path: &str) -> Result<(), String> {
@@ -197,7 +222,12 @@ pub fn dump_tree_json(tree: &ProofTree, path: &str) -> Result<(), String> {
 }
 
 pub fn dump_state(args: &Args, children: &[Child], jobs: u64, per_worker: &HashMap<usize, u64>) {
+    // Format v2 (plan 9 §2.1): additive over v0 — per-leaf `depth` and
+    // `last_worker`, per-child `depth` and `synthesized`, and a `version`
+    // field. v2 is what `load_state` requires; v0 readers ignore unknown
+    // fields, v2 readers reject a missing version.
     let state = serde_json::json!({
+        "version": 2,
         "jobs_dispatched": jobs,
         "children": children.iter().map(|c| serde_json::json!({
             "mv": move_to_uci(c.mv),
@@ -205,9 +235,13 @@ pub fn dump_state(args: &Args, children: &[Child], jobs: u64, per_worker: &HashM
             "terminal": c.terminal.map(|o| o.as_str()),
             "resolved": c.resolved,
             "refuted": c.refuted,
+            "depth": c.depth,
+            "synthesized": c.synthesized,
             "replies": c.replies.iter().map(|l| serde_json::json!({
                 "mv": move_to_uci(l.mv),
                 "status": format!("{:?}", l.status),
+                "depth": l.depth,
+                "last_worker": l.last_worker,
                 "pn": l.pn, "dn": l.dn, "work": l.work, "slices": l.slices,
                 "locked": l.job.is_some(),
             })).collect::<Vec<_>>(),
@@ -215,6 +249,98 @@ pub fn dump_state(args: &Args, children: &[Child], jobs: u64, per_worker: &HashM
         "per_worker_child_evals": per_worker,
     });
     let _ = super::write_json(format!("{}/master_state.json", args.session), &state);
+}
+
+/// Load a v2 `master_state.json` over a freshly built child table (the
+/// `--resume` path, plan 9 §2.1). Restores leaf statuses, advisory pn/dn,
+/// work, slice counts, per-leaf depth and `last_worker`, and the per-child
+/// `synthesized` flag. Job locks are dropped (their workers are gone; the
+/// in-flight straggler results merge by path when they drain).
+/// `resolved`/`refuted` are recomputed by `Child::refresh` from the restored
+/// statuses, so a stale classification cannot survive. Returns the number
+/// of overlaid leaves and synthesized children.
+pub fn load_state(args: &Args, children: &mut [Child]) -> Result<(usize, usize), String> {
+    #[derive(serde::Deserialize)]
+    struct LeafV2 {
+        mv: String,
+        status: String,
+        depth: u32,
+        pn: u64,
+        dn: u64,
+        work: u64,
+        slices: u32,
+        last_worker: Option<usize>,
+    }
+    #[derive(serde::Deserialize)]
+    struct ChildV2 {
+        mv: String,
+        depth: u32,
+        synthesized: bool,
+        replies: Vec<LeafV2>,
+    }
+    #[derive(serde::Deserialize)]
+    struct StateV2 {
+        version: u32,
+        children: Vec<ChildV2>,
+    }
+    let path = format!("{}/master_state.json", args.session);
+    let st: StateV2 = super::read_json(&path)?;
+    if st.version != 2 {
+        return Err(format!("unsupported master_state version {}", st.version));
+    }
+    let by_child: HashMap<&str, &ChildV2> =
+        st.children.iter().map(|c| (c.mv.as_str(), c)).collect();
+    let mut leaves = 0usize;
+    let mut synthesized = 0usize;
+    for child in children.iter_mut() {
+        let Some(cv) = by_child.get(move_to_uci(child.mv).as_str()) else {
+            continue;
+        };
+        child.depth = cv.depth;
+        child.synthesized = cv.synthesized;
+        if cv.synthesized {
+            synthesized += 1;
+        }
+        let by_leaf: HashMap<&str, &LeafV2> =
+            cv.replies.iter().map(|l| (l.mv.as_str(), l)).collect();
+        for leaf in child.replies.iter_mut() {
+            let Some(lv) = by_leaf.get(move_to_uci(leaf.mv).as_str()) else {
+                continue;
+            };
+            leaf.status = match lv.status.as_str() {
+                "Open" => LeafStatus::Open,
+                "Won" => LeafStatus::Won,
+                "Lost" => LeafStatus::Lost,
+                other => return Err(format!("unknown leaf status '{other}'")),
+            };
+            leaf.depth = lv.depth;
+            leaf.pn = lv.pn;
+            leaf.dn = lv.dn;
+            leaf.work = lv.work;
+            leaf.slices = lv.slices;
+            leaf.last_worker = lv.last_worker;
+            leaf.job = None; // locks dropped: session k's workers are gone
+            leaves += 1;
+        }
+        child.refresh();
+    }
+    Ok((leaves, synthesized))
+}
+
+/// Remove every job file / claim / cancel marker (resume only): the prior
+/// session's workers are gone, and stale unclaimed jobs must not be picked
+/// up under a new session's seed. Durable `results/` are kept (re-drained).
+pub fn clear_job_dir(args: &Args) {
+    let dir = format!("{}/{}", args.session, JOBS_DIR);
+    let Ok(entries) = std::fs::read_dir(&dir) else {
+        return;
+    };
+    for e in entries.flatten() {
+        let name = e.file_name().to_string_lossy().into_owned();
+        if name.ends_with(".json") || name.ends_with(".claim") || name.ends_with(".cancel") {
+            let _ = std::fs::remove_file(e.path());
+        }
+    }
 }
 
 /// Build the master's initial AND/OR proof state: root children (OR nodes)
@@ -416,6 +542,14 @@ pub struct Args {
     pub tree_json: String,
     pub state_every: u64,
     pub seq_timeout: u64,
+    /// Plan 9 §2.1: resume from `master_state.json` (format v2) instead of
+    /// starting fresh: statuses/advisory/work restored, job locks dropped,
+    /// durable results re-drained into a fresh proof tree, counters at 0.
+    pub resume: bool,
+    /// Plan 9 §2.2: job-id namespacing so a resumed master's ids
+    /// (`w{w}_{seed}_{n}`) cannot collide with earlier sessions' result
+    /// files in the shared session directory.
+    pub job_seed: u64,
 }
 
 /// Per-session summary printed as JSON at exit (and written to
@@ -459,6 +593,9 @@ pub fn run_campaign(args: &Args) -> i32 {
     for dir in [JOBS_DIR, RESULTS_DIR] {
         std::fs::create_dir_all(format!("{}/{}", args.session, dir)).expect("session dirs");
     }
+    // A prior session's STOP file must not stop this session's fresh
+    // workers (resume), and is absent in a fresh session dir anyway.
+    let _ = std::fs::remove_file(format!("{}/{}", args.session, STOP_FILE));
     let config = super::SessionConfig {
         root_fen: args.fen.clone(),
         tt_mb: args.tt_mb,
@@ -472,6 +609,24 @@ pub fn run_campaign(args: &Args) -> i32 {
     let (root_hash, mut children) = build_children(&args.fen);
     let _ = root_hash;
     let children_total = children.len();
+
+    // Plan 9 §2.1 resume: overlay the v2 state (statuses, advisory pn/dn,
+    // work, slices, depth, last_worker, synthesized), drop job locks, and
+    // clear stale job files. Counters below start at 0; the durable results
+    // re-drain (empty `processed`) and the fresh proof tree rebuilds from
+    // their re-verification.
+    if args.resume {
+        match load_state(args, &mut children) {
+            Ok((leaves, synth)) => {
+                eprintln!("master: resumed state: {leaves} leaves, {synth} synthesized children");
+            }
+            Err(e) => {
+                eprintln!("master: resume failed: {e}");
+                return 4;
+            }
+        }
+        clear_job_dir(args);
+    }
 
     // Master proof tree (the global artifact).
     let memory_limited = Arc::new(AtomicBool::new(false));
@@ -493,15 +648,20 @@ pub fn run_campaign(args: &Args) -> i32 {
     let mut exit_reason = "timeout".to_string();
     let mut last_state_dump = Instant::now();
 
-    // Rule-derived terminal-child facts are emitted immediately.
+    // Rule-derived terminal-child facts are emitted immediately; a resumed
+    // session additionally re-emits every previously synthesized child once
+    // at startup, so the fresh proof tree carries the already-merged AND
+    // resolutions and the re-drain's synthesis guard stays a no-op.
     for child in &mut children {
         if child.terminal == Some(Outcome::Loss) {
             child.synthesized = true;
+        }
+        if child.synthesized {
             let _ = pt_tx.send(ProofEvent::NodeProven(NodeProven::new(
                 vec![child.mv],
                 child.hash,
                 Outcome::Loss,
-                0,
+                child.depth,
             )));
         }
     }
@@ -554,9 +714,18 @@ pub fn run_campaign(args: &Args) -> i32 {
                 ));
                 continue;
             }
-            let Some((ci, li)) = find_job_loc(&mut children, &result.job_id) else {
+            // In-session results match by job lock; straggler results of a
+            // prior session (locks dropped at resume) match by echoed path.
+            // `from_lock` gates the per-leaf work accumulation: restored
+            // leaf.work already contains prior sessions' evals, so only
+            // this session's own merges may extend it.
+            let from_lock = find_job_loc(&mut children, &result.job_id);
+            let Some((ci, li)) =
+                from_lock.or_else(|| find_loc_by_path(&children, &result.path_uci))
+            else {
                 continue;
             };
+            let from_lock = from_lock.is_some();
             let job_path_uci: Vec<String> = vec![
                 move_to_uci(children[ci].mv),
                 move_to_uci(children[ci].replies[li].mv),
@@ -568,7 +737,9 @@ pub fn run_campaign(args: &Args) -> i32 {
                 eprintln!("master: job {} errored: {err}", result.job_id);
                 continue;
             }
-            leaf.work += result.child_evals;
+            if from_lock {
+                leaf.work += result.child_evals;
+            }
             match result.outcome.as_str() {
                 "win" | "loss" => {
                     let mut emit = |global: &[Move], hash: u64, outcome: Outcome, depth: u32| {
@@ -714,7 +885,7 @@ pub fn run_campaign(args: &Args) -> i32 {
                     };
                     (path, budget)
                 };
-                let job_id = format!("w{w}_{jobs_dispatched}");
+                let job_id = format!("w{w}_{}_{}", args.job_seed, jobs_dispatched);
                 jobs_dispatched += 1;
                 dispatched = true;
                 let job = super::Job {
@@ -840,5 +1011,106 @@ mod tests {
         let cancelled = abandon_in_flight(&mut children);
         assert_eq!(cancelled, vec!["w1_3".to_string()]);
         assert!(children[1].replies[0].job.is_none());
+    }
+
+    // -------------------------------------------------- plan 9 resume ---
+
+    #[test]
+    fn state_v2_dump_load_round_trips_selection_state() {
+        let dir = std::env::temp_dir().join(format!(
+            "plan9_state_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let args = Args {
+            session: dir.to_string_lossy().into_owned(),
+            fen: Position::STARTPOS_FEN.to_string(),
+            workers: 4,
+            tt_mb: 128,
+            pt_mb: 512,
+            slice: 4_000_000,
+            max_slice: 8_000_000,
+            nf: false,
+            abandon: false,
+            max_wall: 3600,
+            mode: "campaign".into(),
+            out: String::new(),
+            tree_json: String::new(),
+            state_every: 30,
+            seq_timeout: 3600,
+            resume: true,
+            job_seed: 1,
+        };
+
+        let (hash, mut children) = build_children(&args.fen);
+        let _ = hash;
+        assert!(!children.is_empty());
+        // Mutate one leaf and one child so the overlay has something to carry.
+        children[0].synthesized = true;
+        children[0].depth = 6;
+        children[0].replies[3].status = LeafStatus::Won;
+        children[0].replies[3].depth = 5;
+        children[0].replies[3].pn = 0;
+        children[0].replies[3].dn = 4;
+        children[0].replies[3].work = 1_234_567;
+        children[0].replies[3].slices = 9;
+        children[0].replies[3].last_worker = Some(2);
+        children[0].replies[3].job = Some(("w2_1_7".into(), 2, Instant::now()));
+        dump_state(&args, &children, 42, &HashMap::new());
+
+        // Fresh rebuild + overlay: the in-flight lock is dropped, everything
+        // else is carried verbatim; resolved/refuted recompute via refresh.
+        let (_, mut rebuilt) = build_children(&args.fen);
+        let (leaves, synth) = load_state(&args, &mut rebuilt).unwrap();
+        assert_eq!(
+            leaves,
+            children.iter().map(|c| c.replies.len()).sum::<usize>()
+        );
+        assert_eq!(synth, 1);
+        assert!(rebuilt[0].synthesized);
+        assert_eq!(rebuilt[0].depth, 6);
+        let l = &rebuilt[0].replies[3];
+        assert_eq!(l.status, LeafStatus::Won);
+        assert_eq!(l.depth, 5);
+        assert_eq!((l.pn, l.dn), (0, 4));
+        assert_eq!(l.work, 1_234_567);
+        assert_eq!(l.slices, 9);
+        assert_eq!(l.last_worker, Some(2));
+        assert!(l.job.is_none(), "job locks are dropped on resume");
+        // Untouched leaves keep their priors.
+        assert_eq!(rebuilt[1].replies[0].status, LeafStatus::Open);
+        assert_eq!((rebuilt[1].replies[0].pn, rebuilt[1].replies[0].dn), (1, 1));
+
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn job_seed_namespaces_ids() {
+        // Different seeds never collide; the worker prefix and the worker-id
+        // parse in the master's drain loop keep working.
+        let id0 = format!("w0_{}_{}", 0u64, 7u64);
+        let id1 = format!("w0_{}_{}", 1u64, 7u64);
+        assert_ne!(id0, id1);
+        assert_eq!(id1.split('_').next(), Some("w0"));
+        assert!(id1.starts_with("w0_"));
+    }
+
+    #[test]
+    fn find_loc_by_path_matches_two_ply_leaf_paths() {
+        let (_, children) = build_children(Position::STARTPOS_FEN);
+        let path = vec![
+            move_to_uci(children[2].mv),
+            move_to_uci(children[2].replies[1].mv),
+        ];
+        assert_eq!(find_loc_by_path(&children, &path), Some((2, 1)));
+        assert_eq!(find_loc_by_path(&children, &["e2e4".to_string()]), None);
+        assert_eq!(
+            find_loc_by_path(&children, &["e2e5".into(), "e7e5".into()]),
+            None
+        );
     }
 }

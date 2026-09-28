@@ -13,13 +13,22 @@ execution established that item 7 (campaign product surface) is not
 draftable, so item 8 (resource sizing) is drafted as plan7 instead; the
 earlier plan7 name is retired with it.
 
-**plan9 drafted 2026-09-25 (`plan9.md`, not yet executed)** — item 8,
-stage 3: multi-session checkpoint-resume accumulation. It completes the
-item-8 ladder; the item-8 verdict (plan7 §4 bands) fires at plan9's
-report, and with m2 locked in GO band it hinges on ρ alone. plan9 also
-builds the campaign's constraint-4 checkpoint/resume machinery
-(examples/-side: master state v2 + worker TT dump/restore) — the
-instrument stage 3 measures with. **plan7 executed 2026-09-24
+**plan9 executed 2026-09-25 (`report9.md`) — item 8 complete, verdict
+**NEGATIVE**:` solve` is DORMANT per the status rule.** Stage 3 built
+the constraint-4 checkpoint/resume machinery (examples/-side: master
+state v2 + `--resume` re-drain + `--job-seed`; worker `--tt-load`/
+`--tt-dump` over the public snapshot primitives; SMOKE-validated 7/7,
+product binary byte-identical) and ran the registered arms on d4d5-p2:
+Δfacts = 30/0/0/0 across the fresh and three resumed sessions →
+**ρ = 0.0** (ρ_2 = ρ_3 = ρ_cold = 0). With m2 = 2.8176 locked in GO
+band, the plan7 §4 verdict fires NEGATIVE; the failure-mode
+attribution (report9 §4, A6) is the resume-mechanics mode per the
+pre-registered discriminator (no warm work-to-censor discount; both
+sides budget-pinned), with the frozen-frontier degeneracy separately
+confirmed on the fresh side. The machinery stays in `examples/` as the
+campaign's measured-sound constraint-4 implementation; reopeners are
+recorded in `campaign_architecture.md` §11 (A5.4 coverage race,
+budget-aware early-censor certificates). **plan7 executed 2026-09-24
 (`report7.md`)**: stage-1 gate **LINEAR**
 (η = 1.0081; R_seq = 198,229 nodes/s certified over 1–4 h; N_floor =
 2.87 G; max-RSS flat 234.7 MB; TT fill ≤ 1 h). **plan8 is drafted and
@@ -37,19 +46,18 @@ But it also **saturates**: deeper reach crosses the quiet plateau that
 plans 1–3 measured blocked. The full four-option matrix is in
 `report4.md` §4.
 
-**Decision (2026-09-23, session close): the campaign line closes; the
-initiative stays ACTIVE, re-scoped** — it is the project's umbrella, so
-it never closes while the startpos value is the goal, and it does not
-go dormant either: item 8 (the sizing ladder, drafted as plans 7–9) is
-the pending work (the status legend's "active"). What closed is the
-plan1–4 **campaign line**: the measured mechanisms (PV-ladder, SSFP
-anchors, step-by-step narrowing at sandbox budgets) are dead, and the
-sharpness-first rescope, as piloted, saturated. The plan4 artifact is
-frozen as the interim deliverable. `solve` falls to **dormant** only if
-the plan6 iteration and the item-8 sizing ladder (plans 7–9) both fire
-negative — at that point it has no open items, just reopeners (mechanism
-innovation or a resource step-change). `report4.md` §7 records the
-amended recommendation.
+**Decision (2026-09-23, session close; amended 2026-09-25 at plan9
+close): the campaign line closes; the initiative is DORMANT.** It is
+the project's umbrella for the startpos value, and its status follows
+the pre-registered rule: plan6 fired Not-GO (item 7 not draftable) and
+the item-8 sizing ladder fired NEGATIVE at its ρ stage (report9 §4) —
+no open items remain, only reopeners (mechanism innovation targeting
+the coverage race / censor certificates, or a resource step-change,
+which re-prices but does not reopen). The plan4 artifact is frozen as
+the interim deliverable. What closed and when: the plan1–4 **campaign
+line** closed 2026-09-23 (measured mechanisms dead, sharpness-first
+rescope saturated); plan6 closed the scheduler/budget family (A5);
+plan9 closed the accumulation question (A6).
 
 ## Roadmap (2026-09-23) — return path to the startpos value
 
@@ -90,12 +98,13 @@ Phase 1 — the work before `solve` returns (two independent tracks):
   R_camp = 558,529 nodes/s, no DECAY, N_floor′ = 8.043 G nodes,
   κ ≈ 27.5 both sides, memory check passed (≈ 1 GiB tree-RSS vs the
   7 GiB watermark); multi-session checkpoint-resume accumulation →
-  **plan9** (the verdict hinges on ρ: m2 is already ≥ 1). The
+  **plan9, executed 2026-09-25 (`report9.md`): ρ = 0.0 → verdict
+  NEGATIVE, initiative dormant** (restore machinery measured sound;
+  Δfacts 30/0/0/0; failure-mode attribution in A6). The
   combination rule (what the stages jointly imply for the finishability
-  number) is pre-registered in plan7. plan3's linear rate makes the
-  ladder the growth datapoint; converts "bottomless" into a number on
-  the hardware actually available. Decides between "active" and
-  "dormant" per the status rule.
+  number) was pre-registered in plan7 and fired at plan9. plan3's
+  linear rate made the ladder the growth datapoint; converts
+  "bottomless" into numbers on the hardware actually available.
 
 (plan5 — the architecture design spike — is executed: `report5.md`,
 `campaign_architecture.md`, the two-job prototype, and the bounded-
@@ -431,6 +440,29 @@ Per repo convention, every plan ends with the task of writing its
   frozen at 0/27 children, 698 open leaves in every arm — plan9's ρ
   (multi-session accumulation) is the only remaining input to the
   item-8 verdict (POSITIVE needs ρ ≥ 0.7 ∧ m2 ≥ 1; m2 is in GO band).
+- **2026-09-25 — plan9 executed (`report9.md`,
+  `measurements/plan9/`): item-8 verdict **NEGATIVE; `solve`
+  dormant**. §2 machinery implemented examples/-side (master state v2 +
+  `--resume` with durable-results re-drain rebuilding the fresh proof
+  tree, `--job-seed` namespacing, worker `--tt-load`/`--tt-dump` via
+  the public snapshot primitives; two implementation findings recorded:
+  straggler path-merge and the per-leaf work re-drain gate; product
+  binary byte-identical, `make test` green, clippy/fmt clean). SMOKE
+  7/7 on the first run. Arms (1 h each, strictly sequential): S1 fresh
+  Δfacts = 30 (exactly plan8 C1's corroboration), S2/S3 warm-resume
+  and RC cold-resume all Δfacts = 0 → **ρ = 0.0, verdict NEGATIVE**;
+  failure mode: resume-mechanics per the pre-registered discriminator
+  (no warm discount; both sides ≈ 100% budget-pinned at 8M evals on
+  the 12 common re-queued leaves) with a recorded resolution caveat,
+  frozen-frontier confirmed on the fresh side. Restore integrity clean
+  in all 8 warm cells (2.3–2.4M solved records/worker, probe 0
+  mismatches); 0 verify failures over ~28k results incl. re-drains; 0
+  oom; peak tree-RSS ≤ 0.96 GiB. Marginal m2 declined 2.89 → 2.53 →
+  2.17 across the chain (observational). Deliverables: horizon table
+  completed (accumulated rows struck at ρ = 0), A6 amendment to
+  `campaign_architecture.md` §11, session dirs + checkpoint TT files
+  cleaned. The checkpoint/resume machinery remains in `examples/` as
+  the measured-sound constraint-4 implementation.
 - **2026-09-25 — plan9 drafted** (not yet executed): item 8, stage 3 —
   the checkpoint-resume accumulation measurement and the item-8 verdict
   stage. Grounded in a code audit: the plan5 prototype has no resume

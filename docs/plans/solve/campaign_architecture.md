@@ -361,3 +361,45 @@ assumed. They are binding for plan7.
   priors do not identify the proof-bearing child), never its *outcome*;
   no scheduling policy within the registered family fixes that, which is
   why the iteration fired negative and plan7 is not draftable.
+- **A6 — plan9 checkpoint-resume attribution: the machinery is sound, the
+  accumulated state converts into zero marginal proof progress (ρ = 0);
+  the pre-registered discriminator fires the resume-mechanics mode, with a
+  recorded budget-cap resolution limit.** plan9 built the constraint-4
+  checkpoint/resume machinery examples/-side (master-state dump v2 with
+  per-leaf depth/last_worker and per-child depth/synthesized; `--resume`
+  with durable-results re-drain rebuilding the fresh proof tree and
+  job-locks dropped; `--job-seed` namespacing; worker `--tt-load`/
+  `--tt-dump` over the public snapshot primitives, `best_child` carried
+  unset — a registered fidelity limitation affecting an ordering hint
+  only) and ran the four registered arms on d4d5-p2 at the incumbent V1
+  shape (S1 fresh 1 h, S2/S3 warm-resume 1 h each, RC cold-resume 1 h).
+  Measured: Δfacts = 30/0/0/0 across closes (leaves_won + leaves_lost +
+  children_resolved), i.e. **ρ = ρ_2 = ρ_3 = ρ_cold = 0** — the item-8
+  verdict (with m2 = 2.8176 locked in GO band) is **NEGATIVE**, `solve`
+  dormant per the status rule. The machinery itself validated cleanly at
+  every boundary: SMOKE round-trip passed all seven checks; every warm
+  worker restored 2.33–2.43M solved + 1.76–1.86M unsolved records with
+  table counts equal to file counts and a 100-record probe at 0
+  mismatches; the re-drain re-verified ~7.2k prior-session results per
+  resumed session with **0 verify failures** (A2 never fired); worker TT
+  checkpoints ≈ 113–123 MB each (≈ 460 MB per close). Substrate metric
+  (work-to-censor on the 12 leaves common to all four sessions' job
+  sets): warm ≈ fresh per-job child-evals (ratio 1.00; both sides
+  ≈ 100% pinned at the 8M-eval budget; median advisory root_dn 37k–48k
+  ≪ budget) — no warm discount, which by the plan9 §4 letter is the
+  *resume-mechanics* mode. Recorded caveat: the fresh S1 jobs on those
+  same leaves are already 99.7% budget-pinned, so a discount could only
+  manifest below the cap and the metric's resolution is bounded there;
+  the positive signals (clean restore, clean re-drain, monotone state)
+  show the substrate *survives* the boundary while nothing *converts*.
+  The frozen-frontier degeneracy is separately confirmed on the fresh
+  side (S1 = 30 facts then flat, reproducing plan8 §3 at 1 h). Reopener
+  record: accumulation-as-such has no measured substrate at job-scale
+  budgets on this root; the two mechanism directions that remain are
+  (a) the A5.4 coverage race (master-side targeting of the proof-bearing
+  child, not session structure) and (b) budget-aware early-censor
+  certificates (exploit restored advisory bounds as a censor proof to
+  cut re-queue cost — unvalidated; would need a worker-side change with
+  its own soundness argument). Session structure (checkpoint/resume,
+  job-store durability) is measured sound and stays the campaign's
+  constraint-4 implementation regardless.

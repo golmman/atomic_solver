@@ -17,13 +17,19 @@
 //!   re-emitted into the global proof tree; a failing result aborts the
 //!   session (rejected, never patched). The artifact is dumped only after
 //!   `validate_proof_tree` passes (the "always again at finalization" leg).
-//! - Checkpointability (§7): `master_state.json` dumps on a timer; jobs and
-//!   results are durable files.
+//! - Checkpointability (§7): `master_state.json` (format v2) dumps on a
+//!   timer; jobs and results are durable files. Plan 9 adds the resume
+//!   path: `--resume` reloads the v2 state (statuses, advisory pn/dn,
+//!   work, slices, synthesized children), drops job locks, clears stale
+//!   job files, and re-drains the durable results into a fresh proof tree
+//!   with all counters at 0; `--job-seed <n>` namespaces the resumed
+//!   session's job ids so they cannot collide with earlier result files.
 //!
 //! Usage:
 //!     campaign_master --session <dir> --fen <FEN> [--mode campaign|seq]
 //!         [--workers 2] [--tt-mb 128] [--pt-mb 512] [--slice 2000000]
 //!         [--max-slice 64000000] [--nf] [--abandon] [--max-wall 1800]
+//!         [--resume] [--job-seed 0]
 //!         [--out proof_tree.bin] [--tree-json tree.json] [--state-every 30]
 //!
 //! `--mode seq` is the in-process sequential baseline (first-outcome solve;
@@ -56,6 +62,8 @@ fn parse_args() -> Args {
         tree_json: String::new(),
         state_every: 30,
         seq_timeout: 3600,
+        resume: false,
+        job_seed: 0,
     };
     let argv: Vec<String> = std::env::args().skip(1).collect();
     let mut i = 0;
@@ -90,6 +98,11 @@ fn parse_args() -> Args {
             "--tree-json" => a.tree_json = need(&mut i, "--tree-json"),
             "--state-every" => a.state_every = need(&mut i, "--state-every").parse().expect("n"),
             "--seq-timeout" => a.seq_timeout = need(&mut i, "--seq-timeout").parse().expect("n"),
+            "--resume" => {
+                a.resume = true;
+                i += 1;
+            }
+            "--job-seed" => a.job_seed = need(&mut i, "--job-seed").parse().expect("n"),
             other => panic!("unknown option '{other}'"),
         }
     }

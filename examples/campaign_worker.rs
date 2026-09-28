@@ -5,6 +5,16 @@
 //! performance contract; the GHI journal contract binds within the worker
 //! exactly as in the sequential solver, unchanged semantics).
 //!
+//! Plan 9 adds the worker-side checkpoint/resume (§2.3 of the plan):
+//! `--tt-load <path>` seeds the fresh table from a snapshot at startup
+//! (retention across a session boundary — no new fact class crosses any
+//! boundary: solved entries are path-independent by the TT store contract,
+//! unsolved bounds are advisory-only); `--tt-dump <path>` writes the
+//! snapshot when the stop condition (STOP file or `--max-runtime`) is
+//! observed, before exit. Restore is integrity-probed in-process (evenly
+//! sampled solved records re-probed against the restored table) and logged
+//! as a machine-parseable `restore:` line.
+//!
 //! Per job: replay the job path from the campaign root (context contract),
 //! run `search_depth_with_prefix` under the job's deterministic child-eval
 //! budget, and — for decisive outcomes — export a validator-clean proof
@@ -17,6 +27,7 @@
 //! Usage:
 //!     campaign_worker --session <dir> --worker 0 [--tt-mb 128]
 //!                     [--retention on|off] [--poll-ms 5] [--max-runtime 3600]
+//!                     [--tt-load <path>] [--tt-dump <path>]
 
 mod campaign;
 
@@ -39,6 +50,8 @@ struct Args {
     poll_ms: u64,
     max_runtime: u64,
     pt_mb: usize,
+    tt_dump: String,
+    tt_load: String,
 }
 
 fn parse_args() -> Args {
@@ -50,6 +63,8 @@ fn parse_args() -> Args {
         poll_ms: 5,
         max_runtime: 24 * 3600,
         pt_mb: 256,
+        tt_dump: String::new(),
+        tt_load: String::new(),
     };
     let argv: Vec<String> = std::env::args().skip(1).collect();
     let mut i = 0;
@@ -70,6 +85,8 @@ fn parse_args() -> Args {
             "--poll-ms" => a.poll_ms = need(&mut i, "--poll-ms").parse().expect("poll-ms number"),
             "--max-runtime" => a.max_runtime = need(&mut i, "--max-runtime").parse().expect("secs"),
             "--pt-mb" => a.pt_mb = need(&mut i, "--pt-mb").parse().expect("pt-mb number"),
+            "--tt-dump" => a.tt_dump = need(&mut i, "--tt-dump"),
+            "--tt-load" => a.tt_load = need(&mut i, "--tt-load"),
             other => panic!("unknown option '{other}'"),
         }
     }
@@ -164,6 +181,111 @@ fn export_via_reconstruction(
         }
     }
     Ok((out_events, out.fill_evals, out.stats.total()))
+}
+
+/// Per-worker restore statistics (logged as one `restore:` stderr line the
+/// driver parses for the plan 9 §3.3 restore-integrity metric).
+struct RestoreStats {
+    file_solved: u64,
+    file_unsolved: u64,
+    table_solved: u64,
+    table_unsolved: u64,
+    probe_checked: usize,
+    probe_mismatched: usize,
+}
+
+/// Seed a fresh `Search` from a TT snapshot (plan 9 §2.3). Solved records
+/// are stored as path-independent base entries (outcome + depth +
+/// best_move); unsolved records as advisory bounds + work. `best_child` is
+/// stored unset (`u8::MAX`) — the snapshot format does not carry it, so an
+/// ordering hint is lost (registered fidelity limitation, no fact
+/// affected). Integrity probe: up to 100 evenly sampled solved records are
+/// re-probed against the restored table and must match exactly.
+fn restore_tt(path: &str, tt_mb: usize) -> Result<(Search, RestoreStats), String> {
+    let file = std::fs::File::open(path).map_err(|e| format!("open: {e}"))?;
+    let mut reader = std::io::BufReader::new(file);
+    let (_header, solved, unsolved) =
+        read_tt_snapshot(&mut reader).map_err(|e| format!("parse: {e}"))?;
+    let mut search = Search::new(tt_mb);
+    for r in &solved {
+        search.tt_mut().store(
+            r.key,
+            r.best_move,
+            u8::MAX,
+            0,
+            Some(r.outcome),
+            0,
+            0,
+            r.depth,
+            0,
+        );
+    }
+    for r in &unsolved {
+        search.tt_mut().store(
+            r.key,
+            r.best_move,
+            u8::MAX,
+            r.work,
+            None,
+            r.pn,
+            r.dn,
+            r.depth,
+            r.remaining_depth,
+        );
+    }
+    // TtEntry fields are pub(crate); use the public accessors: tt_stats
+    // for the section counts, best_result for the probe spot-check.
+    let (_buckets, _live, table_solved, table_unsolved, _gen) = search.tt_stats();
+    let step = (solved.len() / 100).max(1);
+    let mut probe_checked = 0usize;
+    let mut probe_mismatched = 0usize;
+    for (i, r) in solved.iter().enumerate() {
+        if i % step != 0 {
+            continue;
+        }
+        probe_checked += 1;
+        let ok = search
+            .tt()
+            .probe(r.key)
+            .and_then(|e| e.best_result())
+            .is_some_and(|(mv, o, d)| mv == r.best_move && o == r.outcome && d == r.depth);
+        if !ok {
+            probe_mismatched += 1;
+        }
+    }
+    Ok((
+        search,
+        RestoreStats {
+            file_solved: solved.len() as u64,
+            file_unsolved: unsolved.len() as u64,
+            table_solved: table_solved as u64,
+            table_unsolved: table_unsolved as u64,
+            probe_checked,
+            probe_mismatched,
+        },
+    ))
+}
+
+/// Dump the retained TT snapshot when the stop condition is observed (plan
+/// 9 §2.3). The header FEN is the campaign root (informational; the restore
+/// path ignores it).
+fn dump_tt(search: &Search, root_fen: &str, tt_mb: usize, path: &str) {
+    let Ok(mut f) = std::fs::File::create(path) else {
+        eprintln!("tt-dump: cannot create {path}");
+        return;
+    };
+    match write_tt_snapshot(
+        search.tt(),
+        root_fen,
+        tt_mb.min(u32::MAX as usize) as u32,
+        &mut f,
+    ) {
+        Ok(s) => eprintln!(
+            "tt-dump: solved={} unsolved={} bytes={} path={path}",
+            s.solved, s.unsolved, s.bytes
+        ),
+        Err(e) => eprintln!("tt-dump: FAILED {e}"),
+    }
 }
 
 fn run_job(
@@ -315,6 +437,27 @@ fn main() {
     };
 
     let mut retained: Option<Search> = None;
+    // Plan 9 §2.3: seed the private TT from the previous session's snapshot
+    // (retention across the process boundary). A missing/incomplete file
+    // degrades this worker to cold-start with a DEGRADED line — the driver
+    // flags it, per the plan's contingency rule; it is never a hard error.
+    if !args.tt_load.is_empty() {
+        match restore_tt(&args.tt_load, args.tt_mb) {
+            Ok((search, st)) => {
+                eprintln!(
+                    "restore: file_solved={} file_unsolved={} table_solved={} table_unsolved={} probe_checked={} probe_mismatched={}",
+                    st.file_solved,
+                    st.file_unsolved,
+                    st.table_solved,
+                    st.table_unsolved,
+                    st.probe_checked,
+                    st.probe_mismatched
+                );
+                retained = Some(search);
+            }
+            Err(e) => eprintln!("restore: DEGRADED path={} reason={e}", args.tt_load),
+        }
+    }
     let poll = Duration::from_millis(args.poll_ms);
     let started = Instant::now();
 
@@ -367,5 +510,81 @@ fn main() {
             None => std::thread::sleep(poll),
         }
     }
+    // Stop-condition exit (STOP file or --max-runtime): dump the TT before
+    // exiting so the next session can restore it (plan 9 §2.3/§2.4).
+    if !args.tt_dump.is_empty()
+        && let Some(search) = &retained
+    {
+        dump_tt(search, &config.root_fen, args.tt_mb, &args.tt_dump);
+    } else if !args.tt_dump.is_empty() {
+        eprintln!("tt-dump: no retained search (no jobs ran); nothing written");
+    }
     eprintln!("worker{}: exiting", args.worker);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use atomic_movegen::types::Move;
+    use atomic_solver::position::Position;
+
+    #[test]
+    fn tt_snapshot_round_trip_restores_solved_and_unsolved() {
+        let dir = std::env::temp_dir().join(format!(
+            "plan9_tt_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("w0.tt");
+
+        let mut src = Search::new(4);
+        src.tt_mut().store(
+            0x1234,
+            Move::NONE,
+            u8::MAX,
+            7,
+            Some(Outcome::Win),
+            0,
+            0,
+            5,
+            0,
+        );
+        src.tt_mut()
+            .store(0x5678, Move::NONE, u8::MAX, 42, None, 3, 9, 2, 11);
+        {
+            let mut f = std::fs::File::create(&path).unwrap();
+            write_tt_snapshot(src.tt(), Position::STARTPOS_FEN, 4, &mut f).unwrap();
+        }
+
+        let (search, st) = restore_tt(path.to_str().unwrap(), 4).unwrap();
+        assert_eq!(st.file_solved, 1);
+        assert_eq!(st.file_unsolved, 1);
+        assert_eq!(st.table_solved, 1);
+        assert_eq!(st.table_unsolved, 1);
+        assert!(st.probe_checked >= 1);
+        assert_eq!(st.probe_mismatched, 0, "probe spot-check must be clean");
+
+        let (mv, outcome, depth) = search.tt().probe(0x1234).unwrap().best_result().unwrap();
+        assert_eq!(outcome, Outcome::Win);
+        assert_eq!(depth, 5);
+        assert_eq!(mv, Move::NONE);
+        let e = search.tt().probe(0x5678).unwrap();
+        let (pn, dn) = e.advisory_pn_dn();
+        assert_eq!((pn, dn), (3, 9));
+
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn restore_reports_missing_snapshot_as_degradation() {
+        let err = match restore_tt("/nonexistent/plan9/w0.tt", 4) {
+            Err(e) => e,
+            Ok(_) => panic!("missing snapshot must fail"),
+        };
+        assert!(err.contains("open:"), "{err}");
+    }
 }
