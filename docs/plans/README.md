@@ -25,7 +25,7 @@ Status vocabulary:
 | [`conversion`](conversion/initiative.md) | Deep tempo/progression conversions (`make stress` class)             | #6 threshold-cut-frame pricing **closed no-go** (plan6 diagnostic GO via the sweep short-circuit, but plan7 measured a 2.2–3.3× net loss with outcome regressions — `report7.md`); #7 default-ε 0.375 **closed won't-fix** (plan8: default-mode confirms FO gains, but quick 57/59 + thorough 34/66 regressions at 0.375 — `report8.md`); remaining: #5 item (e) reading; #2a ordering guidance parked; #4 parallel spike moved to `parallel` (2026-09-21) |
 | [`cleanup`](cleanup/initiative.md)       | Housekeeping: DRY, YAGNI, lints, module sizing                       | dormant-as-needed; `dfpn/mod.rs` size watch (40 KB)                                                                   |
 | [`movegen`](movegen/initiative.md)       | _Special case:_ cross-repo plans for the `atomic_movegen` dependency | new upstream asks follow the same standalone-plan pattern                                                            |
-| [`proofdb`](proofdb/initiative.md)       | Startpos-rooted proof-line database: validated shards → merger → derived SQLite tree; external website consumes the spec'd schema | plan1 (drafted): merger MVP + `docs/spec/global_proof_store.md` + seed graft of the 95 plan4 shards; then harvest loop (#2) and DTM-upgrade pass (#3) |
+| [`proofdb`](proofdb/initiative.md)       | Startpos-rooted proof-line database: validated shards → merger → derived SQLite tree; external website consumes the spec'd schema | **item 1 done** (plan1 executed 2026-09-28: merger MVP + `global_proof_store.md` + seeded 12,081-node DB, gates pass); next: harvest loop (#2), DTM-upgrade pass (#3) |
 
 ## Dormant
 

@@ -120,7 +120,7 @@ value.
 
 | # | Item | Mechanism | Potential | Effort | Status |
 |---|------|-----------|-----------|--------|--------|
-| 1 | **Merger MVP + schema + spec + seed graft** | `examples/proofdb_merge`: manifest+shard reader, per-shard replay validation, grafting, overlay into SQLite, canonical dump; `docs/spec/global_proof_store.md`; seed = the 95 plan4 shards | the working layer exists; website can be built against the schema | M | **plan1 drafted** (not yet executed) |
+| 1 | **Merger MVP + schema + spec + seed graft** | `examples/proofdb_merge`: manifest+shard reader, per-shard replay validation, grafting, overlay into SQLite, canonical dump; `docs/spec/global_proof_store.md`; seed = the 95 plan4 shards | the working layer exists; website can be built against the schema | M | **done (plan1, 2026-09-28)**: 95/95 shards merged, 12,081 nodes, gates G1–G5 pass |
 | 2 | **Harvest loop** | campaign-worker-shaped runs producing shards (fresh root per job → solve → reconstruct → validate → manifest entry); merger runs after each batch | the DB grows at will, stoppable anytime | M | open |
 | 3 | **DTM-upgrade pass** | background jobs re-searching bound ladders to promote `bound` → `exact` where affordable | depth quality improves without re-harvesting outcomes | M | open |
 | 4 | **Coverage policy** | which frontier children to open next (cheap-first gradient; sharpness like plan4's, not enumerative layers) | keeps per-fact cost low as the tree deepens | S–M | open |
@@ -146,6 +146,12 @@ value.
 
 ## History
 
+- **2026-09-28** — **item 1 executed** (plan1): merger MVP in
+  `examples/proofdb_merge` + `examples/proofdb/`, spec
+  `docs/spec/global_proof_store.md`, seed DB built from the 95 plan4
+  shards (12,081 nodes; 87 open); gates G1–G5 pass. One merger defect
+  found and fixed by the pre-registered gates (parent-row id inversion —
+  the run DB was wrong; see `report1.md`).
 - **2026-09-28** — **initiative opened** (docs only): brainstorm converged
   on the path-keyed partial AND/OR tree, shards-as-truth / SQLite-as-view,
   single-writer merger in `examples/`, bound-by-default depth vocabulary,

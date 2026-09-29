@@ -16,3 +16,7 @@ toml = "=1.1.4"
 
 [dev-dependencies]
 serde_json = "=1.0.120"
+# proofdb tooling (examples only): SQLite writer for the global proof store
+# (bundled: no system libsqlite3 in this container) and manifest digesting.
+rusqlite = { version = "0.40", features = ["bundled"] }
+sha2 = "0.10"
