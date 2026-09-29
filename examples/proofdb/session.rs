@@ -31,6 +31,9 @@ pub fn fail(msg: &str) -> ! {
 /// One census record, emitted as a `job: {…}` JSON line (the census input).
 pub struct JobRecord {
     pub path: String,
+    pub policy: &'static str,
+    pub class: &'static str,
+    pub parent_bound: Option<u32>,
     pub tier: &'static str,
     pub budget: u64,
     pub child_evals: u64,
@@ -46,10 +49,12 @@ impl JobRecord {
         println!(
             "job: {}",
             serde_json::json!({
-                "path": self.path, "tier": self.tier, "budget": self.budget,
-                "child_evals": self.child_evals, "wall_s": self.wall_s,
-                "outcome": self.outcome, "exit_reason": self.exit_reason,
-                "tag": self.tag, "shard_nodes": self.shard_nodes,
+                "path": self.path, "policy": self.policy, "class": self.class,
+                "parent_bound": self.parent_bound, "tier": self.tier,
+                "budget": self.budget, "child_evals": self.child_evals,
+                "wall_s": self.wall_s, "outcome": self.outcome,
+                "exit_reason": self.exit_reason, "tag": self.tag,
+                "shard_nodes": self.shard_nodes,
             })
         );
     }
@@ -64,6 +69,8 @@ pub struct Session {
     entries: Vec<ShardEntry>,
     known_tags: HashSet<String>,
     known_paths: HashSet<String>,
+    /// The coverage policy name (census field).
+    policy: &'static str,
     /// Shard entries appended this session.
     pub new_shards: usize,
 }
@@ -72,7 +79,12 @@ impl Session {
     /// Assemble the session: fresh `Search` (safety-net wall timeout; the
     /// child-eval budget is binding), export config, and the manifest state
     /// the collision asserts work against.
-    pub fn new(tt_mb: usize, shard_dir: PathBuf, seed_entries: Vec<ShardEntry>) -> Self {
+    pub fn new(
+        tt_mb: usize,
+        shard_dir: PathBuf,
+        seed_entries: Vec<ShardEntry>,
+        policy: &'static str,
+    ) -> Self {
         let mut search = Search::new(tt_mb);
         search.set_timeout(3600);
         search.set_first_outcome_only(true);
@@ -93,6 +105,7 @@ impl Session {
             entries: seed_entries,
             known_tags,
             known_paths,
+            policy,
             new_shards: 0,
         }
     }
@@ -135,9 +148,16 @@ impl Session {
         (entry.tag, tree.nodes.len())
     }
 
-    /// Run one job at `budget`: replay the startpos→node path, search under
-    /// the child-eval budget, classify, and produce the shard if decisive.
-    pub fn run_job(&mut self, job: &Job, tier: &'static str, budget: u64) -> JobRecord {
+    /// Run one job at its policy-resolved screen budget: replay the
+    /// startpos→node path, search under the child-eval budget, classify,
+    /// and produce the shard if decisive.
+    pub fn run_job(&mut self, job: &Job) -> JobRecord {
+        self.run_job_with_budget(job, "screen", job.budget)
+    }
+
+    /// Run one job at an explicit budget (the heavy tier's re-run of a
+    /// censored screen job at the heavy budget).
+    pub fn run_job_with_budget(&mut self, job: &Job, tier: &'static str, budget: u64) -> JobRecord {
         let (mut pos, prefix) =
             replay_job_path(&job.path).unwrap_or_else(|e| fail(&format!("job replay: {e}")));
         let sub_fen = pos.fen();
@@ -153,6 +173,9 @@ impl Session {
         let Some(decisive) = classify(outcome) else {
             return JobRecord {
                 path: path_str,
+                policy: self.policy,
+                class: job.class.as_str(),
+                parent_bound: job.parent_bound,
                 tier,
                 budget,
                 child_evals,
@@ -172,6 +195,9 @@ impl Session {
         );
         JobRecord {
             path: path_str,
+            policy: self.policy,
+            class: job.class.as_str(),
+            parent_bound: job.parent_bound,
             tier,
             budget,
             child_evals,

@@ -1,0 +1,90 @@
+{
+  "input_db_nodes": 12655,
+  "grown2_db_nodes": 35055,
+  "screen_budget_evals_each": 300000000,
+  "winner_rule": "highest new-facts-per-100M-evals; ties: lower median cost/fact; ties: keep open-deepest (status quo bias)",
+  "policies": {
+    "open-deepest": {
+      "screen_jobs": 75,
+      "screen_evals": 300001179,
+      "heavy_jobs": 0,
+      "heavy_evals": 0,
+      "heavy_decisive": 0,
+      "jobs_by_class": {
+        "C1": {
+          "jobs": 75,
+          "decisive": 0,
+          "evals": 300001179
+        }
+      },
+      "new_facts": 0,
+      "fact_evals_total": 0,
+      "cost_per_fact_median": null,
+      "cost_per_fact_mean": null,
+      "facts_per_100m": 0.0,
+      "fact_cost_by_class": {},
+      "fact_ply_distribution": {},
+      "fact_outcomes": {},
+      "stop": "exhausted",
+      "wall_s": 64.7
+    },
+    "sharp-siblings": {
+      "screen_jobs": 385,
+      "screen_evals": 300097867,
+      "heavy_jobs": 0,
+      "heavy_evals": 0,
+      "heavy_decisive": 0,
+      "jobs_by_class": {
+        "C2": {
+          "jobs": 385,
+          "decisive": 90,
+          "evals": 300097867
+        }
+      },
+      "new_facts": 90,
+      "fact_evals_total": 5093910,
+      "cost_per_fact_median": 44714.0,
+      "cost_per_fact_mean": 56599.0,
+      "facts_per_100m": 29.99,
+      "fact_cost_by_class": {
+        "C2": {
+          "n": 90,
+          "median": 44714.0
+        }
+      },
+      "fact_ply_distribution": {
+        "5": 90
+      },
+      "fact_outcomes": {
+        "loss": 90
+      },
+      "stop": "budget",
+      "wall_s": 72.9
+    },
+    "sharp-heavy-tail": {
+      "screen_jobs": 300,
+      "screen_evals": 300003765,
+      "heavy_jobs": 5,
+      "heavy_evals": 200000078,
+      "heavy_decisive": 0,
+      "jobs_by_class": {
+        "C2": {
+          "jobs": 300,
+          "decisive": 0,
+          "evals": 300003765
+        }
+      },
+      "new_facts": 0,
+      "fact_evals_total": 0,
+      "cost_per_fact_median": null,
+      "cost_per_fact_mean": null,
+      "facts_per_100m": 0.0,
+      "fact_cost_by_class": {},
+      "fact_ply_distribution": {},
+      "fact_outcomes": {},
+      "stop": "budget",
+      "wall_s": 105.5
+    }
+  },
+  "winner": "sharp-siblings"
+}

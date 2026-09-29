@@ -1,38 +1,39 @@
 //! `proofdb_harvest` — the harvest loop of the startpos proof-line database
-//! (proofdb initiative, backlog item 2, plan2).
+//! (proofdb initiative, backlog items 2 and 4).
 //!
-//! Per job (one open node of the current DB, deepest-first): replay the full
+//! Per job (one frontier position of the current DB, selected by the
+//! `--policy` coverage policy over the full frontier): replay the full
 //! startpos→node path (context contract — repetition verdicts are
-//! path-dependent), run `Search::search_depth_with_prefix` under the
-//! deterministic `--budget-evals` child-eval budget, and for a decisive
-//! outcome export a validator-clean proof subtree via the product's offline
-//! pipeline (TT snapshot → `reconstruct` → `validate_proof_tree`), write the
-//! shard into the standing shard directory and record its manifest entry.
+//! path-dependent), run `Search::search_depth_with_prefix` under the job's
+//! policy-resolved child-eval budget, and for a decisive outcome export a
+//! validator-clean proof subtree via the product's offline pipeline (TT
+//! snapshot → `reconstruct` → `validate_proof_tree`), writing the shard
+//! into the standing shard directory and recording its manifest entry.
 //! `Draw` from any cause is **censored** (no fact, no write). The merger
-//! runs after the batch as a separate tool — this CLI never merges and never
-//! writes a DB; `--out-db` / `--dump` are the caller's `proofdb_merge`
-//! output targets, recorded in the summary only.
+//! runs after the batch as a separate tool — this CLI never merges and
+//! never writes a DB; `--out-db` / `--dump` are the caller's
+//! `proofdb_merge` output targets, recorded in the summary only.
 //!
-//! Session shape and the heavy tier are documented in
-//! `examples/proofdb/session.rs`; the DB-facing engine (frontier extraction,
-//! job order, replay-prefix contract) in `examples/proofdb/harvest.rs`.
+//! Module map: session shape and the job pipeline in
+//! `examples/proofdb/session.rs`; the batch driver (screen pass, budget
+//! cap, heavy-tier placement, stop conditions) in `examples/proofdb/batch.rs`;
+//! the DB-facing engine (frontier-class extraction, AND-completeness assert,
+//! decision-3 disjointness) in `examples/proofdb/frontier.rs` + `db.rs`;
+//! the policies and per-class budgets in `examples/proofdb/policy.rs`.
 //!
-//! Heavy tier (`--heavy-sample N`, `--heavy-budget-evals`): after the screen
-//! pass, the first N censored jobs *in job order* are re-run at the heavy
-//! budget as a pre-registered censored-tail sample (measures the plateau's
-//! cost curve; any decision there is a shard like any other). Jobs not
-//! reached by the screen pass are not sampled.
+//! Coverage policies (`--policy`; default `sharp-siblings`, the plan3 A/B
+//! winner per pre-registered decision 7 — pass `open-deepest` to reproduce
+//! plan2's behavior): `open-deepest` (C1 only, deepest-first),
+//! `sharp-siblings` (C2 at 1M evals each, then C3, then C1 at 4M),
+//! `sharp-heavy-tail` (same, plus a C2-only censored-tail sample at the
+//! heavy budget where the C2 screen ends — see `batch.rs`).
 //!
-//! Stop conditions are checked **between jobs only** (`--max-jobs`,
-//! `--max-runtime`, `--stop-file`; 0 = unlimited for jobs/runtime): a job is
-//! never abandoned mid-search — budgets are small enough that losing one
-//! interrupted job's work is cheaper than nondeterministic interruption.
-//!
-//! Output: one `job: {…}` JSON line per job (census input), then
-//! `manifest:`/`harvest:` summary lines. On any defect (export/validation
-//! failure, manifest collision) the session aborts non-zero before the
-//! manifest rewrite — nothing inconsistent enters the durable layer (shard
-//! files of jobs completed before the abort are unreferenced orphans and are
+//! Output: one `job: {…}` JSON line per job (census input; fields include
+//! `policy`, `class`, `parent_bound`), then `manifest:`/`harvest:` summary
+//! lines. On any defect (extraction violation, export/validation failure,
+//! manifest collision) the session aborts non-zero before the manifest
+//! rewrite — nothing inconsistent enters the durable layer (shard files of
+//! jobs completed before the abort are unreferenced orphans and are
 //! deterministically overwritten by the retry).
 
 mod proofdb;
@@ -41,14 +42,18 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use proofdb::harvest::extract_jobs;
+use proofdb::batch::{BatchOptions, run_batch};
+use proofdb::frontier::extract_frontier;
+use proofdb::policy::{Policy, jobs_for_policy};
 use proofdb::session::{Session, fail};
 
 struct Args {
     db: PathBuf,
     manifest: PathBuf,
     shard_dir: PathBuf,
+    policy: Policy,
     budget_evals: u64,
+    max_total_evals: u64,
     heavy_budget_evals: u64,
     heavy_sample: usize,
     tt_mb: usize,
@@ -62,7 +67,8 @@ struct Args {
 fn usage() -> ! {
     eprintln!(
         "usage: proofdb_harvest --db <proofdb.db> --manifest <manifest.json> \
-         --shard-dir <dir> [--budget-evals <n>] [--heavy-budget-evals <n>] \
+         --shard-dir <dir> [--policy <open-deepest|sharp-siblings|sharp-heavy-tail>] \
+         [--budget-evals <n>] [--max-total-evals <n>] [--heavy-budget-evals <n>] \
          [--heavy-sample <n>] [--tt-mb <mb>] [--max-jobs <n>] [--max-runtime <s>] \
          [--stop-file <path>] [--out-db <grown.db>] [--dump <nodes.txt>]"
     );
@@ -74,7 +80,9 @@ fn parse_args() -> Args {
         db: PathBuf::new(),
         manifest: PathBuf::new(),
         shard_dir: PathBuf::new(),
-        budget_evals: 4_000_000,
+        policy: Policy::SharpSiblings,
+        budget_evals: 0,
+        max_total_evals: 0,
         heavy_budget_evals: 40_000_000,
         heavy_sample: 5,
         tt_mb: 128,
@@ -91,7 +99,14 @@ fn parse_args() -> Args {
             "--db" => a.db = PathBuf::from(next()),
             "--manifest" => a.manifest = PathBuf::from(next()),
             "--shard-dir" => a.shard_dir = PathBuf::from(next()),
+            "--policy" => {
+                a.policy = Policy::parse(&next()).unwrap_or_else(|e| {
+                    eprintln!("proofdb_harvest: {e}");
+                    usage()
+                })
+            }
             "--budget-evals" => a.budget_evals = next().parse().unwrap_or_else(|_| usage()),
+            "--max-total-evals" => a.max_total_evals = next().parse().unwrap_or_else(|_| usage()),
             "--heavy-budget-evals" => {
                 a.heavy_budget_evals = next().parse().unwrap_or_else(|_| usage())
             }
@@ -118,104 +133,65 @@ fn main() {
     let args = parse_args();
     let t_start = Instant::now();
     let manifest = proofdb::read_manifest(&args.manifest).unwrap_or_else(|e| fail(&e));
-    let input = extract_jobs(&args.db, &manifest.sha256_hex).unwrap_or_else(|e| fail(&e));
-    // H1 assert: job paths are disjoint from the manifest's shard paths and
-    // from the DB's proven paths.
-    let known_paths: HashSet<String> = manifest.entries.iter().map(|e| e.moves.join(" ")).collect();
-    for job in &input.jobs {
-        let p = job.path.join(" ");
-        if known_paths.contains(&p) {
-            fail(&format!(
-                "open node {p:?} already has a shard (stale frontier?)"
-            ));
-        }
-        if input.proven_paths.contains(&p) {
-            fail(&format!("open node {p:?} is also a proven DB path"));
+    // Decision 3: frontier paths must be neither DB rows nor manifest paths;
+    // the extractor asserts both while building every class.
+    let manifest_paths: HashSet<String> =
+        manifest.entries.iter().map(|e| e.moves.join(" ")).collect();
+    let frontier = extract_frontier(&args.db, &manifest.sha256_hex, &manifest_paths)
+        .unwrap_or_else(|e| fail(&e));
+    let mut jobs = jobs_for_policy(args.policy, &frontier);
+    // Optional screen-budget override (probe knob; 0 = policy-resolved).
+    if args.budget_evals > 0 {
+        for j in &mut jobs {
+            j.budget = args.budget_evals;
         }
     }
     eprintln!(
-        "harvest: db {} ({} nodes, built_from {}) — {} open jobs, order deepest-first",
+        "harvest: db {} ({} nodes, built_from {}) — policy {} over frontier \
+         C1 {} / C2 {} / C3 {} (AND-checks {}), {} jobs",
         args.db.display(),
-        input.n_nodes,
+        frontier.n_nodes,
         &manifest.sha256_hex[..16],
-        input.jobs.len()
+        args.policy.as_str(),
+        frontier.c1.len(),
+        frontier.c2.len(),
+        frontier.c3.len(),
+        frontier.and_checks,
+        jobs.len(),
     );
 
-    let mut session = Session::new(args.tt_mb, args.shard_dir.clone(), manifest.entries.clone());
-
-    let stopped = |completed: usize, t: &Instant| -> Option<String> {
-        if args.max_jobs > 0 && completed >= args.max_jobs {
-            return Some("max-jobs".to_string());
-        }
-        if args.max_runtime > 0 && t.elapsed().as_secs() >= args.max_runtime {
-            return Some("max-runtime".to_string());
-        }
-        if args.stop_file.as_os_str().is_empty() {
-            return None;
-        }
-        if std::path::Path::new(&args.stop_file).exists() {
-            return Some("stop-file".to_string());
-        }
-        None
+    let mut session = Session::new(
+        args.tt_mb,
+        args.shard_dir.clone(),
+        manifest.entries.clone(),
+        args.policy.as_str(),
+    );
+    let opts = BatchOptions {
+        heavy_tail_is_c2: args.policy == Policy::SharpHeavyTail,
+        max_total_evals: args.max_total_evals,
+        heavy_budget_evals: args.heavy_budget_evals,
+        heavy_sample: args.heavy_sample,
+        max_jobs: args.max_jobs,
+        max_runtime: args.max_runtime,
+        stop_file: args.stop_file.clone(),
     };
-
-    // Screen pass over all open jobs, then stop-condition bookkeeping.
-    let mut completed = 0usize;
-    let mut screen_jobs = 0usize;
-    let mut screen_decisive = 0usize;
-    let mut stop_reason = String::new();
-    for job in &input.jobs {
-        if let Some(reason) = stopped(completed, &t_start) {
-            stop_reason = reason;
-            break;
-        }
-        let rec = session.run_job(job, "screen", args.budget_evals);
-        if rec.outcome != "censored" {
-            screen_decisive += 1;
-        }
-        rec.emit();
-        completed += 1;
-        screen_jobs += 1;
-    }
-
-    // Heavy tier: first N censored jobs (in job order) re-run at the heavy
-    // budget (pre-registered censored-tail sample). Jobs not reached by the
-    // screen pass are not sampled.
-    let mut heavy_jobs = 0usize;
-    let mut heavy_decisive = 0usize;
-    if args.heavy_sample > 0 && args.heavy_budget_evals > 0 && stop_reason.is_empty() {
-        for job in input.jobs.iter().take(screen_jobs) {
-            if heavy_jobs >= args.heavy_sample {
-                break;
-            }
-            // A censored screen job: no shard exists for its path.
-            if session.has_path(&job.path.join(" ")) {
-                continue; // decided during the screen pass
-            }
-            if let Some(reason) = stopped(completed, &t_start) {
-                stop_reason = reason;
-                break;
-            }
-            let rec = session.run_job(job, "heavy", args.heavy_budget_evals);
-            if rec.outcome != "censored" {
-                heavy_decisive += 1;
-            }
-            rec.emit();
-            completed += 1;
-            heavy_jobs += 1;
-        }
-    }
+    let summary = run_batch(&mut session, &jobs, &opts);
 
     session.rewrite_manifest(&args.manifest, &manifest.sha256_hex);
     println!(
-        "harvest: stop={} screen_jobs {screen_jobs} screen_decisive \
-         {screen_decisive} heavy_jobs {heavy_jobs} heavy_decisive \
-         {heavy_decisive} new_shards {} wall {:.1}s",
-        if stop_reason.is_empty() {
+        "harvest: policy {} stop={} screen_jobs {} screen_decisive {} \
+         screen_evals {} heavy_jobs {} heavy_decisive {} new_shards {} wall {:.1}s",
+        args.policy.as_str(),
+        if summary.stop_reason.is_empty() {
             "exhausted"
         } else {
-            &stop_reason
+            &summary.stop_reason
         },
+        summary.screen_jobs,
+        summary.screen_decisive,
+        summary.screen_evals,
+        summary.heavy_jobs,
+        summary.heavy_decisive,
         session.new_shards,
         t_start.elapsed().as_secs_f64(),
     );

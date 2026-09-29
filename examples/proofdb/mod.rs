@@ -16,12 +16,19 @@
 use atomic_solver::position::Outcome;
 use serde::Deserialize;
 
+pub mod batch;
+pub mod db;
+pub mod frontier;
 pub mod harvest;
 pub mod manifest;
 pub mod merge;
+pub mod policy;
 pub mod schema;
 pub mod session;
 pub mod shard_export;
+
+#[cfg(test)]
+mod fixture;
 
 pub use manifest::write_manifest;
 

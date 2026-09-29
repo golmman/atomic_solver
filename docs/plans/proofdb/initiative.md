@@ -123,7 +123,7 @@ value.
 | 1 | **Merger MVP + schema + spec + seed graft** | `examples/proofdb_merge`: manifest+shard reader, per-shard replay validation, grafting, overlay into SQLite, canonical dump; `docs/spec/global_proof_store.md`; seed = the 95 plan4 shards | the working layer exists; website can be built against the schema | M | **done (plan1, 2026-09-28)**: 95/95 shards merged, 12,081 nodes, gates G1–G5 pass |
 | 2 | **Harvest loop** | campaign-worker-shaped runs producing shards (fresh root per job → solve → reconstruct → validate → manifest entry); merger runs after each batch | the DB grows at will, stoppable anytime | M | **done (plan2, 2026-09-29)**: standing shard dir + `proofdb_harvest`; first batch 12/87 decisive (all wins, plies 4–27), DB 12,081 → 12,655 nodes; gates H1–H5 pass; censored tail measured ≥ 40M evals at the 5 deepest quiet nodes |
 | 3 | **DTM-upgrade pass** | background jobs re-searching bound ladders to promote `bound` → `exact` where affordable | depth quality improves without re-harvesting outcomes | M | open |
-| 4 | **Coverage policy** | which frontier children to open next (cheap-first gradient; sharpness like plan4's, not enumerative layers) | keeps per-fact cost low as the tree deepens | S–M | open |
+| 4 | **Coverage policy** | which frontier children to open next (cheap-first gradient; sharpness like plan4's, not enumerative layers) | keeps per-fact cost low as the tree deepens | S–M | **done (plan3, 2026-09-29)**: frontier classes C1/C2/C3 + policies in `proofdb_harvest` (`--policy`); measured A/B at 300M evals each: `sharp-siblings` 90 facts/300M (29.99 facts/100M, median 44.7k evals/fact) vs `open-deepest` 0/300M; winner is the default; gradient saturates after its head (marginal P2: 0 facts) |
 | 5 | **Website handoff** | ship `global_proof_store.md` to the external website project; agree on read-only DB consumption | the product surface of this initiative | S | open |
 
 ## Non-goals
@@ -146,6 +146,20 @@ value.
 
 ## History
 
+- **2026-09-29** — **item 4 executed** (plan3): coverage policy measured
+  and shipped. `proofdb_harvest` now extracts the full frontier classes
+  (C1 open / C2 unexpanded siblings of proving children / C3 unexpanded
+  children of open nodes) with a free AND-completeness assert over every
+  proven loss node, and orders jobs by pre-registered policies. The A/B
+  at 300M child-evals each (fresh TT per policy, marginal-yield design):
+  `open-deepest` 0 facts / 300M (baseline, as pre-registered);
+  **`sharp-siblings` 90 facts / 300M (29.99 facts/100M, median 44.7k
+  evals/fact, all ply-5 loss refutations under bound-1 win parents)**;
+  `sharp-heavy-tail` marginal after P1's head: 0 facts at 300M screen +
+  200M heavy — the sibling gradient saturates immediately after its head.
+  Winner is now the default `--policy`. DB 12,655 → 35,055 nodes (75 open
+  unchanged); standing shard dir at 197 shards. Gates H1–H6 pass; H5
+  replay 385/385 screen records identical. See `report3.md`.
 - **2026-09-29** — **item 2 executed** (plan2): standing shard directory
   (`shards/` + standing manifest), `proofdb_harvest` CLI
   (deterministic child-eval budgets, path-context replay, TT retention,
