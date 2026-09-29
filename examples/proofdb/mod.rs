@@ -1,4 +1,5 @@
-//! Shared protocol for the `proofdb` merger (`proofdb_merge`).
+//! Shared protocol for the `proofdb` tooling (`proofdb_merge`,
+//! `proofdb_harvest`).
 //!
 //! This is example-side tooling for the startpos proof-line database; the
 //! product solver (`src/`) is untouched. The durable truth is the validated
@@ -15,8 +16,14 @@
 use atomic_solver::position::Outcome;
 use serde::Deserialize;
 
+pub mod harvest;
+pub mod manifest;
 pub mod merge;
 pub mod schema;
+pub mod session;
+pub mod shard_export;
+
+pub use manifest::write_manifest;
 
 /// Generator identification written into the DB `meta` table.
 pub const GENERATOR: &str = concat!("proofdb_merge ", env!("CARGO_PKG_VERSION"));

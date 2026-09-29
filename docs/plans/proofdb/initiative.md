@@ -121,7 +121,7 @@ value.
 | # | Item | Mechanism | Potential | Effort | Status |
 |---|------|-----------|-----------|--------|--------|
 | 1 | **Merger MVP + schema + spec + seed graft** | `examples/proofdb_merge`: manifest+shard reader, per-shard replay validation, grafting, overlay into SQLite, canonical dump; `docs/spec/global_proof_store.md`; seed = the 95 plan4 shards | the working layer exists; website can be built against the schema | M | **done (plan1, 2026-09-28)**: 95/95 shards merged, 12,081 nodes, gates G1–G5 pass |
-| 2 | **Harvest loop** | campaign-worker-shaped runs producing shards (fresh root per job → solve → reconstruct → validate → manifest entry); merger runs after each batch | the DB grows at will, stoppable anytime | M | open |
+| 2 | **Harvest loop** | campaign-worker-shaped runs producing shards (fresh root per job → solve → reconstruct → validate → manifest entry); merger runs after each batch | the DB grows at will, stoppable anytime | M | **done (plan2, 2026-09-29)**: standing shard dir + `proofdb_harvest`; first batch 12/87 decisive (all wins, plies 4–27), DB 12,081 → 12,655 nodes; gates H1–H5 pass; censored tail measured ≥ 40M evals at the 5 deepest quiet nodes |
 | 3 | **DTM-upgrade pass** | background jobs re-searching bound ladders to promote `bound` → `exact` where affordable | depth quality improves without re-harvesting outcomes | M | open |
 | 4 | **Coverage policy** | which frontier children to open next (cheap-first gradient; sharpness like plan4's, not enumerative layers) | keeps per-fact cost low as the tree deepens | S–M | open |
 | 5 | **Website handoff** | ship `global_proof_store.md` to the external website project; agree on read-only DB consumption | the product surface of this initiative | S | open |
@@ -146,6 +146,17 @@ value.
 
 ## History
 
+- **2026-09-29** — **item 2 executed** (plan2): standing shard directory
+  (`shards/` + standing manifest), `proofdb_harvest` CLI
+  (deterministic child-eval budgets, path-context replay, TT retention,
+  screen + heavy tiers, stop conditions), first batch over the seed's 87
+  open frontier nodes: 12 decisive (all wins, even plies 4–27 on quiet
+  ladder lines), 75 censored (deepest 5 re-verified undecided at 40M
+  evals); merge-after-batch → 12,655 nodes (75 open); gates H1–H5 pass;
+  full batch replay byte-identical. One harvest-tool defect found and
+  fixed (root-job false repetition from a self-seeded prefix; censored,
+  no bad fact; see `report2.md` finding 1 — same latent issue noted in
+  the campaign worker's `replay_path`).
 - **2026-09-28** — **item 1 executed** (plan1): merger MVP in
   `examples/proofdb_merge` + `examples/proofdb/`, spec
   `docs/spec/global_proof_store.md`, seed DB built from the 95 plan4
