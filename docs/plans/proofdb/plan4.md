@@ -61,6 +61,19 @@ subtree-scoped harvesting over the same startpos-rooted tree;
 (iv) parallel harvesters stay sequenced after this plan (item 6).
 Sections touched: §2, D1, D2, decisions 3/4/11/12, §8.
 
+**Second amendment (2026-09-30, docs-only, user-confirmed; plan amended
+in place while unexecuted).** Decision 12 (`--root-fen`/`--root-path`
+subtree scoping) is **parked to initiative item 7**: the first batch runs
+at the startpos root, so the feature is dead weight for this plan's
+measurement, and its only near-term consumer is item 6 (independent
+harvesters' per-worker subtree partition), whose requirements will likely
+reshape the MVP limitation anyway — building it now risks building it
+twice. Consequences: D2, task 1, §8 lose the root-scoping clause;
+non-goals reworded; decision 12 keeps its number as a parked tombstone so
+cross-references stay stable. The first amendment's clause (iii) above is
+superseded by this note. Decisions 11 and 4 (frontier exposure, live
+queue) are untouched — they define what is measured.
+
 **Precedent.** The `solve` campaign prototype (`examples/campaign*`,
 plans 5/9) already ran multi-worker PNS-style harvesting (pseudo-MPN job
 selection, workers claiming jobs via atomic rename, verify-on-merge); it
@@ -206,8 +219,7 @@ default.
     lineage gate go through `tests/proofdb.rs` (the established proofdb
     convention); `pns.rs` stays ≤ 10 KB.
 - **D2 — CLI extension**: `--policy breadth-pns` (new default),
-  `--ledger <path>` (default `data/proofdb_work.json`), `--root-fen
-  <FEN>` (+ optional `--root-path <uci-path>`) per decision 12, census
+  `--ledger <path>` (default `data/proofdb_work.json`), census
   fields on the `job:` lines (`pass`, `number` — the node's effective
   number at selection time —, `work_before`); `--budget-evals` remains
   the explicit override; the session cap is `--max-total-evals` (300M,
@@ -292,8 +304,10 @@ default.
    the queue; undecided frontier state survives the run in the sidecar,
    not in the DB (no open-leaf shards — the "shard = validated proven
    subtree" contract stands).
-12. **`--root-fen` subtree harvesting** (checkpoint 2026-09-30): the
-   harvest root is pluggable by FEN. Resolution contract: with
+12. **PARKED to initiative item 7 (second amendment, 2026-09-30)**:
+   `--root-fen`/`--root-path` subtree harvesting is out of this plan —
+   the harvest root is always the startpos. The parked contract (for
+   item 7 to resume, unexecuted): pluggable root by FEN; with
    `--root-path`, replay the path from the startpos and require the
    final position's FEN to match (the graft fidelity check, reused);
    without it, locate the FEN by replaying the merged DB tree and
@@ -303,7 +317,8 @@ default.
    shards, manifest paths, and grafting stay startpos-relative
    unchanged (a root FEN is a *view*, never a second tree). MVP
    limitation: the FEN must be a node of the merged DB tree — roots in
-   unexpanded territory are future work.
+   unexpanded territory are future work. The MVP limitation is expected
+   to be revisited under item 6.
 
 ## 5. Pre-registered gates (fixed before any run)
 
@@ -346,9 +361,9 @@ no C2/C3 harvesting under the new default
 (both gradients remain selectable); no parallel harvesters (item 6);
 no cross-session TT seeding (`--tt-load`; still deferred — the ledger, not
 TT residue, is the cross-session state); no DTM-upgrade pass (item 3); no
-website handoff (item 5); no incremental merger; no roots in unexpanded
-territory (`--root-fen` resolves within the merged DB tree only, decision
-12 MVP limitation).
+website handoff (item 5); no incremental merger; no subtree scoping
+(`--root-fen`/`--root-path` parked to item 7; the harvest root is always
+the startpos).
 
 ## 7. Tasks
 
@@ -356,7 +371,7 @@ territory (`--root-fen` resolves within the merged DB tree only, decision
    by the ledger's known-open records, effective numbers, live priority
    queue with censor-time frontier exposure, sidecar ledger with the
    lineage gate) and D2 (`--policy breadth-pns` default, `--ledger`,
-   `--root-fen`/`--root-path` subtree scoping, census fields).
+   census fields).
 2. Set up D3: `.gitignore` for `data/`; build `data/proofdb.db` from the
    standing shard set (byte-identity check vs the plan3 grown DB); empty
    ledger init.
@@ -379,8 +394,8 @@ one merger run ≈ 1 min; unit
 tests minutes. Implementation is the dominant session cost: the structural
 number pass reuses the existing DFS replay (one post-order pass over
 the input DB's row count — ≈ 35k today, growing with the DB), the
-ledger is a small JSON file, `--root-fen` resolution reuses the same
-replay. Fits `make test` plus the batch inside one sitting.
+ledger is a small JSON file. Fits `make test` plus the batch inside one
+sitting.
 
 ## SESSION COMPLETE
 
@@ -395,11 +410,15 @@ replay. Fits `make test` plus the batch inside one sitting.
   reworded), `--root-fen` subtree harvesting (decision 12), parallel
   harvesters confirmed sequenced after this plan (item 6). See the
   amendment note after the header.
+- **Amended 2026-09-30, second (docs-only, user-confirmed)**: decision 12
+  (`--root-fen`/`--root-path`) parked to initiative item 7; the harvest
+  root is always the startpos in this plan. See the second amendment
+  note after the header.
 Follow-up options:
 1. Kickoff prompt: "Execute docs/plans/proofdb/plan4.md (breadth-first PNS
-   harvester, 2026-09-30 amended): pns.rs numbers + live queue + sidecar
-   ledger with frontier exposure under data/, --policy breadth-pns
-   default, --root-fen subtree scoping, first batch (number-1 pool × 4M,
+   harvester, 2026-09-30 amended twice, root = startpos): pns.rs numbers +
+   live queue + sidecar ledger with frontier exposure under data/,
+   --policy breadth-pns default, first batch (number-1 pool × 4M,
    cap 300M), gates H1–H6, report4.md with the yield and escalation
    outlook."
 2. Alternative: run the item-5 website handoff first (ship

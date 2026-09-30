@@ -126,6 +126,7 @@ value.
 | 4 | **Coverage policy** | which frontier children to open next (cheap-first gradient; sharpness like plan4's, not enumerative layers) | keeps per-fact cost low as the tree deepens | S–M | **done (plan3, 2026-09-29)**: frontier classes C1/C2/C3 + policies in `proofdb_harvest` (`--policy`); measured A/B at 300M evals each: `sharp-siblings` 90 facts/300M (29.99 facts/100M, median 44.7k evals/fact) vs `open-deepest` 0/300M; winner is the default; gradient saturates after its head (marginal P2: 0 facts) |
 | 5 | **Website handoff** | ship `global_proof_store.md` to the external website project; agree on read-only DB consumption | the product surface of this initiative | S | open |
 | 6 | **Independent harvesters** | partition the frontier across worker processes (by root-child subtree or class; per-worker shard staging, serialized manifest merge); campaign-prototype precedent (`examples/campaign*`, solve plans 5/9) | wall-time scaling of harvesting without touching solver semantics | M | open — sequenced after the breadth-first PNS policy (plan4) is measured sequentially; jobs are independent roots, so the partition is mechanical once selection state is a sidecar |
+| 7 | **Subtree-scoped harvesting** | `--root-fen` (+ optional `--root-path`) plumbs the harvest root by FEN, resolved within the merged DB tree (no match or ambiguous match aborts); a subtree *view* over the same startpos-rooted tree — shards, manifest paths, and grafting stay startpos-relative unchanged | harvest any position, the primary user surface for item 6's per-worker subtree partition | S | open — parked from plan4 (2026-09-30, docs-only amendment, plan4 decision 12 tombstone): the first batch runs at the startpos root, and the MVP limitation ("FEN must be a node of the merged DB tree") is expected to be revisited under item 6 |
 
 ## Non-goals
 
@@ -147,6 +148,16 @@ value.
 
 ## History
 
+- **2026-09-30** — **plan4 slimmed before execution (docs-only, second
+  amendment)**: `--root-fen`/`--root-path` subtree scoping (checkpoint
+  decision 12) parked as **item 7**. Reasons: the first batch runs at
+  the startpos root (dead weight for the measurement), and the
+  feature's only near-term consumer is item 6's per-worker subtree
+  partition, whose requirements will likely reshape the MVP limitation
+  anyway. Decision numbering in plan4 is unchanged (12 stays as a parked
+  tombstone); the kickoff prompt and deliverables D2/task 1/§8 are
+  updated in place. Frontier exposure (decision 11) and the live queue
+  (decision 4 reworded) are untouched — they define what plan4 measures.
 - **2026-09-30** — **checkpoint design review** (plan4 unexecuted,
   amended in place): the initiative was checked against the user's
   top-down harvest vision (N-thread runs from root or from any FEN,
