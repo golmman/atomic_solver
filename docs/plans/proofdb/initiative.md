@@ -147,6 +147,26 @@ value.
 
 ## History
 
+- **2026-09-30** — **checkpoint design review** (plan4 unexecuted,
+  amended in place): the initiative was checked against the user's
+  top-down harvest vision (N-thread runs from root or from any FEN,
+  24h stoppable runs, merge appends, website consumes the extended
+  tree). Agreed deltas, all folded into `plan4.md`: (1) the sidecar
+  ledger is the pick-up state — a censored job's expanded-but-undecided
+  children are recorded as known-open records, so the exposed frontier
+  survives the run (no open-leaf shards; shard contract unchanged);
+  (2) selection became a **live priority queue** with censor-time
+  frontier exposure, replacing plan4's fixed passes — freshly exposed
+  children (number 1) are explored before a censored node's doubled
+  revisit, which is the layer discipline "next depth only when the
+  current depth is explored/in flight"; (3) `--root-fen` (+ optional
+  `--root-path`) plumbs the harvest root by FEN, resolved within the
+  merged DB tree (ambiguity/absence aborts) — a subtree *view* over the
+  same startpos-rooted tree, shards/grafting unchanged; (4) parallel
+  harvesters stay item 6, sequenced after plan4's sequential
+  measurement. pn/dn stay derived (DB tree + ledger), never stored —
+  the ledger records exactly the non-derivable state. See `plan4.md`
+  amendment note and decisions 3/4/11/12.
 - **2026-09-29** — **pivot decided after plan3**: job selection moves from
   class gradients (plan3's C1/C2/C3) to **breadth-first PNS over the open
   frontier** (plan4): structural pn/dn numbers (unvisited = 1), min-pn at

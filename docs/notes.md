@@ -540,7 +540,7 @@ I want the initiative to pivot then.
 
 ---
 
-Let's have a checkpoint brainstorming and validation session.
+Let's have a checkpoint session.
 I want to make sure the `proofdb` initiative reflects my intended design.
 
 here is my top down vision of the finished initiative:
@@ -577,3 +577,7 @@ for the harvester i envision this:
 the merger:
 
 - picks up new shards and appends to the global proof tree
+
+---
+
+plan4 looks huge. should we split it or park some tasks as items in the initiative?
