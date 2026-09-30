@@ -125,6 +125,7 @@ value.
 | 3 | **DTM-upgrade pass** | background jobs re-searching bound ladders to promote `bound` → `exact` where affordable | depth quality improves without re-harvesting outcomes | M | open |
 | 4 | **Coverage policy** | which frontier children to open next (cheap-first gradient; sharpness like plan4's, not enumerative layers) | keeps per-fact cost low as the tree deepens | S–M | **done (plan3, 2026-09-29)**: frontier classes C1/C2/C3 + policies in `proofdb_harvest` (`--policy`); measured A/B at 300M evals each: `sharp-siblings` 90 facts/300M (29.99 facts/100M, median 44.7k evals/fact) vs `open-deepest` 0/300M; winner is the default; gradient saturates after its head (marginal P2: 0 facts) |
 | 5 | **Website handoff** | ship `global_proof_store.md` to the external website project; agree on read-only DB consumption | the product surface of this initiative | S | open |
+| 6 | **Independent harvesters** | partition the frontier across worker processes (by root-child subtree or class; per-worker shard staging, serialized manifest merge); campaign-prototype precedent (`examples/campaign*`, solve plans 5/9) | wall-time scaling of harvesting without touching solver semantics | M | open — sequenced after the breadth-first PNS policy (plan4) is measured sequentially; jobs are independent roots, so the partition is mechanical once selection state is a sidecar |
 
 ## Non-goals
 
@@ -146,6 +147,18 @@ value.
 
 ## History
 
+- **2026-09-29** — **pivot decided after plan3**: job selection moves from
+  class gradients (plan3's C1/C2/C3) to **breadth-first PNS over the open
+  frontier** (plan4): structural pn/dn numbers (unvisited = 1), min-pn at
+  OR / min-dn at AND, prefer-closer-to-root ties, censored nodes re-visited
+  at doubled work (geometric ladder). Rationale: the C2 cheap head is
+  measured-exhausted, and the most proving lines are what the website's
+  users want explored — the initiative goal stays *coverage AND proof*
+  (metric = harvesting value, not root-solver speed; the handover rule
+  stands). Numbers are selection state: sidecar work ledger under the new
+  **`data/`** working layer (gitignored, with the derived DB), never in the
+  DB, never facts. Parallel harvesters added as item 6 (sequential PNS
+  measured first; campaign-prototype precedent). See `plan4.md`.
 - **2026-09-29** — **item 4 executed** (plan3): coverage policy measured
   and shipped. `proofdb_harvest` now extracts the full frontier classes
   (C1 open / C2 unexpanded siblings of proving children / C3 unexpanded

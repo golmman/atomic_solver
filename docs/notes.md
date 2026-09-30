@@ -383,9 +383,10 @@ So each session should be self contained with a clean handoff and the ai agent s
 
 Plan 8 is too uncertain and costly in my opinion.
 I can offer these limits for exceptional experiments for now:
-* 16G memory
-* 8 cpus
-* 12h time
+
+- 16G memory
+- 8 cpus
+- 12h time
 
 **Point 2**
 
@@ -417,9 +418,10 @@ Let's call it orchestrator-PNS.
 The orchestrator starts with an initial (low) work budget for each worker.
 Then it traverses the tree of positions breadth first and adds nodes to its bookkeeping tree.
 Each node is assigned a pns
-* 0 - the node is proven/disproven
-* the work budget - the work budget was exceeded in this node
-* INF - node not yet explored by a worker
+
+- 0 - the node is proven/disproven
+- the work budget - the work budget was exceeded in this node
+- INF - node not yet explored by a worker
 
 It takes the first N children of the root and assigns them to the workers.
 If a worker gets a proof/disproof inside the budget add it to the global proof and flag it OUTCOME.
@@ -428,30 +430,28 @@ Repeat until there a no UNKNOWN nodes left.
 Then increase the work budget and explore the EXCEEDED nodes again.
 Repeat.
 
-
 ---
 
 what if the orchestrator implemented a breadth-first PNS where it assigns the workers the nodes to be explored?
 
 ---
 
-* pivot: database of prroven positions bradth first
-* selfplay against stockfish?
-  * measured in conversion initative: no-go
-* pns mit attacker der eigentlich loser ist?
-  * funktioniert, ist aber in der theorie aufwändiger
-  * position wird immer als attacker OR ausgeführt
-  * -> alle OR nodes müssen durchsucht werden
-* nextn step solve?
-   1. A5.4 — the coverage race: a mechanism innovation that wins the root's ~41-children coverage race (the one open architectural problem, since budget ladders were falsified as the fix). Requires 
-      a fresh pre-registered plan.
+- pivot: database of prroven positions bradth first
+- selfplay against stockfish?
+  - measured in conversion initative: no-go
+- pns mit attacker der eigentlich loser ist?
+  - funktioniert, ist aber in der theorie aufwändiger
+  - position wird immer als attacker OR ausgeführt
+  - -> alle OR nodes müssen durchsucht werden
+- nextn step solve?
+  1. A5.4 — the coverage race: a mechanism innovation that wins the root's ~41-children coverage race (the one open architectural problem, since budget ladders were falsified as the fix). Requires
+     a fresh pre-registered plan.
   2. A6 — budget-aware early-censor certificates: mechanism innovation targeting the resume/accumulation failure mode (no warm work-to-censor discount).
-* solve: no-go parallel?
-  * "Read parallel/report2.md, solve/report8–9, and campaign_architecture.md §11 (A5.4/A6); assess whether a 
- TT-seeded race probe or an A6 certificate design justifies a fresh pre-registered plan, and write plan10.md or a closure note."
+- solve: no-go parallel?
+  - "Read parallel/report2.md, solve/report8–9, and campaign_architecture.md §11 (A5.4/A6); assess whether a
+    TT-seeded race probe or an A6 certificate design justifies a fresh pre-registered plan, and write plan10.md or a closure note."
 
 ---
-
 
 ## Goal
 
@@ -465,9 +465,9 @@ Breadth-first PNS orchestrator runs this solver with N instances parallel.
 
 ## Questions
 
-* new initiative?
-* as an example or external?
-* directly to db or append proof_tree.bin?
+- new initiative?
+- as an example or external?
+- directly to db or append proof_tree.bin?
 
 ---
 
@@ -498,3 +498,42 @@ Where the code lives, also agreed.
 
 Where does the merger live though? If it is part of this project we need not to share the proof_tree_dump.md but only the global_proof_store.md.
 When we store directly to and SQLite db the global_proof_store.md should only explain the structure of the stored data, right?
+
+---
+
+1. does the harvester start multiple parallel instances?
+2. when i start the example does it already automatically add to the global proof?
+3. where is the global proof sqlite file?
+4. how is the next position selected by the harvester? breadth first?
+
+---
+
+I want the initiative to pivot then.
+
+1. have we tried to give sub-positions to independent harvesters?
+2. ok
+3. the data/ directory would be a good place to store these.
+4. why would we prove children of proven parents?
+  I'd rather have "breadth first PNS", i.e.:
+  * search breadth first
+  * init unvisited nodes with 1 as proof/disproof number
+  * harvest the node with the lowest pn/dpn with a fixed budget, prefer nodes closer to the root
+  * if no decisive outcome update pn/dpn with the work done and pick the next node
+  * when no nodes with "1" pn/dpn remain visit the failed harvested nodes and doulbe their work
+
+---
+
+1. i'd argue the goals are different.
+There we wanted to get the fastest solver for the root position.
+In the `proofdb` initiative we want to build a database of proven positions, and of course we should try to be as fast as possible in harvesting. But the metric is different.
+
+3. should be gitignored in my opinion. i suspect the databases grows and grows, i don't like conflating gigabytes of db positions with application code.
+i think the sidecar file should live here as well.
+
+4. I'd argue initiative `proofdb` is for coverage AND proof.
+E.g. after g1f3 from the root position only 3 moves are not immediatly losing. and we encode this in the db as proof.
+4.1 agreed, we don't want this number in the db but in a sidecar file. but i'd still argue they are proof/disproof-numbers. if pn/dpn are not priority estimates what else are they?
+4.2 you're right. i'd rather see the most promising lines explored. in the end the database is used by atomic chess players who want to see if their opening ideas result in quick losses, traps, etc., of course they will want to explore the most proving lines more likely.
+4.3 agreed, that's the purpose of the sidecar file.
+4.4 ok, but let's add it as an explicit item in the initiative.
+
