@@ -514,26 +514,66 @@ I want the initiative to pivot then.
 2. ok
 3. the data/ directory would be a good place to store these.
 4. why would we prove children of proven parents?
-  I'd rather have "breadth first PNS", i.e.:
-  * search breadth first
-  * init unvisited nodes with 1 as proof/disproof number
-  * harvest the node with the lowest pn/dpn with a fixed budget, prefer nodes closer to the root
-  * if no decisive outcome update pn/dpn with the work done and pick the next node
-  * when no nodes with "1" pn/dpn remain visit the failed harvested nodes and doulbe their work
+   I'd rather have "breadth first PNS", i.e.:
+
+- search breadth first
+- init unvisited nodes with 1 as proof/disproof number
+- harvest the node with the lowest pn/dpn with a fixed budget, prefer nodes closer to the root
+- if no decisive outcome update pn/dpn with the work done and pick the next node
+- when no nodes with "1" pn/dpn remain visit the failed harvested nodes and doulbe their work
 
 ---
 
 1. i'd argue the goals are different.
-There we wanted to get the fastest solver for the root position.
-In the `proofdb` initiative we want to build a database of proven positions, and of course we should try to be as fast as possible in harvesting. But the metric is different.
+   There we wanted to get the fastest solver for the root position.
+   In the `proofdb` initiative we want to build a database of proven positions, and of course we should try to be as fast as possible in harvesting. But the metric is different.
 
-3. should be gitignored in my opinion. i suspect the databases grows and grows, i don't like conflating gigabytes of db positions with application code.
-i think the sidecar file should live here as well.
+2. should be gitignored in my opinion. i suspect the databases grows and grows, i don't like conflating gigabytes of db positions with application code.
+   i think the sidecar file should live here as well.
 
-4. I'd argue initiative `proofdb` is for coverage AND proof.
-E.g. after g1f3 from the root position only 3 moves are not immediatly losing. and we encode this in the db as proof.
-4.1 agreed, we don't want this number in the db but in a sidecar file. but i'd still argue they are proof/disproof-numbers. if pn/dpn are not priority estimates what else are they?
-4.2 you're right. i'd rather see the most promising lines explored. in the end the database is used by atomic chess players who want to see if their opening ideas result in quick losses, traps, etc., of course they will want to explore the most proving lines more likely.
-4.3 agreed, that's the purpose of the sidecar file.
-4.4 ok, but let's add it as an explicit item in the initiative.
+3. I'd argue initiative `proofdb` is for coverage AND proof.
+   E.g. after g1f3 from the root position only 3 moves are not immediatly losing. and we encode this in the db as proof.
+   4.1 agreed, we don't want this number in the db but in a sidecar file. but i'd still argue they are proof/disproof-numbers. if pn/dpn are not priority estimates what else are they?
+   4.2 you're right. i'd rather see the most promising lines explored. in the end the database is used by atomic chess players who want to see if their opening ideas result in quick losses, traps, etc., of course they will want to explore the most proving lines more likely.
+   4.3 agreed, that's the purpose of the sidecar file.
+   4.4 ok, but let's add it as an explicit item in the initiative.
 
+---
+
+Let's have a checkpoint brainstorming and validation session.
+I want to make sure the `proofdb` initiative reflects my intended design.
+
+here is my top down vision of the finished initiative:
+
+- run harvest from root with N threads
+  - also i want to be able to run it from any OR-node / white-to-move position
+- let it run for e.g. 24h
+- stop it manually, we have e.g. 10 new proven positions, 10 new undecided positions
+- run merge, which adds the 10 new proofs to the global proof tree
+- hand over the updated proof tree to the website
+- explore the extended proof tree in the website
+- the website side is not part of this initiative
+
+for the harvester i envision this:
+
+- Let's say the position splits into 10 children
+- Each child has always (for the sake of simplicity) 10 children
+- so we can use the notation 0567 to uniquely identify the path where child 0, then child 5, then child 6, then child 7 was chosen
+- let's say this is the first run ever
+- from the root we see 10 children so we put them in the sidecar file with pn 1
+- then we start exploring the children with a fixed (but cli-configurable) work budget
+- child 0 to 7 are a decisive wins: update the sidecar file, write the shards
+  - we never need to explore 0 to 7 again, job done
+- child 8 and 9 exceed their budget
+- we expand 8 and 9, that gives 20 new sub-children
+- before we go deeper we explore the 20 new sub-children
+- the run is stopped / terminated
+- new shards have been added and the sidecar was updated
+- intermediate work is lost but that's ok
+- next run we pick up where we left off based on the sidecar file
+- we only start expanding the next depth when all nodes of the current depth are currently being explored (in parallel) or were explored already
+- at OR-nodes we are only interested in one proving move, if we find it we skip their siblings
+
+the merger:
+
+- picks up new shards and appends to the global proof tree
