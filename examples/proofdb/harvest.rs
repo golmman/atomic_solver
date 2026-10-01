@@ -34,6 +34,9 @@ pub enum JobClass {
     SharpSibling,
     /// Unexpanded child of an open node.
     OpenChild,
+    /// Ledger-known-open frontier node (no DB row; a sidecar record from a
+    /// previous censoring or exposure, plan4 D1).
+    Ledger,
 }
 
 impl JobClass {
@@ -43,6 +46,7 @@ impl JobClass {
             Self::Open => "C1",
             Self::SharpSibling => "C2",
             Self::OpenChild => "C3",
+            Self::Ledger => "L",
         }
     }
 }

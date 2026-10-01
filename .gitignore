@@ -25,9 +25,11 @@ target
 proof_tree.bin
 proof_tree.bin.tt
 
-# Local nn-era leftovers (archive lives on the nn branch)
-data/corpus/
-data/oracle/
+# Working layer of the proofdb initiative: the derived proof DB (rebuilt
+# from the committed shard set at any time) and the harvest sidecar work
+# ledger (plan4). Supersedes the nn-era data/corpus and data/oracle
+# entries; the archive itself lives on the nn branch.
+data/
 
 # Raw measurement run data: solver run transcripts (.out/.err/.log/.time,
 # captured stdout/stderr, superseded by the parsed results in

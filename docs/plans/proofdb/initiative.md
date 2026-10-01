@@ -125,7 +125,7 @@ value.
 | 3 | **DTM-upgrade pass** | background jobs re-searching bound ladders to promote `bound` → `exact` where affordable | depth quality improves without re-harvesting outcomes | M | open |
 | 4 | **Coverage policy** | which frontier children to open next (cheap-first gradient; sharpness like plan4's, not enumerative layers) | keeps per-fact cost low as the tree deepens | S–M | **done (plan3, 2026-09-29)**: frontier classes C1/C2/C3 + policies in `proofdb_harvest` (`--policy`); measured A/B at 300M evals each: `sharp-siblings` 90 facts/300M (29.99 facts/100M, median 44.7k evals/fact) vs `open-deepest` 0/300M; winner is the default; gradient saturates after its head (marginal P2: 0 facts) |
 | 5 | **Website handoff** | ship `global_proof_store.md` to the external website project; agree on read-only DB consumption | the product surface of this initiative | S | open |
-| 6 | **Independent harvesters** | partition the frontier across worker processes (by root-child subtree or class; per-worker shard staging, serialized manifest merge); campaign-prototype precedent (`examples/campaign*`, solve plans 5/9) | wall-time scaling of harvesting without touching solver semantics | M | open — sequenced after the breadth-first PNS policy (plan4) is measured sequentially; jobs are independent roots, so the partition is mechanical once selection state is a sidecar |
+| 6 | **Independent harvesters** | partition the frontier across worker processes (by root-child subtree or class; per-worker shard staging, serialized manifest merge); campaign-prototype precedent (`examples/campaign*`, solve plans 5/9) | wall-time scaling of harvesting without touching solver semantics | M | open — the sequential prerequisite is done (plan4, 2026-09-30: the ledger holds exactly the pick-up state a per-worker partition needs); note report4 finding 3: within-layer selection needs a work-aware key before large batches are worth scaling |
 | 7 | **Subtree-scoped harvesting** | `--root-fen` (+ optional `--root-path`) plumbs the harvest root by FEN, resolved within the merged DB tree (no match or ambiguous match aborts); a subtree *view* over the same startpos-rooted tree — shards, manifest paths, and grafting stay startpos-relative unchanged | harvest any position, the primary user surface for item 6's per-worker subtree partition | S | open — parked from plan4 (2026-09-30, docs-only amendment, plan4 decision 12 tombstone): the first batch runs at the startpos root, and the MVP limitation ("FEN must be a node of the merged DB tree") is expected to be revisited under item 6 |
 
 ## Non-goals
@@ -148,6 +148,23 @@ value.
 
 ## History
 
+- **2026-09-30** — **plan4 executed** (breadth-first PNS harvester):
+  `--policy breadth-pns` shipped as the default (live `(number, ply, path)`
+  queue over the open frontier; sidecar work ledger `data/proofdb_work.json`
+  with censor-time frontier exposure and the lineage gate; working layer at
+  gitignored `data/`). First batch: **0 facts / 300.0M child-evals — exactly
+  the pre-registered expectation**; the live queue swept plies 0–2 fully
+  (75 censored jobs at 4M), exposed 1,368 undecided children into the
+  ledger (1,443 records total), and the first ladder rung never fired
+  in-session. Gates H1–H6 pass (H5: 75/75 records + byte-identical
+  ledger). Findings: plan4 §1's pre-registered census (7 implied wins +
+  1 implied loss + 41 jobs) came from a no-movegen probe — the normative
+  §2 rule (unvisited = 1 via movegen) yields 49 jobs, the 8 extra rows
+  genuinely undecided; and a factless session degenerates to pure BFS —
+  within-layer selection needs a work-aware key before the next large
+  batch (see `report4.md` findings 1/3). DB unchanged (35,055 nodes,
+  197 shards); `data/proofdb.db` byte-identical to plan3's committed
+  grown2 DB.
 - **2026-09-30** — **plan4 slimmed before execution (docs-only, second
   amendment)**: `--root-fen`/`--root-path` subtree scoping (checkpoint
   decision 12) parked as **item 7**. Reasons: the first batch runs at

@@ -581,3 +581,7 @@ the merger:
 ---
 
 plan4 looks huge. should we split it or park some tasks as items in the initiative?
+
+---
+
+Plan a small plan5 in proofdb (docs-only, read-only probe allowed): decide the within-layer selection key for breadth-pns (report4 finding 3) — work-aware effective numbers vs a per-layer budget split — pre-register it, and run the second batch over the 1,417-job frontier from data/proofdb_work.json (ledger snapshot in measurements/plan4/); goal: measure whether the ladder can ever fire in-session.
