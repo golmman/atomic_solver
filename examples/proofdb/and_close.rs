@@ -21,10 +21,13 @@
 //!   unmeasured tail, shallow-first.
 //!
 //! **Budgets.** Per-reply geometric ladder read from the ledger with the
-//! **monotone-budget rule** (new for this policy): the k-th visit
-//! (`k = passes_failed + 1`) runs at `max(2^(k-1) × base, work_done)` —
-//! a deep-censored reply must not regress to a small revisit. Base = the
-//! CLI `--budget-evals`.
+//! **strict-growth floor** (plan9 §2, superseding plan8 §2's monotone floor
+//! for this policy): the k-th visit (`k = passes_failed + 1`) runs at
+//! `max(2^(k-1) × base, 2 × work_done)` — a revisit at budget ≤ work_done
+//! is a byte-identical deterministic repeat (a fresh empty-TT run
+//! reproduces the original censored result) and must be impossible, so the
+//! floor doubles accumulated work instead of matching it. Base = the CLI
+//! `--budget-evals`.
 //!
 //! **Censor behavior** (the decision-11 deviation, normative for this
 //! policy): a censored reply bumps its own ledger record and saves
@@ -38,6 +41,10 @@
 //! null (pns-specific fields). Tests run in `tests/proofdb.rs` (which
 //! includes this module verbatim; cargo does not run unit tests inside
 //! example targets).
+//!
+//! File-size justification: ~10.1 KB — the order/ladder policy, the
+//! sequence builder over the classified tree, and the census extraction
+//! share one indexing scheme; tests are split out (`tests/proofdb.rs`).
 
 use super::harvest::{Job, JobClass};
 use super::pns::{Child, Kind, Pns};
@@ -82,14 +89,23 @@ impl AndCloseOrder {
     }
 }
 
-/// Per-reply budget: the geometric ladder with the monotone-budget rule
-/// (plan8 §2). The k-th visit of a reply (`k = passes_failed + 1`) runs at
-/// `max(2^(k-1) × base, work_done)`: a deep-censored reply (say, 1B spent)
-/// must not regress below its accumulated work at the next visit.
+/// Per-reply budget: the geometric ladder with the strict-growth floor
+/// (plan9 §2, superseding the monotone floor of plan8 §2 for this policy).
+/// The k-th visit of a reply (`k = passes_failed + 1`) runs at
+/// `max(2^(k-1) × base, 2 × work_done)`: a revisit at budget ≤ work_done
+/// is a byte-identical deterministic repeat (a fresh empty-TT run capped by
+/// cumulative child-evals reproduces the original censored result — plan8
+/// H5 proved the replay) and must be impossible, so the floor doubles the
+/// accumulated work instead of matching it. Fresh replies (pass 0, work 0)
+/// stay at the base; deep-censored replies climb geometrically in
+/// cumulative work (1B → 2B → 6B → 12B …). Base = the CLI
+/// `--budget-evals`.
 #[must_use]
 pub fn ladder_budget(passes_failed: u32, work_done: u64, base: u64) -> u64 {
     let k = u64::from(passes_failed).min(63);
-    (1u64 << k).saturating_mul(base).max(work_done)
+    (1u64 << k)
+        .saturating_mul(base)
+        .max(work_done.saturating_mul(2))
 }
 
 /// The extraction output: the ordered job sequence, the census, and the

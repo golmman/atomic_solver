@@ -19,8 +19,9 @@
 //! queue) in `batch.rs`, the DB-facing engine (frontier classes,
 //! AND-completeness assert, disjointness) in `frontier.rs` + `db.rs`, the
 //! legacy policies in `policy.rs`, the PNS selection in `pns.rs` + `pns/`,
-//! the `and-close` completion-gradient policy (plan8) in `and_close.rs` +
-//! `and_close/`, and the sidecar work ledger in `ledger.rs`.
+//! the `and-close` completion-gradient policy (plan8, ladder plan9 §2) in
+//! `and_close.rs` + `and_close/`, and the sidecar work ledger in
+//! `ledger.rs`.
 //!
 //! Coverage policies (`--policy`; default `breadth-pns`, the plan4 pivot):
 //! `breadth-pns` — the plan6 selection mechanism (eligibility, pacing,
@@ -30,10 +31,11 @@
 //! session cap = `--max-total-evals`; `--pns-config <file>` loads the
 //! mechanism knobs (TOML, plan6 §2; compiled defaults when absent) and the
 //! effective config is echoed on the session-start `pns:` line; the plan8
-//! `and-close` — the missing replies of the active open rows in the
-//! completion-gradient or fresh order (`--and-close-order`), the
-//! monotone-budget ladder `max(2^(k-1) × base, work_done)` per reply and
-//! a bump-only censor hook (no exposure); plus the plan3 legacy gradients
+//! `and-close` — the missing
+//! replies of the active open rows in the completion-gradient or fresh
+//! order (`--and-close-order`), the strict-growth ladder
+//! `max(2^(k-1) × base, 2 × work_done)` per reply (plan9 §2) and a
+//! bump-only censor hook (no exposure); plus the plan3 legacy gradients
 //! `open-deepest`, `sharp-siblings`, `sharp-heavy-tail` (heavy options and
 //! `--pns-config` are effective only under `breadth-pns`).
 //!

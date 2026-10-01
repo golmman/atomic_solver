@@ -1,0 +1,18 @@
+{
+ "H1_integrity": "pass (pinned census 1108 = 257 fresh + 851 censored, gradient head, exclusions 26/0/0; armA: every budget 4M, before-bump pass 0; armB: head exactly g1f3 \u00d73 at budgets == 2 \u00d7 work_before then the 26-job 8M tier, every budget >= 2 \u00d7 work_before; no job path a standing manifest/DB-row path; no-exposure exact both arms)",
+ "H2_merge_determinism": "pass (256/256 shards replay-validated; grown1.db == grown2.db == grown3.db == 6c724928603a28c3..., dumps identical)",
+ "H3_H4_no_regression": "pass (25 promoted facts all replay-validated by the merger; no same-path outcome contradiction between arms: armB had 0 facts; armA's 25 fact paths are disjoint from every standing manifest path)",
+ "H5_policy_determinism": "pass (both arms: job sequences identical excl wall_s, post-run ledgers byte-identical - including armB's 6.5B-eval session; union determinism/idempotence/N=1 normalization byte-identical)",
+ "H6_hygiene": "pass (make test green incl. the updated strict-growth ladder tests; clippy/fmt/doc clean; no src/ changes; new/edited example files <= 10 KB; data/ ignored)",
+ "flip_analysis": "pass (0 flips over the grown DB, 0 over the pre-run standing DB; 0 claims to verify - no row reached AND-completeness; the completion branch of \u00a74.3 did not fire)",
+ "armA": {
+  "facts": 25,
+  "verdict": "the fresh sweep exhausted its pool (257 jobs, stop=exhausted) and yielded 25 facts (9.7% of jobs vs arm-2 screen's 4.3%) - above the plan's 5-15 expectation; the deep tail (plies 19-27) is the measured-yielding territory"
+ },
+ "armB": {
+  "facts": 0,
+  "verdict": "0 facts: the three g1f3 defenses censored at 2B each (strict-growth rung, pass 2, work ~3B) and the 26-job 8M sub-plateau tier + 27 deeper 8M/24M probes all censored - the plateau band holds from above; next rungs pinned (6B for g1f3, 24M tier)"
+ },
+ "escalation_policy": "\u00a74.4 applied: the fresh tier yielded (25 facts) -> base stays 4M for the next fresh batch (no \u00d710); the censor tier escalates automatically via the strict-growth ladder (g1f3: 1B -> 2B -> 6B; sub-plateau tier: 8M -> 24M); one batch per escalation",
+ "handover": "not triggered (no completed row, 0 flips, root undecided)"
+}

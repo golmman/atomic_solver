@@ -442,15 +442,26 @@ fn and_close_completion_order_ties_and_budgets() {
 }
 
 #[test]
-fn and_close_ladder_budgets_and_monotone_rule() {
+fn and_close_ladder_budgets_and_strict_growth() {
     // The pure ladder: 2^(k-1) × base.
     assert_eq!(ladder_budget(0, 0, 4_000_000), 4_000_000);
     assert_eq!(ladder_budget(1, 0, 4_000_000), 8_000_000);
     assert_eq!(ladder_budget(2, 0, 4_000_000), 16_000_000);
     assert_eq!(ladder_budget(3, 0, 1_000_000), 8_000_000);
-    // The monotone-budget rule: work above the rung holds the budget.
-    assert_eq!(ladder_budget(1, 100_000_000, 4_000_000), 100_000_000);
-    assert_eq!(ladder_budget(2, 20_000_000, 4_000_000), 20_000_000);
+    // The strict-growth floor (plan9 §2): the floor doubles accumulated
+    // work instead of matching it — a revisit at budget ≤ work_done is a
+    // byte-identical deterministic repeat and must be impossible.
+    assert_eq!(ladder_budget(1, 100_000_000, 4_000_000), 200_000_000);
+    assert_eq!(ladder_budget(2, 20_000_000, 4_000_000), 40_000_000);
+    // The equal-work regression case (plan9 §2): pass 1 at work =
+    // 2^(k−1) × base must yield 2 × work, not work (the plan8 monotone
+    // rule revisited a 1B-censored defense at exactly 1B — pure waste).
+    assert_eq!(ladder_budget(1, 8_000_000, 4_000_000), 16_000_000);
+    // The g1f3 deep-probe case with the standing base 4M: ≈ 2B (the
+    // pre-registered plan9 rung, reached without a base change).
+    assert_eq!(ladder_budget(1, 1_000_000_060, 4_000_000), 2_000_000_120);
+    // Fresh (pass 0, work 0) stays at the base.
+    assert_eq!(ladder_budget(0, 0, 4_000_000), 4_000_000);
     // Saturation guard.
     assert_eq!(ladder_budget(63, 0, u64::MAX), u64::MAX);
 
@@ -475,9 +486,12 @@ fn and_close_ladder_budgets_and_monotone_rule() {
             .unwrap()
             .budget
     };
-    // Monotone: the 100M-deep-censored reply does not regress to 8M.
-    assert_eq!(budget("c2c4"), 100_000_000);
-    assert_eq!(budget("d2d4"), 4_000_000); // max(2M ladder, 4M work)
+    // Strict growth: the 100M-deep-censored reply revisits at 2 × work,
+    // never at ≤ work (the plan9 §2 floor); a pass-1 4M reply revisits at
+    // max(8M rung, 8M floor) = 8M — plan8's behavior where the old floor
+    // was strictly exceeded.
+    assert_eq!(budget("c2c4"), 200_000_000);
+    assert_eq!(budget("d2d4"), 8_000_000); // max(8M rung, 2 × 4M work)
     assert_eq!(budget("e2e4"), 1_000_000); // pass-0 record: fresh budget
     assert_eq!(budget("a2a3"), 1_000_000);
     std::fs::remove_dir_all(&dir).ok();
