@@ -148,7 +148,35 @@ value.
 
 ## History
 
-- **2026-10-01 (latest)** — **plan7 drafted (docs-only plan session)**:
+- **2026-10-01 (latest)** — **plan8 drafted (docs-only plan session)**:
+  the §4.6 closure-rule response (report7: sixth consecutive 0-fact batch;
+  "another identical default batch is not a valid plan8"). The design
+  dialogue **rejects the depth-rationing lever on arithmetic** (exposure
+  caps cannot shrink the structural number-1 pool — unvisited children are
+  counted via movegen; layer completion is unaffordable at ~27× layer
+  growth; the ladder is plan6's measured no-go) and adopts the
+  **fact-yield-oriented job-set change**: the new policy `and-close` whose
+  job set is the tree's actual completion work — the missing replies of
+  undecided rows, completion-gradient ordered. The plan names the
+  **starvation mechanism** behind the six 0-fact sessions (the number ≥ 2
+  pool — where all completion work sits — is unreachable under the fresh
+  cascade) and pins the tree's near-closure structure by probe:
+  `g1f3` (3 missing replies), `e2e3` (7), `e2e4` (7), `g1h3` (9), the root
+  (13); completing any head row implies the root (either direction — the
+  handover contingency is pre-registered with a conservative trigger).
+  Two arms pre-registered: the **deep probes** (1B child-evals on `g1f3`'s
+  three defenses — the first budgets one-to-two orders above the measured
+  censor band on those positions: pilot 8-s ≈ 10–20M-equiv, 120-s sample
+  ≈ 100–250M-equiv, 2-h ≈ 7–15B-equiv, in-harness 4M censors) and the
+  **fresh-tail screen** (970 never-searched C3 replies at 4M — the
+  class-closing probe). Normative deltas: the monotone revisit budget
+  `max(2^passes × base, work_done)`, bump-only censors (decision 11
+  superseded for this policy — no child exposure), flips stay derived
+  (decision 10 stands, no propagation pass). `and-close` becomes the
+  harvest default in every outcome; 0 facts everywhere escalates the base
+  ×10 per factless batch. Ledger advance = union(arm1, arm2) — the plan7
+  union mechanism's first production use. See `plan8.md`.
+- **2026-10-01** — **plan7 drafted (docs-only plan session)**:
   batch 3 pre-registered as a **two-arm A/B over the standing post-plan6
   state** — arm 1 (control): the shipped default (rationed expansion,
   layer caps 24, reserve 0) from the standing ledger as-is; arm 2 (union):
