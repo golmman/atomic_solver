@@ -585,3 +585,20 @@ plan4 looks huge. should we split it or park some tasks as items in the initiati
 ---
 
 Plan a small plan5 in proofdb (docs-only, read-only probe allowed): decide the within-layer selection key for breadth-pns (report4 finding 3) — work-aware effective numbers vs a per-layer budget split — pre-register it, and run the second batch over the 1,417-job frontier from data/proofdb_work.json (ledger snapshot in measurements/plan4/); goal: measure whether the ladder can ever fire in-session.
+
+---
+
+Do we have two conflicting ideas for the outer pns deepening in `proofdb`?
+
+1. we have the "ladder": if a position keeps failing, come back to it later and give it double the effort, then quadruple, and so on
+2. we have the "expansion": if a node fails to be proven in the buget given we expand it and try to prove their children
+
+---
+
+I feel like we don't need the "ladder" when the "expansion" determines the next node to be explored. Why would we ever come back to harvest the parent when we could instead harvest the children?
+
+---
+
+Sounds good so far, we should be careful with the documentation and exploration methods though.
+We are "inventing" a new algorithm by combining two principles here, right? So i feel like it is imperative to document the mechanism where/when exactly the split happens. When do we expand, when do we ladder? How did we find this rule? how can we configure the rule so we can benchmark variations of the rule?
+

@@ -148,6 +148,18 @@ value.
 
 ## History
 
+- **2026-10-01** — **plan5 pre-registered (docs-only plan session)**: the
+  within-layer selection question (report4 finding 3) decided as a
+  **per-layer budget split with a scheduled ladder reserve**; work-aware
+  effective numbers rejected by a degeneracy lemma (every fresh number-1
+  record has zero ledger state, so any ledger-derived key collapses to the
+  current `(number, ply, path)`), and the pool-growth lemma shows the
+  ladder can never fire in-session under any ordering (censor exposure
+  ≈ +18.2 fresh records/visit vs ≤ 1 removal). Batch 2 is pre-registered
+  as the unchanged-policy control over the exposed frontier (measured
+  census: 1,483 jobs / 1,408 number-1 / 75 number-2, superseding report4's
+  1,417 figure); the split itself is plan6 implementation work, A/B'd
+  against the batch-2 control. See `plan5.md`.
 - **2026-09-30** — **plan4 executed** (breadth-first PNS harvester):
   `--policy breadth-pns` shipped as the default (live `(number, ply, path)`
   queue over the open frontier; sidecar work ledger `data/proofdb_work.json`
