@@ -148,6 +148,26 @@ value.
 
 ## History
 
+- **2026-10-01 (latest)** — **plan7 drafted (docs-only plan session)**:
+  batch 3 pre-registered as a **two-arm A/B over the standing post-plan6
+  state** — arm 1 (control): the shipped default (rationed expansion,
+  layer caps 24, reserve 0) from the standing ledger as-is; arm 2 (union):
+  the identical config from a **ledger-unioned** copy that recovers the
+  censor knowledge plan6's standing-ledger advance dropped (report6
+  finding 4). Ledger records are selection state only (no outcomes), so
+  the union is a conservative max-rule merge (`passes_failed` max, tie by
+  `work_done`) with a soundness-empty surface — and the N-way primitive
+  item 6's per-worker ledger merge needs. Probes on throwaway copies
+  pinned both censuses (arm 1: 4,608 jobs; arm 2: 5,987 jobs) and the
+  union composition (5,950 records = 4,569 standing + 1,381 recovered
+  paths from arm A + 57 upgrades from A/B; ply-2 fresh 190 → 141). The
+  re-censor metric (finding 4 made measurable: expected 24 vs 0,
+  ≈ 96M-eval waste bound) and the decision rule are pre-registered;
+  **§4.6 fixes the plan8 closure rule**: if the expected 0-fact result
+  holds (sixth consecutive), another default batch is invalid — the
+  depth-rationing lever (finding 1) or a yield-oriented selection change
+  is mandatory next. Finding 1 is otherwise deferred to its own plan. See
+  `plan7.md`.
 - **2026-10-01 (later still)** — **plan6 executed (the selection
   mechanism + the A/B)**: the plan5 §2 decision implemented as the
   pre-registered config surface (`--pns-config`: eligibility,

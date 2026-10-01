@@ -602,3 +602,15 @@ I feel like we don't need the "ladder" when the "expansion" determines the next 
 Sounds good so far, we should be careful with the documentation and exploration methods though.
 We are "inventing" a new algorithm by combining two principles here, right? So i feel like it is imperative to document the mechanism where/when exactly the split happens. When do we expand, when do we ladder? How did we find this rule? how can we configure the rule so we can benchmark variations of the rule?
 
+---
+
+Help me understand `docs/plans/proofdb/report6.md`.
+
+1. we have the "ladder": if a position keeps failing, come back to it later and give it double the effort, then quadruple, and so on
+2. we have the "expansion": if a node fails to be proven in the buget given we expand it and try to prove their children
+
+We tried combining the two mechanisms in plan6 and measure where/when exactly the split should happen and establish a rule.
+
+The result is that the "ladder" mechanism is never giving better results than the "expansion" mechanism. So the algorithm is pure "expansion" from now on.
+
+Correct?
