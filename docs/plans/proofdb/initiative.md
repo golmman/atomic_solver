@@ -148,6 +148,23 @@ value.
 
 ## History
 
+- **2026-10-01 (later)** — **plan6 drafted; plan5's decision refined
+  (docs-only, design dialogue)**: the within-layer decision became an
+  explicit hybrid mechanism — breadth-PNS expansion stays the default;
+  ladder escalation is granted only to nodes whose children are all
+  visited (the eligibility trigger, from the user's argument that
+  expansion *is* the parent's proof work), paced by an interleave and
+  rationed by a reserve share + per-ply-layer visit caps; full config
+  surface (`--pns-config` TOML) so rule variants are benchmarkable, with
+  census gaining a `kind: expand|rung` field so transcripts trace where
+  the split fires. plan6 pre-registers the A/B: status-quo control from
+  the post-batch-2 state, its degenerate-config equivalence replay,
+  mechanism defaults, and the reserve=0 ladder-deletion arm — the
+  ladder's marginal value is the measured question, with a measured
+  no-go as a valid outcome. Research note `research_pns_ladder.md`
+  (plan6 D3) mines the vendored PNS/DF-PN theory (threshold escalation,
+  Nagai) and records the provenance chain and rejected alternatives.
+  See `plan5.md` (amendment) and `plan6.md`.
 - **2026-10-01** — **plan5 pre-registered (docs-only plan session)**: the
   within-layer selection question (report4 finding 3) decided as a
   **per-layer budget split with a scheduled ladder reserve**; work-aware

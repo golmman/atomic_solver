@@ -16,6 +16,22 @@ plan6 (batch 3), A/B'd against this control. Docs + `examples/`-side
 measurements only; the product solver, DB schema, and spec are untouched.
 Per repo convention the final task is `report5.md`.
 
+**Amendment (2026-10-01, docs-only, user-confirmed design dialogue; plan
+amended in place while unexecuted).** The §2 decision — "per-layer budget
+split with a scheduled ladder reserve" — is refined into an explicit
+mechanism: rung **eligibility** (a censored node earns a revisit only when
+all its children have been visited — expansion *is* the parent's proof
+work), rung **pacing** (interleaved slots) and **rationing** (reserve share
+of the session cap; per-ply-layer visit caps), all exposed through a
+TOML config surface so rule variants are benchmarkable. The refined
+decision table, the config schema, and the pre-registered A/B arms are
+normative in `plan6.md` (drafted the same day); §2's paragraph stays as
+the decision record, plan6 §2 supersedes it operationally. This plan's
+batch-2 control protocol (§3–§5, unchanged policy, E1–E5) is untouched —
+plan6's arm A′ replays a legacy-policy session under the new selector's
+degenerate config and must byte-match it, which pins the refactor
+equivalence against the measured control state.
+
 ## 1. Background (self-contained)
 
 **State after plan4.** The standing shard dir holds 197 validated shards;
@@ -220,6 +236,7 @@ Follow-up options:
    verify ledger/DB state, run batch 2 over the 1,483-job frontier
    (cap 300M, base 4M), gates H1–H6 incl. the E5 replay, report5.md with
    the E1–E5 verdicts and the plan6 kickoff (per-layer split)."
-2. Alternative: skip the control and go straight to plan6 (implement the
-   split + batch 3) — faster to the decided policy, but loses the
-   baseline that makes batch 3's A/B interpretable; not recommended.
+2. Alternative: skip the control and go straight to plan6 (drafted
+   2026-10-01: eligibility/pacing mechanism + config surface + A/B) —
+   faster to the decided policy, but loses the baseline that makes the
+   A/B interpretable; not recommended.
