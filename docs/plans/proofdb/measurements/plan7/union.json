@@ -1,0 +1,50 @@
+{
+ "tool": "proofdb_ledger_union (examples/)",
+ "inputs": [
+  {
+   "file": "data/proofdb_work.json",
+   "sha256": "058a62026e1109ad4573dd85eb958c9b6de590d999564049f4755f74cc554aa4",
+   "records": 4569
+  },
+  {
+   "file": "docs/plans/proofdb/measurements/plan6/ledger_snapshot_A.json",
+   "sha256": "7fd92ea2a2329c6ad50cc1cae1a84ddf2fa661efbbab111585ba36e8116d240c",
+   "records": 4933
+  },
+  {
+   "file": "docs/plans/proofdb/measurements/plan6/ledger_snapshot_B.json",
+   "sha256": "9aa0c32604badeaa6cf63055910c2550278278d12da2e69254ef9e126d73494d",
+   "records": 4178
+  }
+ ],
+ "union_records": 5950,
+ "per_input": [
+  {
+   "input": "standing",
+   "new_paths": 391,
+   "sole_pass_upgrades": 20
+  },
+  {
+   "input": "plan6 arm A",
+   "new_paths": 1381,
+   "sole_pass_upgrades": 49
+  },
+  {
+   "input": "plan6 arm B",
+   "new_paths": 0,
+   "sole_pass_upgrades": 8
+  }
+ ],
+ "gates": {
+  "digest_verification_before_merge": "pass (--expect, all 3 pinned)",
+  "determinism_any_input_order": "pass",
+  "idempotence_union_of_u_and_inputs": "pass",
+  "n1_normalization_standing": "pass (byte-identical rewrite)",
+  "coverage_property_over_real_artifacts": "pass"
+ },
+ "union_ledger_sha256": "896cdd4deb0dd29081271d10f6a5360eb88d72771eaf95a7e2578736ed85a740",
+ "ply2_split": {
+  "standing": "fresh 190 / censored 153",
+  "union": "fresh 141 / censored 204 (51 A-known recensors recovered)"
+ }
+}

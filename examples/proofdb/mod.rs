@@ -22,6 +22,7 @@ pub mod frontier;
 pub mod harvest;
 pub mod harvest_args;
 pub mod ledger;
+pub mod ledger_union;
 pub mod manifest;
 pub mod merge;
 pub mod pns;

@@ -1,0 +1,55 @@
+{
+ "h1_pinned_census": "pass (both arms, incl. cfg echo)",
+ "h2_merge_determinism": "pass (DB 670e19e3... twice, = input DB at 0 facts)",
+ "h3_h4": "pass (vacuous: 0 promoted facts)",
+ "h5_replays": {
+  "arm1": {
+   "job_sequence_identical": true,
+   "ledger_bytes_identical": true,
+   "ledger_sha256": "61097620e0b88d90ff236204781e99765dfe1e3c0f3a796b52b8b500381f4593"
+  },
+  "arm2": {
+   "job_sequence_identical": true,
+   "ledger_bytes_identical": true,
+   "ledger_sha256": "0d0a86ee13ed35fc42b356e5adfe5430a904fd3a0da07dfcd42820108b337782"
+  }
+ },
+ "recensor_metric": {
+  "arm1": {
+   "n": 24,
+   "waste_evals": 96000242
+  },
+  "arm2": {
+   "n": 0,
+   "waste_evals": 0
+  }
+ },
+ "decision_rule_union_marginal_value": {
+  "condition_1_fewer_recensors": {
+   "arm1": 24,
+   "arm2": 0,
+   "holds": true
+  },
+  "condition_2_facts": {
+   "arm1": 0,
+   "arm2": 0,
+   "holds": true
+  },
+  "condition_3_max_ply": {
+   "arm1": 5,
+   "arm2": 5,
+   "holds": true
+  },
+  "verdict": "union ships: standing ledger advances to arm 2's post-run ledger; proofdb_ledger_union is the standing-state merge tool (\u00a74.5)"
+ },
+ "closure_rule_plan8": {
+  "sessions_at_0_facts": 6,
+  "both_arms_0_facts": true,
+  "rule": "plan8 must change the yield outlook (depth-rationing lever or fact-yield-oriented selection change); another identical default batch is not a valid plan8 (\u00a74.6)",
+  "fires": true
+ },
+ "post_run_ledger_sha256": {
+  "arm1": "61097620e0b88d90ff236204781e99765dfe1e3c0f3a796b52b8b500381f4593",
+  "arm2": "0d0a86ee13ed35fc42b356e5adfe5430a904fd3a0da07dfcd42820108b337782"
+ }
+}

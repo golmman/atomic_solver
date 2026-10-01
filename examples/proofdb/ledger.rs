@@ -38,7 +38,7 @@ pub struct LedgerEntry {
 
 /// The parsed ledger: path key (space-joined UCI, empty for the root) →
 /// entry, in a `BTreeMap` so the serialized bytes are deterministic.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Ledger {
     entries: BTreeMap<String, LedgerEntry>,
 }
@@ -84,6 +84,15 @@ impl Ledger {
 
     fn default_ok() -> Result<Self, String> {
         Ok(Self::default())
+    }
+
+    /// Build a ledger from an already-keyed map (the ledger-union's output;
+    /// keys are space-joined UCI paths, empty for the root, exactly as
+    /// [`Ledger::load`] produces them). The bytes written by [`Ledger::save`]
+    /// are the map's iteration order, so a `BTreeMap` keeps them sorted.
+    #[must_use]
+    pub fn from_entries(entries: BTreeMap<String, LedgerEntry>) -> Self {
+        Self { entries }
     }
 
     /// The record at `key`, if any.
