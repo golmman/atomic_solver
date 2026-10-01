@@ -6,13 +6,16 @@
 //! The `pass`/`number`/`work_before` triple is present only for the
 //! breadth-PNS policy (plan4 D2); legacy policies emit without it. The
 //! `kind` field (plan6 D1: `expand` | `rung`) is likewise PNS-only and
-//! traces the selection mechanism's split.
+//! traces the selection mechanism's split. The `and-close` policy (plan8)
+//! emits `pass` + `work_before` with `number`/`kind` null (pns-specific
+//! fields).
 
 /// One census record, emitted as a `job: {…}` JSON line (the census input).
 /// The `pass`/`number`/`work_before` triple is present only for the
-/// breadth-PNS policy (plan4 D2); legacy policies emit without it. The
-/// `kind` field (plan6 D1: `expand` | `rung`) is likewise PNS-only and
-/// traces the selection mechanism's split.
+/// breadth-PNS policy (plan4 D2); legacy policies emit without it; the
+/// `and-close` policy (plan8) emits `pass` + `work_before` with
+/// `number`/`kind` null. The `kind` field (plan6 D1: `expand` | `rung`)
+/// is PNS-only and traces the selection mechanism's split.
 pub struct JobRecord {
     pub path: String,
     pub policy: &'static str,
@@ -26,11 +29,12 @@ pub struct JobRecord {
     pub exit_reason: String,
     pub tag: Option<String>,
     pub shard_nodes: Option<usize>,
-    /// PNS census: 1-based visit rung (`passes_failed + 1`).
+    /// PNS/and-close census: 1-based visit rung (`passes_failed + 1`).
     pub pass: Option<u32>,
-    /// PNS census: effective number at selection time.
+    /// PNS census: effective number at selection time (null for
+    /// `and-close`).
     pub number: Option<u64>,
-    /// PNS census: ledger `work_done` before this visit.
+    /// PNS/and-close census: ledger `work_done` before this visit.
     pub work_before: Option<u64>,
     /// PNS census: visit kind (plan6 D1; `None` = legacy policy).
     pub kind: Option<&'static str>,
@@ -47,12 +51,14 @@ impl JobRecord {
                 "exit_reason": self.exit_reason, "tag": self.tag,
                 "shard_nodes": self.shard_nodes,
         });
-        if let (Some(pass), Some(number), Some(work_before)) =
-            (self.pass, self.number, self.work_before)
-        {
+        if let Some(pass) = self.pass {
             o["pass"] = serde_json::json!(pass);
-            o["number"] = serde_json::json!(number);
+        }
+        if let Some(work_before) = self.work_before {
             o["work_before"] = serde_json::json!(work_before);
+        }
+        if let Some(number) = self.number {
+            o["number"] = serde_json::json!(number);
         }
         if let Some(kind) = self.kind {
             o["kind"] = serde_json::json!(kind);

@@ -1,0 +1,84 @@
+{
+ "config": {
+  "dir": "/tmp/plan8/arm1",
+  "replay": "/tmp/plan8/arm1_replay",
+  "base": 1000000000,
+  "order": "completion",
+  "cap": 3000000000
+ },
+ "metrics": {
+  "jobs": 3,
+  "facts": 0,
+  "censored": 3,
+  "total_evals": 3000000060,
+  "ply_distribution": {
+   "2": 3
+  },
+  "facts_by_ply": {},
+  "ledger_start_records": 7547,
+  "ledger_post_records": 7547,
+  "ledger_new_records": 0,
+  "ledger_bumped_records": 3,
+  "no_exposure_signature": "post == start + 3 bumps + 0 new (censors only)",
+  "max_pass_after": 3,
+  "census_line": "and-close: active rows 49, replies 1142 (fresh 1041, ledger-censored 101); order completion; base budget 1000000000",
+  "gradient_head": "and-close-gradient: g1f3:3 e2e3:7 e2e4:7 g1h3:9 root:13 a2a3 a7a6 b2b3 a6a5 c2c3 a5a4:17 d2d4:18 a2a3 a7a6:18 a2a3 a7a6 b2b3:18 d2d4 a7a6 a2a3:18",
+  "exclusions_line": "and-close-excluded: open rows 75 (active 49); proven-ancestor 26, implied-win 0, implied-loss 0",
+  "manifest_line": "manifest: unchanged (197 entries, digest 37c1f5b2bf02078783e0944eb3a539bcc4a07f2f1f3da29f271031df227135ba)",
+  "post_ledger_sha256": "fd08019ca0d30688f4d2b2b31a14696bc496185a64a7c8026c64fe40baffbe6d"
+ },
+ "jobs": [
+  {
+   "budget": 1000000000,
+   "child_evals": 1000000024,
+   "class": "C3",
+   "exit_reason": "BudgetExhausted",
+   "outcome": "censored",
+   "parent_bound": null,
+   "pass": 1,
+   "path": "g1f3 d7d6",
+   "policy": "and-close",
+   "shard_nodes": null,
+   "tag": null,
+   "tier": "and-close",
+   "wall_s": 235.837062489,
+   "work_before": 0
+  },
+  {
+   "budget": 1000000000,
+   "child_evals": 1000000025,
+   "class": "C3",
+   "exit_reason": "BudgetExhausted",
+   "outcome": "censored",
+   "parent_bound": null,
+   "pass": 1,
+   "path": "g1f3 e7e5",
+   "policy": "and-close",
+   "shard_nodes": null,
+   "tag": null,
+   "tier": "and-close",
+   "wall_s": 229.469563253,
+   "work_before": 0
+  },
+  {
+   "budget": 1000000000,
+   "child_evals": 1000000011,
+   "class": "C3",
+   "exit_reason": "BudgetExhausted",
+   "outcome": "censored",
+   "parent_bound": null,
+   "pass": 1,
+   "path": "g1f3 f7f6",
+   "policy": "and-close",
+   "shard_nodes": null,
+   "tag": null,
+   "tier": "and-close",
+   "wall_s": 233.097136463,
+   "work_before": 0
+  }
+ ],
+ "h5": {
+  "job_sequence_identical": true,
+  "ledger_bytes_identical": true
+ }
+}

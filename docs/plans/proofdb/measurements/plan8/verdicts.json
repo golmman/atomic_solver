@@ -1,0 +1,17 @@
+{
+ "H1_integrity": "pass (pinned census + gradient head + exclusions; budgets = base; no-exposure exact; the plan's 970/172 split NOT reproducible - plan-model finding, see report8)",
+ "H2_merge_determinism": "pass (grown1.db == grown2.db == grown3.db == 186d0e89a8d92019..., dumps identical; 231/231 shards validated)",
+ "H3_H4_no_regression": "pass (34 promoted facts all replay-validated by the merger; no contradiction between arms: arm1 had 0 facts)",
+ "H5_policy_determinism": "pass (both arms: job sequences identical excl wall_s, post-run ledgers byte-identical; union determinism/idempotence/normalization byte-identical)",
+ "H6_hygiene": "pass (make test green incl. 7 new and-close tests; clippy/fmt/doc clean; no src/ changes; new/edited example files <= 10 KB except proofdb_flip.rs 12 KB with header justification; data/ ignored)",
+ "flip_analysis": "pass (0 flips, 0 claims to verify - no row reached AND-completeness; the completion branch of \u00a74.1 did not fire)",
+ "arm1": {
+  "facts": 0,
+  "verdict": "the three g1f3 defenses censored at 1B child-evals each (BudgetExhausted); measured bounds >= 1B evals (~230 s wall each); completion question stays open"
+ },
+ "arm2": {
+  "facts": 34,
+  "verdict": "first facts of the initiative: 34 decisive replies (all refutation steps toward AND-completion; none completes a row yet); the cold-4M zero-fact precedent is broken at the fresh tail"
+ },
+ "standing_mode_switch": "only arm 2 yielded -> per \u00a74.3: the fresh sweep continues at 4M (order fresh); the completion head escalates in parallel batches (next: arm-1 defense revisits at the monotone ladder 2B)"
+}

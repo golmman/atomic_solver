@@ -19,7 +19,8 @@
 //! queue) in `batch.rs`, the DB-facing engine (frontier classes,
 //! AND-completeness assert, disjointness) in `frontier.rs` + `db.rs`, the
 //! legacy policies in `policy.rs`, the PNS selection in `pns.rs` + `pns/`,
-//! and the sidecar work ledger in `ledger.rs`.
+//! the `and-close` completion-gradient policy (plan8) in `and_close.rs` +
+//! `and_close/`, and the sidecar work ledger in `ledger.rs`.
 //!
 //! Coverage policies (`--policy`; default `breadth-pns`, the plan4 pivot):
 //! `breadth-pns` — the plan6 selection mechanism (eligibility, pacing,
@@ -28,14 +29,18 @@
 //! revisit ladder `2^(k-1) × base` (base = `--budget-evals` or 4M),
 //! session cap = `--max-total-evals`; `--pns-config <file>` loads the
 //! mechanism knobs (TOML, plan6 §2; compiled defaults when absent) and the
-//! effective config is echoed on the session-start `pns:` line; plus the
-//! plan3 legacy gradients `open-deepest`, `sharp-siblings`,
-//! `sharp-heavy-tail` (heavy options and `--pns-config` are effective only
-//! under `breadth-pns`).
+//! effective config is echoed on the session-start `pns:` line; the plan8
+//! `and-close` — the missing replies of the active open rows in the
+//! completion-gradient or fresh order (`--and-close-order`), the
+//! monotone-budget ladder `max(2^(k-1) × base, work_done)` per reply and
+//! a bump-only censor hook (no exposure); plus the plan3 legacy gradients
+//! `open-deepest`, `sharp-siblings`, `sharp-heavy-tail` (heavy options and
+//! `--pns-config` are effective only under `breadth-pns`).
 //!
 //! Output: one `job: {…}` JSON line per job (fields include `policy`,
-//! `class`, and for `breadth-pns` the `kind`/`pass`/`number`/
-//! `work_before` quadruple), then `manifest:`/`harvest:` summary lines. On
+//! `class`, for `breadth-pns` the `kind`/`pass`/`number`/`work_before`
+//! quadruple, and for `and-close` the `pass`/`work_before` pair with
+//! `number`/`kind` null), then `manifest:`/`harvest:` summary lines. On
 //! any defect the session aborts non-zero before the manifest rewrite —
 //! nothing inconsistent enters the durable layer (shard files of jobs
 //! completed before the abort are unreferenced orphans and are
@@ -47,6 +52,7 @@ use proofdb::harvest_args::parse_args;
 use std::collections::HashSet;
 use std::time::Instant;
 
+use proofdb::and_close::driver::{AndCloseOptions, run_and_close_session};
 use proofdb::batch::{BatchOptions, run_batch};
 use proofdb::db::load_db_rows;
 use proofdb::frontier::extract_frontier;
@@ -128,6 +134,42 @@ fn main() {
             summary.jobs,
             summary.rungs,
             summary.decisive,
+            summary.evals,
+            session.new_shards,
+            t_start.elapsed().as_secs_f64(),
+        )
+    } else if args.policy == Policy::AndClose {
+        // Plan8 D1: the completion-gradient harvest (assembly + census
+        // echo + batch live in the driver module for the file-size
+        // convention on this target root).
+        let opts = AndCloseOptions {
+            max_total_evals: args.max_total_evals,
+            max_jobs: args.max_jobs,
+            max_runtime: args.max_runtime,
+            stop_file: args.stop_file.clone(),
+        };
+        let summary = run_and_close_session(
+            &mut session,
+            &args.db,
+            &manifest.sha256_hex,
+            &args.ledger,
+            args.and_close_order,
+            args.budget_evals,
+            &opts,
+        )
+        .unwrap_or_else(|e| fail(&e));
+        format!(
+            "harvest: policy {} stop={} jobs {} decisive {} censored {} evals {} \
+             new_shards {} wall {:.1}s",
+            args.policy.as_str(),
+            if summary.stop_reason.is_empty() {
+                "exhausted"
+            } else {
+                &summary.stop_reason
+            },
+            summary.jobs,
+            summary.decisive,
+            summary.censored,
             summary.evals,
             session.new_shards,
             t_start.elapsed().as_secs_f64(),

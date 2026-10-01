@@ -16,6 +16,7 @@
 use atomic_solver::position::Outcome;
 use serde::Deserialize;
 
+pub mod and_close;
 pub mod batch;
 pub mod db;
 pub mod frontier;
@@ -32,7 +33,7 @@ pub mod session;
 pub mod shard_export;
 
 #[cfg(test)]
-mod fixture;
+pub(crate) mod fixture;
 
 pub use manifest::write_manifest;
 

@@ -6,6 +6,7 @@
 
 use std::path::PathBuf;
 
+use super::and_close::AndCloseOrder;
 use super::policy::Policy;
 
 pub struct Args {
@@ -23,6 +24,8 @@ pub struct Args {
     pub max_runtime: u64,
     pub stop_file: PathBuf,
     pub pns_config: Option<PathBuf>,
+    /// The `and-close` reply order (effective only under `and-close`).
+    pub and_close_order: AndCloseOrder,
     pub out_db: Option<PathBuf>,
     pub dump: Option<PathBuf>,
 }
@@ -33,8 +36,9 @@ fn usage() -> ! {
          --shard-dir <dir> [--policy <name>] [--ledger <path>] [--budget-evals <n>] \
          [--max-total-evals <n>] [--heavy-budget-evals <n>] [--heavy-sample <n>] \
          [--tt-mb <mb>] [--max-jobs <n>] [--max-runtime <s>] [--stop-file <path>] \
-         [--pns-config <file>] [--out-db <grown.db>] [--dump <nodes.txt>]  \
-         (policies: breadth-pns | open-deepest | sharp-siblings | sharp-heavy-tail)"
+         [--pns-config <file>] [--and-close-order <completion|fresh>] \
+         [--out-db <grown.db>] [--dump <nodes.txt>]  \
+         (policies: breadth-pns | and-close | open-deepest | sharp-siblings | sharp-heavy-tail)"
     );
     std::process::exit(1);
 }
@@ -55,6 +59,7 @@ pub fn parse_args() -> Args {
         max_runtime: 0,
         stop_file: PathBuf::from("STOP"),
         pns_config: None,
+        and_close_order: AndCloseOrder::Completion,
         out_db: None,
         dump: None,
     };
@@ -83,6 +88,12 @@ pub fn parse_args() -> Args {
             "--max-runtime" => a.max_runtime = next().parse().unwrap_or_else(|_| usage()),
             "--stop-file" => a.stop_file = PathBuf::from(next()),
             "--pns-config" => a.pns_config = Some(PathBuf::from(next())),
+            "--and-close-order" => {
+                a.and_close_order = AndCloseOrder::parse(&next()).unwrap_or_else(|e| {
+                    eprintln!("proofdb_harvest: {e}");
+                    usage()
+                })
+            }
             "--out-db" => a.out_db = Some(PathBuf::from(next())),
             "--dump" => a.dump = Some(PathBuf::from(next())),
             _ => usage(),

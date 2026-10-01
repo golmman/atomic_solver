@@ -5,6 +5,9 @@
 //! - `breadth-pns` — the plan4 default: **no precomputed sequence** — the
 //!   live priority queue over structural proof/disproof numbers in
 //!   [`super::pns`], with the sidecar ledger in [`super::ledger`];
+//! - `and-close` (plan8) — the completion-gradient harvest: **no sequence
+//!   from the frontier** — the missing replies of the active open rows,
+//!   built over the classified PNS tree + ledger in [`super::and_close`];
 //! - `open-deepest` — C1 only, deepest-first (plan2's rule);
 //! - `sharp-siblings` — C2 (sharpness order), then C3, then C1 deepest-first;
 //!   C2 jobs screen at [`BUDGET_C2_EVALS`] (cheap territory — censor fast
@@ -44,6 +47,10 @@ pub enum Policy {
     /// the open frontier, with the sidecar work ledger (no precomputed
     /// job sequence — see [`super::pns`]).
     BreadthPns,
+    /// The plan8 completion-gradient harvest: the missing replies of the
+    /// active open rows (no sequence from the frontier — built over the
+    /// classified PNS tree + ledger, see [`super::and_close`]).
+    AndClose,
     /// C1 only, deepest-first (plan2's rule).
     OpenDeepest,
     /// C2 (sharpness order), then C3, then C1 deepest-first.
@@ -58,6 +65,7 @@ impl Policy {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::BreadthPns => "breadth-pns",
+            Self::AndClose => "and-close",
             Self::OpenDeepest => "open-deepest",
             Self::SharpSiblings => "sharp-siblings",
             Self::SharpHeavyTail => "sharp-heavy-tail",
@@ -71,11 +79,12 @@ impl Policy {
     pub fn parse(s: &str) -> Result<Self, String> {
         match s {
             "breadth-pns" => Ok(Self::BreadthPns),
+            "and-close" => Ok(Self::AndClose),
             "open-deepest" => Ok(Self::OpenDeepest),
             "sharp-siblings" => Ok(Self::SharpSiblings),
             "sharp-heavy-tail" => Ok(Self::SharpHeavyTail),
             other => Err(format!(
-                "unknown policy {other:?} (expected breadth-pns | open-deepest | \
+                "unknown policy {other:?} (expected breadth-pns | and-close | open-deepest | \
                  sharp-siblings | sharp-heavy-tail)"
             )),
         }
@@ -88,8 +97,10 @@ impl Policy {
 pub fn jobs_for_policy(policy: Policy, f: &Frontier) -> Vec<Job> {
     let mut jobs = match policy {
         // Breadth-PNS selection is the live priority queue in `super::pns`;
-        // it never consumes a precomputed sequence.
-        Policy::BreadthPns => Vec::new(),
+        // it never consumes a precomputed sequence. `and-close` builds its
+        // sequence over the classified PNS tree + ledger in `super::and_close`
+        // (the CLI branch owns that; the frontier is not its input).
+        Policy::BreadthPns | Policy::AndClose => Vec::new(),
         Policy::OpenDeepest => f.c1.clone(),
         Policy::SharpSiblings | Policy::SharpHeavyTail => {
             f.c2.iter().chain(&f.c3).chain(&f.c1).cloned().collect()
