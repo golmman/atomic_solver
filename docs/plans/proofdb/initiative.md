@@ -148,6 +148,27 @@ value.
 
 ## History
 
+- **2026-10-01 (later still)** — **plan6 executed (the selection
+  mechanism + the A/B)**: the plan5 §2 decision implemented as the
+  pre-registered config surface (`--pns-config`: eligibility,
+  `interleave_k`, `reserve_share`, per-ply-layer visit caps, growth,
+  rotation, rung cap; census gains `kind: expand|rung`) and A/B'd over
+  the identical post-batch-2 state: arm A (plan4 selector control) ≡ arm
+  A′ (degenerate config) **byte-for-byte** (the equivalence contract
+  holds at full-batch scale); arm B fired exactly 9 reserve-bound rungs
+  (root + seven ply-1 nodes eligible at start + c2c3's mid-session
+  eligibility flip — the trigger works, all rungs censored); arm C (no
+  ladder) reached ply 5 vs B's 4 at the same cap. **§4.5 decision rule →
+  the ladder is a measured no-go**: the shipped default config is arm
+  C's (compiled `reserve_share = 0.0`; the mechanism stays
+  config-reachable). 0 facts in every arm; the standing ledger advanced
+  to arm C's post-run state (`058a6202…`, 4,569 records). Findings:
+  layer caps ration breadth per layer, not depth (arm B's ply-8 reach
+  prediction wrong — measured 4); the reserve, not the rung cap or the
+  eligibility, binds. Gates H1–H6 pass. See `report6.md`,
+  `measurements/plan6/`, and `research_pns_ladder.md` (theory linkage:
+  df-pn threshold escalation is the ladder's ancestor; the eligibility
+  trigger is the original part).
 - **2026-10-01 (later)** — **plan6 drafted; plan5's decision refined
   (docs-only, design dialogue)**: the within-layer decision became an
   explicit hybrid mechanism — breadth-PNS expansion stays the default;

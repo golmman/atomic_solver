@@ -22,56 +22,13 @@ use super::harvest::{Job, classify, make_entry, replay_job_path};
 use super::shard_export::export_validated_shard;
 use super::{ShardEntry, write_manifest};
 
+mod record;
+pub use record::JobRecord;
+
 /// Abort the session (non-zero exit) on any defect: rejected, never patched.
 pub fn fail(msg: &str) -> ! {
     eprintln!("proofdb_harvest: ABORT: {msg}");
     std::process::exit(2);
-}
-
-/// One census record, emitted as a `job: {…}` JSON line (the census input).
-/// The `pass`/`number`/`work_before` triple is present only for the
-/// breadth-PNS policy (plan4 D2); legacy policies emit without it.
-pub struct JobRecord {
-    pub path: String,
-    pub policy: &'static str,
-    pub class: &'static str,
-    pub parent_bound: Option<u32>,
-    pub tier: &'static str,
-    pub budget: u64,
-    pub child_evals: u64,
-    pub wall_s: f64,
-    pub outcome: String,
-    pub exit_reason: String,
-    pub tag: Option<String>,
-    pub shard_nodes: Option<usize>,
-    /// PNS census: 1-based visit rung (`passes_failed + 1`).
-    pub pass: Option<u32>,
-    /// PNS census: effective number at selection time.
-    pub number: Option<u64>,
-    /// PNS census: ledger `work_done` before this visit.
-    pub work_before: Option<u64>,
-}
-
-impl JobRecord {
-    #[allow(clippy::too_many_lines)]
-    pub fn emit(&self) {
-        let mut o = serde_json::json!({
-                "path": self.path, "policy": self.policy, "class": self.class,
-                "parent_bound": self.parent_bound, "tier": self.tier,
-                "budget": self.budget, "child_evals": self.child_evals,
-                "wall_s": self.wall_s, "outcome": self.outcome,
-                "exit_reason": self.exit_reason, "tag": self.tag,
-                "shard_nodes": self.shard_nodes,
-        });
-        if let (Some(pass), Some(number), Some(work_before)) =
-            (self.pass, self.number, self.work_before)
-        {
-            o["pass"] = serde_json::json!(pass);
-            o["number"] = serde_json::json!(number);
-            o["work_before"] = serde_json::json!(work_before);
-        }
-        println!("job: {o}");
-    }
 }
 
 /// The harvest session: the retained `Search` plus the mutable state the
@@ -201,6 +158,7 @@ impl Session {
                 pass: None,
                 number: None,
                 work_before: None,
+                kind: None,
             };
         };
         let (tag, shard_nodes) = self.produce_shard(job, &sub_fen, decisive);
@@ -226,12 +184,14 @@ impl Session {
             pass: None,
             number: None,
             work_before: None,
+            kind: None,
         }
     }
 
     /// Run one breadth-PNS job at its ladder budget, with the PNS census
-    /// triple (`pass`, `number`, `work_before`) attached to the record
-    /// (plan4 D2). Same pipeline as [`Self::run_job_with_budget`].
+    /// quadruple (`kind`, `pass`, `number`, `work_before`) attached to the
+    /// record (plan4 D2 + plan6 D1). Same pipeline as
+    /// [`Self::run_job_with_budget`].
     pub fn run_pns_job(
         &mut self,
         job: &Job,
@@ -239,11 +199,13 @@ impl Session {
         pass: u32,
         number: u64,
         work_before: u64,
+        kind: &'static str,
     ) -> JobRecord {
         let mut rec = self.run_job_with_budget(job, "pns", budget);
         rec.pass = Some(pass);
         rec.number = Some(number);
         rec.work_before = Some(work_before);
+        rec.kind = Some(kind);
         rec
     }
 

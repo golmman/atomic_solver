@@ -19,11 +19,16 @@ Status values:
 
 - L. V. Allis, M. van der Meulen, H. J. van den Herik (1994). *Proof-Number
   Search*. Artificial Intelligence 66(1). — Original PNS. **Cited**
-  (`dfpn/research_parallel.md`).
+  (`dfpn/research_parallel.md`; the breadth-explosion linkage of the
+  proofdb selection mechanism is mined from the vendored secondary
+  sources — see `proofdb/research_pns_ladder.md`).
 - A. Nagai (2002). *Df-pn Algorithm for Searching AND/OR Trees and Its
   Applications*. Ph.D. dissertation, University of Tokyo. — DF-PN and
   DF-PN+; source of the PDS variant. **Cited**
-  (`dfpn/research_ghi.md`, `dfpn/research_epsilon.md`).
+  (`dfpn/research_ghi.md`, `dfpn/research_epsilon.md`; the
+  threshold-escalation half of the proofdb PNS rung mechanism is linked
+  in `proofdb/research_pns_ladder.md` — thesis not vendored: no
+  retrievable copy, attempt recorded there).
 - J. Pawlewicz, L. Lew (2007). *Improving Depth-first PN-Search: 1 + ε
   Trick*. Warsaw University. — Implemented in the solver. §4 is the primary
   df-pn-vs-PDS head-to-head (Atari Go TT-size sweep; 488 easy + 286 hard LOA;
@@ -119,7 +124,9 @@ Status values:
   `docs/theory/deep-dfpn-2017/`. **Mined**
   (`research/research_deep_dfpn.md`; `research` backlog #15 closed by plan9
   — faithful mapping contract-breaking at the TT store/reuse sites, all
-  variants (c)/(d), evidence regime 2–3 orders below the stress class).
+  variants (c)/(d), evidence regime 2–3 orders below the stress class;
+  its PN-search/df-pn survey passages also carry the proofdb selection
+  mechanism's theory linkage, `proofdb/research_pns_ladder.md`).
 
 ## GHI / repetitions
 

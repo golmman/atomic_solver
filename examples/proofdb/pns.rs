@@ -3,8 +3,10 @@
 //! the effective-number rules, the job set (sibling-skip + decided-row
 //! exclusion, decisions 9/10), and the live priority queue: tree
 //! construction and the lineage gate in [`build`], number derivation in
-//! [`numbers`], the pop/censor state machine in [`selector`], and the
-//! batch driver in [`super::batch`].
+//! [`numbers`], the pop/censor state machine in [`selector`], the plan6
+//! selection mechanism (eligibility, pacing, rationing) in
+//! [`selector::decision`] + [`selector::rung`] + [`pacing`], the
+//! per-visit census in [`census`], and the batch driver in [`driver`].
 //!
 //! **Numbers (pre-registered, plan4 §2).** For every node of the extended
 //! tree, computed bottom-up with saturating arithmetic (`INF = u64::MAX`;
@@ -57,7 +59,15 @@ use super::db::DbRow;
 use super::harvest::replay_job_path;
 use super::ledger::Ledger;
 
+pub mod census;
+pub mod config;
+pub mod driver;
+pub mod numbers;
+pub mod pacing;
 pub mod selector;
+pub use census::PnsCensus;
+pub use config::PnsConfig;
+pub use pacing::Pacing;
 
 /// Proof-theoretic infinity (a proven root-loss child's pn / root-win
 /// child's dn). Finite sums never produce it: they saturate one below.
@@ -132,79 +142,10 @@ pub struct PnsNode {
     pub nums: Option<(u64, u64)>,
 }
 
-/// Per-reason census of the job-set extraction (gate H1).
-#[derive(Debug, Default)]
-pub struct PnsCensus {
-    pub rows_total: usize,
-    /// All open DB rows (active and inactive).
-    pub open_rows: usize,
-    /// Ledger records surviving the lineage gate (new ledger nodes built).
-    pub ledger_records: usize,
-    /// Records dropped because their path is now a proven DB row.
-    pub ledger_dropped: usize,
-    /// Excluded frontier nodes per reason, split (rows, ledger).
-    pub excluded: [(usize, usize); 3],
-    /// Jobs: active undecided nodes, split open rows / ledger records.
-    pub jobs_rows: usize,
-    pub jobs_ledger: usize,
-}
-
-impl PnsCensus {
-    fn excl_add(&mut self, e: Exclusion, ledger: bool) {
-        let i = match e {
-            Exclusion::ProvenAncestor => 0,
-            Exclusion::ImpliedWin => 1,
-            Exclusion::ImpliedLoss => 2,
-        };
-        if ledger {
-            self.excluded[i].1 += 1;
-        } else {
-            self.excluded[i].0 += 1;
-        }
-    }
-
-    /// The per-reason excluded counts as `(rows, ledger)`.
-    #[must_use]
-    pub fn excluded_of(&self, e: Exclusion) -> (usize, usize) {
-        match e {
-            Exclusion::ProvenAncestor => self.excluded[0],
-            Exclusion::ImpliedWin => self.excluded[1],
-            Exclusion::ImpliedLoss => self.excluded[2],
-        }
-    }
-
-    #[must_use]
-    pub fn jobs(&self) -> usize {
-        self.jobs_rows + self.jobs_ledger
-    }
-
-    /// The one-line session-start census (gate H1: per-reason exclusion
-    /// counts; decision 6: gate drops).
-    #[must_use]
-    pub fn describe(&self, base_budget: u64) -> String {
-        use Exclusion as E;
-        let (pa_r, pa_l) = self.excluded_of(E::ProvenAncestor);
-        let (iw_r, iw_l) = self.excluded_of(E::ImpliedWin);
-        let (il_r, il_l) = self.excluded_of(E::ImpliedLoss);
-        format!(
-            "pns: rows {} (open {}), ledger records {} ({} new, {} dropped as decided); \
-             exclusions proven-ancestor r{pa_r}/l{pa_l}, implied-win r{iw_r}/l{iw_l}, \
-             implied-loss r{il_r}/l{il_l}; jobs {} (rows {}, ledger {}); base budget {base_budget}",
-            self.rows_total,
-            self.open_rows,
-            self.ledger_records + self.ledger_dropped,
-            self.ledger_records,
-            self.ledger_dropped,
-            self.jobs(),
-            self.jobs_rows,
-            self.jobs_ledger,
-        )
-    }
-}
-
 /// The PNS selection state: the extended tree, the derived numbers, the
 /// live queue, and the ledger it picks up from. The pop/censor state
-/// machine is in [`selector`].
+/// machine is in [`selector`]; the plan6 decision function (eligibility,
+/// pacing, rationing) in [`selector::decision`].
 pub struct Pns {
     pub nodes: Vec<PnsNode>,
     by_key: HashMap<String, usize>,
@@ -214,11 +155,16 @@ pub struct Pns {
     pub ledger_path: PathBuf,
     pub base_budget: u64,
     pub census: PnsCensus,
+    /// The plan6 pacing/rationing state (config echo + counters).
+    pub pacing: Pacing,
 }
 
 impl Pns {
     /// Expand an undecided node: replay its position, movegen, and classify
-    /// every legal child (row / ledger record / unvisited).
+    /// every legal child (row / ledger record / unvisited). Idempotent; a
+    /// fill-through-elsewhere (numbers derivation, an eligibility probe)
+    /// changes nothing observable — an unclassified legal child stays
+    /// number 1 until it is visited or exposed.
     ///
     /// # Errors
     /// An illegal DB move on replay (the DB replays were validated upstream,
@@ -254,10 +200,19 @@ impl Pns {
         self.nodes[idx].children = children;
         Ok(())
     }
+
+    /// The space-joined key of a child path (empty parent = root).
+    #[must_use]
+    pub fn child_key(parent_key: &str, uci: &str) -> String {
+        if parent_key.is_empty() {
+            uci.to_string()
+        } else {
+            format!("{parent_key} {uci}")
+        }
+    }
 }
 
 pub mod build;
-pub mod numbers;
 
 #[cfg(test)]
 mod tests;

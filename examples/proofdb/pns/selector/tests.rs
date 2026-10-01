@@ -96,9 +96,15 @@ fn lineage_gate_drops_decided_and_aborts_illegal() {
     )
     .unwrap();
     let ledger = Ledger::load(&ledger_path).unwrap();
-    let mut pns =
-        crate::proofdb::pns::Pns::build(&db, ledger, ledger_path.clone(), BUDGET_PNS_BASE_EVALS)
-            .unwrap();
+    let mut pns = crate::proofdb::pns::Pns::build(
+        &db,
+        ledger,
+        ledger_path.clone(),
+        BUDGET_PNS_BASE_EVALS,
+        crate::proofdb::pns::PnsConfig::default(),
+        0,
+    )
+    .unwrap();
     assert_eq!(pns.census.ledger_dropped, 1, "decided path dropped");
     assert!(!pns.ledger.contains("f2f3 e7e6 g2g4"));
     assert!(pns.ledger.contains("f2f3"));
@@ -124,11 +130,17 @@ fn lineage_gate_drops_decided_and_aborts_illegal() {
     )
     .unwrap();
     let ledger = Ledger::load(&ledger_path2).unwrap();
-    let err =
-        match crate::proofdb::pns::Pns::build(&db, ledger, ledger_path2, BUDGET_PNS_BASE_EVALS) {
-            Err(e) => e,
-            Ok(_) => panic!("illegal ledger path must abort"),
-        };
+    let err = match crate::proofdb::pns::Pns::build(
+        &db,
+        ledger,
+        ledger_path2,
+        BUDGET_PNS_BASE_EVALS,
+        crate::proofdb::pns::PnsConfig::default(),
+        0,
+    ) {
+        Err(e) => e,
+        Ok(_) => panic!("illegal ledger path must abort"),
+    };
     assert!(
         err.contains("does not replay legally"),
         "illegal ledger path aborts: {err}"

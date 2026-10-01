@@ -28,7 +28,7 @@ pub(crate) fn load_fixture(dir: &std::path::Path) -> (DbContent, std::path::Path
 /// A `DbContent` from hand-written rows (path, ply, outcome). Physically
 /// implausible outcomes are fine: the numbers logic is structural; proof
 /// verification is the merger's job.
-fn crafted(rows: &[(&str, usize, Option<Outcome>)]) -> DbContent {
+pub(crate) fn crafted(rows: &[(&str, usize, Option<Outcome>)]) -> DbContent {
     let rows = rows
         .iter()
         .map(|&(p, ply, o)| DbRow {
@@ -54,6 +54,8 @@ pub(crate) fn build(db: &DbContent, dir: &std::path::Path) -> Pns {
         Ledger::default(),
         dir.join("ledger.json"),
         BUDGET_PNS_BASE_EVALS,
+        crate::proofdb::pns::PnsConfig::default(),
+        0,
     )
     .unwrap()
 }
@@ -167,7 +169,15 @@ fn ledger_children_flat_and_proven_numbers() {
     )
     .unwrap();
     let ledger = Ledger::load(&ledger_path).unwrap();
-    let mut pns = Pns::build(&db, ledger, ledger_path, BUDGET_PNS_BASE_EVALS).unwrap();
+    let mut pns = Pns::build(
+        &db,
+        ledger,
+        ledger_path,
+        BUDGET_PNS_BASE_EVALS,
+        crate::proofdb::pns::PnsConfig::default(),
+        0,
+    )
+    .unwrap();
     assert_eq!(pns.census.ledger_records, 1);
     assert_eq!(pns.census.jobs_ledger, 1, "the ledger node is a job");
     let rec = pns.by_key["f2f3 e7e6 a2a3"];

@@ -20,6 +20,7 @@ pub mod batch;
 pub mod db;
 pub mod frontier;
 pub mod harvest;
+pub mod harvest_args;
 pub mod ledger;
 pub mod manifest;
 pub mod merge;

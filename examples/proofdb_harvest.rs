@@ -22,120 +22,39 @@
 //! and the sidecar work ledger in `ledger.rs`.
 //!
 //! Coverage policies (`--policy`; default `breadth-pns`, the plan4 pivot):
-//! `breadth-pns` — live PNS priority queue over the open frontier, the
+//! `breadth-pns` — the plan6 selection mechanism (eligibility, pacing,
+//! rationing; the plan4 breadth-first queue as its degenerate case), the
 //! sidecar ledger at `--ledger` as pick-up state, per-visit budgets on the
-//! geometric ladder `2^(k-1) × base` (base = `--budget-evals` or 4M),
-//! session cap = `--max-total-evals`; plus the plan3 legacy gradients
-//! `open-deepest`, `sharp-siblings` (the plan3 default), `sharp-heavy-tail`
-//! (heavy options ignored under `breadth-pns`).
+//! revisit ladder `2^(k-1) × base` (base = `--budget-evals` or 4M),
+//! session cap = `--max-total-evals`; `--pns-config <file>` loads the
+//! mechanism knobs (TOML, plan6 §2; compiled defaults when absent) and the
+//! effective config is echoed on the session-start `pns:` line; plus the
+//! plan3 legacy gradients `open-deepest`, `sharp-siblings`,
+//! `sharp-heavy-tail` (heavy options and `--pns-config` are effective only
+//! under `breadth-pns`).
 //!
 //! Output: one `job: {…}` JSON line per job (fields include `policy`,
-//! `class`, `parent_bound`, and for `breadth-pns` the `pass`/`number`/
-//! `work_before` triple), then `manifest:`/`harvest:` summary lines. On any
-//! defect the session aborts non-zero before the manifest rewrite — nothing
-//! inconsistent enters the durable layer (shard files of jobs completed
-//! before the abort are unreferenced orphans and are deterministically
-//! overwritten by the retry).
+//! `class`, and for `breadth-pns` the `kind`/`pass`/`number`/
+//! `work_before` quadruple), then `manifest:`/`harvest:` summary lines. On
+//! any defect the session aborts non-zero before the manifest rewrite —
+//! nothing inconsistent enters the durable layer (shard files of jobs
+//! completed before the abort are unreferenced orphans and are
+//! deterministically overwritten by the retry).
 
 mod proofdb;
+use proofdb::harvest_args::parse_args;
 
 use std::collections::HashSet;
-use std::path::PathBuf;
 use std::time::Instant;
 
-use proofdb::batch::{BatchOptions, PnsOptions, run_batch, run_pns_batch};
+use proofdb::batch::{BatchOptions, run_batch};
 use proofdb::db::load_db_rows;
 use proofdb::frontier::extract_frontier;
 use proofdb::ledger::Ledger;
-use proofdb::pns::{BUDGET_PNS_BASE_EVALS, Pns};
+use proofdb::pns::driver::{PnsOptions, run_pns_batch};
+use proofdb::pns::{BUDGET_PNS_BASE_EVALS, Pns, PnsConfig};
 use proofdb::policy::{Policy, jobs_for_policy};
 use proofdb::session::{Session, fail};
-
-struct Args {
-    db: PathBuf,
-    manifest: PathBuf,
-    shard_dir: PathBuf,
-    policy: Policy,
-    ledger: PathBuf,
-    budget_evals: u64,
-    max_total_evals: u64,
-    heavy_budget_evals: u64,
-    heavy_sample: usize,
-    tt_mb: usize,
-    max_jobs: usize,
-    max_runtime: u64,
-    stop_file: PathBuf,
-    out_db: Option<PathBuf>,
-    dump: Option<PathBuf>,
-}
-
-fn usage() -> ! {
-    eprintln!(
-        "usage: proofdb_harvest --db <proofdb.db> --manifest <manifest.json> \
-         --shard-dir <dir> [--policy <name>] [--ledger <path>] [--budget-evals <n>] \
-         [--max-total-evals <n>] [--heavy-budget-evals <n>] [--heavy-sample <n>] \
-         [--tt-mb <mb>] [--max-jobs <n>] [--max-runtime <s>] [--stop-file <path>] \
-         [--out-db <grown.db>] [--dump <nodes.txt>]  (policies: breadth-pns | \
-         open-deepest | sharp-siblings | sharp-heavy-tail)"
-    );
-    std::process::exit(1);
-}
-
-fn parse_args() -> Args {
-    let mut a = Args {
-        db: PathBuf::new(),
-        manifest: PathBuf::new(),
-        shard_dir: PathBuf::new(),
-        policy: Policy::BreadthPns,
-        ledger: PathBuf::from("data/proofdb_work.json"),
-        budget_evals: 0,
-        max_total_evals: 0,
-        heavy_budget_evals: 40_000_000,
-        heavy_sample: 5,
-        tt_mb: 128,
-        max_jobs: 0,
-        max_runtime: 0,
-        stop_file: PathBuf::from("STOP"),
-        out_db: None,
-        dump: None,
-    };
-    let mut it = std::env::args().skip(1);
-    while let Some(arg) = it.next() {
-        let mut next = || it.next().unwrap_or_else(|| usage());
-        match arg.as_str() {
-            "--db" => a.db = PathBuf::from(next()),
-            "--manifest" => a.manifest = PathBuf::from(next()),
-            "--shard-dir" => a.shard_dir = PathBuf::from(next()),
-            "--policy" => {
-                a.policy = Policy::parse(&next()).unwrap_or_else(|e| {
-                    eprintln!("proofdb_harvest: {e}");
-                    usage()
-                })
-            }
-            "--ledger" => a.ledger = PathBuf::from(next()),
-            "--budget-evals" => a.budget_evals = next().parse().unwrap_or_else(|_| usage()),
-            "--max-total-evals" => a.max_total_evals = next().parse().unwrap_or_else(|_| usage()),
-            "--heavy-budget-evals" => {
-                a.heavy_budget_evals = next().parse().unwrap_or_else(|_| usage())
-            }
-            "--heavy-sample" => a.heavy_sample = next().parse().unwrap_or_else(|_| usage()),
-            "--tt-mb" => a.tt_mb = next().parse().unwrap_or_else(|_| usage()),
-            "--max-jobs" => a.max_jobs = next().parse().unwrap_or_else(|_| usage()),
-            "--max-runtime" => a.max_runtime = next().parse().unwrap_or_else(|_| usage()),
-            "--stop-file" => a.stop_file = PathBuf::from(next()),
-            "--out-db" => a.out_db = Some(PathBuf::from(next())),
-            "--dump" => a.dump = Some(PathBuf::from(next())),
-            _ => usage(),
-        }
-    }
-    if a.db.as_os_str().is_empty()
-        || a.manifest.as_os_str().is_empty()
-        || a.shard_dir.as_os_str().is_empty()
-    {
-        usage();
-    }
-    a
-}
 
 fn main() {
     let args = parse_args();
@@ -176,9 +95,20 @@ fn main() {
         } else {
             BUDGET_PNS_BASE_EVALS
         };
-        let mut sel =
-            Pns::build(&db, ledger, args.ledger.clone(), base).unwrap_or_else(|e| fail(&e));
-        eprintln!("{}", sel.census.describe(base));
+        let cfg = match &args.pns_config {
+            Some(p) => PnsConfig::load(p).unwrap_or_else(|e| fail(&e)),
+            None => PnsConfig::default(),
+        };
+        let mut sel = Pns::build(
+            &db,
+            ledger,
+            args.ledger.clone(),
+            base,
+            cfg,
+            args.max_total_evals,
+        )
+        .unwrap_or_else(|e| fail(&e));
+        eprintln!("{}; {}", sel.census.describe(base), cfg.describe());
         let opts = PnsOptions {
             max_total_evals: args.max_total_evals,
             max_jobs: args.max_jobs,
@@ -187,7 +117,8 @@ fn main() {
         };
         let summary = run_pns_batch(&mut session, &mut sel, &opts).unwrap_or_else(|e| fail(&e));
         format!(
-            "harvest: policy {} stop={} pns_jobs {} decisive {} evals {} new_shards {} wall {:.1}s",
+            "harvest: policy {} stop={} pns_jobs {} rungs {} decisive {} evals {} \
+             new_shards {} wall {:.1}s",
             args.policy.as_str(),
             if summary.stop_reason.is_empty() {
                 "exhausted"
@@ -195,6 +126,7 @@ fn main() {
                 &summary.stop_reason
             },
             summary.jobs,
+            summary.rungs,
             summary.decisive,
             summary.evals,
             session.new_shards,

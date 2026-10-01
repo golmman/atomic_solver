@@ -15,6 +15,10 @@
 //! the dump at `--dump` when requested. Any validation defect, cross-check
 //! mismatch, or proven-outcome conflict aborts with a non-zero exit and
 //! writes nothing — conflicts are never patched.
+//!
+//! File-size justification: 11.6 KB — the argument parsing, the shard
+//! pipeline, and the census/summary emission are one self-contained CLI
+//! flow; the heavy lifting is already split into `proofdb/merge/`.
 
 use std::path::{Path, PathBuf};
 

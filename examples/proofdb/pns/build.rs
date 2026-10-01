@@ -10,11 +10,15 @@ use super::super::harvest::replay_job_path;
 use super::{DbRow, Exclusion, INF, Kind, Pns, PnsCensus, PnsNode, Res};
 use crate::proofdb::db::DbContent;
 use crate::proofdb::ledger::Ledger;
+use crate::proofdb::pns::Pacing;
 use atomic_solver::position::Outcome;
 
 impl Pns {
     /// Build the extended tree over `db` + `ledger`, run the lineage gate,
     /// derive all numbers, classify the job set, and initialize the queue.
+    /// `cfg` + `session_cap` seed the plan6 pacing state (§2); the plan4
+    /// selector is the degenerate config (`reserve_share = 0`,
+    /// `layer_visit_cap = 0`).
     ///
     /// # Errors
     /// Anything `replay_job_path` rejects for a ledger record (the lineage
@@ -26,6 +30,8 @@ impl Pns {
         ledger: Ledger,
         ledger_path: PathBuf,
         base_budget: u64,
+        cfg: crate::proofdb::pns::PnsConfig,
+        session_cap: u64,
     ) -> Res<Self> {
         let mut pns = Self {
             nodes: Vec::new(),
@@ -36,6 +42,7 @@ impl Pns {
             ledger_path,
             base_budget,
             census: PnsCensus::default(),
+            pacing: Pacing::new(cfg, session_cap),
         };
         pns.census.rows_total = db.rows.len();
         // DB rows first (creation order = DB id order), walking the row

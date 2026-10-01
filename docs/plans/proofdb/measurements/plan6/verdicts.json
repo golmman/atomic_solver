@@ -1,0 +1,95 @@
+{
+ "ap_equiv_A": {
+  "job_records_identical_mod_wall_s_kind": true,
+  "post_run_ledger_bytes_identical": true,
+  "ledger_sha256": "7fd92ea2a2329c6ad50cc1cae1a84ddf2fa661efbbab111585ba36e8116d240c"
+ },
+ "h5_replays": {
+  "A_ap": {
+   "job_sequence_identical": true,
+   "ledger_bytes_identical": true,
+   "ledger_sha256": "7fd92ea2a2329c6ad50cc1cae1a84ddf2fa661efbbab111585ba36e8116d240c"
+  },
+  "B": {
+   "job_sequence_identical": true,
+   "ledger_bytes_identical": true,
+   "ledger_sha256": "9aa0c32604badeaa6cf63055910c2550278278d12da2e69254ef9e126d73494d"
+  },
+  "C": {
+   "job_sequence_identical": true,
+   "ledger_bytes_identical": true,
+   "ledger_sha256": "058a62026e1109ad4573dd85eb958c9b6de590d999564049f4755f74cc554aa4"
+  }
+ },
+ "arm_B_mechanics": {
+  "rung_visits": 9,
+  "rung_evals": 80000154,
+  "reserve_budget": 75000000,
+  "reserve_bound": true,
+  "all_rungs_censored": true,
+  "rung_targets_in_order": [
+   "",
+   "a2a3",
+   "a2a4",
+   "b1a3",
+   "b1c3",
+   "b2b3",
+   "b2b4",
+   "c2c3",
+   ""
+  ],
+  "rung_targets_all_at_pass_2": true,
+  "max_expansion_visits_per_layer": {
+   "2": 24,
+   "3": 24,
+   "4": 7
+  },
+  "layer_caps_respected": true,
+  "facts": 0,
+  "max_ply": 4,
+  "rotation_order_verified": true
+ },
+ "decision_rule_B_vs_C": {
+  "facts": {
+   "B": 0,
+   "C": 0
+  },
+  "max_ply_reached": {
+   "B": 4,
+   "C": 5
+  },
+  "evals_per_ply_layer": {
+   "B": {
+    "0": 24000025,
+    "1": 56000129,
+    "2": 96000243,
+    "3": 96000270,
+    "4": 28000118
+   },
+   "C": {
+    "2": 96000322,
+    "3": 96000300,
+    "4": 96000267,
+    "5": 12000036
+   }
+  },
+  "rung_yield": {
+   "B": {
+    "rungs": 9,
+    "facts": 0,
+    "all_censored": true
+   },
+   "C": {
+    "rungs": 0
+   }
+  },
+  "verdict": "ladder no-go: default config becomes arm C's"
+ },
+ "input_ledger_sha256": "4f168105f43e17a05b42453ce1e6d60fd9e58393a62c61a04343bca1cfd53a15",
+ "post_run_ledger_sha256": {
+  "A": "7fd92ea2a2329c6ad50cc1cae1a84ddf2fa661efbbab111585ba36e8116d240c",
+  "A_ap": "7fd92ea2a2329c6ad50cc1cae1a84ddf2fa661efbbab111585ba36e8116d240c",
+  "B": "9aa0c32604badeaa6cf63055910c2550278278d12da2e69254ef9e126d73494d",
+  "C": "058a62026e1109ad4573dd85eb958c9b6de590d999564049f4755f74cc554aa4"
+ }
+}
