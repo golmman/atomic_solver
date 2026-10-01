@@ -148,7 +148,28 @@ value.
 
 ## History
 
-- **2026-10-01 (latest)** — **plan8 drafted (docs-only plan session)**:
+- **2026-10-01 (newest) — plan9 drafted (docs-only plan session)**: the
+  §4.3 standing shape's first batch, with committed probe pins (report8
+  finding 1's lesson applied — the census probe output is in the plan).
+  The plan session **discovered a ladder defect**: plan8 §2's monotone
+  floor (`max(2^(k−1) × base, work_done)`) revisits a deep probe at
+  exactly its accumulated work with the standing base — a byte-identical
+  deterministic repeat (plan8 H5's replay is the evidence), ~3B wasted
+  evals per completion arm; the 2B rung was reachable only at base 1B,
+  which blindly 500×-jumps the 4M-censored tail. Fix (normative): the
+  **strict-growth ladder**, floor `2 × work_done` (supersedes plan8's
+  floor clause for `and-close` only). Two arms pre-registered: the **fresh
+  sweep** (the 257 never-visited replies at 4M, the measured-yielding
+  territory; head probed at ply 19) and the **completion head
+  escalation** (`g1f3`'s three defenses at 2B each via the new floor,
+  then `e2e3`/`e2e4`/`g1h3`'s 23 replies at their first 8M rung; cap
+  6.5B). The **factless-batch escalation policy** is set: fresh base ×10
+  per factless batch (plan8 verbatim); the censor tier escalates
+  automatically (every revisit ≥ 2 × cumulative work — the `g1f3` rung
+  ladder 1B → 2B → 6B → 12B toward the 7–15B-equiv plateau band). Union
+  ledger advance = the plan7 mechanism's second production use. See
+  `plan9.md`.
+- **2026-10-01 (latest before plan9)** — **plan8 drafted (docs-only plan session)**:
   the §4.6 closure-rule response (report7: sixth consecutive 0-fact batch;
   "another identical default batch is not a valid plan8"). The design
   dialogue **rejects the depth-rationing lever on arithmetic** (exposure
