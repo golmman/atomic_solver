@@ -142,3 +142,21 @@ class, as pre-registered.
   tooling. All probes and the replay ran against throwaway copies in
   `/tmp/plan5/`; the standing shard set, manifest, and `data/` ledger were
   touched only by the real batch.
+
+SESSION COMPLETE
+- `report5.md` written; `measurements/plan5/` complete (census,
+  ledger_snapshot, env.json, README); gate result: all gates pass, all
+  five pre-registered expectations E1–E5 confirmed, 0 facts as
+  pre-registered; the ladder measured unreachable (E3, the goal
+  measurement). plan5.md §2 decision stands; plan6 drafted in the same
+  sitting (docs-only, design dialogue).
+Follow-up options:
+  1. Kickoff prompt: "Execute docs/plans/proofdb/plan6.md: implement the
+     selection mechanism (eligibility + pacing + rationing, `--pns-config`)
+     and run the four-arm A/B over the post-batch-2 state; gates H1–H6
+     including the A′≡A equivalence replay; report6.md with the ladder's
+     marginal-value verdict."
+  2. Alternative: review plan6's constants (reserve_share 0.25,
+     layer_visit_cap 24, interleave_k 4, max_rung_passes 3) against the
+     measured post-batch-2 census before committing the A/B — safer if the
+     standing census deviates from the pre-registered ranges.

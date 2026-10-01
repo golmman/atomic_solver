@@ -20,13 +20,15 @@ Per repo convention the final task is `report6.md`.
 unchanged plan4 policy over the exposed frontier from the plan4 ledger
 snapshot. Pre-registered outcome (E1–E5): ≈ 75 censored visits, all within
 the ply-2 fresh sublayer, ≈ 0 facts, no rung fired, post-batch ledger
-≈ 2.8k records (`measurements/plan5/ledger_snapshot.json` is the standing
-state; its measured census — not the predictions — is this plan's input).
+**3,033 records** (150 censored — root + 20 ply-1 + 129 ply-2 — and 2,883
+fresh; `measurements/plan5/ledger_snapshot.json` is the standing state; its
+measured census — not the predictions — is this plan's input).
 The two lemmas stand: **L1** no key built from (structural numbers, ledger
 state) can order a fresh pool (all its ledger state is zero); **L2** a
-factless policy's number-1 pool grows monotonically (≈ +18.2 exposed per
-censor vs ≤ 1 removed), so emergent escalation — the ladder firing when
-"nothing cheaper remains" — is unreachable in-session at this frontier.
+factless policy's number-1 pool grows monotonically (≈ +21.2 exposed per
+censor in batch 2, +18.2 in batch 1, vs ≤ 1 removed), so emergent
+escalation — the ladder firing when "nothing cheaper remains" — is
+unreachable in-session at this frontier.
 
 **The refined mechanism (design dialogue, 2026-10-01).** Three insights,
 each traceable in the dialogue record:
@@ -74,6 +76,11 @@ per visit, with V = visits so far (expansion + rung),
    if none exists and nothing is ladderable           → stop ("exhausted")
 ```
 
+- **Ladderable** = rung-eligible and reserve remains (the term used in
+  steps 3–4). With the §4 budgets the reserve (0.25 × 300M = 75M) affords
+  ≈ 9 rung visits at the 8M/16M/32M revisit ladder (revisits start at
+  `2^1 × base` because pass 1 is the original censored visit) — arm-B rung
+  counts are reserve-bound, not eligibility-bound.
 - **Ladder target:** eligible node with fewest passes (rotation — no node
   climbs 8M → 16M → 32M while others wait), ties by (ply, path). Budget:
   `2^(passes) × base` (passes *before* this visit), never above
@@ -113,7 +120,9 @@ function to the plan4 selector verbatim. Arm A′ verifies this by replay.
 **Census trace of the split:** every `job:` line gains `kind`
 (`expand` | `rung`; legacy policies emit without it), so a batch
 transcript *is* a trace of when and where the split fired — the
-empirical counterpart of the normative table above.
+empirical counterpart of the normative table above. The A′≡A equivalence
+comparison (§4.2, H5) is therefore taken field-wise **modulo `kind` and
+wall time**; the post-run ledger byte-match is unaffected.
 
 ## 3. Deliverables
 
@@ -156,11 +165,13 @@ lineage gate.
    plan4 policy as-is. This is the reference for reach and yield from the
    same starting state (batch 2 itself was measured from the *pre*-batch-2
    state, so it anchors the S1 stage, not this comparison). Expected:
-   ≈ 75 censored visits within the ply-2/3 fresh layers, ≈ 0 facts, no
+   ≈ 75 censored visits, **all within the ply-2 fresh sublayer** (214
+   fresh ply-2 records > 75 visits; ply 3 not reached), ≈ 0 facts, no
    rung.
 2. **Arm A′ — equivalence replay (new selector, degenerate config):**
    `reserve_share = 0, layer_visit_cap = 0`. Must reproduce arm A
-   bit-for-bit: identical job sequence (every field except wall time) and
+   bit-for-bit: identical job sequence (every field except wall time and
+   the `kind` census field — arm A's legacy selector does not emit it) and
    byte-identical post-run ledger. This pins the refactor equivalence —
    the new selector is verified as a strict superset of the old one.
 3. **Arm B — mechanism defaults:** the §2 defaults table verbatim.
@@ -168,9 +179,11 @@ lineage gate.
    sparse ply-4+ rows (3–4 per ply layer, caps never bind there) spread
    into single-digit layers up to ≈ ply 8 — **the session leaves ply 3**,
    unlike every prior session; rungs fire on the root and any node whose
-   children the session fully visited; yield ≈ 0 facts (pre-registered;
-   plan2's 40M heavy-tier precedent says the quiet class censors at 10×
-   base).
+   children the session fully visited (**the root's eligibility is
+   verified from the standing ledger**: root and all 20 ply-1 children
+   are censored, so no virgin child); expect ≈ 9 rungs (reserve-bound);
+   yield ≈ 0 facts (pre-registered; plan2's 40M heavy-tier precedent says
+   the quiet class censors at 10× base).
 4. **Arm C — ladder deletion:** `reserve_share = 0, layer_visit_cap = 24`
    — identical expansion behavior to B minus rungs. This arm carries the
    user's position ("expansion determines everything") as a measurable
@@ -201,7 +214,8 @@ lineage gate.
   promoted facts; vacuous at 0.
 - **H5 policy determinism:** per-arm replay (same staging input →
   identical job sequence, byte-identical post-run ledger); **plus the
-  A′ ≡ A equivalence match** (all record fields except wall time).
+  A′ ≡ A equivalence match** (all record fields except wall time and
+  `kind`).
 - **H6 hygiene:** `make test` green (including the new decision-table
   tests); `cargo clippy --release --all-targets` / `cargo fmt --check`
   clean; no `src/` changes; new/edited example files ≤ 10 KB;
