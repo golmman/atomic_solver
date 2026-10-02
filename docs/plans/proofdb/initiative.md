@@ -166,7 +166,24 @@ value.
 
 ## History
 
-- **2026-10-02 (latest) — initiative pivoted (owner decision): tooling over
+- **2026-10-02 (latest) — plan12 drafted (plan session): item 8's audit run
+  at plan time, all read-only.** The clean-checkout audit is measured: the
+  durable layer is complete and self-consistent (262 shards, unique
+  tags/paths, no orphans, seeds included), the merger reproduces the
+  standing DB byte-identically from the committed manifest (1.2 s,
+  `0d929f4c…`), the harvest loop starts cleanly on a fresh/missing ledger,
+  and the flip/ledger-union tools work over the rebuilt DB. Gaps: one
+  error-path defect (the stale-DB check panics on a short DB-stored
+  `built_from` — `db.rs:50` truncation, exit 134 instead of a clean abort),
+  no operator runbook (the only run instructions live in plan/report
+  prose), AGENTS.md omits all four proofdb tools, and the derived-DB
+  rebuild gate exists only as narrative (no repeatable test). plan12 fixes
+  all four, documents the ledger-from-clean-checkout decision (fresh or
+  seed from the committed plan10 snapshot — the ledger stays scheduling
+  state, out of the durable layer), and closes item 8 if execution finds no
+  new M-sized gap. Plan11 is retired (parked 18B `g1f3` rung idea). See
+  `plan12.md`.
+- **2026-10-02 — initiative pivoted (owner decision): tooling over
   database contents.** The founding goal ("build and grow a proof-line
   database") is re-scoped: the deliverable is the **tooling pipeline**
   (harvester, merger, ledger union, flip analysis, website handoff);

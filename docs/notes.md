@@ -622,3 +622,15 @@ Amend plan10 (§4.1/§4.3/H2/H3 re-scoped: arm A re-baselined by a full in-sessi
 ---
 
 please investigate: how is `libs/Fairy-Stockfish/` achieving parallel / multi-threaded search when we struggle to get it done for this application?
+
+---
+
+Have we tried this idea?
+The first thread is promoted to "leader". when it encounters the first AND-node all children have to be explored, so the leader picks one and "follower" threads are opened which explore the others. when a follower thread finishes it can be use at the next promising AND-child where help is needed.
+We could also experiment with higher epsilon values in follower sub-trees in order to prevent super-short follower-explorations.
+
+---
+
+1. Kickoff prompt for the recommended session: "Plan proofdb item 8 (tooling completeness audit + hardening): audit the shard→merger→DB→harvest pipeline from a clean checkout as a third party would run it, per docs/plans/proofdb/initiative.md item 8; deliver planN.md sized to one session."
+2. Alternative: "Execute lean #10 (history/killer re-tune) as a small session — S–M effort, drift-gated, the last open node-count lever on the board."
+3. under the assumption we pivot to non-deterministic parallel runs explore "Pawlewicz & Hayward 2014 — Scalable Parallel DFPN Search"
