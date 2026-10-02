@@ -633,4 +633,4 @@ We could also experiment with higher epsilon values in follower sub-trees in ord
 
 1. Kickoff prompt for the recommended session: "Plan proofdb item 8 (tooling completeness audit + hardening): audit the shard→merger→DB→harvest pipeline from a clean checkout as a third party would run it, per docs/plans/proofdb/initiative.md item 8; deliver planN.md sized to one session."
 2. Alternative: "Execute lean #10 (history/killer re-tune) as a small session — S–M effort, drift-gated, the last open node-count lever on the board."
-3. under the assumption we pivot to non-deterministic parallel runs explore "Pawlewicz & Hayward 2014 — Scalable Parallel DFPN Search"
+3. under the assumption we allow non-deterministic parallel runs explore "Pawlewicz & Hayward 2014 — Scalable Parallel DFPN Search"

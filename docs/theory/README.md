@@ -23,6 +23,7 @@ files.
 | `deep-dfpn-2017/` | Zhang, Iida, van den Herik, *Deep df-pn and Its Efficient Implementations* | ACG 2017, LNCS 10664 | (see `deep-dfpn-2017/deep-dfpn-2017.md`) |
 | `ppn2-2011/` | Saffidine, Jouandeau, Cazenave, *Solving Breakthrough with Race Patterns and Job-Level Proof Number Search* | ACG 2011, pp. 196–207 | `docs/plans/parallel/research_jlpns.md` |
 | `pns-pdfpn-2025/` | Čížek, Balko, Schmid, *Massively Parallel Proof-Number Search for Impartial Games and Beyond* | arXiv:2511.10339 / AAAI-26 | `docs/plans/parallel/research_cizek2025.md` |
+| `spdfpn-2014/` | Pawlewicz, Hayward, *Scalable Parallel DFPN Search* | CG 2013, LNCS 8427 (author copy; no arXiv) | `docs/plans/parallel/research_spdfpn.md` |
 
 Status of each entry (Open / Cited / Mined) is tracked centrally in
 `docs/bibliography.md`; this index only records where things live.

@@ -6,6 +6,21 @@ Opened 2026-09-21 as the consolidated home for the parallelization effort,
 absorbing `conversion` backlog #4 and `lean` backlog #2 (joint ownership
 split across two initiatives until now). The next plan number is **plan1**.
 
+**2026-10-02, premise change — initiative reopened for option A.** The
+product consumer now accepts nondeterministic parallel runs
+(nondeterminism confined to *which* valid proof wins, never a false
+decisive outcome). This satisfies the precondition that plan2's NO-GO
+deliberately deferred: option A (thread-level shared-TT parallel DF-PN)
+was gated on mining Pawlewicz & Hayward 2014, now mined (plan3,
+`research_spdfpn.md`): mechanism fully specified (W-threshold
+interruptible jobs, virtual win/loss steering over a per-ply virtual TT,
+shared-TT discipline), serial base identical to ours (dfpn 1+ε),
+measured 0.74 efficiency /16 threads with work inflation ≤1.40× — the
+exact gap that killed option C. The option-C no-go and the lean plan7
+deterministic no-go stand untouched. Next: backlog #4 (plan4 inert
+TT-concurrency refactor = cheap kill point; plan5 prototype with
+pre-registered GO bands).
+
 **2026-09-21, plan2: architecture selection closed as measured NO-GO.**
 The option space is now closed by measurement on both sides: the
 shared-state architectures (A/B/D) are excluded by soundness/economics
@@ -158,6 +173,7 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
 | 1 | **Reading round: parallel PNS (2025-era)** | Mine the three open bibliography entries into `research_*.md` here: (a) Čížek, Balko, Schmid 2025 (*Massively Parallel Proof-Number Search*, arXiv:2511.10339 — two-level parallelization + shared worker info, 333× on 1024 cores); (b) Saffidine, Jouandeau, Cazenave 2011 (JLPNS, ACG-13); (c) Young, Hayward 2016 (*A Reverse Hex Solver*, scalable parallel DF-PN, Solrex). Extract per paper: cooperation protocol, TT sharing/sharding model, GHI/repetition handling under concurrency, scaling regime (where the gains saturate on 4–16 cores, not 1024) | information (feeds #2) | — | S | **mined 2026-09-21** (plan1): `research_cizek2025.md`, `research_jlpns.md`, `research_solrex.md` (+ vendored PDFs); all three silent on repetitions under concurrency (monotone domains) — the finding; small-pool evidence favors C over A; D's shared-DB layer has no safe payload here |
 | 2 | **Design-space note: architecture selection** | Weigh options A–D above against the design constraints; include the API/consumer story (opt-in `--threads N` vs a process-portfolio harness vs both). Sizing spike allowed per lean's cadence (temporary instrumentation, reverted) | selects the 2–8× lever's shape | — | M | **closed 2026-09-21 (plan2): measured NO-GO** — `design_space.md` + `measurements/plan2/`: option C (root-child race over unmodified processes) measured 0.27× wall (3.7× slowdown) at N=4 on m22, 15.5× work inflation, zero soundness violations; deficit structural (forfeited cross-child TT sharing/interleaving); ship-shape verdict recorded (harness-only, moot); no parallel mode ships |
 | 3 | **Staged implementation** | Gated on #2 GO; one lever per plan; sequential drift protocol green at every stage; parallel mode documented as nondeterministic (or not shipped, per #2) | the actual speedup | wall | L–XL | **closed 2026-09-21** — unblocking condition (#2 GO) failed on the pre-registered rules; no staged implementation exists to stage |
+| 4 | **A-stage: SPDFPN-style shared-TT parallel DF-PN** | Reopened by the 2026-10-02 nondeterminism premise; reference design = `research_spdfpn.md`. Stage 1 (plan4): inert TT-concurrency refactor — sharded TT behind interior-mut locking, byte-identical N=1 behavior (drift gate = cheap kill point). Stage 2 (plan5): `--threads N` prototype — W-threshold + same-child resume clause, virtual TT + job lock + `TRYRUNJOB`, thread-local repetition cache, serialized ProofEvents; measured on the hard class (wall speedup, work inflation, outcome agreement) with pre-registered GO bands | 2–8× wall on hard solves | wall | L–XL | **open 2026-10-02** (plan3 mining: `research_spdfpn.md`, GO input; plan4/plan5 not yet written) |
 
 ## Non-goals
 
@@ -184,6 +200,17 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
   and outcome agreement across repeated runs (no `wrong` ever).
 
 ## History
+
+- **2026-10-02** — **initiative reopened; plan3 complete: SPDFPN 2014
+  mined, option-A GO input** (docs only, no code): premise change
+  recorded (nondeterministic parallel runs accepted); paper located via
+  author copy after the bibliography's arXiv pointer proved wrong
+  (arXiv:1503.07698 resolves to an unrelated XENON1T paper — entry
+  corrected, flipped **Open → Mined**); extraction vendored under
+  `docs/theory/spdfpn-2014/`; `research_spdfpn.md` written (mechanism,
+  measurements, soundness mapping, bill of materials, staged plan
+  skeleton); backlog #4 opened. `docs/plans/README.md` row updated
+  (reopen event).
 
 - **2026-09-21** — **plan2 complete: architecture selection → measured
   NO-GO** (no `src/`/`examples/` change; spike drove the release binary
