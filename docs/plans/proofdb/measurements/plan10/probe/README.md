@@ -1,4 +1,16 @@
-# plan10 probe artifacts (plan-session, 2026-10-01)
+# plan10 probe artifacts (plan-session, 2026-10-01) — FALSIFIED PRE-REGISTRATION (amended 2026-10-02, plan10 §9)
+
+> **Status after the official run.** Arm A's official run (2026-10-02) did not
+> reproduce this pilot: 6 facts / 1,074 censors, not 3/1,077. Root cause: the
+> pilot ran all 1,083 jobs in one session whose private TT is retained across
+> jobs — its three 6B head probes ran first and warmed the 128 MB TT for the
+> 1,080 tier jobs; arm A drops those probes, so the tier jobs run under a
+> different TT history (child_evals differ on 1,053/1,080 shared jobs; 3
+> censored jobs flipped to wins). The byte-exact baseline digests below
+> (`f8cb4277…`, `47892f84…`, `5df15da5…`) and the shard byte-equality gate are
+> **falsified**; the pilot's per-job *budget* bookkeeping (0 budget
+> divergences vs the base-4M ladder) remains valid. Arm A was re-baselined by
+> a full in-session replay (plan10 §9) — see `../README.md`.
 
 Provenance: a plan10 **plan-session census probe** on throwaway `/tmp/plan10probe`
 staging copies of the standing layer (digests pinned in `plan10.md` §1) ran the

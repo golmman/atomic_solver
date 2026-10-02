@@ -1,0 +1,94 @@
+{
+ "config": {
+  "dir": "/tmp/plan10/armB",
+  "replay": "/tmp/plan10/armB_replay",
+  "base": 4000000,
+  "order": "completion",
+  "cap": 18500000000,
+  "tt_mb": 1024,
+  "filtered": false
+ },
+ "metrics": {
+  "jobs": 3,
+  "facts": 0,
+  "censored": 3,
+  "total_evals": 18000000517,
+  "ply_distribution": {
+   "2": 3
+  },
+  "facts_by_ply": {},
+  "tier_jobs": {
+   "6004000000": 3
+  },
+  "facts_by_tier": {},
+  "ledger_start_records": 8446,
+  "ledger_post_records": 8446,
+  "ledger_new_records": 0,
+  "ledger_bumped_records": 3,
+  "no_exposure_signature": "post == start + 3 bumps + 0 new",
+  "max_pass_after": 3,
+  "census_line": "and-close: active rows 49, replies 1083 (fresh 0, ledger-censored 1083); order completion; base budget 4000000",
+  "gradient_head": "and-close-gradient: g1f3:3 e2e3:7 e2e4:7 g1h3:9 a2a3 a7a6 b2b3 a6a5 c2c3 a5a4 d2d3 a4b3 e2e3:10 d2d4 a7a6 a2a3 a6a5 b2b3 a5a4 c2c3 a4b3 e2e3:11 d2d4 d7d5 a2a3 a7a6 b2b3 a6a5 c2c3 a5a4 e2e3 a4b3 f2f3 b7b6 g2g3 b6b5 h2h3 b5b4 a3a4 b4b3 c3c4 b3b2 e3e4 b2a1q f3f4 d5c4 g3g4 c7c6:12 root:13 a2a3 a7a6 b2b3 a6a5 c2c3 a5a4:17 d2d4:18",
+  "exclusions_line": "and-close-excluded: open rows 75 (active 49); proven-ancestor 26, implied-win 0, implied-loss 0",
+  "filter_line": null,
+  "manifest_line": "manifest: unchanged (256 entries, digest 9992dba4e4abc800a90d90a954f85d073766d38ae8383ca91d2f2982a72fd916)",
+  "post_ledger_sha256": "4e14f46fd9490142ad006647b96899078aae693c16ba6e8efb76d2a74457c89c",
+  "stop_reason": "max-jobs"
+ },
+ "jobs": [
+  {
+   "budget": 6000000190,
+   "child_evals": 6000000191,
+   "class": "C3",
+   "exit_reason": "BudgetExhausted",
+   "outcome": "censored",
+   "parent_bound": null,
+   "pass": 3,
+   "path": "g1f3 d7d6",
+   "policy": "and-close",
+   "shard_nodes": null,
+   "tag": null,
+   "tier": "and-close",
+   "wall_s": 1385.741014308,
+   "work_before": 3000000095
+  },
+  {
+   "budget": 6000000194,
+   "child_evals": 6000000204,
+   "class": "C3",
+   "exit_reason": "BudgetExhausted",
+   "outcome": "censored",
+   "parent_bound": null,
+   "pass": 3,
+   "path": "g1f3 e7e5",
+   "policy": "and-close",
+   "shard_nodes": null,
+   "tag": null,
+   "tier": "and-close",
+   "wall_s": 1349.16535083,
+   "work_before": 3000000097
+  },
+  {
+   "budget": 6000000102,
+   "child_evals": 6000000122,
+   "class": "C3",
+   "exit_reason": "BudgetExhausted",
+   "outcome": "censored",
+   "parent_bound": null,
+   "pass": 3,
+   "path": "g1f3 f7f6",
+   "policy": "and-close",
+   "shard_nodes": null,
+   "tag": null,
+   "tier": "and-close",
+   "wall_s": 1328.72927941,
+   "work_before": 3000000051
+  }
+ ],
+ "h5": {
+  "job_sequence_identical": true,
+  "ledger_bytes_identical": true,
+  "shards_bytes_identical": null,
+  "manifest_bytes_identical": true
+ }
+}

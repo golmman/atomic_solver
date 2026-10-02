@@ -149,6 +149,7 @@ fn main() {
             max_jobs: args.max_jobs,
             max_runtime: args.max_runtime,
             stop_file: args.stop_file.clone(),
+            max_budget: args.and_close_max_budget,
         };
         let summary = run_and_close_session(
             &mut session,

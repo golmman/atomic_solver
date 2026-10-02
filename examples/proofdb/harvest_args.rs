@@ -26,6 +26,8 @@ pub struct Args {
     pub pns_config: Option<PathBuf>,
     /// The `and-close` reply order (effective only under `and-close`).
     pub and_close_order: AndCloseOrder,
+    /// The `and-close` per-job budget cap (plan10 D1; 0 = unlimited).
+    pub and_close_max_budget: u64,
     pub out_db: Option<PathBuf>,
     pub dump: Option<PathBuf>,
 }
@@ -37,6 +39,7 @@ fn usage() -> ! {
          [--max-total-evals <n>] [--heavy-budget-evals <n>] [--heavy-sample <n>] \
          [--tt-mb <mb>] [--max-jobs <n>] [--max-runtime <s>] [--stop-file <path>] \
          [--pns-config <file>] [--and-close-order <completion|fresh>] \
+         [--and-close-max-budget <evals>] \
          [--out-db <grown.db>] [--dump <nodes.txt>]  \
          (policies: breadth-pns | and-close | open-deepest | sharp-siblings | sharp-heavy-tail)"
     );
@@ -60,6 +63,7 @@ pub fn parse_args() -> Args {
         stop_file: PathBuf::from("STOP"),
         pns_config: None,
         and_close_order: AndCloseOrder::Completion,
+        and_close_max_budget: 0,
         out_db: None,
         dump: None,
     };
@@ -93,6 +97,9 @@ pub fn parse_args() -> Args {
                     eprintln!("proofdb_harvest: {e}");
                     usage()
                 })
+            }
+            "--and-close-max-budget" => {
+                a.and_close_max_budget = next().parse().unwrap_or_else(|_| usage())
             }
             "--out-db" => a.out_db = Some(PathBuf::from(next())),
             "--dump" => a.dump = Some(PathBuf::from(next())),

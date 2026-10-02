@@ -614,3 +614,11 @@ We tried combining the two mechanisms in plan6 and measure where/when exactly th
 The result is that the "ladder" mechanism is never giving better results than the "expansion" mechanism. So the algorithm is pure "expansion" from now on.
 
 Correct?
+
+---
+
+Amend plan10 (§4.1/§4.3/H2/H3 re-scoped: arm A re-baselined by a full in-session replay per §4.2, pilot kept as falsified pre-registration, arm B unchanged), then finish plan10: replay arm A (~35 min), run arm B + replay, gates, promote the 6 facts, union advance, merge, flip analysis, report10.md.
+
+---
+
+please investigate: how is `libs/Fairy-Stockfish/` achieving parallel search when we struggle to get it for this application?

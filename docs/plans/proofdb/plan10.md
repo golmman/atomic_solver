@@ -174,6 +174,8 @@ arm B — the plan8 §4.3 ordering rule.
    shards), 1,077 censors, ≈ 9,695,668,462 child-evals, stop `exhausted` (the
    cap is headroom; decisive jobs cost less). Any deviation from the pilot's
    tail job lines is a determinism defect: stop and investigate (§4.1).
+   *(Falsified 2026-10-02: the official run found 6 facts / 1,074 censors —
+   §9 re-scopes the expectation and the baseline.)*
 2. **Arm B — the `g1f3` 6B rung.** `--policy and-close --and-close-order
    completion --max-jobs 3 --budget-evals 4000000 --max-total-evals
    18500000000 --tt-mb 1024`. Census expectation (H1): the §1 pin verbatim,
@@ -228,7 +230,7 @@ arm B — the plan8 §4.3 ordering rule.
 
 ## 4. The cross-run determinism contract (this batch's H5, pre-registered)
 
-1. **Arm A vs the pilot (byte-exact).** Arm A's emitted `job:` lines must
+1. **Arm A vs the pilot (byte-exact; falsified 2026-10-02 — re-scoped in §9).** Arm A's emitted `job:` lines must
    match the pilot's 1,080 tail lines on `(path, budget, child_evals,
    outcome, exit_reason, pass, work_before)` — the canonical digest
    `f8cb42777b1b94c1a9bb7d24d183fbd545e557c888744a09fa04f921419e25ac` over
@@ -253,6 +255,8 @@ arm B — the plan8 §4.3 ordering rule.
    difference). If arm B yields f head facts, those f records instead
    compare equal to arm B's own post state (decisive jobs leave their
    records untouched) and report10 documents the branch.
+   *(Falsified 2026-10-02 — re-scoped in §9: the union target is the arms'
+   own post ledgers, digest-pinned via `--expect`.)*
 
 ## 5. Pre-registered gates (fixed before any run)
 
@@ -261,24 +265,28 @@ arm B — the plan8 §4.3 ordering rule.
   head string; exclusions 26/0/0; the standing digests; the frontier line).
   Arm A: the filter echo exactly `jobs 1080 of 1083`; every job budget ≤
   100M; the byte-exact pilot match (§4.1) — 3 facts at the pinned paths,
-  1,077 censors. Arm B: the sequence head exactly the §1.3 head pins (no
+  1,077 censors. *(Re-scoped §9: in-session replay instead of the pilot
+  match; 6 facts / 1,074 censors.)* Arm B: the sequence head exactly the §1.3 head pins (no
   filter echo); `--max-jobs 3` stops the arm; every job path replays
   legally; no job is a standing manifest path. **No-exposure check:** arm A's
   post ledger = standing + 1,077 bumps (0 new records, 0 fresh touches);
+  *(re-scoped §9: arm A = 1,074 bumps — its 6 decisive records untouched;*
+  *0 new records confirmed on the official run.)*
   arm B's = standing + 3 bumps (0 new records); ledger growth in *records*
   is 0 for both.
 - **H2 merge determinism:** merger re-run twice over the grown manifest →
   byte-identical DB + dump; 259/259 shards replay-validated (256 standing +
   arm A's 3; arm B's facts, if any, add). If arm B yields 0 facts (the
-  prior), the grown manifest must **byte-equal the pilot's grown manifest**
-  `af49fce349f2ccb9db8ad7e3444fcb317968ef1b478cb83eb5e22aec33f22409` (259
-  entries — the promotion is deterministic); a mismatch is a defect: stop.
-  If arm B yields facts, the manifest is the 259-entry one plus arm B's
+  prior), the grown manifest must **byte-equal arm A's own grown manifest**
+  `e91ad57b44008fee65ab0b124fab51365c17d08f891777cde525cfecb61fb5fd` (262
+  entries — the promotion is deterministic) *(re-scoped §9; the pilot's
+  259-entry `af49fce3…` target is falsified)*; a mismatch is a defect: stop.
+  If arm B yields facts, the manifest is the 262-entry one plus arm B's
   entries, all `validate: ok`, and report10 documents the branch.
-- **H3/H4 no-regression / spot-checks:** the 3 promoted facts'
-  shard bins must byte-equal the pilot's
-  (`6e71cbd7…` / `c32391f3…` / `e4db19b4…` under
-  `measurements/plan10/probe/probe_shards/`); no same-path outcome
+- **H3/H4 no-regression / spot-checks:** the 6 promoted facts'
+  shard bins are validated by the merger's replay validator and pinned to
+  arm A run 1's bytes via the §9 replay (the pilot byte-equality is
+  falsified — §9) *(re-scoped)*; no same-path outcome
   contradiction (the three fact paths are not standing manifest paths —
   pinned); plan4's H3/H4 run over promoted facts.
 - **H5 policy determinism:** §4's three-part contract (arm A cross-run
@@ -339,6 +347,73 @@ byte-compares) and report10 records the deferral explicitly; arm B's cap may
 drop to 12B (two probes; the third joins the next batch) — the completion
 question then stays open and report10 says so.
 
+## 9. Amendment — 2026-10-02 (execution session): the pilot is a falsified pre-registration; arm A re-baselined by a full in-session replay
+
+Arm A's official run (§7 task 3, executed 2026-10-02 on fresh staging copies at
+`/tmp/plan10/armA`) **falsified §3.1's expectation and §4.1's cross-run
+baseline**: 1,080 jobs, **6 facts / 1,074 censors**, 9,693,439,558 child-evals,
+stop `exhausted`, wall 2097.7 s — not the pilot's 3/1,077. The session-start
+census matched §5 H1 exactly (the §1 pin verbatim + the filter echo
+`and-close-filter: max-budget 100000000, jobs 1080 of 1083`), and the
+no-exposure check held (0 new records, 0 gone; 1,074 bumps, all `passes_failed`
++1; the 6 decisive records untouched). Only the *within-job* search diverged:
+`child_evals` differ on 1,053/1,080 shared jobs (same budgets, passes,
+`work_before`, same sequence order), and 3 censored jobs flipped to wins.
+
+**Root cause (measured).** The pilot and arm A are not sequence-matched in the
+decisive respect: §1.3's premise "arm A's config is pilot-matched … identical
+sequence" is false. The harvest session retains one private TT across jobs
+(`examples/proofdb/session.rs` module doc); the pilot ran all 1,083 jobs in one
+session, so its three 6B head probes ran *first* and warmed the 128 MB TT for
+the 1,080 tier jobs, while arm A drops those probes and runs the tier jobs
+under a different TT history. TT state changes DF-PN+'s within-job work and,
+at the margin, its outcome. Cross-checks: two fresh-staging 30-job prefix runs
+on independent builds are byte-identical (job lines excl `wall_s` + post-run
+ledger; LTO vs no-LTO byte-identical — `det1`/`det2`/`nolto`), and a single-job
+cold run of the first diverging job (`e2e3 c7c6`, 24M budget) reproduces arm
+A's `child_evals` (24,000,080), not the pilot's (24,000,085) (`skip1`) — the
+pilot's values are reachable only from a warmed TT. Arm A is deterministic and
+sound; the pilot's *outcome* predictions are not.
+
+The falsification also invalidates the byte-equality half of H2/H3: arm A's
+three shared-path shards carry the pilot's *names* (path-hashed tags) but
+different *bytes* — the proof-subtree export depends on the job's TT snapshot.
+Fact sizes equal for two of them (8,438 / 8,594 B), the 27-ply one differs
+(28,642 vs 29,710 B).
+
+**Re-scope (fixed before the replay and arm B):**
+
+- **§4.1 (re-scoped):** arm A's determinism gate is a **full in-session replay
+  per §4.2** — the same staging input re-run from scratch; job lines byte-exact
+  excl `wall_s`, post-run ledger byte-identical, the 6 fact shards
+  byte-identical, grown manifest byte-identical to run 1. The pilot's canonical
+  digests (`f8cb4277…`, `47892f84…`, `5df15da5…`) are falsified baselines.
+- **§3.1 (re-scoped expectation):** arm A = 6 facts / 1,074 censors — 24M tier:
+  2 facts (the pilot's two `…e2e3` wins); 8M tier: 4 facts (the pilot's `e1e2`
+  win plus three new: `d2d4 a7a6 a2a3 a6a5 b2b3 a5a4 c2c3 a4b3 e2e3 g7g6`,
+  `…e3e4 b2a1q f3f4 b8d7`, `…h2h3 b5b4 a3a4 a8a4`); 72M tier: 0. All 6 are
+  White-win refutations of reply/candidate moves (the `e1e2`/`b8d7`/`a8a4`
+  class remains loss-side-documented as in §1.3).
+- **§4.3 (re-scoped):** the union target is the arms' own post ledgers
+  (arm A's sha `9c060103bd23038a5bd270eb2399494ce6208c6e1b3f16e53d2ed11d91d846e1`,
+  arm B's pinned when run), digest-pinned via `--expect`; the pilot's
+  `d0653c3c…` post ledger is falsified as a comparison target (the §4.3
+  head-record caveat is moot).
+- **H2 (re-scoped):** the grown manifest = 256 standing + 6 arm A facts =
+  262 entries; byte-equality target is arm A run 1's manifest (`e91ad57b…`);
+  262/262 shards replay-validated.
+- **H3 (re-scoped):** pilot shard byte-equality is dropped; the 6 promoted
+  shards are validated by the merger's replay validator and pinned to arm A
+  run 1's bytes via the replay.
+- **Arm B unchanged** (§3.2, §4.2 full replay) — its run/replay share the
+  identical 3-job sequence and TT history, so the comparison is sound.
+- The pilot artifacts under `measurements/plan10/probe/` stay committed,
+  re-labeled a **falsified pre-registration**: its per-job *budget*
+  bookkeeping remains valid (0 budget divergences, §1.3), its outcome and
+  child-eval predictions do not.
+- **§8 budget impact:** + ~35 min (the arm A replay the pilot baseline was
+  supposed to replace), total ≈ 3.5 h — accepted.
+
 **Next-rung outlook (for report10, not this batch):** after the sweep, the
 ladder state is 1,026 records at pass 2/work 12M (next 24M ≈ 24.6B), 46 at
 pass 3/work 36M (next 72M ≈ 3.3B), 5 at pass 4/work 108M (next 216M ≈
@@ -350,6 +425,15 @@ completions the tier sweep feeds. Plan11 sizes that trade-off with the
 measured 0.28 %-per-rung fact yield (3/1,083) as the prior.
 
 ## History
+
+- **2026-10-02 — amended (execution session): §9 added.** Arm A's official run
+  falsified the pilot pre-registration (6 facts / 1,074 censors vs 3/1,077;
+  root cause: the session's cross-job private TT — the pilot's head probes
+  warmed it, arm A drops them). §3.1/§4.1/§4.3/H1/H2/H3 re-scoped in place:
+  arm A re-baselined by a full in-session replay per §4.2, the union target
+  moved to the arms' own post ledgers, the manifest target to arm A run 1's
+  262 entries; arm B unchanged. The pilot artifacts stay committed as a
+  falsified pre-registration.
 
 - **2026-10-01 — drafted (docs-only plan session).** The census probe
   unintentionally ran the full batch at true budgets (the strict-growth

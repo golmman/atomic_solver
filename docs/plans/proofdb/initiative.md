@@ -148,6 +148,29 @@ value.
 
 ## History
 
+- **2026-10-02 (newest) — plan10 executed (amended §9)**: the tier sweep
+  (arm A, `--and-close-max-budget 100M` filter shipped as D1) ran its full
+  1,080-job set and yielded **6 facts / 1,074 censors** (0.55 %/job) —
+  **falsifying the plan-session pilot's 3-fact pre-registration**: the
+  pilot's three 6B head probes warmed the harvest session's cross-job
+  private TT, so its tier jobs ran under a different TT history
+  (child_evals diverge on 1,053/1,080 shared jobs; 3 censors flip to wins).
+  Arm A was re-baselined by a full in-session replay (byte-exact job lines,
+  ledger, all 6 shards, manifest `e91ad57b…`); normative lesson: per-arm
+  in-session replay is the only sound determinism gate — censor records are
+  scheduling state, not bounds. Arm B measured the **`g1f3` 6B rung at TT
+  1024 MB**: 3 censors at ≈ 6B each, 0 facts, work ≈ 9B, next rung **18B**
+  (§4.4's corrected ladder; plan9's "12B" prose slip stays corrected).
+  Standing layer advanced: DB `0d929f4c…` (55,703 nodes), manifest 262
+  entries `e91ad57b…`, ledger `de690bc1…` (8,446 records; pass mix
+  7,113/250/1,029/49/5); post-batch census 1,077 = 0 fresh + 1,077
+  censored. 0 flips, root undecided, handover not triggered; the
+  completion-critical-order candidate confirmed subsumed. Next: the 18B
+  `g1f3` rung vs a head-only batch (plan11 sizing, ≈ 83B ≈ 5 h full-sweep
+  alternative), website handoff (#5), parallel harvesters (#6, now with a
+  TT-history note), DTM-upgrade pass (#3). See `report10.md` and
+  `measurements/plan10/` (the pilot committed as a falsified
+  pre-registration).
 - **2026-10-01 (newest) — plan9 drafted (docs-only plan session)**: the
   §4.3 standing shape's first batch, with committed probe pins (report8
   finding 1's lesson applied — the census probe output is in the plan).

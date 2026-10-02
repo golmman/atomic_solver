@@ -1,0 +1,37 @@
+{
+ "H1_integrity": "pass (pinned census 1,083 = 0 fresh + 1,083 censored, gradient head, exclusions 26/0/0 reproduced per arm; armA: filter echo `jobs 1080 of 1083`, every job budget <= 100M and >= 2 \u00d7 work_before; armB: no filter echo, head exactly the pinned g1f3 trio at budgets 6,000,000,190/194/102 (pass 3, work \u2248 3B), --max-jobs 3 stops the arm; no job path a standing manifest path; no-exposure exact both arms: 0 new records, decisive records untouched)",
+ "H2_merge_determinism": "pass (262/262 shards replay-validated; grown1.db == grown2.db == 0d929f4c3c62e4bb..., dumps identical; grown manifest == arm A run 1's e91ad57b\u2026)",
+ "H3_H4_no_regression": "pass (6 promoted facts all replay-validated by the merger; fact paths disjoint from every standing manifest path and between arms; the pilot shard byte-equality gate is re-scoped per \u00a79 \u2014 the pilot's pre-registration was falsified)",
+ "H5_policy_determinism": "pass (\u00a79 re-scoped: arm A run 1 vs full in-session replay \u2014 job sequences identical excl wall_s, post-run ledgers byte-identical, all 6 fact shards byte-identical, grown manifests byte-identical; arm B run vs replay likewise; union determinism/idempotence/N=1 normalization byte-identical on the digest-pinned real inputs)",
+ "H6_hygiene": "pass (make test green incl. the new --and-close-max-budget filter tests; clippy/fmt/doc clean; no src/ changes; new/edited example files <= 10 KB; data/ ignored)",
+ "flip_analysis": "pass (0 flips over the grown DB and the pre-run standing DB; no row reached AND-completeness; the completion branch of \u00a74.3 did not fire; the two \u2026e2e3 rows moved to missing 8, the OR-row's e1e2/b8d7/a8a4-class candidates removed per \u00a73.7's prior)",
+ "pilot_falsification": {
+  "pilot_jobs": 1083,
+  "pilot_facts": 3,
+  "armA_run_facts": 6,
+  "shared_jobs": 1080,
+  "differing_fields": {
+   "budget": 0,
+   "child_evals": 1053,
+   "outcome": 3,
+   "exit_reason": 3,
+   "pass": 0,
+   "work_before": 0
+  },
+  "outcome_flipped_paths": [
+   "d2d4 a7a6 a2a3 a6a5 b2b3 a5a4 c2c3 a4b3 e2e3 g7g6",
+   "d2d4 d7d5 a2a3 a7a6 b2b3 a6a5 c2c3 a5a4 e2e3 a4b3 f2f3 b7b6 g2g3 b6b5 h2h3 b5b4 a3a4 b4b3 c3c4 b3b2 e3e4 b2a1q f3f4 b8d7",
+   "d2d4 d7d5 a2a3 a7a6 b2b3 a6a5 c2c3 a5a4 e2e3 a4b3 f2f3 b7b6 g2g3 b6b5 h2h3 b5b4 a3a4 a8a4"
+  ],
+  "note": "child_evals diverge on the shared jobs; outcomes flip on 3 (censored -> win). Root cause: the pilot's three 6B head probes ran first in the same session and warmed the cross-job private TT; arm A drops them. Budget bookkeeping (budget/pass/work_before) is identical everywhere \u2014 the strict-growth ladder is unaffected; \u00a74.1's byte-exact baseline and H2/H3's shard byte-equality are falsified (\u00a79)."
+ },
+ "armA": {
+  "facts": 6,
+  "verdict": "the tier sweep ran its full 1,080-job set (stop=exhausted) and yielded 6 facts (0.55% of jobs): 2 at the 24M tier, 4 at the 8M tier \u2014 three of them re-deriving the pilot's fact paths, three new. The \u00a73.1 expectation (exactly the pilot's 3 facts) is falsified; \u00a79's re-scoped expectation is confirmed by the replay"
+ },
+ "armB": {
+  "facts": 0,
+  "verdict": "3 censors: each g1f3 defense consumed its \u2248 6B budget at TT 1024 MB (work \u2248 9B after; next rung 18B) \u2014 the climb's first config-matched >= 2B measurement confirms the config-mismatch concern was real only in the TT-history sense; the band prior holds"
+ },
+ "handover": "not triggered (no completed row, 0 flips, root undecided)"
+}

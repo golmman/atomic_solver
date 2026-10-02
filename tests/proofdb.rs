@@ -343,7 +343,9 @@ fn union_ledger_save_roundtrip_is_deterministic() {
 
 // --- plan8 D1: the and-close completion-gradient policy (and_close.rs) ---
 
-use proofdb::and_close::driver::{AndCloseOptions, on_censored, run_and_close_batch};
+use proofdb::and_close::driver::{
+    AndCloseOptions, apply_budget_filter, on_censored, run_and_close_batch,
+};
 use proofdb::and_close::{AndCloseCensus, AndCloseOrder, build_sequence, ladder_budget};
 use proofdb::pns::{Pns, PnsConfig};
 use proofdb::policy::Policy;
@@ -627,6 +629,7 @@ fn and_close_driver_censored_jobs_grow_ledger_by_censor_count() {
             max_jobs: 5,
             max_runtime: 0,
             stop_file: std::path::PathBuf::new(),
+            max_budget: 0,
         };
         let mut sel = ac_build(&db, Ledger::default(), &dir, 1_000);
         let built = build_sequence(&mut sel, AndCloseOrder::Completion, 1_000).unwrap();
@@ -653,6 +656,51 @@ fn and_close_driver_censored_jobs_grow_ledger_by_censor_count() {
     let b1 = std::fs::read(&ledger_path).unwrap();
     let b2 = std::fs::read(&ledger_path2).unwrap();
     assert_eq!(b1, b2, "post-run ledger bytes identical");
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn and_close_budget_filter_plan10_d1() {
+    let dir = ac_dir("filter");
+    // Fresh (pass-0, budget = base) and ledger-censored replies at pass 1
+    // (budget = 2 × work) — a filter cap between the two classes must keep
+    // exactly the fresh ones.
+    let db = ac_crafted(&[("", 0, None)]);
+    let mut ledger = Ledger::default();
+    ledger.bump("a2a3", 1_000_000); // pass 1, work 1M → budget 2M
+    let mut sel = ac_build(&db, ledger, &dir, 1_000_000);
+    let built = build_sequence(&mut sel, AndCloseOrder::Completion, 1_000_000).unwrap();
+    assert!(built.jobs.iter().any(|j| j.budget == 1_000_000));
+    assert!(built.jobs.iter().any(|j| j.budget == 2_000_000));
+    let total = built.jobs.len();
+
+    // Unlimited (0): no-op, empty echo.
+    let mut jobs = built.jobs.clone();
+    assert_eq!(apply_budget_filter(&mut jobs, 0), "");
+    assert_eq!(jobs.len(), total);
+
+    // Cap between the classes: fresh kept, bumped dropped, echo exact.
+    let mut jobs = built.jobs.clone();
+    let line = apply_budget_filter(&mut jobs, 1_000_000);
+    assert_eq!(
+        line,
+        format!(
+            "and-close-filter: max-budget 1000000, jobs {} of {total}",
+            jobs.len()
+        )
+    );
+    assert!(jobs.iter().all(|j| j.budget == 1_000_000));
+    assert_eq!(jobs.len(), total - 1);
+    assert!(jobs.iter().all(|j| j.path != vec!["a2a3"]));
+
+    // Cap above every budget: nothing dropped.
+    let mut jobs = built.jobs.clone();
+    let line = apply_budget_filter(&mut jobs, 1_000_000_000);
+    assert_eq!(
+        line,
+        format!("and-close-filter: max-budget 1000000000, jobs {total} of {total}")
+    );
+    assert_eq!(jobs.len(), total);
     std::fs::remove_dir_all(&dir).ok();
 }
 

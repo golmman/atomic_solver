@@ -52,6 +52,10 @@ pub struct AndCloseOptions {
     pub max_jobs: usize,
     pub max_runtime: u64,
     pub stop_file: PathBuf,
+    /// The per-job budget filter (`--and-close-max-budget`, plan10 D1):
+    /// jobs whose resolved ladder budget exceeds it are dropped from the
+    /// sequence; 0 = unlimited (the default, today's behavior).
+    pub max_budget: u64,
 }
 
 /// The user-facing stop condition (`None` = keep going).
@@ -87,7 +91,26 @@ pub fn on_censored(
     ledger.save(ledger_path)
 }
 
-/// Run the `and-close` batch over the (already budgeted) job sequence./// Emits one census `job:` line per job; census records carry `pass` and
+/// The per-job budget filter (plan10 D1): drop jobs whose resolved ladder
+/// budget exceeds `max_budget`; 0 = unlimited (no-op). Returns the echo
+/// line (`"and-close-filter: max-budget <n>, jobs <kept> of <total>"`), or
+/// `""` when unlimited — no echo. The census lines are unchanged (they
+/// describe the full job set); this line describes what actually runs.
+#[must_use]
+pub fn apply_budget_filter(jobs: &mut Vec<Job>, max_budget: u64) -> String {
+    if max_budget == 0 {
+        return String::new();
+    }
+    let total = jobs.len();
+    jobs.retain(|j| j.budget <= max_budget);
+    format!(
+        "and-close-filter: max-budget {max_budget}, jobs {} of {total}",
+        jobs.len()
+    )
+}
+
+/// Run the `and-close` batch over the (already budgeted) job sequence.
+/// Emits one census `job:` line per job; census records carry `pass` and
 /// `work_before` (ledger-integrated); `number`/`kind` stay null.
 ///
 /// # Errors
@@ -166,10 +189,16 @@ pub fn run_and_close_session(
         PnsConfig::default(),
         0,
     )?;
-    let built = build_sequence(&mut sel, order, base)?;
+    let mut built = build_sequence(&mut sel, order, base)?;
     eprintln!("{}", built.census.describe(order, base));
     eprintln!("{}", describe_gradient(&built.gradient));
     eprintln!("{}", built.census.describe_exclusions());
     let mut ledger = std::mem::take(&mut sel.ledger);
+    // The budget filter (plan10 D1): drop jobs above the cap and echo the
+    // filter line. Unlimited (0) echoes nothing.
+    let filter_line = apply_budget_filter(&mut built.jobs, opts.max_budget);
+    if !filter_line.is_empty() {
+        eprintln!("{filter_line}");
+    }
     run_and_close_batch(session, &built.jobs, &mut ledger, ledger_path, opts)
 }
