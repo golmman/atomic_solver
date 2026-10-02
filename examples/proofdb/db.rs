@@ -11,6 +11,13 @@ use atomic_solver::position::Position;
 
 type Res<T> = Result<T, String>;
 
+/// Length-safe digest prefix for error messages. A DB-stored `built_from`
+/// is arbitrary content (foreign/corrupted DB) — rendering it must never
+/// panic; the message may print the value in full instead of truncating.
+fn short(s: &str) -> &str {
+    s.get(..16).unwrap_or(s)
+}
+
 /// One DB node in path form (the frontier-extraction input).
 #[derive(Debug)]
 pub struct DbRow {
@@ -47,8 +54,8 @@ pub fn load_db_rows(db_path: &Path, manifest_sha256: &str) -> Res<DbContent> {
         return Err(format!(
             "DB built_from {} != manifest digest {} (stale DB or stale manifest — \
              re-merge the standing shard set first)",
-            &built_from[..16],
-            &manifest_sha256[..16]
+            short(&built_from),
+            short(manifest_sha256)
         ));
     }
     let root_fen: String = meta("root_fen")?;

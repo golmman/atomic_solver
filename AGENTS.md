@@ -36,7 +36,10 @@ A pure solver for atomic chess in Rust.
   step: search → TT snapshot (`--tt-dump-path`) → `src/reconstruct` /
   `examples/reconstruct_pt` (worker + finalize + validator) → dump; the search CLI never
   builds trees. `Search::set_memory_limited` / `ExitReason::MemoryLimit` are a
-  reconstruct-side contract only (`src/reconstruct/walker.rs`).
+  reconstruct-side contract only (`src/reconstruct/walker.rs`). The offline proof-tree
+  pipeline is consumed by the proofdb tooling (`examples/proofdb*`, all in `examples/`):
+  shards → `proofdb_merge` → SQLite DB → `proofdb_harvest` loop; operator manual at
+  `docs/proofdb_pipeline.md`, external DB contract in `docs/spec/global_proof_store.md`.
 - `src/zobrist.rs` — deterministic Zobrist keys, including the halfmove clock;
   `src/notation.rs` — UCI move helpers, including `moves_to_uci_path`.
 - `src/main.rs` — the CLI (`--fen`, `--tt-size`, `--epsilon`, `--timeout`, `--first-outcome`,
@@ -69,6 +72,10 @@ A pure solver for atomic chess in Rust.
   format stores no hashes, so keys are recomputed by replay).
 - `move_order_debug` — static/history/killer/total ordering scores (`--name <case>`).
 - `play_and_solve` — play a given move, then solve the resulting position.
+- `proofdb_flip` — read-only implied-flip analysis over a grown proof DB (plan8); exits non-zero on any unverified flip.
+- `proofdb_harvest` — the harvest loop: solve budgeted frontier jobs, export validated shards, extend the manifest (never merges; run `proofdb_merge` after each batch). Operator manual: `docs/proofdb_pipeline.md`.
+- `proofdb_ledger_union` — N-way merge of harvest work ledgers (`--expect` digest pins; deterministic output).
+- `proofdb_merge` — the single-writer merger: manifest + shards → replay-validated, grafted SQLite DB (schema v1) + canonical dump; conflicts abort unmerged.
 - `reconstruct_pt` — rebuild a proof tree offline from a FEN + TT snapshot (`--snapshot`); reports `validate: ok|FAILED n`, exits non-zero on defects; `--oracle` and `--experiment` run the dual-build oracle.
 - `replay` — replay a UCI line from a FEN, then solve the resulting position.
 - `solve_depth_limited` — fixed-`max_depth` search without the iterative-deepening bootstrap.

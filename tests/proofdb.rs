@@ -755,3 +755,139 @@ fn and_close_census_lines_and_parsing() {
     assert!(proofdb::policy::jobs_for_policy(Policy::AndClose, &f).is_empty());
     std::fs::remove_dir_all(&dir).ok();
 }
+
+// --- plan12 D3: the derived-DB gate as a repeatable test ---
+
+/// The standing shard set (committed under `docs/plans/proofdb/shards/`)
+/// must rebuild the standing DB byte-identically from a clean checkout —
+/// the durable-layer gate (initiative constraint 3), pinned here against
+/// drift. Digest and node counts are the plan12-audit pinned values
+/// (report12 §1.1); a shard-set change is expected to turn this red.
+#[test]
+fn standing_layer_rebuilds_byte_identical() {
+    let crate_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let shards = crate_root.join("docs/plans/proofdb/shards");
+    let manifest_path = shards.join("manifest.json");
+    assert!(
+        manifest_path.is_file(),
+        "standing shard set not found at {} — this test runs inside the\n\
+         atomic_solver checkout (it pins the committed durable layer);\n\
+         see docs/proofdb_pipeline.md",
+        manifest_path.display()
+    );
+    let manifest = proofdb::read_manifest(&manifest_path).unwrap();
+    assert_eq!(manifest.entries.len(), 262, "standing manifest entry count");
+
+    // The proofdb_merge pipeline, faithfully: per shard — validate=='ok',
+    // parse + replay-validate, outcome cross-check, startpos path replay,
+    // graft + overlay; then finalize, per-graft skeleton re-validation, DB.
+    let mut tree = proofdb::merge::PathTree::new();
+    let mut rows = Vec::new();
+    let mut graft_roots = Vec::new();
+    for entry in &manifest.entries {
+        assert_eq!(entry.validate, "ok", "only 'ok' enters a merge");
+        let bytes = std::fs::read(shards.join(&entry.file))
+            .unwrap_or_else(|e| panic!("shard {}: {e}", entry.tag));
+        let shard = atomic_solver::proof_tree::ProofTree::from_bin(&mut bytes.as_slice())
+            .unwrap_or_else(|e| panic!("shard {}: {e}", entry.tag));
+        atomic_solver::proof_tree::validate_proof_tree(&shard)
+            .unwrap_or_else(|d| panic!("shard {}: {d:?}", entry.tag));
+        assert_eq!(
+            shard.nodes[0].outcome,
+            Some(entry.outcome),
+            "shard {}",
+            entry.tag
+        );
+        let mut pos = Position::from_fen(Position::STARTPOS_FEN).unwrap();
+        let moves: Vec<atomic_movegen::types::Move> = entry
+            .moves
+            .iter()
+            .map(|u| {
+                let mv = atomic_solver::notation::uci_to_move(u, &pos)
+                    .unwrap_or_else(|| panic!("shard {}: illegal {u}", entry.tag));
+                pos.do_move(mv);
+                mv
+            })
+            .collect();
+        let graft = tree.graft_path(&moves, &entry.tag);
+        tree.overlay_subtree(graft, &shard, &entry.tag)
+            .unwrap_or_else(|e| panic!("shard {}: {e}", entry.tag));
+        graft_roots.push((graft, entry.fen.clone()));
+        rows.push(proofdb::schema::ShardRow {
+            tag: entry.tag.clone(),
+            file: entry.file.clone(),
+            sha256: proofdb::digest_hex(&bytes),
+            root_fen: shard.root_fen,
+            path: entry.moves.join(" "),
+            outcome: entry.outcome,
+            depth_bound: shard.nodes[0].depth,
+            n_nodes: shard.nodes.len(),
+        });
+    }
+    tree.finalize().unwrap();
+    for (root_id, fen) in &graft_roots {
+        let skeleton = tree.reassemble_skeleton(*root_id, fen).unwrap();
+        assert!(
+            atomic_solver::proof_tree::validate_proof_tree(&skeleton).is_ok(),
+            "skeleton re-validation failed at graft {:?}",
+            tree.path_uci(*root_id)
+        );
+    }
+
+    let dir = std::env::temp_dir().join(format!("proofdb_rebuild_{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let db_path = dir.join("rebuilt.db");
+    proofdb::schema::write_db(
+        &db_path,
+        Position::STARTPOS_FEN,
+        &manifest.sha256_hex,
+        &rows,
+        &tree,
+    )
+    .unwrap();
+
+    // The pinned standing DB: byte-identical rebuild + node census.
+    assert_eq!(
+        proofdb::digest_hex(&std::fs::read(&db_path).unwrap()),
+        "0d929f4c3c62e4bbb87e9b043b582716297b23e2f7332a36e82763b1486070b8",
+        "rebuilt DB digest (the standing data/proofdb.db)"
+    );
+    assert_eq!(tree.nodes.len(), 55_703, "merged node count");
+    assert_eq!(
+        tree.nodes.iter().filter(|n| n.outcome.is_some()).count(),
+        55_628,
+        "proven node count"
+    );
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+// --- plan12 D1: the stale-DB guard is length-safe on a malformed DB ---
+
+/// A foreign/corrupted DB with a short (or non-ASCII) `built_from` must
+/// produce the clean stale-DB abort (an `Err` naming `built_from`), never a
+/// slice panic (the pre-plan12 behavior: exit 134, core dump).
+#[test]
+fn stale_db_guard_is_length_safe_on_malformed_built_from() {
+    let dir = std::env::temp_dir().join(format!("proofdb_g1_{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
+    for bogus in ["deadbeef", "", "méé-méé-méé-méé-beyond-16-bytes"] {
+        let tampered = dir.join("tampered.db");
+        std::fs::copy(&db_path, &tampered).unwrap();
+        let conn = rusqlite::Connection::open(&tampered).unwrap();
+        conn.execute("UPDATE meta SET value=?1 WHERE key='built_from'", [bogus])
+            .unwrap();
+        let err = proofdb::db::load_db_rows(&tampered, &digest).unwrap_err();
+        assert!(
+            err.contains("built_from"),
+            "message names the meta row: {err}"
+        );
+        assert!(
+            err.contains("stale DB"),
+            "stale-DB abort, not a panic: {err}"
+        );
+        assert!(err.contains(bogus), "value printed in full: {err}");
+        std::fs::remove_file(&tampered).ok();
+    }
+    std::fs::remove_dir_all(&dir).ok();
+}

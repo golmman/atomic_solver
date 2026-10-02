@@ -144,7 +144,7 @@ value.
 | 5 | **Website handoff** | ship `global_proof_store.md` to the external website project; agree on read-only DB consumption | the product surface of this initiative | S | open |
 | 6 | **Independent harvesters** | partition the frontier across worker processes (by root-child subtree or class; per-worker shard staging, serialized manifest merge); campaign-prototype precedent (`examples/campaign*`, solve plans 5/9) | wall-time scaling of harvesting without touching solver semantics | M | open — the sequential prerequisite is done (plan4, 2026-09-30: the ledger holds exactly the pick-up state a per-worker partition needs); note report4 finding 3: within-layer selection needs a work-aware key before large batches are worth scaling |
 | 7 | **Subtree-scoped harvesting** | `--root-fen` (+ optional `--root-path`) plumbs the harvest root by FEN, resolved within the merged DB tree (no match or ambiguous match aborts); a subtree *view* over the same startpos-rooted tree — shards, manifest paths, and grafting stay startpos-relative unchanged | harvest any position, the primary user surface for item 6's per-worker subtree partition | S | open — parked from plan4 (2026-09-30, docs-only amendment, plan4 decision 12 tombstone): the first batch runs at the startpos root, and the MVP limitation ("FEN must be a node of the merged DB tree") is expected to be revisited under item 6 |
-| 8 | **Tooling completeness audit + hardening** | audit the pipeline end-to-end as a third party would run it (shards → merger → DB, harvest loop from a clean checkout): missing CLIs/options, undocumented contracts, error-path gaps, packaging/docs; fix what it finds | the pivot's next plan; defines "tooling complete" so harvesting runs can be justified as validation and the website handoff (#5) has a stable surface to hand over | S–M | **open — added by the 2026-10-02 pivot** (highest priority; supersedes plan11's pre-registered 18B `g1f3` rung, which is parked unless re-framed as tooling validation) |
+| 8 | **Tooling completeness audit + hardening** | audit the pipeline end-to-end as a third party would run it (shards → merger → DB, harvest loop from a clean checkout): missing CLIs/options, undocumented contracts, error-path gaps, packaging/docs; fix what it finds | the pivot's next plan; defines "tooling complete" so harvesting runs can be justified as validation and the website handoff (#5) has a stable surface to hand over | S–M | **done (plan12, 2026-10-02)**: audit re-run and pinned (durable layer 262/262 self-consistent; merger reproduces the standing DB byte-identically, `0d929f4c…`, 55,703 nodes; harvest smoke 2/2 censored, manifest byte-identical; flip 75/0/Null). One defect found and fixed (the stale-DB `built_from` truncation panicked on a short DB value — now length-safe, regression-tested); deliverables: operator runbook `docs/proofdb_pipeline.md`, derived-DB rebuild regression test (`tests/proofdb.rs::standing_layer_rebuilds_byte_identical`, in the default gate), AGENTS.md entries for all four tools; ledger-from-clean-checkout recorded as a decision (fresh or seed — the ledger stays scheduling state), startpos-rooting/orphan-shard/merge-after-batch recorded as limitations. Plan11 (parked 18B `g1f3` rung) retired. Next levers: items 5 and 6. |
 
 ## Non-goals
 
@@ -166,8 +166,30 @@ value.
 
 ## History
 
-- **2026-10-02 (latest) — plan12 drafted (plan session): item 8's audit run
-  at plan time, all read-only.** The clean-checkout audit is measured: the
+- **2026-10-02 (latest) — plan12 executed; item 8 closed.** The audit
+  probes were re-run against the working tree and their results pinned:
+  clean-checkout merge digest `0d929f4c…` / 55,703 nodes (1.2 s), harvest
+  smoke 2/2 censored with a byte-identical manifest rewrite (`e91ad57b…`),
+  flip census 75 open / 0 flips / root Null, ledger-union N=1 over the
+  committed plan10 snapshot → 8,446 records. G1 fixed: the stale-DB guard
+  in `examples/proofdb/db.rs` now renders a short/malformed DB-stored
+  `built_from` length-safely (previously a Rust panic, exit 134) and the
+  malformed-DB probe aborts cleanly (exit 1, message names `built_from`);
+  regression test added (short, empty, non-ASCII values). G2: operator
+  runbook `docs/proofdb_pipeline.md` written and its quickstart executed
+  verbatim (all pinned expectations hold). G3: AGENTS.md now lists all
+  four proofdb tools and points at the runbook. G4:
+  `standing_layer_rebuilds_byte_identical` merges the committed manifest
+  into a temp DB and asserts the byte-identical digest + node counts in
+  the default gate (1.2 s; verified red on digest drift). G5/G6 recorded
+  as decision/limitations in the runbook. Gates: `make test` green,
+  clippy/fmt/doc clean, no `src/` changes. No new M-sized gap — item 8
+  closes with plan12; next levers are items 5 (website handoff) and 6
+  (parallel harvesters). One S-sized finding for the backlog:
+  `tests/proofdb.rs` (~35 KB) is past the file-size split threshold and
+  grows with every proofdb plan. See `report12.md`.
+- **2026-10-02 — plan12 drafted (plan session): item 8's audit run at plan
+  time, all read-only.** The clean-checkout audit is measured: the
   durable layer is complete and self-consistent (262 shards, unique
   tags/paths, no orphans, seeds included), the merger reproduces the
   standing DB byte-identically from the committed manifest (1.2 s,
