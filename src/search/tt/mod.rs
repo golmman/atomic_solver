@@ -1,6 +1,7 @@
 //! Transposition table for solver results.
 
 mod entry;
+mod shard;
 mod table;
 
 #[cfg(test)]

@@ -97,7 +97,7 @@ fn tt_resolved_rejects_win_when_best_move_repeats() {
         u32::MAX,
     );
 
-    let entry = search.tt.probe(key).copied().unwrap();
+    let entry = search.tt.probe(key).unwrap();
 
     // With the child on the path, the cached win is invalid.
     search.path_stack.push(child_rep_key);

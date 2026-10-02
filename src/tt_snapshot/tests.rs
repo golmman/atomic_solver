@@ -7,7 +7,7 @@ use crate::search::tt::TranspositionTable;
 use atomic_movegen::types::{Move, Square};
 use std::io::Cursor;
 
-fn store_solved(tt: &mut TranspositionTable, key: u64, outcome: Outcome, depth: u32) {
+fn store_solved(tt: &TranspositionTable, key: u64, outcome: Outcome, depth: u32) {
     tt.store(
         key,
         Move::make_move(Square::E2, Square::E4),
@@ -21,7 +21,7 @@ fn store_solved(tt: &mut TranspositionTable, key: u64, outcome: Outcome, depth: 
     );
 }
 
-fn store_unsolved(tt: &mut TranspositionTable, key: u64, pn: u64, dn: u64, work: u64) {
+fn store_unsolved(tt: &TranspositionTable, key: u64, pn: u64, dn: u64, work: u64) {
     tt.store(
         key,
         Move::make_move(Square::D2, Square::D4),
@@ -36,10 +36,10 @@ fn store_unsolved(tt: &mut TranspositionTable, key: u64, pn: u64, dn: u64, work:
 }
 
 fn sample_table() -> TranspositionTable {
-    let mut tt = TranspositionTable::with_capacity(4);
-    store_solved(&mut tt, 0x101, Outcome::Win, 9);
-    store_solved(&mut tt, 0x102, Outcome::Loss, 13);
-    store_unsolved(&mut tt, 0x103, 5, 8, 1000);
+    let tt = TranspositionTable::with_capacity(4);
+    store_solved(&tt, 0x101, Outcome::Win, 9);
+    store_solved(&tt, 0x102, Outcome::Loss, 13);
+    store_unsolved(&tt, 0x103, 5, 8, 1000);
     tt
 }
 
@@ -93,12 +93,12 @@ fn round_trip_preserves_every_field() {
 
 #[test]
 fn generation_policy_solved_all_unsolved_current_only() {
-    let mut tt = TranspositionTable::with_capacity(8);
-    store_solved(&mut tt, 0x201, Outcome::Win, 3); // stale solved
-    store_unsolved(&mut tt, 0x202, 1, 2, 10); // stale unsolved
+    let tt = TranspositionTable::with_capacity(8);
+    store_solved(&tt, 0x201, Outcome::Win, 3); // stale solved
+    store_unsolved(&tt, 0x202, 1, 2, 10); // stale unsolved
     tt.new_generation();
-    store_solved(&mut tt, 0x203, Outcome::Loss, 6); // current solved
-    store_unsolved(&mut tt, 0x204, 3, 4, 20); // current unsolved
+    store_solved(&tt, 0x203, Outcome::Loss, 6); // current solved
+    store_unsolved(&tt, 0x204, 3, 4, 20); // current unsolved
 
     let mut buf = Vec::new();
     write_tt_snapshot(&tt, "test", 1, &mut buf).unwrap();
@@ -114,7 +114,7 @@ fn generation_policy_solved_all_unsolved_current_only() {
 
 #[test]
 fn move_none_sentinel_round_trips() {
-    let mut tt = TranspositionTable::with_capacity(2);
+    let tt = TranspositionTable::with_capacity(2);
     tt.store(
         0x301,
         Move::NONE,
@@ -138,7 +138,7 @@ fn move_none_sentinel_round_trips() {
 
 #[test]
 fn move_none_serializes_as_0xffff() {
-    let mut tt = TranspositionTable::with_capacity(1);
+    let tt = TranspositionTable::with_capacity(1);
     tt.store(
         0x401,
         Move::NONE,
@@ -215,11 +215,12 @@ fn solved_records_appear_in_bucket_order() {
     write_tt_snapshot(&tt, "test", 1, &mut buf).unwrap();
     let (_, solved, _) = read_tt_snapshot(&mut Cursor::new(&buf)).unwrap();
 
-    let expected: Vec<u64> = tt
-        .entries()
-        .filter(|e| e.outcome.is_some())
-        .map(|e| e.key)
-        .collect();
+    let mut expected: Vec<u64> = Vec::new();
+    tt.for_each_entry(|e| {
+        if e.outcome.is_some() {
+            expected.push(e.key);
+        }
+    });
     let actual: Vec<u64> = solved.iter().map(|r| r.key).collect();
     assert_eq!(actual, expected);
 }

@@ -239,7 +239,7 @@ impl Search {
             // position-static (terminality is deterministic per hash), so a
             // TT-resolved hit is identical to the terminal path that used to
             // run before the probe.
-            let entry = self.tt.probe(child_key).copied();
+            let entry = self.tt.probe(child_key);
             let mut resolved = entry
                 .as_ref()
                 .and_then(|e| Self::resolved_from_entry(e, child_max_depth));

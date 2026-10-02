@@ -232,7 +232,7 @@ mod tests {
     fn extract_pv_follows_tt_entries() {
         use crate::zobrist::INF;
 
-        let mut search = Search::new(1);
+        let search = Search::new(1);
         let pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
         let mv = Move::make_move(Square::E1, Square::E8);
 

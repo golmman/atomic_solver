@@ -206,9 +206,9 @@ fn restore_tt(path: &str, tt_mb: usize) -> Result<(Search, RestoreStats), String
     let mut reader = std::io::BufReader::new(file);
     let (_header, solved, unsolved) =
         read_tt_snapshot(&mut reader).map_err(|e| format!("parse: {e}"))?;
-    let mut search = Search::new(tt_mb);
+    let search = Search::new(tt_mb);
     for r in &solved {
-        search.tt_mut().store(
+        search.tt().store(
             r.key,
             r.best_move,
             u8::MAX,
@@ -221,7 +221,7 @@ fn restore_tt(path: &str, tt_mb: usize) -> Result<(Search, RestoreStats), String
         );
     }
     for r in &unsolved {
-        search.tt_mut().store(
+        search.tt().store(
             r.key,
             r.best_move,
             u8::MAX,
@@ -542,7 +542,7 @@ mod tests {
         let path = dir.join("w0.tt");
 
         let mut src = Search::new(4);
-        src.tt_mut().store(
+        src.tt().store(
             0x1234,
             Move::NONE,
             u8::MAX,
@@ -553,7 +553,7 @@ mod tests {
             5,
             0,
         );
-        src.tt_mut()
+        src.tt()
             .store(0x5678, Move::NONE, u8::MAX, 42, None, 3, 9, 2, 11);
         {
             let mut f = std::fs::File::create(&path).unwrap();

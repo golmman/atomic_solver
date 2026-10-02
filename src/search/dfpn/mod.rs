@@ -470,22 +470,13 @@ impl Search {
     /// Read-only access to the transposition table, for snapshot/debug use.
     ///
     /// This exposes the raw table contents (all generations, native bucket
-    /// order via [`TranspositionTable::entries`]); the search itself only ever
-    /// probes current-generation entries. Intended for the TT snapshot writer
-    /// and debugging tools, not for search logic.
+    /// order via [`TranspositionTable::for_each_entry`]); the search itself
+    /// only ever probes current-generation entries. Intended for the TT
+    /// snapshot writer, table seeding, and debugging tools, not for search
+    /// logic.
     #[must_use]
     pub fn tt(&self) -> &TranspositionTable {
         &self.tt
-    }
-
-    /// Mutable transposition-table access for tooling that pre-populates the
-    /// table from a snapshot (see [`crate::tt_snapshot`] and
-    /// [`crate::reconstruct`]). Seeding uses the public
-    /// [`TranspositionTable::store`]; the search must not depend on seeded
-    /// entries being present (they are ordinary entries: evictable, and
-    /// subject to the same probe semantics as live ones).
-    pub fn tt_mut(&mut self) -> &mut TranspositionTable {
-        &mut self.tt
     }
 
     /// Aggregate transposition-table statistics after a search.

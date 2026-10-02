@@ -234,7 +234,7 @@ pub fn seed_search(search: &mut Search, solved: &[SolvedRecord]) -> usize {
             continue;
         }
         let (pn, dn) = record.outcome.to_pn_dn();
-        search.tt_mut().store(
+        search.tt().store(
             record.key,
             record.best_move,
             u8::MAX,

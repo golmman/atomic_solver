@@ -115,7 +115,7 @@ impl Search {
         // Copy) so the borrow ends before the later `self.tt.store`, and the
         // solved-result check, ordering hint, and previous-bounds snapshot are
         // all derived from the same snapshot.
-        let tt_entry = self.tt.probe(tt_key).copied();
+        let tt_entry = self.tt.probe(tt_key);
         if let Some(entry) = tt_entry.as_ref()
             && let Some(resolved) = Self::resolved_from_entry(entry, max_depth)
             && (entry.best_move == Move::NONE || !self.best_move_repeats_path(pos, entry.best_move))
