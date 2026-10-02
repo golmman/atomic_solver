@@ -3,10 +3,21 @@
 ## Status
 
 **Opened 2026-09-28.** A new initiative, deliberately *not* a reopening of
-`solve` (see Relationship to other initiatives below). Goal: build and grow a
-**startpos-rooted, machine-verifiable database of proven and disproven lines**
-of atomic chess, structured as a partial AND/OR proof tree, consumable by an
-external exploratory website.
+`solve` (see Relationship to other initiatives below). Founding framing:
+build and grow a **startpos-rooted, machine-verifiable database of proven
+and disproven lines** of atomic chess, structured as a partial AND/OR proof
+tree, consumable by an external exploratory website.
+
+**Pivoted 2026-10-02 (owner decision).** The founding framing above was a
+mis-statement of the intent: the initiative's actual deliverable is the
+**tooling**, not the database contents. Goal: deliver, harden, and document
+the pipeline that can *build and grow* such a database (harvester, merger,
+ledger tooling, flip analysis, website handoff). Harvesting batches are
+**validation of the tooling** — evidence that the pipeline works at scale —
+not deliverables in their own right; DB growth beyond what validation
+requires is out of scope until the tooling is complete. The data-model
+decisions below are unchanged: they are the contract surface the tooling
+implements.
 
 ## Motivation
 
@@ -47,6 +58,12 @@ initiative's founding conversation). Key decisions:
   (repetition draws are path-dependent).
 
 ## Goal
+
+**Post-pivot reading (2026-10-02):** the layers below describe what the
+*tooling* must be able to build and consume — they are the deliverable's
+contract, not a production target. Item 8 (tooling completeness audit +
+hardening) owns closing the gap; harvesting runs justify themselves only as
+pipeline validation.
 
 A growing, verifiable, startpos-rooted partial proof tree:
 
@@ -127,6 +144,7 @@ value.
 | 5 | **Website handoff** | ship `global_proof_store.md` to the external website project; agree on read-only DB consumption | the product surface of this initiative | S | open |
 | 6 | **Independent harvesters** | partition the frontier across worker processes (by root-child subtree or class; per-worker shard staging, serialized manifest merge); campaign-prototype precedent (`examples/campaign*`, solve plans 5/9) | wall-time scaling of harvesting without touching solver semantics | M | open — the sequential prerequisite is done (plan4, 2026-09-30: the ledger holds exactly the pick-up state a per-worker partition needs); note report4 finding 3: within-layer selection needs a work-aware key before large batches are worth scaling |
 | 7 | **Subtree-scoped harvesting** | `--root-fen` (+ optional `--root-path`) plumbs the harvest root by FEN, resolved within the merged DB tree (no match or ambiguous match aborts); a subtree *view* over the same startpos-rooted tree — shards, manifest paths, and grafting stay startpos-relative unchanged | harvest any position, the primary user surface for item 6's per-worker subtree partition | S | open — parked from plan4 (2026-09-30, docs-only amendment, plan4 decision 12 tombstone): the first batch runs at the startpos root, and the MVP limitation ("FEN must be a node of the merged DB tree") is expected to be revisited under item 6 |
+| 8 | **Tooling completeness audit + hardening** | audit the pipeline end-to-end as a third party would run it (shards → merger → DB, harvest loop from a clean checkout): missing CLIs/options, undocumented contracts, error-path gaps, packaging/docs; fix what it finds | the pivot's next plan; defines "tooling complete" so harvesting runs can be justified as validation and the website handoff (#5) has a stable surface to hand over | S–M | **open — added by the 2026-10-02 pivot** (highest priority; supersedes plan11's pre-registered 18B `g1f3` rung, which is parked unless re-framed as tooling validation) |
 
 ## Non-goals
 
@@ -148,6 +166,22 @@ value.
 
 ## History
 
+- **2026-10-02 (latest) — initiative pivoted (owner decision): tooling over
+  database contents.** The founding goal ("build and grow a proof-line
+  database") is re-scoped: the deliverable is the **tooling pipeline**
+  (harvester, merger, ledger union, flip analysis, website handoff);
+  harvesting batches are validation of that tooling, not deliverables.
+  Motivation: plan6–plan10 were compute-heavy DB-growth batches (plan10's
+  accidental pilot alone spent ~28B child-evals / ~98 min for 3 facts),
+  which the owner did not intend. Consequences: item 8 added (tooling
+  completeness audit + hardening — the next plan); plan11's pre-registered
+  18B `g1f3` rung and further ladder sweeps are parked unless re-framed as
+  tooling validation; items 5/6/7 stay open as the tooling gaps. The status
+  index row is updated; the data-model decisions above are unchanged (they
+  are the tooling's contract surface). Plan10's executed record (6 facts,
+  falsified pilot pre-registration, arm A re-baselined by full in-session
+  replay; standing layer DB `0d929f4c…`, 262 shards, ledger `de690bc1…`)
+  stands as the pipeline's latest validated state.
 - **2026-10-02 (newest) — plan10 executed (amended §9)**: the tier sweep
   (arm A, `--and-close-max-budget 100M` filter shipped as D1) ran its full
   1,080-job set and yielded **6 facts / 1,074 censors** (0.55 %/job) —

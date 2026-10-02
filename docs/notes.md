@@ -621,4 +621,4 @@ Amend plan10 (§4.1/§4.3/H2/H3 re-scoped: arm A re-baselined by a full in-sessi
 
 ---
 
-please investigate: how is `libs/Fairy-Stockfish/` achieving parallel search when we struggle to get it for this application?
+please investigate: how is `libs/Fairy-Stockfish/` achieving parallel / multi-threaded search when we struggle to get it done for this application?
