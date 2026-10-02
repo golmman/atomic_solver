@@ -1,0 +1,1077 @@
+diff --git a/examples/campaign_worker.rs b/examples/campaign_worker.rs
+index 37b8970..bea7e28 100644
+--- a/examples/campaign_worker.rs
++++ b/examples/campaign_worker.rs
+@@ -206,9 +206,9 @@ fn restore_tt(path: &str, tt_mb: usize) -> Result<(Search, RestoreStats), String
+     let mut reader = std::io::BufReader::new(file);
+     let (_header, solved, unsolved) =
+         read_tt_snapshot(&mut reader).map_err(|e| format!("parse: {e}"))?;
+-    let mut search = Search::new(tt_mb);
++    let search = Search::new(tt_mb);
+     for r in &solved {
+-        search.tt_mut().store(
++        search.tt().store(
+             r.key,
+             r.best_move,
+             u8::MAX,
+@@ -221,7 +221,7 @@ fn restore_tt(path: &str, tt_mb: usize) -> Result<(Search, RestoreStats), String
+         );
+     }
+     for r in &unsolved {
+-        search.tt_mut().store(
++        search.tt().store(
+             r.key,
+             r.best_move,
+             u8::MAX,
+@@ -542,7 +542,7 @@ mod tests {
+         let path = dir.join("w0.tt");
+ 
+         let mut src = Search::new(4);
+-        src.tt_mut().store(
++        src.tt().store(
+             0x1234,
+             Move::NONE,
+             u8::MAX,
+@@ -553,7 +553,7 @@ mod tests {
+             5,
+             0,
+         );
+-        src.tt_mut()
++        src.tt()
+             .store(0x5678, Move::NONE, u8::MAX, 42, None, 3, 9, 2, 11);
+         {
+             let mut f = std::fs::File::create(&path).unwrap();
+diff --git a/src/reconstruct/mod.rs b/src/reconstruct/mod.rs
+index 1ed30d2..fd54292 100644
+--- a/src/reconstruct/mod.rs
++++ b/src/reconstruct/mod.rs
+@@ -234,7 +234,7 @@ pub fn seed_search(search: &mut Search, solved: &[SolvedRecord]) -> usize {
+             continue;
+         }
+         let (pn, dn) = record.outcome.to_pn_dn();
+-        search.tt_mut().store(
++        search.tt().store(
+             record.key,
+             record.best_move,
+             u8::MAX,
+diff --git a/src/reconstruct/tests.rs b/src/reconstruct/tests.rs
+index 4fc4aa6..d70438d 100644
+--- a/src/reconstruct/tests.rs
++++ b/src/reconstruct/tests.rs
+@@ -11,6 +11,7 @@ use atomic_movegen::types::Move;
+ use crate::notation::move_to_bits;
+ use crate::position::{Outcome, Position};
+ use crate::search::dfpn::Search;
++use crate::search::tt::{TranspositionTable, TtEntry};
+ use crate::tt_snapshot::{SolvedRecord, read_tt_snapshot, write_tt_snapshot};
+ use crate::zobrist::rule50_key;
+ 
+@@ -35,6 +36,18 @@ fn solved_snapshot(fen: &str) -> Vec<SolvedRecord> {
+     solved
+ }
+ 
++/// Find a solved root entry by replaying the table's entries in native
++/// order (replacement for the removed `entries()` iterator).
++fn find_solved_root(tt: &TranspositionTable, root_key: u64) -> TtEntry {
++    let mut found = None;
++    tt.for_each_entry(|e| {
++        if found.is_none() && e.key == root_key && e.outcome.is_some() {
++            found = Some(*e);
++        }
++    });
++    found.expect("live search stored a solved root entry")
++}
++
+ fn record(key: u64, outcome: Outcome, depth: u32, best_move: Move) -> SolvedRecord {
+     SolvedRecord {
+         key,
+@@ -54,12 +67,7 @@ fn seeding_is_probe_visible_in_current_generation() {
+ 
+     // The root solved record from the live search, seeded into a fresh table.
+     let root_key = Position::from_fen(MATE3_FEN).unwrap().hash();
+-    let entry = live
+-        .tt()
+-        .entries()
+-        .find(|e| e.key == root_key && e.outcome.is_some())
+-        .copied()
+-        .expect("live search stored a solved root entry");
++    let entry = find_solved_root(live.tt(), root_key);
+ 
+     let mut fresh = Search::new(16);
+     let seeded = seed_search(
+@@ -104,12 +112,7 @@ fn seeded_entry_resolves_a_mate_in_1_search() {
+     let (live_outcome, _pv, _nodes) = live.solve(&mut live_pos);
+     assert_eq!(live_outcome, Outcome::Win);
+     let root_key = Position::from_fen(fen).unwrap().hash();
+-    let entry = live
+-        .tt()
+-        .entries()
+-        .find(|e| e.key == root_key && e.outcome.is_some())
+-        .copied()
+-        .expect("live search stored a solved root entry");
++    let entry = find_solved_root(live.tt(), root_key);
+     assert_eq!(entry.remaining_depth, u32::MAX);
+     assert!(entry.depth >= 1);
+ 
+diff --git a/src/reconstruct/walker.rs b/src/reconstruct/walker.rs
+index 3473823..ff53bdd 100644
+--- a/src/reconstruct/walker.rs
++++ b/src/reconstruct/walker.rs
+@@ -324,7 +324,7 @@ impl Walker<'_> {
+ 
+     /// Copy solved entries from the fill search's TT into the walk map.
+     fn harvest(&mut self) {
+-        for entry in self.fill.tt().entries() {
++        self.fill.tt().for_each_entry(|entry| {
+             if let Some(outcome) = entry.outcome {
+                 self.map.entry(entry.key).or_insert(SolvedRecord {
+                     key: entry.key,
+@@ -333,7 +333,7 @@ impl Walker<'_> {
+                     best_move: entry.best_move,
+                 });
+             }
+-        }
++        });
+     }
+ 
+     /// Validate a Win node's best move and descend into it. The node's own
+diff --git a/src/search/dfpn/children.rs b/src/search/dfpn/children.rs
+index 414b156..0efaf90 100644
+--- a/src/search/dfpn/children.rs
++++ b/src/search/dfpn/children.rs
+@@ -239,7 +239,7 @@ impl Search {
+             // position-static (terminality is deterministic per hash), so a
+             // TT-resolved hit is identical to the terminal path that used to
+             // run before the probe.
+-            let entry = self.tt.probe(child_key).copied();
++            let entry = self.tt.probe(child_key);
+             let mut resolved = entry
+                 .as_ref()
+                 .and_then(|e| Self::resolved_from_entry(e, child_max_depth));
+diff --git a/src/search/dfpn/core.rs b/src/search/dfpn/core.rs
+index 1d2949f..5160abd 100644
+--- a/src/search/dfpn/core.rs
++++ b/src/search/dfpn/core.rs
+@@ -115,7 +115,7 @@ impl Search {
+         // Copy) so the borrow ends before the later `self.tt.store`, and the
+         // solved-result check, ordering hint, and previous-bounds snapshot are
+         // all derived from the same snapshot.
+-        let tt_entry = self.tt.probe(tt_key).copied();
++        let tt_entry = self.tt.probe(tt_key);
+         if let Some(entry) = tt_entry.as_ref()
+             && let Some(resolved) = Self::resolved_from_entry(entry, max_depth)
+             && (entry.best_move == Move::NONE || !self.best_move_repeats_path(pos, entry.best_move))
+diff --git a/src/search/dfpn/mod.rs b/src/search/dfpn/mod.rs
+index afc0c0c..3624717 100644
+--- a/src/search/dfpn/mod.rs
++++ b/src/search/dfpn/mod.rs
+@@ -470,24 +470,15 @@ impl Search {
+     /// Read-only access to the transposition table, for snapshot/debug use.
+     ///
+     /// This exposes the raw table contents (all generations, native bucket
+-    /// order via [`TranspositionTable::entries`]); the search itself only ever
+-    /// probes current-generation entries. Intended for the TT snapshot writer
+-    /// and debugging tools, not for search logic.
++    /// order via [`TranspositionTable::for_each_entry`]); the search itself
++    /// only ever probes current-generation entries. Intended for the TT
++    /// snapshot writer, table seeding, and debugging tools, not for search
++    /// logic.
+     #[must_use]
+     pub fn tt(&self) -> &TranspositionTable {
+         &self.tt
+     }
+ 
+-    /// Mutable transposition-table access for tooling that pre-populates the
+-    /// table from a snapshot (see [`crate::tt_snapshot`] and
+-    /// [`crate::reconstruct`]). Seeding uses the public
+-    /// [`TranspositionTable::store`]; the search must not depend on seeded
+-    /// entries being present (they are ordinary entries: evictable, and
+-    /// subject to the same probe semantics as live ones).
+-    pub fn tt_mut(&mut self) -> &mut TranspositionTable {
+-        &mut self.tt
+-    }
+-
+     /// Aggregate transposition-table statistics after a search.
+     ///
+     /// Tuple fields are: `(buckets, live_entries, solved_entries, unsolved_entries, generation)`.
+diff --git a/src/search/dfpn/pv.rs b/src/search/dfpn/pv.rs
+index 8101d9a..3ad7c75 100644
+--- a/src/search/dfpn/pv.rs
++++ b/src/search/dfpn/pv.rs
+@@ -232,7 +232,7 @@ mod tests {
+     fn extract_pv_follows_tt_entries() {
+         use crate::zobrist::INF;
+ 
+-        let mut search = Search::new(1);
++        let search = Search::new(1);
+         let pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+         let mv = Move::make_move(Square::E1, Square::E8);
+ 
+diff --git a/src/search/dfpn/tests.rs b/src/search/dfpn/tests.rs
+index 4517636..61dc5a1 100644
+--- a/src/search/dfpn/tests.rs
++++ b/src/search/dfpn/tests.rs
+@@ -97,7 +97,7 @@ fn tt_resolved_rejects_win_when_best_move_repeats() {
+         u32::MAX,
+     );
+ 
+-    let entry = search.tt.probe(key).copied().unwrap();
++    let entry = search.tt.probe(key).unwrap();
+ 
+     // With the child on the path, the cached win is invalid.
+     search.path_stack.push(child_rep_key);
+diff --git a/src/search/tt/mod.rs b/src/search/tt/mod.rs
+index 39cf29e..627cae5 100644
+--- a/src/search/tt/mod.rs
++++ b/src/search/tt/mod.rs
+@@ -1,6 +1,7 @@
+ //! Transposition table for solver results.
+ 
+ mod entry;
++mod shard;
+ mod table;
+ 
+ #[cfg(test)]
+diff --git a/src/search/tt/table.rs b/src/search/tt/table.rs
+index f98ad64..9bdc64a 100644
+--- a/src/search/tt/table.rs
++++ b/src/search/tt/table.rs
+@@ -1,21 +1,70 @@
+ //! Transposition table storage and lookup.
++//!
++//! # Concurrency (inert prerequisite for the parallel prototype)
++//!
++//! The bucket array is sharded into contiguous power-of-two chunks, each
++//! behind a [`std::sync::RwLock`]; every mutating operation takes `&self`
++//! (interior mutability), so the table is `Send + Sync` by construction.
++//! The sequential N=1 behavior is observably identical to the pre-sharding
++//! table: the bucket index (`key & mask`), the store semantics (solved
++//! overwrites, unsolved never downgrades a solved entry, `work` monotone,
++//! k=2 replacement score), the generation policy, and the native bucket
++//! order consumed by `for_each_entry` (the snapshot byte-identity contract)
++//! are all unchanged.
++//!
++//! # Critical sections
++//!
++//! One bucket's read-modify-write stays inside one write-locked critical
++//! section of the shard owning the bucket (`store`), so a concurrent
++//! `probe` can never observe a torn or half-updated entry — `probe` copies
++//! the matched entry under a read lock and returns it by value. Lock
++//! poisoning propagates as a panic: a panic while holding a lock crashes
++//! loudly instead of hiding a broken invariant.
++//!
++//! # Generation counter
++//!
++//! The generation counter is a single shared `AtomicU32` with the
++//! *unchanged* sequential policy: `new_generation()` bumps exactly as
++//! before; `clear()` resets it to 1. `Relaxed`-style atomicity is not
++//! relied on beyond atomicity itself: all entry-content ordering flows
++//! through the per-shard locks, and the loads/stores use `Acquire`/`Release`
++//! for conservatism at no measurable cost.
++//!
++//! # Sequential-owner contract
++//!
++//! `clear()` and `new_generation()` are called between search phases by the
++//! single owner thread in the sequential solver; calling them *while other
++//! workers run* is not part of this table's contract (the parallel
++//! prototype owns that policy and its documentation).
++
++use std::sync::atomic::{AtomicU32, Ordering};
++use std::sync::RwLock;
+ 
+ use crate::position::Outcome;
+ use crate::zobrist::INF;
+ use atomic_movegen::types::Move;
+ 
+ use super::entry::TtEntry;
++use super::shard::{layout, Shard};
+ 
+ pub struct TranspositionTable {
+-    table: Vec<[TtEntry; 2]>,
++    shards: Vec<RwLock<Shard>>,
++    buckets_per_shard: usize,
++    shard_shift: u32,
+     mask: usize,
+-    current_generation: u32,
++    current_generation: AtomicU32,
+ }
+ 
++// Static assertion: the table is safe to share across worker threads.
++const _: () = {
++    const fn assert_send_sync<T: Send + Sync>() {}
++    assert_send_sync::<TranspositionTable>();
++};
++
+ impl TranspositionTable {
+     #[cfg(test)]
+     pub(crate) fn bucket_count(&self) -> usize {
+-        self.table.len()
++        self.shards.len() * self.buckets_per_shard
+     }
+ 
+     /// Construct a table with the given number of buckets (rounded up to the
+@@ -24,11 +73,7 @@ impl TranspositionTable {
+     #[cfg(test)]
+     pub(crate) fn with_capacity(buckets: usize) -> Self {
+         let buckets = buckets.next_power_of_two().max(1);
+-        Self {
+-            table: vec![[TtEntry::default(); 2]; buckets],
+-            mask: buckets - 1,
+-            current_generation: 1,
+-        }
++        Self::with_bucket_count(buckets)
+     }
+ 
+     #[must_use]
+@@ -37,10 +82,19 @@ impl TranspositionTable {
+         let entries = (bytes / std::mem::size_of::<TtEntry>()).next_power_of_two();
+         let entries = entries.max(32);
+         let buckets = entries.max(2) / 2;
++        Self::with_bucket_count(buckets)
++    }
++
++    fn with_bucket_count(bucket_count: usize) -> Self {
++        let (shards, buckets_per_shard, shard_shift) = layout(bucket_count);
+         Self {
+-            table: vec![[TtEntry::default(); 2]; buckets],
+-            mask: buckets - 1,
+-            current_generation: 1,
++            shards: (0..shards)
++                .map(|_| RwLock::new(Shard::new(buckets_per_shard)))
++                .collect(),
++            buckets_per_shard,
++            shard_shift,
++            mask: bucket_count - 1,
++            current_generation: AtomicU32::new(1),
+         }
+     }
+ 
+@@ -49,31 +103,51 @@ impl TranspositionTable {
+         (key as usize) & self.mask
+     }
+ 
++    /// The generation counter at the time of the call.
++    ///
++    /// Used by snapshot/debug tooling to partition entries by generation.
++    #[must_use]
++    pub fn current_generation(&self) -> u32 {
++        self.current_generation.load(Ordering::Acquire)
++    }
++
++    #[inline]
+     #[must_use]
+-    pub fn probe(&self, key: u64) -> Option<&TtEntry> {
+-        self.table[self.index(key)]
++    pub fn probe(&self, key: u64) -> Option<TtEntry> {
++        let generation = self.current_generation.load(Ordering::Acquire);
++        let idx = self.index(key);
++        // SAFETY: `index()` masks with `bucket_count - 1`, so the shard index
++        // and the local bucket index are in bounds by construction.
++        let shard = unsafe { self.shards.get_unchecked(idx >> self.shard_shift) }
++            .read()
++            .unwrap();
++        unsafe { shard.buckets.get_unchecked(idx & (self.buckets_per_shard - 1)) }
+             .iter()
+-            .find(|e| e.valid && e.key == key && e.generation == self.current_generation)
++            .find(|e| e.valid && e.key == key && e.generation == generation)
++            .copied()
+     }
+ 
+-    pub fn clear(&mut self) {
+-        for bucket in &mut self.table {
+-            *bucket = [TtEntry::default(); 2];
++    pub fn clear(&self) {
++        for shard in &self.shards {
++            let mut shard = shard.write().expect("tt shard lock poisoned");
++            for bucket in &mut shard.buckets {
++                *bucket = [TtEntry::default(); 2];
++            }
+         }
+-        self.current_generation = 1;
++        self.current_generation.store(1, Ordering::Release);
+     }
+ 
+     /// Mark every existing table entry as belonging to an older generation.
+-    pub fn new_generation(&mut self) {
+-        self.current_generation = self.current_generation.wrapping_add(1);
+-        if self.current_generation == 0 {
++    pub fn new_generation(&self) {
++        let previous = self.current_generation.fetch_add(1, Ordering::AcqRel);
++        if previous == u32::MAX {
+             self.clear();
+         }
+     }
+ 
+     #[allow(clippy::too_many_arguments)]
+     pub fn store(
+-        &mut self,
++        &self,
+         key: u64,
+         best_move: Move,
+         best_child: u8,
+@@ -91,15 +165,21 @@ impl TranspositionTable {
+             dn = 1;
+         }
+ 
++        let generation = self.current_generation.load(Ordering::Acquire);
+         let idx = self.index(key);
+         let mut existing = false;
+ 
+         {
+-            let bucket = &mut self.table[idx];
++            // The bucket's read-modify-write stays inside one write-locked
++            // critical section (shared-TT discipline at the per-shard level).
++            let mut shard = self.shards[idx >> self.shard_shift]
++                .write()
++                .expect("tt shard lock poisoned");
++            let bucket = &mut shard.buckets[idx & (self.buckets_per_shard - 1)];
+             for slot in bucket.iter_mut() {
+-                if slot.valid && slot.key == key && slot.generation == self.current_generation {
++                if slot.valid && slot.key == key && slot.generation == generation {
+                     existing = true;
+-                    slot.generation = self.current_generation;
++                    slot.generation = generation;
+                     slot.work = slot.work.max(work);
+                     if let Some(o) = outcome {
+                         // Solved, path-independent result: overwrite the base entry.
+@@ -125,49 +205,46 @@ impl TranspositionTable {
+                     break;
+                 }
+             }
++            if !existing {
++                let new = TtEntry {
++                    key,
++                    valid: true,
++                    generation,
++                    best_move,
++                    best_child,
++                    work,
++                    outcome,
++                    pn,
++                    dn,
++                    depth,
++                    remaining_depth,
++                };
++                insert_new(bucket, generation, new);
++            }
+         }
+-
+-        if existing {
+-            return;
+-        }
+-
+-        let new = TtEntry {
+-            key,
+-            valid: true,
+-            generation: self.current_generation,
+-            best_move,
+-            best_child,
+-            work,
+-            outcome,
+-            pn,
+-            dn,
+-            depth,
+-            remaining_depth,
+-        };
+-
+-        self.insert_new(idx, new);
+-    }
+-
+-    /// The generation counter at the time of the call.
+-    ///
+-    /// Used by snapshot/debug tooling to partition entries by generation.
+-    #[must_use]
+-    pub fn current_generation(&self) -> u32 {
+-        self.current_generation
+     }
+ 
+     /// Iterate over all `valid` entries in native bucket order, across all
+-    /// generations.
++    /// generations, locking one shard at a time in index order.
+     ///
+     /// This is for snapshot/debug use; the search itself only ever looks at
+     /// entries via `probe` (current generation). Callers that need
+     /// generation-dependent semantics must filter by `current_generation()`
+     /// themselves.
+-    pub fn entries(&self) -> impl Iterator<Item = &TtEntry> {
+-        self.table
+-            .iter()
+-            .flat_map(|bucket| bucket.iter())
+-            .filter(|e| e.valid)
++    ///
++    /// `f` must not call back into the table (lock re-entrancy is not
++    /// supported: a `store` on the same shard inside `f` would deadlock).
++    pub fn for_each_entry(&self, mut f: impl FnMut(&TtEntry)) {
++        for shard in &self.shards {
++            let shard = shard.read().expect("tt shard lock poisoned");
++            for bucket in &shard.buckets {
++                for entry in bucket {
++                    if entry.valid {
++                        f(entry);
++                    }
++                }
++            }
++        }
+     }
+ 
+     /// Return a distribution of stored `best_child` values among live entries.
+@@ -176,17 +253,18 @@ impl TranspositionTable {
+     /// debugging proof-tree and GHI path-code usage.
+     #[must_use]
+     pub fn best_child_counts(&self) -> Vec<(u8, usize)> {
++        let generation = self.current_generation();
+         let mut counts = std::collections::HashMap::new();
+-        for bucket in &self.table {
++        for_each_bucket(&self.shards, |bucket| {
+             for entry in bucket {
+                 if entry.valid
+-                    && entry.generation == self.current_generation
++                    && entry.generation == generation
+                     && entry.best_child != u8::MAX
+                 {
+                     *counts.entry(entry.best_child).or_insert(0) += 1;
+                 }
+             }
+-        }
++        });
+         let mut v: Vec<_> = counts.into_iter().collect();
+         v.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
+         v
+@@ -197,45 +275,57 @@ impl TranspositionTable {
+     /// Tuple fields are: `(buckets, live_entries, solved_entries, unsolved_entries, generation)`.
+     #[must_use]
+     pub fn stats(&self) -> (usize, usize, usize, usize, u32) {
++        let generation = self.current_generation();
+         let mut live = 0;
+         let mut solved = 0;
+-        for bucket in &self.table {
++        for_each_bucket(&self.shards, |bucket| {
+             for entry in bucket {
+-                if entry.valid && entry.generation == self.current_generation {
++                if entry.valid && entry.generation == generation {
+                     live += 1;
+                     if entry.outcome.is_some() {
+                         solved += 1;
+                     }
+                 }
+             }
+-        }
++        });
+         let unsolved = live - solved;
+         (
+-            self.table.len(),
++            self.shards.len() * self.buckets_per_shard,
+             live,
+             solved,
+             unsolved,
+-            self.current_generation,
++            generation,
+         )
+     }
++}
+ 
+-    /// Place a new entry into `idx`, preferring the two most valuable entries.
+-    fn insert_new(&mut self, idx: usize, new: TtEntry) {
+-        let current_generation = self.current_generation;
+-        let score = |e: &TtEntry| {
+-            let live = e.valid && e.generation == current_generation;
+-            let solved = e.outcome.is_some();
+-            (u8::from(live), u8::from(solved), e.work, e.generation)
+-        };
+-
+-        let bucket = &mut self.table[idx];
+-        if !bucket[0].valid || bucket[0].generation != current_generation {
+-            bucket[0] = new;
+-        } else if !bucket[1].valid || bucket[1].generation != current_generation {
+-            bucket[1] = new;
+-        } else {
+-            let evict = usize::from(score(&bucket[0]) >= score(&bucket[1]));
+-            bucket[evict] = new;
++/// Lock each shard's buckets in index order and apply `f` (order-independent
++/// aggregate helper for `stats`/`best_child_counts`).
++fn for_each_bucket(shards: &[RwLock<Shard>], mut f: impl FnMut(&[TtEntry; 2])) {
++    for shard in shards {
++        let shard = shard.read().expect("tt shard lock poisoned");
++        for bucket in &shard.buckets {
++            f(bucket);
+         }
+     }
+ }
++
++/// Place a new entry into `bucket`, preferring the two most valuable entries.
++/// Called with the owning shard write-locked; `generation` is the value the
++/// caller read for this store.
++fn insert_new(bucket: &mut [TtEntry; 2], generation: u32, new: TtEntry) {
++    let score = |e: &TtEntry| {
++        let live = e.valid && e.generation == generation;
++        let solved = e.outcome.is_some();
++        (u8::from(live), u8::from(solved), e.work, e.generation)
++    };
++
++    if !bucket[0].valid || bucket[0].generation != generation {
++        bucket[0] = new;
++    } else if !bucket[1].valid || bucket[1].generation != generation {
++        bucket[1] = new;
++    } else {
++        let evict = usize::from(score(&bucket[0]) >= score(&bucket[1]));
++        bucket[evict] = new;
++    }
++}
+diff --git a/src/search/tt/tests.rs b/src/search/tt/tests.rs
+index cbb6020..9e06e80 100644
+--- a/src/search/tt/tests.rs
++++ b/src/search/tt/tests.rs
+@@ -1,3 +1,4 @@
++use super::shard::{layout, MAX_SHARDS};
+ use super::{TranspositionTable, TtEntry};
+ use crate::position::Outcome;
+ use atomic_movegen::types::{Move, Square};
+@@ -17,7 +18,7 @@ fn with_capacity_rounds_to_power_of_two() {
+ #[test]
+ fn with_capacity_forces_deterministic_eviction() {
+     // One bucket, two slots: a third distinct key must evict a live slot.
+-    let mut tt = TranspositionTable::with_capacity(1);
++    let tt = TranspositionTable::with_capacity(1);
+ 
+     let key1 = 1u64;
+     let key2 = 2u64;
+@@ -88,7 +89,7 @@ fn table_size_is_power_of_two_and_at_least_minimum() {
+ 
+ #[test]
+ fn clear_removes_all_entries_and_resets_generation() {
+-    let mut tt = TranspositionTable::with_mb(1);
++    let tt = TranspositionTable::with_mb(1);
+     let key = 0x222u64;
+     tt.store(
+         key,
+@@ -108,7 +109,7 @@ fn clear_removes_all_entries_and_resets_generation() {
+ 
+ #[test]
+ fn probe_matches_stored_entry_fields() {
+-    let mut tt = TranspositionTable::with_mb(1);
++    let tt = TranspositionTable::with_mb(1);
+     let key = 0xdead_beefu64;
+     let mv = Move::make_move(Square::E2, Square::E4);
+     tt.store(
+@@ -138,7 +139,7 @@ fn tt_entry_size_is_reasonable() {
+ 
+ #[test]
+ fn store_and_probe_solved_result() {
+-    let mut tt = TranspositionTable::with_mb(1);
++    let tt = TranspositionTable::with_mb(1);
+     let key = 12345u64;
+     let mv = Move::make_move(
+         atomic_movegen::types::Square::A1,
+@@ -167,7 +168,7 @@ fn store_and_probe_solved_result() {
+ 
+ #[test]
+ fn unsolved_bounds_do_not_overwrite_solved() {
+-    let mut tt = TranspositionTable::with_mb(1);
++    let tt = TranspositionTable::with_mb(1);
+     let key = 12345u64;
+     let mv = Move::make_move(
+         atomic_movegen::types::Square::A1,
+@@ -194,7 +195,7 @@ fn unsolved_bounds_do_not_overwrite_solved() {
+ 
+ #[test]
+ fn solved_result_overwrites_unsolved_bounds() {
+-    let mut tt = TranspositionTable::with_mb(1);
++    let tt = TranspositionTable::with_mb(1);
+     let key = 12345u64;
+     let mv = Move::make_move(
+         atomic_movegen::types::Square::A1,
+@@ -222,7 +223,7 @@ fn solved_result_overwrites_unsolved_bounds() {
+ 
+ #[test]
+ fn new_generation_marks_old_entries_stale() {
+-    let mut tt = TranspositionTable::with_mb(1);
++    let tt = TranspositionTable::with_mb(1);
+     let key = 123u64;
+ 
+     tt.store(
+@@ -258,7 +259,7 @@ fn new_generation_marks_old_entries_stale() {
+ 
+ #[test]
+ fn new_generation_prefers_stale_slot() {
+-    let mut tt = TranspositionTable::with_mb(1);
++    let tt = TranspositionTable::with_mb(1);
+     let key1 = 1u64;
+     // Force two slots in the same bucket by using keys that differ by a
+     // multiple of the bucket count.
+@@ -314,9 +315,11 @@ fn new_generation_prefers_stale_slot() {
+ }
+ 
+ #[test]
+-fn entries_yields_all_valid_entries_in_bucket_order_across_generations() {
+-    let mut tt = TranspositionTable::with_capacity(4);
+-    assert_eq!(tt.entries().count(), 0, "fresh table has no valid entries");
++fn for_each_entry_visits_all_valid_entries_in_bucket_order_across_generations() {
++    let tt = TranspositionTable::with_capacity(4);
++    let mut count = 0usize;
++    tt.for_each_entry(|_| count += 1);
++    assert_eq!(count, 0, "fresh table has no valid entries");
+ 
+     // Keys land in distinct buckets (index = key & 3) but are stored out of
+     // bucket order on purpose.
+@@ -345,20 +348,22 @@ fn entries_yields_all_valid_entries_in_bucket_order_across_generations() {
+     );
+     tt.store(0x22, Move::NONE, u8::MAX, 0, None, 1, 1, 0, 0);
+ 
+-    let keys: Vec<u64> = tt.entries().map(|e| e.key).collect();
++    let mut keys: Vec<u64> = Vec::new();
++    tt.for_each_entry(|e| keys.push(e.key));
+     assert_eq!(
+         keys,
+         vec![0x11, 0x22, 0x33],
+         "entries must be yielded in native bucket order, all generations"
+     );
+ 
+-    let outcomes: Vec<bool> = tt.entries().map(|e| e.outcome.is_some()).collect();
++    let mut outcomes: Vec<bool> = Vec::new();
++    tt.for_each_entry(|e| outcomes.push(e.outcome.is_some()));
+     assert_eq!(outcomes, vec![true, false, true]);
+ }
+ 
+ #[test]
+ fn current_generation_reflects_new_generation_and_clear() {
+-    let mut tt = TranspositionTable::with_capacity(2);
++    let tt = TranspositionTable::with_capacity(2);
+     assert_eq!(tt.current_generation(), 1);
+     tt.new_generation();
+     assert_eq!(tt.current_generation(), 2);
+@@ -367,3 +372,146 @@ fn current_generation_reflects_new_generation_and_clear() {
+     tt.clear();
+     assert_eq!(tt.current_generation(), 1);
+ }
++
++#[test]
++fn layout_partitions_the_bucket_range() {
++    let (shards, bps, shift) = layout(16384);
++    assert_eq!((shards, bps, shift), (256, 64, 6));
++    let (shards, bps, shift) = layout(4);
++    assert_eq!((shards, bps, shift), (4, 1, 0));
++    let (shards, bps, shift) = layout(1);
++    assert_eq!((shards, bps, shift), (1, 1, 0));
++    for total in [1usize, 2, 4, 16, 1024, 16384] {
++        let (shards, bps, _) = layout(total);
++        assert_eq!(shards * bps, total);
++        assert!(shards <= MAX_SHARDS);
++    }
++}
++
++#[test]
++fn shard_split_preserves_native_bucket_order() {
++    // 16 buckets -> 16 shards of one bucket each; keys chosen to cross shard
++    // boundaries and to share a bucket (0x11 vs 0x11 + bucket_count).
++    let tt = TranspositionTable::with_capacity(16);
++    let bucket_count = tt.bucket_count() as u64;
++    assert_eq!(bucket_count, 16);
++
++    let keys = [0x10u64, 0x11, 0x11 + bucket_count, 0x05];
++    for k in keys {
++        tt.store(
++            k,
++            Move::NONE,
++            u8::MAX,
++            0,
++            Some(Outcome::Win),
++            0,
++            0,
++            0,
++            u32::MAX,
++        );
++        assert!(tt.probe(k).is_some(), "key {k:#x} must be probe-visible");
++    }
++
++    // Reference enumeration: buckets in index order, slots in insertion order.
++    let mut expected: Vec<u64> = Vec::new();
++    for b in 0..bucket_count {
++        for &k in &keys {
++            if k & (bucket_count - 1) == b {
++                expected.push(k);
++            }
++        }
++    }
++    let mut visited: Vec<u64> = Vec::new();
++    tt.for_each_entry(|e| visited.push(e.key));
++    assert_eq!(visited, expected, "for_each_entry must follow native bucket order");
++}
++
++/// Concurrent `store` + `probe` over a shared table: 4 threads with disjoint
++/// key ranges. Invariants checked under the races: no panic, no torn entries
++/// (`outcome == Some(Win)` is only ever stored together with `work >= 1000`,
++/// so a mixed old/new read shows up as a violation), solved entries are never
++/// downgraded, and `work` is monotone.
++#[test]
++fn concurrent_store_and_probe_respect_solver_invariants() {
++    use std::sync::Arc;
++    use std::sync::Barrier;
++
++    const THREADS: usize = 4;
++    const KEYS_PER_THREAD: u64 = 4096;
++
++    let tt = Arc::new(TranspositionTable::with_mb(1));
++    let barrier = Arc::new(Barrier::new(THREADS));
++
++    std::thread::scope(|scope| {
++        for t in 0..THREADS {
++            let tt = Arc::clone(&tt);
++            let barrier = Arc::clone(&barrier);
++            scope.spawn(move || {
++                barrier.wait();
++                let base = t as u64 * 1_000_003;
++
++                // Phase 1: solved entries with work = 1000.
++                for i in 0..KEYS_PER_THREAD {
++                    let key = base + i;
++                    tt.store(
++                        key,
++                        Move::NONE,
++                        u8::MAX,
++                        1000,
++                        Some(Outcome::Win),
++                        0,
++                        crate::zobrist::INF,
++                        i as u32,
++                        u32::MAX,
++                    );
++                }
++
++                // Phase 2: unsolved bounds with lower work, then verify the
++                // solver invariants on whatever is still probe-visible
++                // (collisions may legitimately have evicted the entry).
++                for i in 0..KEYS_PER_THREAD {
++                    let key = base + i;
++                    tt.store(key, Move::NONE, u8::MAX, 7, None, 1, 1, 0, 0);
++                }
++                for i in 0..KEYS_PER_THREAD {
++                    let key = base + i;
++                    if let Some(e) = tt.probe(key) {
++                        assert_eq!(e.key, key);
++                        assert_eq!(
++                            e.outcome,
++                            Some(Outcome::Win),
++                            "solved entry was downgraded by an unsolved store"
++                        );
++                        assert!(e.work >= 1000, "work must be monotone");
++                        assert_eq!(e.remaining_depth, u32::MAX);
++                    }
++                }
++
++                // Phase 3: probe other threads' ranges (concurrent readers).
++                let other = ((t + 1) % THREADS) as u64 * 1_000_003;
++                for i in 0..KEYS_PER_THREAD {
++                    if let Some(e) = tt.probe(other + i) {
++                        assert_eq!(e.key, other + i);
++                        // No torn mix: a solved entry always carries its
++                        // solved-time work value.
++                        if e.outcome.is_some() {
++                            assert!(e.work >= 1000);
++                        }
++                    }
++                }
++            });
++        }
++    });
++
++    // Global post-condition: every surviving entry is coherent.
++    let (buckets, live, _solved, _unsolved, generation) = tt.stats();
++    assert!(live <= 2 * buckets);
++    assert!(generation >= 1);
++    tt.for_each_entry(|e| {
++        if e.outcome.is_some() {
++            assert!(e.work >= 1000, "no torn entry: solved implies solved-time work");
++        } else {
++            assert!(e.work >= 7, "unsolved work only ever grows from 7");
++        }
++    });
++}
+diff --git a/src/tt_snapshot/mod.rs b/src/tt_snapshot/mod.rs
+index 6a5af19..2f458e9 100644
+--- a/src/tt_snapshot/mod.rs
++++ b/src/tt_snapshot/mod.rs
+@@ -163,13 +163,13 @@ pub fn write_tt_snapshot<W: Write>(
+     let generation = tt.current_generation();
+     let mut solved_count: u64 = 0;
+     let mut unsolved_count: u64 = 0;
+-    for e in tt.entries() {
++    tt.for_each_entry(|e| {
+         if e.outcome.is_some() {
+             solved_count += 1;
+         } else if e.generation == generation {
+             unsolved_count += 1;
+         }
+-    }
++    });
+ 
+     w.write_all(MAGIC)?;
+     w.write_all(&[VERSION, FLAGS])?;
+@@ -181,26 +181,45 @@ pub fn write_tt_snapshot<W: Write>(
+ 
+     let mut solved: u64 = 0;
+     let mut unsolved: u64 = 0;
+-    for e in tt.entries() {
++    // `f` may not re-enter the table, but may write to `w`; the first write
++    // error is captured and returned after the pass (the closure cannot use
++    // `?` because `for_each_entry` takes a plain `FnMut`).
++    let mut err: Option<io::Error> = None;
++    tt.for_each_entry(|e| {
++        if err.is_some() {
++            return;
++        }
+         if let Some(outcome) = e.outcome {
+-            w.write_all(&e.key.to_le_bytes())?;
+-            w.write_all(&[outcome_to_u8(outcome)])?;
+-            w.write_all(&e.depth.to_le_bytes())?;
+-            w.write_all(&move_to_u16(e.best_move).to_le_bytes())?;
+-            solved += 1;
++            let key = e.key.to_le_bytes();
++            let outcome = [outcome_to_u8(outcome)];
++            let depth = e.depth.to_le_bytes();
++            let best_move = move_to_u16(e.best_move).to_le_bytes();
++            match write_record(w, &[&key, &outcome, &depth, &best_move]) {
++                Ok(()) => solved += 1,
++                Err(e) => err = Some(e),
++            }
++        }
++    });
++    tt.for_each_entry(|e| {
++        if err.is_some() {
++            return;
+         }
+-    }
+-    for e in tt.entries() {
+         if e.outcome.is_none() && e.generation == generation {
+-            w.write_all(&e.key.to_le_bytes())?;
+-            w.write_all(&e.pn.to_le_bytes())?;
+-            w.write_all(&e.dn.to_le_bytes())?;
+-            w.write_all(&e.depth.to_le_bytes())?;
+-            w.write_all(&e.remaining_depth.to_le_bytes())?;
+-            w.write_all(&move_to_u16(e.best_move).to_le_bytes())?;
+-            w.write_all(&e.work.to_le_bytes())?;
+-            unsolved += 1;
++            let key = e.key.to_le_bytes();
++            let pn = e.pn.to_le_bytes();
++            let dn = e.dn.to_le_bytes();
++            let depth = e.depth.to_le_bytes();
++            let remaining_depth = e.remaining_depth.to_le_bytes();
++            let best_move = move_to_u16(e.best_move).to_le_bytes();
++            let work = e.work.to_le_bytes();
++            match write_record(w, &[&key, &pn, &dn, &depth, &remaining_depth, &best_move, &work]) {
++                Ok(()) => unsolved += 1,
++                Err(e) => err = Some(e),
++            }
+         }
++    });
++    if let Some(e) = err {
++        return Err(e);
+     }
+ 
+     debug_assert_eq!(solved, solved_count);
+@@ -219,6 +238,15 @@ fn header_bytes(root_fen: &str) -> u64 {
+     8 + 1 + 1 + root_fen.len() as u64 + 1 + 4 + 4 + 8 + 8
+ }
+ 
++/// Write the given byte slices as one record (helper so the
++/// `for_each_entry` closures can stay infallible).
++fn write_record<W: Write>(w: &mut W, parts: &[&[u8]]) -> io::Result<()> {
++    for p in parts {
++        w.write_all(p)?;
++    }
++    Ok(())
++}
++
+ fn invalid_data(msg: &str) -> io::Error {
+     io::Error::new(io::ErrorKind::InvalidData, msg)
+ }
+diff --git a/src/tt_snapshot/tests.rs b/src/tt_snapshot/tests.rs
+index a1fdfea..6439229 100644
+--- a/src/tt_snapshot/tests.rs
++++ b/src/tt_snapshot/tests.rs
+@@ -7,7 +7,7 @@ use crate::search::tt::TranspositionTable;
+ use atomic_movegen::types::{Move, Square};
+ use std::io::Cursor;
+ 
+-fn store_solved(tt: &mut TranspositionTable, key: u64, outcome: Outcome, depth: u32) {
++fn store_solved(tt: &TranspositionTable, key: u64, outcome: Outcome, depth: u32) {
+     tt.store(
+         key,
+         Move::make_move(Square::E2, Square::E4),
+@@ -21,7 +21,7 @@ fn store_solved(tt: &mut TranspositionTable, key: u64, outcome: Outcome, depth:
+     );
+ }
+ 
+-fn store_unsolved(tt: &mut TranspositionTable, key: u64, pn: u64, dn: u64, work: u64) {
++fn store_unsolved(tt: &TranspositionTable, key: u64, pn: u64, dn: u64, work: u64) {
+     tt.store(
+         key,
+         Move::make_move(Square::D2, Square::D4),
+@@ -36,10 +36,10 @@ fn store_unsolved(tt: &mut TranspositionTable, key: u64, pn: u64, dn: u64, work:
+ }
+ 
+ fn sample_table() -> TranspositionTable {
+-    let mut tt = TranspositionTable::with_capacity(4);
+-    store_solved(&mut tt, 0x101, Outcome::Win, 9);
+-    store_solved(&mut tt, 0x102, Outcome::Loss, 13);
+-    store_unsolved(&mut tt, 0x103, 5, 8, 1000);
++    let tt = TranspositionTable::with_capacity(4);
++    store_solved(&tt, 0x101, Outcome::Win, 9);
++    store_solved(&tt, 0x102, Outcome::Loss, 13);
++    store_unsolved(&tt, 0x103, 5, 8, 1000);
+     tt
+ }
+ 
+@@ -93,12 +93,12 @@ fn round_trip_preserves_every_field() {
+ 
+ #[test]
+ fn generation_policy_solved_all_unsolved_current_only() {
+-    let mut tt = TranspositionTable::with_capacity(8);
+-    store_solved(&mut tt, 0x201, Outcome::Win, 3); // stale solved
+-    store_unsolved(&mut tt, 0x202, 1, 2, 10); // stale unsolved
++    let tt = TranspositionTable::with_capacity(8);
++    store_solved(&tt, 0x201, Outcome::Win, 3); // stale solved
++    store_unsolved(&tt, 0x202, 1, 2, 10); // stale unsolved
+     tt.new_generation();
+-    store_solved(&mut tt, 0x203, Outcome::Loss, 6); // current solved
+-    store_unsolved(&mut tt, 0x204, 3, 4, 20); // current unsolved
++    store_solved(&tt, 0x203, Outcome::Loss, 6); // current solved
++    store_unsolved(&tt, 0x204, 3, 4, 20); // current unsolved
+ 
+     let mut buf = Vec::new();
+     write_tt_snapshot(&tt, "test", 1, &mut buf).unwrap();
+@@ -114,7 +114,7 @@ fn generation_policy_solved_all_unsolved_current_only() {
+ 
+ #[test]
+ fn move_none_sentinel_round_trips() {
+-    let mut tt = TranspositionTable::with_capacity(2);
++    let tt = TranspositionTable::with_capacity(2);
+     tt.store(
+         0x301,
+         Move::NONE,
+@@ -138,7 +138,7 @@ fn move_none_sentinel_round_trips() {
+ 
+ #[test]
+ fn move_none_serializes_as_0xffff() {
+-    let mut tt = TranspositionTable::with_capacity(1);
++    let tt = TranspositionTable::with_capacity(1);
+     tt.store(
+         0x401,
+         Move::NONE,
+@@ -215,11 +215,12 @@ fn solved_records_appear_in_bucket_order() {
+     write_tt_snapshot(&tt, "test", 1, &mut buf).unwrap();
+     let (_, solved, _) = read_tt_snapshot(&mut Cursor::new(&buf)).unwrap();
+ 
+-    let expected: Vec<u64> = tt
+-        .entries()
+-        .filter(|e| e.outcome.is_some())
+-        .map(|e| e.key)
+-        .collect();
++    let mut expected: Vec<u64> = Vec::new();
++    tt.for_each_entry(|e| {
++        if e.outcome.is_some() {
++            expected.push(e.key);
++        }
++    });
+     let actual: Vec<u64> = solved.iter().map(|r| r.key).collect();
+     assert_eq!(actual, expected);
+ }

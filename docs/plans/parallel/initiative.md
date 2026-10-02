@@ -6,6 +6,42 @@ Opened 2026-09-21 as the consolidated home for the parallelization effort,
 absorbing `conversion` backlog #4 and `lean` backlog #2 (joint ownership
 split across two initiatives until now). The next plan number is **plan1**.
 
+**2026-10-03, owner decision — gate re-registered; initiative reopened for
+plan4b/plan5.** The plan4 kill verdict stands unchanged as the measured
+record; the owner consciously accepts the measured TT-concurrency tax
+(+4.4 % / +6.0 % hard-class wall) as the entry fee for the A-stage — the
+only remaining multiplicative lever (all others measured no-go). Three
+conditions are pre-registered with the acceptance:
+
+1. **Conditional acceptance (revert-if-missed).** The tax is accepted
+   *only while* plan5 proves out: if the SPDFPN prototype misses its GO
+   bands (≥ 2.0×/4 threads, work inflation ≤ 2×, zero soundness
+   violations), the refactor is reverted again and the tax goes with it.
+2. **Explicit gate, not a waiver.** The plan4 gate (≤ +2 % wall) is
+   replaced by a hard budget: **≤ +7 % median hard-class wall** (m22 /
+   shuffle-win first-outcome, vs the unsharded baseline) with the
+   byte-identity surface unchanged (quick-suite `child_evals`, stdout,
+   snapshot bytes). Future TT work may not erode the sequential path
+   silently beyond this budget.
+3. **Measurement honesty.** The reference container exposes 4 CPUs: wall
+   measurements at 2–4 threads are real; N ≥ 8 are simulated only. The
+   conservative band at 4 threads (~1.8×) sits at the GO-band edge — a
+   marginal result is a realistic outcome, not a surprise.
+
+Next: **plan4b** (re-land the preserved refactor
+`measurements/plan4/sharded_tt_attempt.patch` + `shard_rs_attempt.rs`,
+re-run the full drift protocol, pin the tax against the ≤ 7 % budget),
+then **plan5** (SPDFPN prototype with the GO bands and the
+revert-if-missed clause).
+
+**2026-10-03, plan4 kill point fired — initiative closed (backlog #4 NO-GO).**
+The inert TT-concurrency refactor measured +6.0 % (m22) / +4.4 %
+(shuffle-win) first-outcome wall vs the pre-registered ≤ +2 % gate —
+with zero deterministic drift — and no in-scope mitigation recovered it
+(profiled; three variants tried; seqlock redesign scoped and rejected).
+The refactor was reverted; the A-stage dies at the cheap kill point as
+pre-registered. Details: `report4.md`, `measurements/plan4/`.
+
 **2026-10-02, premise change — initiative reopened for option A.** The
 product consumer now accepts nondeterministic parallel runs
 (nondeterminism confined to *which* valid proof wins, never a false
@@ -173,9 +209,7 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
 | 1 | **Reading round: parallel PNS (2025-era)** | Mine the three open bibliography entries into `research_*.md` here: (a) Čížek, Balko, Schmid 2025 (*Massively Parallel Proof-Number Search*, arXiv:2511.10339 — two-level parallelization + shared worker info, 333× on 1024 cores); (b) Saffidine, Jouandeau, Cazenave 2011 (JLPNS, ACG-13); (c) Young, Hayward 2016 (*A Reverse Hex Solver*, scalable parallel DF-PN, Solrex). Extract per paper: cooperation protocol, TT sharing/sharding model, GHI/repetition handling under concurrency, scaling regime (where the gains saturate on 4–16 cores, not 1024) | information (feeds #2) | — | S | **mined 2026-09-21** (plan1): `research_cizek2025.md`, `research_jlpns.md`, `research_solrex.md` (+ vendored PDFs); all three silent on repetitions under concurrency (monotone domains) — the finding; small-pool evidence favors C over A; D's shared-DB layer has no safe payload here |
 | 2 | **Design-space note: architecture selection** | Weigh options A–D above against the design constraints; include the API/consumer story (opt-in `--threads N` vs a process-portfolio harness vs both). Sizing spike allowed per lean's cadence (temporary instrumentation, reverted) | selects the 2–8× lever's shape | — | M | **closed 2026-09-21 (plan2): measured NO-GO** — `design_space.md` + `measurements/plan2/`: option C (root-child race over unmodified processes) measured 0.27× wall (3.7× slowdown) at N=4 on m22, 15.5× work inflation, zero soundness violations; deficit structural (forfeited cross-child TT sharing/interleaving); ship-shape verdict recorded (harness-only, moot); no parallel mode ships |
 | 3 | **Staged implementation** | Gated on #2 GO; one lever per plan; sequential drift protocol green at every stage; parallel mode documented as nondeterministic (or not shipped, per #2) | the actual speedup | wall | L–XL | **closed 2026-09-21** — unblocking condition (#2 GO) failed on the pre-registered rules; no staged implementation exists to stage |
-| 4 | **A-stage: SPDFPN-style shared-TT parallel DF-PN** | Reopened by the 2026-10-02 nondeterminism premise; reference design = `research_spdfpn.md`. Stage 1 (plan4): inert TT-concurrency refactor — sharded TT behind interior-mut locking, byte-identical N=1 behavior (drift gate = cheap kill point). Stage 2 (plan5): `--threads N` prototype — W-threshold + same-child resume clause, virtual TT + job lock + `TRYRUNJOB`, thread-local repetition cache, serialized ProofEvents; measured on the hard class (wall speedup, work inflation, outcome agreement) with pre-registered GO bands | 2–8× wall on hard solves | wall | L–XL | **open 2026-10-02** (plan3 mining: `research_spdfpn.md`, GO input); A-stage
-GO confirmed 2026-10-03 — **plan4 written** (inert TT-concurrency refactor,
-drift-gated kill point), plan5 (prototype) not yet written |
+| 4 | **A-stage: SPDFPN-style shared-TT parallel DF-PN** | Reopened by the 2026-10-02 nondeterminism premise; reference design = `research_spdfpn.md`. Stage 1 (plan4/plan4b): inert TT-concurrency refactor — sharded TT behind interior-mut locking, byte-identical N=1 behavior (gate re-registered 2026-10-03: ≤ +7 % median hard-class wall, byte-identity unchanged). Stage 2 (plan5): `--threads N` prototype — W-threshold + same-child resume clause, virtual TT + job lock + `TRYRUNJOB`, thread-local repetition cache, serialized ProofEvents; measured on the hard class (wall speedup, work inflation, outcome agreement) with pre-registered GO bands; **tax acceptance + refactor revert-if-missed** | 2–8× wall on hard solves (expected ≈ 2.9–3.2× at 4 threads; conservative band ~1.8× at the GO edge) | wall | L–XL | **reopened 2026-10-03 (owner decision)**: plan4's measured record stands (zero deterministic drift; wall +6.0 %/+4.4 % vs the original ≤ 2 % gate → kill); owner accepts the tax under three conditions (revert-if-missed, explicit ≤ 7 % budget, 2–4 thread measurements real / N ≥ 8 simulated). Attempt preserved in `measurements/plan4/sharded_tt_attempt.patch` + `shard_rs_attempt.rs`; plan4b re-lands it, plan5 prototypes on top. Prior kill analysis: `report4.md` |
 
 ## Non-goals
 
@@ -202,6 +236,45 @@ drift-gated kill point), plan5 (prototype) not yet written |
   and outcome agreement across repeated runs (no `wrong` ever).
 
 ## History
+
+- **2026-10-03 (later the same day) — owner decision: A-stage reopened,
+  gate re-registered (docs only, no code)**: the owner accepts the
+  measured ~5 % TT-concurrency tax as the entry fee for the only
+  remaining multiplicative lever, with three pre-registered conditions:
+  (1) acceptance is conditional — plan5 missing its GO bands reverts the
+  refactor and the tax; (2) the plan4 gate (≤ +2 %) is replaced by an
+  explicit ≤ +7 % median hard-class wall budget with the byte-identity
+  surface unchanged; (3) wall measurements at 2–4 threads are real (4-CPU
+  container), N ≥ 8 simulated only. Speedup estimate table (2–10 threads,
+  literature-anchored: SPDFPN 0.74 eff/16, Solrex ≈5.2×/4) recorded in
+  the session record; expected ≈ 2.9–3.2×/4 threads, conservative band
+  ~1.8× at the GO edge. Backlog #4 row updated; plan4b (re-land + pin the
+  tax) and plan5 (prototype) to be written by the next session.
+
+- **2026-10-03** — **plan4 complete: inert TT-concurrency refactor → NO-GO at the
+  pre-registered kill point; backlog #4 closed** (code reverted; docs +
+  measurements committed): the sharded, interior-mut, `Send + Sync`
+  `TranspositionTable` was fully implemented and behaviorally inert
+  (quick-suite `child_evals` bit-identical per case, m22/shuffle-win
+  stdout byte-identical, snapshot dump byte-identical, `make test`
+  green, new concurrency-invariant tests included), but the wall gate
+  failed reproducibly: **+6.0 %** m22 / **+4.4 %** shuffle-win median
+  first-outcome vs the ≤ +2 % threshold. Profiled per the plan's risk
+  protocol (`perf record`): the RMW pair is only 0.7 % — the cost is the
+  lock discipline at child-eval granularity (~15–20 probes/node,
+  ~15 M probes on m22; 48 B copies, non-forwardable loads, clobber
+  re-loads). `#[inline]`, unchecked indexing (probe inlined, no gain)
+  and `-Ctarget-cpu=native` (LSE) were each wall-neutral; a seqlock
+  redesign (lock-free readers, atomic entry fields) was scoped and
+  rejected: still projects ≈ +2–3 % and adds version-retry storms under
+  plan5's multi-writer contention — worse for the target workload. The
+  refactor was reverted to the byte-identical sequential solver (clean
+  `git diff`, gate re-run green); the full attempt is preserved in
+  `measurements/plan4/sharded_tt_attempt.patch` + `shard_rs_attempt.rs`.
+  Report: `report4.md` (includes the reopen triggers: a consumer-facing
+  GO re-weighing of a ~5 % sequential tax against the parallel band, or
+  a mechanism redesign with a re-registered gate — owner's call).
+  `docs/plans/README.md` row updated (close event).
 
 - **2026-10-02** — **initiative reopened; plan3 complete: SPDFPN 2014
   mined, option-A GO input** (docs only, no code): premise change
