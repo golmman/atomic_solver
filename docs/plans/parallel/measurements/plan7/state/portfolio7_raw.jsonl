@@ -1,0 +1,156 @@
+{"kind": "baseline", "case": "shuffle_win", "round": 1, "label": "pilot", "wall_s": 52.845, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "shuffle_win", "round": 1, "label": "pilot", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 53.104, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 1, "label": "pilot", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 51.994, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 1, "label": "pilot", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 52.331, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 1, "label": "pilot", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 71.968, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "shuffle_win", "round": 1, "label": "pilot", "w_first_s": 51.994, "n_racers": 4, "cap_s": 100}
+{"kind": "baseline", "case": "shuffle_win", "round": 2, "label": "pilot", "wall_s": 53.131, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "shuffle_win", "round": 2, "label": "pilot", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 52.637, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 2, "label": "pilot", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 51.589, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 2, "label": "pilot", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 52.276, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 2, "label": "pilot", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 72.772, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "shuffle_win", "round": 2, "label": "pilot", "w_first_s": 51.589, "n_racers": 4, "cap_s": 100}
+{"kind": "baseline", "case": "m22", "round": 1, "label": "main", "wall_s": 2.949, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "m22", "round": 1, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 3.025, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 1, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 2.928, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 1, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 2.964, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 1, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 4.521, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "m22", "round": 1, "label": "main", "w_first_s": 2.928, "n_racers": 4, "cap_s": 30}
+{"kind": "baseline", "case": "rem12", "round": 1, "label": "main", "wall_s": 15.777, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "rem12", "round": 1, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 15.729, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 1, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 15.245, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 1, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 15.668, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 1, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 15.154, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "rem12", "round": 1, "label": "main", "w_first_s": 15.154, "n_racers": 4, "cap_s": 60}
+{"kind": "baseline", "case": "shuffle_win", "round": 1, "label": "main", "wall_s": 53.046, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "shuffle_win", "round": 1, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 52.364, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 1, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 52.211, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 1, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 52.359, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 1, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 72.583, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "shuffle_win", "round": 1, "label": "main", "w_first_s": 52.211, "n_racers": 4, "cap_s": 100}
+{"kind": "baseline", "case": "m22", "round": 2, "label": "main", "wall_s": 2.945, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "m22", "round": 2, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 3.1, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 2, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 3.004, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 2, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 2.973, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 2, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 4.451, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "m22", "round": 2, "label": "main", "w_first_s": 2.973, "n_racers": 4, "cap_s": 30}
+{"kind": "baseline", "case": "rem12", "round": 2, "label": "main", "wall_s": 15.74, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "rem12", "round": 2, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 15.584, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 2, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 15.615, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 2, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 15.696, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 2, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 15.167, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "rem12", "round": 2, "label": "main", "w_first_s": 15.167, "n_racers": 4, "cap_s": 60}
+{"kind": "baseline", "case": "shuffle_win", "round": 2, "label": "main", "wall_s": 52.834, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "shuffle_win", "round": 2, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 52.423, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 2, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 53.16, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 2, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 51.895, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 2, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 72.446, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "shuffle_win", "round": 2, "label": "main", "w_first_s": 51.895, "n_racers": 4, "cap_s": 100}
+{"kind": "baseline", "case": "m22", "round": 3, "label": "main", "wall_s": 2.985, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "m22", "round": 3, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 2.924, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 3, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 3.001, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 3, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 2.99, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 3, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 4.413, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "m22", "round": 3, "label": "main", "w_first_s": 2.924, "n_racers": 4, "cap_s": 30}
+{"kind": "baseline", "case": "rem12", "round": 3, "label": "main", "wall_s": 15.674, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "rem12", "round": 3, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 15.652, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 3, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 15.632, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 3, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 15.475, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 3, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 15.337, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "rem12", "round": 3, "label": "main", "w_first_s": 15.337, "n_racers": 4, "cap_s": 60}
+{"kind": "baseline", "case": "shuffle_win", "round": 3, "label": "main", "wall_s": 52.707, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "shuffle_win", "round": 3, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 51.753, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 3, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 52.826, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 3, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 52.427, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 3, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 72.934, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "shuffle_win", "round": 3, "label": "main", "w_first_s": 51.753, "n_racers": 4, "cap_s": 100}
+{"kind": "baseline", "case": "m22", "round": 4, "label": "main", "wall_s": 2.964, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "m22", "round": 4, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 2.958, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 4, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 2.978, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 4, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 2.994, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 4, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 4.459, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "m22", "round": 4, "label": "main", "w_first_s": 2.958, "n_racers": 4, "cap_s": 30}
+{"kind": "baseline", "case": "rem12", "round": 4, "label": "main", "wall_s": 15.638, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "rem12", "round": 4, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 15.708, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 4, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 15.484, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 4, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 15.657, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 4, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 15.163, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "rem12", "round": 4, "label": "main", "w_first_s": 15.163, "n_racers": 4, "cap_s": 60}
+{"kind": "baseline", "case": "shuffle_win", "round": 4, "label": "main", "wall_s": 52.864, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "shuffle_win", "round": 4, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 52.071, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 4, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 52.167, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 4, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 52.987, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 4, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 72.963, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "shuffle_win", "round": 4, "label": "main", "w_first_s": 52.071, "n_racers": 4, "cap_s": 100}
+{"kind": "baseline", "case": "m22", "round": 5, "label": "main", "wall_s": 2.967, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "m22", "round": 5, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 2.958, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 5, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 2.948, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 5, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 2.902, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 5, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 4.515, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "m22", "round": 5, "label": "main", "w_first_s": 2.902, "n_racers": 4, "cap_s": 30}
+{"kind": "baseline", "case": "rem12", "round": 5, "label": "main", "wall_s": 15.61, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "rem12", "round": 5, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 15.483, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 5, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 15.494, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 5, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 15.473, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 5, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 15.468, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "rem12", "round": 5, "label": "main", "w_first_s": 15.468, "n_racers": 4, "cap_s": 60}
+{"kind": "baseline", "case": "shuffle_win", "round": 5, "label": "main", "wall_s": 52.679, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "shuffle_win", "round": 5, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 52.57, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 5, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 51.6, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 5, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 53.191, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 5, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 72.214, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "shuffle_win", "round": 5, "label": "main", "w_first_s": 51.6, "n_racers": 4, "cap_s": 100}
+{"kind": "baseline", "case": "m22", "round": 6, "label": "main", "wall_s": 2.972, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "m22", "round": 6, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 2.952, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 6, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 2.947, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 6, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 2.926, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 6, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 4.485, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "m22", "round": 6, "label": "main", "w_first_s": 2.926, "n_racers": 4, "cap_s": 30}
+{"kind": "baseline", "case": "rem12", "round": 6, "label": "main", "wall_s": 15.735, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "rem12", "round": 6, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 15.443, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 6, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 15.647, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 6, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 16.006, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 6, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 14.976, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "rem12", "round": 6, "label": "main", "w_first_s": 14.976, "n_racers": 4, "cap_s": 60}
+{"kind": "baseline", "case": "shuffle_win", "round": 6, "label": "main", "wall_s": 52.43, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "shuffle_win", "round": 6, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 51.936, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 6, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 53.746, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 6, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 52.659, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 6, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 72.164, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "shuffle_win", "round": 6, "label": "main", "w_first_s": 51.936, "n_racers": 4, "cap_s": 100}
+{"kind": "baseline", "case": "m22", "round": 7, "label": "main", "wall_s": 3.021, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "m22", "round": 7, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 2.969, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 7, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 2.985, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 7, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 2.969, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 7, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 4.564, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "m22", "round": 7, "label": "main", "w_first_s": 2.969, "n_racers": 4, "cap_s": 30}
+{"kind": "baseline", "case": "rem12", "round": 7, "label": "main", "wall_s": 15.675, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "rem12", "round": 7, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 15.487, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 7, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 15.36, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 7, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 15.609, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 7, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 15.345, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "rem12", "round": 7, "label": "main", "w_first_s": 15.345, "n_racers": 4, "cap_s": 60}
+{"kind": "baseline", "case": "shuffle_win", "round": 7, "label": "main", "wall_s": 52.411, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "shuffle_win", "round": 7, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 52.058, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 7, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 52.047, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 7, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 52.774, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 7, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 73.185, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "shuffle_win", "round": 7, "label": "main", "w_first_s": 52.047, "n_racers": 4, "cap_s": 100}
+{"kind": "baseline", "case": "m22", "round": 8, "label": "main", "wall_s": 2.955, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "m22", "round": 8, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 2.973, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 8, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 2.967, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 8, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 3.018, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "m22", "round": 8, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 4.411, "outcome": "win", "cap_s": 30, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "m22", "round": 8, "label": "main", "w_first_s": 2.967, "n_racers": 4, "cap_s": 30}
+{"kind": "baseline", "case": "rem12", "round": 8, "label": "main", "wall_s": 15.694, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "rem12", "round": 8, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 15.411, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 8, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 15.462, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 8, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 16.01, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "rem12", "round": 8, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 14.952, "outcome": "win", "cap_s": 60, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "rem12", "round": 8, "label": "main", "w_first_s": 14.952, "n_racers": 4, "cap_s": 60}
+{"kind": "baseline", "case": "shuffle_win", "round": 8, "label": "main", "wall_s": 52.591, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0, "child_evals": null}
+{"kind": "racer", "case": "shuffle_win", "round": 8, "label": "main", "racer": "P0", "cfg": "--refine-cap 0.25 --epsilon 0.125", "wall_s": 52.364, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 8, "label": "main", "racer": "P1", "cfg": "--refine-cap 0 --epsilon 0.125", "wall_s": 51.951, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 8, "label": "main", "racer": "P2", "cfg": "--refine-cap 1.0 --epsilon 0.125", "wall_s": 52.302, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "racer", "case": "shuffle_win", "round": 8, "label": "main", "racer": "P3", "cfg": "--refine-cap 0.25 --epsilon 0.25", "wall_s": 73.244, "outcome": "win", "cap_s": 100, "cap_hit": false, "rc": 0}
+{"kind": "race", "case": "shuffle_win", "round": 8, "label": "main", "w_first_s": 51.951, "n_racers": 4, "cap_s": 100}

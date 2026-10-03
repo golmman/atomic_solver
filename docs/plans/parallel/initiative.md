@@ -2,6 +2,24 @@
 
 ## Status
 
+**2026-10-05, plan7 executed → NO-GO confirmed; initiative re-closed.**
+Plan7 tested the last unmeasured mechanism shape — a process-level portfolio
+(K = 4 independent *sequential* solver processes racing with diverse
+`--refine-cap`/`--epsilon` configs, take-first decisive; zero product-code
+changes) — to trim plan6's observed shuffle-win t4 bad-trajectory tail.
+Verdict (mechanical, pre-registered in `plan7.md`): **H1 fails — shuffle-win
+W_first median = 0.986× the baseline median (gate ≤ 0.75×)**; H2 pass (m22
+0.992×, rem12 0.967×), H3 pass (120/120 decisive `win`, zero cap-hits, zero
+panics). The load-bearing diagnosis: the solver is **deterministic per
+(FEN, config)** — each racer's trajectory is fixed, so the 8 races are 8
+replays of the same race, and the plan6 t4 bimodality (20–39 s vs 90–100 s)
+**does not exist in sequential single-process runs** (40 racer runs + 16
+baselines, all within ~1% of the case median): it was an artifact of the
+SPDFPN shared-TT mechanism itself, not a harvestable path-dependence. Cost:
+~4.4× CPU core-seconds for −1.4% wall. The "ship an `examples/portfolio`
+driver" follow-up is answered **do-not-ship**. `report7.md`,
+`measurements/plan7/`.
+
 Opened 2026-09-21 as the consolidated home for the parallelization effort,
 absorbing `conversion` backlog #4 and `lean` backlog #2 (joint ownership
 split across two initiatives until now). The next plan number is **plan1**.
