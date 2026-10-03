@@ -638,3 +638,99 @@ We could also experiment with higher epsilon values in follower sub-trees in ord
 ---
 
 In docs/plans/parallel, run the plan session for the reopened backlog #4. Read initiative.md (owner decision, later 2026-10-03: tax accepted with three pre-registered conditions — revert-if-missed, explicit ≤ +7 % hard-class wall budget, 2–4 thread measurements real), report4.md incl. its addendum, and measurements/plan4/ (preserved attempt: sharded_tt_attempt.patch + shard_rs_attempt.rs, drift-protocol baselines). Then write two self-contained plans: plan4b.md (execute backlog #4 stage 1b: re-land the sharded-TT refactor — note shard.rs must be recreated from shard_rs_attempt.rs minus its record header; re-run the full drift protocol; pin the tax median vs the ≤ 7 % budget; final task = report4b.md) and plan5.md (stage 2: --threads N SPDFPN prototype — W-threshold + same-child resume clause, virtual TT + job lock + TRYRUNJOB, thread-local repetition cache, serialized ProofEvents; measured on m22/shuffle-win at 2–4 threads with N ≥ 8 simulated only; GO bands ≥ 2.0×/4 threads, inflation ≤ 2×, zero soundness violations, and the revert-if-missed clause making the tax acceptance conditional; final task = report5.md). Split anything larger than one sitting.
+
+---
+
+Apparently `libs/Fairy-Stockfish/` is the faster oracle for decisive outcomes but a worse proof provider.
+Can we use `atomic_solver`'s ideas to build an even faster oracle than Fairy-Stockfish with df-pn?
+
+---
+
+Have we ruled out using `libs/Fairy-Stockfish/` as an oracle to speed up df-pn completely?
+
+---
+
+Execute conversion plan9.
+
+---
+
+Review my parallelization idea.
+
+Have we evaluated this simple parallelization idea?
+At the shallowest OR-node use 2 threads to explore the most promising children. Both use the same TT.
+
+---
+
+Let me unpack in my own words, so you can verify if i understand correctly.
+All numbers i use are the measured averages.
+
+- 90% of the total work goes into the most promising OR-node child
+- this child (AND-node) splits into 41 children
+- againg 90% (coincidence?) of the remaining work is then spent in 1 of those 41 children
+- the other 40 children are almost trivially refuted (0.25% of remaining work)
+
+---
+
+getting dfpn parallelization for atomic chess is apparently hard, as measured and tested. all POCs we tried said no-go so far.
+So let's say we don't go parallel at all. We use one cpu core. then 3 cpu cores are idling, how are we putting them to good use?
+
+---
+
+solve initiative
+
+---
+
+Here's the whole mechanism, from the top, in plain terms.
+
+What the campaign is trying to do
+
+Proving the value of the chess starting position is one enormous search — on the order of billions of node evaluations. No single run can do it; the solver is capped by RAM (TT only) and  
+sessions are capped in time. The campaign's idea: cut the one big proof into millions of small questions, farm them out to several independent solver processes, and merge their answers into one  
+global proof tree.
+
+The division of labor
+
+- The master is the foreman. It holds the global proof map: which positions are decided, which are still open "leaves." It never does heavy search itself — it picks the next question worth  
+  answering and hands out a job.
+- A job is deliberately tiny: not "solve this whole branch" but "resolve this one specific leaf, and you may spend at most N million evaluations doing it." This is the fix for the earlier  
+  failure (plan2): workers never attack a whole root child in isolation, because isolated big chunks lose the sharing that makes sequential search 10× cheaper.
+- A worker is one process running the unmodified sequential solver with its own private memory (TT), kept across jobs within the session. For each job it replays the path from the root to the  
+  leaf (rebuilding the game context), searches within the budget, and reports.
+- Trust: a worker's "this position is a win/loss" answer is never taken on faith — it's exported as a proof subtree, replayed and validated by the product's own verifier before it enters the  
+  global map. Wrong answers structurally can't get in.
+
+What's proven to work
+
+With 4 workers, the campaign made progress at 2.82× the rate of the sequential solver, and throughput scaled near-linearly with worker count. Within a session, the parallelism is real and clean.
+
+The catch that killed it
+
+The full job is ~billions of evaluations; one session solves a sliver. So the entire plan depends on sessions compounding: session 2 must start from where session 1 ended. That's what was  
+measured — and it failed completely. A resumed session produced zero new facts. Two intertwined mechanisms:
+
+1.  Money-pit leaves. The master kept re-queueing the same ~12 leaves that no single job's budget (8M evals) can crack. Every session, workers burned their entire budget on them and resolved  
+    nothing — and the budget doesn't carry over. Time served doesn't count: each session re-approaches the same wall with the same fresh 8M allowance.
+
+2.  No memory of partial progress. Workers do restore their notebooks between sessions — 2.3M solved positions came back intact. But solved positions aren't the frontier. What's lost is the  
+    knowledge the dying session had about the unsolved part: "I surveyed all of this region; everything in it is at least this hard / bounded by that." That knowledge exists only as advisory  
+    hints in the worker's private table, and the contract treats them as not-trustworthy-enough to build on across sessions. So each session re-walks ground the previous session already covered.
+
+Net effect: within a session you get 2.8×, but wall time across sessions doesn't accumulate — like a construction crew that works 2.8× faster but burns the site plans every evening.
+
+The three recorded fixes
+
+1.  Budget-aware early-censor certificates — "hand the next crew your survey map." When a worker's budget runs out, instead of reporting just "unproven," it would export a checkable ticket: which
+    regions it fully surveyed and the bounds it established there. The next session's worker starts behind that frontier instead of re-walking it. This is the main fix, and the hard part is  
+    soundness: those bounds are path-dependent in this game (repetition rules can invalidate them), so the ticket needs its own proof that it's safe to act on — that's the gating design task.
+
+2.  Coverage race (redirect the foreman) — the master's job picker funnels work into the same blocked leaves; the frozen frontier (the same 698 open leaves in every arm) confirms it. The fix is  
+    master-side targeting that spreads jobs across the whole frontier — spending crews on tunnels that might actually go somewhere, not just the deepest blocked one.
+
+3.  Work-to-censor discount — remember a leaf's cumulative spend. Either its next budget grows by time already served, or after enough total spend it's parked as a known money pit and the master  
+    moves on. This kills the eternal re-queue.
+
+Status
+
+All three are recorded, verbatim, as the reopeners in campaign_architecture.md §11. The initiative is dormant with no open items — so a re-open would be framed as exercising these recorded  
+mechanisms, and the honest entry point is the soundness argument for fix 1, because per the project's priorities (correctness first), a censor certificate that could ever smuggle in a wrong  
+bound is worse than no certificate.

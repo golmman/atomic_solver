@@ -13,6 +13,38 @@ execution established that item 7 (campaign product surface) is not
 draftable, so item 8 (resource sizing) is drafted as plan7 instead; the
 earlier plan7 name is retired with it.
 
+**2026-10-03, owner decision — initiative re-opened for campaign-mechanism
+POCs (plan10 next).** The plan9 NEGATIVE verdict stands unchanged as the
+measured record; the re-open *exercises the recorded §11 A5/A6
+reopeners*, it does not add scope. m2 = 2.82× in-session (plan8, GO
+band) is accepted as the working parallel mechanism; what the POCs must
+fix is accumulation (ρ = 0.0). Staged, each stage gated before the next
+is drafted:
+- **Stage 0 (diagnostic, S)** — frontier budget-completion sweep over
+  the plan9 frozen frontier (698 open leaves; per-leaf budget ladder
+  ≈ 8M/32M/128M) + per-leaf cumulative-spend ledger, on the existing
+  measured-sound harness, no solver changes. Decides whether scheduling
+  (A5.4 coverage race) suffices or censoring (A6) is required, and
+  prices the report9 budget-cap resolution caveat.
+- **Stage 1 (master-side, M)** — A5.4 coverage-race targeting + warm
+  work-to-censor discount / spend-aware re-queue. No new soundness
+  surface. POC gate: fresh-session Δfacts beats the plan9 30-fact
+  baseline; frontier breadth metric improves.
+- **Stage 2 (worker-side, L)** — budget-aware early-censor
+  certificates, gated on a pre-registered soundness argument:
+  path-scoped provenance (a certificate is valid only for its exact
+  job path; per-job TT pollution must not cross that boundary — the
+  GHI hazard is bounded by the fixed replay path, but the
+  cross-job-polluted table is the open design point). POC gate: the
+  replay verifier accepts every produced certificate and rejects a
+  deliberately corrupted one; warm-resume Δfacts > 0 (POC-level
+  ρ > 0).
+Standing constraints: campaign code stays `examples/`-side; product
+binary byte-identity re-checked at every stage; POC-level gates only —
+the full verdict bands (ρ ≥ 0.7 per plan7 §4) are re-registered at a
+later verdict stage, not at the POCs. `docs/plans/README.md` row update
+due with the plan session that drafts plan10.
+
 **plan9 executed 2026-09-25 (`report9.md`) — item 8 complete, verdict
 **NEGATIVE**:` solve` is DORMANT per the status rule.** Stage 3 built
 the constraint-4 checkpoint/resume machinery (examples/-side: master
@@ -122,6 +154,15 @@ not draftable and Phase 2 is dead.** The campaign architecture's
 confirmed mechanisms (retention, complete-job scheduling) and its open
 problem (the coverage race, A5.4) are recorded in
 `campaign_architecture.md` §11; any future campaign work starts there.
+
+**Phase 3 (opened 2026-10-03, owner decision — campaign-mechanism POCs;
+plan10 next):** staged POCs exercising the `campaign_architecture.md`
+§11 A5/A6 reopeners — Stage 0 frontier budget-completion diagnostic
+(decides scheduling vs. censoring; prices the A6 budget-cap caveat) →
+Stage 1 master-side coverage-race targeting + spend-aware re-queue →
+Stage 2 budget-aware early-censor certificates behind a pre-registered,
+path-scoped soundness argument. Full gates and constraints in the
+Status entry dated 2026-10-03.
 
 Not on the critical path (no-work recommendations): `egtb` stays
 oracle-only (anchoring at generable depths is measured dead);
@@ -487,3 +528,13 @@ Per repo convention, every plan ends with the task of writing its
   call, no A5 re-tread. Compute ≈ 4.8 h of the 6 h cap. Verdict bands
   and deliverables per plan7 §4; mandatory `campaign_architecture.md`
   §11 amendment (A6) at the report.
+- **2026-10-03** — **initiative re-opened (owner decision; docs only,
+  no code)**: campaign-mechanism POCs staged over the §11 A5/A6
+  reopeners — Stage 0 frontier budget-completion diagnostic (decides
+  scheduling vs. censoring; prices the A6 budget-cap caveat), Stage 1
+  master-side coverage-race targeting + spend-aware re-queue, Stage 2
+  censor certificates behind a path-scoped soundness argument (replay
+  verifier as the accept/reject gate). plan10 is the next plan number;
+  the plan9 NEGATIVE verdict and the dormant rules stand as history —
+  the Status entry of this date carries the gates. `docs/plans/README.md`
+  row update due at the plan10 drafting session.
