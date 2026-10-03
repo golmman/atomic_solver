@@ -1,0 +1,412 @@
+{
+ "stress_1000000_K1": {
+  "case": "stress",
+  "nodes": 1000000,
+  "K": 1,
+  "wall": 0.86,
+  "bestmove": "g3g4",
+  "multipv": [
+   {
+    "rank": 1,
+    "depth": 21,
+    "seldepth": 25,
+    "score": "cp 2517",
+    "pv": [
+     "g3g4"
+    ]
+   }
+  ]
+ },
+ "stress_10000000_K1": {
+  "case": "stress",
+  "nodes": 10000000,
+  "K": 1,
+  "wall": 6.79,
+  "bestmove": "g3g4",
+  "multipv": [
+   {
+    "rank": 1,
+    "depth": 43,
+    "seldepth": 20,
+    "score": "mate 10",
+    "pv": [
+     "g3g4",
+     "h5g4",
+     "b1b8",
+     "h8g8",
+     "h4h5",
+     "g6g5",
+     "b8e8",
+     "g8h7",
+     "g1b1",
+     "g5g4",
+     "b1b8",
+     "g4g3",
+     "d6e5",
+     "g3g2",
+     "h1g1",
+     "h7h6",
+     "b8h8",
+     "h6g5",
+     "e5f6"
+    ]
+   }
+  ]
+ },
+ "m22_1000000_K1": {
+  "case": "m22",
+  "nodes": 1000000,
+  "K": 1,
+  "wall": 0.73,
+  "bestmove": "g4h5",
+  "multipv": [
+   {
+    "rank": 1,
+    "depth": 21,
+    "seldepth": 21,
+    "score": "cp 3500",
+    "pv": [
+     "g4h5"
+    ]
+   }
+  ]
+ },
+ "m22_10000000_K1": {
+  "case": "m22",
+  "nodes": 10000000,
+  "K": 1,
+  "wall": 6.64,
+  "bestmove": "g4h5",
+  "multipv": [
+   {
+    "rank": 1,
+    "depth": 50,
+    "seldepth": 16,
+    "score": "mate 8",
+    "pv": [
+     "g4h5",
+     "a5a4",
+     "e3f4",
+     "h8g8",
+     "b1b8",
+     "a4a3",
+     "c3e4",
+     "g8h8",
+     "d6e5",
+     "h8g8",
+     "e4f6",
+     "g8h8",
+     "f6d7",
+     "h8h7",
+     "g1g6"
+    ]
+   }
+  ]
+ },
+ "dec01_1000000_K1": {
+  "case": "dec01",
+  "nodes": 1000000,
+  "K": 1,
+  "wall": 0.73,
+  "bestmove": "f7g5",
+  "multipv": [
+   {
+    "rank": 1,
+    "depth": 42,
+    "seldepth": 16,
+    "score": "mate 8",
+    "pv": [
+     "f7g5",
+     "h7h8",
+     "d1e1",
+     "h5h4",
+     "e1d1",
+     "f6f5",
+     "g5f7",
+     "h8g7",
+     "f7h6",
+     "g8b8",
+     "d1h5",
+     "g7h8",
+     "h5f7",
+     "h4h3",
+     "f7g7"
+    ]
+   }
+  ]
+ },
+ "dec01_10000000_K1": {
+  "case": "dec01",
+  "nodes": 10000000,
+  "K": 1,
+  "wall": 5.14,
+  "bestmove": "f7g5",
+  "multipv": [
+   {
+    "rank": 1,
+    "depth": 62,
+    "seldepth": 16,
+    "score": "mate 8",
+    "pv": [
+     "f7g5",
+     "h7h8",
+     "d1e1",
+     "h5h4",
+     "e1d1",
+     "f6f5",
+     "g5f7",
+     "h8g7",
+     "f7h6",
+     "g8b8",
+     "d1h5",
+     "g7h8",
+     "h5f7",
+     "h4h3",
+     "f7g7"
+    ]
+   }
+  ]
+ },
+ "dec10_1000000_K1": {
+  "case": "dec10",
+  "nodes": 1000000,
+  "K": 1,
+  "wall": 0.52,
+  "bestmove": "c7c6",
+  "multipv": [
+   {
+    "rank": 1,
+    "depth": 44,
+    "seldepth": 24,
+    "score": "mate 12",
+    "pv": [
+     "c7c6",
+     "d7e6",
+     "d8d6",
+     "h1g1",
+     "d6e6",
+     "g1f2",
+     "c6e6",
+     "f2g1",
+     "e6h6",
+     "g1f2",
+     "h6h1",
+     "f2e3",
+     "h1e1",
+     "e3d4",
+     "e2e1q",
+     "c1e1",
+     "c2c1q",
+     "d4d5",
+     "c1c6",
+     "d5d4",
+     "c6c4",
+     "d4e3",
+     "c4f4"
+    ]
+   }
+  ]
+ },
+ "dec10_10000000_K1": {
+  "case": "dec10",
+  "nodes": 10000000,
+  "K": 1,
+  "wall": 4.89,
+  "bestmove": "c7c6",
+  "multipv": [
+   {
+    "rank": 1,
+    "depth": 68,
+    "seldepth": 24,
+    "score": "mate 12",
+    "pv": [
+     "c7c6",
+     "d7e6",
+     "d8d6",
+     "h1g1",
+     "d6e6",
+     "g1f2",
+     "c6e6",
+     "f2g1",
+     "e6h6",
+     "g1f2",
+     "h6h1",
+     "f2e3",
+     "h1e1",
+     "e3d4",
+     "e2e1q",
+     "c1e1",
+     "c2c1q",
+     "d4d5",
+     "c1c6",
+     "d5d4",
+     "c6c4",
+     "d4e3",
+     "c4f4"
+    ]
+   }
+  ]
+ },
+ "dec13_1000000_K1": {
+  "case": "dec13",
+  "nodes": 1000000,
+  "K": 1,
+  "wall": 0.71,
+  "bestmove": "d1f3",
+  "multipv": [
+   {
+    "rank": 1,
+    "depth": 34,
+    "seldepth": 12,
+    "score": "mate 6",
+    "pv": [
+     "d1f3",
+     "d8h4",
+     "h1h4",
+     "e6e5",
+     "g4f5",
+     "c8f5",
+     "d4e5",
+     "f8e7",
+     "f3f7",
+     "e7d8",
+     "f7d7"
+    ]
+   }
+  ]
+ },
+ "dec13_10000000_K1": {
+  "case": "dec13",
+  "nodes": 10000000,
+  "K": 1,
+  "wall": 5.19,
+  "bestmove": "d1f3",
+  "multipv": [
+   {
+    "rank": 1,
+    "depth": 50,
+    "seldepth": 12,
+    "score": "mate 6",
+    "pv": [
+     "d1f3",
+     "d8h4",
+     "h1h4",
+     "e6e5",
+     "g4f5",
+     "c8f5",
+     "d4e5",
+     "f8e7",
+     "f3f7",
+     "e7d8",
+     "f7d7"
+    ]
+   }
+  ]
+ },
+ "stress_10000000_K3": {
+  "case": "stress",
+  "nodes": 10000000,
+  "K": 3,
+  "wall": 6.78,
+  "bestmove": "d6e5",
+  "multipv": [
+   {
+    "rank": 1,
+    "depth": 22,
+    "seldepth": 28,
+    "score": "cp 3136",
+    "pv": [
+     "d6e5",
+     "h8g8",
+     "b1b7",
+     "e8b8",
+     "g3g4",
+     "a5a4",
+     "g4h5",
+     "b8f8",
+     "h4h5",
+     "g6g5",
+     "b7b8",
+     "g8h7",
+     "e5d6",
+     "f8e8",
+     "b8e8",
+     "f5f4",
+     "h5h6",
+     "f4e3",
+     "c3e4",
+     "h7g8",
+     "e4c3"
+    ]
+   },
+   {
+    "rank": 2,
+    "depth": 22,
+    "seldepth": 22,
+    "score": "cp 3041",
+    "pv": [
+     "g3g4",
+     "h5g4",
+     "b1b7",
+     "h8g8",
+     "d6e5",
+     "e8b8",
+     "h4h5",
+     "g6g5",
+     "h5h6",
+     "g8h7",
+     "e5d6",
+     "b8b7",
+     "g1b1",
+     "f5f4"
+    ]
+   },
+   {
+    "rank": 3,
+    "depth": 22,
+    "seldepth": 23,
+    "score": "cp 2536",
+    "pv": [
+     "b1b7",
+     "e8g8"
+    ]
+   }
+  ]
+ },
+ "stress_10000000_K1_run2": {
+  "case": "stress",
+  "nodes": 10000000,
+  "K": 1,
+  "wall": 6.83,
+  "bestmove": "g3g4",
+  "multipv": [
+   {
+    "rank": 1,
+    "depth": 43,
+    "seldepth": 20,
+    "score": "mate 10",
+    "pv": [
+     "g3g4",
+     "h5g4",
+     "b1b8",
+     "h8g8",
+     "h4h5",
+     "g6g5",
+     "b8e8",
+     "g8h7",
+     "g1b1",
+     "g5g4",
+     "b1b8",
+     "g4g3",
+     "d6e5",
+     "g3g2",
+     "h1g1",
+     "h7h6",
+     "b8h8",
+     "h6g5",
+     "e5f6"
+    ]
+   }
+  ]
+ }
+}

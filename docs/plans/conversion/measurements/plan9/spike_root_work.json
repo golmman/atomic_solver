@@ -1,0 +1,105 @@
+{
+ "stress_FO_unguided": {
+  "summary": {
+   "total": 249480478,
+   "decisive": "g3g4",
+   "W": 0.8357,
+   "moves_recorded": 41,
+   "decisive_rank_sweep": 22,
+   "decisive_rank_descent": 22,
+   "moves_descended_before": 21
+  },
+  "rows": []
+ },
+ "stress_DEFAULT_unguided": {
+  "summary": {
+   "total": 249480478,
+   "decisive": "g3g4",
+   "W": 0.8357,
+   "moves_recorded": 41,
+   "decisive_rank_sweep": 22,
+   "decisive_rank_descent": 22,
+   "moves_descended_before": 21
+  }
+ },
+ "guided_runs": {
+  "stress_FO": {
+   "summary": {
+    "total": 212150376,
+    "decisive": "g3g4",
+    "W": 0.8093,
+    "moves_recorded": 41,
+    "decisive_rank_sweep": 1,
+    "decisive_rank_descent": 1,
+    "moves_descended_before": 0
+   },
+   "rows": [],
+   "baseline_child_evals": 249480478
+  },
+  "stress_DEFAULT": {
+   "summary": {
+    "total": 212150376,
+    "decisive": "g3g4",
+    "W": 0.8093,
+    "moves_recorded": 41,
+    "decisive_rank_sweep": 1,
+    "decisive_rank_descent": 1,
+    "moves_descended_before": 0
+   },
+   "rows": null,
+   "baseline_child_evals": 249480478
+  },
+  "m22_FO": {
+   "summary": {
+    "total": 22336876,
+    "decisive": "g4h5",
+    "W": 0.1621,
+    "moves_recorded": 43,
+    "decisive_rank_sweep": 1,
+    "decisive_rank_descent": 1,
+    "moves_descended_before": 0
+   },
+   "rows": null,
+   "baseline_child_evals": 14156269
+  },
+  "dec01_FO": {
+   "summary": {
+    "total": 5713706,
+    "decisive": "f7g5",
+    "W": 0.191,
+    "moves_recorded": 28,
+    "decisive_rank_sweep": 1,
+    "decisive_rank_descent": 1,
+    "moves_descended_before": 0
+   },
+   "rows": null,
+   "baseline_child_evals": 5713706
+  },
+  "dec10_FO": {
+   "summary": {
+    "total": 3212311,
+    "decisive": "c7c6",
+    "W": 0.1701,
+    "moves_recorded": 16,
+    "decisive_rank_sweep": 1,
+    "decisive_rank_descent": 1,
+    "moves_descended_before": 0
+   },
+   "rows": null,
+   "baseline_child_evals": 4262128
+  },
+  "dec13_FO": {
+   "summary": {
+    "total": 5024279,
+    "decisive": "g4f5",
+    "W": 0.656,
+    "moves_recorded": 41,
+    "decisive_rank_sweep": 4,
+    "decisive_rank_descent": 4,
+    "moves_descended_before": 3
+   },
+   "rows": null,
+   "baseline_child_evals": 3822602
+  }
+ }
+}
