@@ -1,0 +1,12 @@
+{"stage": "sweep6", "W": 4000, "rep": 0, "threads": 1, "wall_s": 58.72, "outcome": "win", "cap_s": 100, "rc": 0}
+{"stage": "sweep6", "W": 4000, "rep": 1, "threads": 4, "wall_s": 15.978, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 253149, "helper_evals": 170257105, "helper_nodes": 9265947, "coordinator_evals": 65920390}
+{"stage": "sweep6", "W": 4000, "rep": 2, "threads": 4, "wall_s": 60.283, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 983212, "helper_evals": 647683700, "helper_nodes": 35720012, "coordinator_evals": 255585726}
+{"stage": "sweep6", "W": 4000, "rep": 3, "threads": 4, "wall_s": 29.441, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 447269, "helper_evals": 311163808, "helper_nodes": 18284414, "coordinator_evals": 123806815}
+{"stage": "sweep6", "W": 10000, "rep": 0, "threads": 1, "wall_s": 57.764, "outcome": "win", "cap_s": 100, "rc": 0}
+{"stage": "sweep6", "W": 10000, "rep": 1, "threads": 4, "wall_s": 29.687, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 223651, "helper_evals": 339359798, "helper_nodes": 21778617, "coordinator_evals": 127501330}
+{"stage": "sweep6", "W": 10000, "rep": 2, "threads": 4, "wall_s": 100.044, "outcome": "draw", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 833343, "helper_evals": 1158751202, "helper_nodes": 67037752, "coordinator_evals": 426741131}
+{"stage": "sweep6", "W": 10000, "rep": 3, "threads": 4, "wall_s": 17.831, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 172989, "helper_evals": 201157078, "helper_nodes": 11320029, "coordinator_evals": 73672182}
+{"stage": "sweep6", "W": 20000, "rep": 0, "threads": 1, "wall_s": 57.78, "outcome": "win", "cap_s": 100, "rc": 0}
+{"stage": "sweep6", "W": 20000, "rep": 1, "threads": 4, "wall_s": 23.326, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 136543, "helper_evals": 273314402, "helper_nodes": 15259848, "coordinator_evals": 95777186}
+{"stage": "sweep6", "W": 20000, "rep": 2, "threads": 4, "wall_s": 26.425, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 160663, "helper_evals": 310640985, "helper_nodes": 18054159, "coordinator_evals": 109586305}
+{"stage": "sweep6", "W": 20000, "rep": 3, "threads": 4, "wall_s": 18.333, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 114504, "helper_evals": 214712856, "helper_nodes": 11758183, "coordinator_evals": 75291251}

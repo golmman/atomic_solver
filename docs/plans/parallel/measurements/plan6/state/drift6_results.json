@@ -1,0 +1,21 @@
+{
+  "stage": "plan6 post-revert drift check (NO-GO revert executed)",
+  "quick_suite": {
+    "cases": 59,
+    "result": "IDENTICAL vs baseline_quick_pre5.json (state/quick_post_revert.json)"
+  },
+  "m22_stdout": {
+    "result": "BYTE-IDENTICAL",
+    "sha256": "b7c74f17c88a730777be98a1452d97aa4cbccee49525cd47278b0a05b05ac79a"
+  },
+  "shuffle_win_stdout": {
+    "result": "BYTE-IDENTICAL",
+    "sha256": "64129ef0942a0446faa4e062512bf80b6f34c2979f657f9f11f3853975b04cd7"
+  },
+  "snapshot_dump": {
+    "result": "BYTE-IDENTICAL",
+    "sha256": "eaa5f2b97bded5e1050cd2e1eb3489186985015d525035ea52cc4918cef81fde",
+    "bytes": 195
+  },
+  "note": "Same hashes as plan4/plan4b/plan5a/plan5b records and as the plan6 stage-0 re-land check."
+}

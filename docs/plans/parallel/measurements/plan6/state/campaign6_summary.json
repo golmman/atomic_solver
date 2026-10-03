@@ -1,0 +1,397 @@
+{
+  "cases": {
+    "m22": {
+      "seq_ref_wall_s": 3.263,
+      "seq_evals": 14156269,
+      "per_threads": {
+        "2": {
+          "runs": 8,
+          "walls_s": [
+            3.074,
+            3.395,
+            3.79,
+            2.549,
+            2.734,
+            3.4,
+            3.541,
+            2.737
+          ],
+          "median_wall_s": 3.234,
+          "median_speedup_vs_n1": 1.009,
+          "totals_evals": [
+            26563800,
+            29604307,
+            33374659,
+            21895676,
+            23396758,
+            29939449,
+            30720132,
+            23330015
+          ],
+          "median_total_evals": 28084054,
+          "inflation_vs_seq": 1.984,
+          "helper_share_median": 0.489,
+          "decisive": 8,
+          "agreement": "8/8",
+          "cap_hits": 0,
+          "cap_hit_rate": 0.0,
+          "nonzero_rc": 0,
+          "median_wall_paired_mean_n1": 3.263
+        },
+        "3": {
+          "runs": 8,
+          "walls_s": [
+            3.559,
+            1.728,
+            11.588,
+            1.836,
+            2.743,
+            2.864,
+            3.138,
+            2.033
+          ],
+          "median_wall_s": 2.803,
+          "median_speedup_vs_n1": 1.164,
+          "totals_evals": [
+            44763738,
+            21871636,
+            162473782,
+            23459500,
+            35201455,
+            36875365,
+            41074769,
+            25851148
+          ],
+          "median_total_evals": 36038410,
+          "inflation_vs_seq": 2.546,
+          "helper_share_median": 0.654,
+          "decisive": 8,
+          "agreement": "8/8",
+          "cap_hits": 0,
+          "cap_hit_rate": 0.0,
+          "nonzero_rc": 0,
+          "median_wall_paired_mean_n1": 3.263
+        },
+        "4": {
+          "runs": 8,
+          "walls_s": [
+            5.94,
+            30.026,
+            2.23,
+            3.821,
+            1.542,
+            1.972,
+            3.694,
+            2.776
+          ],
+          "median_wall_s": 3.235,
+          "median_speedup_vs_n1": 1.009,
+          "totals_evals": [
+            92989405,
+            479352857,
+            34234986,
+            59989416,
+            23821934,
+            30715355,
+            57543141,
+            42592288
+          ],
+          "median_total_evals": 50067714,
+          "inflation_vs_seq": 3.537,
+          "helper_share_median": 0.739,
+          "decisive": 7,
+          "agreement": "7/7",
+          "cap_hits": 1,
+          "cap_hit_rate": 0.125,
+          "nonzero_rc": 0,
+          "median_wall_paired_mean_n1": 3.263
+        }
+      },
+      "n1_walls": [
+        3.275,
+        3.291,
+        3.255,
+        3.254,
+        3.238,
+        3.277,
+        3.263,
+        3.262
+      ]
+    },
+    "rem12": {
+      "seq_ref_wall_s": 16.886,
+      "seq_evals": 69605385,
+      "per_threads": {
+        "2": {
+          "runs": 8,
+          "walls_s": [
+            12.541,
+            12.743,
+            13.508,
+            12.01,
+            11.865,
+            13.6,
+            13.012,
+            12.66
+          ],
+          "median_wall_s": 12.701,
+          "median_speedup_vs_n1": 1.329,
+          "totals_evals": [
+            103638898,
+            106173965,
+            111422514,
+            98958777,
+            99146843,
+            112303975,
+            107437174,
+            101418938
+          ],
+          "median_total_evals": 104906432,
+          "inflation_vs_seq": 1.507,
+          "helper_share_median": 0.488,
+          "decisive": 8,
+          "agreement": "8/8",
+          "cap_hits": 0,
+          "cap_hit_rate": 0.0,
+          "nonzero_rc": 0,
+          "median_wall_paired_mean_n1": 16.886
+        },
+        "3": {
+          "runs": 8,
+          "walls_s": [
+            13.959,
+            11.888,
+            12.907,
+            13.157,
+            18.751,
+            11.658,
+            13.084,
+            13.901
+          ],
+          "median_wall_s": 13.12,
+          "median_speedup_vs_n1": 1.287,
+          "totals_evals": [
+            172674669,
+            146286984,
+            158898245,
+            161428507,
+            232691397,
+            142263861,
+            159548675,
+            169574349
+          ],
+          "median_total_evals": 160488591,
+          "inflation_vs_seq": 2.306,
+          "helper_share_median": 0.656,
+          "decisive": 8,
+          "agreement": "8/8",
+          "cap_hits": 0,
+          "cap_hit_rate": 0.0,
+          "nonzero_rc": 0,
+          "median_wall_paired_mean_n1": 16.886
+        },
+        "4": {
+          "runs": 8,
+          "walls_s": [
+            13.128,
+            15.861,
+            16.271,
+            14.872,
+            12.991,
+            17.8,
+            11.735,
+            13.268
+          ],
+          "median_wall_s": 14.07,
+          "median_speedup_vs_n1": 1.2,
+          "totals_evals": [
+            195767543,
+            239038442,
+            241810811,
+            224153015,
+            192773732,
+            264185817,
+            172984422,
+            197591460
+          ],
+          "median_total_evals": 210872238,
+          "inflation_vs_seq": 3.03,
+          "helper_share_median": 0.739,
+          "decisive": 8,
+          "agreement": "8/8",
+          "cap_hits": 0,
+          "cap_hit_rate": 0.0,
+          "nonzero_rc": 0,
+          "median_wall_paired_mean_n1": 16.886
+        }
+      },
+      "n1_walls": [
+        16.895,
+        16.877,
+        16.856,
+        16.994,
+        16.806,
+        16.894,
+        16.909,
+        16.83
+      ]
+    },
+    "shuffle_win": {
+      "seq_ref_wall_s": 57.707,
+      "seq_evals": 249480478,
+      "per_threads": {
+        "2": {
+          "runs": 8,
+          "walls_s": [
+            55.515,
+            43.05,
+            100.045,
+            100.043,
+            28.94,
+            36.046,
+            38.607,
+            100.042
+          ],
+          "median_wall_s": 49.282,
+          "median_speedup_vs_n1": 1.171,
+          "totals_evals": [
+            498212937,
+            381499415,
+            733651525,
+            768135070,
+            254773994,
+            320013350,
+            341305552,
+            792814950
+          ],
+          "median_total_evals": 439856176,
+          "inflation_vs_seq": 1.763,
+          "helper_share_median": 0.487,
+          "decisive": 5,
+          "agreement": "5/5",
+          "cap_hits": 3,
+          "cap_hit_rate": 0.375,
+          "nonzero_rc": 0,
+          "median_wall_paired_mean_n1": 57.707
+        },
+        "3": {
+          "runs": 8,
+          "walls_s": [
+            100.043,
+            29.23,
+            100.028,
+            47.794,
+            34.344,
+            24.846,
+            33.166,
+            20.582
+          ],
+          "median_wall_s": 33.755,
+          "median_speedup_vs_n1": 1.71,
+          "totals_evals": [
+            1334584892,
+            384076102,
+            1338239105,
+            668391801,
+            450778229,
+            325876267,
+            436230321,
+            268356948
+          ],
+          "median_total_evals": 443504275,
+          "inflation_vs_seq": 1.778,
+          "helper_share_median": 0.654,
+          "decisive": 6,
+          "agreement": "6/6",
+          "cap_hits": 2,
+          "cap_hit_rate": 0.25,
+          "nonzero_rc": 0,
+          "median_wall_paired_mean_n1": 57.707
+        },
+        "4": {
+          "runs": 8,
+          "walls_s": [
+            90.667,
+            100.069,
+            100.027,
+            20.364,
+            38.777,
+            22.653,
+            31.112,
+            25.158
+          ],
+          "median_wall_s": 34.944,
+          "median_speedup_vs_n1": 1.651,
+          "totals_evals": [
+            1414112412,
+            1578064516,
+            1479137305,
+            318670210,
+            616037641,
+            357028616,
+            492376264,
+            396793115
+          ],
+          "median_total_evals": 554206952,
+          "inflation_vs_seq": 2.221,
+          "helper_share_median": 0.738,
+          "decisive": 6,
+          "agreement": "6/6",
+          "cap_hits": 2,
+          "cap_hit_rate": 0.25,
+          "nonzero_rc": 0,
+          "median_wall_paired_mean_n1": 57.707
+        }
+      },
+      "n1_walls": [
+        58.097,
+        57.72,
+        57.237,
+        57.925,
+        57.557,
+        57.845,
+        57.309,
+        57.695
+      ]
+    }
+  },
+  "extrapolations_n8_n16": {
+    "m22": {
+      "model": "S(N) = a + b*ln(N) on medians at N=1,2,3,4 (speedup form)",
+      "speedup": {
+        "8": 1.11,
+        "16": 1.14
+      },
+      "label": "EXTRAPOLATION ONLY \u2014 not a wall measurement, non-gating"
+    },
+    "rem12": {
+      "model": "S(N) = a + b*ln(N) on medians at N=1,2,3,4 (speedup form)",
+      "speedup": {
+        "8": 1.49,
+        "16": 1.72
+      },
+      "label": "EXTRAPOLATION ONLY \u2014 not a wall measurement, non-gating"
+    },
+    "shuffle_win": {
+      "model": "S(N) = a + b*ln(N) on medians at N=1,2,3,4 (speedup form)",
+      "speedup": {
+        "8": 2.84,
+        "16": 7.58
+      },
+      "label": "EXTRAPOLATION ONLY \u2014 not a wall measurement, non-gating"
+    }
+  },
+  "length_trend": {
+    "seq_walls_s": {
+      "m22": 3.263,
+      "rem12": 16.886,
+      "shuffle_win": 57.707
+    },
+    "s4": {
+      "m22": 1.009,
+      "rem12": 1.2,
+      "shuffle_win": 1.651
+    },
+    "spearman_rho": 1.0
+  }
+}
