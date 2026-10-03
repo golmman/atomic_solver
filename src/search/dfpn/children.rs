@@ -262,6 +262,28 @@ impl Search {
                     repetition_seen: false,
                     explored: false,
                 }
+            } else if let Some(virtual_outcome) = self
+                .parallel_overlay
+                .as_ref()
+                .and_then(|o| o.outcome_for(child_key))
+            {
+                // SPDFPN virtual steering (`--threads N`, N > 1 only): this
+                // child is another worker's job node. Report unsolved
+                // synthetic bounds that make the subtree unattractive in the
+                // parent's selection dimension (see
+                // `parallel::steering_bounds`) — never an outcome, so a
+                // virtual entry can never flow into a solved store or a
+                // proof event. A wrong steering costs work only.
+                let (pn, dn) = super::parallel::steering_bounds(virtual_outcome);
+                ChildInfo {
+                    mv,
+                    pn,
+                    dn,
+                    outcome: None,
+                    depth: 0,
+                    repetition_seen: false,
+                    explored: false,
+                }
             } else {
                 // #12a TT non-terminal skip: a live entry with `outcome ==
                 // None` was only ever stored after the node passed the

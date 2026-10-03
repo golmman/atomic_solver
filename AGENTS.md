@@ -16,9 +16,15 @@ A pure solver for atomic chess in Rust.
   job). Refinement rounds are deterministically work-capped (`set_refine_cap_factor` /
   `--refine-cap`, default 0.25, `0` disables); searches can instead be bounded by cumulative
   child evals (`set_child_eval_budget`: budget-exhausted → `Draw` +
-  `ExitReason::BudgetExhausted`, never `Timeout`). Hot-path terminal classification, pooled
-  movegen slots (`children.rs`), and the per-run repetition-draw cache (`repetition_cache.rs`)
-  are documented in their own module docs.
+  `ExitReason::BudgetExhausted`, never `Timeout`; advisory under `--threads > 1`). An opt-in
+  SPDFPN-style parallel mode (`--threads N`, N > 1; `src/search/dfpn/parallel/`) runs the
+  unmodified sequential chunk loop on the coordinator thread while N−1 helper workers pre-warm
+  the shared sharded TT with W-capped, threshold-guided, virtually-steered jobs —
+  nondeterministic in which valid proof wins and in work counts, never a false decisive
+  outcome; N = 1 is byte-identical to the sequential solver. Repetition caches, history,
+  killers, and movegen pools are per-worker (never shared). Hot-path terminal classification,
+  pooled movegen slots (`children.rs`), and the per-run repetition-draw cache
+  (`repetition_cache.rs`) are documented in their own module docs.
 - `src/search/preflight/` — detector-gated bounded pre-phase (plan13, architecture R): on
   ≤3-men, pawnless, no-castling roots it decides the value via a region-closure AND/OR fixpoint
   plus a mandatory replay verifier; a claim returns the exact-DTM principal-line PV, anything
@@ -43,10 +49,11 @@ A pure solver for atomic chess in Rust.
 - `src/zobrist.rs` — deterministic Zobrist keys, including the halfmove clock;
   `src/notation.rs` — UCI move helpers, including `moves_to_uci_path`.
 - `src/main.rs` — the CLI (`--fen`, `--tt-size`, `--epsilon`, `--timeout`, `--first-outcome`,
-  `--refine-cap`, `--outcome-only`, `--tt-dump-path`, `--no-preflight`, `-h`; unknown options
-  exit with an error). Resource-bounded: RAM = TT only; it never builds proof trees and prints
-  no proof-tree lines. The full option, output (`pre_exit:` / `preflight:` / `pv_status:`
-  lines), and offline-proof contracts are in the module header.
+  `--refine-cap`, `--threads`, `--outcome-only`, `--tt-dump-path`, `--no-preflight`, `-h`;
+  unknown options exit with an error). Resource-bounded: RAM = TT only, plus O(N) small
+  per-worker state under `--threads N > 1`; it never builds proof trees and prints no
+  proof-tree lines. The full option, output (`pre_exit:` / `preflight:` / `pv_status:` lines),
+  parallel-mode, and offline-proof contracts are in the module header.
 - `examples/` — example binaries (below); `tests/` — integration/regression tests.
 
 ## Dependency direction
@@ -266,6 +273,8 @@ If these commands start failing (`EPERM`/`EACCES` on event open), the host-side 
 - `src/search/dfpn/children.rs` — `ChildPrecompute` pooled frame movegen slots, existence-query terminal classification, TT reuse, and proof-event emission share one `Position` move/undo sequence; slot invariants live next to the owning type.
 - `src/search/dfpn/selection.rs` — OR/AND selection and best/second-unsolved search over the `ChildInfo` table; tests are split out (`selection/tests.rs`).
 - `src/main.rs` — self-contained CLI: argument parsing, help text, search setup, and pre-exit hook in one place.
+- `src/search/dfpn/parallel/mod.rs` and `parallel/jobs.rs` — the parallel-mode soundness contract plus the coordinator/worker construction and re-propagation (mod), and the virtual TT / job lock / `TRYRUNJOB` descent / retirement bookkeeping (jobs) share one locking and indexing scheme; splitting would scatter the invariants the contract states.
+- `src/search/tt/table.rs` — the store/probe hot path, the parallel-only `refresh_bounds`/`bump_work` helpers, and the snapshot/stats iterators share the shard layout and generation-policy invariants.
 
 ## Tuning workflow
 

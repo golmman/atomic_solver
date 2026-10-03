@@ -7,6 +7,7 @@
 mod children;
 mod core;
 mod history;
+mod parallel;
 mod pv;
 mod repetition_cache;
 mod selection;
@@ -154,7 +155,11 @@ fn gcd(mut a: u64, mut b: u64) -> u64 {
 }
 
 pub struct Search {
-    tt: TranspositionTable,
+    tt: Arc<TranspositionTable>,
+    /// Worker count for the opt-in SPDFPN parallel mode (`--threads N`).
+    /// `1` (the default) runs the deterministic sequential path; the parallel
+    /// machinery in [`parallel`] is constructed only when this is `> 1`.
+    threads: usize,
     path_stack: Vec<u64>,
     nodes: u64,
     child_evals: u64,
@@ -221,6 +226,14 @@ pub struct Search {
     /// Report of the last run's pre-phase hook, `None` when the hook has not
     /// run in the current run.
     preflight_report: Option<PreflightReport>,
+    /// SPDFPN parallel mode (`search::dfpn::parallel`): per-worker snapshot of
+    /// the other workers' virtual entries, refreshed once per job dispatch.
+    /// `None` on the sequential path (N = 1) — the hot-path checks on this
+    /// field are inert there. Never consulted for solved-result reuse.
+    parallel_overlay: Option<parallel::OverlaySnapshot>,
+    /// SPDFPN parallel mode: frame depth of the current job's top frame, for
+    /// the same-child resume clause (decision 4). `None` outside parallel jobs.
+    parallel_resume_top: Option<usize>,
 }
 
 impl Search {
@@ -230,7 +243,8 @@ impl Search {
         let (refine_cap_factor_num, refine_cap_factor_den) =
             fraction_from_f64(DEFAULT_REFINE_CAP_FACTOR);
         Self {
-            tt: TranspositionTable::with_mb(tt_mb),
+            tt: Arc::new(TranspositionTable::with_mb(tt_mb)),
+            threads: 1,
             path_stack: Vec::new(),
             nodes: 0,
             child_evals: 0,
@@ -273,7 +287,27 @@ impl Search {
             repetition_cache: RepetitionCache::new(),
             preflight_enabled: true,
             preflight_report: None,
+            parallel_overlay: None,
+            parallel_resume_top: None,
         }
+    }
+
+    /// Enable the opt-in SPDFPN parallel mode (`--threads N`, plan5).
+    ///
+    /// `N = 1` (the default) is the deterministic sequential solver;
+    /// `N > 1` runs N workers over one shared sharded TT and is
+    /// nondeterministic in *which* valid proof wins and in work counts —
+    /// never a false decisive outcome (see the `parallel` module header for
+    /// the soundness contract). The child-eval budget becomes advisory under
+    /// `N > 1` (exhaustion still ends the run as `Draw` +
+    /// [`ExitReason::BudgetExhausted`], but nondeterministically).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `threads == 0`.
+    pub fn set_threads(&mut self, threads: usize) {
+        assert!(threads >= 1, "threads must be >= 1, got {threads}");
+        self.threads = threads;
     }
 
     /// Enable or disable the detector-gated bounded pre-phase (plan13).
@@ -541,6 +575,28 @@ impl Search {
     /// call (a per-refinement-round cap). `u64::MAX` means uncapped, which is
     /// what the non-refinement entry points use.
     fn bounded_search(
+        &mut self,
+        pos: &mut Position,
+        max_depth: u32,
+        round_work_cap: u64,
+    ) -> (Outcome, Vec<Move>, RoundTermination) {
+        // Opt-in parallel mode (`--threads N`, N > 1): the coordinator runs the
+        // unmodified sequential work-chunk loop below while N-1 SPDFPN helper
+        // workers pre-warm the shared TT (W-capped jobs, virtual steering).
+        // At N = 1 none of the parallel machinery is constructed or touched.
+        if self.threads > 1 {
+            let (outcome, pv, termination) =
+                parallel::bounded_search_with_helpers(self, pos, max_depth, round_work_cap);
+            return (outcome, pv, termination);
+        }
+
+        self.chunk_loop(pos, max_depth, round_work_cap)
+    }
+
+    /// The sequential work-chunk loop shared by the N = 1 path and the N > 1
+    /// coordinator. Extracted verbatim from `bounded_search` so the parallel
+    /// coordinator can run it on the main thread unchanged.
+    fn chunk_loop(
         &mut self,
         pos: &mut Position,
         max_depth: u32,

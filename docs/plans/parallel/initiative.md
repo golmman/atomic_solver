@@ -29,8 +29,9 @@ conditions are pre-registered with the acceptance:
    marginal result is a realistic outcome, not a surprise.
 
 Next: **plan4b done (stage 1b re-landed, tax pinned +5.36 %/+4.61 % vs
-the ≤ 7 % budget, `report4b.md`)**; **plan5 (SPDFPN prototype, stage 2a)
-next**, then plan5b (campaign + GO/NO-GO + revert-if-missed).
+the ≤ 7 % budget, `report4b.md`)**; **plan5 done (stage 2a mechanism built,
+smoke sound but 1.42×/4 threads — `report5a.md`)**; **plan5b next** (W sweep,
+campaign, GO/NO-GO + condition-1 revert-if-missed).
 
 **2026-10-03, plan4 kill point fired — initiative closed (backlog #4 NO-GO).**
 The inert TT-concurrency refactor measured +6.0 % (m22) / +4.4 %
@@ -207,7 +208,7 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
 | 1 | **Reading round: parallel PNS (2025-era)** | Mine the three open bibliography entries into `research_*.md` here: (a) Čížek, Balko, Schmid 2025 (*Massively Parallel Proof-Number Search*, arXiv:2511.10339 — two-level parallelization + shared worker info, 333× on 1024 cores); (b) Saffidine, Jouandeau, Cazenave 2011 (JLPNS, ACG-13); (c) Young, Hayward 2016 (*A Reverse Hex Solver*, scalable parallel DF-PN, Solrex). Extract per paper: cooperation protocol, TT sharing/sharding model, GHI/repetition handling under concurrency, scaling regime (where the gains saturate on 4–16 cores, not 1024) | information (feeds #2) | — | S | **mined 2026-09-21** (plan1): `research_cizek2025.md`, `research_jlpns.md`, `research_solrex.md` (+ vendored PDFs); all three silent on repetitions under concurrency (monotone domains) — the finding; small-pool evidence favors C over A; D's shared-DB layer has no safe payload here |
 | 2 | **Design-space note: architecture selection** | Weigh options A–D above against the design constraints; include the API/consumer story (opt-in `--threads N` vs a process-portfolio harness vs both). Sizing spike allowed per lean's cadence (temporary instrumentation, reverted) | selects the 2–8× lever's shape | — | M | **closed 2026-09-21 (plan2): measured NO-GO** — `design_space.md` + `measurements/plan2/`: option C (root-child race over unmodified processes) measured 0.27× wall (3.7× slowdown) at N=4 on m22, 15.5× work inflation, zero soundness violations; deficit structural (forfeited cross-child TT sharing/interleaving); ship-shape verdict recorded (harness-only, moot); no parallel mode ships |
 | 3 | **Staged implementation** | Gated on #2 GO; one lever per plan; sequential drift protocol green at every stage; parallel mode documented as nondeterministic (or not shipped, per #2) | the actual speedup | wall | L–XL | **closed 2026-09-21** — unblocking condition (#2 GO) failed on the pre-registered rules; no staged implementation exists to stage |
-| 4 | **A-stage: SPDFPN-style shared-TT parallel DF-PN** | Reopened by the 2026-10-02 nondeterminism premise; reference design = `research_spdfpn.md`. Stage 1 (plan4/plan4b): inert TT-concurrency refactor — sharded TT behind interior-mut locking, byte-identical N=1 behavior (gate re-registered 2026-10-03: ≤ +7 % median hard-class wall, byte-identity unchanged). Stage 2 (plan5): `--threads N` prototype — W-threshold + same-child resume clause, virtual TT + job lock + `TRYRUNJOB`, thread-local repetition cache, serialized ProofEvents; measured on the hard class (wall speedup, work inflation, outcome agreement) with pre-registered GO bands; **tax acceptance + refactor revert-if-missed** | 2–8× wall on hard solves (expected ≈ 2.9–3.2× at 4 threads; conservative band ~1.8× at the GO edge) | wall | L–XL | **stage 1b landed (plan4b, 2026-10-04)**: the sharded-TT refactor is re-landed (patch applied verbatim; one test-only fix, see `report4b.md`); drift zero everywhere; pinned tax **m22 +5.36 % / shuffle-win +4.61 %** median interleaved wall — inside the ≤ +7 % budget and consistent with plan4's +6.0 %/+4.4 %. Stage 2a = plan5 (mechanism + smoke), stage 2b = plan5b (campaign, GO/NO-GO, condition-1 revert-if-missed). Attempt provenance: `measurements/plan4/`; re-land measurements: `measurements/plan4b/`. Prior kill analysis: `report4.md` |
+| 4 | **A-stage: SPDFPN-style shared-TT parallel DF-PN** | Reopened by the 2026-10-02 nondeterminism premise; reference design = `research_spdfpn.md`. Stage 1 (plan4/plan4b): inert TT-concurrency refactor — sharded TT behind interior-mut locking, byte-identical N=1 behavior (gate re-registered 2026-10-03: ≤ +7 % median hard-class wall, byte-identity unchanged). Stage 2 (plan5/plan5b): `--threads N` prototype — W-threshold + same-child resume clause, virtual TT + job lock + `TRYRUNJOB`, thread-local repetition cache, serialized ProofEvents; measured on the hard class (wall speedup, work inflation, outcome agreement) with pre-registered GO bands; **tax acceptance + refactor revert-if-missed** | 2–8× wall on hard solves (expected ≈ 2.9–3.2× at 4 threads; conservative band ~1.8× at the GO edge) | wall | L–XL | **stage 2a built (plan5, 2026-10-04; `report5a.md`)**: `--threads N` landed — coordinator runs the unmodified sequential chunk loop, N−1 SPDFPN helper workers pre-warm the shared TT (declared architecture deviation: the pure worker pool could not converge on the hard class; W = 20 000 child evals, path-derived thresholds, virtual steering, retirement). N = 1 drift zero everywhere (quick suite 59/59, stdout + snapshot hashes identical to plan4b). Smoke (m22, 5 interleaved reps): **outcome agreement 15/15, zero panics**; median speedup **1.42×/4 threads, 0.92×/2 threads**, inflation ~2.2–2.4×, high t2 variance — below the GO bands, verdict belongs to plan5b's campaign. Stage 2b = plan5b (W sweep, campaign, GO/NO-GO, condition-1 revert-if-missed). Measurements: `measurements/plan4/`, `plan4b/`, `plan5/` |
 
 ## Non-goals
 
@@ -234,6 +235,25 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
   and outcome agreement across repeated runs (no `wrong` ever).
 
 ## History
+
+- **2026-10-04 — plan5 complete: stage 2a mechanism built, smoke sound, speed
+  below GO bands (`report5a.md`)**: `--threads N` (N > 1) landed over the
+  sharded TT — with one declared architecture deviation: the pre-registered
+  pure worker pool could not converge on the hard class (instrumented
+  diagnosis: fine-grained jobs re-verify saturated regions without advancing
+  the global proof-number state), so the landed shape runs the unmodified
+  sequential chunk loop on the coordinator while N−1 SPDFPN helper workers
+  (W = 20 000 child evals, path-derived thresholds, virtual win/loss
+  steering, zero-progress retirement, serialized events, per-worker
+  repetition caches) pre-warm the shared TT. N = 1 byte-identity re-proven
+  (quick suite 59/59, m22/shuffle stdout + snapshot hashes identical to
+  plan4b). Smoke: outcome agreement 15/15, zero panics; 1.42×/4 threads,
+  0.92×/2 threads, inflation 2.2–2.4× — below the pre-registered GO bands;
+  plan5b's W sweep + interleaved campaign decide the verdict (condition-1
+  revert-if-missed stands). Kill-point check: no decisive disagreement, no
+  panic/torn state — the prototype stays alive. Measurements:
+  `measurements/plan5/`. No `docs/plans/README.md` row edit (initiative
+  neither opened, pivoted, nor closed).
 
 - **2026-10-04 — plan4b complete: sharded-TT refactor re-landed, tax pinned, gate PASS**
   (stage 1b of backlog #4; `report4b.md`): the preserved plan4 attempt was

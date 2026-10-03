@@ -1,0 +1,167 @@
+[
+ {
+  "rep": 1,
+  "threads": 1,
+  "outcome": "win",
+  "pv_len": 95,
+  "wall": 3.302,
+  "helper_jobs": 0,
+  "helper_evals": 0,
+  "helper_nodes": 0,
+  "coordinator_evals": 0
+ },
+ {
+  "rep": 1,
+  "threads": 2,
+  "outcome": "win",
+  "pv_len": 384,
+  "wall": 15.127,
+  "helper_jobs": 87213,
+  "helper_evals": 58132343,
+  "helper_nodes": 4531080,
+  "coordinator_evals": 97923894
+ },
+ {
+  "rep": 1,
+  "threads": 4,
+  "outcome": "win",
+  "pv_len": 217,
+  "wall": 2.288,
+  "helper_jobs": 10719,
+  "helper_evals": 24918457,
+  "helper_nodes": 1736766,
+  "coordinator_evals": 8865719
+ },
+ {
+  "rep": 2,
+  "threads": 1,
+  "outcome": "win",
+  "pv_len": 95,
+  "wall": 3.259,
+  "helper_jobs": 0,
+  "helper_evals": 0,
+  "helper_nodes": 0,
+  "coordinator_evals": 0
+ },
+ {
+  "rep": 2,
+  "threads": 2,
+  "outcome": "win",
+  "pv_len": 519,
+  "wall": 10.486,
+  "helper_jobs": 15909,
+  "helper_evals": 41871839,
+  "helper_nodes": 2819650,
+  "coordinator_evals": 63500312
+ },
+ {
+  "rep": 2,
+  "threads": 4,
+  "outcome": "win",
+  "pv_len": 107,
+  "wall": 3.467,
+  "helper_jobs": 15995,
+  "helper_evals": 37418241,
+  "helper_nodes": 2598694,
+  "coordinator_evals": 13020294
+ },
+ {
+  "rep": 3,
+  "threads": 1,
+  "outcome": "win",
+  "pv_len": 95,
+  "wall": 3.256,
+  "helper_jobs": 0,
+  "helper_evals": 0,
+  "helper_nodes": 0,
+  "coordinator_evals": 0
+ },
+ {
+  "rep": 3,
+  "threads": 2,
+  "outcome": "win",
+  "pv_len": 587,
+  "wall": 2.958,
+  "helper_jobs": 4733,
+  "helper_evals": 12617236,
+  "helper_nodes": 746033,
+  "coordinator_evals": 13063197
+ },
+ {
+  "rep": 3,
+  "threads": 4,
+  "outcome": "win",
+  "pv_len": 125,
+  "wall": 1.894,
+  "helper_jobs": 8694,
+  "helper_evals": 21036519,
+  "helper_nodes": 1295090,
+  "coordinator_evals": 7432520
+ },
+ {
+  "rep": 4,
+  "threads": 1,
+  "outcome": "win",
+  "pv_len": 95,
+  "wall": 3.215,
+  "helper_jobs": 0,
+  "helper_evals": 0,
+  "helper_nodes": 0,
+  "coordinator_evals": 0
+ },
+ {
+  "rep": 4,
+  "threads": 2,
+  "outcome": "win",
+  "pv_len": 89,
+  "wall": 2.46,
+  "helper_jobs": 4571,
+  "helper_evals": 10349531,
+  "helper_nodes": 615907,
+  "coordinator_evals": 10830412
+ },
+ {
+  "rep": 4,
+  "threads": 4,
+  "outcome": "win",
+  "pv_len": 727,
+  "wall": 1.597,
+  "helper_jobs": 7890,
+  "helper_evals": 17436051,
+  "helper_nodes": 1076755,
+  "coordinator_evals": 6102285
+ },
+ {
+  "rep": 5,
+  "threads": 1,
+  "outcome": "win",
+  "pv_len": 95,
+  "wall": 3.27,
+  "helper_jobs": 0,
+  "helper_evals": 0,
+  "helper_nodes": 0,
+  "coordinator_evals": 0
+ },
+ {
+  "rep": 5,
+  "threads": 2,
+  "outcome": "win",
+  "pv_len": 73,
+  "wall": 3.535,
+  "helper_jobs": 5902,
+  "helper_evals": 14856661,
+  "helper_nodes": 791034,
+  "coordinator_evals": 15511056
+ },
+ {
+  "rep": 5,
+  "threads": 4,
+  "outcome": "win",
+  "pv_len": 623,
+  "wall": 2.709,
+  "helper_jobs": 12411,
+  "helper_evals": 29540109,
+  "helper_nodes": 1833409,
+  "coordinator_evals": 10332159
+ }
+]

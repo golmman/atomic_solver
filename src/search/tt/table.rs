@@ -30,6 +30,10 @@
 //! through the per-shard locks, and the loads/stores use `Acquire`/`Release`
 //! for conservatism at no measurable cost.
 //!
+//! This file is larger than 10 KB because the store/probe hot path, the
+//! parallel-only `refresh_bounds`/`bump_work` helpers, and the snapshot/stats
+//! iterators share the shard layout and generation policy invariants.
+//!
 //! # Sequential-owner contract
 //!
 //! `clear()` and `new_generation()` are called between search phases by the
@@ -224,6 +228,57 @@ impl TranspositionTable {
                     remaining_depth,
                 };
                 insert_new(bucket, generation, new);
+            }
+        }
+    }
+
+    /// Raise the stored `work` of a live current-generation entry (parallel
+    /// SPDFPN only). Returns `false` when no live entry exists (the caller
+    /// then inserts a fresh unsolved marker via `store`).
+    pub fn bump_work(&self, key: u64, work: u64) -> bool {
+        let generation = self.current_generation.load(Ordering::Acquire);
+        let idx = self.index(key);
+        let mut shard = self.shards[idx >> self.shard_shift]
+            .write()
+            .expect("tt shard lock poisoned");
+        let bucket = &mut shard.buckets[idx & (self.buckets_per_shard - 1)];
+        for slot in bucket.iter_mut() {
+            if slot.valid && slot.key == key && slot.generation == generation {
+                slot.work = slot.work.max(work);
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Refresh the unsolved bounds of a live current-generation entry
+    /// (parallel SPDFPN re-propagation only; never called on the sequential
+    /// path, whose store semantics are untouched). Updates `pn`, `dn`,
+    /// `best_move`, and `best_child` of an unsolved entry in one write-locked
+    /// critical section; solved entries are never modified, missing entries
+    /// are not inserted (a refresh never creates state), and
+    /// `depth`/`remaining_depth`/`work` are left untouched so the entry's
+    /// existing validity guards keep applying at the probe sites.
+    pub fn refresh_bounds(&self, key: u64, best_move: Move, best_child: u8, pn: u64, dn: u64) {
+        let pn = pn.clamp(1, INF);
+        let dn = dn.clamp(1, INF);
+        let generation = self.current_generation.load(Ordering::Acquire);
+        let idx = self.index(key);
+        let mut shard = self.shards[idx >> self.shard_shift]
+            .write()
+            .expect("tt shard lock poisoned");
+        let bucket = &mut shard.buckets[idx & (self.buckets_per_shard - 1)];
+        for slot in bucket.iter_mut() {
+            if slot.valid
+                && slot.key == key
+                && slot.generation == generation
+                && slot.outcome.is_none()
+            {
+                slot.pn = pn;
+                slot.dn = dn;
+                slot.best_move = best_move;
+                slot.best_child = best_child;
+                break;
             }
         }
     }
