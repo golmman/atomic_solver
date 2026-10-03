@@ -538,3 +538,30 @@ Per repo convention, every plan ends with the task of writing its
   the plan9 NEGATIVE verdict and the dormant rules stand as history —
   the Status entry of this date carries the gates. `docs/plans/README.md`
   row update due at the plan10 drafting session.
+- **2026-10-03 — plan10 drafted** (not yet executed): Phase 3, Stage 0 — the
+  frontier budget-completion sweep (the 2026-10-03 owner decision's
+  scheduling-vs-censoring diagnostic; README row moved to active at this
+  session). Grounded in a plan-session audit of the committed
+  `measurements/plan9/state/master_state_s1.json` (three structural
+  findings, recorded in plan10 §1): (i) the incumbent dispatcher's
+  affinity+min-dn policy touches only **104/698 open leaves** in a fresh
+  hour (one affinity-locked leaf per worker per child; 594 never searched,
+  sitting at the build prior pn = dn = 1) — the "698 open leaves" record is
+  a dispatcher-biased sample; (ii) spend is concentrated (1.e4 35.1 G +
+  1.e3 18.5 G of 56.8 G child-evals; 8 leaves > 1 G each); (iii) **c1g5 is
+  two leaf-wins from the first root-child resolution ever measured** (24
+  Won, 2 open at 68M/52M historical evals). The sweep therefore bypasses
+  the dispatcher (driver-written jobs, zero solver/lib/campaign-code
+  changes) and measures the full frontier warm-laddered at 8M/32M/128M
+  child-evals per leaf (contingent 512M under a 5.0 h projection rule;
+  conditional cold-control arm pricing the report9 A6 warm-discount caveat
+  at last). Pre-registered gate on ΔC = C(128M) − C(8M): ≥ 25 → SCHEDULING
+  GO (Stage 1, A5.4); ≤ 5 → CENSORING GO (Stage 2, A6b) gated on the M3
+  advisory-signal predictivity check (no signal → MARGINAL-with-no-
+  substrate); between → MARGINAL; ΔC ≤ 5 ∧ no M3 signal → sharpened-
+  negative, dormant with the sharpened reopener record. Merge pass
+  (campaign_master --resume over the sweep's decisive results = A2 global
+  replay discipline) yields M4 root-level conversion (children_resolved).
+  Compute ≈ 2.2 h worst case of the 6 h cap. Side task: the pending
+  Phase-0 `book.md` (refutation book from the complete plan4 p2 state
+  records) registered as a bounded docs-only deliverable.
