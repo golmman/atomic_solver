@@ -324,7 +324,7 @@ impl Walker<'_> {
 
     /// Copy solved entries from the fill search's TT into the walk map.
     fn harvest(&mut self) {
-        self.fill.tt().for_each_entry(|entry| {
+        for entry in self.fill.tt().entries() {
             if let Some(outcome) = entry.outcome {
                 self.map.entry(entry.key).or_insert(SolvedRecord {
                     key: entry.key,
@@ -333,7 +333,7 @@ impl Walker<'_> {
                     best_move: entry.best_move,
                 });
             }
-        });
+        }
     }
 
     /// Validate a Win node's best move and descend into it. The node's own

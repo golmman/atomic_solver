@@ -11,7 +11,6 @@ use atomic_movegen::types::Move;
 use crate::notation::move_to_bits;
 use crate::position::{Outcome, Position};
 use crate::search::dfpn::Search;
-use crate::search::tt::{TranspositionTable, TtEntry};
 use crate::tt_snapshot::{SolvedRecord, read_tt_snapshot, write_tt_snapshot};
 use crate::zobrist::rule50_key;
 
@@ -36,18 +35,6 @@ fn solved_snapshot(fen: &str) -> Vec<SolvedRecord> {
     solved
 }
 
-/// Find a solved root entry by replaying the table's entries in native
-/// order (replacement for the removed `entries()` iterator).
-fn find_solved_root(tt: &TranspositionTable, root_key: u64) -> TtEntry {
-    let mut found = None;
-    tt.for_each_entry(|e| {
-        if found.is_none() && e.key == root_key && e.outcome.is_some() {
-            found = Some(*e);
-        }
-    });
-    found.expect("live search stored a solved root entry")
-}
-
 fn record(key: u64, outcome: Outcome, depth: u32, best_move: Move) -> SolvedRecord {
     SolvedRecord {
         key,
@@ -67,7 +54,12 @@ fn seeding_is_probe_visible_in_current_generation() {
 
     // The root solved record from the live search, seeded into a fresh table.
     let root_key = Position::from_fen(MATE3_FEN).unwrap().hash();
-    let entry = find_solved_root(live.tt(), root_key);
+    let entry = live
+        .tt()
+        .entries()
+        .find(|e| e.key == root_key && e.outcome.is_some())
+        .copied()
+        .expect("live search stored a solved root entry");
 
     let mut fresh = Search::new(16);
     let seeded = seed_search(
@@ -112,7 +104,12 @@ fn seeded_entry_resolves_a_mate_in_1_search() {
     let (live_outcome, _pv, _nodes) = live.solve(&mut live_pos);
     assert_eq!(live_outcome, Outcome::Win);
     let root_key = Position::from_fen(fen).unwrap().hash();
-    let entry = find_solved_root(live.tt(), root_key);
+    let entry = live
+        .tt()
+        .entries()
+        .find(|e| e.key == root_key && e.outcome.is_some())
+        .copied()
+        .expect("live search stored a solved root entry");
     assert_eq!(entry.remaining_depth, u32::MAX);
     assert!(entry.depth >= 1);
 

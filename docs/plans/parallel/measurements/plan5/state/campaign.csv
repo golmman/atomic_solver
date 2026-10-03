@@ -1,0 +1,7 @@
+case,N,median_wall_s,speedup,inflation,cap_hits,decisive_agreement,helper_share_range
+m22,2,2.6,1.268,1.586,0,5/5 decisive == win,0.48-0.49
+m22,3,2.549,1.293,2.252,0,5/5 decisive == win,0.58-0.66
+m22,4,1.842,1.789,2.06,0,5/5 decisive == win,0.73-0.74
+shuffle_win,2,30.672,1.898,1.081,1,4/4 decisive == win,0.32-0.49
+shuffle_win,3,30.757,1.892,1.57,1,4/4 decisive == win,0.64-0.65
+shuffle_win,4,21.734,2.678,1.408,0,5/5 decisive == win,0.73-0.74

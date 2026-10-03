@@ -36,11 +36,6 @@ pub struct CliOptions {
     /// Disable the detector-gated bounded pre-phase (plan13). The ordinary
     /// DF-PN search then runs on every position.
     pub no_preflight: bool,
-    /// Worker count for the opt-in SPDFPN parallel mode. `1` (default) is
-    /// the deterministic sequential solver; `N > 1` is nondeterministic in
-    /// which valid proof wins and in work counts (never a false decisive
-    /// outcome), and makes the child-eval budget advisory.
-    pub threads: usize,
 }
 
 impl Default for CliOptions {
@@ -60,7 +55,6 @@ impl Default for CliOptions {
             tt_dump_path: None,
             config_path: None,
             no_preflight: false,
-            threads: 1,
         }
     }
 }
@@ -181,19 +175,6 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 opts.no_preflight = true;
                 i += 1;
             }
-            "--threads" => {
-                let value = args
-                    .get(i + 1)
-                    .ok_or_else(|| "error: --threads requires a value".to_string())?;
-                let v = value
-                    .parse::<usize>()
-                    .map_err(|e| format!("error: invalid --threads value: {e}"))?;
-                if v == 0 {
-                    return Err(format!("error: --threads must be positive, got {v}"));
-                }
-                opts.threads = v;
-                i += 2;
-            }
             _ => {
                 return Err(format!(
                     "error: unknown option '{arg}'\nRun with --help for usage."
@@ -227,7 +208,6 @@ mod tests {
             tt_dump_path,
             config_path,
             no_preflight,
-            threads,
         } = match parsed {
             ParseResult::Options(o) => o,
             ParseResult::Help => panic!("unexpected help"),
@@ -242,7 +222,6 @@ mod tests {
         assert!(tt_dump_path.is_none());
         assert!(config_path.is_none());
         assert!(!no_preflight);
-        assert_eq!(threads, 1);
     }
 
     #[test]
@@ -371,30 +350,6 @@ mod tests {
             ParseResult::Options(o) => assert!(o.no_preflight),
             ParseResult::Help => panic!("unexpected help"),
         }
-    }
-
-    #[test]
-    fn threads_is_parsed() {
-        let parsed = parse_args(&args(&["atomic_solver", "--threads", "4"])).unwrap();
-        match parsed {
-            ParseResult::Options(o) => assert_eq!(o.threads, 4),
-            ParseResult::Help => panic!("unexpected help"),
-        }
-    }
-
-    #[test]
-    fn threads_zero_rejected() {
-        assert!(parse_args(&args(&["atomic_solver", "--threads", "0"])).is_err());
-    }
-
-    #[test]
-    fn threads_non_numeric_rejected() {
-        assert!(parse_args(&args(&["atomic_solver", "--threads", "x"])).is_err());
-    }
-
-    #[test]
-    fn threads_missing_value_rejected() {
-        assert!(parse_args(&args(&["atomic_solver", "--threads"])).is_err());
     }
 
     #[test]

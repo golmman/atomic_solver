@@ -14,7 +14,7 @@ use crate::position::{Outcome, Position};
 use super::Search;
 use super::children::{ChildPrecompute, ChildSelection};
 use super::repetition_cache::RepetitionCache;
-use super::selection::{second_best_unsolved_excluding, select_from_children, selection_for_child};
+use super::selection::select_from_children;
 use crate::search::tt::TtEntry;
 use crate::zobrist::INF;
 
@@ -111,27 +111,11 @@ impl Search {
             return Outcome::Draw;
         }
 
-        // SPDFPN virtual steering (`--threads N`, N > 1 only): this node is
-        // assigned to another worker. Return "no progress" — no TT store, no
-        // proof event, no path push — so the caller's re-evaluation marks the
-        // child explored via unchanged bounds and moves on. The worker owning
-        // the job never sees its own entry (its snapshot excludes it), so its
-        // search is unaffected. A virtual entry can therefore never produce a
-        // decisive result here; see the `parallel` module header.
-        if self
-            .parallel_overlay
-            .as_ref()
-            .is_some_and(|o| o.outcome_for(tt_key).is_some())
-        {
-            self.precompute_pool[slot_depth] = slot;
-            return Outcome::Draw;
-        }
-
         // Single TT probe for this node: the entry is copied (TtEntry is
         // Copy) so the borrow ends before the later `self.tt.store`, and the
         // solved-result check, ordering hint, and previous-bounds snapshot are
         // all derived from the same snapshot.
-        let tt_entry = self.tt.probe(tt_key);
+        let tt_entry = self.tt.probe(tt_key).copied();
         if let Some(entry) = tt_entry.as_ref()
             && let Some(resolved) = Self::resolved_from_entry(entry, max_depth)
             && (entry.best_move == Move::NONE || !self.best_move_repeats_path(pos, entry.best_move))
@@ -200,10 +184,6 @@ impl Search {
         if self.child_pool.len() <= frame_depth {
             self.child_pool.resize_with(frame_depth + 1, Vec::new);
         }
-        // SPDFPN same-child resume clause applies to the top frame of a
-        // parallel job call only (set/cleared around the call in
-        // `parallel::run_job`); `false` on the sequential path.
-        let resume_here = self.parallel_resume_top == Some(frame_depth);
         let mut children = std::mem::take(&mut self.child_pool[frame_depth]);
         children.clear();
 
@@ -232,13 +212,8 @@ impl Search {
                 break;
             }
 
-            let dbg_top =
-                std::env::var("PAR_DBG2").is_ok() && self.parallel_resume_top == Some(frame_depth);
             if children.is_empty() {
                 self.evaluate_all_children(pos, moves, max_depth, is_or_node, &mut children);
-                if dbg_top {
-                    eprintln!("[dfpn-top] children evaluated: {}", children.len());
-                }
             } else if let Some(prev) = selection
                 && let Some(idx) = prev.best_child_index
             {
@@ -261,53 +236,12 @@ impl Search {
                 previous_best_move,
                 previous_best_child,
             ));
-            // SPDFPN same-child resume clause (plan5 decision 4; paper §1
-            // item 1): a resumed job keeps its previous best child j1 while
-            // p1 < (1 + ε)·p2 instead of re-selecting from scratch — the
-            // modification that makes a work-capped dfpn a resumable job,
-            // not a restart. At AND nodes the role-appropriate dn pair is
-            // used (the paper's perspective caveat, research_spdfpn.md §4
-            // risk 3). Inert at N = 1 (`resume_here` is always false there).
-            if resume_here
-                && let Some(sel) = selection.as_ref()
-                && sel.solved_outcome.is_none()
-                && let Some(prev_mv) = previous_best_move
-                && sel.best_move != prev_mv
-                && let Some(idx) = children
-                    .iter()
-                    .position(|c| c.mv == prev_mv && c.outcome.is_none() && !c.explored)
-            {
-                let keep = match second_best_unsolved_excluding(&children, is_or_node, idx) {
-                    Some(s) => {
-                        let (p1, p2) = if is_or_node {
-                            (children[idx].pn, children[s].pn)
-                        } else {
-                            (children[idx].dn, children[s].dn)
-                        };
-                        p1 < self.epsilon_ceil(p2)
-                    }
-                    None => true,
-                };
-                if keep {
-                    selection = Some(selection_for_child(&children, is_or_node, idx));
-                }
-            }
             let selection = selection.as_ref().unwrap();
             best_move = selection.best_move;
             pn = selection.pn;
             dn = selection.dn;
             depth = selection.depth;
 
-            if dbg_top {
-                eprintln!(
-                    "[dfpn-top] sel pn={} dn={} best={:?} solved={:?} th=({th_pn},{th_dn}) work={}",
-                    selection.pn,
-                    selection.dn,
-                    selection.best_move,
-                    selection.solved_outcome,
-                    self.child_evals - child_evals_start
-                );
-            }
             if let Some(solved) = selection.solved_outcome {
                 // Win: one winning child is enough. Loss and Draw require all
                 // children to be solved.

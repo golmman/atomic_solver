@@ -40,18 +40,6 @@
 //!                              else; decisive claims are replay-verified
 //!                              cycle-free certificates and never touch the
 //!                              transposition table.
-//!   --threads <N>              Worker count for the opt-in SPDFPN-style
-//!                              parallel DF-PN (N >= 1, default 1). N = 1 is
-//!                              the deterministic sequential solver.
-//!                              N > 1 runs N workers over one shared sharded
-//!                              TT and is nondeterministic in which valid
-//!                              proof wins and in work counts (event order
-//!                              included) — never a false decisive outcome;
-//!                              RAM = TT + O(N) small per-worker state.
-//!                              Under N > 1 the child-eval budget is
-//!                              advisory: exhaustion still ends the run as
-//!                              Draw + BudgetExhausted, but
-//!                              nondeterministically.
 //!   --tt-dump-path <FILE>      Write a compact binary snapshot of the
 //!                              transposition table after the search finishes.
 //!                              Optional; the snapshot is the transfer
@@ -123,13 +111,6 @@ fn print_help(program: &str) {
     println!("                             decides small-space positions (occupied");
     println!("                             <= 3 men, no pawns/castling) before the");
     println!("                             DF-PN loop");
-    println!("  --threads <N>              Worker count for the opt-in parallel");
-    println!("                             SPDFPN mode (default 1 = deterministic");
-    println!("                             sequential solver). N > 1 is");
-    println!("                             nondeterministic in which valid proof");
-    println!("                             wins and in work counts (never a false");
-    println!("                             decisive outcome); the child-eval");
-    println!("                             budget becomes advisory");
     println!("  --tt-dump-path <FILE>      Write a binary TT snapshot after the search");
     println!("                             (transfer artifact for offline proof");
     println!("                             reconstruction via reconstruct_pt; optional)");
@@ -199,7 +180,6 @@ fn main() {
         tt_dump_path,
         config_path,
         no_preflight,
-        threads,
     } = opts;
 
     let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
@@ -227,7 +207,6 @@ fn main() {
     search.set_first_outcome_only(first_outcome);
     search.set_refine_cap_factor(refine_cap);
     search.set_preflight_enabled(!no_preflight);
-    search.set_threads(threads);
 
     let stop_flag = Arc::new(AtomicBool::new(false));
 

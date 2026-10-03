@@ -30,8 +30,14 @@ conditions are pre-registered with the acceptance:
 
 Next: **plan4b done (stage 1b re-landed, tax pinned +5.36 %/+4.61 % vs
 the ≤ 7 % budget, `report4b.md`)**; **plan5 done (stage 2a mechanism built,
-smoke sound but 1.42×/4 threads — `report5a.md`)**; **plan5b next** (W sweep,
-campaign, GO/NO-GO + condition-1 revert-if-missed).
+smoke sound but 1.42×/4 threads — `report5a.md`)**; **plan5b done (stage 2b
+campaign: W locked at 10 000, S4 = 1.79×/m22, I4 = 2.06×/m22 → NO-GO per the
+pre-registered bands; condition-1 revert executed — stage 1b + 2a reverted,
+byte-identical sequential solver restored, tax refunded,
+`report5.md`)**. **2026-10-04: backlog #4 closed NO-GO; initiative closed —
+the parallelism space as scoped is measured out end to end** (option C
+plan2, deterministic lean plan7, SPDFPN stage 2; see `report5.md` next
+steps for the re-open levers if the owner ever revisits option A).
 
 **2026-10-03, plan4 kill point fired — initiative closed (backlog #4 NO-GO).**
 The inert TT-concurrency refactor measured +6.0 % (m22) / +4.4 %
@@ -208,7 +214,7 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
 | 1 | **Reading round: parallel PNS (2025-era)** | Mine the three open bibliography entries into `research_*.md` here: (a) Čížek, Balko, Schmid 2025 (*Massively Parallel Proof-Number Search*, arXiv:2511.10339 — two-level parallelization + shared worker info, 333× on 1024 cores); (b) Saffidine, Jouandeau, Cazenave 2011 (JLPNS, ACG-13); (c) Young, Hayward 2016 (*A Reverse Hex Solver*, scalable parallel DF-PN, Solrex). Extract per paper: cooperation protocol, TT sharing/sharding model, GHI/repetition handling under concurrency, scaling regime (where the gains saturate on 4–16 cores, not 1024) | information (feeds #2) | — | S | **mined 2026-09-21** (plan1): `research_cizek2025.md`, `research_jlpns.md`, `research_solrex.md` (+ vendored PDFs); all three silent on repetitions under concurrency (monotone domains) — the finding; small-pool evidence favors C over A; D's shared-DB layer has no safe payload here |
 | 2 | **Design-space note: architecture selection** | Weigh options A–D above against the design constraints; include the API/consumer story (opt-in `--threads N` vs a process-portfolio harness vs both). Sizing spike allowed per lean's cadence (temporary instrumentation, reverted) | selects the 2–8× lever's shape | — | M | **closed 2026-09-21 (plan2): measured NO-GO** — `design_space.md` + `measurements/plan2/`: option C (root-child race over unmodified processes) measured 0.27× wall (3.7× slowdown) at N=4 on m22, 15.5× work inflation, zero soundness violations; deficit structural (forfeited cross-child TT sharing/interleaving); ship-shape verdict recorded (harness-only, moot); no parallel mode ships |
 | 3 | **Staged implementation** | Gated on #2 GO; one lever per plan; sequential drift protocol green at every stage; parallel mode documented as nondeterministic (or not shipped, per #2) | the actual speedup | wall | L–XL | **closed 2026-09-21** — unblocking condition (#2 GO) failed on the pre-registered rules; no staged implementation exists to stage |
-| 4 | **A-stage: SPDFPN-style shared-TT parallel DF-PN** | Reopened by the 2026-10-02 nondeterminism premise; reference design = `research_spdfpn.md`. Stage 1 (plan4/plan4b): inert TT-concurrency refactor — sharded TT behind interior-mut locking, byte-identical N=1 behavior (gate re-registered 2026-10-03: ≤ +7 % median hard-class wall, byte-identity unchanged). Stage 2 (plan5/plan5b): `--threads N` prototype — W-threshold + same-child resume clause, virtual TT + job lock + `TRYRUNJOB`, thread-local repetition cache, serialized ProofEvents; measured on the hard class (wall speedup, work inflation, outcome agreement) with pre-registered GO bands; **tax acceptance + refactor revert-if-missed** | 2–8× wall on hard solves (expected ≈ 2.9–3.2× at 4 threads; conservative band ~1.8× at the GO edge) | wall | L–XL | **stage 2a built (plan5, 2026-10-04; `report5a.md`)**: `--threads N` landed — coordinator runs the unmodified sequential chunk loop, N−1 SPDFPN helper workers pre-warm the shared TT (declared architecture deviation: the pure worker pool could not converge on the hard class; W = 20 000 child evals, path-derived thresholds, virtual steering, retirement). N = 1 drift zero everywhere (quick suite 59/59, stdout + snapshot hashes identical to plan4b). Smoke (m22, 5 interleaved reps): **outcome agreement 15/15, zero panics**; median speedup **1.42×/4 threads, 0.92×/2 threads**, inflation ~2.2–2.4×, high t2 variance — below the GO bands, verdict belongs to plan5b's campaign. Stage 2b = plan5b (W sweep, campaign, GO/NO-GO, condition-1 revert-if-missed). Measurements: `measurements/plan4/`, `plan4b/`, `plan5/` |
+| 4 | **A-stage: SPDFPN-style shared-TT parallel DF-PN** | Reopened by the 2026-10-02 nondeterminism premise; reference design = `research_spdfpn.md`. Stage 1 (plan4/plan4b): inert TT-concurrency refactor — sharded TT behind interior-mut locking, byte-identical N=1 behavior (gate re-registered 2026-10-03: ≤ +7 % median hard-class wall, byte-identity unchanged). Stage 2 (plan5/plan5b): `--threads N` prototype — W-threshold + same-child resume clause, virtual TT + job lock + `TRYRUNJOB`, thread-local repetition cache, serialized ProofEvents; measured on the hard class (wall speedup, work inflation, outcome agreement) with pre-registered GO bands; **tax acceptance + refactor revert-if-missed** | 2–8× wall on hard solves (expected ≈ 2.9–3.2× at 4 threads; conservative band ~1.8× at the GO edge) | wall | L–XL | **closed 2026-10-04 NO-GO (plan5b; `report5.md`)**: stage 2b campaign (W sweep locked 10 000 — the landed 20 000 measured 3× worse at median; 5 interleaved reps × N ∈ {2,3,4} on m22 + shuffle-win): outcome agreement 29/29 decisive `win`, zero panics; **S4 = 1.79× (m22) / 2.68× (shuffle-win), I4 = 2.06× (m22) / 1.41× (shuffle-win)** → m22 misses both GO conjuncts, I4 > 2× fires NO-GO. **Condition-1 revert executed**: stage 1b + 2a reverted (0-line code diff vs pre-plan4b, `make test` green, quick suite 59/59, snapshot sha identical) — the tax is refunded. Mechanism preserved in history (`b714ef6` + W delta) and `measurements/plan4/`; re-open levers in `report5.md`. Measurements: `measurements/plan4/`, `plan4b/`, `plan5/` |
 
 ## Non-goals
 
@@ -235,6 +241,28 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
   and outcome agreement across repeated runs (no `wrong` ever).
 
 ## History
+
+- **2026-10-04 — plan5 complete: stage 2 (2a + 2b) → NO-GO verdict, condition-1 revert executed,
+  backlog #4 closed, initiative closed (`report5.md`)**: stage 2a built the opt-in `--threads N`
+  mechanism (`report5a.md`); stage 2b locked W = 10 000 (pre-campaign sweep over
+  {250, 1 000, 4 000, 10 000, 20 000, 50 000}, m22 t4 — the landed 20 000 was 3× worse at
+  median), ran the pre-registered interleaved campaign (5 reps × N ∈ {2, 3, 4} on m22 +
+  shuffle-win, N = 1 in-session references, sequential evals 14.16 M / 249.5 M via the
+  move-order suite), and produced the verdict: soundness clean (29/29 decisive `win`, zero
+  panics/lock anomalies; 2 cap-hit timeout draws recorded separately), **S4 = 1.79× (m22) /
+  2.68× (shuffle-win), I4 = 2.06× (m22) / 1.41× (shuffle-win) → NO-GO** (I4 > 2× fires
+  regardless of speedup; m22 misses S4 ≥ 2.0× too; verdict robust to the tax-adjusted
+  denominator and to the N = 3 inflation). Inflation driver identified but not chased
+  (pre-registration forbids mid-campaign mechanism changes): in ~1 of 5 runs helper-stored TT
+  entries steer the coordinator into a bad trajectory. **Condition 1 executed**: stage 1b + 2a
+  reverted — 0-line code diff vs pre-plan4b (`e18e53e`), `make test`/fmt/clippy green, quick
+  suite 59/59 `child_evals` identical, snapshot sha `eaa5f2b9…`/195 B identical; the ~5 %
+  TT-concurrency tax is refunded. N = 1 drift was zero at every stage-2b checkpoint (condition 2
+  held). N ∈ {8, 16} reported as clearly-labeled log-fit extrapolations only (condition 3).
+  The parallelism space as scoped is now measured out end to end (plan2 option C, lean plan7
+  deterministic, SPDFPN stage 2); re-open levers recorded in `report5.md`. Measurements:
+  `measurements/plan5/` (sweep + campaign + drivers). `docs/plans/README.md` row updated
+  (close event).
 
 - **2026-10-04 — plan5 complete: stage 2a mechanism built, smoke sound, speed
   below GO bands (`report5a.md`)**: `--threads N` (N > 1) landed over the

@@ -1,0 +1,40 @@
+{"case": "m22", "round": 1, "threads": 1, "wall_s": 3.294, "outcome": "win", "cap_s": 30, "rc": 0}
+{"case": "m22", "round": 1, "threads": 2, "wall_s": 4.646, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 1, "jobs": 11261, "helper_evals": 19387646, "helper_nodes": 1018696, "coordinator_evals": 20776659}
+{"case": "m22", "round": 1, "threads": 3, "wall_s": 1.932, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 2, "jobs": 9950, "helper_evals": 16082896, "helper_nodes": 1021915, "coordinator_evals": 8431478}
+{"case": "m22", "round": 1, "threads": 4, "wall_s": 3.678, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 3, "jobs": 24724, "helper_evals": 44037430, "helper_nodes": 2963441, "coordinator_evals": 15501856}
+{"case": "m22", "round": 2, "threads": 1, "wall_s": 3.296, "outcome": "win", "cap_s": 30, "rc": 0}
+{"case": "m22", "round": 2, "threads": 2, "wall_s": 2.598, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 1, "jobs": 5726, "helper_evals": 10928305, "helper_nodes": 623682, "coordinator_evals": 11526979}
+{"case": "m22", "round": 2, "threads": 3, "wall_s": 17.534, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 2, "jobs": 82691, "helper_evals": 146488784, "helper_nodes": 10464944, "coordinator_evals": 108174295}
+{"case": "m22", "round": 2, "threads": 4, "wall_s": 1.842, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 3, "jobs": 12124, "helper_evals": 21542180, "helper_nodes": 1342861, "coordinator_evals": 7614848}
+{"case": "m22", "round": 3, "threads": 1, "wall_s": 3.299, "outcome": "win", "cap_s": 30, "rc": 0}
+{"case": "m22", "round": 3, "threads": 2, "wall_s": 2.6, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 1, "jobs": 6233, "helper_evals": 10793585, "helper_nodes": 633523, "coordinator_evals": 11521512}
+{"case": "m22", "round": 3, "threads": 3, "wall_s": 1.66, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 2, "jobs": 7558, "helper_evals": 13750871, "helper_nodes": 920084, "coordinator_evals": 7265466}
+{"case": "m22", "round": 3, "threads": 4, "wall_s": 1.578, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 3, "jobs": 11971, "helper_evals": 18570948, "helper_nodes": 1218829, "coordinator_evals": 6611013}
+{"case": "m22", "round": 4, "threads": 1, "wall_s": 3.294, "outcome": "win", "cap_s": 30, "rc": 0}
+{"case": "m22", "round": 4, "threads": 2, "wall_s": 2.271, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 1, "jobs": 4966, "helper_evals": 9558678, "helper_nodes": 550824, "coordinator_evals": 10026789}
+{"case": "m22", "round": 4, "threads": 3, "wall_s": 2.549, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 2, "jobs": 12755, "helper_evals": 20928987, "helper_nodes": 1214471, "coordinator_evals": 10948247}
+{"case": "m22", "round": 4, "threads": 4, "wall_s": 2.228, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 3, "jobs": 16114, "helper_evals": 26379255, "helper_nodes": 1694842, "coordinator_evals": 9758295}
+{"case": "m22", "round": 5, "threads": 1, "wall_s": 3.319, "outcome": "win", "cap_s": 30, "rc": 0}
+{"case": "m22", "round": 5, "threads": 2, "wall_s": 3.207, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 1, "jobs": 8136, "helper_evals": 13150715, "helper_nodes": 799831, "coordinator_evals": 13801260}
+{"case": "m22", "round": 5, "threads": 3, "wall_s": 5.674, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 2, "jobs": 26782, "helper_evals": 46202836, "helper_nodes": 3340327, "coordinator_evals": 30777117}
+{"case": "m22", "round": 5, "threads": 4, "wall_s": 1.679, "outcome": "win", "cap_s": 30, "rc": 0, "helpers": 3, "jobs": 12103, "helper_evals": 20002534, "helper_nodes": 1270493, "coordinator_evals": 7112696}
+{"case": "shuffle_win", "round": 1, "threads": 1, "wall_s": 58.599, "outcome": "win", "cap_s": 100, "rc": 0}
+{"case": "shuffle_win", "round": 1, "threads": 2, "wall_s": 29.013, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 1, "jobs": 86852, "helper_evals": 123381159, "helper_nodes": 6894091, "coordinator_evals": 130195809}
+{"case": "shuffle_win", "round": 1, "threads": 3, "wall_s": 36.304, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 2, "jobs": 240701, "helper_evals": 303276883, "helper_nodes": 17180514, "coordinator_evals": 164110124}
+{"case": "shuffle_win", "round": 1, "threads": 4, "wall_s": 12.434, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 110065, "helper_evals": 146874448, "helper_nodes": 8311473, "coordinator_evals": 52684618}
+{"case": "shuffle_win", "round": 2, "threads": 1, "wall_s": 55.388, "outcome": "win", "cap_s": 100, "rc": 0}
+{"case": "shuffle_win", "round": 2, "threads": 2, "wall_s": 35.158, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 1, "jobs": 98452, "helper_evals": 148636798, "helper_nodes": 9011056, "coordinator_evals": 157641324}
+{"case": "shuffle_win", "round": 2, "threads": 3, "wall_s": 100.03, "outcome": "draw", "cap_s": 100, "rc": 0, "helpers": 2, "jobs": 596178, "helper_evals": 833981887, "helper_nodes": 52316678, "coordinator_evals": 477882542}
+{"case": "shuffle_win", "round": 2, "threads": 4, "wall_s": 31.705, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 298983, "helper_evals": 372328233, "helper_nodes": 21204651, "coordinator_evals": 135962727}
+{"case": "shuffle_win", "round": 3, "threads": 1, "wall_s": 58.207, "outcome": "win", "cap_s": 100, "rc": 0}
+{"case": "shuffle_win", "round": 3, "threads": 2, "wall_s": 30.672, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 1, "jobs": 92580, "helper_evals": 130820077, "helper_nodes": 7306530, "coordinator_evals": 138791679}
+{"case": "shuffle_win", "round": 3, "threads": 3, "wall_s": 25.872, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 2, "jobs": 158125, "helper_evals": 217875374, "helper_nodes": 11915524, "coordinator_evals": 116136958}
+{"case": "shuffle_win", "round": 3, "threads": 4, "wall_s": 21.734, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 188480, "helper_evals": 256507330, "helper_nodes": 14563455, "coordinator_evals": 94795333}
+{"case": "shuffle_win", "round": 4, "threads": 1, "wall_s": 58.201, "outcome": "win", "cap_s": 100, "rc": 0}
+{"case": "shuffle_win", "round": 4, "threads": 2, "wall_s": 29.794, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 1, "jobs": 92736, "helper_evals": 126449756, "helper_nodes": 7040971, "coordinator_evals": 134383877}
+{"case": "shuffle_win", "round": 4, "threads": 3, "wall_s": 25.687, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 2, "jobs": 170948, "helper_evals": 212311183, "helper_nodes": 12393807, "coordinator_evals": 115953623}
+{"case": "shuffle_win", "round": 4, "threads": 4, "wall_s": 17.408, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 175407, "helper_evals": 200760971, "helper_nodes": 11419900, "coordinator_evals": 73934183}
+{"case": "shuffle_win", "round": 5, "threads": 1, "wall_s": 58.618, "outcome": "win", "cap_s": 100, "rc": 0}
+{"case": "shuffle_win", "round": 5, "threads": 2, "wall_s": 100.044, "outcome": "draw", "cap_s": 100, "rc": 0, "helpers": 1, "jobs": 2350235, "helper_evals": 215786379, "helper_nodes": 14219132, "coordinator_evals": 454572154}
+{"case": "shuffle_win", "round": 5, "threads": 3, "wall_s": 30.757, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 2, "jobs": 191512, "helper_evals": 254376597, "helper_nodes": 15676287, "coordinator_evals": 137424399}
+{"case": "shuffle_win", "round": 5, "threads": 4, "wall_s": 27.492, "outcome": "win", "cap_s": 100, "rc": 0, "helpers": 3, "jobs": 245266, "helper_evals": 324426132, "helper_nodes": 18386370, "coordinator_evals": 118417814}

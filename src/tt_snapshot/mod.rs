@@ -163,13 +163,13 @@ pub fn write_tt_snapshot<W: Write>(
     let generation = tt.current_generation();
     let mut solved_count: u64 = 0;
     let mut unsolved_count: u64 = 0;
-    tt.for_each_entry(|e| {
+    for e in tt.entries() {
         if e.outcome.is_some() {
             solved_count += 1;
         } else if e.generation == generation {
             unsolved_count += 1;
         }
-    });
+    }
 
     w.write_all(MAGIC)?;
     w.write_all(&[VERSION, FLAGS])?;
@@ -181,48 +181,26 @@ pub fn write_tt_snapshot<W: Write>(
 
     let mut solved: u64 = 0;
     let mut unsolved: u64 = 0;
-    // `f` may not re-enter the table, but may write to `w`; the first write
-    // error is captured and returned after the pass (the closure cannot use
-    // `?` because `for_each_entry` takes a plain `FnMut`).
-    let mut err: Option<io::Error> = None;
-    tt.for_each_entry(|e| {
-        if err.is_some() {
-            return;
-        }
+    for e in tt.entries() {
         if let Some(outcome) = e.outcome {
-            let key = e.key.to_le_bytes();
-            let outcome = [outcome_to_u8(outcome)];
-            let depth = e.depth.to_le_bytes();
-            let best_move = move_to_u16(e.best_move).to_le_bytes();
-            match write_record(w, &[&key, &outcome, &depth, &best_move]) {
-                Ok(()) => solved += 1,
-                Err(e) => err = Some(e),
-            }
+            w.write_all(&e.key.to_le_bytes())?;
+            w.write_all(&[outcome_to_u8(outcome)])?;
+            w.write_all(&e.depth.to_le_bytes())?;
+            w.write_all(&move_to_u16(e.best_move).to_le_bytes())?;
+            solved += 1;
         }
-    });
-    tt.for_each_entry(|e| {
-        if err.is_some() {
-            return;
-        }
+    }
+    for e in tt.entries() {
         if e.outcome.is_none() && e.generation == generation {
-            let key = e.key.to_le_bytes();
-            let pn = e.pn.to_le_bytes();
-            let dn = e.dn.to_le_bytes();
-            let depth = e.depth.to_le_bytes();
-            let remaining_depth = e.remaining_depth.to_le_bytes();
-            let best_move = move_to_u16(e.best_move).to_le_bytes();
-            let work = e.work.to_le_bytes();
-            match write_record(
-                w,
-                &[&key, &pn, &dn, &depth, &remaining_depth, &best_move, &work],
-            ) {
-                Ok(()) => unsolved += 1,
-                Err(e) => err = Some(e),
-            }
+            w.write_all(&e.key.to_le_bytes())?;
+            w.write_all(&e.pn.to_le_bytes())?;
+            w.write_all(&e.dn.to_le_bytes())?;
+            w.write_all(&e.depth.to_le_bytes())?;
+            w.write_all(&e.remaining_depth.to_le_bytes())?;
+            w.write_all(&move_to_u16(e.best_move).to_le_bytes())?;
+            w.write_all(&e.work.to_le_bytes())?;
+            unsolved += 1;
         }
-    });
-    if let Some(e) = err {
-        return Err(e);
     }
 
     debug_assert_eq!(solved, solved_count);
@@ -239,15 +217,6 @@ pub fn write_tt_snapshot<W: Write>(
 
 fn header_bytes(root_fen: &str) -> u64 {
     8 + 1 + 1 + root_fen.len() as u64 + 1 + 4 + 4 + 8 + 8
-}
-
-/// Write the given byte slices as one record (helper so the
-/// `for_each_entry` closures can stay infallible).
-fn write_record<W: Write>(w: &mut W, parts: &[&[u8]]) -> io::Result<()> {
-    for p in parts {
-        w.write_all(p)?;
-    }
-    Ok(())
 }
 
 fn invalid_data(msg: &str) -> io::Error {

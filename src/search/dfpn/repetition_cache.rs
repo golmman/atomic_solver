@@ -23,18 +23,6 @@
 //!    reuse returns precisely the value the search would recompute.
 //! 4. Entries are cleared once per run in `Search::begin_run` and are never
 //!    serialized into TT snapshots, proof events, or any other artifact.
-//!
-//! # Parallel instantiation (`search::dfpn::parallel`)
-//!
-//! Under `--threads N`, N > 1, each helper worker owns a private
-//! `RepetitionCache` inside its own `Search` (never shared, never merged
-//! across workers). The cache is path-dependent *by design*: its keys include
-//! the ancestor repetition-key context, and different workers descend
-//! different paths, so sharing entries across workers is the one sharp
-//! false-result edge of the parallel mode (see the `parallel` module header's
-//! soundness contract). Per-worker private caches keep hit semantics exactly
-//! the sequential ones: a hit is only ever returned under an identical
-//! ancestor set.
 
 use std::collections::HashMap;
 
