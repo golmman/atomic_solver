@@ -141,7 +141,7 @@ value.
 | 2 | **Harvest loop** | campaign-worker-shaped runs producing shards (fresh root per job → solve → reconstruct → validate → manifest entry); merger runs after each batch | the DB grows at will, stoppable anytime | M | **done (plan2, 2026-09-29)**: standing shard dir + `proofdb_harvest`; first batch 12/87 decisive (all wins, plies 4–27), DB 12,081 → 12,655 nodes; gates H1–H5 pass; censored tail measured ≥ 40M evals at the 5 deepest quiet nodes |
 | 3 | **DTM-upgrade pass** | background jobs re-searching bound ladders to promote `bound` → `exact` where affordable | depth quality improves without re-harvesting outcomes | M | open |
 | 4 | **Coverage policy** | which frontier children to open next (cheap-first gradient; sharpness like plan4's, not enumerative layers) | keeps per-fact cost low as the tree deepens | S–M | **done (plan3, 2026-09-29)**: frontier classes C1/C2/C3 + policies in `proofdb_harvest` (`--policy`); measured A/B at 300M evals each: `sharp-siblings` 90 facts/300M (29.99 facts/100M, median 44.7k evals/fact) vs `open-deepest` 0/300M; winner is the default; gradient saturates after its head (marginal P2: 0 facts) |
-| 5 | **Website handoff** | ship `global_proof_store.md` to the external website project; agree on read-only DB consumption | the product surface of this initiative | S | open |
+| 5 | **Website handoff** | ship `global_proof_store.md` to the external website project; agree on read-only DB consumption | the product surface of this initiative | S | **done (plan13, 2026-10-02)**: handoff package at `measurements/plan13/handoff/` (digest-pinned rebuilt DB `0d929f4c…` + `HANDOFF.md` + verbatim spec copy); runbook extended into the operator **and user** manual (`docs/proofdb_pipeline.md`: data-model primer, shard provenance, per-tool output grammars, operator + consumer SQL recipes, troubleshooting); spec gained §7 (example consumer queries, additive). **Caveat: the agreement with the external project itself is the owner's follow-up action** — forward the package. |
 | 6 | **Independent harvesters** | partition the frontier across worker processes (by root-child subtree or class; per-worker shard staging, serialized manifest merge); campaign-prototype precedent (`examples/campaign*`, solve plans 5/9) | wall-time scaling of harvesting without touching solver semantics | M | open — the sequential prerequisite is done (plan4, 2026-09-30: the ledger holds exactly the pick-up state a per-worker partition needs); note report4 finding 3: within-layer selection needs a work-aware key before large batches are worth scaling |
 | 7 | **Subtree-scoped harvesting** | `--root-fen` (+ optional `--root-path`) plumbs the harvest root by FEN, resolved within the merged DB tree (no match or ambiguous match aborts); a subtree *view* over the same startpos-rooted tree — shards, manifest paths, and grafting stay startpos-relative unchanged | harvest any position, the primary user surface for item 6's per-worker subtree partition | S | open — parked from plan4 (2026-09-30, docs-only amendment, plan4 decision 12 tombstone): the first batch runs at the startpos root, and the MVP limitation ("FEN must be a node of the merged DB tree") is expected to be revisited under item 6 |
 | 8 | **Tooling completeness audit + hardening** | audit the pipeline end-to-end as a third party would run it (shards → merger → DB, harvest loop from a clean checkout): missing CLIs/options, undocumented contracts, error-path gaps, packaging/docs; fix what it finds | the pivot's next plan; defines "tooling complete" so harvesting runs can be justified as validation and the website handoff (#5) has a stable surface to hand over | S–M | **done (plan12, 2026-10-02)**: audit re-run and pinned (durable layer 262/262 self-consistent; merger reproduces the standing DB byte-identically, `0d929f4c…`, 55,703 nodes; harvest smoke 2/2 censored, manifest byte-identical; flip 75/0/Null). One defect found and fixed (the stale-DB `built_from` truncation panicked on a short DB value — now length-safe, regression-tested); deliverables: operator runbook `docs/proofdb_pipeline.md`, derived-DB rebuild regression test (`tests/proofdb.rs::standing_layer_rebuilds_byte_identical`, in the default gate), AGENTS.md entries for all four tools; ledger-from-clean-checkout recorded as a decision (fresh or seed — the ledger stays scheduling state), startpos-rooting/orphan-shard/merge-after-batch recorded as limitations. Plan11 (parked 18B `g1f3` rung) retired. Next levers: items 5 and 6. |
@@ -166,7 +166,27 @@ value.
 
 ## History
 
-- **2026-10-02 (latest) — plan12 executed; item 8 closed.** The audit
+- **2026-10-02 (latest) — plan13 executed; item 5 closed.** The handoff is
+  now shippable as one directory: `measurements/plan13/handoff/` holds a
+  DB rebuilt from the committed shard set (digest `0d929f4c…` = the plan12
+  pin, 55,703 nodes), a consumer-facing `HANDOFF.md` (digest + census +
+  read-only consumption statement), and a verbatim spec copy. The runbook
+  `docs/proofdb_pipeline.md` became the operator **and user** manual (owner
+  decision: one canonical doc, no separate manual file): new data-model
+  primer, shard-provenance section, per-tool output grammars with worked
+  invocations (all re-run this session; the decisive `job:` example is the
+  pinned plan10 census record), operator + consumer SQL recipes, extended
+  troubleshooting. Spec §7 (example consumer queries) added, verified
+  additive-only and standalone. One runbook correction found: §2's smoke
+  expectation said `job:` lines carry `"kind": null` — the observed lines
+  omit `number`/`kind` entirely (and-close emits `pass`/`work_before`);
+  fixed to the observed bytes. The read-only DB probe corrected the plan's
+  root-child sanity item (all 7 root children are open — the root is
+  undecided; 55,628 proven nodes live deeper). Gates: `make test` green,
+  no code changes. Next lever: **item 6 (parallel harvesters)**; the
+  owner forwards the handoff package (external agreement). See
+  `report13.md` and `measurements/plan13/`.
+- **2026-10-02 — plan12 executed; item 8 closed.** The audit
   probes were re-run against the working tree and their results pinned:
   clean-checkout merge digest `0d929f4c…` / 55,703 nodes (1.2 s), harvest
   smoke 2/2 censored with a byte-identical manifest rewrite (`e91ad57b…`),
