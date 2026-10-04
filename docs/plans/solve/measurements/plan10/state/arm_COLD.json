@@ -1,0 +1,67 @@
+{
+ "fired": true,
+ "dc_at_fire": 2,
+ "sample": [
+  "b1a3 e8d7",
+  "b1d2 e8d7"
+ ],
+ "jobs": [
+  {
+   "job_id": "w0_C_0",
+   "worker": 0,
+   "path": "b1a3 e8d7",
+   "resolving_rung": "R3",
+   "budget": 128000000,
+   "outcome": "win",
+   "child_evals": 69902397,
+   "nodes": 2556103,
+   "wall_s": 15.572021176,
+   "root_pn": 0,
+   "root_dn": 1152921504606846976,
+   "error": null
+  },
+  {
+   "job_id": "w1_C_0",
+   "worker": 1,
+   "path": "b1d2 e8d7",
+   "resolving_rung": "R2",
+   "budget": 32000000,
+   "outcome": "draw",
+   "child_evals": 32000006,
+   "nodes": 1224782,
+   "wall_s": 6.775364073,
+   "root_pn": 50,
+   "root_dn": 35051,
+   "error": null
+  }
+ ],
+ "wall_s": 16.502,
+ "sampler": {
+  "aborted": false,
+  "vanished": [],
+  "peak_total_bytes": 481574912,
+  "peak_single_bytes": {
+   "w0": 238403584,
+   "w1": 238452736,
+   "w2": 2359296,
+   "w3": 2359296
+  },
+  "samples_taken": 2
+ },
+ "oom_kill_delta": 0,
+ "worker_exits": {
+  "w0": {
+   "exitcode": 0
+  },
+  "w1": {
+   "exitcode": 0
+  },
+  "w2": {
+   "exitcode": 0
+  },
+  "w3": {
+   "exitcode": 0
+  }
+ },
+ "job_errors": 0
+}

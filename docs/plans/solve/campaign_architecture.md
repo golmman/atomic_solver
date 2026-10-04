@@ -403,3 +403,34 @@ assumed. They are binding for plan7.
   its own soundness argument). Session structure (checkpoint/resume,
   job-store durability) is measured sound and stays the campaign's
   constraint-4 implementation regardless.
+- **A7 — plan10 full-frontier attribution: the dispatcher-biased record
+  is superseded; budget escalation is inert on the full frontier; the
+  advisory-dn channel and a below-cap warm discount are measured (n=2).**
+  plan10's Stage-0 sweep bypassed the master dispatcher by construction
+  (driver-written jobs, 4 workers, per-leaf budget ladder 8M/32M/128M
+  child-evals) and measured the full 698-leaf frontier of plan9's frozen
+  state. Facts that amend the A5/A6 attribution record: (1) the
+  incumbent dispatch policy touches only 104/698 open leaves (one
+  affinity leaf per worker per child), and **all 38 sweep conversions
+  are on never-searched leaves** — the touched 104 produced zero
+  conversions at 4× budget; the cheap class is a coverage problem
+  (C(8M) = 36 facts at a median ≈ 1.3k evals sit in the dispatcher's
+  blind spot), the rest of the frontier a censoring problem (100%/
+  100%/99.85% cap-pinned at the three rungs; ΔC = 2 over 110.9 G
+  child-evals). (2) The Stage-0 gate fired **CENSORING GO**: budget
+  escalation is refuted as a conversion mechanism; the registered next
+  lever is Stage 2 (A6b early-censor certificates), whose substrate is
+  now measured but thin — pre-rung advisory root_dn separated the two
+  rung-resolved leaves from the censored mass (AUC 0.87/0.99, combined
+  0.99/1.00) and the cold-control arm measured a warm-state discount
+  below cap (warm marginal / cold spend 0.72/0.86; one conversion
+  unreachable cold at its resolving budget) — exactly the regime the A6
+  caveat recorded as unresolvable at 8M. Qualification: n = 1 positive
+  per rung; any certificate design must validate the signal at larger n
+  and carry the pre-registered path-scoped soundness argument. (3) M4
+  remains 0/27 root-level conversions (c1g5's two open leaves censor at
+  268M/260M cumulative evals); the dispatcher's per-child targeting
+  (A5.4) is not gate-selected but the coverage fact above is its
+  measured motivation for the cheap class. Session structure and
+  machinery unchanged: the sweep ran the plan9 binaries with 0 job
+  errors, 0 verify failures (A2), and 0 deviations across 2,023 jobs.

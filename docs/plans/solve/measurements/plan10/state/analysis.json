@@ -1,0 +1,532 @@
+{
+ "root_fen": "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq d6 0 2",
+ "shape": {
+  "workers": 4,
+  "tt_mb": 128,
+  "pt_mb": 512,
+  "rung_budgets": {
+   "R1": 8000000,
+   "R2": 32000000,
+   "R3": 128000000,
+   "R4": 512000000
+  },
+  "retention": "on (cold arm: off)",
+  "master": "absent during the sweep (driver-written jobs)"
+ },
+ "locked_inputs": {
+  "r_seq": 198229.0,
+  "r_camp": 558529.0,
+  "kappa": 27.5
+ },
+ "frontier": {
+  "open_leaves": 698,
+  "untouched": 594
+ },
+ "M1": {
+  "R1": {
+   "decided": 36,
+   "won": 36,
+   "lost": 0
+  },
+  "R2": {
+   "decided": 37,
+   "won": 37,
+   "lost": 0
+  },
+  "R3": {
+   "decided": 38,
+   "won": 38,
+   "lost": 0
+  },
+  "C8M_on_untouched": 36
+ },
+ "M2": {
+  "R1": {
+   "n": 662,
+   "cap_pinned_frac": 1.0,
+   "median": 8000014.0,
+   "deciles": [
+    8000001,
+    8000008,
+    8000014,
+    8000020,
+    8000028
+   ],
+   "mean": 8000014.6
+  },
+  "R2": {
+   "n": 661,
+   "cap_pinned_frac": 1.0,
+   "median": 32000014,
+   "deciles": [
+    32000002,
+    32000008,
+    32000014,
+    32000019,
+    32000027
+   ],
+   "mean": 32000014.2
+  },
+  "R3": {
+   "n": 660,
+   "cap_pinned_frac": 0.9985,
+   "median": 128000013.0,
+   "deciles": [
+    128000001,
+    128000007,
+    128000013,
+    128000019,
+    128000027
+   ],
+   "mean": 127899043.0
+  }
+ },
+ "M3": {
+  "R2": {
+   "entered": 662,
+   "resolved_at_rung": 1,
+   "signals": {
+    "pn": {
+     "threshold": 107,
+     "youden": 0.0272,
+     "tpr": 1.0,
+     "fpr": 0.973,
+     "tp": 1,
+     "fn": 0,
+     "tn": 18,
+     "fp": 643,
+     "auc": 0.0272
+    },
+    "dn": {
+     "threshold": 9626,
+     "youden": 0.8729,
+     "tpr": 1.0,
+     "fpr": 0.127,
+     "tp": 1,
+     "fn": 0,
+     "tn": 577,
+     "fp": 84,
+     "auc": 0.8729
+    },
+    "work": {
+     "threshold": 30989098,
+     "youden": 0.0,
+     "tpr": 1.0,
+     "fpr": 1.0,
+     "tp": 1,
+     "fn": 0,
+     "tn": 0,
+     "fp": 661,
+     "auc": 0.0
+    }
+   },
+   "note": "pn/dn INF-capped at 2^62; work = historical + sweep cumulative; label = resolved at this rung",
+   "combined": {
+    "threshold": 0.2697932425617751,
+    "youden": 0.9939,
+    "tpr": 1.0,
+    "fpr": 0.006,
+    "tp": 1,
+    "fn": 0,
+    "tn": 657,
+    "fp": 4,
+    "auc": 0.9939
+   }
+  },
+  "R3": {
+   "entered": 661,
+   "resolved_at_rung": 1,
+   "signals": {
+    "pn": {
+     "threshold": 112,
+     "youden": 0.0909,
+     "tpr": 1.0,
+     "fpr": 0.909,
+     "tp": 1,
+     "fn": 0,
+     "tn": 60,
+     "fp": 600,
+     "auc": 0.0909
+    },
+    "dn": {
+     "threshold": 44073,
+     "youden": 0.9924,
+     "tpr": 1.0,
+     "fpr": 0.008,
+     "tp": 1,
+     "fn": 0,
+     "tn": 655,
+     "fp": 5,
+     "auc": 0.9924
+    },
+    "work": {
+     "threshold": 100174122,
+     "youden": 0.0,
+     "tpr": 1.0,
+     "fpr": 1.0,
+     "tp": 1,
+     "fn": 0,
+     "tn": 0,
+     "fp": 660,
+     "auc": 0.0
+    }
+   },
+   "note": "pn/dn INF-capped at 2^62; work = historical + sweep cumulative; label = resolved at this rung",
+   "combined": {
+    "threshold": 0.26616161616161615,
+    "youden": 1.0,
+    "tpr": 1.0,
+    "fpr": 0.0,
+    "tp": 1,
+    "fn": 0,
+    "tn": 660,
+    "fp": 0,
+    "auc": 1.0
+   }
+  }
+ },
+ "M4": {
+  "children_resolved": 0,
+  "children_refuted": 0,
+  "leaves_won": 68,
+  "leaves_lost": 0,
+  "per_child": [
+   {
+    "child": "a2a3",
+    "replies": 27,
+    "won": 0,
+    "lost": 0,
+    "open": 27,
+    "resolved": false
+   },
+   {
+    "child": "a2a4",
+    "replies": 27,
+    "won": 0,
+    "lost": 0,
+    "open": 27,
+    "resolved": false
+   },
+   {
+    "child": "b2b3",
+    "replies": 27,
+    "won": 2,
+    "lost": 0,
+    "open": 25,
+    "resolved": false
+   },
+   {
+    "child": "b2b4",
+    "replies": 27,
+    "won": 0,
+    "lost": 0,
+    "open": 27,
+    "resolved": false
+   },
+   {
+    "child": "c2c3",
+    "replies": 27,
+    "won": 1,
+    "lost": 0,
+    "open": 26,
+    "resolved": false
+   },
+   {
+    "child": "c2c4",
+    "replies": 28,
+    "won": 1,
+    "lost": 0,
+    "open": 27,
+    "resolved": false
+   },
+   {
+    "child": "e2e3",
+    "replies": 27,
+    "won": 3,
+    "lost": 0,
+    "open": 24,
+    "resolved": false
+   },
+   {
+    "child": "e2e4",
+    "replies": 28,
+    "won": 5,
+    "lost": 0,
+    "open": 23,
+    "resolved": false
+   },
+   {
+    "child": "f2f3",
+    "replies": 27,
+    "won": 0,
+    "lost": 0,
+    "open": 27,
+    "resolved": false
+   },
+   {
+    "child": "f2f4",
+    "replies": 27,
+    "won": 0,
+    "lost": 0,
+    "open": 27,
+    "resolved": false
+   },
+   {
+    "child": "g2g3",
+    "replies": 27,
+    "won": 1,
+    "lost": 0,
+    "open": 26,
+    "resolved": false
+   },
+   {
+    "child": "g2g4",
+    "replies": 26,
+    "won": 0,
+    "lost": 0,
+    "open": 26,
+    "resolved": false
+   },
+   {
+    "child": "h2h3",
+    "replies": 27,
+    "won": 0,
+    "lost": 0,
+    "open": 27,
+    "resolved": false
+   },
+   {
+    "child": "h2h4",
+    "replies": 27,
+    "won": 0,
+    "lost": 0,
+    "open": 27,
+    "resolved": false
+   },
+   {
+    "child": "b1d2",
+    "replies": 27,
+    "won": 1,
+    "lost": 0,
+    "open": 26,
+    "resolved": false
+   },
+   {
+    "child": "b1a3",
+    "replies": 27,
+    "won": 1,
+    "lost": 0,
+    "open": 26,
+    "resolved": false
+   },
+   {
+    "child": "b1c3",
+    "replies": 27,
+    "won": 0,
+    "lost": 0,
+    "open": 27,
+    "resolved": false
+   },
+   {
+    "child": "g1f3",
+    "replies": 27,
+    "won": 17,
+    "lost": 0,
+    "open": 10,
+    "resolved": false
+   },
+   {
+    "child": "g1h3",
+    "replies": 27,
+    "won": 3,
+    "lost": 0,
+    "open": 24,
+    "resolved": false
+   },
+   {
+    "child": "c1d2",
+    "replies": 27,
+    "won": 0,
+    "lost": 0,
+    "open": 27,
+    "resolved": false
+   },
+   {
+    "child": "c1e3",
+    "replies": 27,
+    "won": 0,
+    "lost": 0,
+    "open": 27,
+    "resolved": false
+   },
+   {
+    "child": "c1f4",
+    "replies": 27,
+    "won": 1,
+    "lost": 0,
+    "open": 26,
+    "resolved": false
+   },
+   {
+    "child": "c1g5",
+    "replies": 26,
+    "won": 24,
+    "lost": 0,
+    "open": 2,
+    "resolved": false
+   },
+   {
+    "child": "c1h6",
+    "replies": 26,
+    "won": 2,
+    "lost": 0,
+    "open": 24,
+    "resolved": false
+   },
+   {
+    "child": "d1d2",
+    "replies": 27,
+    "won": 3,
+    "lost": 0,
+    "open": 24,
+    "resolved": false
+   },
+   {
+    "child": "d1d3",
+    "replies": 27,
+    "won": 3,
+    "lost": 0,
+    "open": 24,
+    "resolved": false
+   },
+   {
+    "child": "e1d2",
+    "replies": 27,
+    "won": 0,
+    "lost": 0,
+    "open": 27,
+    "resolved": false
+   }
+  ]
+ },
+ "M6": {
+  "per_rung_child_evals": {
+   "R1": 5301335051,
+   "R2": 21174998490,
+   "R3": 84473542470
+  },
+  "total_child_evals": 110949876011,
+  "total_nodes_est": 4034540946,
+  "per_rung_nodes_est": {
+   "R1": 192775820,
+   "R2": 769999945,
+   "R3": 3071765181
+  },
+  "projection": {
+   "last_rung": "R3",
+   "conversion_rate_per_rung": 0.0015,
+   "survivors": 660,
+   "next_doubling_budget": 256000000,
+   "expected_conversions_next_doubling": 1.0,
+   "projected_spend_next_doubling_child_evals": 168960000000,
+   "note": "geometric extrapolation of the measured per-doubling conversion rate; not a DTM-based bound"
+  }
+ },
+ "gate": {
+  "dc": 2,
+  "verdict": "CENSORING_GO",
+  "detail": {
+   "rule": "dC <= 5 with an M3 advisory signal: budget escalation refuted; Stage 2 (A6b) certificates have a measured substrate",
+   "m3_signal": true,
+   "m4_conversion": 0
+  }
+ },
+ "cross_checks": {
+  "plan9_common_12": {
+   "n": 12,
+   "median_marginal_evals": 8000019.0,
+   "cap_pinned_frac": 1.0,
+   "plan9_fresh_reference": {
+    "median": 7989618.7,
+    "cap_pinned": 0.997
+   }
+  },
+  "no_won_leaf_jobs": {
+   "violations": 0
+  },
+  "job_errors": {
+   "rung_errors": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0
+   },
+   "missing_results": {
+    "R1": 0,
+    "R2": 0,
+    "R3": 0
+   },
+   "cold_errors": 0,
+   "merge_job_errors": 0,
+   "merge_verify_failures": 0
+  },
+  "deviations": {}
+ },
+ "cold_arm": {
+  "fired": true,
+  "dc_at_fire": 2,
+  "n": 2,
+  "warm_vs_cold": {
+   "rows": [
+    {
+     "path": "b1a3 e8d7",
+     "budget": 128000000,
+     "warm_marginal": 60174090,
+     "warm_cumulative": 100174123,
+     "cold": 69902397,
+     "warm_marginal_over_cold": 0.861
+    },
+    {
+     "path": "b1d2 e8d7",
+     "budget": 32000000,
+     "warm_marginal": 22989099,
+     "warm_cumulative": 30989099,
+     "cold": 32000006,
+     "warm_marginal_over_cold": 0.718
+    }
+   ],
+   "median_warm_marginal_over_cold": 0.7895,
+   "note": "warm marginal = the resolving rung's per-job evals under the warm TT; cold = fresh-Search spend at the same budget (--retention off)"
+  }
+ },
+ "r4_decision": {
+  "survivors": 660,
+  "elapsed_h": 1.832,
+  "projected_r4_h": 6.111,
+  "rule_h": 5.0,
+  "fired": false
+ },
+ "machinery": {
+  "R1": {
+   "restore_probe_mismatches": 0,
+   "restore_degraded_workers": 0,
+   "tt_dumps_missing": [],
+   "defect": false,
+   "export_failures": 0
+  },
+  "R2": {
+   "restore_probe_mismatches": 0,
+   "restore_degraded_workers": 0,
+   "tt_dumps_missing": [],
+   "defect": false,
+   "export_failures": 0
+  },
+  "R3": {
+   "restore_probe_mismatches": 0,
+   "restore_degraded_workers": 0,
+   "tt_dumps_missing": [],
+   "defect": false,
+   "export_failures": 0
+  }
+ },
+ "verify_failures": 0
+}

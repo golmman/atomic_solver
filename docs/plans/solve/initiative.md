@@ -45,6 +45,29 @@ the full verdict bands (ρ ≥ 0.7 per plan7 §4) are re-registered at a
 later verdict stage, not at the POCs. `docs/plans/README.md` row update
 due with the plan session that drafts plan10.
 
+**plan10 executed 2026-10-04 (`report10.md`) — Stage 0 gate: CENSORING GO
+(ΔC = 2; M3 substrate measured, n=2).** The full-frontier sweep (698 open
+leaves, driver-written jobs, dispatcher bypassed, warm 8M/32M/128M ladder +
+contingent-R4 rule + cold control + A2 merge pass) measured: C(8M) = 36,
+C(32M) = 37, C(128M) = 38 (ΔC = 2 ≤ 5), censoring 100%/100%/99.85%
+cap-pinned at the three rungs, `children_resolved` still 0/27 (c1g5's two
+open leaves censor at 268M/260M cumulative evals). Structural finding
+(§11 A7): all 38 conversions are on never-searched leaves — the
+dispatcher's 104-leaf sample produced zero at 4× budget — so the cheap
+class is a coverage problem while the frontier body is a censoring
+problem; the report9 budget-cap caveat is priced (warm-state discount
+measured below cap: warm marginal / cold spend 0.72/0.86, one conversion
+unreachable cold at its resolving budget). The pre-registered gate
+selects **Stage 2 (A6b budget-aware early-censor certificates)** as the
+next draft; its substrate (advisory-dn separation, AUC 0.87/0.99) rests
+on n = 1 positive per rung and must be validated at larger n, with the
+pre-registered path-scoped soundness argument, before certificates are
+trusted. Stage 1 (A5.4 targeting) is not gate-selected; the M1 sub-reading
+(the 36-fact dispatcher-blind-spot harvest at median ≈ 1.3k evals) is its
+measured motivation if a Stage-1-adjacent design is ever folded in. The
+pending Phase-0 side deliverable `docs/plans/solve/book.md` is published
+(plan10 task 4; counts verified against report4 §1).
+
 **plan9 executed 2026-09-25 (`report9.md`) — item 8 complete, verdict
 **NEGATIVE**:` solve` is DORMANT per the status rule.** Stage 3 built
 the constraint-4 checkpoint/resume machinery (examples/-side: master
@@ -96,8 +119,10 @@ plan9 closed the accumulation question (A6).
 The campaign line is closed; the initiative is re-scoped onto the
 following pending plans (status: active).
 
-Phase 0 (start of next session): publish the human-readable refutation
-book (report4 §1 expanded with PVs) as `docs/plans/solve/book.md`.
+Phase 0 — DONE (plan10 task 4, 2026-10-04): the human-readable refutation
+book is published as `docs/plans/solve/book.md` (report4 §1 expanded with
+PVs and node costs, generated from the committed plan4 records by
+`measurements/plan10/make_book.py`, counts verified).
 
 Phase 1 — the work before `solve` returns (two independent tracks):
 
