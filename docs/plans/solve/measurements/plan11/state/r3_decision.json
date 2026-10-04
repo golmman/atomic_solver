@@ -1,0 +1,11 @@
+{
+ "survivors": 56,
+ "elapsed_h": 1.135,
+ "projected_r3_h": 2.026,
+ "rule_h": 4.5,
+ "constants": {
+  "kappa": 27.5,
+  "r_camp": 558529.0
+ },
+ "fired": true
+}

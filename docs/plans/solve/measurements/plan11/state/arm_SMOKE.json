@@ -1,0 +1,460 @@
+{
+ "budget_evals": 100000,
+ "n_leaves": 8,
+ "sample": [
+  "e2e3 b7b6",
+  "e2e3 a7a5",
+  "g2g3 a7a6",
+  "a2a4 a7a6",
+  "h2h3 b7b6",
+  "g1f3 e7e5",
+  "a2a3 b8a6",
+  "a2a4 b8a6"
+ ],
+ "strata_counts": {
+  "H": 2,
+  "M": 2,
+  "L": 2,
+  "U": 2
+ },
+ "phases": [
+  {
+   "phase": "S0",
+   "warm": false,
+   "jobs": 8,
+   "resolved": 0,
+   "job_errors": 0,
+   "wall_s": 2.502,
+   "sampler": {
+    "aborted": false,
+    "vanished": [],
+    "peak_total_bytes": 18415616,
+    "peak_single_bytes": {
+     "w0": 7569408,
+     "w1": 2326528,
+     "w2": 6209536,
+     "w3": 2310144
+    },
+    "samples_taken": 1
+   },
+   "oom_kill_delta": 0,
+   "worker_exits": {
+    "w0": {
+     "exitcode": 0
+    },
+    "w1": {
+     "exitcode": 0
+    },
+    "w2": {
+     "exitcode": 0
+    },
+    "w3": {
+     "exitcode": 0
+    }
+   },
+   "tt_files": {
+    "w0": {
+     "exists": true,
+     "bytes": 425544
+    },
+    "w1": {
+     "exists": true,
+     "bytes": 141144
+    },
+    "w2": {
+     "exists": true,
+     "bytes": 136773
+    },
+    "w3": {
+     "exists": true,
+     "bytes": 431745
+    }
+   },
+   "stderr": {
+    "w0": {
+     "job_lines": 3,
+     "restore": [],
+     "tt_dump": [
+      {
+       "solved": 1346,
+       "unsolved": 9649,
+       "bytes": 425544,
+       "path": "/tmp/plan11_smoke/tt_w0_S0.tt"
+      }
+     ],
+     "export_failures": []
+    },
+    "w1": {
+     "job_lines": 1,
+     "restore": [],
+     "tt_dump": [
+      {
+       "solved": 278,
+       "unsolved": 3259,
+       "bytes": 141144,
+       "path": "/tmp/plan11_smoke/tt_w1_S0.tt"
+      }
+     ],
+     "export_failures": []
+    },
+    "w2": {
+     "job_lines": 1,
+     "restore": [],
+     "tt_dump": [
+      {
+       "solved": 373,
+       "unsolved": 3121,
+       "bytes": 136773,
+       "path": "/tmp/plan11_smoke/tt_w2_S0.tt"
+      }
+     ],
+     "export_failures": []
+    },
+    "w3": {
+     "job_lines": 3,
+     "restore": [],
+     "tt_dump": [
+      {
+       "solved": 2087,
+       "unsolved": 9532,
+       "bytes": 431745,
+       "path": "/tmp/plan11_smoke/tt_w3_S0.tt"
+      }
+     ],
+     "export_failures": []
+    }
+   },
+   "jobs_rec": [
+    {
+     "job_id": "w0_S0_0",
+     "worker": 0,
+     "path": "a2a3 b8a6",
+     "stratum": "U",
+     "outcome": "draw",
+     "child_evals": 100018,
+     "root_pn": 49,
+     "root_dn": 498,
+     "error": null
+    },
+    {
+     "job_id": "w0_S0_1",
+     "worker": 0,
+     "path": "a2a4 a7a6",
+     "stratum": "M",
+     "outcome": "draw",
+     "child_evals": 100008,
+     "root_pn": 49,
+     "root_dn": 647,
+     "error": null
+    },
+    {
+     "job_id": "w3_S0_0",
+     "worker": 3,
+     "path": "a2a4 b8a6",
+     "stratum": "U",
+     "outcome": "draw",
+     "child_evals": 100015,
+     "root_pn": 49,
+     "root_dn": 670,
+     "error": null
+    },
+    {
+     "job_id": "w3_S0_1",
+     "worker": 3,
+     "path": "e2e3 a7a5",
+     "stratum": "H",
+     "outcome": "draw",
+     "child_evals": 100012,
+     "root_pn": 26,
+     "root_dn": 1326,
+     "error": null
+    },
+    {
+     "job_id": "w2_S0_0",
+     "worker": 2,
+     "path": "e2e3 b7b6",
+     "stratum": "H",
+     "outcome": "draw",
+     "child_evals": 100032,
+     "root_pn": 25,
+     "root_dn": 139,
+     "error": null
+    },
+    {
+     "job_id": "w0_S0_2",
+     "worker": 0,
+     "path": "g1f3 e7e5",
+     "stratum": "L",
+     "outcome": "draw",
+     "child_evals": 100009,
+     "root_pn": 78,
+     "root_dn": 305,
+     "error": null
+    },
+    {
+     "job_id": "w3_S0_2",
+     "worker": 3,
+     "path": "g2g3 a7a6",
+     "stratum": "M",
+     "outcome": "draw",
+     "child_evals": 100004,
+     "root_pn": 49,
+     "root_dn": 263,
+     "error": null
+    },
+    {
+     "job_id": "w1_S0_0",
+     "worker": 1,
+     "path": "h2h3 b7b6",
+     "stratum": "L",
+     "outcome": "draw",
+     "child_evals": 100013,
+     "root_pn": 53,
+     "root_dn": 580,
+     "error": null
+    }
+   ],
+   "restore_probe_mismatches": 0,
+   "restore_degraded_workers": 0,
+   "tt_dumps_missing": []
+  },
+  {
+   "phase": "S1",
+   "warm": true,
+   "jobs": 8,
+   "resolved": 0,
+   "job_errors": 0,
+   "wall_s": 2.502,
+   "sampler": {
+    "aborted": false,
+    "vanished": [],
+    "peak_total_bytes": 16695296,
+    "peak_single_bytes": {
+     "w0": 6848512,
+     "w1": 2523136,
+     "w2": 5095424,
+     "w3": 2228224
+    },
+    "samples_taken": 1
+   },
+   "oom_kill_delta": 0,
+   "worker_exits": {
+    "w0": {
+     "exitcode": 0
+    },
+    "w1": {
+     "exitcode": 0
+    },
+    "w2": {
+     "exitcode": 0
+    },
+    "w3": {
+     "exitcode": 0
+    }
+   },
+   "tt_files": {
+    "w0": {
+     "exists": true,
+     "bytes": 830178
+    },
+    "w1": {
+     "exists": true,
+     "bytes": 276753
+    },
+    "w2": {
+     "exists": true,
+     "bytes": 282372
+    },
+    "w3": {
+     "exists": true,
+     "bytes": 853803
+    }
+   },
+   "stderr": {
+    "w0": {
+     "job_lines": 3,
+     "restore": [
+      {
+       "file_solved": 1346,
+       "file_unsolved": 9649,
+       "table_solved": 1346,
+       "table_unsolved": 9649,
+       "probe_checked": 104,
+       "probe_mismatched": 0
+      }
+     ],
+     "tt_dump": [
+      {
+       "solved": 2976,
+       "unsolved": 18701,
+       "bytes": 830178,
+       "path": "/tmp/plan11_smoke/tt_w0_S1.tt"
+      }
+     ],
+     "export_failures": []
+    },
+    "w1": {
+     "job_lines": 1,
+     "restore": [
+      {
+       "file_solved": 278,
+       "file_unsolved": 3259,
+       "table_solved": 278,
+       "table_unsolved": 3259,
+       "probe_checked": 139,
+       "probe_mismatched": 0
+      }
+     ],
+     "tt_dump": [
+      {
+       "solved": 829,
+       "unsolved": 6291,
+       "bytes": 276753,
+       "path": "/tmp/plan11_smoke/tt_w1_S1.tt"
+      }
+     ],
+     "export_failures": []
+    },
+    "w2": {
+     "job_lines": 1,
+     "restore": [
+      {
+       "file_solved": 373,
+       "file_unsolved": 3121,
+       "table_solved": 373,
+       "table_unsolved": 3121,
+       "probe_checked": 125,
+       "probe_mismatched": 0
+      }
+     ],
+     "tt_dump": [
+      {
+       "solved": 1240,
+       "unsolved": 6278,
+       "bytes": 282372,
+       "path": "/tmp/plan11_smoke/tt_w2_S1.tt"
+      }
+     ],
+     "export_failures": []
+    },
+    "w3": {
+     "job_lines": 3,
+     "restore": [
+      {
+       "file_solved": 2087,
+       "file_unsolved": 9532,
+       "table_solved": 2087,
+       "table_unsolved": 9532,
+       "probe_checked": 105,
+       "probe_mismatched": 0
+      }
+     ],
+     "tt_dump": [
+      {
+       "solved": 4005,
+       "unsolved": 18896,
+       "bytes": 853803,
+       "path": "/tmp/plan11_smoke/tt_w3_S1.tt"
+      }
+     ],
+     "export_failures": []
+    }
+   },
+   "jobs_rec": [
+    {
+     "job_id": "w0_S1_0",
+     "worker": 0,
+     "path": "a2a3 b8a6",
+     "stratum": "U",
+     "outcome": "draw",
+     "child_evals": 100006,
+     "root_pn": 72,
+     "root_dn": 455,
+     "error": null
+    },
+    {
+     "job_id": "w0_S1_1",
+     "worker": 0,
+     "path": "a2a4 a7a6",
+     "stratum": "M",
+     "outcome": "draw",
+     "child_evals": 100034,
+     "root_pn": 70,
+     "root_dn": 342,
+     "error": null
+    },
+    {
+     "job_id": "w3_S1_0",
+     "worker": 3,
+     "path": "a2a4 b8a6",
+     "stratum": "U",
+     "outcome": "draw",
+     "child_evals": 100001,
+     "root_pn": 73,
+     "root_dn": 623,
+     "error": null
+    },
+    {
+     "job_id": "w3_S1_1",
+     "worker": 3,
+     "path": "e2e3 a7a5",
+     "stratum": "H",
+     "outcome": "draw",
+     "child_evals": 100000,
+     "root_pn": 35,
+     "root_dn": 621,
+     "error": null
+    },
+    {
+     "job_id": "w2_S1_0",
+     "worker": 2,
+     "path": "e2e3 b7b6",
+     "stratum": "H",
+     "outcome": "draw",
+     "child_evals": 100002,
+     "root_pn": 42,
+     "root_dn": 705,
+     "error": null
+    },
+    {
+     "job_id": "w0_S1_2",
+     "worker": 0,
+     "path": "g1f3 e7e5",
+     "stratum": "L",
+     "outcome": "draw",
+     "child_evals": 100000,
+     "root_pn": 105,
+     "root_dn": 606,
+     "error": null
+    },
+    {
+     "job_id": "w3_S1_2",
+     "worker": 3,
+     "path": "g2g3 a7a6",
+     "stratum": "M",
+     "outcome": "draw",
+     "child_evals": 100004,
+     "root_pn": 73,
+     "root_dn": 383,
+     "error": null
+    },
+    {
+     "job_id": "w1_S1_0",
+     "worker": 1,
+     "path": "h2h3 b7b6",
+     "stratum": "L",
+     "outcome": "draw",
+     "child_evals": 100015,
+     "root_pn": 79,
+     "root_dn": 660,
+     "error": null
+    }
+   ],
+   "restore_probe_mismatches": 0,
+   "restore_degraded_workers": 0,
+   "tt_dumps_missing": []
+  }
+ ],
+ "total_child_evals": 1600173,
+ "defect": false
+}

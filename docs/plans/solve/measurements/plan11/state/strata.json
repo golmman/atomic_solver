@@ -1,0 +1,644 @@
+{
+ "frame": {
+  "source": "measurements/plan10/state/master_state_merge.json",
+  "open_leaves": 660,
+  "touched": 104,
+  "untouched": 556,
+  "covariates": "committed advisory (pn,dn,work) from plan9's frozen S1 close (identity-checked vs the plan10 merged state) + plan10 ledger cumulative spend"
+ },
+ "selection_rules": {
+  "H": "top-24 open leaves by committed advisory dn (ties -> higher work), force-including c1g5 f7f6 and c1g5 g8f6",
+  "M": "touched-open leaves at the ~55th-75th percentile of the touched set's committed dn (sorted dn asc, work asc, path); band ranks 56..77 of 104, 12 evenly spaced",
+  "L": "touched-open leaves at the ~15th-35th percentile of the touched set's committed dn (same ordering); band ranks 15..36 of 104, 12 evenly spaced",
+  "U": "untouched open leaves (committed work = 0), round-robin over children by static rank"
+ },
+ "forced_into_H": [
+  "c1g5 g8f6"
+ ],
+ "H": [
+  "e2e3 b7b6",
+  "e2e3 a7a5",
+  "e2e4 b7b6",
+  "e2e3 a7a6",
+  "e2e4 a7a5",
+  "e2e4 a7a6",
+  "e2e3 b7b5",
+  "d1d3 a7a5",
+  "d1d3 b7b6",
+  "d1d3 a7a6",
+  "e2e4 b7b5",
+  "d1d3 b7b5",
+  "d1d2 a7a5",
+  "c2c4 a7a6",
+  "d1d2 a7a6",
+  "d1d2 b7b5",
+  "c2c4 b7b6",
+  "c2c4 d5c4",
+  "c2c4 a7a5",
+  "d1d2 b7b6",
+  "c2c3 a7a6",
+  "c2c3 b7b6",
+  "c1g5 f7f6",
+  "c1g5 g8f6"
+ ],
+ "M": [
+  "g2g3 a7a6",
+  "a2a4 a7a6",
+  "h2h4 a7a6",
+  "c1f4 b7b5",
+  "b2b3 a7a6",
+  "b2b4 a7a6",
+  "g2g4 a7a6",
+  "b2b3 a7a5",
+  "g1f3 c7c5",
+  "a2a3 a7a6",
+  "c1d2 a7a6",
+  "c2c3 a7a5"
+ ],
+ "L": [
+  "h2h3 b7b6",
+  "g1f3 e7e5",
+  "a2a4 a7a5",
+  "g2g3 b7b5",
+  "c1e3 a7a5",
+  "b1a3 b7b6",
+  "b1a3 b7b5",
+  "g2g4 a7a5",
+  "c1h6 a7a6",
+  "f2f3 a7a5",
+  "b2b4 a7a5",
+  "f2f4 a7a6"
+ ],
+ "U": [
+  "a2a3 b8a6",
+  "a2a4 b8a6",
+  "b2b3 b8a6",
+  "b2b4 b8a6",
+  "c2c3 b8a6",
+  "c2c4 b7b5",
+  "e2e3 b8a6",
+  "e2e4 b8a6"
+ ],
+ "leaves": {
+  "e2e3 b7b6": {
+   "idx": 422,
+   "child_mv": "e2e3",
+   "reply_mv": "b7b6",
+   "committed_pn": 296,
+   "committed_dn": 146201,
+   "committed_work": 4604007788,
+   "touched": true,
+   "plan10_spend": 168000028
+  },
+  "e2e3 a7a5": {
+   "idx": 419,
+   "child_mv": "e2e3",
+   "reply_mv": "a7a5",
+   "committed_pn": 340,
+   "committed_dn": 97942,
+   "committed_work": 4604008253,
+   "touched": true,
+   "plan10_spend": 168000031
+  },
+  "e2e4 b7b6": {
+   "idx": 446,
+   "child_mv": "e2e4",
+   "reply_mv": "b7b6",
+   "committed_pn": 186,
+   "committed_dn": 77489,
+   "committed_work": 8692016536,
+   "touched": true,
+   "plan10_spend": 168000030
+  },
+  "e2e3 a7a6": {
+   "idx": 420,
+   "child_mv": "e2e3",
+   "reply_mv": "a7a6",
+   "committed_pn": 408,
+   "committed_dn": 72572,
+   "committed_work": 4628008229,
+   "touched": true,
+   "plan10_spend": 168000057
+  },
+  "e2e4 a7a5": {
+   "idx": 443,
+   "child_mv": "e2e4",
+   "reply_mv": "a7a5",
+   "committed_pn": 157,
+   "committed_dn": 69570,
+   "committed_work": 8844016760,
+   "touched": true,
+   "plan10_spend": 168000041
+  },
+  "e2e4 a7a6": {
+   "idx": 444,
+   "child_mv": "e2e4",
+   "reply_mv": "a7a6",
+   "committed_pn": 240,
+   "committed_dn": 60156,
+   "committed_work": 8796016320,
+   "touched": true,
+   "plan10_spend": 168000060
+  },
+  "e2e3 b7b5": {
+   "idx": 421,
+   "child_mv": "e2e3",
+   "reply_mv": "b7b5",
+   "committed_pn": 623,
+   "committed_dn": 54328,
+   "committed_work": 4644008091,
+   "touched": true,
+   "plan10_spend": 168000019
+  },
+  "d1d3 a7a5": {
+   "idx": 368,
+   "child_mv": "d1d3",
+   "reply_mv": "a7a5",
+   "committed_pn": 451,
+   "committed_dn": 48234,
+   "committed_work": 364000637,
+   "touched": true,
+   "plan10_spend": 168000040
+  },
+  "d1d3 b7b6": {
+   "idx": 371,
+   "child_mv": "d1d3",
+   "reply_mv": "b7b6",
+   "committed_pn": 504,
+   "committed_dn": 38699,
+   "committed_work": 332000706,
+   "touched": true,
+   "plan10_spend": 168000029
+  },
+  "d1d3 a7a6": {
+   "idx": 369,
+   "child_mv": "d1d3",
+   "reply_mv": "a7a6",
+   "committed_pn": 460,
+   "committed_dn": 36145,
+   "committed_work": 356000669,
+   "touched": true,
+   "plan10_spend": 168000060
+  },
+  "e2e4 b7b5": {
+   "idx": 445,
+   "child_mv": "e2e4",
+   "reply_mv": "b7b5",
+   "committed_pn": 306,
+   "committed_dn": 32265,
+   "committed_work": 8756016240,
+   "touched": true,
+   "plan10_spend": 168000037
+  },
+  "d1d3 b7b5": {
+   "idx": 370,
+   "child_mv": "d1d3",
+   "reply_mv": "b7b5",
+   "committed_pn": 546,
+   "committed_dn": 31356,
+   "committed_work": 364000781,
+   "touched": true,
+   "plan10_spend": 168000051
+  },
+  "d1d2 a7a5": {
+   "idx": 344,
+   "child_mv": "d1d2",
+   "reply_mv": "a7a5",
+   "committed_pn": 548,
+   "committed_dn": 25650,
+   "committed_work": 100000288,
+   "touched": true,
+   "plan10_spend": 168000030
+  },
+  "c2c4 a7a6": {
+   "idx": 318,
+   "child_mv": "c2c4",
+   "reply_mv": "a7a6",
+   "committed_pn": 471,
+   "committed_dn": 25101,
+   "committed_work": 156000266,
+   "touched": true,
+   "plan10_spend": 168000022
+  },
+  "d1d2 a7a6": {
+   "idx": 345,
+   "child_mv": "d1d2",
+   "reply_mv": "a7a6",
+   "committed_pn": 394,
+   "committed_dn": 24796,
+   "committed_work": 92000186,
+   "touched": true,
+   "plan10_spend": 168000044
+  },
+  "d1d2 b7b5": {
+   "idx": 346,
+   "child_mv": "d1d2",
+   "reply_mv": "b7b5",
+   "committed_pn": 510,
+   "committed_dn": 24533,
+   "committed_work": 84000165,
+   "touched": true,
+   "plan10_spend": 168000032
+  },
+  "c2c4 b7b6": {
+   "idx": 320,
+   "child_mv": "c2c4",
+   "reply_mv": "b7b6",
+   "committed_pn": 495,
+   "committed_dn": 20063,
+   "committed_work": 148000213,
+   "touched": true,
+   "plan10_spend": 168000041
+  },
+  "c2c4 d5c4": {
+   "idx": 331,
+   "child_mv": "c2c4",
+   "reply_mv": "d5c4",
+   "committed_pn": 417,
+   "committed_dn": 19706,
+   "committed_work": 140000275,
+   "touched": true,
+   "plan10_spend": 168000052
+  },
+  "c2c4 a7a5": {
+   "idx": 317,
+   "child_mv": "c2c4",
+   "reply_mv": "a7a5",
+   "committed_pn": 560,
+   "committed_dn": 18999,
+   "committed_work": 124000209,
+   "touched": true,
+   "plan10_spend": 168000018
+  },
+  "d1d2 b7b6": {
+   "idx": 347,
+   "child_mv": "d1d2",
+   "reply_mv": "b7b6",
+   "committed_pn": 476,
+   "committed_dn": 17733,
+   "committed_work": 76000162,
+   "touched": true,
+   "plan10_spend": 168000011
+  },
+  "c2c3 a7a6": {
+   "idx": 292,
+   "child_mv": "c2c3",
+   "reply_mv": "a7a6",
+   "committed_pn": 344,
+   "committed_dn": 8512,
+   "committed_work": 20000046,
+   "touched": true,
+   "plan10_spend": 168000033
+  },
+  "c2c3 b7b6": {
+   "idx": 294,
+   "child_mv": "c2c3",
+   "reply_mv": "b7b6",
+   "committed_pn": 383,
+   "committed_dn": 7674,
+   "committed_work": 12000026,
+   "touched": true,
+   "plan10_spend": 168000054
+  },
+  "c1g5 f7f6": {
+   "idx": 265,
+   "child_mv": "c1g5",
+   "reply_mv": "f7f6",
+   "committed_pn": 1312,
+   "committed_dn": 7584,
+   "committed_work": 68000113,
+   "touched": true,
+   "plan10_spend": 168000033
+  },
+  "c1g5 g8f6": {
+   "idx": 266,
+   "child_mv": "c1g5",
+   "reply_mv": "g8f6",
+   "committed_pn": 956,
+   "committed_dn": 5935,
+   "committed_work": 52000091,
+   "touched": true,
+   "plan10_spend": 168000032
+  },
+  "g2g3 a7a6": {
+   "idx": 555,
+   "child_mv": "g2g3",
+   "reply_mv": "a7a6",
+   "committed_pn": 699,
+   "committed_dn": 4740,
+   "committed_work": 12000018,
+   "touched": true,
+   "plan10_spend": 168000037
+  },
+  "a2a4 a7a6": {
+   "idx": 28,
+   "child_mv": "a2a4",
+   "reply_mv": "a7a6",
+   "committed_pn": 583,
+   "committed_dn": 4871,
+   "committed_work": 12000027,
+   "touched": true,
+   "plan10_spend": 168000051
+  },
+  "h2h4 a7a6": {
+   "idx": 634,
+   "child_mv": "h2h4",
+   "reply_mv": "a7a6",
+   "committed_pn": 672,
+   "committed_dn": 4998,
+   "committed_work": 12000029,
+   "touched": true,
+   "plan10_spend": 168000025
+  },
+  "c1f4 b7b5": {
+   "idx": 241,
+   "child_mv": "c1f4",
+   "reply_mv": "b7b5",
+   "committed_pn": 680,
+   "committed_dn": 5058,
+   "committed_work": 12000042,
+   "touched": true,
+   "plan10_spend": 168000075
+  },
+  "b2b3 a7a6": {
+   "idx": 134,
+   "child_mv": "b2b3",
+   "reply_mv": "a7a6",
+   "committed_pn": 522,
+   "committed_dn": 5249,
+   "committed_work": 20000059,
+   "touched": true,
+   "plan10_spend": 168000036
+  },
+  "b2b4 a7a6": {
+   "idx": 159,
+   "child_mv": "b2b4",
+   "reply_mv": "a7a6",
+   "committed_pn": 714,
+   "committed_dn": 5467,
+   "committed_work": 12000005,
+   "touched": true,
+   "plan10_spend": 168000047
+  },
+  "g2g4 a7a6": {
+   "idx": 581,
+   "child_mv": "g2g4",
+   "reply_mv": "a7a6",
+   "committed_pn": 589,
+   "committed_dn": 5473,
+   "committed_work": 12000040,
+   "touched": true,
+   "plan10_spend": 168000045
+  },
+  "b2b3 a7a5": {
+   "idx": 133,
+   "child_mv": "b2b3",
+   "reply_mv": "a7a5",
+   "committed_pn": 426,
+   "committed_dn": 5502,
+   "committed_work": 12000047,
+   "touched": true,
+   "plan10_spend": 168000038
+  },
+  "g1f3 c7c5": {
+   "idx": 521,
+   "child_mv": "g1f3",
+   "reply_mv": "c7c5",
+   "committed_pn": 355,
+   "committed_dn": 5632,
+   "committed_work": 12000030,
+   "touched": true,
+   "plan10_spend": 168000026
+  },
+  "a2a3 a7a6": {
+   "idx": 1,
+   "child_mv": "a2a3",
+   "reply_mv": "a7a6",
+   "committed_pn": 607,
+   "committed_dn": 5687,
+   "committed_work": 28000090,
+   "touched": true,
+   "plan10_spend": 168000032
+  },
+  "c1d2 a7a6": {
+   "idx": 186,
+   "child_mv": "c1d2",
+   "reply_mv": "a7a6",
+   "committed_pn": 624,
+   "committed_dn": 6597,
+   "committed_work": 28000011,
+   "touched": true,
+   "plan10_spend": 168000061
+  },
+  "c2c3 a7a5": {
+   "idx": 291,
+   "child_mv": "c2c3",
+   "reply_mv": "a7a5",
+   "committed_pn": 363,
+   "committed_dn": 6960,
+   "committed_work": 12000022,
+   "touched": true,
+   "plan10_spend": 168000074
+  },
+  "h2h3 b7b6": {
+   "idx": 609,
+   "child_mv": "h2h3",
+   "reply_mv": "b7b6",
+   "committed_pn": 495,
+   "committed_dn": 2546,
+   "committed_work": 4000016,
+   "touched": true,
+   "plan10_spend": 168000053
+  },
+  "g1f3 e7e5": {
+   "idx": 524,
+   "child_mv": "g1f3",
+   "reply_mv": "e7e5",
+   "committed_pn": 756,
+   "committed_dn": 2564,
+   "committed_work": 12000033,
+   "touched": true,
+   "plan10_spend": 168000043
+  },
+  "a2a4 a7a5": {
+   "idx": 27,
+   "child_mv": "a2a4",
+   "reply_mv": "a7a5",
+   "committed_pn": 447,
+   "committed_dn": 2569,
+   "committed_work": 4000004,
+   "touched": true,
+   "plan10_spend": 168000029
+  },
+  "g2g3 b7b5": {
+   "idx": 556,
+   "child_mv": "g2g3",
+   "reply_mv": "b7b5",
+   "committed_pn": 509,
+   "committed_dn": 2624,
+   "committed_work": 4000024,
+   "touched": true,
+   "plan10_spend": 168000023
+  },
+  "c1e3 a7a5": {
+   "idx": 212,
+   "child_mv": "c1e3",
+   "reply_mv": "a7a5",
+   "committed_pn": 544,
+   "committed_dn": 2629,
+   "committed_work": 4000017,
+   "touched": true,
+   "plan10_spend": 168000021
+  },
+  "b1a3 b7b6": {
+   "idx": 57,
+   "child_mv": "b1a3",
+   "reply_mv": "b7b6",
+   "committed_pn": 444,
+   "committed_dn": 2661,
+   "committed_work": 4000016,
+   "touched": true,
+   "plan10_spend": 168000036
+  },
+  "b1a3 b7b5": {
+   "idx": 56,
+   "child_mv": "b1a3",
+   "reply_mv": "b7b5",
+   "committed_pn": 487,
+   "committed_dn": 2667,
+   "committed_work": 4000013,
+   "touched": true,
+   "plan10_spend": 168000018
+  },
+  "g2g4 a7a5": {
+   "idx": 580,
+   "child_mv": "g2g4",
+   "reply_mv": "a7a5",
+   "committed_pn": 444,
+   "committed_dn": 2675,
+   "committed_work": 4000022,
+   "touched": true,
+   "plan10_spend": 168000040
+  },
+  "c1h6 a7a6": {
+   "idx": 268,
+   "child_mv": "c1h6",
+   "reply_mv": "a7a6",
+   "committed_pn": 385,
+   "committed_dn": 2715,
+   "committed_work": 4000010,
+   "touched": true,
+   "plan10_spend": 168000031
+  },
+  "f2f3 a7a5": {
+   "idx": 466,
+   "child_mv": "f2f3",
+   "reply_mv": "a7a5",
+   "committed_pn": 538,
+   "committed_dn": 2783,
+   "committed_work": 4000032,
+   "touched": true,
+   "plan10_spend": 168000028
+  },
+  "b2b4 a7a5": {
+   "idx": 158,
+   "child_mv": "b2b4",
+   "reply_mv": "a7a5",
+   "committed_pn": 476,
+   "committed_dn": 2880,
+   "committed_work": 4000002,
+   "touched": true,
+   "plan10_spend": 168000004
+  },
+  "f2f4 a7a6": {
+   "idx": 494,
+   "child_mv": "f2f4",
+   "reply_mv": "a7a6",
+   "committed_pn": 1088,
+   "committed_dn": 2923,
+   "committed_work": 20000051,
+   "touched": true,
+   "plan10_spend": 168000028
+  },
+  "a2a3 b8a6": {
+   "idx": 4,
+   "child_mv": "a2a3",
+   "reply_mv": "b8a6",
+   "committed_pn": 1,
+   "committed_dn": 1,
+   "committed_work": 0,
+   "touched": false,
+   "plan10_spend": 168000048
+  },
+  "a2a4 b8a6": {
+   "idx": 31,
+   "child_mv": "a2a4",
+   "reply_mv": "b8a6",
+   "committed_pn": 1,
+   "committed_dn": 1,
+   "committed_work": 0,
+   "touched": false,
+   "plan10_spend": 168000021
+  },
+  "b2b3 b8a6": {
+   "idx": 137,
+   "child_mv": "b2b3",
+   "reply_mv": "b8a6",
+   "committed_pn": 1,
+   "committed_dn": 1,
+   "committed_work": 0,
+   "touched": false,
+   "plan10_spend": 168000036
+  },
+  "b2b4 b8a6": {
+   "idx": 162,
+   "child_mv": "b2b4",
+   "reply_mv": "b8a6",
+   "committed_pn": 1,
+   "committed_dn": 1,
+   "committed_work": 0,
+   "touched": false,
+   "plan10_spend": 168000056
+  },
+  "c2c3 b8a6": {
+   "idx": 295,
+   "child_mv": "c2c3",
+   "reply_mv": "b8a6",
+   "committed_pn": 1,
+   "committed_dn": 1,
+   "committed_work": 0,
+   "touched": false,
+   "plan10_spend": 168000053
+  },
+  "c2c4 b7b5": {
+   "idx": 319,
+   "child_mv": "c2c4",
+   "reply_mv": "b7b5",
+   "committed_pn": 1,
+   "committed_dn": 1,
+   "committed_work": 0,
+   "touched": false,
+   "plan10_spend": 168000040
+  },
+  "e2e3 b8a6": {
+   "idx": 423,
+   "child_mv": "e2e3",
+   "reply_mv": "b8a6",
+   "committed_pn": 1,
+   "committed_dn": 1,
+   "committed_work": 0,
+   "touched": false,
+   "plan10_spend": 168000075
+  },
+  "e2e4 b8a6": {
+   "idx": 447,
+   "child_mv": "e2e4",
+   "reply_mv": "b8a6",
+   "committed_pn": 1,
+   "committed_dn": 1,
+   "committed_work": 0,
+   "touched": false,
+   "plan10_spend": 168000038
+  }
+ }
+}

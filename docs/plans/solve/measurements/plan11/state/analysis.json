@@ -1,0 +1,165 @@
+{
+ "root_fen": "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq d6 0 2",
+ "shape": {
+  "workers": 4,
+  "tt_mb": 128,
+  "pt_mb": 512,
+  "rung_budgets": {
+   "R1": 256000000,
+   "R2": 1000000000,
+   "R3": 2000000000
+  },
+  "strata": {
+   "H": 24,
+   "M": 12,
+   "L": 12,
+   "U": 8
+  }
+ },
+ "registered_readings": {
+  "percentile_rank": "pct(x,C) = (#c<x + 0.5*#c==x)/|C|",
+  "directional_inversion": "positive with pct(pre_dn, rung entrant cohort) <= 0.35",
+  "pooled_warm_auc": "rank-attachment: within-cohort percentile ranks pooled across warm rungs",
+  "heldout_fn": "held-out positive with pre_dn <= theta"
+ },
+ "per_rung": {
+  "R1": {
+   "regime": "fresh",
+   "entrants": 48,
+   "positives": 0,
+   "negatives": 48,
+   "lost": 0,
+   "evals_spent_total": 12288000770
+  },
+  "R2": {
+   "regime": "warm",
+   "entrants": 48,
+   "positives": 0,
+   "negatives": 48,
+   "lost": 0,
+   "evals_spent_total": 48000000619
+  },
+  "R3": {
+   "regime": "warm",
+   "entrants": 48,
+   "positives": 0,
+   "negatives": 48,
+   "lost": 0,
+   "evals_spent_total": 96000000732
+  }
+ },
+ "pooled_warm": {
+  "warm_rungs": [
+   "R2",
+   "R3"
+  ],
+  "pooled_positives": 0,
+  "pooled_negatives": 96,
+  "auc_by_rank_attachment": null
+ },
+ "theta": {
+  "branch": "no positives \u2014 theta undefined",
+  "theta": null,
+  "heldout_rungs": [],
+  "heldout_false_negatives": [],
+  "s_theta": null
+ },
+ "gate": {
+  "positives_P": 0,
+  "pooled_warm_auc": null,
+  "theta": null,
+  "s_theta": null,
+  "heldout_false_negatives": 0,
+  "directional_inversions": 0,
+  "inversion_rows": [],
+  "r3_fired": true,
+  "lost_labels": 0,
+  "verdict": "SUBSTRATE_EMPTY",
+  "detail": "P = 0 at the full ladder including fired R3': the advisory-dn channel produced no positives to validate at all (stronger M2-MARGINAL wording; Stage 2 halts)"
+ },
+ "u_stratum": {
+  "entrants": 8,
+  "resolved": 0,
+  "child_evals_total": 26048000475
+ },
+ "delta_facts": {
+  "resolved_in_sample": 0,
+  "merged_won": null,
+  "merged_open": null,
+  "merged_children_resolved": null,
+  "note": "plan10 merged close: 68 Won / 660 Open / children 0/27"
+ },
+ "spend": {
+  "per_rung_child_evals": {
+   "R1": 14336000908,
+   "R2": 56000000772,
+   "R3": 112000000916
+  },
+  "total_child_evals": 182336002596,
+  "smoke_child_evals": 1600173,
+  "total_nodes_est": 6630400094,
+  "constants": {
+   "kappa": 27.5,
+   "r_camp": 558529.0
+  },
+  "observed_rate_note": "rates measured from rung walls; projections used the locked constants only"
+ },
+ "merge": {
+  "decisive_copied": 0,
+  "master_exit": null,
+  "verify_failures": null,
+  "job_errors": null,
+  "leaves_won": null,
+  "leaves_open": null,
+  "children_resolved": null
+ },
+ "r3_decision": {
+  "survivors": 56,
+  "elapsed_h": 1.135,
+  "projected_r3_h": 2.026,
+  "rule_h": 4.5,
+  "constants": {
+   "kappa": 27.5,
+   "r_camp": 558529.0
+  },
+  "fired": true
+ },
+ "smoke": {
+  "defect": false,
+  "total_child_evals": 1600173
+ },
+ "cross_checks": {
+  "job_errors": {
+   "R1": 0,
+   "R2": 0,
+   "R3": 0
+  },
+  "missing_results": {
+   "R1": 0,
+   "R2": 0,
+   "R3": 0
+  },
+  "merge_job_errors": null,
+  "merge_verify_failures": 0,
+  "lost_labels": {
+   "R1": 0,
+   "R2": 0,
+   "R3": 0
+  },
+  "deviations": {},
+  "restore_probe_mismatches": {
+   "R1": 0,
+   "R2": 0,
+   "R3": 0
+  },
+  "covariate_control_check": {
+   "cumulative_work_auc_per_rung": {
+    "R1": null,
+    "R2": null,
+    "R3": null
+   },
+   "note": "registered control: cumulative work must NOT separate (plan10 M3 AUC 0.000); a separating control voids the gate verdict until the defect is fixed"
+  }
+ },
+ "verify_failures": 0
+}

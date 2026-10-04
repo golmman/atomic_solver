@@ -1,0 +1,21 @@
+{
+ "decisive_copied": 0,
+ "master_exitcode": null,
+ "master_exit": null,
+ "wall_s": 0.0,
+ "summary": null,
+ "verify_failures": null,
+ "job_errors": null,
+ "jobs_completed": null,
+ "leaves_open": null,
+ "leaves_won": null,
+ "leaves_lost": null,
+ "children_resolved": null,
+ "children_refuted": null,
+ "slop_jobs_ignored": 0,
+ "master_run": false,
+ "master_reason": "no decisive results \u2014 nothing to re-verify; the master is not invoked because in resume mode it dispatches new jobs from t=0 (plan10's 'results never arrive within the wall' slop assumption breaks with an empty result set), which would add unregistered work to the committed close; the close state is committed as the verified identity of the plan10 merged close",
+ "close_is_identity_of_seed": true,
+ "master_state_checkpoint": "/workspace/atomic_solver/docs/plans/solve/measurements/plan11/state/master_state_merge11.json",
+ "oom_kill_delta": 0
+}

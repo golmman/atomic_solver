@@ -71,6 +71,32 @@ measured motivation if a Stage-1-adjacent design is ever folded in. The
 pending Phase-0 side deliverable `docs/plans/solve/book.md` is published
 (plan10 task 4; counts verified against report4 §1).
 
+**plan11 executed 2026-10-04 (`report11.md`) — Stage 2a gate:
+SUBSTRATE_EMPTY; Stage 2 (A6b certificates) halts.** The registered
+stratified corpus over the plan10 merged close's 660 open leaves (H 24
+top committed-dn incl. the c1g5 near-misses / M 12 / L 12 touched
+percentile bands / U 8 untouched control) ran the warm ladder
+256M/1G/2G child-evals per leaf per rung (R1′ fresh, R2′/R3′ warm; the
+contingent-R3′ rule fired at 1.14 h + 2.03 h ≤ 4.5 h): **P = 0 positives
+at the full ladder** — all 56 leaves censored at every rung, 100%
+cap-pinned at all three budgets, 182.3 G child-evals ≈ 6.6 G nodes in
+2.81 h ladder wall; 0 job errors, 0 deviations, 0 oom, restore integrity
+0 mismatches, SMOKE clean. The n=2 advisory-dn substrate of plan10 is
+not validated at larger n — it is *emptied*: no AUC/θ/S(θ) computable,
+the certificate policy's predicted-positive mass is empty at plan11's
+budgets, plan12 is not draftable. Covariate finding for any revisit: in
+the warm regime the committed-dn stratification partially flattens (R3′
+pre-rung medians H 70k vs M 29k / L 25k / U 32k — M/L/U overlap). The
+pre-registered certificate v1 + path-scoped soundness contract is
+preserved in `campaign_architecture.md` §11 A6b as the halt record
+(never carried into an implementation). The merge pass ran as a
+registered no-op (zero decisive results; close = verified byte-identity
+of plan10's merged close). Stage 1 (A5.4 coverage-race targeting)
+remains the registered direction, but with no measured substrate either
+(plan6; the cheap untouched class is already harvested — report11 §4),
+so the owner decision now on the table is a Stage-1 draft vs re-closing
+`solve` as DORMANT with the sharpened reopener record.
+
 **plan9 executed 2026-09-25 (`report9.md`) — item 8 complete, verdict
 **NEGATIVE**:` solve` is DORMANT per the status rule.** Stage 3 built
 the constraint-4 checkpoint/resume machinery (examples/-side: master

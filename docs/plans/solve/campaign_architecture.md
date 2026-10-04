@@ -434,3 +434,83 @@ assumed. They are binding for plan7.
   measured motivation for the cheap class. Session structure and
   machinery unchanged: the sweep ran the plan9 binaries with 0 job
   errors, 0 verify failures (A2), and 0 deviations across 2,023 jobs.
+- **A6b — plan11 Stage-2a attribution: the advisory-dn censor-signal has
+  no positives to validate at larger n on this frontier; Stage 2
+  (A6b early-censor certificates) halts at the M2 gate — and the
+  pre-registered certificate design + path-scoped soundness contract are
+  recorded here as the stage's gate material, not as a plan12 input.**
+  plan11 ran the registered stratified corpus over the plan10 merged
+  close's 660 open leaves (H = 24 top committed-advisory-dn, force
+  including the c1g5 near-misses; M = 12 and L = 12 at the touched set's
+  ~55–75th / ~15–35th committed-dn percentiles; U = 8 untouched control)
+  through a warm budget ladder 256M / 1G / 2G child-evals per leaf per
+  rung (R1′ fresh, R2′/R3′ warm `--tt-load`; the contingent-R3′ rule
+  fired at 1.14 h elapsed + 2.03 h projected ≤ 4.5 h; locked κ = 27.5,
+  R_camp = 558,529; observed κ ≈ 26.7–26.9, ≈ 670k nodes/s). Measured:
+  **P = 0 positives at the full ladder** — all 56 leaves censored at
+  every rung, 100% cap-pinned at all three budgets (the A6b lever's
+  ≈100% re-burn premise re-confirmed on the certificate mechanism's
+  actual target population), 182.3 G child-evals ≈ 6.6 G nodes in 2.81 h
+  ladder wall, 0 job errors, 0 deviations, 0 oom, restore-probe 0
+  mismatches, SMOKE 8 leaves × 100k × 2 phases clean. The registered M2
+  gate fired **SUBSTRATE_EMPTY**: no AUC/θ/S(θ) is computable, the n=2
+  substrate of A7 is not validated, and plan12 (the certificate
+  implementation) is not draftable. Two covariate findings for any
+  future revisit: (i) the two A7 positives converted at ≤ 128M warm
+  budgets; at plan11's deeper ladder their budget class is already
+  resolved out of the open frame, and the remaining frontier converted
+  nothing in 182 G evals — consistent with A7's ~1 conversion per
+  ≈ 169 G projection, i.e. the predicted-positive mass is too sparse to
+  validate any predicate at affordable n; (ii) in the warm regime (the
+  certificate-consumption regime) the committed-dn stratification
+  partially flattens (R3′ pre-rung medians: H 70k vs M 29k / L 25k /
+  U 32k — M/L/U overlap), so the advisory channel does not preserve the
+  committed-dn ordering that strata selection relied on. Stage 1
+  (A5.4 coverage-race targeting) remains the initiative's registered
+  direction; any future certificate revival must start from a
+  conversion-rate step-change, not from re-measuring this corpus.
+  **Pre-registered certificate (v1) + path-scoped soundness contract
+  (written before the run; recorded verbatim as the halt record):** a
+  worker-produced record attached only to *censored* results for job
+  (global path P, budget B) — path_digest (SHA-256 of the canonical
+  global path, replay-verifiable), budget_evals, pre_advisory (pn, dn
+  restored at job start), post_advisory, evals_spent, lineage_digest
+  (SHA-256 of the worker's TT dump at the session boundary the job ran
+  in), session_id/worker_id/job_seed, outcome = Censored. It may license
+  exactly one thing: the master's spend-aware re-queue may skip
+  re-queuing leaf L at budget ≤ B on lineage (w, ℓ) when a certificate
+  at (L, B, w, ℓ) exists and the plan12-validated predicate holds; it
+  may not change L's status class, compose into proof state, gate any
+  A2-verified fact, suppress escalated budgets (certified leaves are
+  first in the escalated queue), or apply across workers/lineages; it
+  claims nothing about L's value, budgets > B, other lineages, or other
+  paths. Soundness argument: (1) composition surface unchanged —
+  certificates gate work allocation only; the artifact pipeline
+  (per-fact A2 verification at merge; final replay validation) never
+  sees one and no new fact class exists; (2) path scope — the claim is
+  indexed by the exact job path P (campaign root → leaf line, clock and
+  repetition context included), re-derived by replay at consumption,
+  rejected on mismatch; no repetition-dependent result crosses any
+  boundary (none is produced); (3) lineage scope — the prediction is
+  conditioned on the worker's TT state at lineage ℓ; session-boundary TT
+  dumps are content-addressed and a consumed certificate must match the
+  consuming session's restored dump digest; cross-job TT pollution
+  inside ℓ is deliberately included in the claim's scope (the claim is
+  about the lineage as a whole — what a warm re-queue actually runs on),
+  which is why the scope must not be widened; (4) GHI — journals keep
+  the standing contract, certificates cache no search result, the skip
+  is a scheduling decision; the hazard class is exactly the plan9
+  machinery's, measured sound; (5) fail-open always — any verification
+  failure, missing field, digest mismatch, or unknown-certificate
+  condition re-queues the leaf normally (suppression is never the
+  default); (6) yield risk (not soundness) — false censor handled by
+  the M2 gate, plan12's mandatory on-line probe (every 16th consumption
+  not honored, runs at full budget, auto-disable above 1/16), and
+  escalation priority. Verifier (would-be plan12 deliverable): path
+  replay legality from the campaign root (A2 discipline, reused);
+  recorded pre_advisory equals the master's per-leaf advisory record;
+  digest checks; outcome class = Censored and evals_spent ≤ budget;
+  session/worker/seed well-formed; any failure → rejected, fail-open;
+  mandatory corrupted-certificate tests (altered advisory dn, altered
+  path/digest, altered budget or spent-evals overclaim, lineage-digest
+  mismatch) each asserting rejection.
