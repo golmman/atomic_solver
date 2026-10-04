@@ -62,7 +62,10 @@ selects **Stage 2 (A6b budget-aware early-censor certificates)** as the
 next draft; its substrate (advisory-dn separation, AUC 0.87/0.99) rests
 on n = 1 positive per rung and must be validated at larger n, with the
 pre-registered path-scoped soundness argument, before certificates are
-trusted. Stage 1 (A5.4 targeting) is not gate-selected; the M1 sub-reading
+trusted (plan11 drafted 2026-10-05: Stage 2a = the M2 larger-n validation
+sweep + the pre-registered soundness contract; plan12 = the Stage-2b
+implementation, gated on plan11's M2 verdict). Stage 1 (A5.4 targeting)
+is not gate-selected; the M1 sub-reading
 (the 36-fact dispatcher-blind-spot harvest at median ≈ 1.3k evals) is its
 measured motivation if a Stage-1-adjacent design is ever folded in. The
 pending Phase-0 side deliverable `docs/plans/solve/book.md` is published
@@ -590,3 +593,31 @@ Per repo convention, every plan ends with the task of writing its
   Compute ≈ 2.2 h worst case of the 6 h cap. Side task: the pending
   Phase-0 `book.md` (refutation book from the complete plan4 p2 state
   records) registered as a bounded docs-only deliverable.
+- **2026-10-05 — plan11 drafted** (not yet executed): Phase 3, **Stage 2a**
+  — the Stage-2 gate material per the plan10 verdict's qualification
+  ("validate the signal at larger n and carry the pre-registered
+  path-scoped soundness argument"). Split rationale recorded at drafting:
+  the certificate implementation (Stage 2b) is plan12, gated on this
+  plan's M2 verdict — it changes *what* plan12 builds and cannot fit one
+  6 h session alongside the corpus sweep. Deliverables: (M2) a
+  stratified censor-label corpus over the frozen frontier's
+  previously-censored body (H = top-24 by committed advisory dn incl. the
+  two c1g5 near-misses; M/L = mid/low touched-open; U = 8 untouched
+  cheap-class control, excluded from the gate) rung-laddered warm at
+  256M/1G (contingent 2G under a 4.5 h projection rule on the locked
+  plan8 constants), covariate-regime matched (fresh = committed advisory;
+  warm = prior rung's post-run advisory — the certificate consumption
+  regime is primary); pre-registered M2 gate bands (GO: P ≥ 3, zero
+  held-out false negatives, pooled warm AUC ≥ 0.80, skipable mass ≥ 0.40;
+  NO-GO: AUC < 0.60 / ≥ 2 inversions / held-out FN; MARGINAL and
+  substrate-empty halt: Stage 2 halts with a sharpened reopener record);
+  and (§3) the certificate design + path-scoped soundness contract,
+  pre-registered before any run — composition surface unchanged (work
+  allocation only), path + lineage scope (content-addressed TT-dump
+  digests, cross-job pollution deliberately *included* in the claim's
+  scope and out-of-scope consumption rejected), fail-open always,
+  yield-risk handled by plan12's 1/16 probe with auto-disable, plus the
+  verifier spec and the inherited plan12 POC gates (verifier accepts
+  all / rejects corrupted; warm-resume Δfacts > 0). No solver, lib, or
+  campaign-code changes; measurement-only (S). Compute ≤ 4 h of the 6 h
+  cap.
