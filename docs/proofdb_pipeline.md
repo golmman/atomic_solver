@@ -9,137 +9,194 @@ the sole external contract and are normative in
 serves two readers:
 
 - the **operator**, who runs the pipeline (merge, harvest, flip, ledger
-  maintenance) — §1–§3, §6, §8, §9;
+  maintenance) — §1–§4, §7, §9, §10;
 - the **user/consumer** (e.g. the website project), who reads the finished
-  SQLite file and wants to understand its shape and query it — §4, §5, §7
+  SQLite file and wants to understand its shape and query it — §5, §6, §8
   (plus the normative spec).
 
 ## Contents
 
 1. [Pipeline map](#1-pipeline-map)
-2. [Clean-checkout quickstart](#2-clean-checkout-quickstart)
-3. [Layer layout and ledger pick-up](#3-layer-layout-and-ledger-pick-up)
-4. [Data model primer (consumer)](#4-data-model-primer-consumer)
-5. [Shard provenance — where a shard comes from](#5-shard-provenance--where-a-shard-comes-from)
-6. [CLI reference (operator)](#6-cli-reference-operator)
-   - [6.1 `proofdb_merge`](#61-proofdb_merge--shards--sqlite-single-writer)
-   - [6.2 `proofdb_harvest`](#62-proofdb_harvest--grow-the-shard-set)
-   - [6.3 `proofdb_flip`](#63-proofdb_flip--implied-flip-analysis-read-only)
-   - [6.4 `proofdb_ledger_union`](#64-proofdb_ledger_union--n-way-ledger-merge)
-7. [Recipes](#7-recipes)
-   - [7.1 Operator recipes](#71-operator-recipes)
-   - [7.2 Consumer recipes (SQL)](#72-consumer-recipes-sql)
-8. [Soundness contract (operator terms)](#8-soundness-contract-operator-terms)
-9. [Troubleshooting and known limitations](#9-troubleshooting-and-known-limitations)
-10. [History](#10-history)
+2. [Artifacts and tools](#2-artifacts-and-tools)
+3. [Clean-checkout quickstart](#3-clean-checkout-quickstart)
+   - [3.1 First harvest](#31-first-harvest)
+   - [3.2 Second harvest](#32-second-harvest)
+4. [Ledger pick-up](#4-ledger-pick-up)
+5. [Data model primer (consumer)](#5-data-model-primer-consumer)
+6. [Shard provenance — where a shard comes from](#6-shard-provenance--where-a-shard-comes-from)
+7. [CLI reference (operator)](#7-cli-reference-operator)
+   - [7.1 `proofdb_merge`](#71-proofdb_merge--shards--sqlite-single-writer)
+   - [7.2 `proofdb_harvest`](#72-proofdb_harvest--grow-the-shard-set)
+   - [7.3 `proofdb_flip`](#73-proofdb_flip--implied-flip-analysis-read-only)
+   - [7.4 `proofdb_ledger_union`](#74-proofdb_ledger_union--n-way-ledger-merge)
+8. [Recipes](#8-recipes)
+   - [8.1 Operator recipes](#81-operator-recipes)
+   - [8.2 Consumer recipes (SQL)](#82-consumer-recipes-sql)
+9. [Soundness contract (operator terms)](#9-soundness-contract-operator-terms)
+10. [Troubleshooting and known limitations](#10-troubleshooting-and-known-limitations)
+11. [History](#11-history)
 
 ## 1. Pipeline map
 
+The nodes are **artifacts** — state that persists between steps. The edges
+are **tools** — binaries that read and write that state. Both are catalogued
+in §2, with the full tool contracts in §7.
+
 ```
-durable truth                     derived view                 selection state
-─────────────                     ────────────                 ───────────────
-docs/plans/proofdb/shards/        proofdb.db (SQLite,          data/proofdb_work.json
-  *.bin  (proof trees)              schema v1)                 (work ledger: per-path
-  manifest.json (entries +        ▲                              censor history; NOT
-   sha256 of the manifest)        │                              part of the DB)
-        │                         │
-        └── proofdb_merge ────────┘
-                    ▲
-                    │ (merge after each batch — proofdb_harvest never merges)
-        proofdb_harvest ── writes new *.bin shards + manifest entries + ledger
-                    │      (fresh roots, child-eval budgets, censored jobs)
-        proofdb_flip ──── read-only analysis over the grown DB (implied flips)
-        proofdb_ledger_union ── N-way merge of work ledgers (selection state)
+  shards + manifest ──proofdb_merge──► proofdb.db
+          ▲                                │
+          │                                ├──proofdb_flip──► flips.json
+          └──── proofdb_harvest ◄──────────┘
+                       ▲ │
+                       │ ▼
+                  work ledger ──proofdb_ledger_union──► work ledger
 ```
 
-- **Durable layer**: the validated shard set (`*.bin` binary proof trees)
-  plus its manifest. Append-only: harvesting adds shards and manifest
-  entries; nothing else ever writes there.
-- **Derived view**: one SQLite file (`proofdb.db`, schema v1 per the spec).
-  Rebuildable from the shards at any time, deterministically and
-  byte-identically (the quickstart below pins this).
-- **Selection state**: the work ledger holds *scheduling* state only —
-  which frontier paths are known-open, how much work failed at them, how
-  many passes. It never enters the DB or the durable layer.
+## 2. Artifacts and tools
 
-## 2. Clean-checkout quickstart
+### 2.1 Artifacts
 
-From a fresh clone, this exercises the whole pipeline in seconds and checks
-that your checkout reproduces the standing DB. Outputs go to `/tmp`; the
-shard set is copied so the quickstart never writes into the checkout.
+| Artifact | Layer | Path | Committed? |
+|----------|-------|------|------------|
+| shard set | durable truth | `docs/plans/proofdb/shards/*.bin` + `manifest.json` | yes |
+| SQLite DB | derived view | `data/proofdb.db` | no (`.gitignore`d) |
+| work ledger | selection state | `data/proofdb_work.json` | no (`.gitignore`d) |
+| flip report | analysis output | `proofdb_flip --out` target (e.g. `flips.json`) | no |
+
+- **Shard set (durable truth).** `*.bin` validated binary proof trees
+  (`proof_tree_dump.md` v1 format) plus `manifest.json`, one entry per shard
+  (path, fen, outcome, tag, `validate`). Append-only: only
+  `proofdb_harvest` adds to it, and `proofdb_merge` only reads it.
+- **SQLite DB (derived view).** `proofdb.db`, schema v1 per the spec.
+  Rebuildable deterministically and byte-identically from the shard set;
+  `proofdb_merge` is its sole writer.
+- **Work ledger (selection state).** Per frontier path: the censor history
+  (`passes_failed`, `work_done`). Scheduling state only — it never enters
+  the DB or the durable layer.
+- **Flip report (analysis output).** `proofdb_flip`'s JSON verdict. A
+  throwaway report, not part of the pipeline's persisted state.
+
+### 2.2 Tools
+
+- **`proofdb_merge`** — *shards + manifest → DB*, single writer. Replay-
+  validates every shard, grafts it at its manifest path, applies the depth
+  fixpoint, and writes the DB; any conflict or defect aborts without
+  writing. Deterministic for a given shard set.
+- **`proofdb_harvest`** — *DB + ledger → shards + manifest + ledger*.
+  Selects frontier jobs under a policy, solves each under a deterministic
+  child-eval budget, exports and validates the decisive ones as shards, and
+  records censored jobs in the ledger. It never merges.
+- **`proofdb_flip`** — *DB → flip report*, read-only. Iterates implied
+  outcomes to fixpoint over the stored tree and re-checks every flip with an
+  independent verifier; writes only the report.
+- **`proofdb_ledger_union`** — *N ledgers → one ledger*. Deterministic
+  max-rule merge (highest `passes_failed`, ties broken by `work_done`).
+
+Full CLI options, output grammars, and exit codes are in §7; ledger pick-up
+semantics are in §4.
+
+## 3. Clean-checkout quickstart
+
+A clean start has no shards, no manifest, no DB, and no ledger — the
+committed shard set under `docs/plans/proofdb/shards/` is the durable layer
+and is not copied in here (recipe R1 reproduces the standing DB from it).
+This section bootstraps the pipeline from the empty state and runs the first
+two harvest passes. Outputs go to `/tmp`; nothing is written into the
+checkout.
 
 ```bash
 cargo build --release --examples
 
-rm -rf /tmp/proofdb_quickstart && mkdir /tmp/proofdb_quickstart
+rm -rf /tmp/proofdb_quickstart && mkdir -p /tmp/proofdb_quickstart/shards
 cd /tmp/proofdb_quickstart
 REPO=<absolute path of your atomic_solver checkout>
-cp -r "$REPO/docs/plans/proofdb/shards" .
 
-# 1. Merge the standing shard set into a fresh DB.
+# An empty manifest is the bootstrap seed (these exact bytes; the
+# built_from digest is taken over them).
+printf '{"entries":[]}' > shards/manifest.json
+```
+
+### 3.1 First harvest
+
+Merge the empty shard set to get a DB holding only the open root, then run
+the first harvest against it.
+
+```bash
+# 1. Bootstrap merge: no shards → a root-only DB.
 "$REPO/target/release/examples/proofdb_merge" \
     --manifest shards/manifest.json --shard-dir shards \
     --db proofdb.db --dump nodes.txt
 
-# 2. Pin the rebuild: digest and census must match the standing DB.
-sha256sum proofdb.db
-```
-
-Expected merge output (pinned 2026-10-02, standing set; see §8 for the
-regression test that keeps this true):
-
-```
-census: shards merged 262/262; shard tree nodes 56226; overlay new 55360; dedupes 866;
-        open-ancestor insertions 342; open nodes upgraded 268; merged nodes 55703
-        (proven 55628, open 75); skeleton re-validations 262
-node arithmetic: 55703 = 1 root + 55360 overlay + 342 ancestors;
-                 shard nodes 56226 = 55360 new + 866 deduped
-db: proofdb.db (nodes 55703), manifest built_from e91ad57b44008fee
-```
-
-`sha256sum proofdb.db` must print
-`0d929f4c3c62e4bbb87e9b043b582716297b23e2f7332a36e82763b1486070b8` — the
-digest of the standing `data/proofdb.db`. Any other digest means your shard
-set or toolchain diverges from the pinned state.
-
-```bash
-# 3. Smoke harvest: 2 jobs, tiny budget — both are expected to censor.
+# 2. First harvest: 2 jobs, tiny budget — both are expected to censor.
 "$REPO/target/release/examples/proofdb_harvest" \
     --db proofdb.db --manifest shards/manifest.json --shard-dir shards \
     --policy and-close --budget-evals 200000 --max-jobs 2 \
     --ledger work.json
+```
 
-# 4. Flip analysis over the (unchanged) DB.
+Expected bootstrap-merge output — a tree with just the open root:
+
+```
+census: shards merged 0/0; shard tree nodes 0; overlay new 0; dedupes 0;
+        open-ancestor insertions 0; open nodes upgraded 0; merged nodes 1
+        (proven 0, open 1); skeleton re-validations 0
+node arithmetic: 1 = 1 root + 0 overlay + 0 ancestors; shard nodes 0 = 0 new + 0 deduped
+db: proofdb.db (nodes 1), manifest built_from d801aa1fb7ddcc33
+```
+
+Expected first-harvest output: the session-start census reports the frontier
+`C1 1 / C2 0 / C3 20` (the open root and its 20 replies) and
+`and-close: active rows 1, replies 20 (fresh 20, ledger-censored 0); …`,
+then two `job: {…}` lines with `"outcome": "censored"`, `"pass": 1`,
+`"work_before": 0`, and
+
+```
+harvest: policy and-close stop=max-jobs jobs 2 decisive 0 censored 2 evals 400014 new_shards 0 wall 0.2s
+```
+
+(exit 0; `wall` is host-dependent, the counts are deterministic). Censored
+jobs write no facts, so `shards/manifest.json` is **unchanged**
+(`built_from d801aa1fb7ddcc33…`) and `work.json` now holds two censor
+records.
+
+A *decisive* first harvest instead changes the manifest digest, so its new
+shards must be folded in before the next pass: run step 1 (`proofdb_merge`)
+again after the harvest, or `proofdb_harvest` aborts on the stale
+`built_from` (§10). The smoke budget above deliberately censors, so §3.2
+runs against the same DB without an intermediate merge.
+
+### 3.2 Second harvest
+
+Re-run the same harvest command. The ledger written by the first pass is
+picked up and changes the run:
+
+```bash
+"$REPO/target/release/examples/proofdb_harvest" \
+    --db proofdb.db --manifest shards/manifest.json --shard-dir shards \
+    --policy and-close --budget-evals 200000 --max-jobs 2 \
+    --ledger work.json
+```
+
+Expected: the session-start line now reports `ledger-censored 2`
+(`and-close: active rows 1, replies 20 (fresh 18, ledger-censored 2); …`),
+and the same two jobs return with `"pass": 2`, `"work_before": 200009` /
+`200005`, and a **doubled** budget (`400018` / `400010`) from the
+strict-growth ladder. The manifest is again unchanged. This is the ledger
+pick-up (§4): a fresh ledger would re-censor the same replies at the base
+budget instead.
+
+Optional sanity check over the bootstrapped DB:
+
+```bash
 "$REPO/target/release/examples/proofdb_flip" \
     --db proofdb.db --manifest shards/manifest.json --out flips.json
 ```
 
-Expected smoke-harvest output: two `job: {…}` lines with `"outcome":
-"censored"` and the `"pass"`/`"work_before"` census fields, then
-`harvest: policy and-close stop=max-jobs jobs 2 decisive 0 censored 2 … new_shards 0`,
-exit 0; `shards/manifest.json` is rewritten **byte-identically** (digest
-`e91ad57b44008fee…` unchanged — censored jobs write no facts, hence no
-shards and no manifest change). `work.json` now exists (the fresh ledger
-pick-up semantics, §3). Expected flip output:
-`flip_analysis: open_rows 75 flips 0 verified 0 root Null (fixpoint 1 rounds)`
-— the standing set has no implied flips and the root is undecided.
+Expected: `flip_analysis: open_rows 1 flips 0 verified 0 root Null
+(fixpoint 1 rounds)` — the root is still undecided and no implied flips
+exist.
 
-```bash
-# 5. Optional: normalize the committed ledger snapshot (N = 1).
-"$REPO/target/release/examples/proofdb_ledger_union" \
-    --out work_union.json \
-    "$REPO/docs/plans/proofdb/measurements/plan10/ledger_union.json"
-```
-
-Expected: `ledger_union: work_union.json -> 8446 records`.
-
-## 3. Layer layout and ledger pick-up
-
-| Path | Layer | Committed? |
-|------|-------|------------|
-| `docs/plans/proofdb/shards/*.bin` + `manifest.json` | durable truth | yes |
-| `data/proofdb.db` | derived view | no (`.gitignore`d) |
-| `data/proofdb_work.json` | work ledger | no (`.gitignore`d) |
+## 4. Ledger pick-up
 
 **Ledger pick-up semantics:** a *missing* ledger file loads as an empty
 (fresh) ledger — a new working directory starts a harvest from scratch
@@ -158,7 +215,7 @@ The ledger is deliberately **not** part of the durable layer: it is
 scheduling state, and its durable residue is the committed snapshots under
 `docs/plans/proofdb/measurements/`.
 
-## 4. Data model primer (consumer)
+## 5. Data model primer (consumer)
 
 This section is consumer-level prose. The normative contract is the spec
 (`docs/spec/global_proof_store.md`) — schema §2, field semantics §3,
@@ -219,7 +276,7 @@ built from — identifies which shard set the DB reflects), `generator`
 (free-form producer identification). Consumers should surface `built_from`
 as a version stamp of the data they display.
 
-## 5. Shard provenance — where a shard comes from
+## 6. Shard provenance — where a shard comes from
 
 A **shard** is one validated binary proof tree (`proof_tree_dump.md` v1
 format) rooted at a job position, plus its manifest entry. Shards are the
@@ -231,7 +288,7 @@ tags refer to.
 **Production path (all inside `proofdb_harvest`):**
 
 1. The policy selects a frontier path from the merged DB + work ledger
-   (§6.2).
+   (§7.2).
 2. The job replays that path from the startpos, then runs a bounded
    solver session on the reached position (fresh TT per job, deterministic
    child-eval budget).
@@ -240,7 +297,7 @@ tags refer to.
    `job:` line carries the `tag` and `shard_nodes`.
    **Censored result** (draw from any cause, budget exhausted) → no shard,
    no manifest entry, a ledger record only.
-4. After the batch, run `proofdb_merge` (§7.1, recipe R2): every shard is
+4. After the batch, run `proofdb_merge` (§8.1, recipe R2): every shard is
    replay-validated *again* at merge time, grafted at its manifest path,
    and only then becomes DB rows.
 
@@ -284,13 +341,13 @@ $ pt_keys shards/h_013861d97dce5d48.bin | head -4
 67 66 15716123331662465803 loss 0 2549
 ```
 
-## 6. CLI reference (operator)
+## 7. CLI reference (operator)
 
 Every tool: `1` = usage error, `2` = defect abort where applicable, `0` =
 success. Options are shown with their defaults; "required" options have no
 default.
 
-### 6.1 `proofdb_merge` — shards → SQLite (single writer)
+### 7.1 `proofdb_merge` — shards → SQLite (single writer)
 
 **Purpose.** Build (or rebuild) the derived DB from a manifest + shard dir.
 The only writer of the DB; deterministic and byte-identical for an
@@ -343,11 +400,11 @@ db: proofdb.db (nodes 55703), manifest built_from e91ad57b44008fee
   `sample 1: e2e4 h7h6 d1h5 e7e5 h5f7 (5 plies, end: loss bound 0 (exact))`
   — random root-to-leaf walks as spot-checks.
 
-**Worked invocation.** Quickstart §2 steps 1–2 (pinned standing set,
-executed 2026-10-02; rerun in every plan session — the outputs above are
-verbatim).
+**Worked invocation.** Recipe R1 (standing shard set, executed
+2026-10-02 — the census above is verbatim); the clean-checkout bootstrap
+merge is in §3.1.
 
-### 6.2 `proofdb_harvest` — grow the shard set
+### 7.2 `proofdb_harvest` — grow the shard set
 
 **Purpose.** Select frontier jobs, solve them under deterministic
 child-eval budgets, and append validated shards + manifest entries for the
@@ -356,7 +413,7 @@ a fact of absence in the work ledger only.
 
 **Prerequisites.** A merged DB whose `meta.built_from` equals the
 manifest's digest (stale pair → clean abort); a writable shard dir; a
-ledger path (missing file = fresh ledger, §3).
+ledger path (missing file = fresh ledger, §4).
 
     usage: proofdb_harvest --db <proofdb.db> --manifest <manifest.json>
                            --shard-dir <dir> [--policy <name>] [--ledger <path>]
@@ -443,10 +500,10 @@ policies, `number`/`kind` only by `breadth-pns` and omitted otherwise):
 | `work_before` | ledger `work_done` recorded before this visit (PNS and `and-close`) |
 | `kind` | PNS visit kind (`expand` \| `rung`) (PNS only) |
 
-A **censored** job (this session, quickstart step 3, verbatim):
+A **censored** job (quickstart §3.1, verbatim; `wall_s` varies by host):
 
 ```text
-job: {"budget":200000,"child_evals":200024,"class":"C3","exit_reason":"BudgetExhausted","outcome":"censored","parent_bound":null,"pass":1,"path":"g1f3 d7d6","policy":"and-close","shard_nodes":null,"tag":null,"tier":"and-close","wall_s":0.039135498,"work_before":0}
+job: {"budget":200000,"child_evals":200009,"class":"C3","exit_reason":"BudgetExhausted","outcome":"censored","parent_bound":null,"pass":1,"path":"a2a3","policy":"and-close","shard_nodes":null,"tag":null,"tier":"and-close","wall_s":0.036931392,"work_before":0}
 ```
 
 A **decisive** job (recorded in the plan10 census,
@@ -479,10 +536,11 @@ harvest: policy and-close stop=max-jobs jobs 2 decisive 0 censored 2 evals 40003
 *stderr, during jobs* — `[bounded_search] chunk done: …` progress lines
 (one per budget chunk); informational, safe to ignore in scripts.
 
-**Worked invocation.** Quickstart §2 step 3 (2 censored jobs at 200k
-evals, manifest byte-identical, exit 0 — outputs above).
+**Worked invocation.** Quickstart §3.1–§3.2 (two censored jobs at 200k
+evals, then the ledger-driven revisit at doubled budget; manifest
+unchanged, exit 0).
 
-### 6.3 `proofdb_flip` — implied-flip analysis (read-only)
+### 7.3 `proofdb_flip` — implied-flip analysis (read-only)
 
 **Purpose.** Sanity check over a grown DB: for every open row whose legal
 replies are all resolved (stored or implied), compute the implied outcome +
@@ -490,7 +548,7 @@ bound, iterated to fixpoint; every reported flip is then recomputed by an
 independent recursive verifier. Reads the DB; writes only `--out`.
 
 **Prerequisites.** A merged DB whose `built_from` matches the manifest
-digest (the stale-DB guard, §9).
+digest (the stale-DB guard, §10).
 
     usage: proofdb_flip --db <grown.db> --manifest <manifest.json>
                         --out <flip_analysis.json>
@@ -523,10 +581,10 @@ flip_analysis: open_rows 75 flips 0 verified 0 root Null (fixpoint 1 rounds)
 }
 ```
 
-**Worked invocation.** Quickstart §2 step 4 (0 flips over the standing
-set, exit 0).
+**Worked invocation.** Recipe R1 then R3 (0 flips over the standing set,
+exit 0); the bootstrapped-DB check is the optional step in §3.2.
 
-### 6.4 `proofdb_ledger_union` — N-way ledger merge
+### 7.4 `proofdb_ledger_union` — N-way ledger merge
 
 **Purpose.** Merge work ledgers (per-worker harvest state) into one.
 Keeps, per path, the record with the highest `passes_failed` (ties: higher
@@ -560,19 +618,28 @@ ledger_union: work_union.json -> 8446 records
   pass count; final: total inputs → merged record count; last line names
   the output file and the record count.
 
-**Worked invocation.** Quickstart §2 step 5 (N = 1 normalization of the
-committed plan10 snapshot → 8,446 records).
+**Worked invocation.** Recipe R4 (N = 1 normalization of the committed
+plan10 snapshot → 8,446 records).
 
-## 7. Recipes
+## 8. Recipes
 
-### 7.1 Operator recipes
+### 8.1 Operator recipes
 
-**R1 — rebuild the DB from the durable layer.** Quickstart §2 steps 1–2:
-`proofdb_merge --manifest … --shard-dir … --db proofdb.db`, then
-`sha256sum proofdb.db` and compare with the previous DB's digest. A
-rebuild is *always* allowed; it is also the response to a stale-DB abort
-(§9). Byte-identical output for an identical manifest is the standing
-regression test.
+**R1 — rebuild the DB from the durable layer.** Merge the shard set into a
+fresh DB, then compare the digest:
+
+```bash
+proofdb_merge --manifest shards/manifest.json --shard-dir shards \
+    --db proofdb.db --dump nodes.txt
+sha256sum proofdb.db
+```
+
+A rebuild is *always* allowed; it is also the response to a stale-DB abort
+(§10). Byte-identical output for an identical manifest is the standing
+regression test
+(`tests/proofdb.rs::standing_layer_rebuilds_byte_identical`). For the
+standing shard set the census is the one in §7.1 and the digest is
+`0d929f4c3c62e4bbb87e9b043b582716297b23e2f7332a36e82763b1486070b8`.
 
 **R2 — grow the DB by one batch, then merge.**
 
@@ -594,13 +661,16 @@ DB. Byte-identity is guaranteed per manifest, not across growth steps.
 
 **R3 — check for implied flips.** Recipe R2 step 3; expected on a sound
 tree: `flips 0 verified 0`. Any flip is a soundness signal — stop and
-investigate (§8), never re-merge to make it disappear.
+investigate (§9), never re-merge to make it disappear.
 
 **R4 — normalize or merge work ledgers.**
 
 ```bash
 # N = 1: canonicalize a ledger (deterministic rewrite).
 proofdb_ledger_union --out ledger.norm.json ledger.json
+# N = 1: normalize the committed plan10 snapshot → 8,446 records.
+proofdb_ledger_union --out work_union.json \
+    docs/plans/proofdb/measurements/plan10/ledger_union.json
 # N > 1: merge per-worker ledgers, digest-pinned.
 proofdb_ledger_union --out merged.json \
     --expect w1.json=9c060103… --expect w2.json=4e14f46f… w1.json w2.json
@@ -613,9 +683,9 @@ recorded censor history per path.
 **R5 — retire an abandoned working directory.** The DB and ledger are
 derived/selection state: delete `data/proofdb.db` and the ledger, re-merge
 (R1), and either start with a fresh ledger or seed it from a committed
-snapshot (§3). Nothing in the durable layer is touched.
+snapshot (§4). Nothing in the durable layer is touched.
 
-### 7.2 Consumer recipes (SQL)
+### 8.2 Consumer recipes (SQL)
 
 All queries below run read-only and are verified against the standing DB
 (node counts in comments are its census: 55,703 nodes = 55,628 proven +
@@ -657,7 +727,7 @@ FROM (SELECT move_uci FROM nodes WHERE id IN up AND move_uci IS NOT NULL
 -- → 'e2e4 h7h6 d1h5 e7e5 h5f7'
 ```
 
-**Children of a node** (facts stored below it; absence ≠ decided — §4):
+**Children of a node** (facts stored below it; absence ≠ decided — §5):
 
 ```sql
 SELECT move_uci, outcome, depth_bound, depth_status
@@ -725,7 +795,7 @@ SELECT (SELECT COUNT(*) FROM nodes),
 -- → 55703 | 55628 | e91ad57b44008fee65ab0b124fab51365c17d08f891777cde525cfecb61fb5fd
 ```
 
-## 8. Soundness contract (operator terms)
+## 9. Soundness contract (operator terms)
 
 - Only shards whose manifest entry says `validate: "ok"` enter a merge, and
   each is replay-validated again at merge time and once more as a
@@ -735,7 +805,7 @@ SELECT (SELECT COUNT(*) FROM nodes),
 - The DB is a derived view: delete it and rebuild with `proofdb_merge`
   anytime — same shard set, byte-identical result. The rebuild is a
   standing regression test (`tests/proofdb.rs::
-  standing_layer_rebuilds_byte_identical`) and the quickstart's `sha256sum`
+  standing_layer_rebuilds_byte_identical`) and recipe R1's `sha256sum`
   step.
 - A DB must carry `meta.built_from` = the sha256 of the manifest it was
   built from; `proofdb_harvest`/`proofdb_flip` refuse a DB whose digest
@@ -744,7 +814,7 @@ SELECT (SELECT COUNT(*) FROM nodes),
   a ledger record. Non-terminal draws are not representable as facts in
   this tree model.
 
-## 9. Troubleshooting and known limitations
+## 10. Troubleshooting and known limitations
 
 **Stale DB (`built_from` mismatch).** `proofdb_harvest`/`proofdb_flip`
 abort with e.g.
@@ -759,7 +829,7 @@ harvest batch completed since the last merge). Fix: re-run
 length-safe on malformed DB values (a short or empty `built_from` aborts
 cleanly, regression-tested).
 
-**Merge aborts with exit 2.** A CONFLICT/DEFECT abort (§6.1) leaves no
+**Merge aborts with exit 2.** A CONFLICT/DEFECT abort (§7.1) leaves no
 partially written DB. Read the abort message: it names the shard/manifest
 defect. Never "fix" a proven-outcome conflict by editing the manifest —
 that is a soundness bug in the pipeline and belongs in a bug report.
@@ -772,11 +842,11 @@ is a symptom worth noting in the operator log.
 
 **Fresh vs seeded ledger.** A fresh ledger (missing `--ledger` file) is
 sound but re-censors every frontier reply at the base budget on first
-revisit — lower first-batch yield. Seeding from a committed snapshot (§3)
-or a `proofdb_ledger_union` merge (§6.4) recovers the censor history. A
+revisit — lower first-batch yield. Seeding from a committed snapshot (§4)
+or a `proofdb_ledger_union` merge (§7.4) recovers the censor history. A
 ledger never changes DB facts; getting it wrong costs work, not soundness.
 
-**Digest drift after growth.** The quickstart pins (`0d929f4c…`,
+**Digest drift after growth.** Recipe R1's pins (`0d929f4c…`,
 55,703 nodes) describe the *standing* shard set. After a decisive harvest
 batch the manifest digest changes and a fresh merge produces a different
 DB — that is growth, not drift. Compare DBs per manifest digest
@@ -790,14 +860,14 @@ position.
 record the intended targets in the summary; after each batch, run
 `proofdb_merge` yourself (recipe R2).
 
-## 10. History
+## 11. History
 
 The pipeline was built and hardened by the `proofdb` initiative
 (`docs/plans/proofdb/`); the tooling-completeness audit that produced this
 manual's first version is plan12 (2026-10-02). plan13 (2026-10-02) extended
-it into the operator **and user** manual — data-model primer (§4), shard
-provenance (§5), per-tool output grammars with worked invocations (§6),
-operator + consumer SQL recipes (§7), troubleshooting (§9) — for the
+it into the operator **and user** manual — data-model primer (§5), shard
+provenance (§6), per-tool output grammars with worked invocations (§7),
+operator + consumer SQL recipes (§8), troubleshooting (§10) — for the
 website handoff package (`measurements/plan13/handoff/`), which packages a
 digest-pinned rebuilt DB with a consumer-facing `HANDOFF.md`. Per-plan
 measurements and the pinned audit results live under
