@@ -1,0 +1,82 @@
+{
+  "provenance": {
+    "plan": "docs/plans/conversion/plan10.md",
+    "date": "2026-10-06",
+    "host": "reference container (post-plan9 binary, spike build CONV10_* env)",
+    "tt_mb": 128,
+    "epsilon_base": 0.125,
+    "timeout_s": 300,
+    "mode": "--first-outcome --outcome-only",
+    "arms": {
+      "BASE": "spike binary, CONV10_STATS=1, no guide/pad (zero behavior change)",
+      "HYGIENE": "GUIDE + PAD=0.125 + STATS (must be bit-identical to BASE)",
+      "P050": "GUIDE + PAD=0.5",
+      "P100": "GUIDE + PAD=1.0",
+      "PINF": "GUIDE + PAD=inf (pad-to-parent-threshold)",
+      "G050": "--epsilon 0.5 global control",
+      "G100": "--epsilon 1.0 global control"
+    }
+  },
+  "hygiene": {
+    "H1a_quick_suite": "59/59 cases identical after excluding wall-clock time fields (h1a_quick_*.json)",
+    "H1b_stress_stdout": "byte-identical pre-spike vs env-unset spike (h1b_stress_*.out)",
+    "H2_hygiene_vs_base": "stdout byte-identical and total_child_evals equal on all 5 cases",
+    "H3_base_reproduction": "all 5 Step-0/report9 counts reproduced exactly",
+    "S2_test_repetition": "3 passed (spike build, env unset)",
+    "S1_S3": "all finishing arms win on expectation; zero wrong claims; censored runs are timeout-draws (empty PV); stress never flipped outcome on a finishing arm"
+  },
+  "base_counts": {
+    "stress": 249480478,
+    "m22_white": 14156269,
+    "dec13": 3822602,
+    "dec01": 5713706,
+    "dec10": 4262128
+  },
+  "arms": {
+    "stress": {
+      "P050":  {"child_evals": 254016727,  "outcome": "win",  "delta_pct": 1.8},
+      "P100":  {"child_evals": 525164346,  "outcome": "win",  "delta_pct": 110.5},
+      "PINF":  {"child_evals": 2502434468, "outcome": "draw", "censored": "timeout 300s"},
+      "G050":  {"child_evals": 156394866,  "outcome": "win",  "delta_pct": -37.3},
+      "G100":  {"child_evals": 2871315037, "outcome": "draw", "censored": "timeout 300s"}
+    },
+    "m22_white": {
+      "P050":  {"child_evals": 17577251,  "outcome": "win", "delta_pct": 24.2},
+      "P100":  {"child_evals": 20498491,  "outcome": "win", "delta_pct": 44.8},
+      "PINF":  {"child_evals": 1024094190, "outcome": "win", "delta_pct": 7134.8},
+      "G050":  {"child_evals": 15952085,  "outcome": "win", "delta_pct": 12.7},
+      "G100":  {"child_evals": 51843616,  "outcome": "win", "delta_pct": 266.2}
+    },
+    "dec13": {
+      "P050":  {"child_evals": 3482492,   "outcome": "win", "delta_pct": -8.9},
+      "P100":  {"child_evals": 4030917,   "outcome": "win", "delta_pct": 5.4},
+      "PINF":  {"child_evals": 256112991, "outcome": "win", "delta_pct": 6599.6},
+      "G050":  {"child_evals": 5827389,   "outcome": "win", "delta_pct": 52.5},
+      "G100":  {"child_evals": 7947572,   "outcome": "win", "delta_pct": 107.9}
+    },
+    "dec01": {
+      "P050":  {"child_evals": 16255078,   "outcome": "win",  "delta_pct": 184.5},
+      "P100":  {"child_evals": 23908386,   "outcome": "win",  "delta_pct": 318.5},
+      "PINF":  {"child_evals": 2511318951, "outcome": "draw", "censored": "timeout 300s"},
+      "G050":  {"child_evals": 7742095,    "outcome": "win",  "delta_pct": 35.5},
+      "G100":  {"child_evals": 2709724025, "outcome": "draw", "censored": "timeout 300s"}
+    },
+    "dec10": {
+      "P050":  {"child_evals": 6274277,  "outcome": "win", "delta_pct": 47.2},
+      "P100":  {"child_evals": 6749706,  "outcome": "win", "delta_pct": 58.4},
+      "PINF":  {"child_evals": 8966705,  "outcome": "win", "delta_pct": 110.4},
+      "G050":  {"child_evals": 3273293,  "outcome": "win", "delta_pct": -23.2},
+      "G100":  {"child_evals": 2367895,  "outcome": "win", "delta_pct": -44.5}
+    }
+  },
+  "phase0_counters": {
+    "comment": "from the HYGIENE arm (GUIDE+PAD=0.125+STATS); counters are pad-independent",
+    "stress":    {"on_path_or_sites": 4663,  "clamps": 2171,   "cut_backs": 3174,  "frame_child_evals": 281162706},
+    "m22_white": {"on_path_or_sites": 2395,  "clamps": 381,    "cut_backs": 2033,  "frame_child_evals": 18000183},
+    "dec13":     {"on_path_or_sites": 435,   "clamps": 20,     "cut_backs": 383,   "frame_child_evals": 4116639},
+    "dec01":     {"on_path_or_sites": 1070,  "clamps": 435,    "cut_backs": 975,   "frame_child_evals": 10428679},
+    "dec10":     {"on_path_or_sites": 60660, "clamps": 60144,  "cut_backs": 55163, "frame_child_evals": 9227110}
+  },
+  "verdict": "NO-GO",
+  "verdict_reason": "best pad arm (P050) is +1.8% on stress, far from the >=10% reduction gate; global controls beat the path-conditioned arms on stress (G050 -37.3% vs P050 +1.8%)"
+}
