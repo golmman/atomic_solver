@@ -1,0 +1,25 @@
+tag,env,phase,total,pct,ok,timeouts,wrong,flips,worst_reg_case,worst_reg,note
+baseline(default 1x),(no env vars),0,38974090,+0.00%,59,0,0,,,0.00x,step-0 HEAD capture; also spike-default (byte-identical)
+hs05,LEAN10_HISTORY_BONUS=50 LEAN10_HISTORY_MAX=5000,1,37886759,-2.79%,59,0,0,,dec44,5.19x,
+hs2,LEAN10_HISTORY_BONUS=200 LEAN10_HISTORY_MAX=20000,1,37841090,-2.91%,59,0,0,,dec31,2.80x,
+k10,LEAN10_SCORE_KILLER=10000,1,39124984,+0.39%,59,0,0,,dec14,1.48x,
+k200,LEAN10_SCORE_KILLER=200000,1,38974090,+0.00%,59,0,0,,,0.00x,
+ag25,LEAN10_HISTORY_AGE_INTERVAL=2500,1,44990871,+15.44%,59,0,0,,dec14,1.57x,
+ag50,LEAN10_HISTORY_AGE_INTERVAL=50000,1,45990478,+18.00%,59,0,0,,dec01,1.95x,
+cr50,LEAN10_HISTORY_MAX=5000,1,41475429,+6.42%,59,0,0,,m23_white,1.32x,
+cr200,LEAN10_HISTORY_MAX=20000,1,39890425,+2.35%,59,0,0,,dec13,1.19x,
+k0,LEAN10_SCORE_KILLER=0,0,42561684,+9.21%,59,0,0,,dec42,18.58x,hook-live sanity probe (should be far off)
+hb1,LEAN10_HISTORY_BONUS=1 LEAN10_HISTORY_MAX=1,0,38373893,-1.54%,58,1,0,dec01:ok->timeout,dec05,5.38x,hook-live sanity probe
+ag1,LEAN10_HISTORY_AGE_INTERVAL=1,0,31493500,-19.19%,58,1,0,m23_white:ok->timeout,dec05,5.19x,hook-live sanity probe -> became de-facto refinement arm
+ag5,LEAN10_HISTORY_AGE_INTERVAL=5,0,38235985,-1.89%,59,0,0,,dec14,1.61x,aging refinement
+ag10,LEAN10_HISTORY_AGE_INTERVAL=10,0,31745692,-18.55%,58,1,0,dec01:ok->timeout,dec14,1.61x,aging refinement
+ag100,LEAN10_HISTORY_AGE_INTERVAL=100,0,38273698,-1.80%,59,0,0,,dec05,3.55x,aging refinement
+ag500,LEAN10_HISTORY_AGE_INTERVAL=500,0,29632972,-23.97%,58,1,0,m23_white:ok->timeout,dec14,1.62x,aging refinement
+ag1000,LEAN10_HISTORY_AGE_INTERVAL=1000,0,42454256,+8.93%,59,0,0,,dec40,1.29x,aging refinement
+ag2000,LEAN10_HISTORY_AGE_INTERVAL=2000,0,36715172,-5.80%,57,2,0,dec01:ok->timeout;dec44:ok->timeout,dec14,1.60x,aging refinement
+hs05-ag1,BONUS=50 MAX=5000 AGE_INTERVAL=1,2,34631157,-11.14%,58,1,0,m23_white:ok->timeout,dec05,5.19x,cross-product finalist candidate
+hs05-ag5,BONUS=50 MAX=5000 AGE_INTERVAL=5,2,39547250,+1.47%,59,0,0,,dec05,5.19x,cross-product
+hs05-ag100,BONUS=50 MAX=5000 AGE_INTERVAL=100,2,37679579,-3.32%,59,0,0,,dec14,1.59x,cross-product
+hs2-ag1,BONUS=200 MAX=20000 AGE_INTERVAL=1,2,31345410,-19.57%,58,1,0,m23_white:ok->timeout,dec05,5.19x,cross-product finalist (best total)
+hs2-ag5,BONUS=200 MAX=20000 AGE_INTERVAL=5,2,31303032,-19.68%,58,1,0,dec01:ok->timeout,dec14,1.61x,cross-product
+hs2-ag100,BONUS=200 MAX=20000 AGE_INTERVAL=100,2,40719587,+4.48%,59,0,0,,dec05,3.23x,cross-product

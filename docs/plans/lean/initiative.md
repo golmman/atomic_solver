@@ -250,7 +250,7 @@ memory, maintainability.
 | 5 | AND-side ordering signal (non-NN) | Counter-moves, AND-specific history, TT `work` feedback — disproving work concentrates in 1–2 replies per AND node (median max child-share 52.9%) | **spiked (plan9), closed**: refuter already at final-sorted rank 0 in 100% of refuted AND frames (median rank 0), pre-refuter mass 0.00–0.02% of child evals (both cases), 99.7–99.9% of AND own evals in threshold-cut frames — see `report9.md` | nodes | M | **closed (plan9 spike, no-go)** |
 | 7 | Lazy/staged child evaluation | Min-heap: evaluate children in rank order as needed instead of all on first iteration | ~3–10% evals | nodes | M | open |
 | 9 | 2–3-man atomic endgame tablebases | Leaf probes in shallow-material positions | huge where covered, negligible elsewhere | nodes | M–L | **moved to [`egtb`](../egtb/initiative.md) (2026-09-14)**: opened as its own initiative with a generation story and a go/no-go spike; leaf probing is its backlog #3, 2-man layer dropped as degenerate |
-| 10 | History/killer constant re-tuning | Never re-tuned after the GHI/twin removal; side-aware killers | ~0–5% evals | nodes | S–M | open |
+| 10 | History/killer constant re-tuning | Never re-tuned after the GHI/twin removal; side-aware killers | ~0–5% evals | nodes | S–M | **closed (plan10 sweep, no-go)**: every winning arm (−11% to −20% quick totals) violates the per-case/flip gates (m23_white/dec01 ok→timeout, dec05 5.19×, dec14 1.6×); the one flip-free −3.3% arm still regresses dec14 1.59×. "Side-aware killers" retired by analysis: killer slots are keyed on ply-depth, which determines side-to-move uniquely (fixed root, no passes/null) — already implicitly side-aware; history is explicitly side-indexed. See `report10.md` |
 
 Done: #1, #1a, #4 (**plan1**); #3, #6 (**plan2**); #11 (**plan3**, 46%
 wall on m22 first-outcome). The plan3-era upstream idea of *handing the
@@ -349,6 +349,7 @@ until a plan claims it.
   OR-Win frames (M1); the nn 90.6% work-share figure is a
   population/attribution difference, not reopened OR headroom (done,
   `report9.md`).
+- **plan10** — #10 history/killer constant re-tune: env-gated `LEAN10_*` sweep (spike reverted; `src/` byte-identical to HEAD): **no-go, #10 closed, backlog empty** — 23 arms measured; quick-suite totals span −24%…+18% with violent non-monotonicity, every aggregate-winning arm flips a previously-solving case to timeout or regresses tail cases >10% (dec05 5.19×, dec14 1.6×); killer axis inert between 50k/200k (byte-identical), killer=0 +9.2%; reorder diagnostic 19.5% of `sort_moves` calls (surface active, outcome harmful); F5 side-aware-killers retired by analysis (done, `report10.md`).
 - **follow-up (report8):** the `rem01` fixture entry in
   `tests/fixtures/decisive_remaining.txt` was re-categorized standalone:
   budget raised 200M → 1.7B `solvable_evals` over the post-dfpn-plan9
