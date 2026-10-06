@@ -734,3 +734,28 @@ Status
 All three are recorded, verbatim, as the reopeners in campaign_architecture.md §11. The initiative is dormant with no open items — so a re-open would be framed as exercising these recorded  
 mechanisms, and the honest entry point is the soundness argument for fix 1, because per the project's priorities (correctness first), a censor certificate that could ever smuggle in a wrong  
 bound is worse than no certificate.
+
+---
+
+Please analyse and look at the historic reports (e.g. nn initiative):
+how much potential is there for better node ordering?
+
+---
+
+Given an oracle PV for a decisive win, have we tried increasing the OR-node's epsilon values in this path?
+
+My justification is that we spend more time in the correct node from the beginning.
+
+We could test it like this:
+
+- run one of the test positions with the current epsilon mechanism, remember the output pv
+- run we the new epsilon mechanism and the remembered pv
+- measure the difference (node count, wall times)
+
+---
+
+
+"Guidance must be free" - I'd argue that guidance is virtually free in the form of unused cpu cores, since we didn't find a way to parallelize yet.
+We could run Fairy-Stockfish in multi-pv mode in parallel and update the epsilons with these (partial) PVs accordingly.
+
+partial pv
