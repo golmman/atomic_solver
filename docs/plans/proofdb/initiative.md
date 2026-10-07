@@ -145,6 +145,7 @@ value.
 | 6 | **Independent harvesters** | partition the frontier across worker processes (by root-child subtree or class; per-worker shard staging, serialized manifest merge); campaign-prototype precedent (`examples/campaign*`, solve plans 5/9) | wall-time scaling of harvesting without touching solver semantics | M | open — the sequential prerequisite is done (plan4, 2026-09-30: the ledger holds exactly the pick-up state a per-worker partition needs); note report4 finding 3: within-layer selection needs a work-aware key before large batches are worth scaling |
 | 7 | **Subtree-scoped harvesting** | `--root-fen` (+ optional `--root-path`) plumbs the harvest root by FEN, resolved within the merged DB tree (no match or ambiguous match aborts); a subtree *view* over the same startpos-rooted tree — shards, manifest paths, and grafting stay startpos-relative unchanged | harvest any position, the primary user surface for item 6's per-worker subtree partition | S | open — parked from plan4 (2026-09-30, docs-only amendment, plan4 decision 12 tombstone): the first batch runs at the startpos root, and the MVP limitation ("FEN must be a node of the merged DB tree") is expected to be revisited under item 6 |
 | 8 | **Tooling completeness audit + hardening** | audit the pipeline end-to-end as a third party would run it (shards → merger → DB, harvest loop from a clean checkout): missing CLIs/options, undocumented contracts, error-path gaps, packaging/docs; fix what it finds | the pivot's next plan; defines "tooling complete" so harvesting runs can be justified as validation and the website handoff (#5) has a stable surface to hand over | S–M | **done (plan12, 2026-10-02)**: audit re-run and pinned (durable layer 262/262 self-consistent; merger reproduces the standing DB byte-identically, `0d929f4c…`, 55,703 nodes; harvest smoke 2/2 censored, manifest byte-identical; flip 75/0/Null). One defect found and fixed (the stale-DB `built_from` truncation panicked on a short DB value — now length-safe, regression-tested); deliverables: operator runbook `docs/proofdb_pipeline.md`, derived-DB rebuild regression test (`tests/proofdb.rs::standing_layer_rebuilds_byte_identical`, in the default gate), AGENTS.md entries for all four tools; ledger-from-clean-checkout recorded as a decision (fresh or seed — the ledger stays scheduling state), startpos-rooting/orphan-shard/merge-after-batch recorded as limitations. Plan11 (parked 18B `g1f3` rung) retired. Next levers: items 5 and 6. |
+| 9 | **Centralized generated-data layout** | default root `data/proofdb/` for **all** generated state, production shards and manifest included (`proofdb.db`, `work.json`, `flip.json`, `shards/manifest.json`); tool defaults updated (`proofdb_merge --manifest/--shard-dir/--db`, `proofdb_harvest --db/--ledger`, `proofdb_flip --db/--out`) so a production run needs no path flags; the committed `docs/plans/proofdb/shards/` set reclassified as development/validation fixture (explicit-flags runs, tests) — production ignores it; manual/AGENTS/.gitignore-comment updates | one canonical home for generated data; cwd never littered; production = bare invocations | S | open — `plan14.md` drafted (2026-10-02, amended same day: shard layer defaults in after the owner clarified the committed set is a dev fixture, production not started) |
 
 ## Non-goals
 
@@ -166,6 +167,26 @@ value.
 
 ## History
 
+- **2026-10-02 — plan14 drafted (docs-only plan session): item 9 added;
+  amended same session.** Owner request: all generated proofdb data
+  centralized in `data/proofdb/` by default. Drafted scope was
+  working-layer only (`proofdb_merge --db`, `proofdb_harvest
+  --db/--ledger`, `proofdb_flip --db/--out` defaults);
+  **owner clarification amended the plan**: the committed shard set at
+  `docs/plans/proofdb/shards/` is a development/validation fixture, not
+  a production artifact, and production has not started — so production
+  runs will keep **all** generated data (shards and manifest included)
+  under `data/proofdb/` and ignore the fixture entirely. Final decision
+  set: defaults `--manifest data/proofdb/shards/manifest.json`,
+  `--shard-dir data/proofdb/shards/`, plus the drafted DB/ledger/flip
+  defaults — a production run is bare `proofdb_merge` / `proofdb_harvest`
+  with no path flags; development/validation runs keep explicit flags
+  against the fixture (regression test untouched). Accepted consequence
+  (decision 9): the production durable layer lives outside git — backup
+  of `data/proofdb/shards/` is the operator's responsibility. Spec
+  verified path-free (no change needed); quickstart becomes the
+  production-shaped walkthrough inside the checkout; a migration
+  one-liner covers existing operator working dirs. See `plan14.md`.
 - **2026-10-02 (latest) — plan13 executed; item 5 closed.** The handoff is
   now shippable as one directory: `measurements/plan13/handoff/` holds a
   DB rebuilt from the committed shard set (digest `0d929f4c…` = the plan12
