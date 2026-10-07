@@ -56,12 +56,12 @@ in §2, with the full tool contracts in §7.
 
 ### 2.1 Artifacts
 
-| Artifact | Layer | Path | Committed? |
-|----------|-------|------|------------|
-| shard set | durable truth | `docs/plans/proofdb/shards/*.bin` + `manifest.json` | yes |
-| SQLite DB | derived view | `data/proofdb.db` | no (`.gitignore`d) |
-| work ledger | selection state | `data/proofdb_work.json` | no (`.gitignore`d) |
-| flip report | analysis output | `proofdb_flip --out` target (e.g. `flips.json`) | no |
+| Artifact    | Layer           | Path                                                | gitignored |
+| ----------- | --------------- | --------------------------------------------------- | ---------- |
+| shard set   | durable truth   | `docs/plans/proofdb/shards/*.bin` + `manifest.json` | yes        |
+| SQLite DB   | derived view    | `data/proofdb.db`                                   | no         |
+| work ledger | selection state | `data/proofdb_work.json`                            | no         |
+| flip report | analysis output | `proofdb_flip --out` target (e.g. `flips.json`)     | no         |
 
 - **Shard set (durable truth).** `*.bin` validated binary proof trees
   (`proof_tree_dump.md` v1 format) plus `manifest.json`, one entry per shard
@@ -78,18 +78,18 @@ in §2, with the full tool contracts in §7.
 
 ### 2.2 Tools
 
-- **`proofdb_merge`** — *shards + manifest → DB*, single writer. Replay-
+- **`proofdb_merge`** — _shards + manifest → DB_, single writer. Replay-
   validates every shard, grafts it at its manifest path, applies the depth
   fixpoint, and writes the DB; any conflict or defect aborts without
   writing. Deterministic for a given shard set.
-- **`proofdb_harvest`** — *DB + ledger → shards + manifest + ledger*.
+- **`proofdb_harvest`** — _DB + ledger → shards + manifest + ledger_.
   Selects frontier jobs under a policy, solves each under a deterministic
   child-eval budget, exports and validates the decisive ones as shards, and
   records censored jobs in the ledger. It never merges.
-- **`proofdb_flip`** — *DB → flip report*, read-only. Iterates implied
+- **`proofdb_flip`** — _DB → flip report_, read-only. Iterates implied
   outcomes to fixpoint over the stored tree and re-checks every flip with an
   independent verifier; writes only the report.
-- **`proofdb_ledger_union`** — *N ledgers → one ledger*. Deterministic
+- **`proofdb_ledger_union`** — _N ledgers → one ledger_. Deterministic
   max-rule merge (highest `passes_failed`, ties broken by `work_done`).
 
 Full CLI options, output grammars, and exit codes are in §7; ledger pick-up
@@ -159,7 +159,7 @@ jobs write no facts, so `shards/manifest.json` is **unchanged**
 (`built_from d801aa1fb7ddcc33…`) and `work.json` now holds two censor
 records.
 
-A *decisive* first harvest instead changes the manifest digest, so its new
+A _decisive_ first harvest instead changes the manifest digest, so its new
 shards must be folded in before the next pass: run step 1 (`proofdb_merge`)
 again after the harvest, or `proofdb_harvest` aborts on the stale
 `built_from` (§10). The smoke budget above deliberately censors, so §3.2
@@ -198,7 +198,7 @@ exist.
 
 ## 4. Ledger pick-up
 
-**Ledger pick-up semantics:** a *missing* ledger file loads as an empty
+**Ledger pick-up semantics:** a _missing_ ledger file loads as an empty
 (fresh) ledger — a new working directory starts a harvest from scratch
 without any setup. Two ways to come back to the standing state:
 
@@ -230,18 +230,18 @@ and facts are never transferred across paths (spec invariant 6). Row `id`s
 are assigned in lexicographic path order (spec invariant 7), so the root is
 `id = 0` and a prefix path always sorts before its extensions.
 
-**Partial AND/OR tree.** `outcome` is from the *side-to-move* perspective:
+**Partial AND/OR tree.** `outcome` is from the _side-to-move_ perspective:
 
-| `outcome` | role | what the tree stores below it |
-| --- | --- | --- |
-| `'win'` | OR-node | exactly one proving child (a `'loss'` child) — the refutation of the opponent's best try; the other replies are *not* rows |
-| `'loss'` | AND-node | every legal, non-terminal reply as a child with `outcome = 'win'` (terminal replies are absent — terminality is derivable) |
-| `NULL` | open | undecided; may still have stored children (resolved replies, or an open ancestor chain over a grafted subtree) |
+| `outcome` | role     | what the tree stores below it                                                                                              |
+| --------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `'win'`   | OR-node  | exactly one proving child (a `'loss'` child) — the refutation of the opponent's best try; the other replies are _not_ rows |
+| `'loss'`  | AND-node | every legal, non-terminal reply as a child with `outcome = 'win'` (terminal replies are absent — terminality is derivable) |
+| `NULL`    | open     | undecided; may still have stored children (resolved replies, or an open ancestor chain over a grafted subtree)             |
 
 Two consequences a consumer must not get wrong:
 
 - **The tree is partial, and absence is not evidence.** A missing child row
-  means "no proven fact recorded for that reply (yet)". It does *not* mean
+  means "no proven fact recorded for that reply (yet)". It does _not_ mean
   the move is illegal, decided, or refuted. The root, for example, has 7
   stored children (its two knight moves and the five most informative pawn
   pushes, all still open); the other ~34 legal replies simply have no rows.
@@ -251,8 +251,8 @@ Two consequences a consumer must not get wrong:
   represented as `NULL`; no `draw` outcome exists in v1.
 
 **Depth vocabulary: bound by default, exactness an annotation.** A proven
-node's `depth_bound` proves *the decisive outcome within ≤ depth_bound
-plies from this node*. `depth_status = 'bound'` is the default (the true
+node's `depth_bound` proves _the decisive outcome within ≤ depth_bound
+plies from this node_. `depth_status = 'bound'` is the default (the true
 distance may be smaller); `'exact'` asserts the bound is the true
 distance-to-terminal (spec invariant 4's minimality claim). Terminality is
 derivable, never stored as a flag: `outcome IS NOT NULL AND depth_bound = 0`
@@ -298,16 +298,31 @@ tags refer to.
    **Censored result** (draw from any cause, budget exhausted) → no shard,
    no manifest entry, a ledger record only.
 4. After the batch, run `proofdb_merge` (§8.1, recipe R2): every shard is
-   replay-validated *again* at merge time, grafted at its manifest path,
+   replay-validated _again_ at merge time, grafted at its manifest path,
    and only then becomes DB rows.
 
 **Manifest entry anatomy** (one standing-set entry, verbatim):
 
 ```json
-{"fen": "1nbqkbnr/1ppppppp/8/8/8/2PPP3/5PPP/RNBQKBNR w KQk - 0 6",
- "file": "h_013861d97dce5d48.bin", "moves": ["a2a3", "a7a6", "b2b3", "a6a5",
- "c2c3", "a5a4", "d2d3", "a4b3", "e2e3", "a8a3"], "outcome": "win",
- "tag": "h_013861d97dce5d48", "validate": "ok"}
+{
+  "fen": "1nbqkbnr/1ppppppp/8/8/8/2PPP3/5PPP/RNBQKBNR w KQk - 0 6",
+  "file": "h_013861d97dce5d48.bin",
+  "moves": [
+    "a2a3",
+    "a7a6",
+    "b2b3",
+    "a6a5",
+    "c2c3",
+    "a5a4",
+    "d2d3",
+    "a4b3",
+    "e2e3",
+    "a8a3"
+  ],
+  "outcome": "win",
+  "tag": "h_013861d97dce5d48",
+  "validate": "ok"
+}
 ```
 
 `moves` is the UCI path from the startpos to the shard root; `fen` is the
@@ -355,18 +370,18 @@ identical shard set. Never merges anything else; never patches conflicts.
 
 **Prerequisites.** A manifest whose entries all say `validate: "ok"`, and
 the shard files they name, readable from `--shard-dir`. No DB is needed —
-`--db` is *overwritten*.
+`--db` is _overwritten_.
 
     usage: proofdb_merge --manifest <index.json> --shard-dir <dir>
                          [--db <out.db>] [--dump <nodes.txt>] [--sample-lines <n>]
 
-| Option | Default | Meaning |
-|--------|---------|---------|
-| `--manifest` | required | manifest JSON (entries sorted by tag internally) |
-| `--shard-dir` | required | directory holding the `*.bin` shard files |
-| `--db` | `proofdb.db` | output SQLite path (overwritten) |
-| `--dump` | off | canonical text dump of the merged tree |
-| `--sample-lines` | `0` | print `n` random root-to-leaf walks as spot-checks |
+| Option           | Default      | Meaning                                            |
+| ---------------- | ------------ | -------------------------------------------------- |
+| `--manifest`     | required     | manifest JSON (entries sorted by tag internally)   |
+| `--shard-dir`    | required     | directory holding the `*.bin` shard files          |
+| `--db`           | `proofdb.db` | output SQLite path (overwritten)                   |
+| `--dump`         | off          | canonical text dump of the merged tree             |
+| `--sample-lines` | `0`          | print `n` random root-to-leaf walks as spot-checks |
 
 **Exit codes.** `0` merged and written; `1` usage error; `2`
 CONFLICT/DEFECT abort (non-`ok` manifest entry, unreadable/unparseable
@@ -396,7 +411,7 @@ db: proofdb.db (nodes 55703), manifest built_from e91ad57b44008fee
   of either equation disagree, the merge is defective.
 - `db:` — where the DB went, its node count, and the 16-hex prefix of
   `meta.built_from` (the manifest digest; the full digest is in the DB).
-- with `--sample-lines n` (printed *before* the census): `n` lines like
+- with `--sample-lines n` (printed _before_ the census): `n` lines like
   `sample 1: e2e4 h7h6 d1h5 e7e5 h5f7 (5 plies, end: loss bound 0 (exact))`
   — random root-to-leaf walks as spot-checks.
 
@@ -425,28 +440,28 @@ ledger path (missing file = fresh ledger, §4).
                            [--and-close-max-budget <evals>]
                            [--out-db <grown.db>] [--dump <nodes.txt>]
 
-| Option | Default | Meaning |
-|--------|---------|---------|
-| `--db` | required | the merged DB to work against (read-only) |
-| `--manifest` | required | manifest to extend (rewritten after the batch) |
-| `--shard-dir` | required | where new shard files are written |
-| `--policy` | `breadth-pns` | `breadth-pns` \| `and-close` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail` |
-| `--ledger` | `data/proofdb_work.json` | pick-up state; a missing file is a fresh ledger |
-| `--budget-evals` | policy default | base child-eval budget per job (breadth-pns base: 4,000,000); screens for the legacy policies |
-| `--max-total-evals` | `0` (unlimited) | session cap across jobs |
-| `--heavy-budget-evals` | `40,000,000` | heavy-job budget (`sharp-heavy-tail`) |
-| `--heavy-sample` | `5` | heavy jobs per screen pass (`sharp-heavy-tail`) |
-| `--tt-mb` | `128` | per-session transposition table (MB) |
-| `--max-jobs` | `0` (unlimited) | stop after n jobs |
-| `--max-runtime` | `0` (unlimited) | stop after n seconds |
-| `--stop-file` | `STOP` | batch stops (gracefully, after the in-flight job) when this file appears |
-| `--pns-config` | compiled defaults | breadth-pns mechanism knobs (TOML); effective only under `breadth-pns` |
-| `--and-close-order` | `completion` | `completion` \| `fresh` (effective only under `and-close`) |
-| `--and-close-max-budget` | `0` (unlimited) | per-job budget cap under `and-close` |
-| `--out-db` / `--dump` | off | recorded in the summary only — **the caller runs `proofdb_merge` separately** (by design; this CLI never merges) |
+| Option                   | Default                  | Meaning                                                                                                          |
+| ------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `--db`                   | required                 | the merged DB to work against (read-only)                                                                        |
+| `--manifest`             | required                 | manifest to extend (rewritten after the batch)                                                                   |
+| `--shard-dir`            | required                 | where new shard files are written                                                                                |
+| `--policy`               | `breadth-pns`            | `breadth-pns` \| `and-close` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail`                         |
+| `--ledger`               | `data/proofdb_work.json` | pick-up state; a missing file is a fresh ledger                                                                  |
+| `--budget-evals`         | policy default           | base child-eval budget per job (breadth-pns base: 4,000,000); screens for the legacy policies                    |
+| `--max-total-evals`      | `0` (unlimited)          | session cap across jobs                                                                                          |
+| `--heavy-budget-evals`   | `40,000,000`             | heavy-job budget (`sharp-heavy-tail`)                                                                            |
+| `--heavy-sample`         | `5`                      | heavy jobs per screen pass (`sharp-heavy-tail`)                                                                  |
+| `--tt-mb`                | `128`                    | per-session transposition table (MB)                                                                             |
+| `--max-jobs`             | `0` (unlimited)          | stop after n jobs                                                                                                |
+| `--max-runtime`          | `0` (unlimited)          | stop after n seconds                                                                                             |
+| `--stop-file`            | `STOP`                   | batch stops (gracefully, after the in-flight job) when this file appears                                         |
+| `--pns-config`           | compiled defaults        | breadth-pns mechanism knobs (TOML); effective only under `breadth-pns`                                           |
+| `--and-close-order`      | `completion`             | `completion` \| `fresh` (effective only under `and-close`)                                                       |
+| `--and-close-max-budget` | `0` (unlimited)          | per-job budget cap under `and-close`                                                                             |
+| `--out-db` / `--dump`    | off                      | recorded in the summary only — **the caller runs `proofdb_merge` separately** (by design; this CLI never merges) |
 
 **Exit codes.** `0` batch completed (then the manifest is rewritten); `1`
-usage error; `2` ABORT on any defect — the session aborts *before* the
+usage error; `2` ABORT on any defect — the session aborts _before_ the
 manifest rewrite, so the durable layer never becomes inconsistent. Shards
 of jobs already completed when an abort hits remain as unreferenced orphan
 files and are deterministically overwritten by the retry. Stop reasons in
@@ -455,7 +470,7 @@ the summary: `max-jobs`, `max-total-evals`, `max-runtime`, `stop-file`,
 
 **Output grammar.**
 
-*stderr, session start* (informational; the numbers are the DB's frontier
+_stderr, session start_ (informational; the numbers are the DB's frontier
 shape and the policy's selected job set):
 
 ```text
@@ -476,29 +491,29 @@ and-close-excluded: open rows 75 (active 49); proven-ancestor 26, implied-win 0,
 - `and-close-excluded:` — open rows excluded from selection, broken down
   (proven-ancestor / implied-win / implied-loss).
 
-*stdout, per job* — one `job: {…}` JSON line per visit. Field table (as
+_stdout, per job_ — one `job: {…}` JSON line per visit. Field table (as
 emitted by `examples/proofdb/session/record.rs`; all jobs carry the first
 twelve; `pass`/`work_before` are emitted by the PNS and `and-close`
 policies, `number`/`kind` only by `breadth-pns` and omitted otherwise):
 
-| field | meaning |
-| --- | --- |
-| `path` | UCI path of the job position (space-separated) |
-| `policy` | the `--policy` used |
-| `class` | frontier class of the job (`C1`/`C2`/`C3`; `and-close` jobs are `C3`) |
-| `parent_bound` | the parent node's proven `depth_bound`, if proven |
-| `tier` | job tier (`screen`/`heavy`/policy name — `and-close` labels all jobs `and-close`) |
-| `budget` | child-eval budget granted for this visit |
-| `child_evals` | child-evals actually spent |
-| `wall_s` | job wall time (seconds) |
-| `outcome` | `"win"` / `"loss"` (decisive, shard exported) or `"censored"` (no fact) |
-| `exit_reason` | solver exit: `Complete` (decisive) or `BudgetExhausted` (censored) |
-| `tag` | shard tag if decisive (manifest tag; matches `provenance` in the DB) |
-| `shard_nodes` | exported shard's node count if decisive |
-| `pass` | visit rung: `passes_failed + 1` (PNS and `and-close` census) |
-| `number` | PNS effective number at selection time (PNS only) |
-| `work_before` | ledger `work_done` recorded before this visit (PNS and `and-close`) |
-| `kind` | PNS visit kind (`expand` \| `rung`) (PNS only) |
+| field          | meaning                                                                           |
+| -------------- | --------------------------------------------------------------------------------- |
+| `path`         | UCI path of the job position (space-separated)                                    |
+| `policy`       | the `--policy` used                                                               |
+| `class`        | frontier class of the job (`C1`/`C2`/`C3`; `and-close` jobs are `C3`)             |
+| `parent_bound` | the parent node's proven `depth_bound`, if proven                                 |
+| `tier`         | job tier (`screen`/`heavy`/policy name — `and-close` labels all jobs `and-close`) |
+| `budget`       | child-eval budget granted for this visit                                          |
+| `child_evals`  | child-evals actually spent                                                        |
+| `wall_s`       | job wall time (seconds)                                                           |
+| `outcome`      | `"win"` / `"loss"` (decisive, shard exported) or `"censored"` (no fact)           |
+| `exit_reason`  | solver exit: `Complete` (decisive) or `BudgetExhausted` (censored)                |
+| `tag`          | shard tag if decisive (manifest tag; matches `provenance` in the DB)              |
+| `shard_nodes`  | exported shard's node count if decisive                                           |
+| `pass`         | visit rung: `passes_failed + 1` (PNS and `and-close` census)                      |
+| `number`       | PNS effective number at selection time (PNS only)                                 |
+| `work_before`  | ledger `work_done` recorded before this visit (PNS and `and-close`)               |
+| `kind`         | PNS visit kind (`expand` \| `rung`) (PNS only)                                    |
 
 A **censored** job (quickstart §3.1, verbatim; `wall_s` varies by host):
 
@@ -514,7 +529,7 @@ A **decisive** job (recorded in the plan10 census,
 job: {"budget":24000162,"child_evals":8513692,"class":"C3","exit_reason":"Complete","outcome":"win","parent_bound":null,"pass":3,"path":"a2a3 a7a6 b2b3 a6a5 c2c3 a5a4 d2d3 a4b3 e2e3 g7g6","policy":"and-close","shard_nodes":1394,"tag":"h_82e976f53648002b","tier":"and-close","wall_s":1.786593106,"work_before":12000081}
 ```
 
-*stdout, after the last job* — the manifest line (printed only when the
+_stdout, after the last job_ — the manifest line (printed only when the
 manifest actually changed, else `manifest: unchanged (…)`), then the
 summary line; `out-db:`/`dump:` echo lines follow when those options were
 given:
@@ -530,10 +545,10 @@ harvest: policy and-close stop=max-jobs jobs 2 decisive 0 censored 2 evals 40003
   (`pns_jobs N rungs M decisive D evals E new_shards S wall Ws`), and-close
   (`jobs N decisive D censored C evals E new_shards S wall Ws`), legacy
   screen/heavy policies (`screen_jobs/screen_decisive/screen_evals
-  heavy_jobs/heavy_decisive new_shards wall`). `decisive` counts jobs that
+heavy_jobs/heavy_decisive new_shards wall`). `decisive` counts jobs that
   exported a shard; `censored` counts facts of absence.
 
-*stderr, during jobs* — `[bounded_search] chunk done: …` progress lines
+_stderr, during jobs_ — `[bounded_search] chunk done: …` progress lines
 (one per budget chunk); informational, safe to ignore in scripts.
 
 **Worked invocation.** Quickstart §3.1–§3.2 (two censored jobs at 200k
@@ -572,12 +587,12 @@ flip_analysis: open_rows 75 flips 0 verified 0 root Null (fixpoint 1 rounds)
 
 ```json
 {
- "flips": [],
- "flips_total": 0,
- "flips_verified_independently": 0,
- "open_rows": 75,
- "root_bound": null,
- "root_implied": null
+  "flips": [],
+  "flips_total": 0,
+  "flips_verified_independently": 0,
+  "open_rows": 75,
+  "root_bound": null,
+  "root_implied": null
 }
 ```
 
@@ -596,11 +611,11 @@ committed snapshots).
     usage: proofdb_ledger_union --out <ledger.json>
                                 [--expect <file>=<sha256>]... <input.json>...
 
-| Option | Default | Meaning |
-|--------|---------|---------|
-| `--out` | required | merged output ledger (deterministic, sorted bytes) |
-| `--expect` | none | pin an input's sha256 digest (repeatable; verified before the merge) |
-| `<input.json>…` | required | 1..N ledger files |
+| Option          | Default  | Meaning                                                              |
+| --------------- | -------- | -------------------------------------------------------------------- |
+| `--out`         | required | merged output ledger (deterministic, sorted bytes)                   |
+| `--expect`      | none     | pin an input's sha256 digest (repeatable; verified before the merge) |
+| `<input.json>…` | required | 1..N ledger files                                                    |
 
 **Exit codes.** `0` merged, `1` on usage/load/digest-mismatch errors.
 
@@ -634,7 +649,7 @@ proofdb_merge --manifest shards/manifest.json --shard-dir shards \
 sha256sum proofdb.db
 ```
 
-A rebuild is *always* allowed; it is also the response to a stale-DB abort
+A rebuild is _always_ allowed; it is also the response to a stale-DB abort
 (§10). Byte-identical output for an identical manifest is the standing
 regression test
 (`tests/proofdb.rs::standing_layer_rebuilds_byte_identical`). For the
@@ -655,7 +670,7 @@ proofdb_merge --manifest shards/manifest.json --shard-dir shards \
 proofdb_flip --db proofdb.db --manifest shards/manifest.json --out flips.json
 ```
 
-Note: after a *decisive* batch the manifest digest changes, so the new
+Note: after a _decisive_ batch the manifest digest changes, so the new
 DB's `built_from` — and therefore its byte content — differs from the old
 DB. Byte-identity is guaranteed per manifest, not across growth steps.
 
@@ -745,7 +760,7 @@ FROM nodes WHERE id = :nid;
 ```
 
 If the line resolves to a proven node, every prefix is a stored row on the
-way (the path *is* the membership proof). A line that dead-ends at a row
+way (the path _is_ the membership proof). A line that dead-ends at a row
 with `outcome IS NULL` is undecided at that point; a line that fails to
 resolve leaves the stored tree.
 
@@ -758,7 +773,7 @@ FROM nodes WHERE outcome IS NULL ORDER BY ply, id;
 -- down to ply 31 — the undecided head rows
 ```
 
-The DB alone cannot say *which legal replies* of an open row are still
+The DB alone cannot say _which legal replies_ of an open row are still
 unresolved (that needs movegen — the harvester's job). What the DB says:
 these rows are undecided, and `provenance` tells which shards touched
 their subtrees.
@@ -773,7 +788,7 @@ SELECT id FROM nodes WHERE outcome = 'win' AND depth_bound =
 -- standing DB: MIN(win depth_bound) = 1; 710 win rows sit at depth_bound 5
 ```
 
-For a *provable-claim* line rather than a shortest one: an OR-node's
+For a _provable-claim_ line rather than a shortest one: an OR-node's
 proving child is its unique `loss` child; walking OR→proving-child and
 AND→any child renders a principal line ending at a
 `depth_bound = 0` terminal. 24,833 terminal rows exist in the standing DB.
@@ -805,7 +820,7 @@ SELECT (SELECT COUNT(*) FROM nodes),
 - The DB is a derived view: delete it and rebuild with `proofdb_merge`
   anytime — same shard set, byte-identical result. The rebuild is a
   standing regression test (`tests/proofdb.rs::
-  standing_layer_rebuilds_byte_identical`) and recipe R1's `sha256sum`
+standing_layer_rebuilds_byte_identical`) and recipe R1's `sha256sum`
   step.
 - A DB must carry `meta.built_from` = the sha256 of the manifest it was
   built from; `proofdb_harvest`/`proofdb_flip` refuse a DB whose digest
@@ -847,7 +862,7 @@ or a `proofdb_ledger_union` merge (§7.4) recovers the censor history. A
 ledger never changes DB facts; getting it wrong costs work, not soundness.
 
 **Digest drift after growth.** Recipe R1's pins (`0d929f4c…`,
-55,703 nodes) describe the *standing* shard set. After a decisive harvest
+55,703 nodes) describe the _standing_ shard set. After a decisive harvest
 batch the manifest digest changes and a fresh merge produces a different
 DB — that is growth, not drift. Compare DBs per manifest digest
 (`built_from`), never across manifests.
