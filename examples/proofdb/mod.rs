@@ -40,6 +40,37 @@ pub use manifest::write_manifest;
 /// Generator identification written into the DB `meta` table.
 pub const GENERATOR: &str = concat!("proofdb_merge ", env!("CARGO_PKG_VERSION"));
 
+/// Default root for *all* generated proofdb state (plan14): a production
+/// run needs no path flags at all — invoked bare, every tool operates
+/// wholly inside this gitignored working layer. The committed shard set at
+/// `docs/plans/proofdb/shards/` is a development/validation fixture and is
+/// never read or written by these defaults.
+pub const DEFAULT_DB: &str = "data/proofdb/proofdb.db";
+/// Default manifest path (co-located with the shards it indexes).
+pub const DEFAULT_MANIFEST: &str = "data/proofdb/shards/manifest.json";
+/// Default shard directory (the durable layer; back it up).
+pub const DEFAULT_SHARD_DIR: &str = "data/proofdb/shards";
+/// Default harvest work-ledger path (pick-up state).
+pub const DEFAULT_LEDGER: &str = "data/proofdb/work.json";
+/// Default `proofdb_flip --out` report path (throwaway analysis output).
+pub const DEFAULT_FLIP_OUT: &str = "data/proofdb/flip.json";
+
+/// Create the parent directory of an output path (no-op for a bare file
+/// name). Only for *write* paths — reading never creates anything (plan14
+/// D3: a missing default DB or manifest is a clean abort naming the path).
+///
+/// # Errors
+/// Any I/O error, as a message.
+pub fn create_parent_dir(path: &std::path::Path) -> Result<(), String> {
+    if let Some(dir) = path.parent()
+        && !dir.as_os_str().is_empty()
+    {
+        std::fs::create_dir_all(dir)
+            .map_err(|e| format!("cannot create {}: {e}", dir.display()))?;
+    }
+    Ok(())
+}
+
 /// One manifest entry (the required subset; extra JSON fields are ignored).
 #[derive(Debug, Clone)]
 pub struct ShardEntry {

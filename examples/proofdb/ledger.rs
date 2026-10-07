@@ -1,6 +1,7 @@
 //! The sidecar work ledger (plan4 D1): the pick-up state of the
-//! breadth-first PNS harvester, kept next to the working DB under `data/`
-//! (gitignored working layer). One record per **known-open frontier node**
+//! breadth-first PNS harvester, kept next to the working DB under
+//! `data/proofdb/` (gitignored working layer; plan14 centralized the
+//! default paths there). One record per **known-open frontier node**
 //! — a node the harvester has exposed (censor-time frontier exposure,
 //! plan4 decision 11) or censored — with the non-derivable selection state:
 //! how many passes failed at it and how much work was spent. Record

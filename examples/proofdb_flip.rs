@@ -17,9 +17,10 @@
 //! recursive verifier, and the JSON emission share one indexing scheme and
 //! one polarity convention; splitting would duplicate the reply-status
 //! logic. The measurement runs it offline over the grown DB only.
-//! Output: JSON at `--out` (`flips` + `root` + counts); exit 1 on any
-//! unverified flip, 0 otherwise. This tool materializes nothing — flips
-//! stay derived (decision 10), the DB ships the raw tree only.
+//! Output: JSON at `--out` (default `data/proofdb/flip.json`, plan14;
+//! `flips` + `root` + counts); exit 1 on any unverified flip, 0 otherwise.
+//! This tool materializes nothing — flips stay derived (decision 10), the
+//! DB ships the raw tree only.
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -30,7 +31,7 @@ use atomic_solver::position::{Outcome, Position};
 mod proofdb;
 
 use proofdb::db::load_db_rows;
-use proofdb::read_manifest;
+use proofdb::{DEFAULT_DB, DEFAULT_FLIP_OUT, DEFAULT_MANIFEST, create_parent_dir, read_manifest};
 
 fn fail(msg: &str) -> ! {
     eprintln!("proofdb_flip: {msg}");
@@ -39,7 +40,10 @@ fn fail(msg: &str) -> ! {
 
 fn usage() -> ! {
     eprintln!(
-        "usage: proofdb_flip --db <grown.db> --manifest <manifest.json> --out <flip_analysis.json>"
+        "usage: proofdb_flip [--db <grown.db>] [--manifest <manifest.json>] \
+         [--out <flip_analysis.json>]  \
+         (defaults: --db data/proofdb/proofdb.db \
+         --manifest data/proofdb/shards/manifest.json --out data/proofdb/flip.json)"
     );
     std::process::exit(1);
 }
@@ -241,9 +245,9 @@ fn replay_fresh(path: &str) -> Result<Position, String> {
 }
 
 fn main() {
-    let mut db = PathBuf::new();
-    let mut manifest_path = PathBuf::new();
-    let mut out = PathBuf::new();
+    let mut db = PathBuf::from(DEFAULT_DB);
+    let mut manifest_path = PathBuf::from(DEFAULT_MANIFEST);
+    let mut out = PathBuf::from(DEFAULT_FLIP_OUT);
     let mut it = std::env::args().skip(1);
     while let Some(a) = it.next() {
         match a.as_str() {
@@ -252,9 +256,6 @@ fn main() {
             "--out" => out = it.next().unwrap_or_else(|| usage()).into(),
             _ => usage(),
         }
-    }
-    if db.as_os_str().is_empty() || manifest_path.as_os_str().is_empty() {
-        usage();
     }
     let manifest = read_manifest(&manifest_path).unwrap_or_else(|e| fail(&e));
     let content = load_db_rows(&db, &manifest.sha256_hex).unwrap_or_else(|e| fail(&e));
@@ -310,10 +311,9 @@ fn main() {
         "root_implied": root_flip.map(|(l, _)| l),
         "root_bound": root_flip.map(|(_, b)| b),
     });
-    if !out.as_os_str().is_empty() {
-        std::fs::write(&out, serde_json::to_string_pretty(&json).unwrap() + "\n")
-            .unwrap_or_else(|e| fail(&format!("cannot write {}: {e}", out.display())));
-    }
+    create_parent_dir(&out).unwrap_or_else(|e| fail(&e));
+    std::fs::write(&out, serde_json::to_string_pretty(&json).unwrap() + "\n")
+        .unwrap_or_else(|e| fail(&format!("cannot write {}: {e}", out.display())));
     println!(
         "flip_analysis: open_rows {} flips {} verified {} root {:?} (fixpoint {} rounds)",
         json["open_rows"],

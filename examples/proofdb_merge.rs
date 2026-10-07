@@ -11,10 +11,13 @@
 //! then the SQLite DB (`docs/spec/global_proof_store.md`, schema v1) and the
 //! canonical dump.
 //!
-//! Output: a census on stdout; the DB at `--db` (default `proofdb.db`) and
-//! the dump at `--dump` when requested. Any validation defect, cross-check
-//! mismatch, or proven-outcome conflict aborts with a non-zero exit and
-//! writes nothing — conflicts are never patched.
+//! Output: a census on stdout; the DB at `--db` and the dump at `--dump`
+//! when requested. Generated state defaults wholly under `data/proofdb/`
+//! (plan14): the DB to `data/proofdb/proofdb.db`, the manifest to
+//! `data/proofdb/shards/manifest.json`, the shards to `data/proofdb/shards/`
+//! — a production merge needs no path flags. Any validation defect,
+//! cross-check mismatch, or proven-outcome conflict aborts with a non-zero
+//! exit and writes nothing — conflicts are never patched.
 //!
 //! File-size justification: 11.6 KB — the argument parsing, the shard
 //! pipeline, and the census/summary emission are one self-contained CLI
@@ -32,7 +35,10 @@ mod proofdb;
 
 use proofdb::merge::PathTree;
 use proofdb::schema::{ShardRow, canonical_dump, write_db};
-use proofdb::{ShardEntry, digest_hex, read_manifest};
+use proofdb::{
+    DEFAULT_DB, DEFAULT_MANIFEST, DEFAULT_SHARD_DIR, ShardEntry, create_parent_dir, digest_hex,
+    read_manifest,
+};
 
 struct Census {
     shards_total: usize,
@@ -48,8 +54,10 @@ fn fail(msg: &str) -> ! {
 
 fn usage() -> ! {
     eprintln!(
-        "usage: proofdb_merge --manifest <index.json> --shard-dir <dir> \
-         [--db <out.db>] [--dump <nodes.txt>] [--sample-lines <n>]"
+        "usage: proofdb_merge [--manifest <index.json>] [--shard-dir <dir>] \
+         [--db <out.db>] [--dump <nodes.txt>] [--sample-lines <n>]  \
+         (defaults: --manifest data/proofdb/shards/manifest.json \
+         --shard-dir data/proofdb/shards --db data/proofdb/proofdb.db)"
     );
     std::process::exit(1);
 }
@@ -64,9 +72,9 @@ struct Args {
 
 fn parse_args() -> Args {
     let mut args = Args {
-        manifest: PathBuf::new(),
-        shard_dir: PathBuf::new(),
-        db: PathBuf::from("proofdb.db"),
+        manifest: PathBuf::from(DEFAULT_MANIFEST),
+        shard_dir: PathBuf::from(DEFAULT_SHARD_DIR),
+        db: PathBuf::from(DEFAULT_DB),
         dump: None,
         sample_lines: 0,
     };
@@ -84,9 +92,6 @@ fn parse_args() -> Args {
             }
             _ => usage(),
         }
-    }
-    if args.manifest.as_os_str().is_empty() || args.shard_dir.as_os_str().is_empty() {
-        usage();
     }
     args
 }
@@ -280,6 +285,9 @@ fn main() {
         census.skeleton_revalidations += 1;
     }
 
+    // The default DB path lives under data/proofdb/ — create it on first
+    // write (reading the manifest/shards never creates anything).
+    create_parent_dir(&args.db).unwrap_or_else(|e| fail(&e));
     if let Err(e) = write_db(
         &args.db,
         Position::STARTPOS_FEN,

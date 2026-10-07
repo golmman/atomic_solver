@@ -25,10 +25,13 @@ target
 proof_tree.bin
 proof_tree.bin.tt
 
-# Working layer of the proofdb initiative: the derived proof DB (rebuilt
-# from the committed shard set at any time) and the harvest sidecar work
-# ledger (plan4). Supersedes the nn-era data/corpus and data/oracle
-# entries; the archive itself lives on the nn branch.
+# Working layer of the proofdb initiative: all generated proofdb state
+# (shard set + manifest under data/proofdb/shards/, the derived proof DB
+# rebuilt from it at any time, and the harvest sidecar work ledger —
+# plan14 centralized the defaults there). Supersedes the nn-era
+# data/corpus and data/oracle entries; the archive itself lives on the
+# nn branch. Backing up data/proofdb/shards/ is the operator's
+# responsibility (manual §2.1).
 data/
 
 # Raw measurement run data: solver run transcripts (.out/.err/.log/.time,

@@ -18,7 +18,7 @@ serves two readers:
 
 1. [Pipeline map](#1-pipeline-map)
 2. [Artifacts and tools](#2-artifacts-and-tools)
-3. [Clean-checkout quickstart](#3-clean-checkout-quickstart)
+3. [Quickstart (production-shaped)](#3-quickstart-production-shaped)
    - [3.1 First harvest](#31-first-harvest)
    - [3.2 Second harvest](#32-second-harvest)
 4. [Ledger pick-up](#4-ledger-pick-up)
@@ -56,12 +56,27 @@ in §2, with the full tool contracts in §7.
 
 ### 2.1 Artifacts
 
-| Artifact    | Layer           | Path                                                | gitignored |
-| ----------- | --------------- | --------------------------------------------------- | ---------- |
-| shard set   | durable truth   | `docs/plans/proofdb/shards/*.bin` + `manifest.json` | yes        |
-| SQLite DB   | derived view    | `data/proofdb.db`                                   | no         |
-| work ledger | selection state | `data/proofdb_work.json`                            | no         |
-| flip report | analysis output | `proofdb_flip --out` target (e.g. `flips.json`)     | no         |
+All **generated** proofdb state lives under `data/proofdb/` by default
+(plan14) — a production run needs no path flags at all: the tools invoked
+bare operate wholly inside that gitignored working layer. The committed
+shard set at `docs/plans/proofdb/shards/` is a **development/validation
+fixture** documenting the implementation (tests and measurement batches
+use it via explicit flags); it is never read or written by the defaults,
+and production runs ignore it entirely.
+
+| Artifact    | Layer           | Default path                                          | gitignored |
+| ----------- | --------------- | ----------------------------------------------------- | ---------- |
+| shard set   | durable truth   | `data/proofdb/shards/*.bin` + `manifest.json`         | yes        |
+| SQLite DB   | derived view    | `data/proofdb/proofdb.db`                             | yes        |
+| work ledger | selection state | `data/proofdb/work.json`                              | yes        |
+| flip report | analysis output | `data/proofdb/flip.json`                              | yes        |
+
+Because `data/` is gitignored, the durable layer now lives **outside
+version control**: backing up `data/proofdb/shards/` is the operator's
+responsibility (the manifest digest, `built_from`, is the integrity stamp
+for any backed-up copy). Nothing else in this layout is irreplaceable:
+the DB is derived, the ledger is scheduling state, the flip report is a
+throwaway.
 
 - **Shard set (durable truth).** `*.bin` validated binary proof trees
   (`proof_tree_dump.md` v1 format) plus `manifest.json`, one entry per shard
@@ -95,43 +110,45 @@ in §2, with the full tool contracts in §7.
 Full CLI options, output grammars, and exit codes are in §7; ledger pick-up
 semantics are in §4.
 
-## 3. Clean-checkout quickstart
+**Production vs development.** _Production_ runs use the bare defaults:
+every artifact inside `data/proofdb/`, the committed fixture ignored.
+_Development/validation_ runs (tests, measurement batches, fixture work)
+pin **explicit** `--manifest`/`--shard-dir`/`--db` flags against
+`docs/plans/proofdb/shards/` — as every plan measurement did. The two
+modes never mix by accident: defaults never touch the fixture, and
+explicit flags never touch `data/proofdb/`.
 
-A clean start has no shards, no manifest, no DB, and no ledger — the
-committed shard set under `docs/plans/proofdb/shards/` is the durable layer
-and is not copied in here (recipe R1 reproduces the standing DB from it).
-This section bootstraps the pipeline from the empty state and runs the first
-two harvest passes. Outputs go to `/tmp`; nothing is written into the
-checkout.
+## 3. Quickstart (production-shaped)
+
+This walkthrough bootstraps a **production-shaped** working layer from
+nothing: no shards, no manifest, no DB, no ledger. It uses only the bare
+defaults — every artifact lands inside `data/proofdb/` (gitignored),
+nothing under `docs/plans/` is touched, and cleanup is a single
+`rm -rf data/proofdb`. Run it from the repo root:
 
 ```bash
 cargo build --release --examples
 
-rm -rf /tmp/proofdb_quickstart && mkdir -p /tmp/proofdb_quickstart/shards
-cd /tmp/proofdb_quickstart
-REPO=<absolute path of your atomic_solver checkout>
-
-# An empty manifest is the bootstrap seed (these exact bytes; the
+# The empty manifest is the bootstrap seed (these exact bytes; the
 # built_from digest is taken over them).
-printf '{"entries":[]}' > shards/manifest.json
+mkdir -p data/proofdb/shards
+printf '{"entries":[]}' > data/proofdb/shards/manifest.json
 ```
 
 ### 3.1 First harvest
 
 Merge the empty shard set to get a DB holding only the open root, then run
-the first harvest against it.
+the first harvest against it — both with **no path flags**:
 
 ```bash
+BIN=target/release/examples
+
 # 1. Bootstrap merge: no shards → a root-only DB.
-"$REPO/target/release/examples/proofdb_merge" \
-    --manifest shards/manifest.json --shard-dir shards \
-    --db proofdb.db --dump nodes.txt
+"$BIN/proofdb_merge"
 
 # 2. First harvest: 2 jobs, tiny budget — both are expected to censor.
-"$REPO/target/release/examples/proofdb_harvest" \
-    --db proofdb.db --manifest shards/manifest.json --shard-dir shards \
-    --policy and-close --budget-evals 200000 --max-jobs 2 \
-    --ledger work.json
+"$BIN/proofdb_harvest" \
+    --policy and-close --budget-evals 200000 --max-jobs 2
 ```
 
 Expected bootstrap-merge output — a tree with just the open root:
@@ -141,29 +158,36 @@ census: shards merged 0/0; shard tree nodes 0; overlay new 0; dedupes 0;
         open-ancestor insertions 0; open nodes upgraded 0; merged nodes 1
         (proven 0, open 1); skeleton re-validations 0
 node arithmetic: 1 = 1 root + 0 overlay + 0 ancestors; shard nodes 0 = 0 new + 0 deduped
-db: proofdb.db (nodes 1), manifest built_from d801aa1fb7ddcc33
+db: data/proofdb/proofdb.db (nodes 1), manifest built_from d801aa1fb7ddcc33
 ```
 
-Expected first-harvest output: the session-start census reports the frontier
-`C1 1 / C2 0 / C3 20` (the open root and its 20 replies) and
-`and-close: active rows 1, replies 20 (fresh 20, ledger-censored 0); …`,
-then two `job: {…}` lines with `"outcome": "censored"`, `"pass": 1`,
-`"work_before": 0`, and
+Expected first-harvest stderr — the session-start census reports the
+frontier `C1 1 / C2 0 / C3 20` (the open root and its 20 replies) and
+`and-close: active rows 1, replies 20 (fresh 20, ledger-censored 0); …`;
+the DB line names the default path:
 
 ```
-harvest: policy and-close stop=max-jobs jobs 2 decisive 0 censored 2 evals 400014 new_shards 0 wall 0.2s
+harvest: db data/proofdb/proofdb.db (1 nodes, built_from d801aa1fb7ddcc33) — policy and-close over frontier C1 1 / C2 0 / C3 20 (AND-checks 0)
+and-close: active rows 1, replies 20 (fresh 20, ledger-censored 0); order completion; base budget 200000
+```
+
+then two `job: {…}` lines (stdout) with `"outcome": "censored"`,
+`"pass": 1`, `"work_before": 0`, and
+
+```
+harvest: policy and-close stop=max-jobs jobs 2 decisive 0 censored 2 evals 400014 new_shards 0 wall 0.1s
 ```
 
 (exit 0; `wall` is host-dependent, the counts are deterministic). Censored
-jobs write no facts, so `shards/manifest.json` is **unchanged**
-(`built_from d801aa1fb7ddcc33…`) and `work.json` now holds two censor
-records.
+jobs write no facts, so `data/proofdb/shards/manifest.json` is
+**unchanged** (`built_from d801aa1fb7ddcc33…`) and
+`data/proofdb/work.json` now holds two censor records.
 
 A _decisive_ first harvest instead changes the manifest digest, so its new
-shards must be folded in before the next pass: run step 1 (`proofdb_merge`)
-again after the harvest, or `proofdb_harvest` aborts on the stale
-`built_from` (§10). The smoke budget above deliberately censors, so §3.2
-runs against the same DB without an intermediate merge.
+shards must be folded in before the next pass: run step 1
+(`proofdb_merge`) again after the harvest, or `proofdb_harvest` aborts on
+the stale `built_from` (§10). The smoke budget above deliberately
+censors, so §3.2 runs against the same DB without an intermediate merge.
 
 ### 3.2 Second harvest
 
@@ -171,10 +195,8 @@ Re-run the same harvest command. The ledger written by the first pass is
 picked up and changes the run:
 
 ```bash
-"$REPO/target/release/examples/proofdb_harvest" \
-    --db proofdb.db --manifest shards/manifest.json --shard-dir shards \
-    --policy and-close --budget-evals 200000 --max-jobs 2 \
-    --ledger work.json
+"$BIN/proofdb_harvest" \
+    --policy and-close --budget-evals 200000 --max-jobs 2
 ```
 
 Expected: the session-start line now reports `ledger-censored 2`
@@ -188,28 +210,41 @@ budget instead.
 Optional sanity check over the bootstrapped DB:
 
 ```bash
-"$REPO/target/release/examples/proofdb_flip" \
-    --db proofdb.db --manifest shards/manifest.json --out flips.json
+"$BIN/proofdb_flip"
 ```
 
 Expected: `flip_analysis: open_rows 1 flips 0 verified 0 root Null
 (fixpoint 1 rounds)` — the root is still undecided and no implied flips
-exist.
+exist; the report lands at `data/proofdb/flip.json`.
+
+Cleanup: `rm -rf data/proofdb`.
 
 ## 4. Ledger pick-up
 
 **Ledger pick-up semantics:** a _missing_ ledger file loads as an empty
-(fresh) ledger — a new working directory starts a harvest from scratch
-without any setup. Two ways to come back to the standing state:
+(fresh) ledger — a new working layer starts a harvest from scratch without
+any setup. The default ledger path is `data/proofdb/work.json` (plan14;
+previously the flat `data/proofdb_work.json`). Two ways to come back to
+the standing state:
 
 1. **Fresh** (sound by construction): every frontier reply is re-censored
    at the base budget before the ladder resumes; lower yield on the first
    revisit, no other effect. This is what the quickstart does.
 2. **Seed from the committed snapshot**: copy
    `docs/plans/proofdb/measurements/plan10/ledger_union.json` (8,446
-   records) to `data/proofdb_work.json`, or pass it via `--ledger`. Use
+   records) to `data/proofdb/work.json`, or pass it via `--ledger`. Use
    `proofdb_ledger_union` to merge several ledger inputs (e.g. per-worker
    ledgers, or a snapshot plus newer work) into one.
+
+Operators with a pre-plan14 working layer migrate it in one line:
+
+```bash
+mkdir -p data/proofdb && mv data/proofdb.db data/proofdb/proofdb.db && \
+    mv data/proofdb_work.json data/proofdb/work.json
+```
+
+Renaming does not affect the `built_from` staleness guard (digest-based,
+not path-based).
 
 The ledger is deliberately **not** part of the durable layer: it is
 scheduling state, and its durable residue is the committed snapshots under
@@ -367,19 +402,25 @@ default.
 **Purpose.** Build (or rebuild) the derived DB from a manifest + shard dir.
 The only writer of the DB; deterministic and byte-identical for an
 identical shard set. Never merges anything else; never patches conflicts.
+All three paths default into `data/proofdb/` (plan14) — invoked bare it is
+a production merge; the committed fixture is consumed only via explicit
+flags (recipe R1).
 
 **Prerequisites.** A manifest whose entries all say `validate: "ok"`, and
 the shard files they name, readable from `--shard-dir`. No DB is needed —
-`--db` is _overwritten_.
+`--db` is _overwritten_. A missing default manifest aborts cleanly naming
+`data/proofdb/shards/manifest.json` (bootstrap: create the empty manifest,
+§3); reading never creates anything, only the DB write creates
+`data/proofdb/` as needed.
 
-    usage: proofdb_merge --manifest <index.json> --shard-dir <dir>
+    usage: proofdb_merge [--manifest <index.json>] [--shard-dir <dir>]
                          [--db <out.db>] [--dump <nodes.txt>] [--sample-lines <n>]
 
-| Option           | Default      | Meaning                                            |
-| ---------------- | ------------ | -------------------------------------------------- |
-| `--manifest`     | required     | manifest JSON (entries sorted by tag internally)   |
-| `--shard-dir`    | required     | directory holding the `*.bin` shard files          |
-| `--db`           | `proofdb.db` | output SQLite path (overwritten)                   |
+| Option           | Default                              | Meaning                                            |
+| ---------------- | ------------------------------------ | -------------------------------------------------- |
+| `--manifest`     | `data/proofdb/shards/manifest.json`  | manifest JSON (entries sorted by tag internally)   |
+| `--shard-dir`    | `data/proofdb/shards`                | directory holding the `*.bin` shard files          |
+| `--db`           | `data/proofdb/proofdb.db`            | output SQLite path (overwritten)                   |
 | `--dump`         | off          | canonical text dump of the merged tree             |
 | `--sample-lines` | `0`          | print `n` random root-to-leaf walks as spot-checks |
 
@@ -398,7 +439,7 @@ census: shards merged 262/262; shard tree nodes 56226; overlay new 55360; dedupe
         (proven 55628, open 75); skeleton re-validations 262
 node arithmetic: 55703 = 1 root + 55360 overlay + 342 ancestors;
                  shard nodes 56226 = 55360 new + 866 deduped
-db: proofdb.db (nodes 55703), manifest built_from e91ad57b44008fee
+db: data/proofdb/proofdb.db (nodes 55703), manifest built_from e91ad57b44008fee
 ```
 
 - `census:` — shard set coverage (merged/total), raw shard-tree nodes,
@@ -415,9 +456,9 @@ db: proofdb.db (nodes 55703), manifest built_from e91ad57b44008fee
   `sample 1: e2e4 h7h6 d1h5 e7e5 h5f7 (5 plies, end: loss bound 0 (exact))`
   — random root-to-leaf walks as spot-checks.
 
-**Worked invocation.** Recipe R1 (standing shard set, executed
-2026-10-02 — the census above is verbatim); the clean-checkout bootstrap
-merge is in §3.1.
+**Worked invocation.** Recipe R1 (standing fixture shard set, executed
+2026-10-02 with explicit flags — the census above is verbatim); the
+production bootstrap merge is in §3.1.
 
 ### 7.2 `proofdb_harvest` — grow the shard set
 
@@ -427,11 +468,14 @@ decisive ones. Censored jobs (no decisive result, budget exhausted) record
 a fact of absence in the work ledger only.
 
 **Prerequisites.** A merged DB whose `meta.built_from` equals the
-manifest's digest (stale pair → clean abort); a writable shard dir; a
-ledger path (missing file = fresh ledger, §4).
+manifest's digest (stale pair → clean abort); a writable shard dir (the
+default `data/proofdb/shards/` is created on the first shard or manifest
+write); a ledger path (missing file = fresh ledger, §4). A missing
+default manifest aborts cleanly naming
+`data/proofdb/shards/manifest.json` (§3 bootstraps it).
 
-    usage: proofdb_harvest --db <proofdb.db> --manifest <manifest.json>
-                           --shard-dir <dir> [--policy <name>] [--ledger <path>]
+    usage: proofdb_harvest [--db <proofdb.db>] [--manifest <manifest.json>]
+                           [--shard-dir <dir>] [--policy <name>] [--ledger <path>]
                            [--budget-evals <n>] [--max-total-evals <n>]
                            [--heavy-budget-evals <n>] [--heavy-sample <n>]
                            [--tt-mb <mb>] [--max-jobs <n>] [--max-runtime <s>]
@@ -440,13 +484,13 @@ ledger path (missing file = fresh ledger, §4).
                            [--and-close-max-budget <evals>]
                            [--out-db <grown.db>] [--dump <nodes.txt>]
 
-| Option                   | Default                  | Meaning                                                                                                          |
-| ------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| `--db`                   | required                 | the merged DB to work against (read-only)                                                                        |
-| `--manifest`             | required                 | manifest to extend (rewritten after the batch)                                                                   |
-| `--shard-dir`            | required                 | where new shard files are written                                                                                |
-| `--policy`               | `breadth-pns`            | `breadth-pns` \| `and-close` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail`                         |
-| `--ledger`               | `data/proofdb_work.json` | pick-up state; a missing file is a fresh ledger                                                                  |
+| Option                   | Default                        | Meaning                                                                                                          |
+| ------------------------ | ------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `--db`                   | `data/proofdb/proofdb.db`      | the merged DB to work against (read-only)                                                                        |
+| `--manifest`             | `data/proofdb/shards/manifest.json` | manifest to extend (rewritten after the batch)                                                              |
+| `--shard-dir`            | `data/proofdb/shards`          | where new shard files are written (created on first write)                                                       |
+| `--policy`               | `breadth-pns`                  | `breadth-pns` \| `and-close` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail`                         |
+| `--ledger`               | `data/proofdb/work.json`       | pick-up state; a missing file is a fresh ledger                                                                  |
 | `--budget-evals`         | policy default           | base child-eval budget per job (breadth-pns base: 4,000,000); screens for the legacy policies                    |
 | `--max-total-evals`      | `0` (unlimited)          | session cap across jobs                                                                                          |
 | `--heavy-budget-evals`   | `40,000,000`             | heavy-job budget (`sharp-heavy-tail`)                                                                            |
@@ -474,7 +518,7 @@ _stderr, session start_ (informational; the numbers are the DB's frontier
 shape and the policy's selected job set):
 
 ```text
-harvest: db proofdb.db (55703 nodes, built_from e91ad57b44008fee) — policy and-close over frontier C1 75 / C2 951429 / C3 1724 (AND-checks 27860)
+harvest: db data/proofdb/proofdb.db (55703 nodes, built_from e91ad57b44008fee) — policy and-close over frontier C1 75 / C2 951429 / C3 1724 (AND-checks 27860)
 and-close: active rows 49, replies 1077 (fresh 1077, ledger-censored 0); order completion; base budget 200000
 and-close-gradient: g1f3:3 e2e3:7 e2e4:7 a2a3 a7a6 …:11 root:13 …:17 d2d4:18
 and-close-excluded: open rows 75 (active 49); proven-ancestor 26, implied-win 0, implied-loss 0
@@ -553,20 +597,28 @@ _stderr, during jobs_ — `[bounded_search] chunk done: …` progress lines
 
 **Worked invocation.** Quickstart §3.1–§3.2 (two censored jobs at 200k
 evals, then the ledger-driven revisit at doubled budget; manifest
-unchanged, exit 0).
+unchanged, exit 0) — production-shaped, no path flags.
 
 ### 7.3 `proofdb_flip` — implied-flip analysis (read-only)
 
 **Purpose.** Sanity check over a grown DB: for every open row whose legal
 replies are all resolved (stored or implied), compute the implied outcome +
 bound, iterated to fixpoint; every reported flip is then recomputed by an
-independent recursive verifier. Reads the DB; writes only `--out`.
+independent recursive verifier. Reads the DB; writes only `--out`
+(default `data/proofdb/flip.json`, created on demand).
 
 **Prerequisites.** A merged DB whose `built_from` matches the manifest
-digest (the stale-DB guard, §10).
+digest (the stale-DB guard, §10). A missing default manifest aborts
+cleanly naming `data/proofdb/shards/manifest.json`.
 
-    usage: proofdb_flip --db <grown.db> --manifest <manifest.json>
-                        --out <flip_analysis.json>
+    usage: proofdb_flip [--db <grown.db>] [--manifest <manifest.json>]
+                        [--out <flip_analysis.json>]
+
+| Option       | Default                             | Meaning                     |
+| ------------ | ----------------------------------- | --------------------------- |
+| `--db`       | `data/proofdb/proofdb.db`           | the grown DB (read-only)    |
+| `--manifest` | `data/proofdb/shards/manifest.json` | manifest digest for the guard |
+| `--out`      | `data/proofdb/flip.json`            | report JSON (overwritten)   |
 
 **Exit codes.** `0` normally (also with 0 flips), `1` on usage error, DB
 load failure (including the stale-DB `built_from` guard), or any unverified
@@ -640,43 +692,66 @@ plan10 snapshot → 8,446 records).
 
 ### 8.1 Operator recipes
 
-**R1 — rebuild the DB from the durable layer.** Merge the shard set into a
-fresh DB, then compare the digest:
+**R0 — first production start (bootstrap).** Create the empty manifest at
+the default location, then merge it (bare tools; everything lands inside
+`data/proofdb/`):
 
 ```bash
-proofdb_merge --manifest shards/manifest.json --shard-dir shards \
-    --db proofdb.db --dump nodes.txt
-sha256sum proofdb.db
+mkdir -p data/proofdb/shards
+printf '{"entries":[]}' > data/proofdb/shards/manifest.json
+proofdb_merge   # root-only DB at data/proofdb/proofdb.db
+```
+
+Optional — seed a fresh production run from the validated fixture:
+
+```bash
+cp docs/plans/proofdb/shards/* data/proofdb/shards/
+proofdb_merge
+```
+
+The seeded DB must reproduce R1's digest below — the same integrity gate,
+now against the production layout.
+
+**R1 — rebuild the fixture DB (development, explicit flags).** Merge the
+committed fixture shard set into a fresh DB, then compare the digest:
+
+```bash
+proofdb_merge --manifest docs/plans/proofdb/shards/manifest.json \
+    --shard-dir docs/plans/proofdb/shards --db /tmp/fixture.db \
+    --dump nodes.txt
+sha256sum /tmp/fixture.db
 ```
 
 A rebuild is _always_ allowed; it is also the response to a stale-DB abort
 (§10). Byte-identical output for an identical manifest is the standing
 regression test
 (`tests/proofdb.rs::standing_layer_rebuilds_byte_identical`). For the
-standing shard set the census is the one in §7.1 and the digest is
+standing fixture shard set the census is the one in §7.1 and the digest is
 `0d929f4c3c62e4bbb87e9b043b582716297b23e2f7332a36e82763b1486070b8`.
+The production rebuild is the same merge with the bare defaults:
+`proofdb_merge` (R2 step 2); its digest is pinned per manifest, not
+universally.
 
-**R2 — grow the DB by one batch, then merge.**
+**R2 — grow the DB by one batch, then merge (production, bare defaults).**
 
 ```bash
 # 1. Harvest (e.g. a small and-close batch; stop conditions as needed).
-proofdb_harvest --db proofdb.db --manifest shards/manifest.json \
-    --shard-dir shards --policy and-close --budget-evals 4000000 \
-    --max-total-evals 10000000000 --ledger data/proofdb_work.json
+proofdb_harvest --policy and-close --budget-evals 4000000 \
+    --max-total-evals 10000000000
 # 2. Merge the grown set (the harvest never merges).
-proofdb_merge --manifest shards/manifest.json --shard-dir shards \
-    --db proofdb.db --dump nodes.txt
+proofdb_merge
 # 3. Flip sanity over the grown DB.
-proofdb_flip --db proofdb.db --manifest shards/manifest.json --out flips.json
+proofdb_flip
 ```
 
 Note: after a _decisive_ batch the manifest digest changes, so the new
 DB's `built_from` — and therefore its byte content — differs from the old
 DB. Byte-identity is guaranteed per manifest, not across growth steps.
 
-**R3 — check for implied flips.** Recipe R2 step 3; expected on a sound
-tree: `flips 0 verified 0`. Any flip is a soundness signal — stop and
-investigate (§9), never re-merge to make it disappear.
+**R3 — check for implied flips.** Recipe R2 step 3 (`proofdb_flip`, bare
+defaults); expected on a sound tree: `flips 0 verified 0`. Any flip is a
+soundness signal — stop and investigate (§9), never re-merge to make it
+disappear.
 
 **R4 — normalize or merge work ledgers.**
 
@@ -695,10 +770,18 @@ Union is a conservative max-rule merge (`passes_failed` max, tie by
 `work_done`) — it never invents facts; it only preserves the strongest
 recorded censor history per path.
 
-**R5 — retire an abandoned working directory.** The DB and ledger are
-derived/selection state: delete `data/proofdb.db` and the ledger, re-merge
-(R1), and either start with a fresh ledger or seed it from a committed
-snapshot (§4). Nothing in the durable layer is touched.
+**R5 — retire an abandoned working layer.** The DB and ledger are
+derived/selection state: delete `data/proofdb/proofdb.db` and
+`data/proofdb/work.json`, re-merge (bare `proofdb_merge`), and either
+start with a fresh ledger or seed it from a committed snapshot (§4).
+Nothing in the durable layer (`data/proofdb/shards/`) is touched.
+
+Operators with a pre-plan14 working layer (flat paths) migrate it first:
+
+```bash
+mkdir -p data/proofdb && mv data/proofdb.db data/proofdb/proofdb.db && \
+    mv data/proofdb_work.json data/proofdb/work.json
+```
 
 ### 8.2 Consumer recipes (SQL)
 
@@ -839,8 +922,21 @@ proofdb_flip: DB built_from deadbeef != manifest digest e91ad57b44008fee (stale 
 ```
 
 The DB was built from a different manifest than the one on disk (usually a
-harvest batch completed since the last merge). Fix: re-run
-`proofdb_merge` (recipe R1) with the on-disk manifest. The guard is
+harvest batch completed since the last merge). Fix: re-run the bare
+`proofdb_merge` (recipe R2 step 2; it rebuilds
+`data/proofdb/proofdb.db` from the on-disk default manifest).
+
+**Missing default manifest.** A bare `proofdb_merge`, `proofdb_harvest`,
+or `proofdb_flip` with no `data/proofdb/shards/manifest.json` aborts
+cleanly, naming the missing path:
+
+```text
+proofdb_flip: cannot read manifest data/proofdb/shards/manifest.json: No such file or directory (os error 2)
+```
+
+Fix: bootstrap the working layer (recipe R0), or point `--manifest` at the
+fixture for a development run (§2). Reading never creates anything — only
+output writes create directories. The guard is
 length-safe on malformed DB values (a short or empty `built_from` aborts
 cleanly, regression-tested).
 
@@ -862,9 +958,9 @@ or a `proofdb_ledger_union` merge (§7.4) recovers the censor history. A
 ledger never changes DB facts; getting it wrong costs work, not soundness.
 
 **Digest drift after growth.** Recipe R1's pins (`0d929f4c…`,
-55,703 nodes) describe the _standing_ shard set. After a decisive harvest
-batch the manifest digest changes and a fresh merge produces a different
-DB — that is growth, not drift. Compare DBs per manifest digest
+55,703 nodes) describe the _standing fixture_ shard set. After a decisive
+harvest batch the manifest digest changes and a fresh merge produces a
+different DB — that is growth, not drift. Compare DBs per manifest digest
 (`built_from`), never across manifests.
 
 **Startpos-rooted only.** Subtree-scoped harvesting (`--root-fen`) is
@@ -887,3 +983,13 @@ website handoff package (`measurements/plan13/handoff/`), which packages a
 digest-pinned rebuilt DB with a consumer-facing `HANDOFF.md`. Per-plan
 measurements and the pinned audit results live under
 `docs/plans/proofdb/measurements/`.
+
+plan14 (2026-10-02, owner request) centralized all generated proofdb state
+under `data/proofdb/` by default: every tool's `--db`, `--manifest`,
+`--shard-dir`, `--ledger`, and `--out` now default there (previously
+`proofdb.db` in the cwd, required manifest/shard-dir flags, and the flat
+`data/proofdb_work.json`), making a production run flag-free. The
+committed shard set at `docs/plans/proofdb/shards/` was reclassified as a
+development/validation fixture (explicit flags only); backup of the
+unversioned production durable layer became the operator's responsibility
+(§2.1). Migration one-liner in §4/R5.

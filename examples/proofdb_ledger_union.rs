@@ -1,9 +1,9 @@
 //! `proofdb_ledger_union` — N-way union of proofdb work ledgers (plan7 §2):
 //! the standing-state merge mechanism. Batch 3's arm 2 merges the standing
-//! `data/proofdb_work.json` with the committed plan6 arm snapshots to
-//! recover the censor knowledge the standing-ledger advance dropped
-//! (report6 finding 4); item 6's per-worker ledger merge builds on the
-//! same primitive.
+//! working ledger (default `data/proofdb/work.json`, plan14) with the
+//! committed plan6 arm snapshots to recover the censor knowledge the
+//! standing-ledger advance dropped (report6 finding 4); item 6's per-worker
+//! ledger merge builds on the same primitive.
 //!
 //! One record per known-open frontier path; per path the union keeps the
 //! record with the highest `passes_failed`, ties broken by the higher

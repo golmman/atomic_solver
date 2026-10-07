@@ -3,11 +3,17 @@
 //! file-size convention; `main` remains there. `--pns-config` (plan6 D1)
 //! loads the selection-mechanism knobs; it is validated here and effective
 //! only under the `breadth-pns` policy.
+//!
+//! Generated state defaults wholly under `data/proofdb/` (plan14): DB,
+//! manifest, shard dir, and ledger — a production harvest needs no path
+//! flags. The committed fixture at `docs/plans/proofdb/shards/` is a
+//! development/validation fixture, used only via explicit flags.
 
 use std::path::PathBuf;
 
 use super::and_close::AndCloseOrder;
 use super::policy::Policy;
+use super::{DEFAULT_DB, DEFAULT_LEDGER, DEFAULT_MANIFEST, DEFAULT_SHARD_DIR};
 
 pub struct Args {
     pub db: PathBuf,
@@ -34,25 +40,27 @@ pub struct Args {
 
 fn usage() -> ! {
     eprintln!(
-        "usage: proofdb_harvest --db <proofdb.db> --manifest <manifest.json> \
-         --shard-dir <dir> [--policy <name>] [--ledger <path>] [--budget-evals <n>] \
+        "usage: proofdb_harvest [--db <proofdb.db>] [--manifest <manifest.json>] \
+         [--shard-dir <dir>] [--policy <name>] [--ledger <path>] [--budget-evals <n>] \
          [--max-total-evals <n>] [--heavy-budget-evals <n>] [--heavy-sample <n>] \
          [--tt-mb <mb>] [--max-jobs <n>] [--max-runtime <s>] [--stop-file <path>] \
          [--pns-config <file>] [--and-close-order <completion|fresh>] \
          [--and-close-max-budget <evals>] \
          [--out-db <grown.db>] [--dump <nodes.txt>]  \
-         (policies: breadth-pns | and-close | open-deepest | sharp-siblings | sharp-heavy-tail)"
+         (defaults: --db data/proofdb/proofdb.db --manifest data/proofdb/shards/manifest.json \
+         --shard-dir data/proofdb/shards --ledger data/proofdb/work.json; \
+         policies: breadth-pns | and-close | open-deepest | sharp-siblings | sharp-heavy-tail)"
     );
     std::process::exit(1);
 }
 
 pub fn parse_args() -> Args {
     let mut a = Args {
-        db: PathBuf::new(),
-        manifest: PathBuf::new(),
-        shard_dir: PathBuf::new(),
+        db: PathBuf::from(DEFAULT_DB),
+        manifest: PathBuf::from(DEFAULT_MANIFEST),
+        shard_dir: PathBuf::from(DEFAULT_SHARD_DIR),
         policy: Policy::BreadthPns,
-        ledger: PathBuf::from("data/proofdb_work.json"),
+        ledger: PathBuf::from(DEFAULT_LEDGER),
         budget_evals: 0,
         max_total_evals: 0,
         heavy_budget_evals: 40_000_000,
@@ -105,12 +113,6 @@ pub fn parse_args() -> Args {
             "--dump" => a.dump = Some(PathBuf::from(next())),
             _ => usage(),
         }
-    }
-    if a.db.as_os_str().is_empty()
-        || a.manifest.as_os_str().is_empty()
-        || a.shard_dir.as_os_str().is_empty()
-    {
-        usage();
     }
     a
 }

@@ -891,3 +891,40 @@ fn stale_db_guard_is_length_safe_on_malformed_built_from() {
     }
     std::fs::remove_dir_all(&dir).ok();
 }
+
+// --- plan14: the CLI defaults are centralized under data/proofdb/ ---
+
+/// Every generated-proofdb default must live wholly under the gitignored
+/// working layer `data/proofdb/` (plan14): the shard layer co-located under
+/// `data/proofdb/shards/`, and every default path directory-qualified (a
+/// bare file name in the cwd is exactly what this item removed).
+#[test]
+fn cli_defaults_are_centralized_under_data_proofdb() {
+    use proofdb::{
+        DEFAULT_DB, DEFAULT_FLIP_OUT, DEFAULT_LEDGER, DEFAULT_MANIFEST, DEFAULT_SHARD_DIR,
+    };
+
+    assert_eq!(DEFAULT_DB, "data/proofdb/proofdb.db");
+    assert_eq!(DEFAULT_MANIFEST, "data/proofdb/shards/manifest.json");
+    assert_eq!(DEFAULT_SHARD_DIR, "data/proofdb/shards");
+    assert_eq!(DEFAULT_LEDGER, "data/proofdb/work.json");
+    assert_eq!(DEFAULT_FLIP_OUT, "data/proofdb/flip.json");
+
+    for path in [
+        DEFAULT_DB,
+        DEFAULT_MANIFEST,
+        DEFAULT_SHARD_DIR,
+        DEFAULT_LEDGER,
+        DEFAULT_FLIP_OUT,
+    ] {
+        let p = std::path::Path::new(path);
+        assert!(
+            p.starts_with("data/proofdb"),
+            "default {path} outside data/proofdb/"
+        );
+        assert!(
+            p.parent().is_some_and(|d| !d.as_os_str().is_empty()),
+            "default {path} is not directory-qualified"
+        );
+    }
+}

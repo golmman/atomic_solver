@@ -112,6 +112,10 @@ impl Session {
             buf
         };
         let path = self.shard_dir.join(&entry.file);
+        // The default shard dir lives under data/proofdb/ — create it on the
+        // first shard write (plan14 D3; reading never creates anything).
+        std::fs::create_dir_all(&self.shard_dir)
+            .unwrap_or_else(|e| fail(&format!("cannot create {}: {e}", self.shard_dir.display())));
         std::fs::write(&path, &bytes)
             .unwrap_or_else(|e| fail(&format!("cannot write {}: {e}", path.display())));
         self.entries.push(entry.clone());
@@ -213,6 +217,10 @@ impl Session {
     /// the shard set; an unchanged set keeps its bytes (and digest).
     pub fn rewrite_manifest(&self, manifest_path: &Path, old_digest: &str) {
         if self.new_shards > 0 {
+            // The default manifest lives under data/proofdb/shards/ — the
+            // shard writes above already created the directory, but keep the
+            // writer self-sufficient for explicit paths too.
+            super::create_parent_dir(manifest_path).unwrap_or_else(|e| fail(&e));
             let digest = write_manifest(manifest_path, &self.entries).unwrap_or_else(|e| fail(&e));
             println!("manifest: {} entries, digest {digest}", self.entries.len());
         } else {
