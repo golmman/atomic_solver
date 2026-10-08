@@ -779,12 +779,23 @@ So my options here are to try with the breadth-pns policy and/or increase the bu
 
 ---
 
+The documented "Production run" `$BIN/proofdb_harvest --policy and-close --budget-evals     
+4000000 --max-total-evals 10000000000` does virtually nothing on the first run. When i run  
+it repeatedly it just updates the `work.json` but censores everytime and does not produce  
+any shards.
+
+So my expectation is that "3.1" describes how to prepares everything needed such that when  
+i then follow the instructions in "3.2" the proofdb is grows with each run.
+
+---
+
 Architecture
-* libs
-  * core
-  * atomic-movegen
-* apps
-  * proofdb
-  * current cli
-* examples
-  * existing examples
+
+- libs
+  - core
+  - atomic-movegen
+- apps
+  - proofdb
+  - current cli
+- examples
+  - existing examples
