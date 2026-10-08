@@ -98,9 +98,12 @@ throwaway.
   fixpoint, and writes the DB; any conflict or defect aborts without
   writing. Deterministic for a given shard set.
 - **`proofdb_harvest`** — _DB + ledger → shards + manifest + ledger_.
-  Selects frontier jobs under a policy, solves each under a deterministic
-  child-eval budget, exports and validates the decisive ones as shards, and
-  records censored jobs in the ledger. It never merges.
+  Selects jobs under a policy — the DB frontier (`breadth-pns`,
+  `and-close`, the legacy gradients) or, under `descend`, off-tree
+  startpos-rooted bootstrap candidates — solves each under a
+  deterministic child-eval budget, exports and validates the decisive
+  ones as shards, and records censored jobs in the ledger. It never
+  merges.
 - **`proofdb_flip`** — _DB → flip report_, read-only. Iterates implied
   outcomes to fixpoint over the stored tree and re-checks every flip with an
   independent verifier; writes only the report.
@@ -189,28 +192,48 @@ censors, so a follow-up batch runs against the same DB without an
 intermediate merge.
 
 This empty layer is the smoke environment only — not a production
-starting point. Production seeds the layer first (§3.2, step 0).
+starting point. Production starts with the self-bootstrapping `descend`
+batch (§3.2).
 
 ### 3.2 Production run
 
-**Step 0 (once) — seed the layer.** A fresh layer cannot bootstrap
-itself by harvesting (cold start below); seed the durable layer and the
-ledger from the validated artifacts, then merge:
+**Step 0 (once) — bootstrap merge.** Create the empty manifest at the
+default location and merge it — no shards → a root-only DB (recipe R0):
 
 ```bash
-cp docs/plans/proofdb/shards/* data/proofdb/shards/
-cp docs/plans/proofdb/measurements/plan10/ledger_union.json \
-    data/proofdb/work.json
+mkdir -p data/proofdb/shards
+printf '{"entries":[]}' > data/proofdb/shards/manifest.json
+
+BIN=target/release/examples
+
 $BIN/proofdb_merge
 ```
 
-The seeded DB must reproduce R1's digest (§8.1) — the same integrity
-gate, now against the production layout. The ledger seed lets the ladder
-resume at its historical rungs instead of re-censoring every reply from
-the base budget (§4).
+**Batch 1 — the `descend` bootstrap batch.** The root-only DB is exactly
+the state the `descend` policy bootstraps from: it enumerates all legal
+startpos-rooted candidate paths of length 1..=2 (420 paths), skips the
+ones covered by stored territory (none, beyond the root — the root row
+deliberately does not suppress), and bounded-solves each under the
+standard ladder. On the reference host the default boot ran
+`stop=exhausted jobs 420 decisive 52 censored 368 evals 1474704787
+wall 361.9s` — 52 decisive shards, no flags beyond the policy:
 
-**The batch cycle.** Solve a batch against the seeded layer, merge, and
-sanity-check (recipe R2, §8.1):
+```bash
+$BIN/proofdb_harvest --policy descend
+$BIN/proofdb_merge    # fold the batch's shards into the DB (the harvest never merges)
+$BIN/proofdb_flip     # soundness sanity over the grown DB (expect: flips 0 verified 0)
+```
+
+The session-start census reports the candidate set and its per-ply
+breakdown; the boot's shards graft at their ply-2 manifest paths and
+insert their ply-1 parents as open rows (57 open-ancestor insertions on
+the reference boot — 4,314 nodes, `flips 0 verified 0`). After batch 1
+the layer is grown and `descend` has nothing left to explore (its kept
+set shrinks toward empty on stored territory — it is a bootstrap policy
+that self-retires).
+
+**The batch cycle.** From batch 2 on, grow with `and-close` (recipe R2,
+§8.1):
 
 ```bash
 $BIN/proofdb_harvest --policy and-close --budget-evals 4000000 \
@@ -242,13 +265,15 @@ ledger growth and the session-start census (the `and-close-gradient`
 shows which rows are closest to completion), not from one batch's shard
 count.
 
-**Cold start.** If you skip step 0, the only active row is the root, so
-the job set is the root's 20 first-move replies — the deepest,
-effectively unsolved positions in the whole tree: the batch runs to
-`stop=exhausted jobs 20 decisive 0` (~80M evals), and no affordable
-budget or policy changes that (`breadth-pns` visits the same territory).
-Harvesting cannot bootstrap an empty layer; step 0 is the production
-starting point.
+**Cold start, resolved (plan15).** Before the `descend` policy existed,
+skipping the bootstrap merge left the only active row at the root, so the
+job set was the root's 20 first-move replies — the deepest, effectively
+unsolved positions in the whole tree: the batch ran to
+`stop=exhausted jobs 20 decisive 0` (~80M evals) under every policy, and
+the layer could not bootstrap itself; the production start was artifact-
+copying from the committed fixture. `descend` removes that boot path: a
+fresh layer runs the pipeline itself (batch 1 above), and the committed
+shards keep a development/validation role only (R1, tests).
 
 The knobs that matter, most-used first:
 
@@ -558,7 +583,7 @@ default manifest aborts cleanly naming
                            [--tt-mb <mb>] [--max-jobs <n>] [--max-runtime <s>]
                            [--stop-file <path>] [--pns-config <file>]
                            [--and-close-order <completion|fresh>]
-                           [--and-close-max-budget <evals>]
+                           [--and-close-max-budget <evals>] [--descend-plies <n>]
                            [--out-db <grown.db>] [--dump <nodes.txt>]
 
 | Option                   | Default                             | Meaning                                                                                                          |
@@ -566,7 +591,7 @@ default manifest aborts cleanly naming
 | `--db`                   | `data/proofdb/proofdb.db`           | the merged DB to work against (read-only)                                                                        |
 | `--manifest`             | `data/proofdb/shards/manifest.json` | manifest to extend (rewritten after the batch)                                                                   |
 | `--shard-dir`            | `data/proofdb/shards`               | where new shard files are written (created on first write)                                                       |
-| `--policy`               | `breadth-pns`                       | `breadth-pns` \| `and-close` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail`                         |
+| `--policy`               | `breadth-pns`                       | `breadth-pns` \| `and-close` \| `descend` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail`             |
 | `--ledger`               | `data/proofdb/work.json`            | pick-up state; a missing file is a fresh ledger                                                                  |
 | `--budget-evals`         | policy default                      | base child-eval budget per job (breadth-pns base: 4,000,000); screens for the legacy policies                    |
 | `--max-total-evals`      | `0` (unlimited)                     | session cap across jobs                                                                                          |
@@ -579,6 +604,7 @@ default manifest aborts cleanly naming
 | `--pns-config`           | compiled defaults                   | breadth-pns mechanism knobs (TOML); effective only under `breadth-pns`                                           |
 | `--and-close-order`      | `completion`                        | `completion` \| `fresh` (effective only under `and-close`)                                                       |
 | `--and-close-max-budget` | `0` (unlimited)                     | per-job budget cap under `and-close`                                                                             |
+| `--descend-plies`        | `2`                                 | candidate-path depth under `descend` (accepted range 1..=3; ply 3 enumerates ~9k paths — user-controlled cost)   |
 | `--out-db` / `--dump`    | off                                 | recorded in the summary only — **the caller runs `proofdb_merge` separately** (by design; this CLI never merges) |
 
 **Exit codes.** `0` batch completed (then the manifest is rewritten); `1`
@@ -603,6 +629,14 @@ and-close-gradient: g1f3:3 e2e3:7 e2e4:7 a2a3 a7a6 …:11 root:13 …:17 d2d4:18
 and-close-excluded: open rows 75 (active 49); proven-ancestor 26, implied-win 0, implied-loss 0
 ```
 
+Under `--policy descend`, the census line reports the enumerated candidate
+set and the skip-rule outcome (the reference boot on a root-only DB,
+base budget 4,000,000):
+
+```text
+descend: candidates 420 (kept 420, covered 0) — ply 1: 20 kept, ply 2: 400 kept; base budget 4000000
+```
+
 - the `harvest: db …` line: DB path, node count, `built_from` prefix, then
   the frontier classes extracted from the DB — **C1** open rows, **C2**
   unexpanded siblings of proving children, **C3** unexpanded children of
@@ -616,16 +650,17 @@ and-close-excluded: open rows 75 (active 49); proven-ancestor 26, implied-win 0,
 
 _stdout, per job_ — one `job: {…}` JSON line per visit. Field table (as
 emitted by `examples/proofdb/session/record.rs`; all jobs carry the first
-twelve; `pass`/`work_before` are emitted by the PNS and `and-close`
+twelve; `pass`/`work_before` are emitted by the PNS, `and-close`, and
+`descend`
 policies, `number`/`kind` only by `breadth-pns` and omitted otherwise):
 
 | field          | meaning                                                                           |
 | -------------- | --------------------------------------------------------------------------------- |
 | `path`         | UCI path of the job position (space-separated)                                    |
 | `policy`       | the `--policy` used                                                               |
-| `class`        | frontier class of the job (`C1`/`C2`/`C3`; `and-close` jobs are `C3`)             |
+| `class`        | frontier class of the job (`C1`/`C2`/`C3`; `and-close` jobs are `C3`; `descend` jobs are `D`) |
 | `parent_bound` | the parent node's proven `depth_bound`, if proven                                 |
-| `tier`         | job tier (`screen`/`heavy`/policy name — `and-close` labels all jobs `and-close`) |
+| `tier`         | job tier (`screen`/`heavy`/policy name — `and-close` labels all jobs `and-close`, `descend` labels all jobs `descend`) |
 | `budget`       | child-eval budget granted for this visit                                          |
 | `child_evals`  | child-evals actually spent                                                        |
 | `wall_s`       | job wall time (seconds)                                                           |
@@ -633,9 +668,9 @@ policies, `number`/`kind` only by `breadth-pns` and omitted otherwise):
 | `exit_reason`  | solver exit: `Complete` (decisive) or `BudgetExhausted` (censored)                |
 | `tag`          | shard tag if decisive (manifest tag; matches `provenance` in the DB)              |
 | `shard_nodes`  | exported shard's node count if decisive                                           |
-| `pass`         | visit rung: `passes_failed + 1` (PNS and `and-close` census)                      |
+| `pass`         | visit rung: `passes_failed + 1` (PNS, `and-close`, and `descend` census)          |
 | `number`       | PNS effective number at selection time (PNS only)                                 |
-| `work_before`  | ledger `work_done` recorded before this visit (PNS and `and-close`)               |
+| `work_before`  | ledger `work_done` recorded before this visit (PNS, `and-close`, and `descend`)   |
 | `kind`         | PNS visit kind (`expand` \| `rung`) (PNS only)                                    |
 
 A **censored** job (quickstart §3.1, verbatim; `wall_s` varies by host):
@@ -665,11 +700,19 @@ harvest: policy and-close stop=max-jobs jobs 2 decisive 0 censored 2 evals 40003
 - `manifest:` — entries + full manifest digest after the rewrite
   (byte-identical when no decisive job occurred).
 - `harvest:` — `stop=` reason; then per policy family: PNS
-  (`pns_jobs N rungs M decisive D evals E new_shards S wall Ws`), and-close
-  (`jobs N decisive D censored C evals E new_shards S wall Ws`), legacy
+  (`pns_jobs N rungs M decisive D evals E new_shards S wall Ws`), and-close (`jobs N decisive D censored C evals E new_shards S wall Ws` — the
+  shape `descend` uses too), legacy
   screen/heavy policies (`screen_jobs/screen_decisive/screen_evals
 heavy_jobs/heavy_decisive new_shards wall`). `decisive` counts jobs that
   exported a shard; `censored` counts facts of absence.
+
+A **`descend`** job record (the reference boot, plan15; a censored ply-1
+job at the 4M base and the boot summary):
+
+```text
+job: {"budget":4000000,"child_evals":4000024,"class":"D","exit_reason":"BudgetExhausted","outcome":"censored","parent_bound":null,"pass":1,"path":"a2a3","policy":"descend","shard_nodes":null,"tag":null,"tier":"descend","wall_s":0.78,"work_before":0}
+harvest: policy descend stop=exhausted jobs 420 decisive 52 censored 368 evals 1474704787 new_shards 52 wall 361.9s
+```
 
 _stderr, during jobs_ — `[bounded_search] chunk done: …` progress lines
 (one per budget chunk); informational, safe to ignore in scripts.
@@ -782,19 +825,22 @@ printf '{"entries":[]}' > data/proofdb/shards/manifest.json
 proofdb_merge   # root-only DB at data/proofdb/proofdb.db
 ```
 
-**Seeding — the production start.** An empty layer cannot bootstrap
-itself by harvesting: its only frontier is the root's 20 first-move
-replies, which no affordable budget decides (§3.2). Seed the durable
-layer from the validated fixture and merge:
+**Batch 1 — the `descend` bootstrap batch.** Harvesting cannot decide the
+root's own replies (§3.2), but `descend` generates its own off-tree
+bootstrap candidates instead — the layer bootstraps by running the
+pipeline, not by copying artifacts:
 
 ```bash
-cp docs/plans/proofdb/shards/* data/proofdb/shards/
+proofdb_harvest --policy descend
 proofdb_merge
+proofdb_flip
 ```
 
-The seeded DB must reproduce R1's digest below — the same integrity gate,
-now against the production layout. Seed the ledger too (§4 option 2) so
-the ladder resumes at its historical rungs instead of re-censoring.
+On the reference host this grew the layer from 1 to 4,314 nodes with 52
+shards in ~6 minutes (§3.2). From batch 2 on, grow with R2. The committed
+fixture shard set keeps a development/validation role only (R1, tests);
+the plan10 ledger snapshot remains an optional §4 optimization for
+resuming censor history, never part of the boot path.
 
 **R1 — rebuild the fixture DB (development, explicit flags).** Merge the
 committed fixture shard set into a fresh DB, then compare the digest:
@@ -1077,3 +1123,14 @@ committed shard set at `docs/plans/proofdb/shards/` was reclassified as a
 development/validation fixture (explicit flags only); backup of the
 unversioned production durable layer became the operator's responsibility
 (§2.1). Migration one-liner in §4/R5.
+
+plan15 (2026-10-08) made the pipeline self-bootstrapping: the `descend`
+policy (`--policy descend`, `--descend-plies`, default 2, range 1..=3)
+enumerates all legal startpos-rooted candidate paths of length 1..=K,
+skips those covered by stored territory, and bounded-solves the rest
+under the standard ladder — the production boot is now R0 + a bare
+`descend` batch instead of artifact-copying the committed fixture (§3.2,
+R0; the former §3.2 step 0 / §8.1 seeding recipe is retired). The
+reference boot grew a fresh layer to 4,314 nodes (52 shards) with
+`flips 0 verified 0`; determinism gate: a second boot reproduced manifest
+digest and ledger bytes identically.

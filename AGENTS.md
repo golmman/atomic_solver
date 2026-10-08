@@ -73,7 +73,7 @@ A pure solver for atomic chess in Rust.
 - `move_order_debug` — static/history/killer/total ordering scores (`--name <case>`).
 - `play_and_solve` — play a given move, then solve the resulting position.
 - `proofdb_flip` — read-only implied-flip analysis over a grown proof DB (plan8); exits non-zero on any unverified flip. DB defaults to `data/proofdb/proofdb.db`, report to `data/proofdb/flip.json`.
-- `proofdb_harvest` — the harvest loop: solve budgeted frontier jobs, export validated shards, extend the manifest (never merges; run `proofdb_merge` after each batch). DB/manifest/shard-dir/ledger default wholly under `data/proofdb/`. Operator manual: `docs/proofdb_pipeline.md`.
+- `proofdb_harvest` — the harvest loop: solve budgeted frontier jobs (or, under `--policy descend`, off-tree startpos-rooted bootstrap candidates of length ≤ `--descend-plies`), export validated shards, extend the manifest (never merges; run `proofdb_merge` after each batch). DB/manifest/shard-dir/ledger default wholly under `data/proofdb/`. Operator manual: `docs/proofdb_pipeline.md`.
 - `proofdb_ledger_union` — N-way merge of harvest work ledgers (`--expect` digest pins; deterministic output).
 - `proofdb_merge` — the single-writer merger: manifest + shards → replay-validated, grafted SQLite DB (schema v1) + canonical dump; conflicts abort unmerged. Manifest/shard-dir/DB default under `data/proofdb/`.
 - `reconstruct_pt` — rebuild a proof tree offline from a FEN + TT snapshot (`--snapshot`); reports `validate: ok|FAILED n`, exits non-zero on defects; `--oracle` and `--experiment` run the dual-build oracle.

@@ -1,0 +1,60 @@
+{
+ "bootA": {
+  "db_line": "harvest: db data/proofdb/proofdb.db (1 nodes, built_from d801aa1fb7ddcc33) \u2014 policy descend over frontier C1 1 / C2 0 / C3 20 (AND-checks 0)",
+  "census_line": "descend: candidates 420 (kept 420, covered 0) \u2014 ply 1: 20 kept, ply 2: 400 kept; base budget 4000000",
+  "summary_line": "harvest: policy descend stop=exhausted jobs 420 decisive 52 censored 368 evals 1474704787 new_shards 52 wall 361.9s",
+  "jobs": 420,
+  "decisive": 52,
+  "censored": 368,
+  "decisive_per_ply": {
+   "1": 0,
+   "2": 52
+  },
+  "censored_per_ply": {
+   "1": 20,
+   "2": 348
+  },
+  "evals_total": 1474704787,
+  "decisive_child_evals": {
+   "min": 0,
+   "max": 2504216,
+   "zero_eval_tt_hits": 49
+  },
+  "shard_nodes": {
+   "min": 38,
+   "max": 334
+  }
+ },
+ "bootB": {
+  "db_line": "harvest: db data/proofdb/proofdb.db (1 nodes, built_from d801aa1fb7ddcc33) \u2014 policy descend over frontier C1 1 / C2 0 / C3 20 (AND-checks 0)",
+  "census_line": "descend: candidates 420 (kept 420, covered 0) \u2014 ply 1: 20 kept, ply 2: 400 kept; base budget 4000000",
+  "summary_line": "harvest: policy descend stop=exhausted jobs 420 decisive 52 censored 368 evals 1474704787 new_shards 52 wall 353.3s",
+  "jobs": 420,
+  "decisive": 52,
+  "censored": 368,
+  "decisive_per_ply": {
+   "1": 0,
+   "2": 52
+  },
+  "censored_per_ply": {
+   "1": 20,
+   "2": 348
+  },
+  "evals_total": 1474704787,
+  "decisive_child_evals": {
+   "min": 0,
+   "max": 2504216,
+   "zero_eval_tt_hits": 49
+  },
+  "shard_nodes": {
+   "min": 38,
+   "max": 334
+  }
+ },
+ "determinism": {
+  "manifest_bytes_identical": true,
+  "ledger_bytes_identical": true,
+  "shard_files_identical": true,
+  "job_record_prefix_compared": 420
+ }
+}

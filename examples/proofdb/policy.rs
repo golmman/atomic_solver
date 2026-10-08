@@ -5,9 +5,13 @@
 //! - `breadth-pns` — the plan4 default: **no precomputed sequence** — the
 //!   live priority queue over structural proof/disproof numbers in
 //!   [`super::pns`], with the sidecar ledger in [`super::ledger`];
-//! - `and-close` (plan8) — the completion-gradient harvest: **no sequence
-//!   from the frontier** — the missing replies of the active open rows,
+//! - `and-close` (plan8) — the completion-gradient harvest: **no sequence from
+//!   the frontier** — the missing replies of the active open rows,
 //!   built over the classified PNS tree + ledger in [`super::and_close`];
+//! - `descend` (plan15) — the self-bootstrapping harvest: **no sequence from
+//!   the frontier** — off-tree bootstrap candidates (all legal
+//!   startpos-rooted paths of length 1..=K minus covered territory), built
+//!   over the DB rows + manifest + ledger in [`super::descend`];
 //! - `open-deepest` — C1 only, deepest-first (plan2's rule);
 //! - `sharp-siblings` — C2 (sharpness order), then C3, then C1 deepest-first;
 //!   C2 jobs screen at [`BUDGET_C2_EVALS`] (cheap territory — censor fast
@@ -37,6 +41,10 @@ pub fn budget_for(class: JobClass) -> u64 {
     match class {
         JobClass::SharpSibling => BUDGET_C2_EVALS,
         JobClass::Open | JobClass::OpenChild | JobClass::Ledger => BUDGET_C1_C3_EVALS,
+        // Descend jobs never flow through here (their policy builds no
+        // frontier sequence); their budgets are ladder-resolved in
+        // `super::descend` from each candidate's own ledger record.
+        JobClass::Descend => BUDGET_C1_C3_EVALS,
     }
 }
 
@@ -51,6 +59,10 @@ pub enum Policy {
     /// active open rows (no sequence from the frontier — built over the
     /// classified PNS tree + ledger, see [`super::and_close`]).
     AndClose,
+    /// The plan15 self-bootstrapping harvest: off-tree bootstrap candidates
+    /// (no sequence from the frontier — built over the DB rows + manifest
+    /// + ledger, see [`super::descend`]).
+    Descend,
     /// C1 only, deepest-first (plan2's rule).
     OpenDeepest,
     /// C2 (sharpness order), then C3, then C1 deepest-first.
@@ -66,6 +78,7 @@ impl Policy {
         match self {
             Self::BreadthPns => "breadth-pns",
             Self::AndClose => "and-close",
+            Self::Descend => "descend",
             Self::OpenDeepest => "open-deepest",
             Self::SharpSiblings => "sharp-siblings",
             Self::SharpHeavyTail => "sharp-heavy-tail",
@@ -80,12 +93,13 @@ impl Policy {
         match s {
             "breadth-pns" => Ok(Self::BreadthPns),
             "and-close" => Ok(Self::AndClose),
+            "descend" => Ok(Self::Descend),
             "open-deepest" => Ok(Self::OpenDeepest),
             "sharp-siblings" => Ok(Self::SharpSiblings),
             "sharp-heavy-tail" => Ok(Self::SharpHeavyTail),
             other => Err(format!(
-                "unknown policy {other:?} (expected breadth-pns | and-close | open-deepest | \
-                 sharp-siblings | sharp-heavy-tail)"
+                "unknown policy {other:?} (expected breadth-pns | and-close | descend | \
+                 open-deepest | sharp-siblings | sharp-heavy-tail)"
             )),
         }
     }
@@ -100,7 +114,9 @@ pub fn jobs_for_policy(policy: Policy, f: &Frontier) -> Vec<Job> {
         // it never consumes a precomputed sequence. `and-close` builds its
         // sequence over the classified PNS tree + ledger in `super::and_close`
         // (the CLI branch owns that; the frontier is not its input).
-        Policy::BreadthPns | Policy::AndClose => Vec::new(),
+        // `descend` builds its sequence over the DB rows + manifest + ledger
+        // in `super::descend` (the CLI branch owns that likewise).
+        Policy::BreadthPns | Policy::AndClose | Policy::Descend => Vec::new(),
         Policy::OpenDeepest => f.c1.clone(),
         Policy::SharpSiblings | Policy::SharpHeavyTail => {
             f.c2.iter().chain(&f.c3).chain(&f.c1).cloned().collect()

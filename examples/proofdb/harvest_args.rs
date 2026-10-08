@@ -12,6 +12,7 @@
 use std::path::PathBuf;
 
 use super::and_close::AndCloseOrder;
+use super::descend::{DEFAULT_PLIES, plies_in_range};
 use super::policy::Policy;
 use super::{DEFAULT_DB, DEFAULT_LEDGER, DEFAULT_MANIFEST, DEFAULT_SHARD_DIR};
 
@@ -34,6 +35,9 @@ pub struct Args {
     pub and_close_order: AndCloseOrder,
     /// The `and-close` per-job budget cap (plan10 D1; 0 = unlimited).
     pub and_close_max_budget: u64,
+    /// The `descend` enumeration depth (plan15 D1; effective only under
+    /// `descend`, accepted range 1..=3).
+    pub descend_plies: usize,
     pub out_db: Option<PathBuf>,
     pub dump: Option<PathBuf>,
 }
@@ -45,11 +49,12 @@ fn usage() -> ! {
          [--max-total-evals <n>] [--heavy-budget-evals <n>] [--heavy-sample <n>] \
          [--tt-mb <mb>] [--max-jobs <n>] [--max-runtime <s>] [--stop-file <path>] \
          [--pns-config <file>] [--and-close-order <completion|fresh>] \
-         [--and-close-max-budget <evals>] \
+         [--and-close-max-budget <evals>] [--descend-plies <n>] \
          [--out-db <grown.db>] [--dump <nodes.txt>]  \
          (defaults: --db data/proofdb/proofdb.db --manifest data/proofdb/shards/manifest.json \
          --shard-dir data/proofdb/shards --ledger data/proofdb/work.json; \
-         policies: breadth-pns | and-close | open-deepest | sharp-siblings | sharp-heavy-tail)"
+         policies: breadth-pns | and-close | descend | open-deepest | sharp-siblings | \
+         sharp-heavy-tail)"
     );
     std::process::exit(1);
 }
@@ -72,9 +77,11 @@ pub fn parse_args() -> Args {
         pns_config: None,
         and_close_order: AndCloseOrder::Completion,
         and_close_max_budget: 0,
+        descend_plies: DEFAULT_PLIES,
         out_db: None,
         dump: None,
     };
+    let mut descend_plies_given: Option<usize> = None;
     let mut it = std::env::args().skip(1);
     while let Some(arg) = it.next() {
         let mut next = || it.next().unwrap_or_else(|| usage());
@@ -109,10 +116,26 @@ pub fn parse_args() -> Args {
             "--and-close-max-budget" => {
                 a.and_close_max_budget = next().parse().unwrap_or_else(|_| usage())
             }
+            "--descend-plies" => {
+                descend_plies_given = Some(next().parse().unwrap_or_else(|_| usage()))
+            }
             "--out-db" => a.out_db = Some(PathBuf::from(next())),
             "--dump" => a.dump = Some(PathBuf::from(next())),
             _ => usage(),
         }
+    }
+    // `--descend-plies` (plan15 D1): effective only under `descend` (the
+    // heavy-option convention) and only in the accepted range 1..=3.
+    if let Some(n) = descend_plies_given {
+        if a.policy != Policy::Descend {
+            eprintln!("proofdb_harvest: --descend-plies is effective only under --policy descend");
+            usage();
+        }
+        if !plies_in_range(n) {
+            eprintln!("proofdb_harvest: --descend-plies must be in 1..=3 (got {n})");
+            usage();
+        }
+        a.descend_plies = n;
     }
     a
 }

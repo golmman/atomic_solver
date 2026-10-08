@@ -19,6 +19,7 @@ use serde::Deserialize;
 pub mod and_close;
 pub mod batch;
 pub mod db;
+pub mod descend;
 pub mod frontier;
 pub mod harvest;
 pub mod harvest_args;

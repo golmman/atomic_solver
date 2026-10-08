@@ -37,6 +37,10 @@ pub enum JobClass {
     /// Ledger-known-open frontier node (no DB row; a sidecar record from a
     /// previous censoring or exposure, plan4 D1).
     Ledger,
+    /// Off-tree bootstrap candidate of the `descend` policy (plan15 D1; a
+    /// startpos-rooted path of length 1..=K not covered by stored
+    /// territory — see [`super::descend`]).
+    Descend,
 }
 
 impl JobClass {
@@ -47,6 +51,7 @@ impl JobClass {
             Self::SharpSibling => "C2",
             Self::OpenChild => "C3",
             Self::Ledger => "L",
+            Self::Descend => "D",
         }
     }
 }

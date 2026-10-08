@@ -777,3 +777,14 @@ After the initial run with `$BIN/proofdb_harvest --policy and-close --budget-eva
 
 So my options here are to try with the breadth-pns policy and/or increase the budget/max-total evals. Right?
 
+---
+
+Architecture
+* libs
+  * core
+  * atomic-movegen
+* apps
+  * proofdb
+  * current cli
+* examples
+  * existing examples

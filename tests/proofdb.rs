@@ -928,3 +928,334 @@ fn cli_defaults_are_centralized_under_data_proofdb() {
         );
     }
 }
+
+// --- plan15 D1: the descend self-bootstrapping policy (descend.rs) ---
+
+use proofdb::descend::{
+    DescendCensus, DescendOptions, build_sequence as descend_build_sequence, enumerate_paths,
+    plies_in_range, run_descend_batch,
+};
+use proofdb::harvest::replay_job_path;
+
+#[test]
+fn descend_enumeration_counts_and_order() {
+    // Ply 1: the root's 20 legal first moves.
+    let p1 = enumerate_paths(1);
+    assert_eq!(p1.len(), 20);
+    assert!(p1.iter().all(|p| p.len() == 1));
+    // Ply 2: 20 × 20 = 400 reply paths (the measured plan15 count) + the 20
+    // ply-1 paths = 420 candidates of length 1..=2.
+    let all = enumerate_paths(2);
+    assert_eq!(all.len(), 420);
+    assert_eq!(all.iter().filter(|p| p.len() == 2).count(), 400);
+    // Lexicographic UCI order (plan15 D2), no duplicates, every path
+    // replays legally (the enumeration is movegen-driven, not string art).
+    let joined: Vec<String> = all.iter().map(|p| p.join(" ")).collect();
+    let mut sorted = joined.clone();
+    sorted.sort();
+    assert_eq!(joined, sorted);
+    assert_eq!(
+        joined
+            .iter()
+            .collect::<std::collections::HashSet<_>>()
+            .len(),
+        420
+    );
+    for p in &all {
+        replay_job_path(p).unwrap_or_else(|e| panic!("path {:?}: {e}", p.join(" ")));
+    }
+    // Ply 3: ~10k paths (plan15 D1's documented cost scale) — pinned for
+    // determinism.
+    let all3 = enumerate_paths(3);
+    assert_eq!(all3.len(), 9322); // 20 + 400 + 8902
+    assert_eq!(all3.iter().filter(|p| p.len() == 3).count(), 8902);
+    let joined3: Vec<String> = all3.iter().map(|p| p.join(" ")).collect();
+    let mut sorted3 = joined3.clone();
+    sorted3.sort();
+    assert_eq!(joined3, sorted3);
+}
+
+#[test]
+fn descend_root_row_never_suppresses_candidates() {
+    // Plan15 D2's subtle case: the root row (id 0) is stored territory, but
+    // every path's ultimate prefix is the root — the root being stored must
+    // not suppress ply-1 candidates. A root-only DB keeps all 420.
+    let dir = ac_dir("desc_root");
+    let db = ac_crafted(&[("", 0, None)]);
+    let built = descend_build_sequence(
+        &db,
+        &std::collections::HashSet::new(),
+        &Ledger::default(),
+        2,
+        1_000_000,
+    )
+    .unwrap();
+    assert_eq!(built.census.candidates, 420);
+    assert_eq!(built.census.kept, 420);
+    assert_eq!(built.census.covered, 0);
+    assert_eq!(built.census.kept_per_ply, [20, 400, 0]);
+    let paths = ac_paths(&built.jobs);
+    assert!(paths.contains(&"a2a3".to_string()));
+    assert!(
+        built
+            .jobs
+            .iter()
+            .all(|j| j.class == proofdb::harvest::JobClass::Descend)
+    );
+    assert!(built.jobs.iter().all(|j| j.class.as_str() == "D"));
+    assert!(built.jobs.iter().all(|j| j.ply == j.path.len()));
+    // Fresh ledger: every budget = the base (the plan15 D3 ladder).
+    assert!(built.jobs.iter().all(|j| j.budget == 1_000_000));
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn descend_skip_rule_rows_and_manifest_prefixes() {
+    // Stored DB rows (any outcome, including open) and manifest shard paths
+    // cover themselves and all their descendants; a proper prefix of length
+    // >= 1 triggers, the root (empty path) never does.
+    let dir = ac_dir("desc_skip");
+    let db = ac_crafted(&[("", 0, None), ("a2a3", 1, None), ("e2e4 e7e5", 2, None)]);
+    let mut manifest_paths = std::collections::HashSet::new();
+    manifest_paths.insert("g1f3".to_string());
+    let built =
+        descend_build_sequence(&db, &manifest_paths, &Ledger::default(), 2, 1_000_000).unwrap();
+    // Covered: a2a3 + its 20 children; g1f3 (manifest) + its 20 children;
+    // the stored ply-2 row e2e4 e7e5 itself → 21 + 21 + 1 = 43.
+    assert_eq!(built.census.candidates, 420);
+    assert_eq!(built.census.covered, 43);
+    assert_eq!(built.census.kept, 377);
+    let paths = ac_paths(&built.jobs);
+    assert!(paths.iter().all(|p| !p.starts_with("a2a3")));
+    assert!(paths.iter().all(|p| !p.starts_with("g1f3")));
+    assert!(!paths.contains(&"e2e4 e7e5".to_string()));
+    // The stored row's parent and siblings stay (its ancestor e2e4 is open
+    // frontier territory, not coverage).
+    assert!(paths.contains(&"e2e4".to_string()));
+    assert!(paths.contains(&"e2e4 e7e6".to_string()));
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn descend_ladder_budgets_from_ledger() {
+    let dir = ac_dir("desc_ladder");
+    let db = ac_crafted(&[("", 0, None)]);
+    let ledger = ledger_of(&[("e2e4 e7e5", 4_000_000, 1)]);
+    let built = descend_build_sequence(
+        &db,
+        &std::collections::HashSet::new(),
+        &ledger,
+        2,
+        1_000_000,
+    )
+    .unwrap();
+    let budget = |p: &str| {
+        built
+            .jobs
+            .iter()
+            .find(|j| j.path.join(" ") == p)
+            .unwrap()
+            .budget
+    };
+    // The plan15 D3 ladder (and-close semantics): censored candidate at
+    // pass 1 with 4M work → max(2^1 × base, 2 × work) = 8M; fresh at base.
+    assert_eq!(budget("e2e4 e7e5"), 8_000_000);
+    assert_eq!(budget("a2a3"), 1_000_000);
+    assert_eq!(budget("e2e4 e7e6"), 1_000_000);
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn descend_census_line_and_helpers() {
+    let c = DescendCensus {
+        candidates: 420,
+        kept: 420,
+        covered: 0,
+        kept_per_ply: [20, 400, 0],
+    };
+    assert_eq!(
+        c.describe(2, 4_000_000),
+        "descend: candidates 420 (kept 420, covered 0) — \
+         ply 1: 20 kept, ply 2: 400 kept; base budget 4000000"
+    );
+    let c1 = DescendCensus {
+        candidates: 20,
+        kept: 18,
+        covered: 2,
+        kept_per_ply: [18, 0, 0],
+    };
+    assert_eq!(
+        c1.describe(1, 20_000),
+        "descend: candidates 20 (kept 18, covered 2) — \
+         ply 1: 18 kept; base budget 20000"
+    );
+    // plies range + policy round-trip.
+    assert!(plies_in_range(1) && plies_in_range(2) && plies_in_range(3));
+    assert!(!plies_in_range(0) && !plies_in_range(4));
+    assert_eq!(
+        Policy::parse("descend"),
+        Ok(proofdb::policy::Policy::Descend)
+    );
+    assert_eq!(proofdb::policy::Policy::Descend.as_str(), "descend");
+    assert!(Policy::parse("descent").is_err());
+    // The frontier sequence builder has no descend jobs (the CLI branch
+    // builds them over DB rows + manifest + ledger instead).
+    let dir = ac_dir("desc_jfp");
+    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
+    let f =
+        proofdb::frontier::extract_frontier(&db_path, &digest, &std::collections::HashSet::new())
+            .unwrap();
+    assert!(proofdb::policy::jobs_for_policy(proofdb::policy::Policy::Descend, &f).is_empty());
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn descend_driver_censored_jobs_grow_ledger_by_censor_count() {
+    let dir = ac_dir("desc_driver");
+    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
+    let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
+    let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
+    let ledger_path = dir.join("ledger.json");
+
+    let run = |ledger_path: &std::path::Path| {
+        let mut session = Session::new(4, dir.join("shards"), manifest.entries.clone(), "descend");
+        let built = descend_build_sequence(
+            &db,
+            &std::collections::HashSet::new(),
+            &Ledger::default(),
+            2,
+            1_000,
+        )
+        .unwrap();
+        assert!(built.jobs.len() > 5, "fixture keeps plenty of candidates");
+        let opts = DescendOptions {
+            max_total_evals: 0,
+            max_jobs: 5,
+            max_runtime: 0,
+            stop_file: std::path::PathBuf::new(),
+        };
+        let mut ledger = Ledger::default();
+        let summary =
+            run_descend_batch(&mut session, &built.jobs, &mut ledger, ledger_path, &opts).unwrap();
+        (summary, ledger)
+    };
+    let (summary, ledger) = run(&ledger_path);
+    // Tiny budgets on quiet fixture positions: every job censors.
+    assert_eq!(summary.jobs, 5);
+    assert_eq!(summary.stop_reason, "max-jobs");
+    assert_eq!(summary.decisive, 0);
+    assert_eq!(summary.censored, 5);
+    // The ledger takes the off-tree censor records as first-class entries
+    // (plan15 D3): growth == censor count.
+    assert_eq!(ledger.len(), 5);
+    // Determinism: a fresh session over the same inputs reproduces the
+    // post-run ledger byte-for-byte.
+    let ledger_path2 = dir.join("ledger2.json");
+    let (summary2, ledger2) = run(&ledger_path2);
+    assert_eq!(summary2.jobs, summary.jobs);
+    assert_eq!(entries(&ledger), entries(&ledger2));
+    assert_eq!(
+        std::fs::read(&ledger_path).unwrap(),
+        std::fs::read(&ledger_path2).unwrap()
+    );
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// Plan15 task 5: boot-from-empty at a small budget on a temp layer — the
+/// R0 bootstrap merge (root-only DB) → `descend` batch → merge → the grown
+/// DB has more than the root. Fast tier: no wall clock, small TT, budget
+/// 20k (the plan4 decisive finds sit at 82–4.7k solver nodes).
+#[test]
+fn descend_boot_from_empty_layer() {
+    let dir = ac_dir("desc_boot");
+    // The R0 bootstrap shape: empty manifest + root-only DB.
+    let manifest_bytes = b"{\"entries\":[]}".to_vec();
+    let digest = proofdb::digest_hex(&manifest_bytes);
+    std::fs::write(dir.join("manifest.json"), &manifest_bytes).unwrap();
+    let mut pt = proofdb::merge::PathTree::new();
+    pt.finalize().unwrap();
+    proofdb::schema::write_db(
+        &dir.join("proofdb.db"),
+        Position::STARTPOS_FEN,
+        &digest,
+        &[],
+        &pt,
+    )
+    .unwrap();
+    let db = proofdb::db::load_db_rows(&dir.join("proofdb.db"), &digest).unwrap();
+
+    // Batch 1: descend at 20k base budget, plies default (2).
+    let mut session = Session::new(4, dir.join("shards"), Vec::new(), "descend");
+    let built = descend_build_sequence(
+        &db,
+        &std::collections::HashSet::new(),
+        &Ledger::default(),
+        2,
+        20_000,
+    )
+    .unwrap();
+    assert_eq!(built.census.candidates, 420);
+    assert_eq!(built.census.kept, 420);
+    let opts = DescendOptions {
+        max_total_evals: 0,
+        max_jobs: 0,
+        max_runtime: 0,
+        stop_file: std::path::PathBuf::new(),
+    };
+    let mut ledger = Ledger::default();
+    let summary = run_descend_batch(
+        &mut session,
+        &built.jobs,
+        &mut ledger,
+        &dir.join("work.json"),
+        &opts,
+    )
+    .unwrap();
+    assert_eq!(summary.stop_reason, "", "batch runs to exhaustion");
+    assert!(summary.decisive >= 1, "boot yield: >= 1 decisive shard");
+    assert_eq!(session.new_shards, summary.decisive);
+    // The CLI's post-batch manifest rewrite (the batch never writes it).
+    session.rewrite_manifest(&dir.join("shards/manifest.json"), &digest);
+
+    // Merge the grown set (the harvest never merges) → DB > 1 node.
+    let manifest = read_manifest(&dir.join("shards/manifest.json")).unwrap();
+    assert_eq!(manifest.entries.len(), summary.decisive);
+    let mut tree = proofdb::merge::PathTree::new();
+    let mut rows = Vec::new();
+    for entry in &manifest.entries {
+        let bytes = std::fs::read(dir.join("shards").join(&entry.file)).unwrap();
+        let mut shard = atomic_solver::proof_tree::ProofTree::from_bin(&mut bytes.as_slice())
+            .unwrap_or_else(|e| panic!("shard {}: {e}", entry.tag));
+        atomic_solver::proof_tree::validate_proof_tree(&shard)
+            .unwrap_or_else(|d| panic!("shard {}: {d:?}", entry.tag));
+        assert_eq!(shard.nodes[0].outcome, Some(entry.outcome));
+        let graft = tree.graft_path(&moves_from_path(&entry.moves), &entry.tag);
+        tree.overlay_subtree(graft, &shard, &entry.tag).unwrap();
+        rows.push(proofdb::schema::ShardRow {
+            tag: entry.tag.clone(),
+            file: entry.file.clone(),
+            sha256: proofdb::digest_hex(&bytes),
+            root_fen: std::mem::take(&mut shard.root_fen),
+            path: entry.moves.join(" "),
+            outcome: entry.outcome,
+            depth_bound: shard.nodes[0].depth,
+            n_nodes: shard.nodes.len(),
+        });
+    }
+    tree.finalize().unwrap();
+    let grown = dir.join("grown.db");
+    proofdb::schema::write_db(
+        &grown,
+        Position::STARTPOS_FEN,
+        &manifest.sha256_hex,
+        &rows,
+        &tree,
+    )
+    .unwrap();
+    let conn = rusqlite::Connection::open(&grown).unwrap();
+    let node_count: i64 = conn
+        .query_row("SELECT COUNT(*) FROM nodes", [], |r| r.get(0))
+        .unwrap();
+    assert!(node_count > 1, "grown DB has more than the root");
+    std::fs::remove_dir_all(&dir).ok();
+}

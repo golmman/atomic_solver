@@ -20,8 +20,9 @@
 //! AND-completeness assert, disjointness) in `frontier.rs` + `db.rs`, the
 //! legacy policies in `policy.rs`, the PNS selection in `pns.rs` + `pns/`,
 //! the `and-close` completion-gradient policy (plan8, ladder plan9 §2) in
-//! `and_close.rs` + `and_close/`, and the sidecar work ledger in
-//! `ledger.rs`.
+//! `and_close.rs` + `and_close/`, the `descend` self-bootstrapping policy
+//! (plan15, off-tree bootstrap candidates) in `descend.rs`, and the sidecar
+//! work ledger in `ledger.rs`.
 //!
 //! Coverage policies (`--policy`; default `breadth-pns`, the plan4 pivot):
 //! `breadth-pns` — the plan6 selection mechanism (eligibility, pacing,
@@ -34,10 +35,15 @@
 //! `and-close` — the missing
 //! replies of the active open rows in the completion-gradient or fresh
 //! order (`--and-close-order`), the strict-growth ladder
-//! `max(2^(k-1) × base, 2 × work_done)` per reply (plan9 §2) and a
-//! bump-only censor hook (no exposure); plus the plan3 legacy gradients
+//! `max(2^(k−1) × base, 2 × work_done)` per reply (plan9 §2) and a
+//! bump-only censor hook (no exposure); the plan15 `descend` — the
+//! self-bootstrapping enumeration of off-tree startpos-rooted candidate
+//! paths of length 1..=`--descend-plies` (default 2, range 1..=3) at the
+//! same ladder, the batch-1 bootstrap before any DB-frontier policy; plus
+//! the plan3 legacy gradients
 //! `open-deepest`, `sharp-siblings`, `sharp-heavy-tail` (heavy options and
-//! `--pns-config` are effective only under `breadth-pns`).
+//! `--pns-config` are effective only under `breadth-pns`; `--descend-plies`
+//! only under `descend`).
 //!
 //! Output: one `job: {…}` JSON line per job (fields include `policy`,
 //! `class`, for `breadth-pns` the `kind`/`pass`/`number`/`work_before`
@@ -57,6 +63,7 @@ use std::time::Instant;
 use proofdb::and_close::driver::{AndCloseOptions, run_and_close_session};
 use proofdb::batch::{BatchOptions, run_batch};
 use proofdb::db::load_db_rows;
+use proofdb::descend::{DescendOptions, run_descend_session};
 use proofdb::frontier::extract_frontier;
 use proofdb::ledger::Ledger;
 use proofdb::pns::driver::{PnsOptions, run_pns_batch};
@@ -157,6 +164,45 @@ fn main() {
             &manifest.sha256_hex,
             &args.ledger,
             args.and_close_order,
+            args.budget_evals,
+            &opts,
+        )
+        .unwrap_or_else(|e| fail(&e));
+        format!(
+            "harvest: policy {} stop={} jobs {} decisive {} censored {} evals {} \
+             new_shards {} wall {:.1}s",
+            args.policy.as_str(),
+            if summary.stop_reason.is_empty() {
+                "exhausted"
+            } else {
+                &summary.stop_reason
+            },
+            summary.jobs,
+            summary.decisive,
+            summary.censored,
+            summary.evals,
+            session.new_shards,
+            t_start.elapsed().as_secs_f64(),
+        )
+    } else if args.policy == Policy::Descend {
+        // Plan15 D1: the self-bootstrapping harvest (sequence building,
+        // census echo, and batch live in the descend module for the
+        // file-size convention on this target root). It consults the DB
+        // rows + manifest paths (the D2 skip rule) and the ledger, never
+        // the frontier classes.
+        let db = load_db_rows(&args.db, &manifest.sha256_hex).unwrap_or_else(|e| fail(&e));
+        let opts = DescendOptions {
+            max_total_evals: args.max_total_evals,
+            max_jobs: args.max_jobs,
+            max_runtime: args.max_runtime,
+            stop_file: args.stop_file.clone(),
+        };
+        let summary = run_descend_session(
+            &mut session,
+            &db,
+            &manifest_paths,
+            &args.ledger,
+            args.descend_plies,
             args.budget_evals,
             &opts,
         )
