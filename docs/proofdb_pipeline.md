@@ -127,9 +127,9 @@ This walkthrough bootstraps a **production-shaped** working layer from
 nothing: no shards, no manifest, no DB, no ledger. It uses only the bare
 defaults — every artifact lands inside `data/proofdb/` (gitignored),
 nothing under `docs/plans/` is touched, and cleanup is a single
-`rm -rf data/proofdb`. Run it from the repo root. §3.1 takes the fresh
-working layer through its first, deliberately tiny harvest; §3.2 shows
-what a production-grade batch looks like.
+`rm -rf data/proofdb`. Run it from the repo root. §3.1 prepares everything the
+pipeline needs — bootstrap merge plus a deliberately tiny smoke harvest; §3.2
+grows the database batch by batch from exactly the state §3.1 leaves behind.
 
 ### 3.1 Initial run
 
@@ -191,23 +191,24 @@ the stale `built_from` (§10). The smoke budget above deliberately
 censors, so a follow-up batch runs against the same DB without an
 intermediate merge.
 
-This empty layer is the smoke environment only — not a production
-starting point. Production starts with the self-bootstrapping `descend`
-batch (§3.2).
+The layer is now ready for §3.2: the bootstrap merge produced the root-only
+DB, and the smoke harvest verified the bare defaults end-to-end without
+writing any fact. Production growth starts with the self-bootstrapping
+`descend` batch (§3.2, batch 1); the smoke run's two censor records in
+`work.json` carry over harmlessly (§3.2).
 
 ### 3.2 Production run
 
-**Step 0 (once) — bootstrap merge.** Create the empty manifest at the
-default location and merge it — no shards → a root-only DB (recipe R0):
-
-```bash
-mkdir -p data/proofdb/shards
-printf '{"entries":[]}' > data/proofdb/shards/manifest.json
-
-BIN=target/release/examples
-
-$BIN/proofdb_merge
-```
+**Prerequisite — a bootstrapped layer.** §3.2 continues from exactly the
+state §3.1 leaves behind: the empty manifest + root-only DB at the default
+paths, plus the smoke run's two censor records in `work.json` (harmless:
+the descend ladder is `max(2^(k−1)·base, 2·work_done)` = `max(4M, 2×200k)`
+per recorded path, so every batch-1 budget is unchanged and the pinned
+census/summary lines below hold — only those candidates' `work_before`
+fields differ). On a fresh machine without even that state, recipe R0
+(§8.1) creates it. **Never re-create the empty manifest on an existing
+layer** — overwriting `manifest.json` discards the durable shard index
+(§2.1). Set `BIN=target/release/examples` as in §3.1.
 
 **Batch 1 — the `descend` bootstrap batch.** The root-only DB is exactly
 the state the `descend` policy bootstraps from: it enumerates all legal
@@ -772,7 +773,7 @@ flip_analysis: open_rows 75 flips 0 verified 0 root Null (fixpoint 1 rounds)
 ```
 
 **Worked invocation.** Recipe R1 then R3 (0 flips over the standing set,
-exit 0); in a production cycle the flip check is step 3 of §3.2.
+exit 0); in a production cycle the flip check is recipe R2's step 3.
 
 ### 7.4 `proofdb_ledger_union` — N-way ledger merge
 

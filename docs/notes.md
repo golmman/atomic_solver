@@ -789,7 +789,20 @@ i then follow the instructions in "3.2" the proofdb is grows with each run.
 
 ---
 
+Last time we finished with `docs/plans/proofdb/report15.md`.
+
+Do we need to update the `docs/proofdb_pipeline.md` now?
+
+My expectation is that "3.1" describes how to prepares everything needed such that when  
+i then follow the instructions in "3.2" the proofdb is grows with each run.
+
+---
+
 Architecture
+
+Monorepo
+
+the `atomic-movegen` dependency is a side project of the user so we could abandon it and integrate this here completely.
 
 - libs
   - core
