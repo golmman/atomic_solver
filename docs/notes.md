@@ -802,7 +802,11 @@ Architecture
 
 Monorepo
 
+Idea: split this project into workspaces
+
 the `atomic-movegen` dependency is a side project of the user so we could abandon it and integrate this here completely.
+
+Proposed structure:
 
 - libs
   - core
