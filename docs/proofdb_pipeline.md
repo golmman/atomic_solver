@@ -18,9 +18,9 @@ serves two readers:
 
 1. [Pipeline map](#1-pipeline-map)
 2. [Artifacts and tools](#2-artifacts-and-tools)
-3. [Quickstart (production-shaped)](#3-quickstart-production-shaped)
-   - [3.1 First harvest](#31-first-harvest)
-   - [3.2 Second harvest](#32-second-harvest)
+3. [Quickstart](#3-quickstart)
+   - [3.1 Initial run](#31-initial-run)
+   - [3.2 Production run](#32-production-run)
 4. [Ledger pick-up](#4-ledger-pick-up)
 5. [Data model primer (consumer)](#5-data-model-primer-consumer)
 6. [Shard provenance — where a shard comes from](#6-shard-provenance--where-a-shard-comes-from)
@@ -118,13 +118,17 @@ pin **explicit** `--manifest`/`--shard-dir`/`--db` flags against
 modes never mix by accident: defaults never touch the fixture, and
 explicit flags never touch `data/proofdb/`.
 
-## 3. Quickstart (production-shaped)
+## 3. Quickstart
 
 This walkthrough bootstraps a **production-shaped** working layer from
 nothing: no shards, no manifest, no DB, no ledger. It uses only the bare
 defaults — every artifact lands inside `data/proofdb/` (gitignored),
 nothing under `docs/plans/` is touched, and cleanup is a single
-`rm -rf data/proofdb`. Run it from the repo root:
+`rm -rf data/proofdb`. Run it from the repo root. §3.1 takes the fresh
+working layer through its first, deliberately tiny harvest; §3.2 shows
+what a production-grade batch looks like.
+
+### 3.1 Initial run
 
 ```bash
 cargo build --release --examples
@@ -133,20 +137,13 @@ cargo build --release --examples
 # built_from digest is taken over them).
 mkdir -p data/proofdb/shards
 printf '{"entries":[]}' > data/proofdb/shards/manifest.json
-```
 
-### 3.1 First harvest
-
-Merge the empty shard set to get a DB holding only the open root, then run
-the first harvest against it — both with **no path flags**:
-
-```bash
 BIN=target/release/examples
 
 # 1. Bootstrap merge: no shards → a root-only DB.
 "$BIN/proofdb_merge"
 
-# 2. First harvest: 2 jobs, tiny budget — both are expected to censor.
+# 2. Smoke harvest: 2 jobs, tiny budget — both are expected to censor.
 "$BIN/proofdb_harvest" --policy and-close --budget-evals 200000 --max-jobs 2
 ```
 
@@ -160,7 +157,7 @@ node arithmetic: 1 = 1 root + 0 overlay + 0 ancestors; shard nodes 0 = 0 new + 0
 db: data/proofdb/proofdb.db (nodes 1), manifest built_from d801aa1fb7ddcc33
 ```
 
-Expected first-harvest stderr — the session-start census reports the
+Expected harvest stderr — the session-start census reports the
 frontier `C1 1 / C2 0 / C3 20` (the open root and its 20 replies) and
 `and-close: active rows 1, replies 20 (fresh 20, ledger-censored 0); …`;
 the DB line names the default path:
@@ -180,42 +177,124 @@ harvest: policy and-close stop=max-jobs jobs 2 decisive 0 censored 2 evals 40001
 (exit 0; `wall` is host-dependent, the counts are deterministic). Censored
 jobs write no facts, so `data/proofdb/shards/manifest.json` is
 **unchanged** (`built_from d801aa1fb7ddcc33…`) and
-`data/proofdb/work.json` now holds two censor records.
+`data/proofdb/work.json` now holds two censor records. (Re-running the
+same command would exercise the ledger pick-up (§4): the two replies
+return as `"pass": 2` at a doubled budget from the strict-growth ladder.)
 
-A _decisive_ first harvest instead changes the manifest digest, so its new
+A _decisive_ harvest instead changes the manifest digest, so its new
 shards must be folded in before the next pass: run step 1
 (`proofdb_merge`) again after the harvest, or `proofdb_harvest` aborts on
 the stale `built_from` (§10). The smoke budget above deliberately
-censors, so §3.2 runs against the same DB without an intermediate merge.
+censors, so a follow-up batch runs against the same DB without an
+intermediate merge.
 
-### 3.2 Second harvest
+This empty layer is the smoke environment only — not a production
+starting point. Production seeds the layer first (§3.2, step 0).
 
-Re-run the same harvest command. The ledger written by the first pass is
-picked up and changes the run:
+### 3.2 Production run
 
-```bash
-"$BIN/proofdb_harvest" --policy and-close --budget-evals 200000 --max-jobs 2
-```
-
-Expected: the session-start line now reports `ledger-censored 2`
-(`and-close: active rows 1, replies 20 (fresh 18, ledger-censored 2); …`),
-and the same two jobs return with `"pass": 2`, `"work_before": 200009` /
-`200005`, and a **doubled** budget (`400018` / `400010`) from the
-strict-growth ladder. The manifest is again unchanged. This is the ledger
-pick-up (§4): a fresh ledger would re-censor the same replies at the base
-budget instead.
-
-Optional sanity check over the bootstrapped DB:
+**Step 0 (once) — seed the layer.** A fresh layer cannot bootstrap
+itself by harvesting (cold start below); seed the durable layer and the
+ledger from the validated artifacts, then merge:
 
 ```bash
-"$BIN/proofdb_flip"
+cp docs/plans/proofdb/shards/* data/proofdb/shards/
+cp docs/plans/proofdb/measurements/plan10/ledger_union.json \
+    data/proofdb/work.json
+$BIN/proofdb_merge
 ```
 
-Expected: `flip_analysis: open_rows 1 flips 0 verified 0 root Null
-(fixpoint 1 rounds)` — the root is still undecided and no implied flips
-exist; the report lands at `data/proofdb/flip.json`.
+The seeded DB must reproduce R1's digest (§8.1) — the same integrity
+gate, now against the production layout. The ledger seed lets the ladder
+resume at its historical rungs instead of re-censoring every reply from
+the base budget (§4).
 
-Cleanup: `rm -rf data/proofdb`.
+**The batch cycle.** Solve a batch against the seeded layer, merge, and
+sanity-check (recipe R2, §8.1):
+
+```bash
+$BIN/proofdb_harvest --policy and-close --budget-evals 4000000 \
+    --and-close-max-budget 100000000 --tt-mb 1024 \
+    --max-total-evals 10000000000
+$BIN/proofdb_merge    # fold the batch's shards into the DB (the harvest never merges)
+$BIN/proofdb_flip     # soundness sanity over the grown DB (expect: flips 0 verified 0)
+```
+
+Repeat the cycle. Each pass re-visits every still-censored reply at a
+strictly larger budget — the ladder `max(2^(k−1)·base, 2·work_done)` —
+so no pass repeats work at the same depth, and the censor records in
+`work.json` are the carried-over progress. Stop a batch with
+`--max-total-evals` (deterministic), `--max-runtime`, or `touch STOP`
+(all checked between jobs; a started job always runs to its granted
+budget, §7.2). After a batch with decisive jobs the manifest digest
+changes — that is growth, not drift (§10).
+
+**What growth looks like.** Expect censoring to dominate; a batch is a
+multi-hour commitment (at ~200k child-evals/s, a 10G batch is roughly
+half a day), and yield is single-digit shards. The standing set's own
+final production batch spent ~9.7G child-evals for **6 facts and 1,074
+censors**; its residual hard lines sit at rungs of 100M–6B evals and
+beyond (the `g1f3` defenses censored at their 6B rung even at TT
+1024 MB; the next rung is 18B). This is the mechanism, not a
+malfunction: each pass prices every open reply deeper until some become
+decidable at their next rung and export shards. Read progress from the
+ledger growth and the session-start census (the `and-close-gradient`
+shows which rows are closest to completion), not from one batch's shard
+count.
+
+**Cold start.** If you skip step 0, the only active row is the root, so
+the job set is the root's 20 first-move replies — the deepest,
+effectively unsolved positions in the whole tree: the batch runs to
+`stop=exhausted jobs 20 decisive 0` (~80M evals), and no affordable
+budget or policy changes that (`breadth-pns` visits the same territory).
+Harvesting cannot bootstrap an empty layer; step 0 is the production
+starting point.
+
+The knobs that matter, most-used first:
+
+- **`--policy and-close`** — closes open rows by solving their missing
+  replies in completion-gradient order; the policy the standing set is
+  grown with. The tool default is `breadth-pns` (§7.2), which broadens
+  the frontier instead of closing it — useful early, but `and-close` is
+  the production workhorse once the frontier is established.
+- **`--budget-evals`** — the base per-job child-eval budget (default
+  4,000,000 under both production policies, so the flag is usually
+  omitted). Censored replies come back on the strict-growth ladder
+  `max(2^(k−1)·base, 2·work_done)` — each failed attempt roughly doubles
+  the next one — so the base is the _screening_ budget, not the ceiling.
+  Raise it to censor less per pass, at the cost of slower screening.
+- **`--max-total-evals`** — deterministic session cap across all jobs
+  (child-evals are the currency the ladder spends). Prefer this over
+  wall time for reproducible batch sizes.
+- **`--max-runtime` / `--max-jobs` / `--stop-file`** — operational stop
+  conditions, checked between jobs. `touch STOP` (default path) ends an
+  unattended batch gracefully after the in-flight job — the intended way
+  to stop a run before its eval budget is spent.
+- **`--and-close-max-budget`** — caps the ladder: jobs whose granted
+  budget would exceed the cap are dropped (`and-close-filter: jobs N of
+  M` echoes the effect). Bounds the worst-case single job — the
+  canonical cycle's 100M keeps a batch predictable; raise it (or drop
+  the flag) to let the ladder climb into the multi-billion-eval rungs,
+  where a single job runs for hours.
+- **`--tt-mb`** — per-job transposition table (default 128 MB; the
+  canonical cycle uses 1024). Every job runs with a fresh TT, so this
+  bounds peak RAM per job; TT size measurably affects large rungs (a
+  multi-billion-eval rung can censor at 128 MB that survives at 1 GB),
+  so give the ladder headroom.
+- **`--ledger`** — pick-up state (§4). Seed it from a committed snapshot
+  to avoid re-censoring known replies; a missing ledger is a sound fresh
+  start at lower first-batch yield.
+
+Operational notes:
+
+- Jobs are deterministic: fresh TT per job, fixed child-eval budgets, no
+  wall clock in any decision. Given the same DB and ledger state, the
+  same command reproduces the same job set; the summary's `wall` is the
+  only host-dependent number (§7.2).
+- Censor records are saved to the ledger atomically per censor; shards
+  and the manifest rewrite are append-only and abort-safe (exit 2 leaves
+  the durable layer consistent, §7.2). The durable layer
+  `data/proofdb/shards/` is unversioned — back it up (§2.1).
 
 ## 4. Ledger pick-up
 
@@ -227,7 +306,7 @@ the standing state:
 
 1. **Fresh** (sound by construction): every frontier reply is re-censored
    at the base budget before the ladder resumes; lower yield on the first
-   revisit, no other effect. This is what the quickstart does.
+   revisit, no other effect. This is what the initial run (§3.1) does.
 2. **Seed from the committed snapshot**: copy
    `docs/plans/proofdb/measurements/plan10/ledger_union.json` (8,446
    records) to `data/proofdb/work.json`, or pass it via `--ledger`. Use
@@ -507,8 +586,10 @@ usage error; `2` ABORT on any defect — the session aborts _before_ the
 manifest rewrite, so the durable layer never becomes inconsistent. Shards
 of jobs already completed when an abort hits remain as unreferenced orphan
 files and are deterministically overwritten by the retry. Stop reasons in
-the summary: `max-jobs`, `max-total-evals`, `max-runtime`, `stop-file`,
-`exhausted`.
+the summary: `budget` (`--max-total-evals` cap reached), `max-jobs`,
+`max-runtime`, `stop-file`, `exhausted` (job sequence completed). All stop
+conditions are checked between jobs only — a started job always runs to
+its granted budget.
 
 **Output grammar.**
 
@@ -593,9 +674,10 @@ heavy_jobs/heavy_decisive new_shards wall`). `decisive` counts jobs that
 _stderr, during jobs_ — `[bounded_search] chunk done: …` progress lines
 (one per budget chunk); informational, safe to ignore in scripts.
 
-**Worked invocation.** Quickstart §3.1–§3.2 (two censored jobs at 200k
-evals, then the ledger-driven revisit at doubled budget; manifest
-unchanged, exit 0) — production-shaped, no path flags.
+**Worked invocation.** Initial run §3.1 (two censored jobs at 200k evals,
+manifest unchanged, exit 0 — the smoke shape; production budgets in
+§3.2). The ledger pick-up the smoke run seeds — revisits at doubled
+budgets — is described in §4.
 
 ### 7.3 `proofdb_flip` — implied-flip analysis (read-only)
 
@@ -647,7 +729,7 @@ flip_analysis: open_rows 75 flips 0 verified 0 root Null (fixpoint 1 rounds)
 ```
 
 **Worked invocation.** Recipe R1 then R3 (0 flips over the standing set,
-exit 0); the bootstrapped-DB check is the optional step in §3.2.
+exit 0); in a production cycle the flip check is step 3 of §3.2.
 
 ### 7.4 `proofdb_ledger_union` — N-way ledger merge
 
@@ -700,7 +782,10 @@ printf '{"entries":[]}' > data/proofdb/shards/manifest.json
 proofdb_merge   # root-only DB at data/proofdb/proofdb.db
 ```
 
-Optional — seed a fresh production run from the validated fixture:
+**Seeding — the production start.** An empty layer cannot bootstrap
+itself by harvesting: its only frontier is the root's 20 first-move
+replies, which no affordable budget decides (§3.2). Seed the durable
+layer from the validated fixture and merge:
 
 ```bash
 cp docs/plans/proofdb/shards/* data/proofdb/shards/
@@ -708,7 +793,8 @@ proofdb_merge
 ```
 
 The seeded DB must reproduce R1's digest below — the same integrity gate,
-now against the production layout.
+now against the production layout. Seed the ledger too (§4 option 2) so
+the ladder resumes at its historical rungs instead of re-censoring.
 
 **R1 — rebuild the fixture DB (development, explicit flags).** Merge the
 committed fixture shard set into a fresh DB, then compare the digest:

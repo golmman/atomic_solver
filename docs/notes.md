@@ -768,3 +768,12 @@ First help me with the terminology "flip" and "censor". I know the words but i a
 Then i want section 3 improved.
 The introduction and `First harvest` subsection can be combined and renamed to `Initial run`.
 The `Second harvest` subsection does not add value in my opinion. Instead we could rename this to `Production run` and describe how to run a production grade harvest with reasonable defaults and an explanation of the most relevant options and tweaks.
+
+---
+
+I just ran the new instructions and tried them out.
+
+After the initial run with `$BIN/proofdb_harvest --policy and-close --budget-evals 4000000 --max-total-evals 10000000000` all attempts get censored.
+
+So my options here are to try with the breadth-pns policy and/or increase the budget/max-total evals. Right?
+
