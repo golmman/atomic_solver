@@ -64,12 +64,12 @@ fixture** documenting the implementation (tests and measurement batches
 use it via explicit flags); it is never read or written by the defaults,
 and production runs ignore it entirely.
 
-| Artifact    | Layer           | Default path                                          | gitignored |
-| ----------- | --------------- | ----------------------------------------------------- | ---------- |
-| shard set   | durable truth   | `data/proofdb/shards/*.bin` + `manifest.json`         | yes        |
-| SQLite DB   | derived view    | `data/proofdb/proofdb.db`                             | yes        |
-| work ledger | selection state | `data/proofdb/work.json`                              | yes        |
-| flip report | analysis output | `data/proofdb/flip.json`                              | yes        |
+| Artifact    | Layer           | Default path                                  | gitignored |
+| ----------- | --------------- | --------------------------------------------- | ---------- |
+| shard set   | durable truth   | `data/proofdb/shards/*.bin` + `manifest.json` | yes        |
+| SQLite DB   | derived view    | `data/proofdb/proofdb.db`                     | yes        |
+| work ledger | selection state | `data/proofdb/work.json`                      | yes        |
+| flip report | analysis output | `data/proofdb/flip.json`                      | yes        |
 
 Because `data/` is gitignored, the durable layer now lives **outside
 version control**: backing up `data/proofdb/shards/` is the operator's
@@ -147,8 +147,7 @@ BIN=target/release/examples
 "$BIN/proofdb_merge"
 
 # 2. First harvest: 2 jobs, tiny budget — both are expected to censor.
-"$BIN/proofdb_harvest" \
-    --policy and-close --budget-evals 200000 --max-jobs 2
+"$BIN/proofdb_harvest" --policy and-close --budget-evals 200000 --max-jobs 2
 ```
 
 Expected bootstrap-merge output — a tree with just the open root:
@@ -195,8 +194,7 @@ Re-run the same harvest command. The ledger written by the first pass is
 picked up and changes the run:
 
 ```bash
-"$BIN/proofdb_harvest" \
-    --policy and-close --budget-evals 200000 --max-jobs 2
+"$BIN/proofdb_harvest" --policy and-close --budget-evals 200000 --max-jobs 2
 ```
 
 Expected: the session-start line now reports `ledger-censored 2`
@@ -416,13 +414,13 @@ the shard files they name, readable from `--shard-dir`. No DB is needed —
     usage: proofdb_merge [--manifest <index.json>] [--shard-dir <dir>]
                          [--db <out.db>] [--dump <nodes.txt>] [--sample-lines <n>]
 
-| Option           | Default                              | Meaning                                            |
-| ---------------- | ------------------------------------ | -------------------------------------------------- |
-| `--manifest`     | `data/proofdb/shards/manifest.json`  | manifest JSON (entries sorted by tag internally)   |
-| `--shard-dir`    | `data/proofdb/shards`                | directory holding the `*.bin` shard files          |
-| `--db`           | `data/proofdb/proofdb.db`            | output SQLite path (overwritten)                   |
-| `--dump`         | off          | canonical text dump of the merged tree             |
-| `--sample-lines` | `0`          | print `n` random root-to-leaf walks as spot-checks |
+| Option           | Default                             | Meaning                                            |
+| ---------------- | ----------------------------------- | -------------------------------------------------- |
+| `--manifest`     | `data/proofdb/shards/manifest.json` | manifest JSON (entries sorted by tag internally)   |
+| `--shard-dir`    | `data/proofdb/shards`               | directory holding the `*.bin` shard files          |
+| `--db`           | `data/proofdb/proofdb.db`           | output SQLite path (overwritten)                   |
+| `--dump`         | off                                 | canonical text dump of the merged tree             |
+| `--sample-lines` | `0`                                 | print `n` random root-to-leaf walks as spot-checks |
 
 **Exit codes.** `0` merged and written; `1` usage error; `2`
 CONFLICT/DEFECT abort (non-`ok` manifest entry, unreadable/unparseable
@@ -484,25 +482,25 @@ default manifest aborts cleanly naming
                            [--and-close-max-budget <evals>]
                            [--out-db <grown.db>] [--dump <nodes.txt>]
 
-| Option                   | Default                        | Meaning                                                                                                          |
-| ------------------------ | ------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| `--db`                   | `data/proofdb/proofdb.db`      | the merged DB to work against (read-only)                                                                        |
-| `--manifest`             | `data/proofdb/shards/manifest.json` | manifest to extend (rewritten after the batch)                                                              |
-| `--shard-dir`            | `data/proofdb/shards`          | where new shard files are written (created on first write)                                                       |
-| `--policy`               | `breadth-pns`                  | `breadth-pns` \| `and-close` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail`                         |
-| `--ledger`               | `data/proofdb/work.json`       | pick-up state; a missing file is a fresh ledger                                                                  |
-| `--budget-evals`         | policy default           | base child-eval budget per job (breadth-pns base: 4,000,000); screens for the legacy policies                    |
-| `--max-total-evals`      | `0` (unlimited)          | session cap across jobs                                                                                          |
-| `--heavy-budget-evals`   | `40,000,000`             | heavy-job budget (`sharp-heavy-tail`)                                                                            |
-| `--heavy-sample`         | `5`                      | heavy jobs per screen pass (`sharp-heavy-tail`)                                                                  |
-| `--tt-mb`                | `128`                    | per-session transposition table (MB)                                                                             |
-| `--max-jobs`             | `0` (unlimited)          | stop after n jobs                                                                                                |
-| `--max-runtime`          | `0` (unlimited)          | stop after n seconds                                                                                             |
-| `--stop-file`            | `STOP`                   | batch stops (gracefully, after the in-flight job) when this file appears                                         |
-| `--pns-config`           | compiled defaults        | breadth-pns mechanism knobs (TOML); effective only under `breadth-pns`                                           |
-| `--and-close-order`      | `completion`             | `completion` \| `fresh` (effective only under `and-close`)                                                       |
-| `--and-close-max-budget` | `0` (unlimited)          | per-job budget cap under `and-close`                                                                             |
-| `--out-db` / `--dump`    | off                      | recorded in the summary only — **the caller runs `proofdb_merge` separately** (by design; this CLI never merges) |
+| Option                   | Default                             | Meaning                                                                                                          |
+| ------------------------ | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `--db`                   | `data/proofdb/proofdb.db`           | the merged DB to work against (read-only)                                                                        |
+| `--manifest`             | `data/proofdb/shards/manifest.json` | manifest to extend (rewritten after the batch)                                                                   |
+| `--shard-dir`            | `data/proofdb/shards`               | where new shard files are written (created on first write)                                                       |
+| `--policy`               | `breadth-pns`                       | `breadth-pns` \| `and-close` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail`                         |
+| `--ledger`               | `data/proofdb/work.json`            | pick-up state; a missing file is a fresh ledger                                                                  |
+| `--budget-evals`         | policy default                      | base child-eval budget per job (breadth-pns base: 4,000,000); screens for the legacy policies                    |
+| `--max-total-evals`      | `0` (unlimited)                     | session cap across jobs                                                                                          |
+| `--heavy-budget-evals`   | `40,000,000`                        | heavy-job budget (`sharp-heavy-tail`)                                                                            |
+| `--heavy-sample`         | `5`                                 | heavy jobs per screen pass (`sharp-heavy-tail`)                                                                  |
+| `--tt-mb`                | `128`                               | per-session transposition table (MB)                                                                             |
+| `--max-jobs`             | `0` (unlimited)                     | stop after n jobs                                                                                                |
+| `--max-runtime`          | `0` (unlimited)                     | stop after n seconds                                                                                             |
+| `--stop-file`            | `STOP`                              | batch stops (gracefully, after the in-flight job) when this file appears                                         |
+| `--pns-config`           | compiled defaults                   | breadth-pns mechanism knobs (TOML); effective only under `breadth-pns`                                           |
+| `--and-close-order`      | `completion`                        | `completion` \| `fresh` (effective only under `and-close`)                                                       |
+| `--and-close-max-budget` | `0` (unlimited)                     | per-job budget cap under `and-close`                                                                             |
+| `--out-db` / `--dump`    | off                                 | recorded in the summary only — **the caller runs `proofdb_merge` separately** (by design; this CLI never merges) |
 
 **Exit codes.** `0` batch completed (then the manifest is rewritten); `1`
 usage error; `2` ABORT on any defect — the session aborts _before_ the
@@ -614,11 +612,11 @@ cleanly naming `data/proofdb/shards/manifest.json`.
     usage: proofdb_flip [--db <grown.db>] [--manifest <manifest.json>]
                         [--out <flip_analysis.json>]
 
-| Option       | Default                             | Meaning                     |
-| ------------ | ----------------------------------- | --------------------------- |
-| `--db`       | `data/proofdb/proofdb.db`           | the grown DB (read-only)    |
+| Option       | Default                             | Meaning                       |
+| ------------ | ----------------------------------- | ----------------------------- |
+| `--db`       | `data/proofdb/proofdb.db`           | the grown DB (read-only)      |
 | `--manifest` | `data/proofdb/shards/manifest.json` | manifest digest for the guard |
-| `--out`      | `data/proofdb/flip.json`            | report JSON (overwritten)   |
+| `--out`      | `data/proofdb/flip.json`            | report JSON (overwritten)     |
 
 **Exit codes.** `0` normally (also with 0 flips), `1` on usage error, DB
 load failure (including the stale-DB `built_from` guard), or any unverified

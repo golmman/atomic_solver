@@ -754,8 +754,17 @@ We could test it like this:
 
 ---
 
-
 "Guidance must be free" - I'd argue that guidance is virtually free in the form of unused cpu cores, since we didn't find a way to parallelize yet.
 We could run Fairy-Stockfish in multi-pv mode in parallel and update the epsilons with these (partial) PVs accordingly.
 
 partial pv
+
+---
+
+Let's refine the `docs/proofdb_pipeline.md`.
+
+First help me with the terminology "flip" and "censor". I know the words but i am confused about the way they are used here. Just give me a quick explanation, no edit necessary here.
+
+Then i want section 3 improved.
+The introduction and `First harvest` subsection can be combined and renamed to `Initial run`.
+The `Second harvest` subsection does not add value in my opinion. Instead we could rename this to `Production run` and describe how to run a production grade harvest with reasonable defaults and an explanation of the most relevant options and tweaks.
