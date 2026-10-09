@@ -1,0 +1,6690 @@
+{
+ "r1_dec10": {
+  "arm": "baseline",
+  "case": "dec10",
+  "child_evals": 4262128,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   33094,
+   30129
+  ],
+  "exit_nomove_evals": [
+   14443818,
+   14408788
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   6024,
+   4197
+  ],
+  "exit_solved_evals": [
+   5159554,
+   4377248
+  ],
+  "exit_threshold": [
+   56397,
+   476878
+  ],
+  "exit_threshold_evals": [
+   22648430,
+   22462827
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   23,
+   20
+  ],
+  "exit_work_evals": [
+   3985966,
+   3054216
+  ],
+  "explored_evals_after": [
+   78073,
+   772692,
+   10245,
+   5073422,
+   0
+  ],
+  "explored_frames": 63709,
+  "explored_marks": 451616,
+  "first_sweep_cut": [
+   37879,
+   458386
+  ],
+  "first_sweep_cut_evals": [
+   669468,
+   2085259
+  ],
+  "first_sweep_cut_fresh": [
+   30325,
+   51144
+  ],
+  "frames_loop": 606762,
+  "group": "R1",
+  "inf_unsolved_stores": [
+   0,
+   34869
+  ],
+  "inf_unsolved_taint_and": 34869,
+  "nodes": 617048,
+  "outcome": "win",
+  "pv_len": 41,
+  "salt": 0,
+  "stale_after_return": 10956,
+  "stale_evals_after": 1624604,
+  "suppress_draw_clobbers": 116,
+  "suppress_draw_stores": 677,
+  "tt": 128,
+  "tt_bound_reuse_inf": 79727,
+  "wall_s": 0.524323708
+ },
+ "r1_dec13": {
+  "arm": "baseline",
+  "case": "dec13",
+  "child_evals": 3822602,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   9829,
+   18507
+  ],
+  "exit_solved_evals": [
+   1123238,
+   679688
+  ],
+  "exit_threshold": [
+   38348,
+   98162
+  ],
+  "exit_threshold_evals": [
+   11662066,
+   14015160
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   12,
+   11
+  ],
+  "exit_work_evals": [
+   4136931,
+   790405
+  ],
+  "explored_evals_after": [
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 0,
+  "explored_marks": 0,
+  "first_sweep_cut": [
+   33180,
+   92992
+  ],
+  "first_sweep_cut_evals": [
+   1109130,
+   2236581
+  ],
+  "first_sweep_cut_fresh": [
+   32718,
+   91821
+  ],
+  "frames_loop": 164869,
+  "group": "R1",
+  "inf_unsolved_stores": [
+   11,
+   342
+  ],
+  "inf_unsolved_taint_and": 331,
+  "nodes": 164880,
+  "outcome": "win",
+  "pv_len": 17,
+  "salt": 0,
+  "stale_after_return": 0,
+  "stale_evals_after": 0,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 0,
+  "tt": 128,
+  "tt_bound_reuse_inf": 1320,
+  "wall_s": 0.742835396
+ },
+ "r1_m22": {
+  "arm": "baseline",
+  "case": "m22",
+  "child_evals": 14156269,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": null,
+  "exit_nomove": [
+   293,
+   252
+  ],
+  "exit_nomove_evals": [
+   251729,
+   266808
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   26036,
+   11474
+  ],
+  "exit_solved_evals": [
+   8771385,
+   5520113
+  ],
+  "exit_threshold": [
+   130252,
+   689620
+  ],
+  "exit_threshold_evals": [
+   52537369,
+   53768163
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   15,
+   11
+  ],
+  "exit_work_evals": [
+   7708117,
+   4202860
+  ],
+  "explored_evals_after": [
+   23216,
+   79460,
+   0,
+   135144,
+   0
+  ],
+  "explored_frames": 689,
+  "explored_marks": 10555,
+  "first_sweep_cut": [
+   89014,
+   648625
+  ],
+  "first_sweep_cut_evals": [
+   3211228,
+   8211121
+  ],
+  "first_sweep_cut_fresh": [
+   81342,
+   599702
+  ],
+  "frames_loop": 857953,
+  "group": "R1",
+  "inf_unsolved_stores": [
+   14,
+   3490
+  ],
+  "inf_unsolved_taint_and": 3476,
+  "nodes": 858117,
+  "outcome": "win",
+  "pv_len": 95,
+  "salt": 0,
+  "stale_after_return": 250,
+  "stale_evals_after": 98091,
+  "suppress_draw_clobbers": 2,
+  "suppress_draw_stores": 86,
+  "tt": 128,
+  "tt_bound_reuse_inf": 19849,
+  "wall_s": 2.758598902
+ },
+ "r1_stress": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 249480478,
+  "chunk0": 500000,
+  "chunks": 9,
+  "depth": null,
+  "exit_nomove": [
+   14653,
+   11696
+  ],
+  "exit_nomove_evals": [
+   19724156,
+   21294854
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   212388,
+   141087
+  ],
+  "exit_solved_evals": [
+   138194415,
+   48314337
+  ],
+  "exit_threshold": [
+   2618204,
+   10901797
+  ],
+  "exit_threshold_evals": [
+   803727092,
+   907108621
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   29,
+   23
+  ],
+  "exit_work_evals": [
+   166412711,
+   50462882
+  ],
+  "explored_evals_after": [
+   218246,
+   4776353,
+   0,
+   10139449,
+   0
+  ],
+  "explored_frames": 28961,
+  "explored_marks": 501014,
+  "first_sweep_cut": [
+   2012427,
+   10316301
+  ],
+  "first_sweep_cut_evals": [
+   67589306,
+   140592302
+  ],
+  "first_sweep_cut_fresh": [
+   1838969,
+   9395484
+  ],
+  "frames_loop": 13899877,
+  "group": "R1",
+  "inf_unsolved_stores": [
+   54,
+   62941
+  ],
+  "inf_unsolved_taint_and": 62886,
+  "nodes": 13907467,
+  "outcome": "win",
+  "pv_len": 477,
+  "salt": 0,
+  "stale_after_return": 8898,
+  "stale_evals_after": 4231795,
+  "suppress_draw_clobbers": 118,
+  "suppress_draw_stores": 1314,
+  "tt": 128,
+  "tt_bound_reuse_inf": 422430,
+  "wall_s": 46.736136579
+ },
+ "r2_m22_tt256": {
+  "arm": "baseline",
+  "case": "m22",
+  "child_evals": 17346998,
+  "chunk0": 500000,
+  "chunks": 6,
+  "depth": null,
+  "exit_nomove": [
+   704,
+   629
+  ],
+  "exit_nomove_evals": [
+   701546,
+   698822
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   29541,
+   12974
+  ],
+  "exit_solved_evals": [
+   4033961,
+   3283087
+  ],
+  "exit_threshold": [
+   165318,
+   859416
+  ],
+  "exit_threshold_evals": [
+   77532791,
+   77971243
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   18,
+   14
+  ],
+  "exit_work_evals": [
+   16760072,
+   10204530
+  ],
+  "explored_evals_after": [
+   4038,
+   142986,
+   0,
+   241893,
+   0
+  ],
+  "explored_frames": 1506,
+  "explored_marks": 19428,
+  "first_sweep_cut": [
+   107003,
+   801047
+  ],
+  "first_sweep_cut_evals": [
+   3841644,
+   9911586
+  ],
+  "first_sweep_cut_fresh": [
+   96500,
+   720261
+  ],
+  "frames_loop": 1068614,
+  "group": "R2",
+  "inf_unsolved_stores": [
+   22,
+   4393
+  ],
+  "inf_unsolved_taint_and": 4371,
+  "nodes": 1069021,
+  "outcome": "win",
+  "pv_len": 129,
+  "salt": 0,
+  "stale_after_return": 503,
+  "stale_evals_after": 181453,
+  "suppress_draw_clobbers": 4,
+  "suppress_draw_stores": 96,
+  "tt": 256,
+  "tt_bound_reuse_inf": 25248,
+  "wall_s": 3.448830872
+ },
+ "r2_stress_tt1024": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 319620873,
+  "chunk0": 500000,
+  "chunks": 10,
+  "depth": null,
+  "exit_nomove": [
+   34756,
+   26555
+  ],
+  "exit_nomove_evals": [
+   38952801,
+   39960703
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   276263,
+   192348
+  ],
+  "exit_solved_evals": [
+   119465638,
+   66745098
+  ],
+  "exit_threshold": [
+   3743428,
+   14059363
+  ],
+  "exit_threshold_evals": [
+   1194252164,
+   1351031591
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   34,
+   29
+  ],
+  "exit_work_evals": [
+   261371316,
+   17968610
+  ],
+  "explored_evals_after": [
+   309034,
+   7781434,
+   0,
+   20544600,
+   0
+  ],
+  "explored_frames": 66903,
+  "explored_marks": 1017450,
+  "first_sweep_cut": [
+   2800167,
+   13152195
+  ],
+  "first_sweep_cut_evals": [
+   91452312,
+   169434266
+  ],
+  "first_sweep_cut_fresh": [
+   2409548,
+   10839738
+  ],
+  "frames_loop": 18332776,
+  "group": "R2",
+  "inf_unsolved_stores": [
+   93,
+   90082
+  ],
+  "inf_unsolved_taint_and": 89988,
+  "nodes": 18351786,
+  "outcome": "win",
+  "pv_len": 157,
+  "salt": 0,
+  "stale_after_return": 21009,
+  "stale_evals_after": 8654395,
+  "suppress_draw_clobbers": 326,
+  "suppress_draw_stores": 2004,
+  "tt": 1024,
+  "tt_bound_reuse_inf": 632809,
+  "wall_s": 79.928331832
+ },
+ "r2_stress_tt256": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 280699834,
+  "chunk0": 500000,
+  "chunks": 10,
+  "depth": null,
+  "exit_nomove": [
+   15764,
+   12799
+  ],
+  "exit_nomove_evals": [
+   25117818,
+   22361740
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   254473,
+   170388
+  ],
+  "exit_solved_evals": [
+   43345008,
+   35987506
+  ],
+  "exit_threshold": [
+   3033571,
+   12016220
+  ],
+  "exit_threshold_evals": [
+   913077282,
+   1027371590
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   28,
+   21
+  ],
+  "exit_work_evals": [
+   288185606,
+   67871167
+  ],
+  "explored_evals_after": [
+   198331,
+   3712579,
+   0,
+   12488440,
+   0
+  ],
+  "explored_frames": 31013,
+  "explored_marks": 518012,
+  "first_sweep_cut": [
+   2329549,
+   11338817
+  ],
+  "first_sweep_cut_evals": [
+   78114940,
+   155100903
+  ],
+  "first_sweep_cut_fresh": [
+   2085794,
+   10220805
+  ],
+  "frames_loop": 15503264,
+  "group": "R2",
+  "inf_unsolved_stores": [
+   71,
+   71292
+  ],
+  "inf_unsolved_taint_and": 69631,
+  "nodes": 15511371,
+  "outcome": "win",
+  "pv_len": 95,
+  "salt": 0,
+  "stale_after_return": 9376,
+  "stale_evals_after": 5348625,
+  "suppress_draw_clobbers": 147,
+  "suppress_draw_stores": 1216,
+  "tt": 256,
+  "tt_bound_reuse_inf": 491727,
+  "wall_s": 59.128384318
+ },
+ "r2_stress_tt512": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 288854747,
+  "chunk0": 500000,
+  "chunks": 10,
+  "depth": null,
+  "exit_nomove": [
+   138990,
+   95674
+  ],
+  "exit_nomove_evals": [
+   83995076,
+   88735326
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   226925,
+   164560
+  ],
+  "exit_solved_evals": [
+   81680787,
+   54528717
+  ],
+  "exit_threshold": [
+   3208387,
+   14460522
+  ],
+  "exit_threshold_evals": [
+   922954563,
+   1032541820
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   35,
+   30
+  ],
+  "exit_work_evals": [
+   389300563,
+   179502099
+  ],
+  "explored_evals_after": [
+   646024,
+   20078764,
+   43258024,
+   42839167,
+   0
+  ],
+  "explored_frames": 262884,
+  "explored_marks": 3390191,
+  "first_sweep_cut": [
+   2394379,
+   13698365
+  ],
+  "first_sweep_cut_evals": [
+   77677079,
+   156048673
+  ],
+  "first_sweep_cut_fresh": [
+   2078755,
+   9424907
+  ],
+  "frames_loop": 18295123,
+  "group": "R2",
+  "inf_unsolved_stores": [
+   5,
+   73689
+  ],
+  "inf_unsolved_taint_and": 73684,
+  "nodes": 18391048,
+  "outcome": "win",
+  "pv_len": 137,
+  "salt": 0,
+  "stale_after_return": 97835,
+  "stale_evals_after": 15635411,
+  "suppress_draw_clobbers": 243,
+  "suppress_draw_stores": 1913,
+  "tt": 512,
+  "tt_bound_reuse_inf": 528719,
+  "wall_s": 62.794038946
+ },
+ "r3_m22_d100": {
+  "arm": "baseline",
+  "case": "m22",
+  "child_evals": 14159216,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": 100,
+  "exit_nomove": [
+   332,
+   387
+  ],
+  "exit_nomove_evals": [
+   257710,
+   276013
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   26036,
+   11474
+  ],
+  "exit_solved_evals": [
+   8804319,
+   5550100
+  ],
+  "exit_threshold": [
+   130244,
+   690215
+  ],
+  "exit_threshold_evals": [
+   52642550,
+   53871839
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   15,
+   11
+  ],
+  "exit_work_evals": [
+   7708117,
+   4202860
+  ],
+  "explored_evals_after": [
+   24956,
+   80721,
+   0,
+   140448,
+   0
+  ],
+  "explored_frames": 865,
+  "explored_marks": 11307,
+  "first_sweep_cut": [
+   89014,
+   649228
+  ],
+  "first_sweep_cut_evals": [
+   3211228,
+   8212577
+  ],
+  "first_sweep_cut_fresh": [
+   81343,
+   599806
+  ],
+  "frames_loop": 858714,
+  "group": "R3",
+  "inf_unsolved_stores": [
+   14,
+   3522
+  ],
+  "inf_unsolved_taint_and": 3508,
+  "nodes": 858983,
+  "outcome": "win",
+  "pv_len": 95,
+  "salt": 0,
+  "stale_after_return": 250,
+  "stale_evals_after": 98091,
+  "suppress_draw_clobbers": 2,
+  "suppress_draw_stores": 86,
+  "tt": 128,
+  "tt_bound_reuse_inf": 19905,
+  "wall_s": 2.775686499
+ },
+ "r3_m22_d128": {
+  "arm": "baseline",
+  "case": "m22",
+  "child_evals": 14156269,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": 128,
+  "exit_nomove": [
+   293,
+   252
+  ],
+  "exit_nomove_evals": [
+   251729,
+   266808
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   26036,
+   11474
+  ],
+  "exit_solved_evals": [
+   8771385,
+   5520113
+  ],
+  "exit_threshold": [
+   130252,
+   689620
+  ],
+  "exit_threshold_evals": [
+   52537369,
+   53768163
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   15,
+   11
+  ],
+  "exit_work_evals": [
+   7708117,
+   4202860
+  ],
+  "explored_evals_after": [
+   23216,
+   79460,
+   0,
+   135144,
+   0
+  ],
+  "explored_frames": 689,
+  "explored_marks": 10555,
+  "first_sweep_cut": [
+   89014,
+   648625
+  ],
+  "first_sweep_cut_evals": [
+   3211228,
+   8211121
+  ],
+  "first_sweep_cut_fresh": [
+   81342,
+   599702
+  ],
+  "frames_loop": 857953,
+  "group": "R3",
+  "inf_unsolved_stores": [
+   14,
+   3490
+  ],
+  "inf_unsolved_taint_and": 3476,
+  "nodes": 858117,
+  "outcome": "win",
+  "pv_len": 95,
+  "salt": 0,
+  "stale_after_return": 250,
+  "stale_evals_after": 98091,
+  "suppress_draw_clobbers": 2,
+  "suppress_draw_stores": 86,
+  "tt": 128,
+  "tt_bound_reuse_inf": 19849,
+  "wall_s": 2.779777949
+ },
+ "r3_m22_d192": {
+  "arm": "baseline",
+  "case": "m22",
+  "child_evals": 14156269,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": 192,
+  "exit_nomove": [
+   293,
+   252
+  ],
+  "exit_nomove_evals": [
+   251729,
+   266808
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   26036,
+   11474
+  ],
+  "exit_solved_evals": [
+   8771385,
+   5520113
+  ],
+  "exit_threshold": [
+   130252,
+   689620
+  ],
+  "exit_threshold_evals": [
+   52537369,
+   53768163
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   15,
+   11
+  ],
+  "exit_work_evals": [
+   7708117,
+   4202860
+  ],
+  "explored_evals_after": [
+   23216,
+   79460,
+   0,
+   135144,
+   0
+  ],
+  "explored_frames": 689,
+  "explored_marks": 10555,
+  "first_sweep_cut": [
+   89014,
+   648625
+  ],
+  "first_sweep_cut_evals": [
+   3211228,
+   8211121
+  ],
+  "first_sweep_cut_fresh": [
+   81342,
+   599702
+  ],
+  "frames_loop": 857953,
+  "group": "R3",
+  "inf_unsolved_stores": [
+   14,
+   3490
+  ],
+  "inf_unsolved_taint_and": 3476,
+  "nodes": 858117,
+  "outcome": "win",
+  "pv_len": 95,
+  "salt": 0,
+  "stale_after_return": 250,
+  "stale_evals_after": 98091,
+  "suppress_draw_clobbers": 2,
+  "suppress_draw_stores": 86,
+  "tt": 128,
+  "tt_bound_reuse_inf": 19849,
+  "wall_s": 2.876847943
+ },
+ "r3_stress_d100": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 2500000002,
+  "chunk0": 500000,
+  "chunks": 13,
+  "depth": 100,
+  "exit_nomove": [
+   17570067,
+   30207384
+  ],
+  "exit_nomove_evals": [
+   26103719635,
+   25998187486
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   209323,
+   136035
+  ],
+  "exit_solved_evals": [
+   62288334,
+   54852820
+  ],
+  "exit_threshold": [
+   2635924,
+   342865079
+  ],
+  "exit_threshold_evals": [
+   848311597,
+   2321187692
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   277,
+   266
+  ],
+  "exit_work_evals": [
+   86038351780,
+   83829491828
+  ],
+  "explored_evals_after": [
+   1433891,
+   3959327,
+   907808231,
+   12841222874,
+   0
+  ],
+  "explored_frames": 47780053,
+  "explored_marks": 403554291,
+  "first_sweep_cut": [
+   2004287,
+   342235411
+  ],
+  "first_sweep_cut_evals": [
+   66932711,
+   1506864530
+  ],
+  "first_sweep_cut_fresh": [
+   1812295,
+   9220855
+  ],
+  "frames_loop": 393624355,
+  "group": "R3",
+  "inf_unsolved_stores": [
+   238,
+   63844
+  ],
+  "inf_unsolved_taint_and": 63615,
+  "nodes": 421294107,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 0,
+  "stale_after_return": 9628,
+  "stale_evals_after": 4532789,
+  "suppress_draw_clobbers": 126,
+  "suppress_draw_stores": 1414,
+  "tt": 128,
+  "tt_bound_reuse_inf": 418744,
+  "wall_s": 243.139358143
+ },
+ "r3_stress_d128": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 245951092,
+  "chunk0": 500000,
+  "chunks": 9,
+  "depth": 128,
+  "exit_nomove": [
+   16463,
+   33363
+  ],
+  "exit_nomove_evals": [
+   20961036,
+   21670610
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   206523,
+   137961
+  ],
+  "exit_solved_evals": [
+   145565302,
+   55800522
+  ],
+  "exit_threshold": [
+   2602574,
+   10785064
+  ],
+  "exit_threshold_evals": [
+   798526223,
+   903598236
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   29,
+   23
+  ],
+  "exit_work_evals": [
+   166412711,
+   50462882
+  ],
+  "explored_evals_after": [
+   231022,
+   3500972,
+   0,
+   9854324,
+   0
+  ],
+  "explored_frames": 52271,
+  "explored_marks": 553435,
+  "first_sweep_cut": [
+   1993911,
+   10194321
+  ],
+  "first_sweep_cut_evals": [
+   66832332,
+   137982704
+  ],
+  "first_sweep_cut_fresh": [
+   1816844,
+   9202941
+  ],
+  "frames_loop": 13782000,
+  "group": "R3",
+  "inf_unsolved_stores": [
+   34,
+   61783
+  ],
+  "inf_unsolved_taint_and": 61749,
+  "nodes": 13809513,
+  "outcome": "win",
+  "pv_len": 127,
+  "salt": 0,
+  "stale_after_return": 8641,
+  "stale_evals_after": 4039007,
+  "suppress_draw_clobbers": 116,
+  "suppress_draw_stores": 1210,
+  "tt": 128,
+  "tt_bound_reuse_inf": 416164,
+  "wall_s": 50.274860471
+ },
+ "r3_stress_d160": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 253258246,
+  "chunk0": 500000,
+  "chunks": 9,
+  "depth": 160,
+  "exit_nomove": [
+   15440,
+   24499
+  ],
+  "exit_nomove_evals": [
+   20035763,
+   20320200
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   216042,
+   146127
+  ],
+  "exit_solved_evals": [
+   148119976,
+   58096624
+  ],
+  "exit_threshold": [
+   2654994,
+   11044304
+  ],
+  "exit_threshold_evals": [
+   816101315,
+   919298172
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   29,
+   23
+  ],
+  "exit_work_evals": [
+   166412711,
+   50462882
+  ],
+  "explored_evals_after": [
+   287602,
+   3458226,
+   0,
+   9282245,
+   0
+  ],
+  "explored_frames": 42416,
+  "explored_marks": 518512,
+  "first_sweep_cut": [
+   2045178,
+   10455040
+  ],
+  "first_sweep_cut_evals": [
+   68796719,
+   142608841
+  ],
+  "first_sweep_cut_fresh": [
+   1869539,
+   9536373
+  ],
+  "frames_loop": 14101458,
+  "group": "R3",
+  "inf_unsolved_stores": [
+   43,
+   63718
+  ],
+  "inf_unsolved_taint_and": 63675,
+  "nodes": 14120832,
+  "outcome": "win",
+  "pv_len": 159,
+  "salt": 0,
+  "stale_after_return": 8599,
+  "stale_evals_after": 3845474,
+  "suppress_draw_clobbers": 116,
+  "suppress_draw_stores": 1287,
+  "tt": 128,
+  "tt_bound_reuse_inf": 429133,
+  "wall_s": 51.405847263
+ },
+ "r3_stress_d200": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 245003056,
+  "chunk0": 500000,
+  "chunks": 9,
+  "depth": 200,
+  "exit_nomove": [
+   15119,
+   12328
+  ],
+  "exit_nomove_evals": [
+   20773343,
+   21711005
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   205086,
+   138112
+  ],
+  "exit_solved_evals": [
+   137060965,
+   47536086
+  ],
+  "exit_threshold": [
+   2587275,
+   10736448
+  ],
+  "exit_threshold_evals": [
+   786640371,
+   891828574
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   29,
+   23
+  ],
+  "exit_work_evals": [
+   166412711,
+   50462882
+  ],
+  "explored_evals_after": [
+   183739,
+   4404011,
+   0,
+   10574751,
+   0
+  ],
+  "explored_frames": 29891,
+  "explored_marks": 512898,
+  "first_sweep_cut": [
+   1986219,
+   10153798
+  ],
+  "first_sweep_cut_evals": [
+   66552861,
+   137707469
+  ],
+  "first_sweep_cut_fresh": [
+   1811385,
+   9180154
+  ],
+  "frames_loop": 13694420,
+  "group": "R3",
+  "inf_unsolved_stores": [
+   34,
+   61355
+  ],
+  "inf_unsolved_taint_and": 61321,
+  "nodes": 13702706,
+  "outcome": "win",
+  "pv_len": 197,
+  "salt": 0,
+  "stale_after_return": 9209,
+  "stale_evals_after": 4020139,
+  "suppress_draw_clobbers": 115,
+  "suppress_draw_stores": 1364,
+  "tt": 128,
+  "tt_bound_reuse_inf": 413958,
+  "wall_s": 48.86862453
+ },
+ "r3_stress_d256": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 252348530,
+  "chunk0": 500000,
+  "chunks": 9,
+  "depth": 256,
+  "exit_nomove": [
+   41249,
+   42251
+  ],
+  "exit_nomove_evals": [
+   51645780,
+   50399640
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   211345,
+   136955
+  ],
+  "exit_solved_evals": [
+   155531136,
+   63838832
+  ],
+  "exit_threshold": [
+   2659192,
+   11549098
+  ],
+  "exit_threshold_evals": [
+   910976663,
+   1017292222
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   29,
+   23
+  ],
+  "exit_work_evals": [
+   166412711,
+   50462882
+  ],
+  "explored_evals_after": [
+   2049371,
+   4371250,
+   0,
+   17995729,
+   0
+  ],
+  "explored_frames": 86028,
+  "explored_marks": 1067987,
+  "first_sweep_cut": [
+   2016148,
+   10912582
+  ],
+  "first_sweep_cut_evals": [
+   67321419,
+   141446967
+  ],
+  "first_sweep_cut_fresh": [
+   1823883,
+   9302171
+  ],
+  "frames_loop": 14640142,
+  "group": "R3",
+  "inf_unsolved_stores": [
+   2906,
+   65890
+  ],
+  "inf_unsolved_taint_and": 62888,
+  "nodes": 14672707,
+  "outcome": "win",
+  "pv_len": 253,
+  "salt": 0,
+  "stale_after_return": 24936,
+  "stale_evals_after": 7218921,
+  "suppress_draw_clobbers": 132,
+  "suppress_draw_stores": 1623,
+  "tt": 128,
+  "tt_bound_reuse_inf": 435497,
+  "wall_s": 50.358230438
+ },
+ "r4_dec10_s1": {
+  "arm": "baseline",
+  "case": "dec10",
+  "child_evals": 3901844,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   29681,
+   27481
+  ],
+  "exit_nomove_evals": [
+   14896736,
+   14471607
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   5855,
+   3941
+  ],
+  "exit_solved_evals": [
+   2057763,
+   1804434
+  ],
+  "exit_threshold": [
+   52282,
+   424088
+  ],
+  "exit_threshold_evals": [
+   20463312,
+   20283625
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   28,
+   25
+  ],
+  "exit_work_evals": [
+   3571377,
+   2654321
+  ],
+  "explored_evals_after": [
+   78865,
+   513554,
+   4031,
+   3897972,
+   0
+  ],
+  "explored_frames": 57479,
+  "explored_marks": 402280,
+  "first_sweep_cut": [
+   36186,
+   408098
+  ],
+  "first_sweep_cut_evals": [
+   649798,
+   1902501
+  ],
+  "first_sweep_cut_fresh": [
+   29737,
+   47608
+  ],
+  "frames_loop": 543381,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   0,
+   28146
+  ],
+  "inf_unsolved_taint_and": 28146,
+  "nodes": 552410,
+  "outcome": "win",
+  "pv_len": 36,
+  "salt": 1,
+  "stale_after_return": 9516,
+  "stale_evals_after": 1449742,
+  "suppress_draw_clobbers": 54,
+  "suppress_draw_stores": 494,
+  "tt": 128,
+  "tt_bound_reuse_inf": 64149,
+  "wall_s": 0.503683916
+ },
+ "r4_dec10_s2": {
+  "arm": "baseline",
+  "case": "dec10",
+  "child_evals": 2918636,
+  "chunk0": 500000,
+  "chunks": 3,
+  "depth": null,
+  "exit_nomove": [
+   17037,
+   16149
+  ],
+  "exit_nomove_evals": [
+   7932157,
+   8022559
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   4992,
+   3739
+  ],
+  "exit_solved_evals": [
+   2677438,
+   2453086
+  ],
+  "exit_threshold": [
+   48774,
+   265396
+  ],
+  "exit_threshold_evals": [
+   13762722,
+   13421842
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   9,
+   7
+  ],
+  "exit_work_evals": [
+   1529954,
+   621451
+  ],
+  "explored_evals_after": [
+   63755,
+   184942,
+   0,
+   2470160,
+   0
+  ],
+  "explored_frames": 33463,
+  "explored_marks": 228542,
+  "first_sweep_cut": [
+   33506,
+   250533
+  ],
+  "first_sweep_cut_evals": [
+   611002,
+   1347856
+  ],
+  "first_sweep_cut_fresh": [
+   27539,
+   41438
+  ],
+  "frames_loop": 356103,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   0,
+   18009
+  ],
+  "inf_unsolved_taint_and": 18009,
+  "nodes": 361836,
+  "outcome": "win",
+  "pv_len": 53,
+  "salt": 2,
+  "stale_after_return": 6295,
+  "stale_evals_after": 803233,
+  "suppress_draw_clobbers": 63,
+  "suppress_draw_stores": 571,
+  "tt": 128,
+  "tt_bound_reuse_inf": 42956,
+  "wall_s": 0.403606521
+ },
+ "r4_dec10_s3": {
+  "arm": "baseline",
+  "case": "dec10",
+  "child_evals": 4802246,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   40616,
+   37832
+  ],
+  "exit_nomove_evals": [
+   21731137,
+   21332427
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   6176,
+   4352
+  ],
+  "exit_solved_evals": [
+   2384563,
+   2183655
+  ],
+  "exit_threshold": [
+   55614,
+   564214
+  ],
+  "exit_threshold_evals": [
+   24752779,
+   24153771
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   20,
+   18
+  ],
+  "exit_work_evals": [
+   4067050,
+   3133445
+  ],
+  "explored_evals_after": [
+   54002,
+   906664,
+   2,
+   5893582,
+   0
+  ],
+  "explored_frames": 78846,
+  "explored_marks": 556635,
+  "first_sweep_cut": [
+   38062,
+   546879
+  ],
+  "first_sweep_cut_evals": [
+   678677,
+   2413035
+  ],
+  "first_sweep_cut_fresh": [
+   30699,
+   50280
+  ],
+  "frames_loop": 708842,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   0,
+   42799
+  ],
+  "inf_unsolved_taint_and": 42799,
+  "nodes": 722689,
+  "outcome": "win",
+  "pv_len": 37,
+  "salt": 3,
+  "stale_after_return": 14606,
+  "stale_evals_after": 1971328,
+  "suppress_draw_clobbers": 101,
+  "suppress_draw_stores": 765,
+  "tt": 128,
+  "tt_bound_reuse_inf": 93251,
+  "wall_s": 0.601104456
+ },
+ "r4_dec10_s4": {
+  "arm": "baseline",
+  "case": "dec10",
+  "child_evals": 3901847,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   29674,
+   27474
+  ],
+  "exit_nomove_evals": [
+   14894949,
+   14469806
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   5858,
+   3941
+  ],
+  "exit_solved_evals": [
+   2057775,
+   1804446
+  ],
+  "exit_threshold": [
+   52281,
+   424019
+  ],
+  "exit_threshold_evals": [
+   20465257,
+   20285206
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   28,
+   25
+  ],
+  "exit_work_evals": [
+   3565394,
+   2648626
+  ],
+  "explored_evals_after": [
+   78865,
+   513554,
+   2132,
+   3897575,
+   0
+  ],
+  "explored_frames": 57465,
+  "explored_marks": 402187,
+  "first_sweep_cut": [
+   36184,
+   408027
+  ],
+  "first_sweep_cut_evals": [
+   650016,
+   1902406
+  ],
+  "first_sweep_cut_fresh": [
+   29735,
+   47619
+  ],
+  "frames_loop": 543300,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   0,
+   28139
+  ],
+  "inf_unsolved_taint_and": 28139,
+  "nodes": 552328,
+  "outcome": "win",
+  "pv_len": 36,
+  "salt": 4,
+  "stale_after_return": 9515,
+  "stale_evals_after": 1449204,
+  "suppress_draw_clobbers": 54,
+  "suppress_draw_stores": 494,
+  "tt": 128,
+  "tt_bound_reuse_inf": 64134,
+  "wall_s": 0.531178514
+ },
+ "r4_dec13_s1": {
+  "arm": "baseline",
+  "case": "dec13",
+  "child_evals": 5031242,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   12447,
+   25820
+  ],
+  "exit_solved_evals": [
+   4967579,
+   3672434
+  ],
+  "exit_threshold": [
+   49561,
+   129488
+  ],
+  "exit_threshold_evals": [
+   14929094,
+   17750621
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   12,
+   9
+  ],
+  "exit_work_evals": [
+   4108603,
+   706425
+  ],
+  "explored_evals_after": [
+   0,
+   35,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 1,
+  "explored_marks": 1,
+  "first_sweep_cut": [
+   42363,
+   122308
+  ],
+  "first_sweep_cut_evals": [
+   1426098,
+   2956125
+  ],
+  "first_sweep_cut_fresh": [
+   41673,
+   120485
+  ],
+  "frames_loop": 217337,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   11,
+   635
+  ],
+  "inf_unsolved_taint_and": 624,
+  "nodes": 217346,
+  "outcome": "win",
+  "pv_len": 31,
+  "salt": 1,
+  "stale_after_return": 1,
+  "stale_evals_after": 35,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 1,
+  "tt": 128,
+  "tt_bound_reuse_inf": 2239,
+  "wall_s": 1.04575881
+ },
+ "r4_dec13_s2": {
+  "arm": "baseline",
+  "case": "dec13",
+  "child_evals": 5038383,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   12449,
+   25843
+  ],
+  "exit_solved_evals": [
+   4984157,
+   3681419
+  ],
+  "exit_threshold": [
+   49545,
+   129755
+  ],
+  "exit_threshold_evals": [
+   14947449,
+   17773469
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   12,
+   9
+  ],
+  "exit_work_evals": [
+   4111764,
+   712773
+  ],
+  "explored_evals_after": [
+   0,
+   35,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 1,
+  "explored_marks": 1,
+  "first_sweep_cut": [
+   42327,
+   122556
+  ],
+  "first_sweep_cut_evals": [
+   1425109,
+   2963148
+  ],
+  "first_sweep_cut_fresh": [
+   41626,
+   120677
+  ],
+  "frames_loop": 217613,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   11,
+   640
+  ],
+  "inf_unsolved_taint_and": 629,
+  "nodes": 217622,
+  "outcome": "win",
+  "pv_len": 31,
+  "salt": 2,
+  "stale_after_return": 1,
+  "stale_evals_after": 35,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 1,
+  "tt": 128,
+  "tt_bound_reuse_inf": 2254,
+  "wall_s": 1.022220411
+ },
+ "r4_dec13_s3": {
+  "arm": "baseline",
+  "case": "dec13",
+  "child_evals": 5032382,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   12444,
+   25820
+  ],
+  "exit_solved_evals": [
+   4969041,
+   3672503
+  ],
+  "exit_threshold": [
+   49534,
+   129575
+  ],
+  "exit_threshold_evals": [
+   14934252,
+   17758566
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   12,
+   9
+  ],
+  "exit_work_evals": [
+   4107284,
+   704363
+  ],
+  "explored_evals_after": [
+   0,
+   35,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 1,
+  "explored_marks": 1,
+  "first_sweep_cut": [
+   42329,
+   122389
+  ],
+  "first_sweep_cut_evals": [
+   1425044,
+   2957945
+  ],
+  "first_sweep_cut_fresh": [
+   41636,
+   120565
+  ],
+  "frames_loop": 217394,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   11,
+   636
+  ],
+  "inf_unsolved_taint_and": 625,
+  "nodes": 217403,
+  "outcome": "win",
+  "pv_len": 31,
+  "salt": 3,
+  "stale_after_return": 1,
+  "stale_evals_after": 35,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 1,
+  "tt": 128,
+  "tt_bound_reuse_inf": 2241,
+  "wall_s": 1.035238225
+ },
+ "r4_dec13_s4": {
+  "arm": "baseline",
+  "case": "dec13",
+  "child_evals": 5030825,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   12441,
+   25818
+  ],
+  "exit_solved_evals": [
+   4967335,
+   3672388
+  ],
+  "exit_threshold": [
+   49526,
+   129527
+  ],
+  "exit_threshold_evals": [
+   14928101,
+   17750484
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   12,
+   9
+  ],
+  "exit_work_evals": [
+   4109599,
+   707403
+  ],
+  "explored_evals_after": [
+   0,
+   35,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 1,
+  "explored_marks": 1,
+  "first_sweep_cut": [
+   42326,
+   122346
+  ],
+  "first_sweep_cut_evals": [
+   1424937,
+   2956823
+  ],
+  "first_sweep_cut_fresh": [
+   41635,
+   120523
+  ],
+  "frames_loop": 217333,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   11,
+   635
+  ],
+  "inf_unsolved_taint_and": 624,
+  "nodes": 217342,
+  "outcome": "win",
+  "pv_len": 31,
+  "salt": 4,
+  "stale_after_return": 1,
+  "stale_evals_after": 35,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 1,
+  "tt": 128,
+  "tt_bound_reuse_inf": 2240,
+  "wall_s": 1.078390658
+ },
+ "r4_m22_s1": {
+  "arm": "baseline",
+  "case": "m22",
+  "child_evals": 23653031,
+  "chunk0": 500000,
+  "chunks": 6,
+  "depth": null,
+  "exit_nomove": [
+   435,
+   376
+  ],
+  "exit_nomove_evals": [
+   582837,
+   593994
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   38238,
+   19060
+  ],
+  "exit_solved_evals": [
+   10988443,
+   7640396
+  ],
+  "exit_threshold": [
+   226036,
+   1136000
+  ],
+  "exit_threshold_evals": [
+   97843604,
+   103399506
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   18,
+   14
+  ],
+  "exit_work_evals": [
+   15688666,
+   3985237
+  ],
+  "explored_evals_after": [
+   7391,
+   157531,
+   0,
+   214221,
+   0
+  ],
+  "explored_frames": 1006,
+  "explored_marks": 15755,
+  "first_sweep_cut": [
+   153740,
+   1064044
+  ],
+  "first_sweep_cut_evals": [
+   5565688,
+   13418471
+  ],
+  "first_sweep_cut_fresh": [
+   136446,
+   964952
+  ],
+  "frames_loop": 1420177,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   45,
+   6584
+  ],
+  "inf_unsolved_taint_and": 6537,
+  "nodes": 1420389,
+  "outcome": "win",
+  "pv_len": 227,
+  "salt": 1,
+  "stale_after_return": 331,
+  "stale_evals_after": 166288,
+  "suppress_draw_clobbers": 3,
+  "suppress_draw_stores": 119,
+  "tt": 128,
+  "tt_bound_reuse_inf": 36363,
+  "wall_s": 4.840232275
+ },
+ "r4_m22_s2": {
+  "arm": "baseline",
+  "case": "m22",
+  "child_evals": 15815489,
+  "chunk0": 500000,
+  "chunks": 6,
+  "depth": null,
+  "exit_nomove": [
+   365,
+   323
+  ],
+  "exit_nomove_evals": [
+   621738,
+   626286
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   27851,
+   13263
+  ],
+  "exit_solved_evals": [
+   3430311,
+   2689831
+  ],
+  "exit_threshold": [
+   143628,
+   766315
+  ],
+  "exit_threshold_evals": [
+   60253042,
+   61426734
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   34,
+   30
+  ],
+  "exit_work_evals": [
+   16184829,
+   9610609
+  ],
+  "explored_evals_after": [
+   6984,
+   85511,
+   0,
+   198463,
+   0
+  ],
+  "explored_frames": 871,
+  "explored_marks": 13518,
+  "first_sweep_cut": [
+   98841,
+   722078
+  ],
+  "first_sweep_cut_evals": [
+   3581753,
+   9204976
+  ],
+  "first_sweep_cut_fresh": [
+   91131,
+   672992
+  ],
+  "frames_loop": 951809,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   22,
+   4169
+  ],
+  "inf_unsolved_taint_and": 4147,
+  "nodes": 951992,
+  "outcome": "win",
+  "pv_len": 35,
+  "salt": 2,
+  "stale_after_return": 277,
+  "stale_evals_after": 114564,
+  "suppress_draw_clobbers": 4,
+  "suppress_draw_stores": 94,
+  "tt": 128,
+  "tt_bound_reuse_inf": 22982,
+  "wall_s": 3.115670338
+ },
+ "r4_m22_s3": {
+  "arm": "baseline",
+  "case": "m22",
+  "child_evals": 17832300,
+  "chunk0": 500000,
+  "chunks": 6,
+  "depth": null,
+  "exit_nomove": [
+   457,
+   388
+  ],
+  "exit_nomove_evals": [
+   728173,
+   738656
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   29596,
+   16262
+  ],
+  "exit_solved_evals": [
+   5203077,
+   4372776
+  ],
+  "exit_threshold": [
+   160534,
+   854467
+  ],
+  "exit_threshold_evals": [
+   67019775,
+   67605439
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   23,
+   20
+  ],
+  "exit_work_evals": [
+   16477840,
+   9809101
+  ],
+  "explored_evals_after": [
+   5231,
+   112331,
+   0,
+   223384,
+   0
+  ],
+  "explored_frames": 1033,
+  "explored_marks": 17863,
+  "first_sweep_cut": [
+   110617,
+   805308
+  ],
+  "first_sweep_cut_evals": [
+   4028673,
+   10398261
+  ],
+  "first_sweep_cut_fresh": [
+   101935,
+   753808
+  ],
+  "frames_loop": 1061747,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   24,
+   4964
+  ],
+  "inf_unsolved_taint_and": 4940,
+  "nodes": 1061960,
+  "outcome": "win",
+  "pv_len": 119,
+  "salt": 3,
+  "stale_after_return": 315,
+  "stale_evals_after": 151881,
+  "suppress_draw_clobbers": 3,
+  "suppress_draw_stores": 103,
+  "tt": 128,
+  "tt_bound_reuse_inf": 26594,
+  "wall_s": 3.490173707
+ },
+ "r4_m22_s4": {
+  "arm": "baseline",
+  "case": "m22",
+  "child_evals": 18071429,
+  "chunk0": 500000,
+  "chunks": 6,
+  "depth": null,
+  "exit_nomove": [
+   900,
+   756
+  ],
+  "exit_nomove_evals": [
+   965291,
+   1482987
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   28762,
+   14145
+  ],
+  "exit_solved_evals": [
+   5368850,
+   4632874
+  ],
+  "exit_threshold": [
+   162619,
+   880536
+  ],
+  "exit_threshold_evals": [
+   70972190,
+   71089402
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   19,
+   14
+  ],
+  "exit_work_evals": [
+   16288450,
+   9434794
+  ],
+  "explored_evals_after": [
+   6730,
+   421363,
+   0,
+   761839,
+   0
+  ],
+  "explored_frames": 1939,
+  "explored_marks": 30443,
+  "first_sweep_cut": [
+   109496,
+   827923
+  ],
+  "first_sweep_cut_evals": [
+   3982145,
+   10580689
+  ],
+  "first_sweep_cut_fresh": [
+   100170,
+   758322
+  ],
+  "frames_loop": 1087751,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   24,
+   5068
+  ],
+  "inf_unsolved_taint_and": 5044,
+  "nodes": 1088209,
+  "outcome": "win",
+  "pv_len": 269,
+  "salt": 4,
+  "stale_after_return": 594,
+  "stale_evals_after": 291965,
+  "suppress_draw_clobbers": 2,
+  "suppress_draw_stores": 137,
+  "tt": 128,
+  "tt_bound_reuse_inf": 27171,
+  "wall_s": 3.7260496180000002
+ },
+ "r4_stress_s1": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 758176477,
+  "chunk0": 500000,
+  "chunks": 11,
+  "depth": null,
+  "exit_nomove": [
+   2834072,
+   2435577
+  ],
+  "exit_nomove_evals": [
+   4464380216,
+   4127115958
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   304890,
+   210644
+  ],
+  "exit_solved_evals": [
+   1255887309,
+   1000460486
+  ],
+  "exit_threshold": [
+   4153595,
+   72703532
+  ],
+  "exit_threshold_evals": [
+   3543985803,
+   4224006371
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   56,
+   51
+  ],
+  "exit_work_evals": [
+   2857652014,
+   2490854097
+  ],
+  "explored_evals_after": [
+   409252,
+   6790183,
+   5449847,
+   1915441184,
+   0
+  ],
+  "explored_frames": 5273572,
+  "explored_marks": 62127158,
+  "first_sweep_cut": [
+   3208463,
+   71787203
+  ],
+  "first_sweep_cut_evals": [
+   104574686,
+   454177070
+  ],
+  "first_sweep_cut_fresh": [
+   2892142,
+   14470261
+  ],
+  "frames_loop": 82642417,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   1128,
+   106238
+  ],
+  "inf_unsolved_taint_and": 105120,
+  "nodes": 84556720,
+  "outcome": "win",
+  "pv_len": 379,
+  "salt": 1,
+  "stale_after_return": 1923022,
+  "stale_evals_after": 360863678,
+  "suppress_draw_clobbers": 296,
+  "suppress_draw_stores": 8723,
+  "tt": 128,
+  "tt_bound_reuse_inf": 652027,
+  "wall_s": 104.123590118
+ },
+ "r4_stress_s2": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 2500000002,
+  "chunk0": 500000,
+  "chunks": 13,
+  "depth": null,
+  "exit_nomove": [
+   16951201,
+   13717771
+  ],
+  "exit_nomove_evals": [
+   24725211601,
+   24687571919
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   215403,
+   166529
+  ],
+  "exit_solved_evals": [
+   14113855,
+   8151890
+  ],
+  "exit_threshold": [
+   2774482,
+   344194129
+  ],
+  "exit_threshold_evals": [
+   6557562130,
+   7615889798
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   166,
+   156
+  ],
+  "exit_work_evals": [
+   34518718686,
+   32649739166
+  ],
+  "explored_evals_after": [
+   258541,
+   9960063,
+   736748786,
+   13781414048,
+   0
+  ],
+  "explored_frames": 30671128,
+  "explored_marks": 366569680,
+  "first_sweep_cut": [
+   2104995,
+   343523239
+  ],
+  "first_sweep_cut_evals": [
+   69843403,
+   1569846664
+  ],
+  "first_sweep_cut_fresh": [
+   1891978,
+   9460460
+  ],
+  "frames_loop": 378019837,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   48,
+   62547
+  ],
+  "inf_unsolved_taint_and": 62498,
+  "nodes": 388694742,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 2,
+  "stale_after_return": 10701409,
+  "stale_evals_after": 2380609981,
+  "suppress_draw_clobbers": 190,
+  "suppress_draw_stores": 26510,
+  "tt": 128,
+  "tt_bound_reuse_inf": 424335,
+  "wall_s": 232.398347247
+ },
+ "r4_stress_s3": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 2500000001,
+  "chunk0": 500000,
+  "chunks": 13,
+  "depth": null,
+  "exit_nomove": [
+   14911978,
+   14192859
+  ],
+  "exit_nomove_evals": [
+   26828122003,
+   26854741280
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   250482,
+   3820735
+  ],
+  "exit_solved_evals": [
+   15356637,
+   16274850
+  ],
+  "exit_threshold": [
+   3093613,
+   423995403
+  ],
+  "exit_threshold_evals": [
+   65565154530,
+   65589542972
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   272,
+   261
+  ],
+  "exit_work_evals": [
+   40796014295,
+   39717373465
+  ],
+  "explored_evals_after": [
+   184782,
+   233812239,
+   229423275,
+   14014556541,
+   0
+  ],
+  "explored_frames": 29107421,
+  "explored_marks": 436641791,
+  "first_sweep_cut": [
+   2385099,
+   423310390
+  ],
+  "first_sweep_cut_evals": [
+   79478793,
+   1427343336
+  ],
+  "first_sweep_cut_fresh": [
+   2158565,
+   11063095
+  ],
+  "frames_loop": 460265603,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   64,
+   70690144
+  ],
+  "inf_unsolved_taint_and": 15530147,
+  "nodes": 460441883,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 3,
+  "stale_after_return": 3833258,
+  "stale_evals_after": 1071019425,
+  "suppress_draw_clobbers": 308,
+  "suppress_draw_stores": 1506,
+  "tt": 128,
+  "tt_bound_reuse_inf": 139993706,
+  "wall_s": 299.61030242
+ },
+ "r4_stress_s4": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 2500000003,
+  "chunk0": 500000,
+  "chunks": 13,
+  "depth": null,
+  "exit_nomove": [
+   17284275,
+   14992632
+  ],
+  "exit_nomove_evals": [
+   18670681092,
+   17782547761
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   237094,
+   176427
+  ],
+  "exit_solved_evals": [
+   16339990,
+   9766466
+  ],
+  "exit_threshold": [
+   3146428,
+   343163417
+  ],
+  "exit_threshold_evals": [
+   992963160,
+   2521731589
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   129,
+   121
+  ],
+  "exit_work_evals": [
+   37432868039,
+   35938395440
+  ],
+  "explored_evals_after": [
+   323534,
+   6708846,
+   3507800526,
+   11717633695,
+   0
+  ],
+  "explored_frames": 32280863,
+  "explored_marks": 367119322,
+  "first_sweep_cut": [
+   2414097,
+   342437363
+  ],
+  "first_sweep_cut_evals": [
+   79236380,
+   1556178123
+  ],
+  "first_sweep_cut_fresh": [
+   2157957,
+   10805666
+  ],
+  "frames_loop": 379000523,
+  "group": "R4",
+  "inf_unsolved_stores": [
+   46,
+   78564
+  ],
+  "inf_unsolved_taint_and": 78516,
+  "nodes": 391725987,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 4,
+  "stale_after_return": 12746601,
+  "stale_evals_after": 5137516859,
+  "suppress_draw_clobbers": 272,
+  "suppress_draw_stores": 21141,
+  "tt": 128,
+  "tt_bound_reuse_inf": 499540,
+  "wall_s": 232.386624319
+ },
+ "r5_dec10_mob": {
+  "arm": "mob",
+  "case": "dec10",
+  "child_evals": 7818439,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": null,
+  "exit_nomove": [
+   100953,
+   88249
+  ],
+  "exit_nomove_evals": [
+   45489706,
+   45556940
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   3631,
+   3502
+  ],
+  "exit_solved_evals": [
+   5655912,
+   4693231
+  ],
+  "exit_threshold": [
+   39009,
+   1247510
+  ],
+  "exit_threshold_evals": [
+   50470021,
+   48396157
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   46,
+   42
+  ],
+  "exit_work_evals": [
+   8673406,
+   8309311
+  ],
+  "explored_evals_after": [
+   910159,
+   3766624,
+   66015,
+   15032396,
+   0
+  ],
+  "explored_frames": 190291,
+  "explored_marks": 1391891,
+  "first_sweep_cut": [
+   12540,
+   1222796
+  ],
+  "first_sweep_cut_evals": [
+   167279,
+   4085077
+  ],
+  "first_sweep_cut_fresh": [
+   7386,
+   12380
+  ],
+  "frames_loop": 1482942,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   96712
+  ],
+  "inf_unsolved_taint_and": 96712,
+  "nodes": 1522037,
+  "outcome": "win",
+  "pv_len": 39,
+  "salt": 0,
+  "stale_after_return": 40471,
+  "stale_evals_after": 6338363,
+  "suppress_draw_clobbers": 217,
+  "suppress_draw_stores": 1381,
+  "tt": 128,
+  "tt_bound_reuse_inf": 192650,
+  "wall_s": 1.12573697
+ },
+ "r5_dec10_mob_s1": {
+  "arm": "mob",
+  "case": "dec10",
+  "child_evals": 7818449,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": null,
+  "exit_nomove": [
+   100953,
+   88249
+  ],
+  "exit_nomove_evals": [
+   45489629,
+   45556863
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   3631,
+   3502
+  ],
+  "exit_solved_evals": [
+   5655912,
+   4693231
+  ],
+  "exit_threshold": [
+   39009,
+   1247512
+  ],
+  "exit_threshold_evals": [
+   50469948,
+   48396098
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   46,
+   42
+  ],
+  "exit_work_evals": [
+   8673576,
+   8309465
+  ],
+  "explored_evals_after": [
+   910159,
+   3766617,
+   66047,
+   15032347,
+   0
+  ],
+  "explored_frames": 190291,
+  "explored_marks": 1391894,
+  "first_sweep_cut": [
+   12539,
+   1222798
+  ],
+  "first_sweep_cut_evals": [
+   167266,
+   4085085
+  ],
+  "first_sweep_cut_fresh": [
+   7386,
+   12378
+  ],
+  "frames_loop": 1482944,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   96712
+  ],
+  "inf_unsolved_taint_and": 96712,
+  "nodes": 1522039,
+  "outcome": "win",
+  "pv_len": 39,
+  "salt": 1,
+  "stale_after_return": 40471,
+  "stale_evals_after": 6338349,
+  "suppress_draw_clobbers": 217,
+  "suppress_draw_stores": 1381,
+  "tt": 128,
+  "tt_bound_reuse_inf": 192650,
+  "wall_s": 1.001877566
+ },
+ "r5_dec10_mob_s2": {
+  "arm": "mob",
+  "case": "dec10",
+  "child_evals": 7818453,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": null,
+  "exit_nomove": [
+   100953,
+   88249
+  ],
+  "exit_nomove_evals": [
+   45489629,
+   45556863
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   3631,
+   3502
+  ],
+  "exit_solved_evals": [
+   5655912,
+   4693231
+  ],
+  "exit_threshold": [
+   39013,
+   1247511
+  ],
+  "exit_threshold_evals": [
+   50470097,
+   48396354
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   44,
+   41
+  ],
+  "exit_work_evals": [
+   8672934,
+   8308721
+  ],
+  "explored_evals_after": [
+   910159,
+   3766617,
+   66015,
+   15032347,
+   0
+  ],
+  "explored_frames": 190291,
+  "explored_marks": 1391894,
+  "first_sweep_cut": [
+   12544,
+   1222794
+  ],
+  "first_sweep_cut_evals": [
+   167306,
+   4085017
+  ],
+  "first_sweep_cut_fresh": [
+   7390,
+   12378
+  ],
+  "frames_loop": 1482944,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   96712
+  ],
+  "inf_unsolved_taint_and": 96712,
+  "nodes": 1522039,
+  "outcome": "win",
+  "pv_len": 39,
+  "salt": 2,
+  "stale_after_return": 40471,
+  "stale_evals_after": 6338349,
+  "suppress_draw_clobbers": 217,
+  "suppress_draw_stores": 1381,
+  "tt": 128,
+  "tt_bound_reuse_inf": 192650,
+  "wall_s": 1.004701048
+ },
+ "r5_dec10_mob_s3": {
+  "arm": "mob",
+  "case": "dec10",
+  "child_evals": 7818441,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": null,
+  "exit_nomove": [
+   100953,
+   88249
+  ],
+  "exit_nomove_evals": [
+   45489629,
+   45556863
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   3631,
+   3502
+  ],
+  "exit_solved_evals": [
+   5655912,
+   4693231
+  ],
+  "exit_threshold": [
+   39009,
+   1247511
+  ],
+  "exit_threshold_evals": [
+   50469916,
+   48396067
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   46,
+   42
+  ],
+  "exit_work_evals": [
+   8673568,
+   8309457
+  ],
+  "explored_evals_after": [
+   910159,
+   3766617,
+   66047,
+   15032347,
+   0
+  ],
+  "explored_frames": 190291,
+  "explored_marks": 1391894,
+  "first_sweep_cut": [
+   12540,
+   1222797
+  ],
+  "first_sweep_cut_evals": [
+   167279,
+   4085078
+  ],
+  "first_sweep_cut_fresh": [
+   7386,
+   12377
+  ],
+  "frames_loop": 1482943,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   96712
+  ],
+  "inf_unsolved_taint_and": 96712,
+  "nodes": 1522038,
+  "outcome": "win",
+  "pv_len": 39,
+  "salt": 3,
+  "stale_after_return": 40471,
+  "stale_evals_after": 6338349,
+  "suppress_draw_clobbers": 217,
+  "suppress_draw_stores": 1381,
+  "tt": 128,
+  "tt_bound_reuse_inf": 192650,
+  "wall_s": 1.010554638
+ },
+ "r5_dec10_mob_s4": {
+  "arm": "mob",
+  "case": "dec10",
+  "child_evals": 7818441,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": null,
+  "exit_nomove": [
+   100953,
+   88249
+  ],
+  "exit_nomove_evals": [
+   45489629,
+   45556863
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   3631,
+   3502
+  ],
+  "exit_solved_evals": [
+   5655912,
+   4693231
+  ],
+  "exit_threshold": [
+   39009,
+   1247511
+  ],
+  "exit_threshold_evals": [
+   50469916,
+   48396067
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   46,
+   42
+  ],
+  "exit_work_evals": [
+   8673568,
+   8309457
+  ],
+  "explored_evals_after": [
+   910159,
+   3766617,
+   66047,
+   15032347,
+   0
+  ],
+  "explored_frames": 190291,
+  "explored_marks": 1391894,
+  "first_sweep_cut": [
+   12540,
+   1222797
+  ],
+  "first_sweep_cut_evals": [
+   167279,
+   4085078
+  ],
+  "first_sweep_cut_fresh": [
+   7386,
+   12377
+  ],
+  "frames_loop": 1482943,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   96712
+  ],
+  "inf_unsolved_taint_and": 96712,
+  "nodes": 1522038,
+  "outcome": "win",
+  "pv_len": 39,
+  "salt": 4,
+  "stale_after_return": 40471,
+  "stale_evals_after": 6338349,
+  "suppress_draw_clobbers": 217,
+  "suppress_draw_stores": 1381,
+  "tt": 128,
+  "tt_bound_reuse_inf": 192650,
+  "wall_s": 1.006016143
+ },
+ "r5_dec10_wpns": {
+  "arm": "wpns",
+  "case": "dec10",
+  "child_evals": 5846520,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   33656,
+   30980
+  ],
+  "exit_nomove_evals": [
+   17439765,
+   17764742
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   10099,
+   4882
+  ],
+  "exit_solved_evals": [
+   8982288,
+   7740751
+  ],
+  "exit_threshold": [
+   110038,
+   526493
+  ],
+  "exit_threshold_evals": [
+   20692268,
+   20440347
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   16,
+   15
+  ],
+  "exit_work_evals": [
+   3620954,
+   1931478
+  ],
+  "explored_evals_after": [
+   673958,
+   194597,
+   0,
+   7123685,
+   0
+  ],
+  "explored_frames": 64805,
+  "explored_marks": 456573,
+  "first_sweep_cut": [
+   77041,
+   494941
+  ],
+  "first_sweep_cut_evals": [
+   1342307,
+   2608703
+  ],
+  "first_sweep_cut_fresh": [
+   54425,
+   73788
+  ],
+  "frames_loop": 716179,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   33761
+  ],
+  "inf_unsolved_taint_and": 33761,
+  "nodes": 726177,
+  "outcome": "win",
+  "pv_len": 41,
+  "salt": 0,
+  "stale_after_return": 10808,
+  "stale_evals_after": 1421631,
+  "suppress_draw_clobbers": 125,
+  "suppress_draw_stores": 815,
+  "tt": 128,
+  "tt_bound_reuse_inf": 79352,
+  "wall_s": 1.1814863070000001
+ },
+ "r5_dec10_wpns_s1": {
+  "arm": "wpns",
+  "case": "dec10",
+  "child_evals": 6616666,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   8712,
+   8089
+  ],
+  "exit_nomove_evals": [
+   3942152,
+   3848562
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   18552,
+   7009
+  ],
+  "exit_solved_evals": [
+   4880915,
+   2294145
+  ],
+  "exit_threshold": [
+   177076,
+   310765
+  ],
+  "exit_threshold_evals": [
+   22272616,
+   23860990
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   15,
+   14
+  ],
+  "exit_work_evals": [
+   4251130,
+   1949908
+  ],
+  "explored_evals_after": [
+   84955,
+   292034,
+   0,
+   1592936,
+   0
+  ],
+  "explored_frames": 16890,
+  "explored_marks": 119455,
+  "first_sweep_cut": [
+   136927,
+   272849
+  ],
+  "first_sweep_cut_evals": [
+   2352014,
+   2665590
+  ],
+  "first_sweep_cut_fresh": [
+   93694,
+   121113
+  ],
+  "frames_loop": 530232,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   11931
+  ],
+  "inf_unsolved_taint_and": 11921,
+  "nodes": 532526,
+  "outcome": "win",
+  "pv_len": 45,
+  "salt": 1,
+  "stale_after_return": 2627,
+  "stale_evals_after": 307936,
+  "suppress_draw_clobbers": 55,
+  "suppress_draw_stores": 338,
+  "tt": 128,
+  "tt_bound_reuse_inf": 48157,
+  "wall_s": 1.07473463
+ },
+ "r5_dec10_wpns_s2": {
+  "arm": "wpns",
+  "case": "dec10",
+  "child_evals": 5846348,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   33656,
+   30980
+  ],
+  "exit_nomove_evals": [
+   17439765,
+   17764742
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   10097,
+   4882
+  ],
+  "exit_solved_evals": [
+   8982116,
+   7740576
+  ],
+  "exit_threshold": [
+   110032,
+   526475
+  ],
+  "exit_threshold_evals": [
+   20690810,
+   20438953
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   27,
+   25
+  ],
+  "exit_work_evals": [
+   3623241,
+   1933644
+  ],
+  "explored_evals_after": [
+   673958,
+   194597,
+   0,
+   7123685,
+   0
+  ],
+  "explored_frames": 64805,
+  "explored_marks": 456573,
+  "first_sweep_cut": [
+   77036,
+   494922
+  ],
+  "first_sweep_cut_evals": [
+   1342255,
+   2608452
+  ],
+  "first_sweep_cut_fresh": [
+   54430,
+   73773
+  ],
+  "frames_loop": 716174,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   33760
+  ],
+  "inf_unsolved_taint_and": 33760,
+  "nodes": 726172,
+  "outcome": "win",
+  "pv_len": 41,
+  "salt": 2,
+  "stale_after_return": 10808,
+  "stale_evals_after": 1421631,
+  "suppress_draw_clobbers": 125,
+  "suppress_draw_stores": 815,
+  "tt": 128,
+  "tt_bound_reuse_inf": 79349,
+  "wall_s": 0.764563638
+ },
+ "r5_dec10_wpns_s3": {
+  "arm": "wpns",
+  "case": "dec10",
+  "child_evals": 5846336,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   33656,
+   30980
+  ],
+  "exit_nomove_evals": [
+   17439765,
+   17764742
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   10098,
+   4882
+  ],
+  "exit_solved_evals": [
+   8982100,
+   7740575
+  ],
+  "exit_threshold": [
+   110033,
+   526480
+  ],
+  "exit_threshold_evals": [
+   20691397,
+   20439522
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   17,
+   15
+  ],
+  "exit_work_evals": [
+   3621257,
+   1931765
+  ],
+  "explored_evals_after": [
+   673958,
+   194597,
+   0,
+   7123685,
+   0
+  ],
+  "explored_frames": 64805,
+  "explored_marks": 456573,
+  "first_sweep_cut": [
+   77037,
+   494926
+  ],
+  "first_sweep_cut_evals": [
+   1342282,
+   2608538
+  ],
+  "first_sweep_cut_fresh": [
+   54429,
+   73782
+  ],
+  "frames_loop": 716161,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   33760
+  ],
+  "inf_unsolved_taint_and": 33760,
+  "nodes": 726159,
+  "outcome": "win",
+  "pv_len": 41,
+  "salt": 3,
+  "stale_after_return": 10808,
+  "stale_evals_after": 1421631,
+  "suppress_draw_clobbers": 125,
+  "suppress_draw_stores": 815,
+  "tt": 128,
+  "tt_bound_reuse_inf": 79347,
+  "wall_s": 0.766263194
+ },
+ "r5_dec10_wpns_s4": {
+  "arm": "wpns",
+  "case": "dec10",
+  "child_evals": 5846350,
+  "chunk0": 500000,
+  "chunks": 4,
+  "depth": null,
+  "exit_nomove": [
+   33656,
+   30980
+  ],
+  "exit_nomove_evals": [
+   17439765,
+   17764742
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   10098,
+   4882
+  ],
+  "exit_solved_evals": [
+   8982108,
+   7740575
+  ],
+  "exit_threshold": [
+   110039,
+   526480
+  ],
+  "exit_threshold_evals": [
+   20691536,
+   20439630
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   16,
+   14
+  ],
+  "exit_work_evals": [
+   3621106,
+   1931624
+  ],
+  "explored_evals_after": [
+   673958,
+   194597,
+   0,
+   7123685,
+   0
+  ],
+  "explored_frames": 64805,
+  "explored_marks": 456573,
+  "first_sweep_cut": [
+   77042,
+   494926
+  ],
+  "first_sweep_cut_evals": [
+   1342307,
+   2608526
+  ],
+  "first_sweep_cut_fresh": [
+   54431,
+   73773
+  ],
+  "frames_loop": 716165,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   33760
+  ],
+  "inf_unsolved_taint_and": 33760,
+  "nodes": 726163,
+  "outcome": "win",
+  "pv_len": 41,
+  "salt": 4,
+  "stale_after_return": 10808,
+  "stale_evals_after": 1421631,
+  "suppress_draw_clobbers": 125,
+  "suppress_draw_stores": 815,
+  "tt": 128,
+  "tt_bound_reuse_inf": 79346,
+  "wall_s": 0.757051326
+ },
+ "r5_dec13_mob": {
+  "arm": "mob",
+  "case": "dec13",
+  "child_evals": 612551,
+  "chunk0": 500000,
+  "chunks": 2,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   3389,
+   2291
+  ],
+  "exit_solved_evals": [
+   183262,
+   94132
+  ],
+  "exit_threshold": [
+   12266,
+   12051
+  ],
+  "exit_threshold_evals": [
+   1858037,
+   2044563
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   5,
+   4
+  ],
+  "exit_work_evals": [
+   586475,
+   87180
+  ],
+  "explored_evals_after": [
+   7,
+   6,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 3,
+  "explored_marks": 3,
+  "first_sweep_cut": [
+   4626,
+   5604
+  ],
+  "first_sweep_cut_evals": [
+   117868,
+   48006
+  ],
+  "first_sweep_cut_fresh": [
+   4396,
+   5511
+  ],
+  "frames_loop": 30006,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   9,
+   32
+  ],
+  "inf_unsolved_taint_and": 23,
+  "nodes": 30014,
+  "outcome": "win",
+  "pv_len": 17,
+  "salt": 0,
+  "stale_after_return": 3,
+  "stale_evals_after": 13,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 2,
+  "tt": 128,
+  "tt_bound_reuse_inf": 88,
+  "wall_s": 0.200658207
+ },
+ "r5_dec13_mob_s1": {
+  "arm": "mob",
+  "case": "dec13",
+  "child_evals": 612551,
+  "chunk0": 500000,
+  "chunks": 2,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   3389,
+   2291
+  ],
+  "exit_solved_evals": [
+   183262,
+   94132
+  ],
+  "exit_threshold": [
+   12266,
+   12051
+  ],
+  "exit_threshold_evals": [
+   1858037,
+   2044563
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   5,
+   4
+  ],
+  "exit_work_evals": [
+   586475,
+   87180
+  ],
+  "explored_evals_after": [
+   7,
+   6,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 3,
+  "explored_marks": 3,
+  "first_sweep_cut": [
+   4626,
+   5604
+  ],
+  "first_sweep_cut_evals": [
+   117868,
+   48006
+  ],
+  "first_sweep_cut_fresh": [
+   4396,
+   5511
+  ],
+  "frames_loop": 30006,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   9,
+   32
+  ],
+  "inf_unsolved_taint_and": 23,
+  "nodes": 30014,
+  "outcome": "win",
+  "pv_len": 17,
+  "salt": 1,
+  "stale_after_return": 3,
+  "stale_evals_after": 13,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 2,
+  "tt": 128,
+  "tt_bound_reuse_inf": 88,
+  "wall_s": 0.198691025
+ },
+ "r5_dec13_mob_s2": {
+  "arm": "mob",
+  "case": "dec13",
+  "child_evals": 612551,
+  "chunk0": 500000,
+  "chunks": 2,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   3389,
+   2291
+  ],
+  "exit_solved_evals": [
+   183262,
+   94132
+  ],
+  "exit_threshold": [
+   12266,
+   12051
+  ],
+  "exit_threshold_evals": [
+   1858037,
+   2044563
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   5,
+   4
+  ],
+  "exit_work_evals": [
+   586475,
+   87180
+  ],
+  "explored_evals_after": [
+   7,
+   6,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 3,
+  "explored_marks": 3,
+  "first_sweep_cut": [
+   4626,
+   5604
+  ],
+  "first_sweep_cut_evals": [
+   117868,
+   48006
+  ],
+  "first_sweep_cut_fresh": [
+   4396,
+   5511
+  ],
+  "frames_loop": 30006,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   9,
+   32
+  ],
+  "inf_unsolved_taint_and": 23,
+  "nodes": 30014,
+  "outcome": "win",
+  "pv_len": 17,
+  "salt": 2,
+  "stale_after_return": 3,
+  "stale_evals_after": 13,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 2,
+  "tt": 128,
+  "tt_bound_reuse_inf": 88,
+  "wall_s": 0.199888368
+ },
+ "r5_dec13_mob_s3": {
+  "arm": "mob",
+  "case": "dec13",
+  "child_evals": 612551,
+  "chunk0": 500000,
+  "chunks": 2,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   3389,
+   2291
+  ],
+  "exit_solved_evals": [
+   183262,
+   94132
+  ],
+  "exit_threshold": [
+   12266,
+   12051
+  ],
+  "exit_threshold_evals": [
+   1858037,
+   2044563
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   5,
+   4
+  ],
+  "exit_work_evals": [
+   586475,
+   87180
+  ],
+  "explored_evals_after": [
+   7,
+   6,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 3,
+  "explored_marks": 3,
+  "first_sweep_cut": [
+   4626,
+   5604
+  ],
+  "first_sweep_cut_evals": [
+   117868,
+   48006
+  ],
+  "first_sweep_cut_fresh": [
+   4396,
+   5511
+  ],
+  "frames_loop": 30006,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   9,
+   32
+  ],
+  "inf_unsolved_taint_and": 23,
+  "nodes": 30014,
+  "outcome": "win",
+  "pv_len": 17,
+  "salt": 3,
+  "stale_after_return": 3,
+  "stale_evals_after": 13,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 2,
+  "tt": 128,
+  "tt_bound_reuse_inf": 88,
+  "wall_s": 0.199944702
+ },
+ "r5_dec13_mob_s4": {
+  "arm": "mob",
+  "case": "dec13",
+  "child_evals": 612551,
+  "chunk0": 500000,
+  "chunks": 2,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   3389,
+   2291
+  ],
+  "exit_solved_evals": [
+   183262,
+   94132
+  ],
+  "exit_threshold": [
+   12266,
+   12051
+  ],
+  "exit_threshold_evals": [
+   1858037,
+   2044563
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   5,
+   4
+  ],
+  "exit_work_evals": [
+   586475,
+   87180
+  ],
+  "explored_evals_after": [
+   7,
+   6,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 3,
+  "explored_marks": 3,
+  "first_sweep_cut": [
+   4626,
+   5604
+  ],
+  "first_sweep_cut_evals": [
+   117868,
+   48006
+  ],
+  "first_sweep_cut_fresh": [
+   4396,
+   5511
+  ],
+  "frames_loop": 30006,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   9,
+   32
+  ],
+  "inf_unsolved_taint_and": 23,
+  "nodes": 30014,
+  "outcome": "win",
+  "pv_len": 17,
+  "salt": 4,
+  "stale_after_return": 3,
+  "stale_evals_after": 13,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 2,
+  "tt": 128,
+  "tt_bound_reuse_inf": 88,
+  "wall_s": 0.197158304
+ },
+ "r5_dec13_wpns": {
+  "arm": "wpns",
+  "case": "dec13",
+  "child_evals": 9274715,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   19558,
+   31297
+  ],
+  "exit_solved_evals": [
+   2983235,
+   1134711
+  ],
+  "exit_threshold": [
+   106686,
+   236355
+  ],
+  "exit_threshold_evals": [
+   28859271,
+   34136317
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   18,
+   16
+  ],
+  "exit_work_evals": [
+   16530906,
+   9300806
+  ],
+  "explored_evals_after": [
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 0,
+  "explored_marks": 0,
+  "first_sweep_cut": [
+   95753,
+   225446
+  ],
+  "first_sweep_cut_evals": [
+   3136573,
+   5168910
+  ],
+  "first_sweep_cut_fresh": [
+   94531,
+   222471
+  ],
+  "frames_loop": 393930,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   644
+  ],
+  "inf_unsolved_taint_and": 644,
+  "nodes": 393934,
+  "outcome": "win",
+  "pv_len": 31,
+  "salt": 0,
+  "stale_after_return": 0,
+  "stale_evals_after": 0,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 0,
+  "tt": 128,
+  "tt_bound_reuse_inf": 3044,
+  "wall_s": 1.847355211
+ },
+ "r5_dec13_wpns_s1": {
+  "arm": "wpns",
+  "case": "dec13",
+  "child_evals": 9270384,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   19547,
+   31290
+  ],
+  "exit_solved_evals": [
+   2977721,
+   1133592
+  ],
+  "exit_threshold": [
+   106668,
+   236212
+  ],
+  "exit_threshold_evals": [
+   28836581,
+   34109162
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   22,
+   19
+  ],
+  "exit_work_evals": [
+   16532140,
+   9303220
+  ],
+  "explored_evals_after": [
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 0,
+  "explored_marks": 0,
+  "first_sweep_cut": [
+   95743,
+   225313
+  ],
+  "first_sweep_cut_evals": [
+   3135773,
+   5165826
+  ],
+  "first_sweep_cut_fresh": [
+   94522,
+   222336
+  ],
+  "frames_loop": 393758,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   642
+  ],
+  "inf_unsolved_taint_and": 642,
+  "nodes": 393762,
+  "outcome": "win",
+  "pv_len": 31,
+  "salt": 1,
+  "stale_after_return": 0,
+  "stale_evals_after": 0,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 0,
+  "tt": 128,
+  "tt_bound_reuse_inf": 3035,
+  "wall_s": 1.822101209
+ },
+ "r5_dec13_wpns_s2": {
+  "arm": "wpns",
+  "case": "dec13",
+  "child_evals": 9278161,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   19669,
+   31526
+  ],
+  "exit_solved_evals": [
+   2994930,
+   1136245
+  ],
+  "exit_threshold": [
+   106663,
+   236499
+  ],
+  "exit_threshold_evals": [
+   28911274,
+   33925111
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   22,
+   19
+  ],
+  "exit_work_evals": [
+   16480799,
+   9524582
+  ],
+  "explored_evals_after": [
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 0,
+  "explored_marks": 0,
+  "first_sweep_cut": [
+   95737,
+   225600
+  ],
+  "first_sweep_cut_evals": [
+   3135083,
+   5172446
+  ],
+  "first_sweep_cut_fresh": [
+   94550,
+   222712
+  ],
+  "frames_loop": 394398,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   642
+  ],
+  "inf_unsolved_taint_and": 642,
+  "nodes": 394402,
+  "outcome": "win",
+  "pv_len": 31,
+  "salt": 2,
+  "stale_after_return": 0,
+  "stale_evals_after": 0,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 0,
+  "tt": 128,
+  "tt_bound_reuse_inf": 3014,
+  "wall_s": 1.817807131
+ },
+ "r5_dec13_wpns_s3": {
+  "arm": "wpns",
+  "case": "dec13",
+  "child_evals": 9328527,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   19778,
+   31752
+  ],
+  "exit_solved_evals": [
+   3043937,
+   1138441
+  ],
+  "exit_threshold": [
+   107188,
+   237193
+  ],
+  "exit_threshold_evals": [
+   29009977,
+   34374597
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   21,
+   20
+  ],
+  "exit_work_evals": [
+   16529896,
+   9236515
+  ],
+  "explored_evals_after": [
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 0,
+  "explored_marks": 0,
+  "first_sweep_cut": [
+   96253,
+   226281
+  ],
+  "first_sweep_cut_evals": [
+   3166016,
+   5188446
+  ],
+  "first_sweep_cut_fresh": [
+   95036,
+   223305
+  ],
+  "frames_loop": 395952,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   638
+  ],
+  "inf_unsolved_taint_and": 638,
+  "nodes": 395956,
+  "outcome": "win",
+  "pv_len": 31,
+  "salt": 3,
+  "stale_after_return": 0,
+  "stale_evals_after": 0,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 0,
+  "tt": 128,
+  "tt_bound_reuse_inf": 3018,
+  "wall_s": 1.8280611329999998
+ },
+ "r5_dec13_wpns_s4": {
+  "arm": "wpns",
+  "case": "dec13",
+  "child_evals": 9358530,
+  "chunk0": 500000,
+  "chunks": 5,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   19785,
+   31498
+  ],
+  "exit_solved_evals": [
+   3086035,
+   1131198
+  ],
+  "exit_threshold": [
+   107183,
+   238858
+  ],
+  "exit_threshold_evals": [
+   29084605,
+   34491978
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   17,
+   16
+  ],
+  "exit_work_evals": [
+   16499429,
+   9219479
+  ],
+  "explored_evals_after": [
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 0,
+  "explored_marks": 0,
+  "first_sweep_cut": [
+   96198,
+   227899
+  ],
+  "first_sweep_cut_evals": [
+   3156164,
+   5225206
+  ],
+  "first_sweep_cut_fresh": [
+   94973,
+   224887
+  ],
+  "frames_loop": 397357,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   641
+  ],
+  "inf_unsolved_taint_and": 641,
+  "nodes": 397361,
+  "outcome": "win",
+  "pv_len": 31,
+  "salt": 4,
+  "stale_after_return": 0,
+  "stale_evals_after": 0,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 0,
+  "tt": 128,
+  "tt_bound_reuse_inf": 3037,
+  "wall_s": 1.829196392
+ },
+ "r5_m22_mob": {
+  "arm": "mob",
+  "case": "m22",
+  "child_evals": 1000000000,
+  "chunk0": 500000,
+  "chunks": 11,
+  "depth": null,
+  "exit_nomove": [
+   6728982,
+   6381701
+  ],
+  "exit_nomove_evals": [
+   10468601674,
+   10411040001
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   19786,
+   12703
+  ],
+  "exit_solved_evals": [
+   3506785,
+   2490301
+  ],
+  "exit_threshold": [
+   145935,
+   195180205
+  ],
+  "exit_threshold_evals": [
+   52035990711,
+   51783801707
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   543,
+   533
+  ],
+  "exit_work_evals": [
+   10805168921,
+   10703843224
+  ],
+  "explored_evals_after": [
+   241919,
+   60260985,
+   110649181,
+   5846642937,
+   0
+  ],
+  "explored_frames": 13114661,
+  "explored_marks": 207644006,
+  "first_sweep_cut": [
+   50684,
+   195093440
+  ],
+  "first_sweep_cut_evals": [
+   1672416,
+   574019965
+  ],
+  "first_sweep_cut_fresh": [
+   43527,
+   72667
+  ],
+  "frames_loop": 208470388,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   91,
+   5681770
+  ],
+  "inf_unsolved_taint_and": 5681679,
+  "nodes": 209561238,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 0,
+  "stale_after_return": 1095602,
+  "stale_evals_after": 115589929,
+  "suppress_draw_clobbers": 236,
+  "suppress_draw_stores": 4752,
+  "tt": 128,
+  "tt_bound_reuse_inf": 11161547,
+  "wall_s": 177.346897574
+ },
+ "r5_m22_mob_s1": {
+  "arm": "mob",
+  "case": "m22",
+  "child_evals": 1000000001,
+  "chunk0": 500000,
+  "chunks": 11,
+  "depth": null,
+  "exit_nomove": [
+   6721840,
+   6374314
+  ],
+  "exit_nomove_evals": [
+   10352042253,
+   10286068386
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   22793,
+   12910
+  ],
+  "exit_solved_evals": [
+   4345576,
+   3721290
+  ],
+  "exit_threshold": [
+   188967,
+   195025659
+  ],
+  "exit_threshold_evals": [
+   46316184905,
+   46132450162
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   538,
+   528
+  ],
+  "exit_work_evals": [
+   16577398566,
+   16415115516
+  ],
+  "explored_evals_after": [
+   284347,
+   90029490,
+   282206430,
+   5773413344,
+   0
+  ],
+  "explored_frames": 13100351,
+  "explored_marks": 207437204,
+  "first_sweep_cut": [
+   70143,
+   194911488
+  ],
+  "first_sweep_cut_evals": [
+   2056913,
+   573361404
+  ],
+  "first_sweep_cut_fresh": [
+   54676,
+   83202
+  ],
+  "frames_loop": 208347549,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   100,
+   5671005
+  ],
+  "inf_unsolved_taint_and": 5670905,
+  "nodes": 209437250,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 1,
+  "stale_after_return": 1094239,
+  "stale_evals_after": 115095174,
+  "suppress_draw_clobbers": 218,
+  "suppress_draw_stores": 4538,
+  "tt": 128,
+  "tt_bound_reuse_inf": 11141745,
+  "wall_s": 175.970054472
+ },
+ "r5_m22_mob_s2": {
+  "arm": "mob",
+  "case": "m22",
+  "child_evals": 1000000000,
+  "chunk0": 500000,
+  "chunks": 11,
+  "depth": null,
+  "exit_nomove": [
+   6729207,
+   6382240
+  ],
+  "exit_nomove_evals": [
+   10545372255,
+   10454851856
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   19082,
+   12123
+  ],
+  "exit_solved_evals": [
+   3299746,
+   2533132
+  ],
+  "exit_threshold": [
+   145666,
+   195237638
+  ],
+  "exit_threshold_evals": [
+   55850065713,
+   55583168997
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   536,
+   527
+  ],
+  "exit_work_evals": [
+   6934332523,
+   6880333707
+  ],
+  "explored_evals_after": [
+   119355,
+   66243566,
+   40420613,
+   5842145482,
+   0
+  ],
+  "explored_frames": 13115154,
+  "explored_marks": 207701530,
+  "first_sweep_cut": [
+   51025,
+   195151865
+  ],
+  "first_sweep_cut_evals": [
+   1680211,
+   573927153
+  ],
+  "first_sweep_cut_fresh": [
+   43261,
+   72177
+  ],
+  "frames_loop": 208527019,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   97,
+   5682894
+  ],
+  "inf_unsolved_taint_and": 5682797,
+  "nodes": 209617549,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 2,
+  "stale_after_return": 1094823,
+  "stale_evals_after": 114768017,
+  "suppress_draw_clobbers": 210,
+  "suppress_draw_stores": 4293,
+  "tt": 128,
+  "tt_bound_reuse_inf": 11163850,
+  "wall_s": 174.718347914
+ },
+ "r5_m22_mob_s3": {
+  "arm": "mob",
+  "case": "m22",
+  "child_evals": 1000000001,
+  "chunk0": 500000,
+  "chunks": 11,
+  "depth": null,
+  "exit_nomove": [
+   6722258,
+   6375491
+  ],
+  "exit_nomove_evals": [
+   10499560264,
+   10450184593
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   21829,
+   13198
+  ],
+  "exit_solved_evals": [
+   2757400,
+   2053227
+  ],
+  "exit_threshold": [
+   178393,
+   195029621
+  ],
+  "exit_threshold_evals": [
+   23923113426,
+   24111907856
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   539,
+   530
+  ],
+  "exit_work_evals": [
+   38825904193,
+   38274774962
+  ],
+  "explored_evals_after": [
+   231152,
+   52938674,
+   103270198,
+   5857856363,
+   0
+  ],
+  "explored_frames": 13101944,
+  "explored_marks": 207446037,
+  "first_sweep_cut": [
+   64553,
+   194922774
+  ],
+  "first_sweep_cut_evals": [
+   1947456,
+   573603671
+  ],
+  "first_sweep_cut_fresh": [
+   52252,
+   80540
+  ],
+  "frames_loop": 208341859,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   87,
+   5677622
+  ],
+  "inf_unsolved_taint_and": 5677535,
+  "nodes": 209432112,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 3,
+  "stale_after_return": 1094979,
+  "stale_evals_after": 115439480,
+  "suppress_draw_clobbers": 247,
+  "suppress_draw_stores": 4726,
+  "tt": 128,
+  "tt_bound_reuse_inf": 11154809,
+  "wall_s": 175.364644404
+ },
+ "r5_m22_mob_s4": {
+  "arm": "mob",
+  "case": "m22",
+  "child_evals": 1000000003,
+  "chunk0": 500000,
+  "chunks": 11,
+  "depth": null,
+  "exit_nomove": [
+   6730532,
+   6383103
+  ],
+  "exit_nomove_evals": [
+   10404392402,
+   10296113031
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   20821,
+   11733
+  ],
+  "exit_solved_evals": [
+   3081982,
+   2341148
+  ],
+  "exit_threshold": [
+   150449,
+   195283978
+  ],
+  "exit_threshold_evals": [
+   46321009773,
+   46230332868
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   538,
+   529
+  ],
+  "exit_work_evals": [
+   16636713882,
+   16424135203
+  ],
+  "explored_evals_after": [
+   392582,
+   204564038,
+   40300513,
+   5813441007,
+   0
+  ],
+  "explored_frames": 13116821,
+  "explored_marks": 207749234,
+  "first_sweep_cut": [
+   54105,
+   195188709
+  ],
+  "first_sweep_cut_evals": [
+   1713942,
+   573815289
+  ],
+  "first_sweep_cut_fresh": [
+   43924,
+   67832
+  ],
+  "frames_loop": 208581683,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   83,
+   5680464
+  ],
+  "inf_unsolved_taint_and": 5680381,
+  "nodes": 209672451,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 4,
+  "stale_after_return": 1094947,
+  "stale_evals_after": 114881449,
+  "suppress_draw_clobbers": 224,
+  "suppress_draw_stores": 4179,
+  "tt": 128,
+  "tt_bound_reuse_inf": 11158152,
+  "wall_s": 176.022107821
+ },
+ "r5_m22_wpns": {
+  "arm": "wpns",
+  "case": "m22",
+  "child_evals": 1000000001,
+  "chunk0": 500000,
+  "chunks": 11,
+  "depth": null,
+  "exit_nomove": [
+   6728631,
+   6640714
+  ],
+  "exit_nomove_evals": [
+   12921089791,
+   12489338614
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   14935,
+   44927
+  ],
+  "exit_solved_evals": [
+   2125259,
+   1538205
+  ],
+  "exit_threshold": [
+   172171,
+   195656656
+  ],
+  "exit_threshold_evals": [
+   80320166,
+   643543078
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   434,
+   424
+  ],
+  "exit_work_evals": [
+   44840664118,
+   44297156974
+  ],
+  "explored_evals_after": [
+   194330,
+   1184613,
+   813038664,
+   8383125380,
+   0
+  ],
+  "explored_frames": 13369943,
+  "explored_marks": 206102843,
+  "first_sweep_cut": [
+   79631,
+   195564876
+  ],
+  "first_sweep_cut_evals": [
+   2758825,
+   573540354
+  ],
+  "first_sweep_cut_fresh": [
+   62106,
+   607725
+  ],
+  "frames_loop": 209258892,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   5682125
+  ],
+  "inf_unsolved_taint_and": 5682125,
+  "nodes": 210217516,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 0,
+  "stale_after_return": 998465,
+  "stale_evals_after": 115183708,
+  "suppress_draw_clobbers": 380,
+  "suppress_draw_stores": 39841,
+  "tt": 128,
+  "tt_bound_reuse_inf": 10905490,
+  "wall_s": 124.325992588
+ },
+ "r5_m22_wpns_s1": {
+  "arm": "wpns",
+  "case": "m22",
+  "child_evals": 1000000029,
+  "chunk0": 500000,
+  "chunks": 11,
+  "depth": null,
+  "exit_nomove": [
+   6990976,
+   6858920
+  ],
+  "exit_nomove_evals": [
+   15805189460,
+   15597829852
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   15248,
+   961190
+  ],
+  "exit_solved_evals": [
+   1912632,
+   3145316
+  ],
+  "exit_threshold": [
+   155299,
+   195261810
+  ],
+  "exit_threshold_evals": [
+   71683727,
+   622982856
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   405,
+   395
+  ],
+  "exit_work_evals": [
+   40353127692,
+   39584433098
+  ],
+  "explored_evals_after": [
+   169583,
+   1062624,
+   913742803,
+   8305087895,
+   0
+  ],
+  "explored_frames": 13850521,
+  "explored_marks": 206600842,
+  "first_sweep_cut": [
+   74445,
+   195181220
+  ],
+  "first_sweep_cut_evals": [
+   2590348,
+   560343820
+  ],
+  "first_sweep_cut_fresh": [
+   58646,
+   678974
+  ],
+  "frames_loop": 210244243,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   17324744
+  ],
+  "inf_unsolved_taint_and": 5253286,
+  "nodes": 210609346,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 1,
+  "stale_after_return": 1319463,
+  "stale_evals_after": 168027951,
+  "suppress_draw_clobbers": 794,
+  "suppress_draw_stores": 20644,
+  "tt": 128,
+  "tt_bound_reuse_inf": 33781247,
+  "wall_s": 119.975637317
+ },
+ "r5_m22_wpns_s2": {
+  "arm": "wpns",
+  "case": "m22",
+  "child_evals": 1000000000,
+  "chunk0": 500000,
+  "chunks": 11,
+  "depth": null,
+  "exit_nomove": [
+   6684936,
+   6604811
+  ],
+  "exit_nomove_evals": [
+   15592516794,
+   15410418627
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   21336,
+   67325
+  ],
+  "exit_solved_evals": [
+   2327050,
+   1689180
+  ],
+  "exit_threshold": [
+   204994,
+   198630932
+  ],
+  "exit_threshold_evals": [
+   766302949,
+   1305080802
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   422,
+   413
+  ],
+  "exit_work_evals": [
+   48450996071,
+   47675018705
+  ],
+  "explored_evals_after": [
+   77893,
+   597126,
+   1126048518,
+   7464127023,
+   0
+  ],
+  "explored_frames": 13290362,
+  "explored_marks": 209678553,
+  "first_sweep_cut": [
+   114888,
+   198541464
+  ],
+  "first_sweep_cut_evals": [
+   3942255,
+   566187468
+  ],
+  "first_sweep_cut_fresh": [
+   95120,
+   838675
+  ],
+  "frames_loop": 212215169,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   5606144
+  ],
+  "inf_unsolved_taint_and": 5606144,
+  "nodes": 213165096,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 2,
+  "stale_after_return": 1011645,
+  "stale_evals_after": 128793977,
+  "suppress_draw_clobbers": 1112,
+  "suppress_draw_stores": 61718,
+  "tt": 128,
+  "tt_bound_reuse_inf": 10682038,
+  "wall_s": 133.354582545
+ },
+ "r5_m22_wpns_s3": {
+  "arm": "wpns",
+  "case": "m22",
+  "child_evals": 1000000001,
+  "chunk0": 500000,
+  "chunks": 11,
+  "depth": null,
+  "exit_nomove": [
+   6812840,
+   6775087
+  ],
+  "exit_nomove_evals": [
+   15925523937,
+   15486631889
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   15686,
+   19666
+  ],
+  "exit_solved_evals": [
+   2215546,
+   1551390
+  ],
+  "exit_threshold": [
+   166306,
+   195292709
+  ],
+  "exit_threshold_evals": [
+   76875446,
+   644793841
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   450,
+   441
+  ],
+  "exit_work_evals": [
+   41336466022,
+   40799471249
+  ],
+  "explored_evals_after": [
+   95608,
+   772976,
+   29956627,
+   8067009407,
+   0
+  ],
+  "explored_frames": 13588568,
+  "explored_marks": 201717980,
+  "first_sweep_cut": [
+   77906,
+   195204252
+  ],
+  "first_sweep_cut_evals": [
+   2696526,
+   577340556
+  ],
+  "first_sweep_cut_fresh": [
+   60179,
+   616035
+  ],
+  "frames_loop": 209083185,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   5854814
+  ],
+  "inf_unsolved_taint_and": 5854814,
+  "nodes": 210065586,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 3,
+  "stale_after_return": 997395,
+  "stale_evals_after": 123197177,
+  "suppress_draw_clobbers": 380,
+  "suppress_draw_stores": 14994,
+  "tt": 128,
+  "tt_bound_reuse_inf": 11083532,
+  "wall_s": 124.531721597
+ },
+ "r5_m22_wpns_s4": {
+  "arm": "wpns",
+  "case": "m22",
+  "child_evals": 1000000000,
+  "chunk0": 500000,
+  "chunks": 11,
+  "depth": null,
+  "exit_nomove": [
+   6760677,
+   6661565
+  ],
+  "exit_nomove_evals": [
+   13288745580,
+   13270919881
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   15947,
+   24756
+  ],
+  "exit_solved_evals": [
+   1699580,
+   1141556
+  ],
+  "exit_threshold": [
+   169095,
+   198022529
+  ],
+  "exit_threshold_evals": [
+   71513609,
+   631686856
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   436,
+   426
+  ],
+  "exit_work_evals": [
+   45549719678,
+   44592183004
+  ],
+  "explored_evals_after": [
+   141398,
+   937194,
+   888021750,
+   7446582615,
+   0
+  ],
+  "explored_frames": 13422868,
+  "explored_marks": 207478446,
+  "first_sweep_cut": [
+   85510,
+   197939332
+  ],
+  "first_sweep_cut_evals": [
+   2949654,
+   570384754
+  ],
+  "first_sweep_cut_fresh": [
+   66894,
+   704773
+  ],
+  "frames_loop": 211655431,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   5699282
+  ],
+  "inf_unsolved_taint_and": 5699282,
+  "nodes": 212643156,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 4,
+  "stale_after_return": 1007157,
+  "stale_evals_after": 173254149,
+  "suppress_draw_clobbers": 394,
+  "suppress_draw_stores": 19432,
+  "tt": 128,
+  "tt_bound_reuse_inf": 10975498,
+  "wall_s": 125.408743043
+ },
+ "r5_stress_mob": {
+  "arm": "mob",
+  "case": "stress",
+  "child_evals": 58665786,
+  "chunk0": 500000,
+  "chunks": 7,
+  "depth": null,
+  "exit_nomove": [
+   14330,
+   11392
+  ],
+  "exit_nomove_evals": [
+   14971630,
+   15904017
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   91776,
+   34613
+  ],
+  "exit_solved_evals": [
+   46944907,
+   31473062
+  ],
+  "exit_threshold": [
+   1137704,
+   1683249
+  ],
+  "exit_threshold_evals": [
+   219757288,
+   220847554
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   21,
+   18
+  ],
+  "exit_work_evals": [
+   36843104,
+   9509172
+  ],
+  "explored_evals_after": [
+   907453,
+   6060814,
+   0,
+   8767831,
+   0
+  ],
+  "explored_frames": 35638,
+  "explored_marks": 523989,
+  "first_sweep_cut": [
+   521508,
+   1113574
+  ],
+  "first_sweep_cut_evals": [
+   16803018,
+   10287398
+  ],
+  "first_sweep_cut_fresh": [
+   428288,
+   508469
+  ],
+  "frames_loop": 2973103,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   59,
+   11567
+  ],
+  "inf_unsolved_taint_and": 11508,
+  "nodes": 2987929,
+  "outcome": "win",
+  "pv_len": 199,
+  "salt": 0,
+  "stale_after_return": 16968,
+  "stale_evals_after": 6276017,
+  "suppress_draw_clobbers": 202,
+  "suppress_draw_stores": 2144,
+  "tt": 128,
+  "tt_bound_reuse_inf": 85324,
+  "wall_s": 15.055494118
+ },
+ "r5_stress_wpns": {
+  "arm": "wpns",
+  "case": "stress",
+  "child_evals": 2500000005,
+  "chunk0": 500000,
+  "chunks": 13,
+  "depth": null,
+  "exit_nomove": [
+   29080150,
+   25566795
+  ],
+  "exit_nomove_evals": [
+   41599761321,
+   41309582530
+  ],
+  "exit_reason": "BudgetExhausted",
+  "exit_solved": [
+   90970,
+   288825
+  ],
+  "exit_solved_evals": [
+   6046463,
+   3337589
+  ],
+  "exit_threshold": [
+   1715705,
+   506919181
+  ],
+  "exit_threshold_evals": [
+   3322931195,
+   4370185189
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   393,
+   384
+  ],
+  "exit_work_evals": [
+   99751274177,
+   97761132251
+  ],
+  "explored_evals_after": [
+   308923,
+   54043751,
+   468472611,
+   24939463805,
+   0
+  ],
+  "explored_frames": 54650361,
+  "explored_marks": 571988179,
+  "first_sweep_cut": [
+   1107382,
+   506328329
+  ],
+  "first_sweep_cut_evals": [
+   31340453,
+   1205323986
+  ],
+  "first_sweep_cut_fresh": [
+   856467,
+   5804194
+  ],
+  "frames_loop": 563662403,
+  "group": "R5",
+  "inf_unsolved_stores": [
+   0,
+   104435
+  ],
+  "inf_unsolved_taint_and": 104435,
+  "nodes": 597411445,
+  "outcome": "draw",
+  "pv_len": 0,
+  "salt": 0,
+  "stale_after_return": 33870264,
+  "stale_evals_after": 12351669112,
+  "suppress_draw_clobbers": 15965,
+  "suppress_draw_stores": 121224,
+  "tt": 128,
+  "tt_bound_reuse_inf": 302660,
+  "wall_s": 266.268506066
+ },
+ "r7_dec10_c128000000": {
+  "arm": "baseline",
+  "case": "dec10",
+  "child_evals": 4646954,
+  "chunk0": 128000000,
+  "chunks": 1,
+  "depth": null,
+  "exit_nomove": [
+   38226,
+   35299
+  ],
+  "exit_nomove_evals": [
+   17164802,
+   17221023
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   5818,
+   4574
+  ],
+  "exit_solved_evals": [
+   6014586,
+   4316819
+  ],
+  "exit_threshold": [
+   56188,
+   525563
+  ],
+  "exit_threshold_evals": [
+   23053123,
+   22610886
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   0,
+   0
+  ],
+  "exit_work_evals": [
+   0,
+   0
+  ],
+  "explored_evals_after": [
+   83399,
+   1741795,
+   0,
+   5780778,
+   0
+  ],
+  "explored_frames": 73975,
+  "explored_marks": 515591,
+  "first_sweep_cut": [
+   40875,
+   510561
+  ],
+  "first_sweep_cut_evals": [
+   741640,
+   2310341
+  ],
+  "first_sweep_cut_fresh": [
+   34071,
+   49129
+  ],
+  "frames_loop": 665668,
+  "group": "R7",
+  "inf_unsolved_stores": [
+   2,
+   39794
+  ],
+  "inf_unsolved_taint_and": 39792,
+  "nodes": 678093,
+  "outcome": "win",
+  "pv_len": 51,
+  "salt": 0,
+  "stale_after_return": 13200,
+  "stale_evals_after": 1684113,
+  "suppress_draw_clobbers": 115,
+  "suppress_draw_stores": 781,
+  "tt": 128,
+  "tt_bound_reuse_inf": 86073,
+  "wall_s": 0.579194433
+ },
+ "r7_dec10_c4000000000": {
+  "arm": "baseline",
+  "case": "dec10",
+  "child_evals": 4646954,
+  "chunk0": 4000000000,
+  "chunks": 1,
+  "depth": null,
+  "exit_nomove": [
+   38226,
+   35299
+  ],
+  "exit_nomove_evals": [
+   17164802,
+   17221023
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   5818,
+   4574
+  ],
+  "exit_solved_evals": [
+   6014586,
+   4316819
+  ],
+  "exit_threshold": [
+   56188,
+   525563
+  ],
+  "exit_threshold_evals": [
+   23053123,
+   22610886
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   0,
+   0
+  ],
+  "exit_work_evals": [
+   0,
+   0
+  ],
+  "explored_evals_after": [
+   83399,
+   1741795,
+   0,
+   5780778,
+   0
+  ],
+  "explored_frames": 73975,
+  "explored_marks": 515591,
+  "first_sweep_cut": [
+   40875,
+   510561
+  ],
+  "first_sweep_cut_evals": [
+   741640,
+   2310341
+  ],
+  "first_sweep_cut_fresh": [
+   34071,
+   49129
+  ],
+  "frames_loop": 665668,
+  "group": "R7",
+  "inf_unsolved_stores": [
+   2,
+   39794
+  ],
+  "inf_unsolved_taint_and": 39792,
+  "nodes": 678093,
+  "outcome": "win",
+  "pv_len": 51,
+  "salt": 0,
+  "stale_after_return": 13200,
+  "stale_evals_after": 1684113,
+  "suppress_draw_clobbers": 115,
+  "suppress_draw_stores": 781,
+  "tt": 128,
+  "tt_bound_reuse_inf": 86073,
+  "wall_s": 0.598441967
+ },
+ "r7_dec10_c8000000": {
+  "arm": "baseline",
+  "case": "dec10",
+  "child_evals": 4646954,
+  "chunk0": 8000000,
+  "chunks": 1,
+  "depth": null,
+  "exit_nomove": [
+   38226,
+   35299
+  ],
+  "exit_nomove_evals": [
+   17164802,
+   17221023
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   5818,
+   4574
+  ],
+  "exit_solved_evals": [
+   6014586,
+   4316819
+  ],
+  "exit_threshold": [
+   56188,
+   525563
+  ],
+  "exit_threshold_evals": [
+   23053123,
+   22610886
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   0,
+   0
+  ],
+  "exit_work_evals": [
+   0,
+   0
+  ],
+  "explored_evals_after": [
+   83399,
+   1741795,
+   0,
+   5780778,
+   0
+  ],
+  "explored_frames": 73975,
+  "explored_marks": 515591,
+  "first_sweep_cut": [
+   40875,
+   510561
+  ],
+  "first_sweep_cut_evals": [
+   741640,
+   2310341
+  ],
+  "first_sweep_cut_fresh": [
+   34071,
+   49129
+  ],
+  "frames_loop": 665668,
+  "group": "R7",
+  "inf_unsolved_stores": [
+   2,
+   39794
+  ],
+  "inf_unsolved_taint_and": 39792,
+  "nodes": 678093,
+  "outcome": "win",
+  "pv_len": 51,
+  "salt": 0,
+  "stale_after_return": 13200,
+  "stale_evals_after": 1684113,
+  "suppress_draw_clobbers": 115,
+  "suppress_draw_stores": 781,
+  "tt": 128,
+  "tt_bound_reuse_inf": 86073,
+  "wall_s": 0.567834672
+ },
+ "r7_dec13_c128000000": {
+  "arm": "baseline",
+  "case": "dec13",
+  "child_evals": 4998422,
+  "chunk0": 128000000,
+  "chunks": 1,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   12374,
+   25988
+  ],
+  "exit_solved_evals": [
+   8399060,
+   3633677
+  ],
+  "exit_threshold": [
+   49226,
+   128546
+  ],
+  "exit_threshold_evals": [
+   15474819,
+   18377190
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   0,
+   0
+  ],
+  "exit_work_evals": [
+   0,
+   0
+  ],
+  "explored_evals_after": [
+   0,
+   35,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 1,
+  "explored_marks": 1,
+  "first_sweep_cut": [
+   42051,
+   121390
+  ],
+  "first_sweep_cut_evals": [
+   1414766,
+   2936823
+  ],
+  "first_sweep_cut_fresh": [
+   41366,
+   119608
+  ],
+  "frames_loop": 216134,
+  "group": "R7",
+  "inf_unsolved_stores": [
+   11,
+   630
+  ],
+  "inf_unsolved_taint_and": 619,
+  "nodes": 216143,
+  "outcome": "win",
+  "pv_len": 31,
+  "salt": 0,
+  "stale_after_return": 1,
+  "stale_evals_after": 35,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 1,
+  "tt": 128,
+  "tt_bound_reuse_inf": 2232,
+  "wall_s": 1.010704682
+ },
+ "r7_dec13_c4000000000": {
+  "arm": "baseline",
+  "case": "dec13",
+  "child_evals": 4998422,
+  "chunk0": 4000000000,
+  "chunks": 1,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   12374,
+   25988
+  ],
+  "exit_solved_evals": [
+   8399060,
+   3633677
+  ],
+  "exit_threshold": [
+   49226,
+   128546
+  ],
+  "exit_threshold_evals": [
+   15474819,
+   18377190
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   0,
+   0
+  ],
+  "exit_work_evals": [
+   0,
+   0
+  ],
+  "explored_evals_after": [
+   0,
+   35,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 1,
+  "explored_marks": 1,
+  "first_sweep_cut": [
+   42051,
+   121390
+  ],
+  "first_sweep_cut_evals": [
+   1414766,
+   2936823
+  ],
+  "first_sweep_cut_fresh": [
+   41366,
+   119608
+  ],
+  "frames_loop": 216134,
+  "group": "R7",
+  "inf_unsolved_stores": [
+   11,
+   630
+  ],
+  "inf_unsolved_taint_and": 619,
+  "nodes": 216143,
+  "outcome": "win",
+  "pv_len": 31,
+  "salt": 0,
+  "stale_after_return": 1,
+  "stale_evals_after": 35,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 1,
+  "tt": 128,
+  "tt_bound_reuse_inf": 2232,
+  "wall_s": 1.044958925
+ },
+ "r7_dec13_c8000000": {
+  "arm": "baseline",
+  "case": "dec13",
+  "child_evals": 4998422,
+  "chunk0": 8000000,
+  "chunks": 1,
+  "depth": null,
+  "exit_nomove": [
+   0,
+   0
+  ],
+  "exit_nomove_evals": [
+   0,
+   0
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   12374,
+   25988
+  ],
+  "exit_solved_evals": [
+   8399060,
+   3633677
+  ],
+  "exit_threshold": [
+   49226,
+   128546
+  ],
+  "exit_threshold_evals": [
+   15474819,
+   18377190
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   0,
+   0
+  ],
+  "exit_work_evals": [
+   0,
+   0
+  ],
+  "explored_evals_after": [
+   0,
+   35,
+   0,
+   0,
+   0
+  ],
+  "explored_frames": 1,
+  "explored_marks": 1,
+  "first_sweep_cut": [
+   42051,
+   121390
+  ],
+  "first_sweep_cut_evals": [
+   1414766,
+   2936823
+  ],
+  "first_sweep_cut_fresh": [
+   41366,
+   119608
+  ],
+  "frames_loop": 216134,
+  "group": "R7",
+  "inf_unsolved_stores": [
+   11,
+   630
+  ],
+  "inf_unsolved_taint_and": 619,
+  "nodes": 216143,
+  "outcome": "win",
+  "pv_len": 31,
+  "salt": 0,
+  "stale_after_return": 1,
+  "stale_evals_after": 35,
+  "suppress_draw_clobbers": 0,
+  "suppress_draw_stores": 1,
+  "tt": 128,
+  "tt_bound_reuse_inf": 2232,
+  "wall_s": 0.993525622
+ },
+ "r7_m22_c128000000": {
+  "arm": "baseline",
+  "case": "m22",
+  "child_evals": 18775289,
+  "chunk0": 128000000,
+  "chunks": 1,
+  "depth": null,
+  "exit_nomove": [
+   448,
+   368
+  ],
+  "exit_nomove_evals": [
+   461838,
+   444896
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   31317,
+   16444
+  ],
+  "exit_solved_evals": [
+   21240010,
+   7348971
+  ],
+  "exit_threshold": [
+   179569,
+   919049
+  ],
+  "exit_threshold_evals": [
+   78837410,
+   85292810
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   0,
+   0
+  ],
+  "exit_work_evals": [
+   0,
+   0
+  ],
+  "explored_evals_after": [
+   1655,
+   145634,
+   0,
+   226734,
+   0
+  ],
+  "explored_frames": 1053,
+  "explored_marks": 16821,
+  "first_sweep_cut": [
+   117972,
+   857753
+  ],
+  "first_sweep_cut_evals": [
+   4230148,
+   10715324
+  ],
+  "first_sweep_cut_fresh": [
+   105772,
+   772494
+  ],
+  "frames_loop": 1147195,
+  "group": "R7",
+  "inf_unsolved_stores": [
+   54,
+   4922
+  ],
+  "inf_unsolved_taint_and": 4868,
+  "nodes": 1147474,
+  "outcome": "win",
+  "pv_len": 97,
+  "salt": 0,
+  "stale_after_return": 418,
+  "stale_evals_after": 199222,
+  "suppress_draw_clobbers": 6,
+  "suppress_draw_stores": 139,
+  "tt": 128,
+  "tt_bound_reuse_inf": 27496,
+  "wall_s": 3.650402053
+ },
+ "r7_m22_c4000000000": {
+  "arm": "baseline",
+  "case": "m22",
+  "child_evals": 18775289,
+  "chunk0": 4000000000,
+  "chunks": 1,
+  "depth": null,
+  "exit_nomove": [
+   448,
+   368
+  ],
+  "exit_nomove_evals": [
+   461838,
+   444896
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   31317,
+   16444
+  ],
+  "exit_solved_evals": [
+   21240010,
+   7348971
+  ],
+  "exit_threshold": [
+   179569,
+   919049
+  ],
+  "exit_threshold_evals": [
+   78837410,
+   85292810
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   0,
+   0
+  ],
+  "exit_work_evals": [
+   0,
+   0
+  ],
+  "explored_evals_after": [
+   1655,
+   145634,
+   0,
+   226734,
+   0
+  ],
+  "explored_frames": 1053,
+  "explored_marks": 16821,
+  "first_sweep_cut": [
+   117972,
+   857753
+  ],
+  "first_sweep_cut_evals": [
+   4230148,
+   10715324
+  ],
+  "first_sweep_cut_fresh": [
+   105772,
+   772494
+  ],
+  "frames_loop": 1147195,
+  "group": "R7",
+  "inf_unsolved_stores": [
+   54,
+   4922
+  ],
+  "inf_unsolved_taint_and": 4868,
+  "nodes": 1147474,
+  "outcome": "win",
+  "pv_len": 97,
+  "salt": 0,
+  "stale_after_return": 418,
+  "stale_evals_after": 199222,
+  "suppress_draw_clobbers": 6,
+  "suppress_draw_stores": 139,
+  "tt": 128,
+  "tt_bound_reuse_inf": 27496,
+  "wall_s": 3.680079508
+ },
+ "r7_m22_c8000000": {
+  "arm": "baseline",
+  "case": "m22",
+  "child_evals": 18833266,
+  "chunk0": 8000000,
+  "chunks": 2,
+  "depth": null,
+  "exit_nomove": [
+   982,
+   860
+  ],
+  "exit_nomove_evals": [
+   2464853,
+   2293154
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   32071,
+   17522
+  ],
+  "exit_solved_evals": [
+   15504070,
+   9578404
+  ],
+  "exit_threshold": [
+   170973,
+   906009
+  ],
+  "exit_threshold_evals": [
+   74541668,
+   77105043
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   4,
+   3
+  ],
+  "exit_work_evals": [
+   8070181,
+   4324062
+  ],
+  "explored_evals_after": [
+   8302,
+   304131,
+   0,
+   611631,
+   0
+  ],
+  "explored_frames": 2137,
+  "explored_marks": 37819,
+  "first_sweep_cut": [
+   117323,
+   853420
+  ],
+  "first_sweep_cut_evals": [
+   4238290,
+   10989735
+  ],
+  "first_sweep_cut_fresh": [
+   107671,
+   780886
+  ],
+  "frames_loop": 1128424,
+  "group": "R7",
+  "inf_unsolved_stores": [
+   63,
+   5348
+  ],
+  "inf_unsolved_taint_and": 5285,
+  "nodes": 1128834,
+  "outcome": "win",
+  "pv_len": 360,
+  "salt": 0,
+  "stale_after_return": 567,
+  "stale_evals_after": 311924,
+  "suppress_draw_clobbers": 4,
+  "suppress_draw_stores": 158,
+  "tt": 128,
+  "tt_bound_reuse_inf": 28225,
+  "wall_s": 3.642738656
+ },
+ "r7_stress_c128000000": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 234966446,
+  "chunk0": 128000000,
+  "chunks": 2,
+  "depth": null,
+  "exit_nomove": [
+   15439,
+   11971
+  ],
+  "exit_nomove_evals": [
+   23680396,
+   23001430
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   197846,
+   133205
+  ],
+  "exit_solved_evals": [
+   123884504,
+   46439603
+  ],
+  "exit_threshold": [
+   2433967,
+   10250482
+  ],
+  "exit_threshold_evals": [
+   742180324,
+   844314677
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   5,
+   5
+  ],
+  "exit_work_evals": [
+   162422104,
+   43475622
+  ],
+  "explored_evals_after": [
+   382069,
+   3780306,
+   0,
+   11410918,
+   0
+  ],
+  "explored_frames": 29670,
+  "explored_marks": 542489,
+  "first_sweep_cut": [
+   1871621,
+   9707087
+  ],
+  "first_sweep_cut_evals": [
+   63658323,
+   132555145
+  ],
+  "first_sweep_cut_fresh": [
+   1705690,
+   8753788
+  ],
+  "frames_loop": 13042920,
+  "group": "R7",
+  "inf_unsolved_stores": [
+   65,
+   57229
+  ],
+  "inf_unsolved_taint_and": 57164,
+  "nodes": 13050488,
+  "outcome": "win",
+  "pv_len": 285,
+  "salt": 0,
+  "stale_after_return": 8868,
+  "stale_evals_after": 4010741,
+  "suppress_draw_clobbers": 108,
+  "suppress_draw_stores": 1303,
+  "tt": 128,
+  "tt_bound_reuse_inf": 390487,
+  "wall_s": 46.142151368
+ },
+ "r7_stress_c4000000000": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 1131031110,
+  "chunk0": 4000000000,
+  "chunks": 1,
+  "depth": null,
+  "exit_nomove": [
+   5171032,
+   4840271
+  ],
+  "exit_nomove_evals": [
+   24455481588,
+   24449943882
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   303115,
+   219033
+  ],
+  "exit_solved_evals": [
+   10986075892,
+   10087123413
+  ],
+  "exit_threshold": [
+   3971756,
+   165684895
+  ],
+  "exit_threshold_evals": [
+   7848350717,
+   8289721510
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   0,
+   0
+  ],
+  "exit_work_evals": [
+   0,
+   0
+  ],
+  "explored_evals_after": [
+   997663373,
+   42250157,
+   0,
+   4702205057,
+   0
+  ],
+  "explored_frames": 10014894,
+  "explored_marks": 158059186,
+  "first_sweep_cut": [
+   3043251,
+   164771503
+  ],
+  "first_sweep_cut_evals": [
+   100124757,
+   644739859
+  ],
+  "first_sweep_cut_fresh": [
+   2737352,
+   14184523
+  ],
+  "frames_loop": 180190102,
+  "group": "R7",
+  "inf_unsolved_stores": [
+   19487,
+   3712965
+  ],
+  "inf_unsolved_taint_and": 3660874,
+  "nodes": 181589328,
+  "outcome": "win",
+  "pv_len": 559,
+  "salt": 0,
+  "stale_after_return": 1413494,
+  "stale_evals_after": 912200835,
+  "suppress_draw_clobbers": 760,
+  "suppress_draw_stores": 14272,
+  "tt": 128,
+  "tt_bound_reuse_inf": 7606052,
+  "wall_s": 149.024861877
+ },
+ "r7_stress_c8000000": {
+  "arm": "baseline",
+  "case": "stress",
+  "child_evals": 253485176,
+  "chunk0": 8000000,
+  "chunks": 6,
+  "depth": null,
+  "exit_nomove": [
+   16348,
+   13163
+  ],
+  "exit_nomove_evals": [
+   24662660,
+   25637247
+  ],
+  "exit_reason": "Complete",
+  "exit_solved": [
+   217116,
+   144833
+  ],
+  "exit_solved_evals": [
+   26736451,
+   20515059
+  ],
+  "exit_threshold": [
+   2665574,
+   11024305
+  ],
+  "exit_threshold_evals": [
+   820846673,
+   931433888
+  ],
+  "exit_time": [
+   0,
+   0
+  ],
+  "exit_time_evals": [
+   0,
+   0
+  ],
+  "exit_work": [
+   20,
+   17
+  ],
+  "exit_work_evals": [
+   278998325,
+   71184707
+  ],
+  "explored_evals_after": [
+   299549,
+   6759374,
+   0,
+   13153264,
+   0
+  ],
+  "explored_frames": 32411,
+  "explored_marks": 561178,
+  "first_sweep_cut": [
+   2056718,
+   10436071
+  ],
+  "first_sweep_cut_evals": [
+   68863581,
+   142796778
+  ],
+  "first_sweep_cut_fresh": [
+   1870312,
+   9414861
+  ],
+  "frames_loop": 14081376,
+  "group": "R7",
+  "inf_unsolved_stores": [
+   41,
+   63992
+  ],
+  "inf_unsolved_taint_and": 63951,
+  "nodes": 14090116,
+  "outcome": "win",
+  "pv_len": 249,
+  "salt": 0,
+  "stale_after_return": 10215,
+  "stale_evals_after": 5516310,
+  "suppress_draw_clobbers": 163,
+  "suppress_draw_stores": 1476,
+  "tt": 128,
+  "tt_bound_reuse_inf": 427153,
+  "wall_s": 49.279612747
+ }
+}

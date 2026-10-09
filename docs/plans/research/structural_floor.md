@@ -4,6 +4,20 @@
 [`research`](initiative.md) initiative (documented by `plan10.md` /
 `report10.md`).
 
+> **Re-examination addendum (2026-10-09).** [`reexamination.md`](reexamination.md)
+> re-tests this record's premises with read-only probes
+> ([`measurements/reexam/`](measurements/reexam/README.md)). The measurements
+> below stand; three readings do not. (1) A semantics-neutral TT-index
+> perturbation moves stress from 249.5 M to 758 M and to censored at 2.5 B in
+> three of four draws, so single-draw "regresses a control" gates are below
+> the noise floor. (2) 80–88% of child evals are first-sweep cuts of fresh
+> nodes initialized at `(1, 1)` — the ε legs of §2 were measured where ε is
+> arithmetically inert, and §5/§9's "no heuristic component" never covered
+> knowledge-free (mobility) initialization, which measures 0.24× on stress
+> and 0.16× on dec13 but censored on m22. (3) §3's "path-derived bounds poison
+> the TT" premise: the incumbent already stores repetition-derived ∞ bounds
+> as unsolved entries. Corrections: `reexamination.md` §5.
+
 **What this document is:** the single, authoritative statement of what the
 solver is locked into and why. Every locked-in commitment below is followed
 immediately by its measured or mined evidence; every claim traces to an

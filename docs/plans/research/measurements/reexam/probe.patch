@@ -1,0 +1,788 @@
+diff --git a/src/search/dfpn/children.rs b/src/search/dfpn/children.rs
+index 414b156..83399a4 100644
+--- a/src/search/dfpn/children.rs
++++ b/src/search/dfpn/children.rs
+@@ -16,6 +16,7 @@ use crate::position::{Outcome, Position};
+ use crate::proof_event::{NodeProven, ProofEvent};
+ 
+ use super::Search;
++use crate::search::probe;
+ use crate::zobrist::INF;
+ 
+ /// Movegen slot for one active `dfpn` frame: the legal-move list and node
+@@ -94,6 +95,10 @@ pub struct ChildSelection {
+     pub best_move: Move,
+     pub solved_outcome: Option<Outcome>,
+     pub repetition_seen: bool,
++    /// wpns arm support: number of children with pn > 0 / dn > 0 at the
++    /// frame that produced this selection (0 on early-exit selections).
++    pub pn_pos: u64,
++    pub dn_pos: u64,
+ }
+ 
+ impl Search {
+@@ -332,9 +337,27 @@ impl Search {
+                                 && e.remaining_depth != u32::MAX
+                                 && e.remaining_depth <= child_max_depth =>
+                         {
++                            // C7: reused unsolved bounds carrying INF.
++                            if e.pn == INF || e.dn == INF {
++                                self.probe.tt_bound_reuse_inf += 1;
++                            }
+                             (e.pn, e.dn)
+                         }
+-                        _ => (1, 1),
++                        _ => {
++                            if probe::init_mob_arm() {
++                                // PROBE_INIT=mob: initialize unsolved
++                                // non-terminal children from their legal-move
++                                // count instead of (1, 1). `pos` is the child
++                                // position here (mv already played).
++                                let mut mob_moves = MoveList::new();
++                                let mut mob_state = StateInfo::new();
++                                pos.legal_moves_with_state(&mut mob_moves, &mut mob_state);
++                                let n = (mob_moves.len() as u64).max(1);
++                                if child_is_or { (1, n) } else { (n, 1) }
++                            } else {
++                                (1, 1)
++                            }
++                        }
+                     };
+                     ChildInfo {
+                         mv,
+diff --git a/src/search/dfpn/core.rs b/src/search/dfpn/core.rs
+index 1d2949f..852ea92 100644
+--- a/src/search/dfpn/core.rs
++++ b/src/search/dfpn/core.rs
+@@ -15,6 +15,7 @@ use super::Search;
+ use super::children::{ChildPrecompute, ChildSelection};
+ use super::repetition_cache::RepetitionCache;
+ use super::selection::select_from_children;
++use crate::search::probe;
+ use crate::search::tt::TtEntry;
+ use crate::zobrist::INF;
+ 
+@@ -47,6 +48,7 @@ impl Search {
+         is_or_node: bool,
+     ) -> Outcome {
+         if self.time_exceeded() {
++            self.last_child_solved = false;
+             return Outcome::Draw;
+         }
+ 
+@@ -92,6 +94,7 @@ impl Search {
+             );
+             self.emit_proof_node(pos, outcome, 0);
+             self.precompute_pool[slot_depth] = slot;
++            self.last_child_solved = true;
+             return outcome;
+         }
+ 
+@@ -102,12 +105,14 @@ impl Search {
+             self.tt
+                 .store(tt_key, Move::NONE, u8::MAX, 0, None, 1, 1, 0, 0);
+             self.precompute_pool[slot_depth] = slot;
++            self.last_child_solved = false;
+             return Outcome::Draw;
+         }
+ 
+         // Local repetition: this board is already on the current search stack.
+         if self.path_contains(rep_key) {
+             self.precompute_pool[slot_depth] = slot;
++            self.last_child_solved = true;
+             return Outcome::Draw;
+         }
+ 
+@@ -122,6 +127,7 @@ impl Search {
+         {
+             self.emit_proof_node(pos, resolved.outcome, resolved.depth);
+             self.precompute_pool[slot_depth] = slot;
++            self.last_child_solved = true;
+             return resolved.outcome;
+         }
+ 
+@@ -147,6 +153,7 @@ impl Search {
+             // no child-eval budget.
+             self.emit_proof_node(pos, Outcome::Draw, cached_depth);
+             self.precompute_pool[slot_depth] = slot;
++            self.last_child_solved = true;
+             return Outcome::Draw;
+         }
+ 
+@@ -200,8 +207,19 @@ impl Search {
+ 
+         let mut selection: Option<ChildSelection> = None;
+ 
++        // Probe instrumentation: classify this frame's main-loop exit.
++        self.probe.frames_loop += 1;
++        let or_idx = usize::from(!is_or_node);
++        let tt_hit_at_entry = tt_entry.is_some();
++        let mut xc = probe::XC_TIME;
++        let mut loop_iter = 0u64;
++        let mut first_mark_evals: Option<u64> = None;
++        let mut stale_first_evals: Option<u64> = None;
++
+         loop {
++            loop_iter += 1;
+             if self.time_exceeded() {
++                xc = probe::XC_TIME;
+                 break;
+             }
+ 
+@@ -209,6 +227,7 @@ impl Search {
+             // budget.  The result is stored as an unsolved entry so the next chunk
+             // can resume from the same bounds.
+             if max_work != u64::MAX && self.child_evals - child_evals_start >= max_work {
++                xc = probe::XC_WORK;
+                 break;
+             }
+ 
+@@ -221,12 +240,24 @@ impl Search {
+                 let old_pn = children[idx].pn;
+                 let old_dn = children[idx].dn;
+                 children[idx] = self.evaluate_child(pos, mv, max_depth, is_or_node);
++                // C8: the child recursion reported solved but the re-evaluated
++                // child is unsolved (suppressed/rejected TT reuse).
++                if self.last_child_solved && children[idx].outcome.is_none() {
++                    self.probe.stale_after_return += 1;
++                    if stale_first_evals.is_none() {
++                        stale_first_evals = Some(self.child_evals);
++                    }
++                }
+                 // In a work-bounded call, if the child came back with exactly the
+                 // same (pn, dn) bounds re-expanding it cannot make progress. Mark
+                 // it explored so the search moves on to other children.
+                 if max_work != u64::MAX && children[idx].pn == old_pn && children[idx].dn == old_dn
+                 {
+                     children[idx].explored = true;
++                    self.probe.explored_marks += 1;
++                    if first_mark_evals.is_none() {
++                        first_mark_evals = Some(self.child_evals);
++                    }
+                 }
+             }
+ 
+@@ -251,21 +282,33 @@ impl Search {
+                 outcome_to_store_dn = selection.dn;
+                 outcome_to_store_depth = selection.depth;
+                 outcome_to_store_repetition_seen = selection.repetition_seen;
++                xc = probe::XC_SOLVED;
+                 break;
+             }
+ 
+             if (th_pn != INF && pn >= th_pn) || (th_dn != INF && dn >= th_dn) {
++                xc = probe::XC_THRESHOLD;
++                if loop_iter == 1 {
++                    self.probe.first_sweep_cut[or_idx] += 1;
++                    self.probe.first_sweep_cut_evals[or_idx] +=
++                        self.child_evals - child_evals_start;
++                    if !tt_hit_at_entry {
++                        self.probe.first_sweep_cut_fresh[or_idx] += 1;
++                    }
++                }
+                 break;
+             }
+ 
+             let (mv, child_pn, child_dn) = selection.best_child;
+             if mv == Move::NONE {
++                xc = probe::XC_NOMOVE;
+                 break;
+             }
+             let (second_pn, second_dn) = selection.second_child;
+ 
+             let work_spent = self.child_evals - child_evals_start;
+             if max_work != u64::MAX && work_spent >= max_work {
++                xc = probe::XC_WORK;
+                 break;
+             }
+             let child_max_work = max_work.saturating_sub(work_spent);
+@@ -274,6 +317,9 @@ impl Search {
+                 let new_th_pn = std::cmp::min(th_pn, self.epsilon_ceil(second_pn));
+                 let new_th_dn = if th_dn == INF {
+                     INF
++                } else if probe::sum_wpns_arm() {
++                    // wpns: weak-sum dn replaces the additive carry-over.
++                    th_dn.saturating_sub(selection.dn_pos.saturating_sub(1))
+                 } else {
+                     th_dn.saturating_sub(dn).saturating_add(child_dn)
+                 };
+@@ -282,6 +328,9 @@ impl Search {
+                 let new_th_dn = std::cmp::min(th_dn, self.epsilon_ceil(second_dn));
+                 let new_th_pn = if th_pn == INF {
+                     INF
++                } else if probe::sum_wpns_arm() {
++                    // wpns: weak-sum pn replaces the additive carry-over.
++                    th_pn.saturating_sub(selection.pn_pos.saturating_sub(1))
+                 } else {
+                     th_pn.saturating_sub(pn).saturating_add(child_pn)
+                 };
+@@ -315,6 +364,37 @@ impl Search {
+             .map_or(u8::MAX, |i| i as u8);
+         let work = self.child_evals - child_evals_start;
+ 
++        // Probe: attribute this frame's descendant evals to its exit class.
++        match xc {
++            probe::XC_SOLVED => {
++                self.probe.exit_solved[or_idx] += 1;
++                self.probe.exit_solved_evals[or_idx] += work;
++            }
++            probe::XC_THRESHOLD => {
++                self.probe.exit_threshold[or_idx] += 1;
++                self.probe.exit_threshold_evals[or_idx] += work;
++            }
++            probe::XC_WORK => {
++                self.probe.exit_work[or_idx] += 1;
++                self.probe.exit_work_evals[or_idx] += work;
++            }
++            probe::XC_NOMOVE => {
++                self.probe.exit_nomove[or_idx] += 1;
++                self.probe.exit_nomove_evals[or_idx] += work;
++            }
++            _ => {
++                self.probe.exit_time[or_idx] += 1;
++                self.probe.exit_time_evals[or_idx] += work;
++            }
++        }
++        if let Some(mark) = first_mark_evals {
++            self.probe.explored_frames += 1;
++            self.probe.explored_evals_after[xc] += self.child_evals - mark;
++        }
++        if let Some(se) = stale_first_evals {
++            self.probe.stale_evals_after += self.child_evals - se;
++        }
++
+         // First-player-loss shortcut: do not cache a Draw that only holds
+         // because of a repetition in the current path. Store it as an unsolved
+         // (1, 1) entry so the next search re-expands it and sees the local Draw.
+@@ -353,6 +433,30 @@ impl Search {
+             max_depth
+         };
+ 
++        // C5: suppressed draws that overwrite a live unsolved non-(1,1) entry.
++        if suppress_draw {
++            self.probe.suppress_draw_stores += 1;
++            if let Some(e) = self.tt.probe(tt_key)
++                && e.outcome.is_none()
++                && (e.pn, e.dn) != (1, 1)
++            {
++                self.probe.suppress_draw_clobbers += 1;
++            }
++        }
++        // C6: unsolved stores carrying an infinite bound; the AND "taint"
++        // subset has a repetition-seen Draw child whose suppress_draw leaf
++        // entry may hide a hard-won bound.
++        if store_outcome.is_none() && (store_pn == INF || store_dn == INF) {
++            self.probe.inf_unsolved_stores[or_idx] += 1;
++            if !is_or_node
++                && children
++                    .iter()
++                    .any(|c| c.outcome == Some(Outcome::Draw) && c.repetition_seen)
++            {
++                self.probe.inf_unsolved_taint_and += 1;
++            }
++        }
++
+         self.tt.store(
+             tt_key,
+             store_best_move,
+@@ -383,6 +487,7 @@ impl Search {
+ 
+         self.path_pop();
+ 
++        self.last_child_solved = outcome_to_store.is_some();
+         if let Some(outcome) = outcome_to_store {
+             self.emit_proof_node(pos, outcome, outcome_to_store_depth);
+             outcome
+diff --git a/src/search/dfpn/mod.rs b/src/search/dfpn/mod.rs
+index afc0c0c..4210090 100644
+--- a/src/search/dfpn/mod.rs
++++ b/src/search/dfpn/mod.rs
+@@ -33,6 +33,8 @@ use super::tt::TranspositionTable;
+ 
+ use repetition_cache::RepetitionCache;
+ 
++use crate::search::probe::{self, ProbeStats};
++
+ const DEFAULT_EPSILON: f64 = 0.125;
+ const TIMEOUT_SECS: u64 = 5;
+ const DEFAULT_MAX_PV_PLIES: usize = 1000;
+@@ -221,6 +223,14 @@ pub struct Search {
+     /// Report of the last run's pre-phase hook, `None` when the hook has not
+     /// run in the current run.
+     preflight_report: Option<PreflightReport>,
++    /// Probe counters (C1-C8, chunk count); reset in `begin_run`.
++    pub probe: ProbeStats,
++    /// C8: whether the most recent `dfpn` return carried a solved result
++    /// (terminal-at-entry, TT-resolved, path repetition, repetition-cache
++    /// hit, or a solved frame exit).
++    last_child_solved: bool,
++    /// Initial work-chunk size for `bounded_search` (`PROBE_CHUNK0`).
++    chunk0: u64,
+ }
+ 
+ impl Search {
+@@ -273,6 +283,9 @@ impl Search {
+             repetition_cache: RepetitionCache::new(),
+             preflight_enabled: true,
+             preflight_report: None,
++            probe: ProbeStats::default(),
++            last_child_solved: false,
++            chunk0: probe::chunk0(),
+         }
+     }
+ 
+@@ -561,11 +574,12 @@ impl Search {
+         // `child_eval_budget_exceeded()`, or (pathologically, via chunk
+         // overflow) `chunk == 0` — all resource cuts.
+         let mut termination = RoundTermination::ResourceCut;
+-        let mut chunk = 500_000u64;
++        let mut chunk = self.chunk0;
+         let mut last_child_evals_before;
+         let round_evals_start = self.child_evals;
+ 
+         while !self.time_exceeded() && !self.child_eval_budget_exceeded() && chunk > 0 {
++            self.probe.chunks += 1;
+             self.reset_search_state();
+             last_child_evals_before = self.child_evals;
+             // Cap the call's work at the remaining child-eval budget (and at
+@@ -837,6 +851,8 @@ impl Search {
+         self.last_clock.set(self.start);
+         self.clock_sample_at.set(0);
+         self.preflight_report = None;
++        self.probe = ProbeStats::default();
++        self.last_child_solved = false;
+     }
+ 
+     /// Run the detector-gated bounded pre-phase (plan13) before the DF-PN
+@@ -904,6 +920,12 @@ impl Search {
+         self.nodes
+     }
+ 
++    /// Probe counters accumulated during the current/last run.
++    #[must_use]
++    pub fn probe_stats(&self) -> &ProbeStats {
++        &self.probe
++    }
++
+     /// Total number of child position evaluations performed.
+     #[must_use]
+     pub fn child_evaluations(&self) -> u64 {
+diff --git a/src/search/dfpn/selection.rs b/src/search/dfpn/selection.rs
+index ee2d0c2..71be2c9 100644
+--- a/src/search/dfpn/selection.rs
++++ b/src/search/dfpn/selection.rs
+@@ -11,8 +11,61 @@ use atomic_movegen::types::Move;
+ use crate::position::Outcome;
+ 
+ use super::children::{ChildInfo, ChildSelection};
++use crate::search::probe;
+ use crate::zobrist::INF;
+ 
++/// wpns arm: weak sum `INF if any v >= INF, else max + (k - 1)` with
++/// `k = #{v > 0}` (0 if k == 0).
++fn weak_sum(values: impl Iterator<Item = u64>) -> u64 {
++    let mut any_inf = false;
++    let mut max = 0u64;
++    let mut k = 0u64;
++    for v in values {
++        if v >= INF {
++            any_inf = true;
++        }
++        if v > 0 {
++            k += 1;
++        }
++        max = max.max(v);
++    }
++    if any_inf {
++        INF
++    } else if k == 0 {
++        0
++    } else {
++        max + (k - 1)
++    }
++}
++
++/// Parent (pn, dn) from the children table. `wpns` replaces the AND-side pn
++/// sum and the OR-side dn sum by the weak sum.
++fn parent_pn_dn(children: &[ChildInfo], is_or_node: bool, wpns: bool) -> (u64, u64) {
++    let (mut pn, mut dn) = if is_or_node { (INF, 0) } else { (0, INF) };
++    if is_or_node {
++        for c in children {
++            pn = std::cmp::min(pn, c.pn);
++            if !wpns {
++                dn = std::cmp::min(INF, dn.saturating_add(c.dn));
++            }
++        }
++        if wpns {
++            dn = weak_sum(children.iter().map(|c| c.dn));
++        }
++    } else {
++        for c in children {
++            dn = std::cmp::min(dn, c.dn);
++            if !wpns {
++                pn = std::cmp::min(INF, pn.saturating_add(c.pn));
++            }
++        }
++        if wpns {
++            pn = weak_sum(children.iter().map(|c| c.pn));
++        }
++    }
++    (pn, dn)
++}
++
+ /// Detect whether the children already determine the parent's outcome.
+ ///
+ /// The returned `Outcome` is from the side-to-move perspective at the
+@@ -118,6 +171,8 @@ pub(super) fn select_child_with_early_exit(
+             best_move: mv,
+             solved_outcome: Some(Outcome::Win),
+             repetition_seen: false,
++            pn_pos: 0,
++            dn_pos: 0,
+         });
+     }
+     if let Some((outcome, depth, mv, all_solved, idx)) = solved
+@@ -136,6 +191,8 @@ pub(super) fn select_child_with_early_exit(
+             best_move: mv,
+             solved_outcome: Some(outcome),
+             repetition_seen,
++            pn_pos: 0,
++            dn_pos: 0,
+         });
+     }
+     None
+@@ -230,16 +287,10 @@ pub(super) fn selection_for_child(
+     is_or_node: bool,
+     idx: usize,
+ ) -> ChildSelection {
+-    let (mut pn, mut dn) = if is_or_node { (INF, 0) } else { (0, INF) };
+-    for c in children {
+-        if is_or_node {
+-            pn = std::cmp::min(pn, c.pn);
+-            dn = std::cmp::min(INF, dn.saturating_add(c.dn));
+-        } else {
+-            pn = std::cmp::min(INF, pn.saturating_add(c.pn));
+-            dn = std::cmp::min(dn, c.dn);
+-        }
+-    }
++    let wpns = probe::sum_wpns_arm();
++    let (pn, dn) = parent_pn_dn(children, is_or_node, wpns);
++    let pn_pos = children.iter().filter(|c| c.pn > 0).count() as u64;
++    let dn_pos = children.iter().filter(|c| c.dn > 0).count() as u64;
+ 
+     let second_idx = second_best_unsolved_excluding(children, is_or_node, idx);
+     let best = &children[idx];
+@@ -255,6 +306,8 @@ pub(super) fn selection_for_child(
+         best_move: best.mv,
+         solved_outcome: None,
+         repetition_seen: false,
++        pn_pos,
++        dn_pos,
+     }
+ }
+ 
+@@ -305,18 +358,10 @@ pub(super) fn select_from_children(
+     }
+ 
+     // Compute proof/disproof numbers from all children.
+-    let (mut pn, mut dn) = if is_or_node { (INF, 0) } else { (0, INF) };
+-    if is_or_node {
+-        for c in children {
+-            pn = std::cmp::min(pn, c.pn);
+-            dn = std::cmp::min(INF, dn.saturating_add(c.dn));
+-        }
+-    } else {
+-        for c in children {
+-            pn = std::cmp::min(INF, pn.saturating_add(c.pn));
+-            dn = std::cmp::min(dn, c.dn);
+-        }
+-    }
++    let wpns = probe::sum_wpns_arm();
++    let (pn, dn) = parent_pn_dn(children, is_or_node, wpns);
++    let pn_pos = children.iter().filter(|c| c.pn > 0).count() as u64;
++    let dn_pos = children.iter().filter(|c| c.dn > 0).count() as u64;
+ 
+     let (best_idx, second_idx) = best_and_second_unsolved(children, is_or_node);
+     let best = best_idx.map(|i| &children[i]);
+@@ -350,6 +395,8 @@ pub(super) fn select_from_children(
+         best_move,
+         solved_outcome: solved.map(|(o, _, _, _, _)| o),
+         repetition_seen,
++        pn_pos,
++        dn_pos,
+     }
+ }
+ 
+diff --git a/src/search/mod.rs b/src/search/mod.rs
+index 3a5e81e..f36d62f 100644
+--- a/src/search/mod.rs
++++ b/src/search/mod.rs
+@@ -1,4 +1,5 @@
+ pub mod dfpn;
+ pub mod ordering;
+ pub mod preflight;
++pub mod probe;
+ pub mod tt;
+diff --git a/src/search/tt/table.rs b/src/search/tt/table.rs
+index f98ad64..a6c7396 100644
+--- a/src/search/tt/table.rs
++++ b/src/search/tt/table.rs
+@@ -5,11 +5,14 @@ use crate::zobrist::INF;
+ use atomic_movegen::types::Move;
+ 
+ use super::entry::TtEntry;
++use crate::search::probe;
+ 
+ pub struct TranspositionTable {
+     table: Vec<[TtEntry; 2]>,
+     mask: usize,
+     current_generation: u32,
++    /// PROBE_SALT perturbation of the bucket index; 0 = baseline.
++    salt: u64,
+ }
+ 
+ impl TranspositionTable {
+@@ -28,6 +31,7 @@ impl TranspositionTable {
+             table: vec![[TtEntry::default(); 2]; buckets],
+             mask: buckets - 1,
+             current_generation: 1,
++            salt: probe::tt_salt(),
+         }
+     }
+ 
+@@ -41,12 +45,17 @@ impl TranspositionTable {
+             table: vec![[TtEntry::default(); 2]; buckets],
+             mask: buckets - 1,
+             current_generation: 1,
++            salt: probe::tt_salt(),
+         }
+     }
+ 
+     #[inline]
+     fn index(&self, key: u64) -> usize {
+-        (key as usize) & self.mask
++        if self.salt != 0 {
++            (((key ^ self.salt).wrapping_mul(0x9E37_79B9_7F4A_7C15) >> 17) as usize) & self.mask
++        } else {
++            (key as usize) & self.mask
++        }
+     }
+ 
+     #[must_use]
+diff --git a/src/search/probe.rs b/src/search/probe.rs
+new file mode 100644
+index 0000000..09307a7
+--- /dev/null
++++ b/src/search/probe.rs
+@@ -0,0 +1,97 @@
++//! Probe instrumentation for measurement sessions (isolated copy only).
++//!
++//! `ProbeStats` holds the always-on counters (C1-C8, plus the R7 chunk
++//! counter); they are reset in `Search::begin_run`. The `*_arm`/`tt_salt`/
++//! `chunk0` helpers read the `PROBE_*` environment variables once per
++//! process; all defaults reproduce the unmodified baseline behavior.
++
++use std::sync::OnceLock;
++
++/// Exit-class indices for the C2/C4 per-class arrays.
++pub(crate) const XC_SOLVED: usize = 0;
++pub(crate) const XC_THRESHOLD: usize = 1;
++pub(crate) const XC_WORK: usize = 2;
++pub(crate) const XC_NOMOVE: usize = 3;
++pub(crate) const XC_TIME: usize = 4;
++pub(crate) const XC_COUNT: usize = 5;
++
++/// Per-run probe counters. `*_or` / `[0]` indexes are OR-node frames,
++/// `[1]` indexes are AND-node frames.
++#[derive(Clone, Copy, Debug, Default, serde::Serialize)]
++pub struct ProbeStats {
++    /// C1: `dfpn` frames that reached the main loop.
++    pub frames_loop: u64,
++    /// C2: loop-exit class counts/descendant evals, [OR, AND] per class.
++    pub exit_solved: [u64; 2],
++    pub exit_solved_evals: [u64; 2],
++    pub exit_threshold: [u64; 2],
++    pub exit_threshold_evals: [u64; 2],
++    pub exit_work: [u64; 2],
++    pub exit_work_evals: [u64; 2],
++    pub exit_nomove: [u64; 2],
++    pub exit_nomove_evals: [u64; 2],
++    pub exit_time: [u64; 2],
++    pub exit_time_evals: [u64; 2],
++    /// C3: threshold-cut breaks on the first loop iteration, [OR, AND];
++    /// `fresh` = subset whose entry TT probe missed.
++    pub first_sweep_cut: [u64; 2],
++    pub first_sweep_cut_evals: [u64; 2],
++    pub first_sweep_cut_fresh: [u64; 2],
++    /// C4: `explored = true` marks; frames with >=1 mark; evals spent in
++    /// those frames after the first mark, split by exit class.
++    pub explored_marks: u64,
++    pub explored_frames: u64,
++    pub explored_evals_after: [u64; XC_COUNT],
++    /// C5: suppressed-draw (1,1) stores; `clobbers` overwrote a live
++    /// unsolved TT entry whose (pn,dn) != (1,1).
++    pub suppress_draw_stores: u64,
++    pub suppress_draw_clobbers: u64,
++    /// C6: unsolved stores with pn == INF or dn == INF, [OR, AND]; `taint`
++    /// counts the AND subset having a repetition-seen Draw child.
++    pub inf_unsolved_stores: [u64; 2],
++    pub inf_unsolved_taint_and: u64,
++    /// C7: unsolved TT bound reuses in `evaluate_child` with pn or dn INF.
++    pub tt_bound_reuse_inf: u64,
++    /// C8: child recursions that returned solved but whose re-evaluated
++    /// child reports `outcome == None`; evals spent in the parent frame
++    /// after the first such event until frame exit.
++    pub stale_after_return: u64,
++    pub stale_evals_after: u64,
++    /// R7: work chunks executed by `bounded_search`.
++    pub chunks: u64,
++}
++
++fn env_eq(name: &str, val: &str) -> bool {
++    std::env::var(name).is_ok_and(|v| v == val)
++}
++
++fn env_u64(name: &str, default: u64) -> u64 {
++    std::env::var(name)
++        .ok()
++        .and_then(|v| v.parse().ok())
++        .unwrap_or(default)
++}
++
++/// `PROBE_INIT=mob`: mobility-based initialization of unsolved children.
++pub(crate) fn init_mob_arm() -> bool {
++    static F: OnceLock<bool> = OnceLock::new();
++    *F.get_or_init(|| env_eq("PROBE_INIT", "mob"))
++}
++
++/// `PROBE_SUM=wpns`: weak proof numbers (max + k - 1 instead of the sum).
++pub(crate) fn sum_wpns_arm() -> bool {
++    static F: OnceLock<bool> = OnceLock::new();
++    *F.get_or_init(|| env_eq("PROBE_SUM", "wpns"))
++}
++
++/// `PROBE_SALT=<u64>`: TT index perturbation; 0/unset = baseline.
++pub(crate) fn tt_salt() -> u64 {
++    static F: OnceLock<u64> = OnceLock::new();
++    *F.get_or_init(|| env_u64("PROBE_SALT", 0))
++}
++
++/// `PROBE_CHUNK0=<u64>`: initial work-chunk size for `bounded_search`.
++pub(crate) fn chunk0() -> u64 {
++    static F: OnceLock<u64> = OnceLock::new();
++    *F.get_or_init(|| env_u64("PROBE_CHUNK0", 500_000))
++}
+diff --git a/examples/probe_solve.rs b/examples/probe_solve.rs
+new file mode 100644
+index 0000000..d1d944b
+--- /dev/null
++++ b/examples/probe_solve.rs
+@@ -0,0 +1,108 @@
++//! Probe driver: solve one FEN and emit a single JSON line with the run
++//! result and all `ProbeStats` counters.
++//!
++//!     probe_solve --fen <FEN> --tt <MB> [--depth <D>] [--budget <N>]
++
++use std::time::Instant;
++
++use atomic_solver::position::{Outcome, Position};
++use atomic_solver::search::dfpn::Search;
++
++fn main() {
++    let args: Vec<String> = std::env::args().collect();
++    let mut fen: Option<String> = None;
++    let mut tt_mb: usize = 128;
++    let mut depth: Option<u32> = None;
++    let mut budget: Option<u64> = None;
++
++    let mut i = 1;
++    while i < args.len() {
++        match args[i].as_str() {
++            "--fen" => {
++                fen = Some(args.get(i + 1).expect("--fen needs a value").clone());
++                i += 1;
++            }
++            "--tt" => {
++                tt_mb = args
++                    .get(i + 1)
++                    .expect("--tt needs a value")
++                    .parse()
++                    .expect("--tt must be a non-negative integer");
++                i += 1;
++            }
++            "--depth" => {
++                depth = Some(
++                    args.get(i + 1)
++                        .expect("--depth needs a value")
++                        .parse()
++                        .expect("--depth must be a non-negative integer"),
++                );
++                i += 1;
++            }
++            "--budget" => {
++                budget = Some(
++                    args.get(i + 1)
++                        .expect("--budget needs a value")
++                        .parse()
++                        .expect("--budget must be a non-negative integer"),
++                );
++                i += 1;
++            }
++            other => {
++                eprintln!("unknown option: {other}");
++                std::process::exit(2);
++            }
++        }
++        i += 1;
++    }
++
++    let fen = fen.expect("--fen is required");
++    let mut pos = Position::from_fen(&fen).expect("invalid FEN");
++
++    let mut search = Search::new(tt_mb);
++    search.set_timeout(3600);
++    search.set_first_outcome_only(true);
++    if let Some(b) = budget {
++        search.set_child_eval_budget(b);
++    }
++
++    let t0 = Instant::now();
++    let (outcome, pv, nodes) = match depth {
++        Some(d) => search.search_depth(&mut pos, d),
++        None => search.solve(&mut pos),
++    };
++    let wall_s = t0.elapsed().as_secs_f64();
++
++    let mut obj = serde_json::Map::new();
++    obj.insert("fen".into(), serde_json::Value::String(fen));
++    obj.insert("tt".into(), serde_json::json!(tt_mb));
++    obj.insert(
++        "depth".into(),
++        depth.map_or(serde_json::Value::Null, |d| serde_json::json!(d)),
++    );
++    obj.insert(
++        "outcome".into(),
++        serde_json::Value::String(
++            match outcome {
++                Outcome::Win => "win",
++                Outcome::Loss => "loss",
++                Outcome::Draw => "draw",
++            }
++            .to_string(),
++        ),
++    );
++    obj.insert("child_evals".into(), serde_json::json!(search.child_evaluations()));
++    obj.insert("nodes".into(), serde_json::json!(nodes));
++    obj.insert("pv_len".into(), serde_json::json!(pv.len()));
++    obj.insert(
++        "exit_reason".into(),
++        serde_json::Value::String(format!("{}", search.exit_reason())),
++    );
++    obj.insert("wall_s".into(), serde_json::json!(wall_s));
++    if let serde_json::Value::Object(stats) =
++        serde_json::to_value(search.probe_stats()).expect("probe stats serialize")
++    {
++        obj.extend(stats);
++    }
++    println!("{}", serde_json::Value::Object(obj));
++}

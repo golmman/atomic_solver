@@ -1,0 +1,2444 @@
+{
+ "r6_mo_baseline": {
+  "aggregates": {
+   "mean_pv_len": 13.68421052631579,
+   "solved": 14,
+   "timeouts": 5,
+   "total_child_evals": 1036873675,
+   "total_nodes": 86030924,
+   "total_time": 154.854187933,
+   "wrong": 0
+  },
+  "cases": [
+   {
+    "child_evals": 159675132,
+    "expected": "win",
+    "name": "m20_white",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 159550295,
+    "expected": "loss",
+    "name": "m20_black",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 162519815,
+    "expected": "win",
+    "name": "m21_white",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 261819191,
+    "expected": "loss",
+    "name": "m21_black",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 14156269,
+    "expected": "win",
+    "name": "m22_white",
+    "outcome": "win",
+    "pv_len": 95,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 266056864,
+    "expected": "loss",
+    "name": "m22_black",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 9673403,
+    "expected": "win",
+    "name": "m23_white",
+    "outcome": "win",
+    "pv_len": 33,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 2892606,
+    "expected": "loss",
+    "name": "m23_black",
+    "outcome": "loss",
+    "pv_len": 24,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 406737,
+    "expected": "win",
+    "name": "m24_white",
+    "outcome": "win",
+    "pv_len": 15,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 93449,
+    "expected": "loss",
+    "name": "m24_black",
+    "outcome": "loss",
+    "pv_len": 24,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 22195,
+    "expected": "win",
+    "name": "m25_white",
+    "outcome": "win",
+    "pv_len": 21,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 5146,
+    "expected": "loss",
+    "name": "m25_black",
+    "outcome": "loss",
+    "pv_len": 12,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1086,
+    "expected": "win",
+    "name": "m26_white",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1011,
+    "expected": "loss",
+    "name": "m26_black",
+    "outcome": "loss",
+    "pv_len": 10,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 257,
+    "expected": "win",
+    "name": "m27_white",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 126,
+    "expected": "loss",
+    "name": "m27_black",
+    "outcome": "loss",
+    "pv_len": 4,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 89,
+    "expected": "win",
+    "name": "m28_white",
+    "outcome": "win",
+    "pv_len": 3,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3,
+    "expected": "loss",
+    "name": "m28_black",
+    "outcome": "loss",
+    "pv_len": 2,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1,
+    "expected": "win",
+    "name": "m29_white",
+    "outcome": "win",
+    "pv_len": 1,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   }
+  ],
+  "mode": "first-outcome",
+  "suite": "move-order",
+  "timeout_s": 30,
+  "tt_size": 128
+ },
+ "r6_mo_mob": {
+  "aggregates": {
+   "mean_pv_len": 17.68421052631579,
+   "solved": 14,
+   "timeouts": 5,
+   "total_child_evals": 881973323,
+   "total_nodes": 108839520,
+   "total_time": 164.74300057000002,
+   "wrong": 0
+  },
+  "cases": [
+   {
+    "child_evals": 123521978,
+    "expected": "win",
+    "name": "m20_white",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 119768706,
+    "expected": "loss",
+    "name": "m20_black",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 58665786,
+    "expected": "win",
+    "name": "m21_white",
+    "outcome": "win",
+    "pv_len": 199,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 178075240,
+    "expected": "loss",
+    "name": "m21_black",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 178296532,
+    "expected": "win",
+    "name": "m22_white",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 219812792,
+    "expected": "loss",
+    "name": "m22_black",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 3074086,
+    "expected": "win",
+    "name": "m23_white",
+    "outcome": "win",
+    "pv_len": 29,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 636344,
+    "expected": "loss",
+    "name": "m23_black",
+    "outcome": "loss",
+    "pv_len": 20,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 82200,
+    "expected": "win",
+    "name": "m24_white",
+    "outcome": "win",
+    "pv_len": 15,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 31258,
+    "expected": "loss",
+    "name": "m24_black",
+    "outcome": "loss",
+    "pv_len": 14,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 4224,
+    "expected": "win",
+    "name": "m25_white",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3126,
+    "expected": "loss",
+    "name": "m25_black",
+    "outcome": "loss",
+    "pv_len": 12,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 448,
+    "expected": "win",
+    "name": "m26_white",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 413,
+    "expected": "loss",
+    "name": "m26_black",
+    "outcome": "loss",
+    "pv_len": 10,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 77,
+    "expected": "win",
+    "name": "m27_white",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 74,
+    "expected": "loss",
+    "name": "m27_black",
+    "outcome": "loss",
+    "pv_len": 4,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 35,
+    "expected": "win",
+    "name": "m28_white",
+    "outcome": "win",
+    "pv_len": 3,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3,
+    "expected": "loss",
+    "name": "m28_black",
+    "outcome": "loss",
+    "pv_len": 2,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1,
+    "expected": "win",
+    "name": "m29_white",
+    "outcome": "win",
+    "pv_len": 1,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   }
+  ],
+  "mode": "first-outcome",
+  "suite": "move-order",
+  "timeout_s": 30,
+  "tt_size": 128
+ },
+ "r6_mo_wpns": {
+  "aggregates": {
+   "mean_pv_len": 7.0,
+   "solved": 12,
+   "timeouts": 7,
+   "total_child_evals": 1665411533,
+   "total_nodes": 251011636,
+   "total_time": 210.54578150599997,
+   "wrong": 0
+  },
+  "cases": [
+   {
+    "child_evals": 166979042,
+    "expected": "win",
+    "name": "m20_white",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 166101626,
+    "expected": "loss",
+    "name": "m20_black",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 217015465,
+    "expected": "win",
+    "name": "m21_white",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 260546726,
+    "expected": "loss",
+    "name": "m21_black",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 256335684,
+    "expected": "win",
+    "name": "m22_white",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 277770759,
+    "expected": "loss",
+    "name": "m22_black",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 2782998,
+    "expected": "win",
+    "name": "m23_white",
+    "outcome": "win",
+    "pv_len": 31,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 317481821,
+    "expected": "loss",
+    "name": "m23_black",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 282204,
+    "expected": "win",
+    "name": "m24_white",
+    "outcome": "win",
+    "pv_len": 19,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 101561,
+    "expected": "loss",
+    "name": "m24_black",
+    "outcome": "loss",
+    "pv_len": 22,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 5980,
+    "expected": "win",
+    "name": "m25_white",
+    "outcome": "win",
+    "pv_len": 13,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 5094,
+    "expected": "loss",
+    "name": "m25_black",
+    "outcome": "loss",
+    "pv_len": 12,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1086,
+    "expected": "win",
+    "name": "m26_white",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1011,
+    "expected": "loss",
+    "name": "m26_black",
+    "outcome": "loss",
+    "pv_len": 10,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 257,
+    "expected": "win",
+    "name": "m27_white",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 126,
+    "expected": "loss",
+    "name": "m27_black",
+    "outcome": "loss",
+    "pv_len": 4,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 89,
+    "expected": "win",
+    "name": "m28_white",
+    "outcome": "win",
+    "pv_len": 3,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3,
+    "expected": "loss",
+    "name": "m28_black",
+    "outcome": "loss",
+    "pv_len": 2,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1,
+    "expected": "win",
+    "name": "m29_white",
+    "outcome": "win",
+    "pv_len": 1,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   }
+  ],
+  "mode": "first-outcome",
+  "suite": "move-order",
+  "timeout_s": 30,
+  "tt_size": 128
+ },
+ "r6_quick_baseline": {
+  "aggregates": {
+   "mean_pv_len": 17.677966101694917,
+   "solved": 59,
+   "timeouts": 0,
+   "total_child_evals": 38974090,
+   "total_nodes": 2488917,
+   "total_time": 6.529599828,
+   "wrong": 0
+  },
+  "cases": [
+   {
+    "child_evals": 5713706,
+    "expected": "win",
+    "name": "dec01",
+    "outcome": "win",
+    "pv_len": 27,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 138124,
+    "expected": "loss",
+    "name": "dec02",
+    "outcome": "loss",
+    "pv_len": 30,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 47068,
+    "expected": "win",
+    "name": "dec03",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 7352,
+    "expected": "win",
+    "name": "dec04",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 314615,
+    "expected": "win",
+    "name": "dec05",
+    "outcome": "win",
+    "pv_len": 15,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1507474,
+    "expected": "loss",
+    "name": "dec06",
+    "outcome": "loss",
+    "pv_len": 22,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 4021,
+    "expected": "win",
+    "name": "dec07",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 45,
+    "expected": "win",
+    "name": "dec08",
+    "outcome": "win",
+    "pv_len": 3,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1842,
+    "expected": "win",
+    "name": "dec09",
+    "outcome": "win",
+    "pv_len": 3,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 4262128,
+    "expected": "win",
+    "name": "dec10",
+    "outcome": "win",
+    "pv_len": 41,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 253890,
+    "expected": "win",
+    "name": "dec11",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 303191,
+    "expected": "win",
+    "name": "dec12",
+    "outcome": "win",
+    "pv_len": 15,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3822602,
+    "expected": "win",
+    "name": "dec13",
+    "outcome": "win",
+    "pv_len": 17,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 2397489,
+    "expected": "win",
+    "name": "dec14",
+    "outcome": "win",
+    "pv_len": 21,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1077420,
+    "expected": "win",
+    "name": "dec15",
+    "outcome": "win",
+    "pv_len": 273,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 107110,
+    "expected": "win",
+    "name": "dec16",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 539273,
+    "expected": "win",
+    "name": "dec17",
+    "outcome": "win",
+    "pv_len": 17,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 39549,
+    "expected": "win",
+    "name": "dec18",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 135708,
+    "expected": "win",
+    "name": "dec19",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 148862,
+    "expected": "win",
+    "name": "dec20",
+    "outcome": "win",
+    "pv_len": 19,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 243842,
+    "expected": "win",
+    "name": "dec21",
+    "outcome": "win",
+    "pv_len": 25,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 4894,
+    "expected": "win",
+    "name": "dec22",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3471,
+    "expected": "win",
+    "name": "dec23",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 32418,
+    "expected": "loss",
+    "name": "dec24",
+    "outcome": "loss",
+    "pv_len": 10,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 30761,
+    "expected": "win",
+    "name": "dec25",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 151933,
+    "expected": "win",
+    "name": "dec26",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 2277,
+    "expected": "win",
+    "name": "dec27",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 11665,
+    "expected": "loss",
+    "name": "dec28",
+    "outcome": "loss",
+    "pv_len": 8,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 28040,
+    "expected": "win",
+    "name": "dec29",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 12041,
+    "expected": "win",
+    "name": "dec30",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 510426,
+    "expected": "loss",
+    "name": "dec31",
+    "outcome": "loss",
+    "pv_len": 22,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3342,
+    "expected": "win",
+    "name": "dec32",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 11984,
+    "expected": "win",
+    "name": "dec33",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 26858,
+    "expected": "win",
+    "name": "dec34",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1092,
+    "expected": "win",
+    "name": "dec35",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 20206,
+    "expected": "loss",
+    "name": "dec36",
+    "outcome": "loss",
+    "pv_len": 8,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 28257,
+    "expected": "loss",
+    "name": "dec37",
+    "outcome": "loss",
+    "pv_len": 14,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1169070,
+    "expected": "loss",
+    "name": "dec38",
+    "outcome": "loss",
+    "pv_len": 18,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 61552,
+    "expected": "win",
+    "name": "dec39",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 852716,
+    "expected": "loss",
+    "name": "dec40",
+    "outcome": "loss",
+    "pv_len": 18,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 27475,
+    "expected": "loss",
+    "name": "dec41",
+    "outcome": "loss",
+    "pv_len": 10,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 80849,
+    "expected": "loss",
+    "name": "dec42",
+    "outcome": "loss",
+    "pv_len": 12,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1506959,
+    "expected": "loss",
+    "name": "dec43",
+    "outcome": "loss",
+    "pv_len": 14,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 102615,
+    "expected": "loss",
+    "name": "dec44",
+    "outcome": "loss",
+    "pv_len": 50,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3422,
+    "expected": "win",
+    "name": "dec45",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 128347,
+    "expected": "loss",
+    "name": "dec46",
+    "outcome": "loss",
+    "pv_len": 16,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 9673403,
+    "expected": "win",
+    "name": "m23_white",
+    "outcome": "win",
+    "pv_len": 33,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 2892606,
+    "expected": "loss",
+    "name": "m23_black",
+    "outcome": "loss",
+    "pv_len": 24,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 406737,
+    "expected": "win",
+    "name": "m24_white",
+    "outcome": "win",
+    "pv_len": 15,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 93449,
+    "expected": "loss",
+    "name": "m24_black",
+    "outcome": "loss",
+    "pv_len": 24,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 22195,
+    "expected": "win",
+    "name": "m25_white",
+    "outcome": "win",
+    "pv_len": 21,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 5146,
+    "expected": "loss",
+    "name": "m25_black",
+    "outcome": "loss",
+    "pv_len": 12,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1086,
+    "expected": "win",
+    "name": "m26_white",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1011,
+    "expected": "loss",
+    "name": "m26_black",
+    "outcome": "loss",
+    "pv_len": 10,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 257,
+    "expected": "win",
+    "name": "m27_white",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 126,
+    "expected": "loss",
+    "name": "m27_black",
+    "outcome": "loss",
+    "pv_len": 4,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 89,
+    "expected": "win",
+    "name": "m28_white",
+    "outcome": "win",
+    "pv_len": 3,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3,
+    "expected": "loss",
+    "name": "m28_black",
+    "outcome": "loss",
+    "pv_len": 2,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1,
+    "expected": "win",
+    "name": "m29_white",
+    "outcome": "win",
+    "pv_len": 1,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   }
+  ],
+  "mode": "first-outcome",
+  "suite": "quick",
+  "timeout_s": 10,
+  "tt_size": 128
+ },
+ "r6_quick_mob": {
+  "aggregates": {
+   "mean_pv_len": 15.525423728813559,
+   "solved": 58,
+   "timeouts": 1,
+   "total_child_evals": 89974828,
+   "total_nodes": 9990949,
+   "total_time": 12.844253580999995,
+   "wrong": 0
+  },
+  "cases": [
+   {
+    "child_evals": 74450805,
+    "expected": "win",
+    "name": "dec01",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 120185,
+    "expected": "loss",
+    "name": "dec02",
+    "outcome": "loss",
+    "pv_len": 20,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3198,
+    "expected": "win",
+    "name": "dec03",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1778,
+    "expected": "win",
+    "name": "dec04",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 645156,
+    "expected": "win",
+    "name": "dec05",
+    "outcome": "win",
+    "pv_len": 25,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1015723,
+    "expected": "loss",
+    "name": "dec06",
+    "outcome": "loss",
+    "pv_len": 24,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 729,
+    "expected": "win",
+    "name": "dec07",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 45,
+    "expected": "win",
+    "name": "dec08",
+    "outcome": "win",
+    "pv_len": 3,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 83,
+    "expected": "win",
+    "name": "dec09",
+    "outcome": "win",
+    "pv_len": 3,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 7818439,
+    "expected": "win",
+    "name": "dec10",
+    "outcome": "win",
+    "pv_len": 39,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 14880,
+    "expected": "win",
+    "name": "dec11",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 70587,
+    "expected": "win",
+    "name": "dec12",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 612551,
+    "expected": "win",
+    "name": "dec13",
+    "outcome": "win",
+    "pv_len": 17,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 224427,
+    "expected": "win",
+    "name": "dec14",
+    "outcome": "win",
+    "pv_len": 15,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 209118,
+    "expected": "win",
+    "name": "dec15",
+    "outcome": "win",
+    "pv_len": 257,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 8362,
+    "expected": "win",
+    "name": "dec16",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 109649,
+    "expected": "win",
+    "name": "dec17",
+    "outcome": "win",
+    "pv_len": 17,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1541,
+    "expected": "win",
+    "name": "dec18",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 17003,
+    "expected": "win",
+    "name": "dec19",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 13021,
+    "expected": "win",
+    "name": "dec20",
+    "outcome": "win",
+    "pv_len": 19,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 134509,
+    "expected": "win",
+    "name": "dec21",
+    "outcome": "win",
+    "pv_len": 25,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 459,
+    "expected": "win",
+    "name": "dec22",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 296,
+    "expected": "win",
+    "name": "dec23",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3523,
+    "expected": "loss",
+    "name": "dec24",
+    "outcome": "loss",
+    "pv_len": 10,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3692,
+    "expected": "win",
+    "name": "dec25",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 34934,
+    "expected": "win",
+    "name": "dec26",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 385,
+    "expected": "win",
+    "name": "dec27",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 524,
+    "expected": "loss",
+    "name": "dec28",
+    "outcome": "loss",
+    "pv_len": 8,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1315,
+    "expected": "win",
+    "name": "dec29",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3324,
+    "expected": "win",
+    "name": "dec30",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 33699,
+    "expected": "loss",
+    "name": "dec31",
+    "outcome": "loss",
+    "pv_len": 16,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 400,
+    "expected": "win",
+    "name": "dec32",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 556,
+    "expected": "win",
+    "name": "dec33",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1671,
+    "expected": "win",
+    "name": "dec34",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 135,
+    "expected": "win",
+    "name": "dec35",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3458,
+    "expected": "loss",
+    "name": "dec36",
+    "outcome": "loss",
+    "pv_len": 8,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 5701,
+    "expected": "loss",
+    "name": "dec37",
+    "outcome": "loss",
+    "pv_len": 14,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 239734,
+    "expected": "loss",
+    "name": "dec38",
+    "outcome": "loss",
+    "pv_len": 12,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 6153,
+    "expected": "win",
+    "name": "dec39",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 204819,
+    "expected": "loss",
+    "name": "dec40",
+    "outcome": "loss",
+    "pv_len": 20,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 9267,
+    "expected": "loss",
+    "name": "dec41",
+    "outcome": "loss",
+    "pv_len": 10,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 21630,
+    "expected": "loss",
+    "name": "dec42",
+    "outcome": "loss",
+    "pv_len": 12,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 26833,
+    "expected": "loss",
+    "name": "dec43",
+    "outcome": "loss",
+    "pv_len": 14,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 29557,
+    "expected": "loss",
+    "name": "dec44",
+    "outcome": "loss",
+    "pv_len": 24,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 191,
+    "expected": "win",
+    "name": "dec45",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 38494,
+    "expected": "loss",
+    "name": "dec46",
+    "outcome": "loss",
+    "pv_len": 12,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3074086,
+    "expected": "win",
+    "name": "m23_white",
+    "outcome": "win",
+    "pv_len": 29,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 636344,
+    "expected": "loss",
+    "name": "m23_black",
+    "outcome": "loss",
+    "pv_len": 20,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 82200,
+    "expected": "win",
+    "name": "m24_white",
+    "outcome": "win",
+    "pv_len": 15,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 31258,
+    "expected": "loss",
+    "name": "m24_black",
+    "outcome": "loss",
+    "pv_len": 14,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 4224,
+    "expected": "win",
+    "name": "m25_white",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3126,
+    "expected": "loss",
+    "name": "m25_black",
+    "outcome": "loss",
+    "pv_len": 12,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 448,
+    "expected": "win",
+    "name": "m26_white",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 413,
+    "expected": "loss",
+    "name": "m26_black",
+    "outcome": "loss",
+    "pv_len": 10,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 77,
+    "expected": "win",
+    "name": "m27_white",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 74,
+    "expected": "loss",
+    "name": "m27_black",
+    "outcome": "loss",
+    "pv_len": 4,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 35,
+    "expected": "win",
+    "name": "m28_white",
+    "outcome": "win",
+    "pv_len": 3,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3,
+    "expected": "loss",
+    "name": "m28_black",
+    "outcome": "loss",
+    "pv_len": 2,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1,
+    "expected": "win",
+    "name": "m29_white",
+    "outcome": "win",
+    "pv_len": 1,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   }
+  ],
+  "mode": "first-outcome",
+  "suite": "quick",
+  "timeout_s": 10,
+  "tt_size": 128
+ },
+ "r6_quick_wpns": {
+  "aggregates": {
+   "mean_pv_len": 17.11864406779661,
+   "solved": 55,
+   "timeouts": 4,
+   "total_child_evals": 420465872,
+   "total_nodes": 50759586,
+   "total_time": 44.72396860099999,
+   "wrong": 0
+  },
+  "cases": [
+   {
+    "child_evals": 66595006,
+    "expected": "win",
+    "name": "dec01",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 130489,
+    "expected": "loss",
+    "name": "dec02",
+    "outcome": "loss",
+    "pv_len": 32,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 73232,
+    "expected": "win",
+    "name": "dec03",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 7264,
+    "expected": "win",
+    "name": "dec04",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1359596,
+    "expected": "win",
+    "name": "dec05",
+    "outcome": "win",
+    "pv_len": 45,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1778747,
+    "expected": "loss",
+    "name": "dec06",
+    "outcome": "loss",
+    "pv_len": 20,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 4021,
+    "expected": "win",
+    "name": "dec07",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 45,
+    "expected": "win",
+    "name": "dec08",
+    "outcome": "win",
+    "pv_len": 3,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1842,
+    "expected": "win",
+    "name": "dec09",
+    "outcome": "win",
+    "pv_len": 3,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 5846520,
+    "expected": "win",
+    "name": "dec10",
+    "outcome": "win",
+    "pv_len": 41,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 222246,
+    "expected": "win",
+    "name": "dec11",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 222391,
+    "expected": "win",
+    "name": "dec12",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 9274715,
+    "expected": "win",
+    "name": "dec13",
+    "outcome": "win",
+    "pv_len": 31,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 954979,
+    "expected": "win",
+    "name": "dec14",
+    "outcome": "win",
+    "pv_len": 23,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 471881,
+    "expected": "win",
+    "name": "dec15",
+    "outcome": "win",
+    "pv_len": 297,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 148078,
+    "expected": "win",
+    "name": "dec16",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 288877,
+    "expected": "win",
+    "name": "dec17",
+    "outcome": "win",
+    "pv_len": 17,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 39549,
+    "expected": "win",
+    "name": "dec18",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 276608,
+    "expected": "win",
+    "name": "dec19",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 260496,
+    "expected": "win",
+    "name": "dec20",
+    "outcome": "win",
+    "pv_len": 19,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 186423,
+    "expected": "win",
+    "name": "dec21",
+    "outcome": "win",
+    "pv_len": 29,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 4894,
+    "expected": "win",
+    "name": "dec22",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3471,
+    "expected": "win",
+    "name": "dec23",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 55719,
+    "expected": "loss",
+    "name": "dec24",
+    "outcome": "loss",
+    "pv_len": 10,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 112683,
+    "expected": "win",
+    "name": "dec25",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 29624,
+    "expected": "win",
+    "name": "dec26",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 2277,
+    "expected": "win",
+    "name": "dec27",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 10107,
+    "expected": "loss",
+    "name": "dec28",
+    "outcome": "loss",
+    "pv_len": 8,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 224952,
+    "expected": "win",
+    "name": "dec29",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 54858,
+    "expected": "win",
+    "name": "dec30",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 163506,
+    "expected": "loss",
+    "name": "dec31",
+    "outcome": "loss",
+    "pv_len": 16,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3342,
+    "expected": "win",
+    "name": "dec32",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 11984,
+    "expected": "win",
+    "name": "dec33",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 151729,
+    "expected": "win",
+    "name": "dec34",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1092,
+    "expected": "win",
+    "name": "dec35",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 17654,
+    "expected": "loss",
+    "name": "dec36",
+    "outcome": "loss",
+    "pv_len": 8,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 28023,
+    "expected": "loss",
+    "name": "dec37",
+    "outcome": "loss",
+    "pv_len": 14,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 109612492,
+    "expected": "loss",
+    "name": "dec38",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 80215,
+    "expected": "win",
+    "name": "dec39",
+    "outcome": "win",
+    "pv_len": 9,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 108724184,
+    "expected": "loss",
+    "name": "dec40",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 27475,
+    "expected": "loss",
+    "name": "dec41",
+    "outcome": "loss",
+    "pv_len": 10,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 76517,
+    "expected": "loss",
+    "name": "dec42",
+    "outcome": "loss",
+    "pv_len": 12,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3502721,
+    "expected": "loss",
+    "name": "dec43",
+    "outcome": "loss",
+    "pv_len": 16,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 75011,
+    "expected": "loss",
+    "name": "dec44",
+    "outcome": "loss",
+    "pv_len": 46,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3422,
+    "expected": "win",
+    "name": "dec45",
+    "outcome": "win",
+    "pv_len": 7,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 57679,
+    "expected": "loss",
+    "name": "dec46",
+    "outcome": "loss",
+    "pv_len": 12,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 2782998,
+    "expected": "win",
+    "name": "m23_white",
+    "outcome": "win",
+    "pv_len": 31,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 106106826,
+    "expected": "loss",
+    "name": "m23_black",
+    "outcome": "draw",
+    "pv_len": 0,
+    "status": "timeout",
+    "timeout": true,
+    "wrong": false
+   },
+   {
+    "child_evals": 282204,
+    "expected": "win",
+    "name": "m24_white",
+    "outcome": "win",
+    "pv_len": 19,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 101561,
+    "expected": "loss",
+    "name": "m24_black",
+    "outcome": "loss",
+    "pv_len": 22,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 5980,
+    "expected": "win",
+    "name": "m25_white",
+    "outcome": "win",
+    "pv_len": 13,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 5094,
+    "expected": "loss",
+    "name": "m25_black",
+    "outcome": "loss",
+    "pv_len": 12,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1086,
+    "expected": "win",
+    "name": "m26_white",
+    "outcome": "win",
+    "pv_len": 11,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1011,
+    "expected": "loss",
+    "name": "m26_black",
+    "outcome": "loss",
+    "pv_len": 10,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 257,
+    "expected": "win",
+    "name": "m27_white",
+    "outcome": "win",
+    "pv_len": 5,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 126,
+    "expected": "loss",
+    "name": "m27_black",
+    "outcome": "loss",
+    "pv_len": 4,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 89,
+    "expected": "win",
+    "name": "m28_white",
+    "outcome": "win",
+    "pv_len": 3,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 3,
+    "expected": "loss",
+    "name": "m28_black",
+    "outcome": "loss",
+    "pv_len": 2,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   },
+   {
+    "child_evals": 1,
+    "expected": "win",
+    "name": "m29_white",
+    "outcome": "win",
+    "pv_len": 1,
+    "status": "ok",
+    "timeout": false,
+    "wrong": false
+   }
+  ],
+  "mode": "first-outcome",
+  "suite": "quick",
+  "timeout_s": 10,
+  "tt_size": 128
+ }
+}

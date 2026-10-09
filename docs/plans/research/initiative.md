@@ -13,6 +13,10 @@ threads live elsewhere and are recorded in `structural_floor.md` §9:
 `conversion` #5e (Gao 2021) stays a reading item. Successor note: any
 future reopener of the recorded blockers starts from `structural_floor.md`
 §9 ("closed for now, reopen trigger X"), not from the backlog below.
+**Re-examined 2026-10-09 (status unchanged — closed):**
+[`reexamination.md`](reexamination.md) finds the single-draw gates below the
+noise floor and leaf initialization (never measured) to be the dominant
+surface; reopening, or opening a successor initiative, is an owner decision.
 
 ## Motivation
 
@@ -412,3 +416,14 @@ Per repo convention, every plan ends with the task of writing its
   close the initiative; GAP → record untraceable claims in an evidence-gaps
   subsection and still close; DEFER → surface blocked sections as a
   potential new initiative, never fabricated.
+- **2026-10-09** — **Re-examination note** (`reexamination.md`, docs +
+  read-only probes in an isolated copy, `measurements/reexam/`; no plan
+  number consumed, status unchanged). Findings: a semantics-neutral TT-index
+  salt moves stress 249.5 M → 758 M / censored (3 of 4 draws), so the
+  single-draw control gates are below the noise floor; 80–88% of child
+  evals are first-sweep cuts of fresh `(1, 1)`-initialized nodes; naive
+  mobility initialization measures stress 0.24× / dec13 0.16× but m22
+  censored at 1 B (all salts). Measured out: bigger TT, depth-capped first
+  outcome, naive WPNS, single work chunk; repetition/bound hygiene small
+  except dec10. Addendum added to `structural_floor.md`; next steps ranked
+  in `reexamination.md` §6.
