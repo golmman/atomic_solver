@@ -19,6 +19,19 @@ requires is out of scope until the tooling is complete. The data-model
 decisions below are unchanged: they are the contract surface the tooling
 implements.
 
+**Extended 2026-10-09 (owner decision).** Two goal extensions on top of the
+tooling-first framing (both low-prio backlog items; neither reopens the
+data-model decisions): (1) **ledger leaves are the harvest frontier** — a
+`descend` run is a deliberate exploration commitment, and its censored
+off-tree candidates (the ledger leaves) are the recognized starting points
+for subsequent harvests, not a byproduct to re-enumerate every run (item
+11); (2) **materialized closure promotion** — when a node's children's
+proven facts entail its value under the parity rules, the merger may
+promote it to a proven row instead of leaving the implication forever
+derived (item 12). The constraint amendments ride with item 12; the
+tooling-first deliverable and the handover rule are unchanged — promotion
+is what eventually makes the handover rule executable.
+
 ## Motivation
 
 The `solve` initiative's plan4 pilot demonstrated that a real, one-sided,
@@ -147,6 +160,8 @@ value.
 | 8 | **Tooling completeness audit + hardening** | audit the pipeline end-to-end as a third party would run it (shards → merger → DB, harvest loop from a clean checkout): missing CLIs/options, undocumented contracts, error-path gaps, packaging/docs; fix what it finds | the pivot's next plan; defines "tooling complete" so harvesting runs can be justified as validation and the website handoff (#5) has a stable surface to hand over | S–M | **done (plan12, 2026-10-02)**: audit re-run and pinned (durable layer 262/262 self-consistent; merger reproduces the standing DB byte-identically, `0d929f4c…`, 55,703 nodes; harvest smoke 2/2 censored, manifest byte-identical; flip 75/0/Null). One defect found and fixed (the stale-DB `built_from` truncation panicked on a short DB value — now length-safe, regression-tested); deliverables: operator runbook `docs/proofdb_pipeline.md`, derived-DB rebuild regression test (`tests/proofdb.rs::standing_layer_rebuilds_byte_identical`, in the default gate), AGENTS.md entries for all four tools; ledger-from-clean-checkout recorded as a decision (fresh or seed — the ledger stays scheduling state), startpos-rooting/orphan-shard/merge-after-batch recorded as limitations. Plan11 (parked 18B `g1f3` rung) retired. Next levers: items 5 and 6. |
 | 9 | **Centralized generated-data layout** | default root `data/proofdb/` for **all** generated state, production shards and manifest included (`proofdb.db`, `work.json`, `flip.json`, `shards/manifest.json`); tool defaults updated (`proofdb_merge --manifest/--shard-dir/--db`, `proofdb_harvest --db/--ledger`, `proofdb_flip --db/--out`) so a production run needs no path flags; the committed `docs/plans/proofdb/shards/` set reclassified as development/validation fixture (explicit-flags runs, tests) — production ignores it; manual/AGENTS/.gitignore-comment updates | one canonical home for generated data; cwd never littered; production = bare invocations | S | **done (plan14, 2026-10-02)**: defaults compiled in `examples/proofdb/mod.rs` (single source of truth, pinned by `tests/proofdb.rs::cli_defaults_are_centralized_under_data_proofdb`); parent-dir creation on write paths only; quickstart re-shaped to production (bare invocations, re-pinned verbatim); R1 fixture digest unchanged (`0d929f4c…`, 55,703 nodes); migration one-liner in manual §4/R5; backup of the unversioned `data/proofdb/shards/` is the operator's responsibility (manual §2.1). `report14.md` |
 | 10 | **Self-bootstrapping harvest (`descend` policy)** | off-tree exploration policy in `proofdb_harvest`: enumerate all legal startpos-rooted paths of length ≤ `--descend-plies` (default 2; 400 measured ply-2 candidates), skip row/manifest-covered ones (root-row-aware rule), bounded-solve under the and-close ladder, export decisive as shards — the solve plan4 sharp-class method productized; batch 1 = descend (bootstrap), batch 2+ = and-close (grow) | a fresh clone bootstraps by running the pipeline; no artifact-copying production step; the fixture reverts to validation-only | S–M | **executed (plan15, 2026-10-08)** — shipped; boot gate 52 shards, determinism gate byte-identical; see `report15.md` |
+| 11 | **Ledger-leaf harvest policy (the descend tail as the frontier)** | a scheduling mode whose job set is exactly the ledger's censored off-tree candidates (the deliberate descend leaves), ordered by the shared ladder; fresh shallow enumeration demoted to bootstrap-only. Decisive leaves export shards exactly as `descend` does today (graft + open-ancestor spine — already shipped with item 10), so this item is scheduling only, no new capability | a descend run is a deliberate exploration commitment: its censored leaves are the measured frontier, and subsequent harvests should resume from them instead of re-enumerating the whole candidate set every run (today the ladder is the only pacing mechanism); the leaf set is also a natural work partition for item 6 | S | open — added 2026-10-09 (owner pivot), low prio |
+| 12 | **Materialized closure promotion (implied AND/OR nodes become proven rows)** | merger-side promotion fixpoint: an undecided row whose children's proven facts entail its value under the side-to-move parity rules (either case: one proving child, or all replies decided) is rewritten as proven. Every promoted row must either carry a synthesized composite proof subtree that passes the existing replay validator, or carry an explicit derived provenance class — the implementing plan decides. Deterministic rebuild from the shard set preserved (the fixpoint is deterministic); `depth_bound`/`depth_status` derived under the same discipline; a promotion contradicting a shard outcome aborts (extends merge rule 4); `proofdb_flip` updated so promoted rows count as verified facts; spec `docs/spec/global_proof_store.md` amended (contract-surface change, standalone doc). Amends constraints 1 and 3: "no unverified fact" is preserved by validating/classing every promotion; "DB = cache of shards" becomes "cache of shards + deterministic promotion" | closes the derived-vs-materialized gap: proven leaf spines propagate closure upward automatically instead of only informing job exclusion and flip analysis; makes the handover rule ("all startpos children resolved, OR-node proven") executable by the merger itself; compounds item 11's leaves into closure | M | open — added 2026-10-09 (owner pivot), low prio |
 
 ## Non-goals
 
@@ -168,6 +183,14 @@ value.
 
 ## History
 
+- **2026-10-09 — goals extended (owner pivot, docs-only session): items 11
+  and 12 added.** The owner reframed descend censoring: a descend run is a
+  deliberate commitment, so its censored ledger leaves are the harvest
+  frontier (item 11 — scheduling only; decisive leaves already graft via
+  item 10), and AND/OR closure should be materialized in the DB rather
+  than remaining derived-only (item 12 — amends constraints 1/3, spec
+  change included). Both open, low prio; the next execution item remains
+  item 6 (independent harvesters).
 - **2026-10-08 — plan15 drafted (docs-only plan session): item 10 added.**
   Owner rejected artifact-copying as the production bootstrap (manual §3.2
   step 0); the seed provenance was traced to solve plan4's sharp-class

@@ -1,7 +1,7 @@
 .PHONY: macos_cleanup
 .PHONY: test test-full test-lite
 .PHONY: stress quick_check quick_check2 quick_check3
-.PHONY: proofdb_init proofdb_cycle proofdb_stats
+.PHONY: proofdb_init proofdb_cycle proofdb_descend proofdb_stats
 
 BIN := target/release/examples
 
@@ -49,16 +49,23 @@ proofdb_init:
 	echo "Next: creating bootstrap batch"
 	sleep 10
 	$(BIN)/proofdb_harvest --policy descend
-	$(BIN)/proofdb_merge    # fold the batch's shards into the DB (the harvest never merges)
-	$(BIN)/proofdb_flip     # soundness sanity over the grown DB (expect: flips 0 verified 0)
+	$(BIN)/proofdb_merge
+	$(BIN)/proofdb_flip
 
 proofdb_cycle:
 	cargo build --release --examples
 	$(BIN)/proofdb_harvest --policy and-close --budget-evals 4000000 \
 		--and-close-max-budget 100000000 --tt-mb 1024 \
-		--max-total-evals 10000000000
-	$(BIN)/proofdb_merge    # fold the batch's shards into the DB (the harvest never merges)
-	$(BIN)/proofdb_flip     # soundness sanity over the grown DB (expect: flips 0 verified 0)
+		--max-total-evals 0
+	$(BIN)/proofdb_merge
+	$(BIN)/proofdb_flip
+
+proofdb_descend:
+	cargo build --release --examples
+	$(BIN)/proofdb_harvest --policy descend --descend-plies 3 \
+	   --budget-evals 4000000 --tt-mb 1024 --max-total-evals 0
+	$(BIN)/proofdb_merge
+	$(BIN)/proofdb_flip
 
 proofdb_stats:
 	@printf "number of shards: "
