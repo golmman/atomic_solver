@@ -128,3 +128,28 @@ measurement answers the question it was registered to answer.
 
 In-repo driver + analyzer only (`portfolio7.py`, `analyze_portfolio7.py`);
 standard `sha256sum` for the drift gate. No external tooling.
+
+## Addendum — re-examination (2026-10-09)
+
+The measured numbers above stand; two interpretations do not
+(`reexamination.md` §1, `measurements/reexam/`):
+
+- **P0, P1 and P2 were the identical computation.** All racers ran
+  `--first-outcome`, under which the refinement loop never executes
+  (`src/search/dfpn/mod.rs`, `while !self.first_outcome_only …`), and
+  `--refine-cap` is read only inside that loop. Their identical medians
+  confirm it; the remark that "P1/P2 produce different PVs than P0" is
+  inconsistent with the code path. The portfolio was effectively
+  {ε 0.125, ε 0.25}, and the research plan4 ε sweep had already measured
+  ε 0.25 as the worst value on both shuffle-win (+39.2 %) and m22 (+49.4 %).
+- **"Deterministic ⇒ no diversity" is inverted.** Determinism holds per
+  config; across sound configs the solver's trajectory is chaotic (ε, TT
+  size, history constants, solved-entry reuse). A re-run with
+  ε ∈ {0.125, 0.375, 0.5, 1.0} measured W_first = 0.63× (shuffle-win),
+  0.75× (rem12) and 0.91× (m22) of the in-race default — passing this
+  plan's H1 and H2 (single race per case; ε = 0.5 chosen with knowledge of
+  its shuffle-win result, rem12 out of sample).
+
+The NO-GO verdict remains the correct mechanical outcome *for the
+portfolio this plan registered*; it is not evidence against diversified
+portfolios.

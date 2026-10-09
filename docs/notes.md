@@ -834,3 +834,10 @@ the `atomic-movegen` dependency is a side project of the user so we could abando
 - examples
   - existing examples
 
+---
+
+We have multiple verdicts that this dfpn atomic solver implementation is not parallelizable. Please re-examine the verdicts thoroughly. Think out of the box. Are there things we might have missed? Is it worth re-trying some of the mechanisms with a different angle? Are there any other (fringe) ideas we could try out?
+
+---
+
+We have multiple verdicts that for this dfpn atomic solver implementation there is little room for effectively reducing work done for a decicive outcome. Please re-examine the verdicts thoroughly. Think out of the box. Are there things we might have missed? Is it worth re-trying some of the mechanisms with a different angle? Are there any other (fringe) ideas we could try out?

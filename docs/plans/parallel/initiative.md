@@ -2,6 +2,24 @@
 
 ## Status
 
+**2026-10-09, re-examination note (docs + read-only probes; status
+unchanged — closed).** `reexamination.md` re-reads the no-go record and
+finds that it over-reaches in four places: (1) plan7 never tested a
+diversified portfolio — under `--first-outcome` `--refine-cap` is inert,
+so P0/P1/P2 were the identical computation, and P3's ε = 0.25 was already
+the measured-worst value on both motivating cases; a re-run with
+ε ∈ {0.125, 0.375, 0.5, 1.0} measured W_first = 0.63× (shuffle-win) /
+0.75× (rem12, out of sample) / 0.91× (m22), passing plan7's own H1/H2
+(single race per case, selection-bias caveat on ε = 0.5); (2) SPDFPN was
+only measured at the capacity-starved 128 MB TT and with a
+coordinator-only-finish shape; (3) the ~5 % sequential tax was avoidable
+(monomorphized TT backend or no shared TT); (4) the gates measured median
+speedup on solving cases rather than timeouts converted on the deep tier.
+Ranked follow-up ideas (diversified/cooperative portfolio, SPDFPN TT-size
+diagnostic, Kaneko root threads, TT prefetch) are recorded there; nothing
+is re-opened by the note — a re-open is a new plan with its own
+pre-registration. Evidence: `measurements/reexam/`; report7 addendum.
+
 **2026-10-05, plan7 executed → NO-GO confirmed; initiative re-closed.**
 Plan7 tested the last unmeasured mechanism shape — a process-level portfolio
 (K = 4 independent *sequential* solver processes racing with diverse
@@ -302,6 +320,17 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
   and outcome agreement across repeated runs (no `wrong` ever).
 
 ## History
+
+- **2026-10-09 — re-examination note (`reexamination.md`, docs + read-only
+  probes, zero product-code changes)**: plan7 portfolio flaw identified
+  (`--refine-cap` inert under `--first-outcome`; ε = 0.25 measured-worst on
+  both motivating cases) and a diversified ε race measured 0.63× / 0.75× /
+  0.91× (shuffle-win / rem12 / m22), passing plan7's H1/H2; SPDFPN
+  TT-capacity confound and coordinator-only-finish shape recorded as
+  hypotheses; avoidable sequential tax and priority-1 gate mismatch noted;
+  ranked ideas A–F. `report7.md` addendum appended. Measurements:
+  `measurements/reexam/`. No `docs/plans/README.md` row edit (no
+  open/pivot/close event).
 
 - **2026-10-04 — plan5 complete: stage 2 (2a + 2b) → NO-GO verdict, condition-1 revert executed,
   backlog #4 closed, initiative closed (`report5.md`)**: stage 2a built the opt-in `--threads N`

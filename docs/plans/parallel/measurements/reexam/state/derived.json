@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-09",
+  "perf_m22_first_outcome": {
+    "samples": 14007,
+    "self_share_top": {
+      "Search::evaluate_child": 0.2891,
+      "Board::do_move": 0.2360,
+      "Board::compute_checkers": 0.1544,
+      "Search::dfpn": 0.0906,
+      "StaticAtomicScorer::score_with_context": 0.0373
+    },
+    "evaluate_child_annotate_top_loads": {
+      "ldr x9, [x10]  (TT bucket slot-0 key)": 0.3923,
+      "ldrb w9, [x10, #0x68]  (TT bucket slot-1 field, second cache line)": 0.1444,
+      "ldrb w9, [x10, #0x30]  (TT bucket slot-0 field)": 0.0607
+    },
+    "derived": "~60% of evaluate_child self samples sit on TT bucket loads => ~17% of total runtime stalled on TT probes (inlined). TtEntry is 56 B, buckets [TtEntry; 2] = 112 B, so slot 1 always lies on a different 64 B line than slot 0."
+  },
+  "vbs_history_arms_quick_suite": {
+    "source": "docs/plans/lean/measurements/plan10/results/*.json (59 cases x 24 configs)",
+    "script": "vbs_history_arms.py",
+    "total_child_evals_ratio_vs_default": {
+      "K2_random_median": 0.952,
+      "K3_random_median": 0.909,
+      "K4_random_median": 0.891,
+      "K8_random_median": 0.870,
+      "K24_vbs": 0.831
+    },
+    "top10_hardest_ratio": {"K4_random_median": 0.880, "K24_vbs": 0.814}
+  },
+  "vbs_epsilon_research_plan4": {
+    "source": "docs/plans/research/measurements/plan4/plan4_derived.csv (phase0)",
+    "script": "vbs_epsilon.py",
+    "per_case_ratio_vs_default": {
+      "[0.125, 0.25] (plan7 effective shape)": {"stress": 1.00, "m22": 1.00, "dec13": 0.93, "dec10": 0.73},
+      "[0.125, 0.5]": {"stress": 0.63, "m22": 1.00, "dec13": 1.00, "dec10": 0.77},
+      "[0.125, 0.375, 0.5]": {"stress": 0.63, "m22": 0.87, "dec13": 1.00, "dec10": 0.77},
+      "[0.125, 0.375, 0.5, 1.0]": {"stress": 0.63, "m22": 0.87, "dec13": 1.00, "dec10": 0.56}
+    },
+    "note": "stress == shuffle-win (identical default first-outcome child_evals 249,480,478). Wall is proportional to child_evals across epsilon: plan7 P3 (eps 0.25) wall ratio 72.758/52.218 = 1.393 vs evals ratio 347.2M/249.5M = 1.392."
+  }
+}

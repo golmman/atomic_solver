@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-09",
+  "commit": "2081e8a",
+  "mode": "--first-outcome --outcome-only, TT 128 MB, 4 racers launched concurrently",
+  "cases": {
+    "shuffle_win": {
+      "fen": "4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21",
+      "cap_s": 100,
+      "racers": [
+        {"epsilon": 0.125, "wall_s": 50.42, "outcome": "win", "pv_len": 477},
+        {"epsilon": 0.375, "wall_s": 45.59, "outcome": "win", "pv_len": 199},
+        {"epsilon": 0.5, "wall_s": 31.91, "outcome": "win", "pv_len": 261},
+        {"epsilon": 1.0, "wall_s": 100.17, "outcome": "draw", "pv_len": 0, "timeout": true}
+      ],
+      "w_first_s": 31.91,
+      "w_first_over_in_race_default": 0.63
+    },
+    "rem12": {
+      "fen": "rnbqkbnr/8/6pp/pppppp1B/3PPP2/N5PN/PPP4P/R1BQ1RK1 w kq - 0 10",
+      "cap_s": 60,
+      "out_of_sample": "not part of the research plan4 epsilon sweep",
+      "racers": [
+        {"epsilon": 0.125, "wall_s": 15.10, "outcome": "win", "pv_len": 55},
+        {"epsilon": 0.375, "wall_s": 11.33, "outcome": "win", "pv_len": 47},
+        {"epsilon": 0.5, "wall_s": 20.73, "outcome": "win", "pv_len": 79},
+        {"epsilon": 1.0, "wall_s": 45.30, "outcome": "win", "pv_len": 302}
+      ],
+      "w_first_s": 11.33,
+      "w_first_over_in_race_default": 0.75
+    },
+    "m22": {
+      "fen": "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+      "cap_s": 30,
+      "racers": [
+        {"epsilon": 0.125, "wall_s": 2.85, "outcome": "win", "pv_len": 95},
+        {"epsilon": 0.375, "wall_s": 2.59, "outcome": "win", "pv_len": 73},
+        {"epsilon": 0.5, "wall_s": 3.02, "outcome": "win", "pv_len": 18},
+        {"epsilon": 1.0, "wall_s": 9.79, "outcome": "win", "pv_len": 403}
+      ],
+      "w_first_s": 2.59,
+      "w_first_over_in_race_default": 0.91
+    }
+  }
+}
