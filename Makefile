@@ -3,6 +3,8 @@
 .PHONY: stress quick_check quick_check2 quick_check3
 .PHONY: proofdb_init proofdb_cycle
 
+BIN := target/release/examples
+
 # General Utilities
 
 macos_cleanup:
@@ -41,17 +43,19 @@ proofdb_init:
 	cargo build --release --examples
 	mkdir -p data/proofdb/shards
 	printf '{"entries":[]}' > data/proofdb/shards/manifest.json
-	BIN=target/release/examples
-	"$BIN/proofdb_merge"
-	"$BIN/proofdb_harvest" --policy and-close --budget-evals 200000 --max-jobs 2
+	$(BIN)/proofdb_merge
+	$(BIN)/proofdb_harvest --policy and-close --budget-evals 200000 --max-jobs 2
 	
-	$BIN/proofdb_harvest --policy descend
-	$BIN/proofdb_merge    # fold the batch's shards into the DB (the harvest never merges)
-	$BIN/proofdb_flip     # soundness sanity over the grown DB (expect: flips 0 verified 0)
+	echo "Next: creating bootstrap batch"
+	sleep 10
+	$(BIN)/proofdb_harvest --policy descend
+	$(BIN)/proofdb_merge    # fold the batch's shards into the DB (the harvest never merges)
+	$(BIN)/proofdb_flip     # soundness sanity over the grown DB (expect: flips 0 verified 0)
 
 proofdb_cycle:
-	$BIN/proofdb_harvest --policy and-close --budget-evals 4000000 \
+	cargo build --release --examples
+	$(BIN)/proofdb_harvest --policy and-close --budget-evals 4000000 \
 		--and-close-max-budget 100000000 --tt-mb 1024 \
 		--max-total-evals 10000000000
-	$BIN/proofdb_merge    # fold the batch's shards into the DB (the harvest never merges)
-	$BIN/proofdb_flip     # soundness sanity over the grown DB (expect: flips 0 verified 0)
+	$(BIN)/proofdb_merge    # fold the batch's shards into the DB (the harvest never merges)
+	$(BIN)/proofdb_flip     # soundness sanity over the grown DB (expect: flips 0 verified 0)
