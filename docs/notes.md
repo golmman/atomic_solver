@@ -798,21 +798,39 @@ i then follow the instructions in "3.2" the proofdb is grows with each run.
 
 ---
 
-Architecture
+Can i delete the shards after i merged them into the proofdb?
 
-Monorepo
+---
 
-Idea: split this project into workspaces
+Please help me plan the following idea. Push back where necessary.
+
+# Monorepo
+
+Split this project into dedicated cargo workspaces.
+
+## Justification
+
+The project has grown, examples and side projects have spawned.
+In particular the proofdb example is huge and growing and deserves its dedicated space.
+
+So with a split we could achieve
+* better de-coupling
+* better maintainability
+* better extensibility
+* isolated and higher testability
+* focussed implementation
+* dedicated AGENTS.md and better context engineering capabilities
+
+## Proposed structure
 
 the `atomic-movegen` dependency is a side project of the user so we could abandon it and integrate this here completely.
 
-Proposed structure:
-
 - libs
-  - core
+  - core search
   - atomic-movegen
 - apps
   - proofdb
   - current cli
 - examples
   - existing examples
+
