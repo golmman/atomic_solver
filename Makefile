@@ -1,7 +1,7 @@
 .PHONY: macos_cleanup
 .PHONY: test test-full test-lite
 .PHONY: stress quick_check quick_check2 quick_check3
-.PHONY: proofdb_init proofdb_cycle proofdb_shard_count
+.PHONY: proofdb_init proofdb_cycle proofdb_stats
 
 BIN := target/release/examples
 
@@ -60,5 +60,10 @@ proofdb_cycle:
 	$(BIN)/proofdb_merge    # fold the batch's shards into the DB (the harvest never merges)
 	$(BIN)/proofdb_flip     # soundness sanity over the grown DB (expect: flips 0 verified 0)
 
-proofdb_shard_count:
-	ls data/proofdb/shards/ | wc -l
+proofdb_stats:
+	@printf "number of shards: "
+	@ls data/proofdb/shards/ | wc -l
+	@printf "size of ledger: "
+	@wc -c < data/proofdb/work.json
+	@printf "number of ledger paths: "
+	@jq ".records | length" < data/proofdb/work.json
