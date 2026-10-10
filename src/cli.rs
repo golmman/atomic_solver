@@ -36,6 +36,14 @@ pub struct CliOptions {
     /// Disable the detector-gated bounded pre-phase (plan13). The ordinary
     /// DF-PN search then runs on every position.
     pub no_preflight: bool,
+    /// TT bucket-index salt. `0` (default) keeps shipped indexing; `s > 0`
+    /// remaps which keys share a bucket without changing search semantics
+    /// (noise-channel knob for the statistical gate).
+    pub salt: u64,
+    /// Child-evaluation budget for the whole search. `None` (default) means
+    /// unbounded; a run that exhausts the budget returns `Draw` and reports
+    /// `budget exhausted`.
+    pub budget: Option<u64>,
 }
 
 impl Default for CliOptions {
@@ -55,6 +63,8 @@ impl Default for CliOptions {
             tt_dump_path: None,
             config_path: None,
             no_preflight: false,
+            salt: 0,
+            budget: None,
         }
     }
 }
@@ -175,6 +185,29 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 opts.no_preflight = true;
                 i += 1;
             }
+            "--salt" => {
+                let value = args
+                    .get(i + 1)
+                    .ok_or_else(|| "error: --salt requires a value".to_string())?;
+                let v = value
+                    .parse::<u64>()
+                    .map_err(|e| format!("error: invalid --salt value: {e}"))?;
+                opts.salt = v;
+                i += 2;
+            }
+            "--budget" => {
+                let value = args
+                    .get(i + 1)
+                    .ok_or_else(|| "error: --budget requires a value".to_string())?;
+                let v = value
+                    .parse::<u64>()
+                    .map_err(|e| format!("error: invalid --budget value: {e}"))?;
+                if v == 0 {
+                    return Err(format!("error: --budget must be positive, got {v}"));
+                }
+                opts.budget = Some(v);
+                i += 2;
+            }
             _ => {
                 return Err(format!(
                     "error: unknown option '{arg}'\nRun with --help for usage."
@@ -208,6 +241,8 @@ mod tests {
             tt_dump_path,
             config_path,
             no_preflight,
+            salt,
+            budget,
         } = match parsed {
             ParseResult::Options(o) => o,
             ParseResult::Help => panic!("unexpected help"),
@@ -222,6 +257,8 @@ mod tests {
         assert!(tt_dump_path.is_none());
         assert!(config_path.is_none());
         assert!(!no_preflight);
+        assert_eq!(salt, 0);
+        assert!(budget.is_none());
     }
 
     #[test]
@@ -353,6 +390,50 @@ mod tests {
     }
 
     #[test]
+    fn salt_is_parsed() {
+        let parsed = parse_args(&args(&["atomic_solver", "--salt", "42"])).unwrap();
+        match parsed {
+            ParseResult::Options(o) => assert_eq!(o.salt, 42),
+            ParseResult::Help => panic!("unexpected help"),
+        }
+        // Salt 0 is explicit and valid (identity).
+        let parsed = parse_args(&args(&["atomic_solver", "--salt", "0"])).unwrap();
+        match parsed {
+            ParseResult::Options(o) => assert_eq!(o.salt, 0),
+            ParseResult::Help => panic!("unexpected help"),
+        }
+        // u64::MAX must round-trip.
+        let parsed =
+            parse_args(&args(&["atomic_solver", "--salt", "18446744073709551615"])).unwrap();
+        match parsed {
+            ParseResult::Options(o) => assert_eq!(o.salt, u64::MAX),
+            ParseResult::Help => panic!("unexpected help"),
+        }
+    }
+
+    #[test]
+    fn salt_rejects_non_numeric() {
+        assert!(parse_args(&args(&["atomic_solver", "--salt", "x"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--salt", "-1"])).is_err());
+    }
+
+    #[test]
+    fn budget_is_parsed() {
+        let parsed = parse_args(&args(&["atomic_solver", "--budget", "1000000000"])).unwrap();
+        match parsed {
+            ParseResult::Options(o) => assert_eq!(o.budget, Some(1_000_000_000)),
+            ParseResult::Help => panic!("unexpected help"),
+        }
+    }
+
+    #[test]
+    fn budget_rejects_non_positive_and_non_numeric() {
+        assert!(parse_args(&args(&["atomic_solver", "--budget", "0"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--budget", "-5"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--budget", "x"])).is_err());
+    }
+
+    #[test]
     fn missing_value_returns_err() {
         assert!(parse_args(&args(&["atomic_solver", "--fen"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--tt-size"])).is_err());
@@ -361,6 +442,8 @@ mod tests {
         assert!(parse_args(&args(&["atomic_solver", "--tt-dump-path"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--config"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--refine-cap"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--salt"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--budget"])).is_err());
     }
 
     /// `--pt-size` / `--dump-path` were removed from the search CLI with plan7:

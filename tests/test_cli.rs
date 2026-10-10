@@ -399,3 +399,69 @@ fn cli_no_tt_dump_by_default() {
         "default run must not print a tt_snapshot line:\n{stdout}"
     );
 }
+
+/// Salted search (research plan11): `--salt 3` on the m22_white fixture must
+/// still solve `win` — the salt remaps TT bucket sharing only, never
+/// outcomes. ~18 M child evals, a few seconds wall in release.
+#[test]
+fn cli_salt_3_m22_still_solves_win() {
+    let output = Command::new(cli_bin())
+        .args([
+            "--fen",
+            "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+            "--salt",
+            "3",
+            "--first-outcome",
+            "--outcome-only",
+            "--timeout",
+            "60",
+        ])
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI failed: {stdout}");
+    assert_eq!(
+        stdout
+            .lines()
+            .find(|l| l.starts_with("outcome: "))
+            .and_then(parse_outcome),
+        Some(Outcome::Win),
+        "salt 3 must not flip the m22_white outcome:\n{stdout}"
+    );
+}
+
+/// `--budget` caps the search deterministically: a tiny budget on the m22
+/// fixture exhausts, returns `draw`, and prints `budget exhausted`.
+#[test]
+fn cli_budget_exhaustion_returns_draw() {
+    let output = Command::new(cli_bin())
+        .args([
+            "--fen",
+            "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+            "--first-outcome",
+            "--outcome-only",
+            "--timeout",
+            "60",
+            "--budget",
+            "100000",
+        ])
+        .output()
+        .expect("failed to run CLI binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI failed: {stdout}");
+    assert!(
+        stdout.contains("outcome: draw"),
+        "a budget-exhausted run must return draw:\n{stdout}"
+    );
+    assert!(
+        stdout.contains("budget exhausted"),
+        "expected the budget-exhausted marker:\n{stdout}"
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.lines().any(|l| l.starts_with("evals: ")),
+        "expected the evals: line on stderr:\n{stderr}"
+    );
+}

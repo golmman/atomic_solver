@@ -410,3 +410,84 @@ fn prefetch_is_observably_a_noop() {
         .collect();
     assert_eq!(after_entries, before_entries);
 }
+
+// --- salt (research plan11: salt-seeded statistical gate) ---
+
+#[test]
+fn salt_zero_keeps_shipped_indexing() {
+    let mut tt = TranspositionTable::with_capacity(64);
+    assert_eq!(tt.salt(), 0);
+    for key in [0u64, 1, 63, 64, 65, u64::MAX, 0xDEAD_BEEF_CAFE_F00D] {
+        assert_eq!(tt.index_for_test(key), (key as usize) & 63);
+    }
+    // Stored entries probe back identically with and without a (re)set of
+    // salt 0.
+    tt.store(7, Move::NONE, u8::MAX, 3, Some(Outcome::Win), 0, 0, 1, 5);
+    assert!(tt.probe(7).is_some());
+    tt.set_salt(0);
+    assert!(tt.probe(7).is_some());
+}
+
+#[test]
+fn salted_index_is_deterministic_and_remaps() {
+    let mut tt = TranspositionTable::with_capacity(1024);
+    tt.set_salt(1);
+    let mut remapped = 0;
+    for key in 0..10_000u64 {
+        let a = tt.index_for_test(key);
+        let b = tt.index_for_test(key);
+        assert_eq!(a, b, "salted index must be deterministic for key {key}");
+        assert!(a < tt.bucket_count(), "salted index out of bounds");
+        let plain = TranspositionTable::with_capacity(1024);
+        if plain.index_for_test(key) != a {
+            remapped += 1;
+        }
+    }
+    // The mixing formula must actually move most keys to other buckets.
+    assert!(remapped > 9_000, "only {remapped}/10000 keys remapped");
+}
+
+#[test]
+fn salted_index_respects_bucket_count() {
+    for buckets in [1usize, 2, 4, 1024] {
+        for salt in [1u64, 2, 3, 4, u64::MAX] {
+            let mut tt = TranspositionTable::with_capacity(buckets);
+            tt.set_salt(salt);
+            for key in 0..5_000u64 {
+                assert!(tt.index_for_test(key) < buckets);
+            }
+        }
+    }
+}
+
+#[test]
+fn salted_table_full_key_verification_holds() {
+    // Store 64 keys into 64 salted buckets: collisions evict (legitimately),
+    // but a probe must only ever return the *exact* key — never a bucket
+    // mate — which is what full-key verification guarantees under remapping.
+    let mut tt = TranspositionTable::with_capacity(64);
+    tt.set_salt(3);
+    for key in 0..64u64 {
+        tt.store(
+            key * 0x1000_0000,
+            Move::NONE,
+            u8::MAX,
+            key,
+            Some(Outcome::Win),
+            0,
+            0,
+            1,
+            5,
+        );
+    }
+    let mut survived = 0;
+    for key in 0..64u64 {
+        if let Some(entry) = tt.probe(key * 0x1000_0000) {
+            assert_eq!(entry.key, key * 0x1000_0000, "wrong key returned");
+            assert_eq!(entry.work, key);
+            survived += 1;
+        }
+    }
+    assert!(survived > 0, "all entries lost");
+    assert!(tt.probe(0x1234_5678).is_none());
+}

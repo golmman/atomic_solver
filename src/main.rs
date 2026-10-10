@@ -46,6 +46,14 @@
 //!                              artifact for offline proof reconstruction via
 //!                              `reconstruct_pt --snapshot` (the search CLI
 //!                              itself never builds proof trees).
+//!   --salt <U64>               TT bucket-index salt. `0` (default) keeps the
+//!                              shipped indexing bit-for-bit; `s > 0` remaps
+//!                              which keys share a bucket without changing
+//!                              search semantics (noise-channel knob for the
+//!                              salt-seeded statistical gate).
+//!   --budget <EVALS>           Cap the whole search at this many child
+//!                              evaluations. A run that hits the cap returns
+//!                              `Draw` and prints `budget exhausted`.
 //!
 //! Output:
 //!   Each newly discovered decisive line is logged as
@@ -59,7 +67,9 @@
 //!   `pv_status` qualifies the PV length, not its validity. Without
 //!   `--outcome-only` the pre-phase hook prints one
 //!   `preflight: decided|deferred ...` line before the outcome, and the
-//!   pre-exit hook prints a `pre_exit:` summary line.
+//!   pre-exit hook prints a `pre_exit:` summary line. On stderr the total
+//!   child-evaluation count is reported as one final `evals: <n>` line (in
+//!   both modes); it includes any pre-phase evals.
 //!
 //! Examples:
 //!   `atomic_solver` --help
@@ -114,6 +124,12 @@ fn print_help(program: &str) {
     println!("  --tt-dump-path <FILE>      Write a binary TT snapshot after the search");
     println!("                             (transfer artifact for offline proof");
     println!("                             reconstruction via reconstruct_pt; optional)");
+    println!("  --salt <U64>               TT bucket-index salt; 0 (default) keeps");
+    println!("                             shipped indexing, s > 0 remaps bucket");
+    println!("                             sharing without changing semantics");
+    println!("  --budget <EVALS>           Cap the search at this many child");
+    println!("                             evaluations; hitting the cap returns");
+    println!("                             draw and prints 'budget exhausted'");
     println!("  --config <FILE>            Path to a TOML file overriding scorer");
     println!("                             parameters; defaults to built-in values");
     println!();
@@ -180,6 +196,8 @@ fn main() {
         tt_dump_path,
         config_path,
         no_preflight,
+        salt,
+        budget,
     } = opts;
 
     let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
@@ -207,6 +225,10 @@ fn main() {
     search.set_first_outcome_only(first_outcome);
     search.set_refine_cap_factor(refine_cap);
     search.set_preflight_enabled(!no_preflight);
+    search.set_salt(salt);
+    if let Some(budget) = budget {
+        search.set_child_eval_budget(budget);
+    }
 
     let stop_flag = Arc::new(AtomicBool::new(false));
 
@@ -304,6 +326,12 @@ fn main() {
             _ => println!("timeout"),
         }
     }
+
+    // Total child evaluations (including any pre-phase evals) on stderr, in
+    // both modes: the machine-readable work metric for gate/optimizer
+    // drivers. Kept off stdout so the outcome-only stdout contract stays
+    // byte-exact.
+    eprintln!("evals: {}", search.child_evaluations());
 
     if let Some(hook) = hook {
         hook(search.exit_reason(), outcome, search.nodes(), &pv);

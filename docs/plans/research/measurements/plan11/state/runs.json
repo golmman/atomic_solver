@@ -1,0 +1,347 @@
+{
+ "runs": [
+  {
+   "case": "dec10",
+   "salt": 0,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 4262128,
+   "budget": 1000000000,
+   "wall_s": 0.7277305126190186
+  },
+  {
+   "case": "dec10",
+   "salt": 1,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 3901844,
+   "budget": 1000000000,
+   "wall_s": 0.6720781326293945
+  },
+  {
+   "case": "dec10",
+   "salt": 2,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 2918636,
+   "budget": 1000000000,
+   "wall_s": 0.5297703742980957
+  },
+  {
+   "case": "dec10",
+   "salt": 3,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 4802246,
+   "budget": 1000000000,
+   "wall_s": 0.794769287109375
+  },
+  {
+   "case": "dec10",
+   "salt": 4,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 3901847,
+   "budget": 1000000000,
+   "wall_s": 0.6664919853210449
+  },
+  {
+   "case": "dec13",
+   "salt": 0,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 3822602,
+   "budget": 1000000000,
+   "wall_s": 0.67173171043396
+  },
+  {
+   "case": "dec13",
+   "salt": 1,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5031242,
+   "budget": 1000000000,
+   "wall_s": 0.8458139896392822
+  },
+  {
+   "case": "dec13",
+   "salt": 2,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5038383,
+   "budget": 1000000000,
+   "wall_s": 0.8545210361480713
+  },
+  {
+   "case": "dec13",
+   "salt": 3,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5032382,
+   "budget": 1000000000,
+   "wall_s": 0.8715496063232422
+  },
+  {
+   "case": "dec13",
+   "salt": 4,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5030825,
+   "budget": 1000000000,
+   "wall_s": 0.8567709922790527
+  },
+  {
+   "case": "m20_white",
+   "salt": 0,
+   "tag": "primary",
+   "outcome": "draw",
+   "decisive": false,
+   "censored": "budget",
+   "evals": 1000000000,
+   "budget": 1000000000,
+   "wall_s": 133.56392335891724
+  },
+  {
+   "case": "m20_white",
+   "salt": 1,
+   "tag": "primary",
+   "outcome": "draw",
+   "decisive": false,
+   "censored": "budget",
+   "evals": 1000000007,
+   "budget": 1000000000,
+   "wall_s": 120.99588966369629
+  },
+  {
+   "case": "m20_white",
+   "salt": 2,
+   "tag": "primary",
+   "outcome": "draw",
+   "decisive": false,
+   "censored": "budget",
+   "evals": 1000000003,
+   "budget": 1000000000,
+   "wall_s": 154.94393920898438
+  },
+  {
+   "case": "m20_white",
+   "salt": 3,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 861809196,
+   "budget": 1000000000,
+   "wall_s": 105.31654238700867
+  },
+  {
+   "case": "m20_white",
+   "salt": 4,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 912098074,
+   "budget": 1000000000,
+   "wall_s": 111.51325726509094
+  },
+  {
+   "case": "m22_white",
+   "salt": 0,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 14156269,
+   "budget": 1000000000,
+   "wall_s": 1.9478521347045898
+  },
+  {
+   "case": "m22_white",
+   "salt": 1,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 23653031,
+   "budget": 1000000000,
+   "wall_s": 3.192967414855957
+  },
+  {
+   "case": "m22_white",
+   "salt": 2,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 15815489,
+   "budget": 1000000000,
+   "wall_s": 2.1782686710357666
+  },
+  {
+   "case": "m22_white",
+   "salt": 3,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 17832300,
+   "budget": 1000000000,
+   "wall_s": 2.4353790283203125
+  },
+  {
+   "case": "m22_white",
+   "salt": 4,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 18071429,
+   "budget": 1000000000,
+   "wall_s": 2.444603204727173
+  },
+  {
+   "case": "m23_white",
+   "salt": 0,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 9673403,
+   "budget": 1000000000,
+   "wall_s": 1.3323636054992676
+  },
+  {
+   "case": "m23_white",
+   "salt": 1,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 12045240,
+   "budget": 1000000000,
+   "wall_s": 1.63993501663208
+  },
+  {
+   "case": "m23_white",
+   "salt": 2,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 9440650,
+   "budget": 1000000000,
+   "wall_s": 1.3075916767120361
+  },
+  {
+   "case": "m23_white",
+   "salt": 3,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 12058206,
+   "budget": 1000000000,
+   "wall_s": 1.6605780124664307
+  },
+  {
+   "case": "m23_white",
+   "salt": 4,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 11567847,
+   "budget": 1000000000,
+   "wall_s": 1.600926399230957
+  },
+  {
+   "case": "stress",
+   "salt": 0,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 249480478,
+   "budget": 2500000000,
+   "wall_s": 31.73358917236328
+  },
+  {
+   "case": "stress",
+   "salt": 1,
+   "tag": "primary",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 758176477,
+   "budget": 2500000000,
+   "wall_s": 100.48451089859009
+  },
+  {
+   "case": "stress",
+   "salt": 2,
+   "tag": "primary",
+   "outcome": "draw",
+   "decisive": false,
+   "censored": "budget",
+   "evals": 2500000002,
+   "budget": 2500000000,
+   "wall_s": 348.16693472862244
+  },
+  {
+   "case": "stress",
+   "salt": 3,
+   "tag": "primary",
+   "outcome": "draw",
+   "decisive": false,
+   "censored": "budget",
+   "evals": 2500000001,
+   "budget": 2500000000,
+   "wall_s": 442.2112183570862
+  },
+  {
+   "case": "stress",
+   "salt": 4,
+   "tag": "primary",
+   "outcome": "draw",
+   "decisive": false,
+   "censored": "budget",
+   "evals": 2500000003,
+   "budget": 2500000000,
+   "wall_s": 343.2626760005951
+  }
+ ],
+ "duplicates": [
+  {
+   "case": "stress",
+   "salt": 1,
+   "tag": "rerun",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 758176477,
+   "budget": 2500000000,
+   "wall_s": 98.81193017959595
+  }
+ ]
+}

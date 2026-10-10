@@ -1,0 +1,164 @@
+{
+ "summary": {
+  "dec10": {
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 5,
+   "uncensored_evals": [
+    2918636,
+    3901844,
+    3901847,
+    4262128,
+    4802246
+   ],
+   "censored": [],
+   "min": 2918636,
+   "median": 3901847,
+   "max": 4802246,
+   "spread_max_over_min": 1.6453733867464118,
+   "salt_sensitive": true
+  },
+  "stress": {
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 3,
+   "n_runs": 5,
+   "uncensored_evals": [
+    249480478,
+    758176477
+   ],
+   "censored": [
+    {
+     "salt": 2,
+     "by": "budget",
+     "evals": 2500000002
+    },
+    {
+     "salt": 3,
+     "by": "budget",
+     "evals": 2500000001
+    },
+    {
+     "salt": 4,
+     "by": "budget",
+     "evals": 2500000003
+    }
+   ],
+   "min": 249480478,
+   "median": 503828477.5,
+   "max": 758176477,
+   "spread_max_over_min": 3.039021261615508,
+   "salt_sensitive": true
+  },
+  "dec13": {
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 5,
+   "uncensored_evals": [
+    3822602,
+    5030825,
+    5031242,
+    5032382,
+    5038383
+   ],
+   "censored": [],
+   "min": 3822602,
+   "median": 5031242,
+   "max": 5038383,
+   "spread_max_over_min": 1.3180506367128988,
+   "salt_sensitive": false
+  },
+  "m22_white": {
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 5,
+   "uncensored_evals": [
+    14156269,
+    15815489,
+    17832300,
+    18071429,
+    23653031
+   ],
+   "censored": [],
+   "min": 14156269,
+   "median": 17832300,
+   "max": 23653031,
+   "spread_max_over_min": 1.670852044419331,
+   "salt_sensitive": true
+  },
+  "m20_white": {
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 3,
+   "n_runs": 5,
+   "uncensored_evals": [
+    861809196,
+    912098074
+   ],
+   "censored": [
+    {
+     "salt": 0,
+     "by": "budget",
+     "evals": 1000000000
+    },
+    {
+     "salt": 1,
+     "by": "budget",
+     "evals": 1000000007
+    },
+    {
+     "salt": 2,
+     "by": "budget",
+     "evals": 1000000003
+    }
+   ],
+   "min": 861809196,
+   "median": 886953635.0,
+   "max": 912098074,
+   "spread_max_over_min": 1.0583526820477325,
+   "salt_sensitive": true
+  },
+  "m23_white": {
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 5,
+   "uncensored_evals": [
+    9440650,
+    9673403,
+    11567847,
+    12045240,
+    12058206
+   ],
+   "censored": [],
+   "min": 9440650,
+   "median": 11567847,
+   "max": 12058206,
+   "spread_max_over_min": 1.2772643832786936,
+   "salt_sensitive": false
+  }
+ },
+ "outcome_flips": [],
+ "duplicates": [
+  {
+   "case": "stress",
+   "salt": 1,
+   "tag": "rerun",
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 758176477,
+   "budget": 2500000000,
+   "wall_s": 98.81193017959595
+  }
+ ]
+}

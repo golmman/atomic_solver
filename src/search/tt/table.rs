@@ -1,4 +1,9 @@
 //! Transposition table storage and lookup.
+//!
+//! This file is slightly larger than 10 KiB because the storage layout, the
+//! salted bucket-index mapping, the architecture-specific prefetch, and the
+//! eviction policy all share one indexing scheme and its invariants; unit
+//! tests are split out (`tests.rs`).
 
 use crate::position::Outcome;
 use crate::zobrist::INF;
@@ -10,6 +15,8 @@ pub struct TranspositionTable {
     table: Vec<[TtEntry; 2]>,
     mask: usize,
     current_generation: u32,
+    /// Bucket-index salt (see [`TranspositionTable::set_salt`]).
+    salt: u64,
 }
 
 impl TranspositionTable {
@@ -28,6 +35,7 @@ impl TranspositionTable {
             table: vec![[TtEntry::default(); 2]; buckets],
             mask: buckets - 1,
             current_generation: 1,
+            salt: 0,
         }
     }
 
@@ -41,12 +49,52 @@ impl TranspositionTable {
             table: vec![[TtEntry::default(); 2]; buckets],
             mask: buckets - 1,
             current_generation: 1,
+            salt: 0,
         }
+    }
+
+    /// Set the bucket-index salt.
+    ///
+    /// With `salt = 0` (the default) the bucket index is `key & mask`, exactly
+    /// the shipped behavior. With `salt = s > 0` the index becomes
+    /// `((key ^ s) * 0x9E3779B97F4A7C15 >> 17) & mask`: a semantics-neutral
+    /// remap of which keys share a bucket (and therefore of the eviction
+    /// pattern). Full-key verification is unchanged, so probe/store hit-miss
+    /// semantics are identical for every salt.
+    ///
+    /// # Contract
+    ///
+    /// The salt must be set once, before the first `probe`/`store`/`prefetch`
+    /// on this table (i.e. at construction time, before any search run). It is
+    /// not reseeded mid-run and must not be changed between runs that are
+    /// meant to share table contents. This is the noise-channel knob behind
+    /// the salt-seeded statistical gate
+    /// (`docs/plans/research/gate_methodology.md`).
+    pub fn set_salt(&mut self, salt: u64) {
+        self.salt = salt;
+    }
+
+    /// The bucket-index salt in effect (0 = shipped indexing).
+    #[must_use]
+    pub fn salt(&self) -> u64 {
+        self.salt
     }
 
     #[inline]
     fn index(&self, key: u64) -> usize {
-        (key as usize) & self.mask
+        if self.salt == 0 {
+            // Shipped path, bit-identical: the mixing formula below would NOT
+            // reduce to `key & mask` at s = 0, so it must stay gated.
+            (key as usize) & self.mask
+        } else {
+            (((key ^ self.salt).wrapping_mul(0x9E37_79B9_7F4A_7C15)) >> 17) as usize & self.mask
+        }
+    }
+
+    /// The bucket index `key` maps to (test visibility only).
+    #[cfg(test)]
+    pub(crate) fn index_for_test(&self, key: u64) -> usize {
+        self.index(key)
     }
 
     /// Hint the CPU to start loading the bucket `key` maps to.

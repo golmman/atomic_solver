@@ -452,6 +452,18 @@ impl Search {
         self.epsilon_den = den;
     }
 
+    /// Set the TT bucket-index salt (the noise-channel knob behind the
+    /// salt-seeded statistical gate). `0` (the default) keeps the shipped
+    /// indexing bit-for-bit; `s > 0` remaps which keys share a bucket without
+    /// changing probe/store semantics (see
+    /// [`TranspositionTable::set_salt`]).
+    ///
+    /// Must be called before the first solve of this `Search` (the table must
+    /// never be probed/stored under two different salts).
+    pub fn set_salt(&mut self, salt: u64) {
+        self.tt.set_salt(salt);
+    }
+
     pub fn set_stop_flag(&mut self, stop_flag: Option<Arc<AtomicBool>>) {
         self.stop_flag = stop_flag;
     }
