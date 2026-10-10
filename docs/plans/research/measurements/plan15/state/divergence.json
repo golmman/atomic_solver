@@ -1,0 +1,106 @@
+{
+ "m22": {
+  "base_len": 858112,
+  "mob_len": 16777216,
+  "mob_trace_capped": true,
+  "first_divergence": 0,
+  "share_after_base": 1.0,
+  "share_after_mob": 1.0,
+  "base_ply_top5_first1M": [
+   [
+    8,
+    192039
+   ],
+   [
+    6,
+    174328
+   ],
+   [
+    10,
+    117720
+   ],
+   [
+    12,
+    58642
+   ],
+   [
+    7,
+    42485
+   ]
+  ],
+  "mob_ply_top5_first1M": [
+   [
+    16,
+    69471
+   ],
+   [
+    150,
+    62528
+   ],
+   [
+    144,
+    61819
+   ],
+   [
+    148,
+    60775
+   ],
+   [
+    152,
+    60477
+   ]
+  ]
+ },
+ "dec13": {
+  "base_len": 164876,
+  "mob_len": 30012,
+  "mob_trace_capped": false,
+  "first_divergence": 0,
+  "share_after_base": 1.0,
+  "share_after_mob": 1.0,
+  "base_ply_top5_first1M": [
+   [
+    8,
+    45098
+   ],
+   [
+    6,
+    25079
+   ],
+   [
+    10,
+    21251
+   ],
+   [
+    12,
+    14083
+   ],
+   [
+    9,
+    13834
+   ]
+  ],
+  "mob_ply_top5_first1M": [
+   [
+    9,
+    4239
+   ],
+   [
+    7,
+    4088
+   ],
+   [
+    8,
+    3823
+   ],
+   [
+    6,
+    3032
+   ],
+   [
+    10,
+    2943
+   ]
+  ]
+ }
+}
