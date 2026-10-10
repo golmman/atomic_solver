@@ -1,7 +1,7 @@
 # Lean Report 11 — #18 TT child-bucket prefetch pre-pass
 
 Executed 2026-10-10 per `plan11.md`, on top of HEAD `2804f48` (search code
-identical to the `81c8f53` tree profiled in `measurements/plan11_phase0/`).
+identical to the `81c8f53` tree profiled in `plan11_phase0/`).
 The change is exactly the phase-0 spike V10:
 `TranspositionTable::prefetch` (two-line prefetch, layout untouched) plus a
 do/undo pre-pass at the top of `evaluate_all_children`. No other change:
@@ -15,9 +15,20 @@ are untouched; `children.rs` grew by 9 lines, `table.rs` by 55 (now
 −55% shuffle-win FO, −48% quick suite) were measured on the aarch64
 reference VM. This session ran on a **different machine**: an x86_64
 container (AMD Ryzen 9 5950X, 4 vCPU, 31 GiB, rustc 1.99.0; see
-`measurements/plan11/env.json`). The win below is therefore measured
-against this host's baseline, and the −30% acceptance derived from the
-aarch64 host is not directly comparable.
+`docs/plans/lean/measurements/plan11/env.json`). The win below is
+therefore measured against this host's baseline, and the −30% acceptance
+derived from the aarch64 host is not directly comparable.
+
+**m22-default anchors, two distinct ones (capture-command note):** the
+A/B drift anchor below is the **non-`--outcome-only`** capture
+(`--timeout 60`; stdout includes the `preflight:`/`pre_exit:` lines),
+md5 `49a08a6d869aa3c002aef9b7e32f50a9`. The golden-anchored capture
+(`--timeout 20 --outcome-only`, the three-line stdout that the golden
+fixture pins) has md5 `b965d37c9a35154fd56ffcedfb5bede6` and matches
+tests/fixtures/m22_default_stdout_golden.txt byte-for-byte on both
+binaries. The two hashes are different because the two commands print
+different line sets; neither is a drift signal. All other md5s in this
+report refer to the capture named next to them.
 
 ## What landed
 
@@ -93,7 +104,8 @@ risk class) still measured −17.3% here.
 
 ## Post-plan11 profile (task 6)
 
-Shuffle-win FO, `--timeout 20`, leaf tables in `measurements/plan11/`
+Shuffle-win FO, `--timeout 20`, leaf tables in
+`docs/plans/lean/measurements/plan11/`
 (base and post side by side; raw transcripts not kept per AGENTS.md):
 
 | leaf | HEAD base | post-plan11 |
@@ -169,4 +181,15 @@ All ten plan tasks executed in order; task 5's acceptance shortfall is
 reported as a finding per the plan's own instruction, not silently passed.
 `AGENTS.md` needed no new convention (none expected); the initiative
 `initiative.md` (status header, backlog rows #18/#19, post-plan11 profile
-subsection, history line) and `measurements/plan11/` are updated.
+subsection, history line) and
+`docs/plans/lean/measurements/plan11/` are updated.
+
+**Post-commit correction (2026-10-10, after report12 flagged it):** the
+session originally wrote its artifacts to repo-root `measurements/plan11/`
+instead of the conventional `docs/plans/lean/measurements/plan11/` —
+which made the plan12 session report them "missing". They were never
+lost (tracked and byte-identical to their raw sources, re-verified
+against the `/tmp` captures before the move); they are now relocated to
+the conventional path, and this report's references updated. The
+`measurements/plan11/` root path stays free for the `solve` initiative's
+own plan11 artifacts.

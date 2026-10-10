@@ -154,6 +154,12 @@ diffing, pre-pass loop patching for the V12 probe), throwaway `/tmp` builds
   anchors match report11's md5s. Flagged as an unresolved item — if the
   plan11 artifacts still exist outside the repo they should be restored;
   otherwise `plan11_phase0/` + `plan12/` carry the record.
+  **Resolved 2026-10-10 (follow-up session):** the artifacts were never
+  missing — the plan11 session had committed them at repo-root
+  `measurements/plan11/` (a non-conventional location, hence invisible
+  here); they re-verified byte-identical against their raw sources and
+  are now relocated to `docs/plans/lean/measurements/plan11/`, and
+  report11/initiative references updated.
 - A transient edit mishap: the first `ChildPrecompute` doc edit pasted a
   fragment of unrelated commentary; caught by immediate re-read and
   repaired before commit. No code path affected.
@@ -164,8 +170,10 @@ diffing, pre-pass loop patching for the V12 probe), throwaway `/tmp` builds
 
 ## Unresolved / follow-ups
 
-- `measurements/plan11/` artifacts missing (see above) — restore or accept
-  the loss; the drift anchors are re-derived in `plan12/`.
+- ~~`measurements/plan11/` artifacts missing (see above)~~ — resolved:
+  relocated to `docs/plans/lean/measurements/plan11/` (see the problems
+  note above); the drift anchors are additionally re-derived in
+  `plan12/`.
 - The aarch64 reference host has not returned; plan11/plan12 percentages
   remain x86_64-host self-consistent A/B pairs only (standing caveat in the
   initiative status header).

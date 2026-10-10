@@ -2,7 +2,12 @@
 
 Implements backlog #18 (`plan11.md`): `TranspositionTable::prefetch` +
 `evaluate_all_children` pre-pass, exactly the phase-0 spike V10
-(`measurements/plan11_phase0/spike_prefetch_prepass.patch`).
+(`../plan11_phase0/spike_prefetch_prepass.patch`).
+
+**Location note (2026-10-10):** originally committed at repo-root
+`measurements/plan11/` by the plan11 session; relocated here (byte-
+identical, re-verified against raw sources) after report12 flagged the
+non-conventional path. See `report11.md`'s post-commit correction.
 
 **Host caveat:** the phase-0 spike/acceptance numbers (−51% / −55% / −48%)
 were measured on the aarch64 reference VM; this session ran on an x86_64

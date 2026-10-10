@@ -15,7 +15,11 @@
     "cmd": "--fen M22 --timeout 60",
     "stdout_md5": "49a08a6d869aa3c002aef9b7e32f50a9",
     "wall_s": 3.297809080,
-    "golden_check": "match (with --timeout 20 --outcome-only, diff vs tests/fixtures/m22_default_stdout_golden.txt empty)"
+    "golden_anchor": {
+      "cmd": "--fen M22 --timeout 20 --outcome-only",
+      "stdout_md5": "b965d37c9a35154fd56ffcedfb5bede6",
+      "check": "byte-identical to tests/fixtures/m22_default_stdout_golden.txt on both binaries; distinct from stdout_md5 because --outcome-only suppresses the preflight:/pre_exit lines"
+    }
   },
   "m22_first_outcome": {
     "cmd": "--fen M22 --timeout 60 --first-outcome",

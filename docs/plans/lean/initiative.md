@@ -46,7 +46,7 @@ own do/undo is ≈12% of the new wall → #19 (plan12, upstream
 Host: AMD Ryzen 9 5950X container, 4 vCPU, 31 GiB, rustc 1.99.0 — a
 different machine than the 2026-10-09 phase-0 VM; all plan11 numbers are
 self-consistent A/B pairs on *this* host (raw tables under
-`measurements/plan11/`). Post-plan11 pie (shuffle-win FO, `--timeout 20`,
+`docs/plans/lean/measurements/plan11/`). Post-plan11 pie (shuffle-win FO, `--timeout 20`,
 leaf table): `evaluate_child` 62.6% → 21.0%, `dfpn` 13.8% → 40.5%
 (renormalized; the frame loop is now the top leaf), `do_move` 4.5% →
 9.9% + `undo_move` 2.6% → 5.0% (incl. the pre-pass), existence cluster
