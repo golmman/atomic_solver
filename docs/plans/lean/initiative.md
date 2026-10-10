@@ -5,8 +5,35 @@
 Active, maintained **agile**: the backlog is a living document re-ranked
 after every profile, plans are single-lever and sized to one session, and
 nothing larger than one lever is planned before a fresh profile justifies
-it. Plans 1–6 are done (`report1.md`–`report6.md`); the post-plan6 profile
-(2026-09-12) is the current baseline for ranking.
+it. Plans 1–10 are done (`report1.md`–`report10.md`). **Re-opened
+2026-10-09** by a fresh profile (plan session, `measurements/plan11_phase0/`):
+the 2026-10-09 profile below is the current baseline; plan11 (#18) is the
+next session, plan12 (#19) follows once movegen 2.3.0 ships.
+
+### Fresh profile 2026-10-09 (HEAD `81c8f53`, reference host container, 128 MB TT)
+
+Shuffle-win first-outcome (45.4 s) leaf table: `evaluate_child` 52.7%,
+`do_move` 11.8%, `compute_checkers` 10.2%, `dfpn` 7.5%,
+`score_with_context` 3.8%, `populate_state` 2.7%,
+`has_legal_move_with_state` 2.4%, `generate_legal_with_state` 1.9%,
+`undo_move` 1.8%. Annotation puts ~85% of `evaluate_child`'s samples on
+the child TT-bucket loads: **≈45% of wall is one serial DRAM miss per
+evaluated child** (m22 default mode ≈19%). Earlier profiles attributed
+this to "TT cache pressure" on make/unmake and the existence check
+(post-plan4 notes); the spikes show those leaves were largely the miss's
+shadow (`compute_checkers` 10.2% → 3.8% once the miss is prefetched).
+
+Spikes (throwaway copies; full table in
+`measurements/plan11_phase0/README.md`): huge pages (glibc already uses
+THP), 128 B bucket alignment, late prefetch, and `target-cpu=native` are
+all ≤ 5%; **prefetching every child's bucket in a pre-pass before the
+evaluation loop halves wall** (m22 default −51%, shuffle-win FO −55%,
+quick suite −48%), byte-identical → backlog #18 (plan11). The pre-pass's
+own do/undo is ≈12% of the new wall → #19 (plan12, upstream
+`hash_after`). Post-spike pie (shuffle-win FO): make/unmake 30.7%
+(incl. pre-pass), `evaluate_child` 16.9% (≈ half residual miss), `dfpn`
+16.1%, `score_with_context` 8.5%, existence cluster 15.5%, full movegen
+4.5%, sort ~4%.
 
 ## Motivation
 
@@ -248,6 +275,9 @@ memory, maintainability.
 | 13 | Clock sampling | `time_exceeded()` calls `Instant::now()` at every `dfpn` entry; sample every N nodes (budget mode is eval-count-based and unaffected) | ~2% wall (2.2% post-plan4, unchanged) | wall | S | **done (plan6, phase 2)**: `Instant::now()` sampled every 4096 dfpn entries behind the unchanged `time_exceeded` call sites; clock leaves <0.1% in the post-plan6 profile; see `report6.md` |
 | 15 | `has_legal_move` playout cross-check | Random-playout property test: `Position::has_legal_move` vs `legal_moves_with_state` + `outcome_from_state` (report3 "missing tests") | correctness hardening, no speed | correctness | S | **done (plan5)**: `tests/test_playout_crosscheck.rs`, P1–P4 green in both tiers; see `report5.md` |
 | 5 | AND-side ordering signal (non-NN) | Counter-moves, AND-specific history, TT `work` feedback — disproving work concentrates in 1–2 replies per AND node (median max child-share 52.9%) | **spiked (plan9), closed**: refuter already at final-sorted rank 0 in 100% of refuted AND frames (median rank 0), pre-refuter mass 0.00–0.02% of child evals (both cases), 99.7–99.9% of AND own evals in threshold-cut frames — see `report9.md` | nodes | M | **closed (plan9 spike, no-go)** |
+| 18 | TT child-bucket prefetch | Pre-pass in `evaluate_all_children` plays/unplays every move and prefetches its child bucket before the first probe, so the per-child DRAM misses overlap (2026-10-09 profile: ≈45% of shuffle-win FO wall is the serial miss) | **spiked: −51% m22 default, −55% shuffle-win FO, −48% quick suite**, byte-identical | wall | S | **planned: `plan11.md`** |
+| 19 | Pre-pass keys without make/unmake | Upstream `Board::hash_after`/`rule50_after` (`movegen/plan_hash_after.md`, 2.3.0) replaces #18's do/undo round-trip | ≈12% of post-#18 wall is the pre-pass (spike V12); expected −5–10% | wall | S solver + M upstream | **planned: `plan12.md`** (blocked on movegen 2.3.0 and #18) |
+| 20 | TT allocation sizing | `with_mb` rounds the entry count up to a power of two with 56 B entries: `--tt-size 128` allocates 224 MiB (1.75×), contradicting the "RAM = TT size" reading of the CLI | memory only; any fix changes capacity → behavior (move-order suite validation) | memory + behavior | S | open (decision: keep, document, or round down) |
 | 7 | Lazy/staged child evaluation | Min-heap: evaluate children in rank order as needed instead of all on first iteration | ~3–10% evals | nodes | M | open |
 | 9 | 2–3-man atomic endgame tablebases | Leaf probes in shallow-material positions | huge where covered, negligible elsewhere | nodes | M–L | **moved to [`egtb`](../egtb/initiative.md) (2026-09-14)**: opened as its own initiative with a generation story and a go/no-go spike; leaf probing is its backlog #3, 2-man layer dropped as degenerate |
 | 10 | History/killer constant re-tuning | Never re-tuned after the GHI/twin removal; side-aware killers | ~0–5% evals | nodes | S–M | **closed (plan10 sweep, no-go)**: every winning arm (−11% to −20% quick totals) violates the per-case/flip gates (m23_white/dec01 ok→timeout, dec05 5.19×, dec14 1.6×); the one flip-free −3.3% arm still regresses dec14 1.59×. "Side-aware killers" retired by analysis: killer slots are keyed on ply-depth, which determines side-to-move uniquely (fixed root, no passes/null) — already implicitly side-aware; history is explicitly side-indexed. See `report10.md` |
@@ -362,6 +392,13 @@ until a plan claims it.
   opened `docs/plans/parallel/`, which also absorbed `conversion` #4.
   The plan7 measurements stand; the report7 reopen triggers are carried
   and consciously renegotiated in the new initiative's Status.
+
+- **2026-10-09** — **fresh profile + spikes (plan session, no `src/`
+  change)**: the serial child TT-probe miss is ≈45% of wall; a prefetch
+  pre-pass halves it byte-identically. New backlog #18 (`plan11.md`), #19
+  (`plan12.md` + upstream `movegen/plan_hash_after.md`), #20 (TT sizing
+  finding). Layout/THP/build-flag levers measured null
+  (`measurements/plan11_phase0/README.md`).
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.

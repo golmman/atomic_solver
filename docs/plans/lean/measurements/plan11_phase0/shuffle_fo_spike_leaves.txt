@@ -1,0 +1,30 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 30K of event 'cpu-clock'
+# Event count (approx.): 15007500000
+#
+# Overhead  Command        Shared Object     Symbol                                                                                                                                                     
+# ........  .............  ................  ...........................................................................................................................................................
+#
+    20.83%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::do_move
+    16.89%  atomic_solver  atomic_solver     [.] <atomic_solver::search::dfpn::Search>::evaluate_child
+    16.14%  atomic_solver  atomic_solver     [.] <atomic_solver::search::dfpn::Search>::dfpn
+     9.90%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::undo_move
+     8.52%  atomic_solver  atomic_solver     [.] <atomic_solver::search::ordering::StaticAtomicScorer>::score_with_context
+     5.85%  atomic_solver  atomic_solver     [.] atomic_movegen::movegen::has_legal_move_with_state
+     4.49%  atomic_solver  atomic_solver     [.] atomic_movegen::movegen::generate_legal_with_state
+     3.81%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::compute_checkers
+     3.34%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::populate_state
+     2.53%  atomic_solver  atomic_solver     [.] <atomic_movegen::board::Board>::legal
+     1.82%  atomic_solver  atomic_solver     [.] core::slice::sort::shared::smallsort::insertion_sort_shift_left::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_k
+     1.56%  atomic_solver  atomic_solver     [.] core::slice::sort::stable::quicksort::quicksort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Re
+     0.69%  atomic_solver  atomic_solver     [.] core::slice::sort::stable::drift::sort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32
+     0.66%  atomic_solver  atomic_solver     [.] <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapt
+     0.54%  atomic_solver  libc.so.6         [.] __memcpy_generic
+     0.39%  atomic_solver  atomic_solver     [.] <atomic_solver::search::tt::table::TranspositionTable>::store
+     0.38%  atomic_solver  atomic_solver     [.] atomic_solver::search::dfpn::selection::selection_for_child
+     0.34%  atomic_solver  atomic_solver     [.] <std::hash::random::DefaultHasher as core::hash::Hasher>::write
+     0.26%  atomic_solver  atomic_solver     [.] core::slice::sort::shared::smallsort::sort8_stable::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp:
