@@ -54,7 +54,7 @@ soundness gate passed; gate verdict **GO → plan12**.
 | stress | 249,480,478 | 758,176,477; censored ×3 @ 2.5 B | 3.04× | **yes** |
 | m20_white | censored @ 1 B | censored ×2; 861.8 M, 912.1 M | — | **yes** (mixed) |
 | m22_white | 14,156,269 | 15.8–23.7 M | 1.67× | **yes** |
-| m23_white | 9,440,650 | 9.7–12.1 M | 1.28× | no |
+| m23_white | 9,673,403 | 9.4–12.1 M | 1.28× | no |
 | dec13 | 3,822,602 | 5.03 M ×4 | 1.32× | no |
 | dec10 | 4,262,128 | 2.9–4.8 M | 1.65× | **yes** (barely) |
 

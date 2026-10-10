@@ -1,0 +1,1324 @@
+{
+ "runs": [
+  {
+   "case": "dec01",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5713706,
+   "budget": 1000000000,
+   "wall_s": 0.836878776550293
+  },
+  {
+   "case": "dec01",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 6492441,
+   "budget": 1000000000,
+   "wall_s": 0.9292762279510498
+  },
+  {
+   "case": "dec01",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5566075,
+   "budget": 1000000000,
+   "wall_s": 0.8131637573242188
+  },
+  {
+   "case": "dec01",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5524360,
+   "budget": 1000000000,
+   "wall_s": 0.81960129737854
+  },
+  {
+   "case": "dec01",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 6899716,
+   "budget": 1000000000,
+   "wall_s": 0.984591007232666
+  },
+  {
+   "case": "dec01",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5801448,
+   "budget": 1000000000,
+   "wall_s": 0.8470606803894043
+  },
+  {
+   "case": "dec02",
+   "salt": 0,
+   "outcome": "loss",
+   "decisive": true,
+   "censored": null,
+   "evals": 138124,
+   "budget": 1000000000,
+   "wall_s": 0.1316063404083252
+  },
+  {
+   "case": "dec02",
+   "salt": 1,
+   "outcome": "loss",
+   "decisive": true,
+   "censored": null,
+   "evals": 138124,
+   "budget": 1000000000,
+   "wall_s": 0.13361167907714844
+  },
+  {
+   "case": "dec02",
+   "salt": 2,
+   "outcome": "loss",
+   "decisive": true,
+   "censored": null,
+   "evals": 138124,
+   "budget": 1000000000,
+   "wall_s": 0.12883329391479492
+  },
+  {
+   "case": "dec02",
+   "salt": 3,
+   "outcome": "loss",
+   "decisive": true,
+   "censored": null,
+   "evals": 138124,
+   "budget": 1000000000,
+   "wall_s": 0.13255620002746582
+  },
+  {
+   "case": "dec02",
+   "salt": 4,
+   "outcome": "loss",
+   "decisive": true,
+   "censored": null,
+   "evals": 138124,
+   "budget": 1000000000,
+   "wall_s": 0.13445258140563965
+  },
+  {
+   "case": "dec02",
+   "salt": 5,
+   "outcome": "loss",
+   "decisive": true,
+   "censored": null,
+   "evals": 138124,
+   "budget": 1000000000,
+   "wall_s": 0.13110065460205078
+  },
+  {
+   "case": "dec03",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 47068,
+   "budget": 1000000000,
+   "wall_s": 0.11297607421875
+  },
+  {
+   "case": "dec03",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 47068,
+   "budget": 1000000000,
+   "wall_s": 0.11268043518066406
+  },
+  {
+   "case": "dec03",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 47068,
+   "budget": 1000000000,
+   "wall_s": 0.11405682563781738
+  },
+  {
+   "case": "dec03",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 47068,
+   "budget": 1000000000,
+   "wall_s": 0.11800026893615723
+  },
+  {
+   "case": "dec03",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 47068,
+   "budget": 1000000000,
+   "wall_s": 0.11703252792358398
+  },
+  {
+   "case": "dec03",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 47068,
+   "budget": 1000000000,
+   "wall_s": 0.11114048957824707
+  },
+  {
+   "case": "dec04",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 7352,
+   "budget": 1000000000,
+   "wall_s": 0.1104135513305664
+  },
+  {
+   "case": "dec04",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 7352,
+   "budget": 1000000000,
+   "wall_s": 0.11146903038024902
+  },
+  {
+   "case": "dec04",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 7352,
+   "budget": 1000000000,
+   "wall_s": 0.11419153213500977
+  },
+  {
+   "case": "dec04",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 7352,
+   "budget": 1000000000,
+   "wall_s": 0.1106879711151123
+  },
+  {
+   "case": "dec04",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 7352,
+   "budget": 1000000000,
+   "wall_s": 0.1096792221069336
+  },
+  {
+   "case": "dec04",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 7352,
+   "budget": 1000000000,
+   "wall_s": 0.10903668403625488
+  },
+  {
+   "case": "dec05",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 314615,
+   "budget": 1000000000,
+   "wall_s": 0.153364896774292
+  },
+  {
+   "case": "dec05",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 314615,
+   "budget": 1000000000,
+   "wall_s": 0.1529982089996338
+  },
+  {
+   "case": "dec05",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 314615,
+   "budget": 1000000000,
+   "wall_s": 0.14710474014282227
+  },
+  {
+   "case": "dec05",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 314615,
+   "budget": 1000000000,
+   "wall_s": 0.15084552764892578
+  },
+  {
+   "case": "dec05",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 314615,
+   "budget": 1000000000,
+   "wall_s": 0.1493091583251953
+  },
+  {
+   "case": "dec05",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 314615,
+   "budget": 1000000000,
+   "wall_s": 0.1493699550628662
+  },
+  {
+   "case": "dec06",
+   "salt": 0,
+   "outcome": "loss",
+   "decisive": true,
+   "censored": null,
+   "evals": 1507474,
+   "budget": 1000000000,
+   "wall_s": 0.29378724098205566
+  },
+  {
+   "case": "dec06",
+   "salt": 1,
+   "outcome": "loss",
+   "decisive": true,
+   "censored": null,
+   "evals": 1507457,
+   "budget": 1000000000,
+   "wall_s": 0.2907123565673828
+  },
+  {
+   "case": "dec06",
+   "salt": 2,
+   "outcome": "loss",
+   "decisive": true,
+   "censored": null,
+   "evals": 1507482,
+   "budget": 1000000000,
+   "wall_s": 0.291980504989624
+  },
+  {
+   "case": "dec06",
+   "salt": 3,
+   "outcome": "loss",
+   "decisive": true,
+   "censored": null,
+   "evals": 1507482,
+   "budget": 1000000000,
+   "wall_s": 0.29224276542663574
+  },
+  {
+   "case": "dec06",
+   "salt": 4,
+   "outcome": "loss",
+   "decisive": true,
+   "censored": null,
+   "evals": 1507480,
+   "budget": 1000000000,
+   "wall_s": 0.2928736209869385
+  },
+  {
+   "case": "dec06",
+   "salt": 5,
+   "outcome": "loss",
+   "decisive": true,
+   "censored": null,
+   "evals": 1507480,
+   "budget": 1000000000,
+   "wall_s": 0.2896122932434082
+  },
+  {
+   "case": "dec07",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 4021,
+   "budget": 1000000000,
+   "wall_s": 0.10971903800964355
+  },
+  {
+   "case": "dec07",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 4021,
+   "budget": 1000000000,
+   "wall_s": 0.10772418975830078
+  },
+  {
+   "case": "dec07",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 4021,
+   "budget": 1000000000,
+   "wall_s": 0.10883450508117676
+  },
+  {
+   "case": "dec07",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 4021,
+   "budget": 1000000000,
+   "wall_s": 0.11157464981079102
+  },
+  {
+   "case": "dec07",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 4021,
+   "budget": 1000000000,
+   "wall_s": 0.11167383193969727
+  },
+  {
+   "case": "dec07",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 4021,
+   "budget": 1000000000,
+   "wall_s": 0.10762667655944824
+  },
+  {
+   "case": "dec08",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 45,
+   "budget": 1000000000,
+   "wall_s": 0.1098787784576416
+  },
+  {
+   "case": "dec08",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 45,
+   "budget": 1000000000,
+   "wall_s": 0.1144869327545166
+  },
+  {
+   "case": "dec08",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 45,
+   "budget": 1000000000,
+   "wall_s": 0.11472821235656738
+  },
+  {
+   "case": "dec08",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 45,
+   "budget": 1000000000,
+   "wall_s": 0.11315131187438965
+  },
+  {
+   "case": "dec08",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 45,
+   "budget": 1000000000,
+   "wall_s": 0.10955309867858887
+  },
+  {
+   "case": "dec08",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 45,
+   "budget": 1000000000,
+   "wall_s": 0.10585308074951172
+  },
+  {
+   "case": "dec09",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1842,
+   "budget": 1000000000,
+   "wall_s": 0.10875487327575684
+  },
+  {
+   "case": "dec09",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1842,
+   "budget": 1000000000,
+   "wall_s": 0.10848140716552734
+  },
+  {
+   "case": "dec09",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1842,
+   "budget": 1000000000,
+   "wall_s": 0.10866904258728027
+  },
+  {
+   "case": "dec09",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1842,
+   "budget": 1000000000,
+   "wall_s": 0.10626626014709473
+  },
+  {
+   "case": "dec09",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1842,
+   "budget": 1000000000,
+   "wall_s": 0.10963654518127441
+  },
+  {
+   "case": "dec09",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1842,
+   "budget": 1000000000,
+   "wall_s": 0.10775589942932129
+  },
+  {
+   "case": "dec10",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 4262128,
+   "budget": 1000000000,
+   "wall_s": 0.7155513763427734
+  },
+  {
+   "case": "dec10",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 3901844,
+   "budget": 1000000000,
+   "wall_s": 0.6668848991394043
+  },
+  {
+   "case": "dec10",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 2918636,
+   "budget": 1000000000,
+   "wall_s": 0.5130817890167236
+  },
+  {
+   "case": "dec10",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 4802246,
+   "budget": 1000000000,
+   "wall_s": 0.7850627899169922
+  },
+  {
+   "case": "dec10",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 3901847,
+   "budget": 1000000000,
+   "wall_s": 0.6588637828826904
+  },
+  {
+   "case": "dec10",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 3901858,
+   "budget": 1000000000,
+   "wall_s": 0.6571052074432373
+  },
+  {
+   "case": "dec11",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 253890,
+   "budget": 1000000000,
+   "wall_s": 0.1407151222229004
+  },
+  {
+   "case": "dec11",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 253890,
+   "budget": 1000000000,
+   "wall_s": 0.1463780403137207
+  },
+  {
+   "case": "dec11",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 253890,
+   "budget": 1000000000,
+   "wall_s": 0.14194798469543457
+  },
+  {
+   "case": "dec11",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 253890,
+   "budget": 1000000000,
+   "wall_s": 0.13995885848999023
+  },
+  {
+   "case": "dec11",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 253890,
+   "budget": 1000000000,
+   "wall_s": 0.14232540130615234
+  },
+  {
+   "case": "dec11",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 253890,
+   "budget": 1000000000,
+   "wall_s": 0.14012384414672852
+  },
+  {
+   "case": "dec12",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 303191,
+   "budget": 1000000000,
+   "wall_s": 0.14942026138305664
+  },
+  {
+   "case": "dec12",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 303191,
+   "budget": 1000000000,
+   "wall_s": 0.1432957649230957
+  },
+  {
+   "case": "dec12",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 303191,
+   "budget": 1000000000,
+   "wall_s": 0.14821600914001465
+  },
+  {
+   "case": "dec12",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 303191,
+   "budget": 1000000000,
+   "wall_s": 0.1524665355682373
+  },
+  {
+   "case": "dec12",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 303191,
+   "budget": 1000000000,
+   "wall_s": 0.14998245239257812
+  },
+  {
+   "case": "dec12",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 303191,
+   "budget": 1000000000,
+   "wall_s": 0.14992403984069824
+  },
+  {
+   "case": "dec13",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 3822602,
+   "budget": 1000000000,
+   "wall_s": 0.6634283065795898
+  },
+  {
+   "case": "dec13",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5031242,
+   "budget": 1000000000,
+   "wall_s": 0.8384556770324707
+  },
+  {
+   "case": "dec13",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5038383,
+   "budget": 1000000000,
+   "wall_s": 0.8427462577819824
+  },
+  {
+   "case": "dec13",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5032382,
+   "budget": 1000000000,
+   "wall_s": 0.8429388999938965
+  },
+  {
+   "case": "dec13",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5030825,
+   "budget": 1000000000,
+   "wall_s": 0.8349418640136719
+  },
+  {
+   "case": "dec13",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 5032308,
+   "budget": 1000000000,
+   "wall_s": 0.839963436126709
+  },
+  {
+   "case": "dec14",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 2397489,
+   "budget": 1000000000,
+   "wall_s": 0.43581628799438477
+  },
+  {
+   "case": "dec14",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 2443896,
+   "budget": 1000000000,
+   "wall_s": 0.44237828254699707
+  },
+  {
+   "case": "dec14",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 2443904,
+   "budget": 1000000000,
+   "wall_s": 0.4437110424041748
+  },
+  {
+   "case": "dec14",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 2443989,
+   "budget": 1000000000,
+   "wall_s": 0.4429972171783447
+  },
+  {
+   "case": "dec14",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 2496055,
+   "budget": 1000000000,
+   "wall_s": 0.44392919540405273
+  },
+  {
+   "case": "dec14",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 2444006,
+   "budget": 1000000000,
+   "wall_s": 0.4412229061126709
+  },
+  {
+   "case": "dec15",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1077420,
+   "budget": 1000000000,
+   "wall_s": 0.24400568008422852
+  },
+  {
+   "case": "dec15",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1077463,
+   "budget": 1000000000,
+   "wall_s": 0.23878955841064453
+  },
+  {
+   "case": "dec15",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1077420,
+   "budget": 1000000000,
+   "wall_s": 0.24964380264282227
+  },
+  {
+   "case": "dec15",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1077420,
+   "budget": 1000000000,
+   "wall_s": 0.2483689785003662
+  },
+  {
+   "case": "dec15",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1077420,
+   "budget": 1000000000,
+   "wall_s": 0.24309349060058594
+  },
+  {
+   "case": "dec15",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1077438,
+   "budget": 1000000000,
+   "wall_s": 0.2435758113861084
+  },
+  {
+   "case": "dec16",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 107110,
+   "budget": 1000000000,
+   "wall_s": 0.12168645858764648
+  },
+  {
+   "case": "dec16",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 107110,
+   "budget": 1000000000,
+   "wall_s": 0.12198209762573242
+  },
+  {
+   "case": "dec16",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 107110,
+   "budget": 1000000000,
+   "wall_s": 0.1219034194946289
+  },
+  {
+   "case": "dec16",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 107110,
+   "budget": 1000000000,
+   "wall_s": 0.12416815757751465
+  },
+  {
+   "case": "dec16",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 107110,
+   "budget": 1000000000,
+   "wall_s": 0.12185239791870117
+  },
+  {
+   "case": "dec16",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 107110,
+   "budget": 1000000000,
+   "wall_s": 0.1211094856262207
+  },
+  {
+   "case": "dec17",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 539273,
+   "budget": 1000000000,
+   "wall_s": 0.18780303001403809
+  },
+  {
+   "case": "dec17",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 539273,
+   "budget": 1000000000,
+   "wall_s": 0.1879591941833496
+  },
+  {
+   "case": "dec17",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 539273,
+   "budget": 1000000000,
+   "wall_s": 0.19160985946655273
+  },
+  {
+   "case": "dec17",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 539273,
+   "budget": 1000000000,
+   "wall_s": 0.1886606216430664
+  },
+  {
+   "case": "dec17",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 539273,
+   "budget": 1000000000,
+   "wall_s": 0.19348430633544922
+  },
+  {
+   "case": "dec17",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 539273,
+   "budget": 1000000000,
+   "wall_s": 0.18486762046813965
+  },
+  {
+   "case": "dec18",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 39549,
+   "budget": 1000000000,
+   "wall_s": 0.11523962020874023
+  },
+  {
+   "case": "dec18",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 39549,
+   "budget": 1000000000,
+   "wall_s": 0.11384201049804688
+  },
+  {
+   "case": "dec18",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 39549,
+   "budget": 1000000000,
+   "wall_s": 0.11629343032836914
+  },
+  {
+   "case": "dec18",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 39549,
+   "budget": 1000000000,
+   "wall_s": 0.1155843734741211
+  },
+  {
+   "case": "dec18",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 39549,
+   "budget": 1000000000,
+   "wall_s": 0.11429643630981445
+  },
+  {
+   "case": "dec18",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 39549,
+   "budget": 1000000000,
+   "wall_s": 0.11091995239257812
+  },
+  {
+   "case": "m20_white",
+   "salt": 0,
+   "outcome": "draw",
+   "decisive": false,
+   "censored": "budget",
+   "evals": 2000000027,
+   "budget": 2000000000,
+   "wall_s": 339.8618383407593
+  },
+  {
+   "case": "m20_white",
+   "salt": 1,
+   "outcome": "draw",
+   "decisive": false,
+   "censored": "budget",
+   "evals": 2000000029,
+   "budget": 2000000000,
+   "wall_s": 302.451363325119
+  },
+  {
+   "case": "m20_white",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 1384231894,
+   "budget": 2000000000,
+   "wall_s": 225.77522802352905
+  },
+  {
+   "case": "m20_white",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 861809196,
+   "budget": 2000000000,
+   "wall_s": 104.2413170337677
+  },
+  {
+   "case": "m20_white",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 912098074,
+   "budget": 2000000000,
+   "wall_s": 110.41712212562561
+  },
+  {
+   "case": "m20_white",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 791401553,
+   "budget": 2000000000,
+   "wall_s": 93.70278573036194
+  },
+  {
+   "case": "m22_white",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 14156269,
+   "budget": 1000000000,
+   "wall_s": 1.926682472229004
+  },
+  {
+   "case": "m22_white",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 23653031,
+   "budget": 1000000000,
+   "wall_s": 3.2172422409057617
+  },
+  {
+   "case": "m22_white",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 15815489,
+   "budget": 1000000000,
+   "wall_s": 2.1672868728637695
+  },
+  {
+   "case": "m22_white",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 17832300,
+   "budget": 1000000000,
+   "wall_s": 2.4120895862579346
+  },
+  {
+   "case": "m22_white",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 18071429,
+   "budget": 1000000000,
+   "wall_s": 2.449871778488159
+  },
+  {
+   "case": "m22_white",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 21236889,
+   "budget": 1000000000,
+   "wall_s": 2.863935947418213
+  },
+  {
+   "case": "m23_white",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 9673403,
+   "budget": 1000000000,
+   "wall_s": 1.349942922592163
+  },
+  {
+   "case": "m23_white",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 12045240,
+   "budget": 1000000000,
+   "wall_s": 1.6543655395507812
+  },
+  {
+   "case": "m23_white",
+   "salt": 2,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 9440650,
+   "budget": 1000000000,
+   "wall_s": 1.300999402999878
+  },
+  {
+   "case": "m23_white",
+   "salt": 3,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 12058206,
+   "budget": 1000000000,
+   "wall_s": 1.646747350692749
+  },
+  {
+   "case": "m23_white",
+   "salt": 4,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 11567847,
+   "budget": 1000000000,
+   "wall_s": 1.5873639583587646
+  },
+  {
+   "case": "m23_white",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 11229272,
+   "budget": 1000000000,
+   "wall_s": 1.5345056056976318
+  },
+  {
+   "case": "stress",
+   "salt": 0,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 249480478,
+   "budget": 2500000000,
+   "wall_s": 31.437353372573853
+  },
+  {
+   "case": "stress",
+   "salt": 1,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 758176477,
+   "budget": 2500000000,
+   "wall_s": 100.71089172363281
+  },
+  {
+   "case": "stress",
+   "salt": 2,
+   "outcome": "draw",
+   "decisive": false,
+   "censored": "budget",
+   "evals": 2500000002,
+   "budget": 2500000000,
+   "wall_s": 344.09539699554443
+  },
+  {
+   "case": "stress",
+   "salt": 3,
+   "outcome": "draw",
+   "decisive": false,
+   "censored": "budget",
+   "evals": 2500000001,
+   "budget": 2500000000,
+   "wall_s": 436.7928168773651
+  },
+  {
+   "case": "stress",
+   "salt": 4,
+   "outcome": "draw",
+   "decisive": false,
+   "censored": "budget",
+   "evals": 2500000003,
+   "budget": 2500000000,
+   "wall_s": 342.6379814147949
+  },
+  {
+   "case": "stress",
+   "salt": 5,
+   "outcome": "win",
+   "decisive": true,
+   "censored": null,
+   "evals": 252069909,
+   "budget": 2500000000,
+   "wall_s": 31.338237762451172
+  }
+ ]
+}
