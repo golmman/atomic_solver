@@ -174,8 +174,9 @@ Dependency order: #17 first; #18–#20 all require it.
 |---|------|---------|--------|
 | 17 | **Salt-seeded statistical gate** | Establish a reusable, soundness-neutral noise channel for gate measurement: a `--salt <u64>` knob that remaps TT bucket indices (full-key verification unchanged, so search semantics are identical; salt 0 = shipped behavior, bit-identical), then per-case child-eval distributions over ≥5 salts on a hard corpus (≥20 cases in the full rollout; pilot first), paired comparison, censored runs as right-censored data. Deliverable includes a methodology note defining the gate rule that plans for #18–#20 must pre-register. Other neutral noise channels (tie-breaking jitter, history aging) are recorded as unmeasured caveats, not implemented here. | **done (plan11 pilot + plan12)** — `--salt`/`--budget` product options + `evals:` line, pilot 6-case × 5-salt corpus ([`report11.md`](report11.md)); 22-case × 6-salt calibration rollout (132 runs, zero flips, salt-0 identity exact; D7 PIVOT fired: salt pair 1/4 correlated on dec10+dec13, salt 5 added, per-case **basin counts** normative); [`gate_methodology.md`](gate_methodology.md) **pinned v1.0** ([`report12.md`](report12.md), [`measurements/plan12/`](measurements/plan12/)). Caveats: salt-channel independence from other noise sources unmeasured; per-case draw diversity bounded by trajectory structure |
 | 18 | **Leaf-initialization family** | Replace the `(1, 1)` unsolved-child initialization (`children.rs` `_ => (1, 1)`) with shaped variants: capped or log mobility, one-sided, blends — **the m22 collapse (censored at 1 B on all five salts under naive mobility, mechanism undiagnosed) is diagnosed first**, as a pre-registered Phase 0. Then cheap atomic features (blast and king-zone threats), then initialization borrowed from the same board stored at another rule50 clock. Soundness-neutral: steers only; solved values are computed exactly as before. Requires #17. | **open** — blocked by #17 |
-| 19 | **Re-score the unjudged closures** | Re-measure the §1 closures under the #17 gate: ε = 0.375 / 0.5 (`conversion` #7, plan4 Phase 0), clock-budget solved-entry reuse (`dfpn` #2, plans 10/11), `lean` plan10 history/killer arms, TT-eviction arm V2 (`lean` plan7). Each arm is re-scored as a per-case distribution over salts, not a single draw; any arm that survives becomes a sized hand-off to its owner initiative. Requires #17; distribution work may be batched per owner initiative. | **open** — blocked by #17 |
+| 19 | **Re-score the unjudged closures** | Re-measure the §1 closures under the #17 gate: ε = 0.375 / 0.5 (`conversion` #7, plan4 Phase 0), clock-budget solved-entry reuse (`dfpn` #2, plans 10/11), `lean` plan10 history/killer arms, TT-eviction arm V2 (`lean` plan7). Each arm is re-scored as a per-case distribution over salts, not a single draw; any arm that survives becomes a sized hand-off to its owner initiative. Requires #17; distribution work may be batched per owner initiative. | **open** — first arms (ε = 0.375 / 0.5 vs. shipped ε = 0.125) drafted as **plan13** (2026-10-10); remaining closures (clock-budget reuse, history/killer arms, eviction V2) stay open |
 | 20 | **Salted restarts (single-core)** | If the per-salt distribution is heavy-tailed (stress suggests ≥10× spread), restarts that keep the TT but reseed the bucket index cut *expected* work — distinct from the `parallel` plan7 portfolio (separate processes, no shared TT) and from the measured-out single-chunk lever (`reexamination.md` §4). Requires #17's distribution data. | **open** — blocked by #17 |
+| 23 | **Seeded move-order tie-break noise channel** | Second noise channel of the #17 family: a `--seed <u64>` knob that breaks `sort_moves` ordering ties with a stateless hash of (seed, node Zobrist key, move) as a *secondary* sort key — non-tied comparisons stay bit-identical, seed 0 = shipped behavior. Unlike the salt (which perturbs only via TT bucket collisions), this perturbs the trajectory at every node even with zero TT interaction — the one lever that may break the per-case basin-diversity ceiling plan12's D7 found (salt 5 not a clean channel). Takes over report12's caveat "salt-channel independence from tie-breaking unmeasured" by making tie-breaking a controlled channel. Constraints (from the opening session, 2026-10-10): stateless hash, never a stateful RNG (path-independence); tie-break only, never score noise (ScorerParams/optimizer contract); scope is `sort_moves` only (selection ties, history aging = future items if the channel calibrates); seed-0 identity preserves all salt-0 reproduction targets. Phase 0 is an in-search tie-frequency probe with a pre-registered kill gate (root ties are plentiful — read-only `move_order_debug` probe on m20/m22/m23 showed large tie-blocks — but mid-search prevalence with populated history/killers is unmeasured); Phase 2 is a calibration rollout with outcome-flip audit, basin counts, and a **cross-channel correlation arm** (do seed draws land in the same basins as salt draws, or add new ones on the low-diversity cases dec13/dec14/dec10?) before any `gate_methodology.md` amendment. Requires #17 (done). Measurement-only product change, default-bit-identical — in scope per Non-goals. | **open** — plan14 drafted (2026-10-10) |
 | 21 | **In-context child results (dec10 class)** | Keep a child's just-proven repetition-dependent Draw in the parent frame instead of re-reading the TT's `(1, 1)` entry; 38.1% of dec10's evals follow a stale child result (`reexamination.md` §4). Soundness-neutral by construction (the value is recomputed, not assumed); repetition-dependent results still never enter the TT. Independent of #17 (dec10 is the one control where the baseline sits mid-distribution), but gated by it for reporting. | **open** |
 | 22 | **Fringe** | (a) Solve ignoring the 50-move rule and use that table only to seed initialization (the real search still proves everything); (b) Kaneko root threads — owned by `parallel` (`parallel/reexamination.md` idea D), not mined here. | **open** — lowest priority |
 
@@ -486,3 +487,34 @@ Per repo convention, every plan ends with the task of writing its
   (m20/m21/m22/m23_white, dec13, dec10) × 5 salts, methodology note
   defining the gate rule for #18–#20. Next plan number after plan11 is
   **plan12**.
+- **2026-10-10** — Reopened backlog **#23 opened (owner decision): seeded
+  move-order tie-break noise channel**, continuing the #17 noise-channel
+  family. Motivation: plan12's D7 result (per-case draw diversity bounded by
+  trajectory structure; salt 5 not a clean channel on the low-diversity
+  cases) and report12's standing caveat (tie-breaking an unmeasured noise
+  source). A tie-break channel perturbs every node independent of TT
+  interaction, so it is the one lever that may widen the basins the salt
+  cannot. Opening-session read-only probe (`move_order_debug`, m20/m22/m23
+  fixtures): root ordering totals tie in large blocks (e.g. m20_white: 4
+  rook moves at 560, 3 king steps at 110, 6 moves at 0), confirming ties
+  are plentiful where history/killers are unpopulated. **plan14 drafted**
+  (Phase 0 tie-frequency probe with kill gate → `--seed` product knob,
+  seed 0 bit-identical → calibration rollout with cross-channel
+  correlation arm → conditional `gate_methodology.md` v1.1). Numbering:
+  report12 pinned the #19 ε re-scores as plan13; plan14 is drafted first
+  at the owner's choice — the two are independent and either execution
+  order is valid. Next unstarted plan numbers: plan13 (ε arms), plan14
+  (this item).
+- **2026-10-10** — **plan13 drafted (item #19, first arms)**: ε = 0.375 /
+  ε = 0.5 vs. the shipped ε = 0.125 baseline over the frozen plan12 corpus
+  (22 cases × 6 salts × 3 arms = 396 runs), verdicts per the pinned
+  `gate_methodology.md` v1.0 applied verbatim (paired-by-salt ratios,
+  W_LO/W_HI + ≥ 75% direction agreement, diversity clause, under-budget
+  rule; fresh runs of both arms per the comparison rule, so the baseline
+  re-runs double as a cross-session identity audit against plan12's
+  recorded values — D3(a) HALTs on any mismatch). Defer extension
+  pre-registered (salts {6, 7} on affected cases, one extension per arm);
+  adopt → sized hand-off to `conversion` (ε thread owner). plan13 also
+  records the paired-ratio dispersion as the methodology's first real-arm
+  calibration data. plan13 (ε arms) and plan14 (#23 tie-break channel)
+  are independent; either execution order is valid.

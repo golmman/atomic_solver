@@ -857,3 +857,12 @@ Write one or multiple implementation plans if warranted but don't fix any possib
 ---
 
 also new workspace initative and updates to proofdb initative
+
+---
+
+Last session we finished with `docs/plans/research/report12.md`.
+We introduced the tt salt.
+Now in the same vein we could add a random seed and introduce randomness for e.g. move order ties.
+What do you think?
+
+draft plan13
