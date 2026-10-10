@@ -1,0 +1,3387 @@
+{
+ "summary": {
+  "m20_white": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 2,
+    "uncensored_evals": [
+     791401553,
+     861809196,
+     912098074,
+     1384231894
+    ],
+    "median": 886953635.0,
+    "censored": [
+     {
+      "salt": 0,
+      "by": "budget",
+      "evals": 2000000027,
+      "outcome": "draw"
+     },
+     {
+      "salt": 1,
+      "by": "budget",
+      "evals": 2000000029,
+      "outcome": "draw"
+     }
+    ],
+    "per_salt": {
+     "0": {
+      "evals": 2000000027,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "1": {
+      "evals": 2000000029,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "2": {
+      "evals": 1384231894,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 861809196,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 912098074,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 791401553,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 4,
+    "uncensored_evals": [
+     335467993,
+     596991290
+    ],
+    "median": 466229641.5,
+    "censored": [
+     {
+      "salt": 2,
+      "by": "budget",
+      "evals": 2000000000,
+      "outcome": "draw"
+     },
+     {
+      "salt": 3,
+      "by": "budget",
+      "evals": 2000000001,
+      "outcome": "draw"
+     },
+     {
+      "salt": 4,
+      "by": "budget",
+      "evals": 2000000000,
+      "outcome": "draw"
+     },
+     {
+      "salt": 5,
+      "by": "budget",
+      "evals": 2000000006,
+      "outcome": "draw"
+     }
+    ],
+    "per_salt": {
+     "0": {
+      "evals": 335467993,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 596991290,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 2000000000,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "3": {
+      "evals": 2000000001,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "4": {
+      "evals": 2000000000,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "5": {
+      "evals": 2000000006,
+      "censored": "budget",
+      "outcome": "draw"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 4,
+    "uncensored_evals": [
+     351856690,
+     555455266
+    ],
+    "median": 453655978.0,
+    "censored": [
+     {
+      "salt": 1,
+      "by": "budget",
+      "evals": 2000000021,
+      "outcome": "draw"
+     },
+     {
+      "salt": 3,
+      "by": "budget",
+      "evals": 2000000006,
+      "outcome": "draw"
+     },
+     {
+      "salt": 4,
+      "by": "budget",
+      "evals": 2000000004,
+      "outcome": "draw"
+     },
+     {
+      "salt": 5,
+      "by": "budget",
+      "evals": 2000000000,
+      "outcome": "draw"
+     }
+    ],
+    "per_salt": {
+     "0": {
+      "evals": 555455266,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 2000000021,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "2": {
+      "evals": 351856690,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 2000000006,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "4": {
+      "evals": 2000000004,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "5": {
+      "evals": 2000000000,
+      "censored": "budget",
+      "outcome": "draw"
+     }
+    }
+   }
+  },
+  "stress": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 3,
+    "uncensored_evals": [
+     249480478,
+     252069909,
+     758176477
+    ],
+    "median": 252069909,
+    "censored": [
+     {
+      "salt": 2,
+      "by": "budget",
+      "evals": 2500000002,
+      "outcome": "draw"
+     },
+     {
+      "salt": 3,
+      "by": "budget",
+      "evals": 2500000001,
+      "outcome": "draw"
+     },
+     {
+      "salt": 4,
+      "by": "budget",
+      "evals": 2500000003,
+      "outcome": "draw"
+     }
+    ],
+    "per_salt": {
+     "0": {
+      "evals": 249480478,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 758176477,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 2500000002,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "3": {
+      "evals": 2500000001,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "4": {
+      "evals": 2500000003,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "5": {
+      "evals": 252069909,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     71148597,
+     73054461,
+     73056452,
+     74859578,
+     75560355,
+     91198427
+    ],
+    "median": 73958015.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 71148597,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 74859578,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 73054461,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 73056452,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 91198427,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 75560355,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     52155506,
+     62818863,
+     65966915,
+     70760457,
+     86312729,
+     98874361
+    ],
+    "median": 68363686.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 98874361,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 62818863,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 65966915,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 70760457,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 52155506,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 86312729,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "m22_white": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     14156269,
+     15815489,
+     17832300,
+     18071429,
+     21236889,
+     23653031
+    ],
+    "median": 17951864.5,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 14156269,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 23653031,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 15815489,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 17832300,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 18071429,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 21236889,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     11467640,
+     11859889,
+     12672848,
+     14222312,
+     14684683,
+     15813483
+    ],
+    "median": 13447580.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 15813483,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 11859889,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 14222312,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 12672848,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 11467640,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 14684683,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     12825207,
+     12875571,
+     13125059,
+     13387712,
+     14553094,
+     15067529
+    ],
+    "median": 13256385.5,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 15067529,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 12825207,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 13387712,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 13125059,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 12875571,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 14553094,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "m23_white": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     9440650,
+     9673403,
+     11229272,
+     11567847,
+     12045240,
+     12058206
+    ],
+    "median": 11398559.5,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 9673403,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 12045240,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 9440650,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 12058206,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 11567847,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 11229272,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 3,
+    "uncensored_evals": [
+     5172374,
+     5195586,
+     10074145
+    ],
+    "median": 5195586,
+    "censored": [
+     {
+      "salt": 1,
+      "by": "budget",
+      "evals": 1000000000,
+      "outcome": "draw"
+     },
+     {
+      "salt": 3,
+      "by": "budget",
+      "evals": 1000000000,
+      "outcome": "draw"
+     },
+     {
+      "salt": 5,
+      "by": "budget",
+      "evals": 1000000003,
+      "outcome": "draw"
+     }
+    ],
+    "per_salt": {
+     "0": {
+      "evals": 5172374,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 1000000000,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "2": {
+      "evals": 10074145,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 1000000000,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "4": {
+      "evals": 5195586,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 1000000003,
+      "censored": "budget",
+      "outcome": "draw"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     5284431,
+     5449710,
+     5684978,
+     5951529,
+     6023482,
+     6302329
+    ],
+    "median": 5818253.5,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 6302329,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 5684978,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 5951529,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 6023482,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 5449710,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 5284431,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec01": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     5524360,
+     5566075,
+     5713706,
+     5801448,
+     6492441,
+     6899716
+    ],
+    "median": 5757577.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 5713706,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 6492441,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 5566075,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 5524360,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 6899716,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 5801448,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 2,
+    "uncensored_evals": [
+     64509294,
+     66586596,
+     128397024,
+     311454526
+    ],
+    "median": 97491810.0,
+    "censored": [
+     {
+      "salt": 2,
+      "by": "budget",
+      "evals": 1000000002,
+      "outcome": "draw"
+     },
+     {
+      "salt": 3,
+      "by": "budget",
+      "evals": 1000000003,
+      "outcome": "draw"
+     }
+    ],
+    "per_salt": {
+     "0": {
+      "evals": 311454526,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 66586596,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 1000000002,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "3": {
+      "evals": 1000000003,
+      "censored": "budget",
+      "outcome": "draw"
+     },
+     "4": {
+      "evals": 128397024,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 64509294,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     2570268,
+     2570297,
+     2570299,
+     2570364,
+     2570445,
+     2585892
+    ],
+    "median": 2570331.5,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 2570299,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 2570297,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 2585892,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 2570445,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 2570364,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 2570268,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec02": {
+   "base": {
+    "decisive_outcomes": [
+     "loss"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     138124,
+     138124,
+     138124,
+     138124,
+     138124,
+     138124
+    ],
+    "median": 138124.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 138124,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "1": {
+      "evals": 138124,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "2": {
+      "evals": 138124,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "3": {
+      "evals": 138124,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "4": {
+      "evals": 138124,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "5": {
+      "evals": 138124,
+      "censored": null,
+      "outcome": "loss"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "loss"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     246025,
+     246025,
+     246025,
+     246025,
+     246025,
+     246025
+    ],
+    "median": 246025.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 246025,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "1": {
+      "evals": 246025,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "2": {
+      "evals": 246025,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "3": {
+      "evals": 246025,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "4": {
+      "evals": 246025,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "5": {
+      "evals": 246025,
+      "censored": null,
+      "outcome": "loss"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "loss"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     134810,
+     134810,
+     134810,
+     134810,
+     134810,
+     134810
+    ],
+    "median": 134810.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 134810,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "1": {
+      "evals": 134810,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "2": {
+      "evals": 134810,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "3": {
+      "evals": 134810,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "4": {
+      "evals": 134810,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "5": {
+      "evals": 134810,
+      "censored": null,
+      "outcome": "loss"
+     }
+    }
+   }
+  },
+  "dec03": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     47068,
+     47068,
+     47068,
+     47068,
+     47068,
+     47068
+    ],
+    "median": 47068.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 47068,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 47068,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 47068,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 47068,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 47068,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 47068,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     3542,
+     3542,
+     3542,
+     3542,
+     3542,
+     3542
+    ],
+    "median": 3542.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 3542,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 3542,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 3542,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 3542,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 3542,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 3542,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     4919,
+     4919,
+     4919,
+     4919,
+     4919,
+     4919
+    ],
+    "median": 4919.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 4919,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 4919,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 4919,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 4919,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 4919,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 4919,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec04": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     7352,
+     7352,
+     7352,
+     7352,
+     7352,
+     7352
+    ],
+    "median": 7352.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 7352,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 7352,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 7352,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 7352,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 7352,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 7352,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     1635,
+     1635,
+     1635,
+     1635,
+     1635,
+     1635
+    ],
+    "median": 1635.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 1635,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 1635,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 1635,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 1635,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 1635,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 1635,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     2481,
+     2481,
+     2481,
+     2481,
+     2481,
+     2481
+    ],
+    "median": 2481.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 2481,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 2481,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 2481,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 2481,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 2481,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 2481,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec05": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     314615,
+     314615,
+     314615,
+     314615,
+     314615,
+     314615
+    ],
+    "median": 314615.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 314615,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 314615,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 314615,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 314615,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 314615,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 314615,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     397169,
+     397169,
+     397169,
+     397169,
+     397169,
+     397169
+    ],
+    "median": 397169.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 397169,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 397169,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 397169,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 397169,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 397169,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 397169,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     755627,
+     755627,
+     755627,
+     755627,
+     755627,
+     755634
+    ],
+    "median": 755627.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 755634,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 755627,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 755627,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 755627,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 755627,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 755627,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec06": {
+   "base": {
+    "decisive_outcomes": [
+     "loss"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     1507457,
+     1507474,
+     1507480,
+     1507480,
+     1507482,
+     1507482
+    ],
+    "median": 1507480.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 1507474,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "1": {
+      "evals": 1507457,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "2": {
+      "evals": 1507482,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "3": {
+      "evals": 1507482,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "4": {
+      "evals": 1507480,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "5": {
+      "evals": 1507480,
+      "censored": null,
+      "outcome": "loss"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "loss"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     3241579,
+     3242878,
+     3243026,
+     3449452,
+     3571532,
+     3571537
+    ],
+    "median": 3346239.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 3241579,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "1": {
+      "evals": 3243026,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "2": {
+      "evals": 3571532,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "3": {
+      "evals": 3449452,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "4": {
+      "evals": 3571537,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "5": {
+      "evals": 3242878,
+      "censored": null,
+      "outcome": "loss"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "loss"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     605975,
+     605975,
+     605975,
+     605975,
+     605975,
+     605975
+    ],
+    "median": 605975.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 605975,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "1": {
+      "evals": 605975,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "2": {
+      "evals": 605975,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "3": {
+      "evals": 605975,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "4": {
+      "evals": 605975,
+      "censored": null,
+      "outcome": "loss"
+     },
+     "5": {
+      "evals": 605975,
+      "censored": null,
+      "outcome": "loss"
+     }
+    }
+   }
+  },
+  "dec07": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     4021,
+     4021,
+     4021,
+     4021,
+     4021,
+     4021
+    ],
+    "median": 4021.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 4021,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 4021,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 4021,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 4021,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 4021,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 4021,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     679,
+     679,
+     679,
+     679,
+     679,
+     679
+    ],
+    "median": 679.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 679,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 679,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 679,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 679,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 679,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 679,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     834,
+     834,
+     834,
+     834,
+     834,
+     834
+    ],
+    "median": 834.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 834,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 834,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 834,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 834,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 834,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 834,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec08": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     45,
+     45,
+     45,
+     45,
+     45,
+     45
+    ],
+    "median": 45.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     45,
+     45,
+     45,
+     45,
+     45,
+     45
+    ],
+    "median": 45.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     45,
+     45,
+     45,
+     45,
+     45,
+     45
+    ],
+    "median": 45.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 45,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec09": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     1842,
+     1842,
+     1842,
+     1842,
+     1842,
+     1842
+    ],
+    "median": 1842.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 1842,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 1842,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 1842,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 1842,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 1842,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 1842,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     83,
+     83,
+     83,
+     83,
+     83,
+     83
+    ],
+    "median": 83.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 83,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 83,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 83,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 83,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 83,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 83,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     83,
+     83,
+     83,
+     83,
+     83,
+     83
+    ],
+    "median": 83.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 83,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 83,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 83,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 83,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 83,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 83,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec10": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     2918636,
+     3901844,
+     3901847,
+     3901858,
+     4262128,
+     4802246
+    ],
+    "median": 3901852.5,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 4262128,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 3901844,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 2918636,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 4802246,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 3901847,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 3901858,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     5148137,
+     5148137,
+     5148137,
+     5148137,
+     5148137,
+     5148137
+    ],
+    "median": 5148137.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 5148137,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 5148137,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 5148137,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 5148137,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 5148137,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 5148137,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     5765793,
+     5765793,
+     5765793,
+     5765793,
+     5765793,
+     5765793
+    ],
+    "median": 5765793.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 5765793,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 5765793,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 5765793,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 5765793,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 5765793,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 5765793,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec11": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     253890,
+     253890,
+     253890,
+     253890,
+     253890,
+     253890
+    ],
+    "median": 253890.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 253890,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 253890,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 253890,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 253890,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 253890,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 253890,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     9175,
+     9175,
+     9175,
+     9175,
+     9175,
+     9175
+    ],
+    "median": 9175.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 9175,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 9175,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 9175,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 9175,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 9175,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 9175,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     35173,
+     35173,
+     35173,
+     35173,
+     35173,
+     35173
+    ],
+    "median": 35173.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 35173,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 35173,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 35173,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 35173,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 35173,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 35173,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec12": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     303191,
+     303191,
+     303191,
+     303191,
+     303191,
+     303191
+    ],
+    "median": 303191.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 303191,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 303191,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 303191,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 303191,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 303191,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 303191,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     29529,
+     29529,
+     29529,
+     29529,
+     29529,
+     29529
+    ],
+    "median": 29529.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 29529,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 29529,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 29529,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 29529,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 29529,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 29529,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     57452,
+     57452,
+     57452,
+     57452,
+     57452,
+     57452
+    ],
+    "median": 57452.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 57452,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 57452,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 57452,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 57452,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 57452,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 57452,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec13": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     3822602,
+     5030825,
+     5031242,
+     5032308,
+     5032382,
+     5038383
+    ],
+    "median": 5031775.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 3822602,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 5031242,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 5038383,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 5032382,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 5030825,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 5032308,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     486175,
+     486175,
+     486175,
+     486175,
+     486175,
+     486175
+    ],
+    "median": 486175.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 486175,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 486175,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 486175,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 486175,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 486175,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 486175,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     509576,
+     509576,
+     509576,
+     509576,
+     509576,
+     509576
+    ],
+    "median": 509576.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 509576,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 509576,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 509576,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 509576,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 509576,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 509576,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec14": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     2397489,
+     2443896,
+     2443904,
+     2443989,
+     2444006,
+     2496055
+    ],
+    "median": 2443946.5,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 2397489,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 2443896,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 2443904,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 2443989,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 2496055,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 2444006,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     175344,
+     175344,
+     175344,
+     175344,
+     175344,
+     175344
+    ],
+    "median": 175344.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 175344,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 175344,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 175344,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 175344,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 175344,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 175344,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     235781,
+     235781,
+     235781,
+     235781,
+     235781,
+     235781
+    ],
+    "median": 235781.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 235781,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 235781,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 235781,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 235781,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 235781,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 235781,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec15": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     1077420,
+     1077420,
+     1077420,
+     1077420,
+     1077438,
+     1077463
+    ],
+    "median": 1077420.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 1077420,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 1077463,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 1077420,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 1077420,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 1077420,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 1077438,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     309918,
+     309918,
+     309918,
+     309918,
+     309918,
+     309918
+    ],
+    "median": 309918.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 309918,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 309918,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 309918,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 309918,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 309918,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 309918,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     244672,
+     244672,
+     244672,
+     244672,
+     244672,
+     244672
+    ],
+    "median": 244672.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 244672,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 244672,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 244672,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 244672,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 244672,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 244672,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec16": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     107110,
+     107110,
+     107110,
+     107110,
+     107110,
+     107110
+    ],
+    "median": 107110.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 107110,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 107110,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 107110,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 107110,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 107110,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 107110,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     9183,
+     9183,
+     9183,
+     9183,
+     9183,
+     9183
+    ],
+    "median": 9183.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 9183,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 9183,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 9183,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 9183,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 9183,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 9183,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     24404,
+     24404,
+     24404,
+     24404,
+     24404,
+     24404
+    ],
+    "median": 24404.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 24404,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 24404,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 24404,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 24404,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 24404,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 24404,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec17": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     539273,
+     539273,
+     539273,
+     539273,
+     539273,
+     539273
+    ],
+    "median": 539273.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 539273,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 539273,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 539273,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 539273,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 539273,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 539273,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     71845,
+     71845,
+     71845,
+     71845,
+     71845,
+     71845
+    ],
+    "median": 71845.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 71845,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 71845,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 71845,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 71845,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 71845,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 71845,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     149267,
+     149267,
+     149267,
+     149267,
+     149267,
+     149267
+    ],
+    "median": 149267.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 149267,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 149267,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 149267,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 149267,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 149267,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 149267,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  },
+  "dec18": {
+   "base": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     39549,
+     39549,
+     39549,
+     39549,
+     39549,
+     39549
+    ],
+    "median": 39549.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 39549,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 39549,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 39549,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 39549,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 39549,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 39549,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mob-or": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     1561,
+     1561,
+     1561,
+     1561,
+     1561,
+     1561
+    ],
+    "median": 1561.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 1561,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 1561,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 1561,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 1561,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 1561,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 1561,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   },
+   "mobcap8": {
+    "decisive_outcomes": [
+     "win"
+    ],
+    "n_censored": 0,
+    "uncensored_evals": [
+     3671,
+     3671,
+     3671,
+     3671,
+     3671,
+     3671
+    ],
+    "median": 3671.0,
+    "censored": [],
+    "per_salt": {
+     "0": {
+      "evals": 3671,
+      "censored": null,
+      "outcome": "win"
+     },
+     "1": {
+      "evals": 3671,
+      "censored": null,
+      "outcome": "win"
+     },
+     "2": {
+      "evals": 3671,
+      "censored": null,
+      "outcome": "win"
+     },
+     "3": {
+      "evals": 3671,
+      "censored": null,
+      "outcome": "win"
+     },
+     "4": {
+      "evals": 3671,
+      "censored": null,
+      "outcome": "win"
+     },
+     "5": {
+      "evals": 3671,
+      "censored": null,
+      "outcome": "win"
+     }
+    }
+   }
+  }
+ },
+ "anchors": {
+  "mob-or_dec10_s0": {
+   "expected": 5148137,
+   "got": 5148137,
+   "censored": null,
+   "ok": true
+  },
+  "mob-or_dec13_s0": {
+   "expected": 486175,
+   "got": 486175,
+   "censored": null,
+   "ok": true
+  },
+  "mob-or_m22_s0": {
+   "expected": 15813483,
+   "got": 15813483,
+   "censored": null,
+   "ok": true
+  },
+  "mob-or_m22_s1": {
+   "expected": 11859889,
+   "got": 11859889,
+   "censored": null,
+   "ok": true
+  },
+  "mob-or_m22_s2": {
+   "expected": 14222312,
+   "got": 14222312,
+   "censored": null,
+   "ok": true
+  },
+  "mob-or_stress_s0": {
+   "expected": 71148597,
+   "got": 71148597,
+   "censored": null,
+   "ok": true
+  },
+  "mobcap8_dec10_s0": {
+   "expected": 5765793,
+   "got": 5765793,
+   "censored": null,
+   "ok": true
+  },
+  "mobcap8_dec13_s0": {
+   "expected": 509576,
+   "got": 509576,
+   "censored": null,
+   "ok": true
+  },
+  "mobcap8_m22_s0": {
+   "expected": 15067529,
+   "got": 15067529,
+   "censored": null,
+   "ok": true
+  },
+  "mobcap8_m22_s1": {
+   "expected": 12825207,
+   "got": 12825207,
+   "censored": null,
+   "ok": true
+  },
+  "mobcap8_m22_s2": {
+   "expected": 13387712,
+   "got": 13387712,
+   "censored": null,
+   "ok": true
+  },
+  "mobcap8_stress_s0": {
+   "expected": 98874361,
+   "got": 98874361,
+   "censored": null,
+   "ok": true
+  }
+ },
+ "failures": []
+}
