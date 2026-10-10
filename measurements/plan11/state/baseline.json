@@ -1,0 +1,37 @@
+{
+  "comment": "plan11 task-1 baseline, HEAD 2804f48 (search code identical to 81c8f53 profiled in phase0), reference host, 128 MB TT, sequential runs",
+  "binary": "target/release/atomic_solver (HEAD, copied to /tmp/plan11_base/atomic_solver)",
+  "quick_suite": {
+    "cmd": "benchmark --suite quick --json --first-outcome --timeout 3 --runs 1",
+    "file": "../quick_before.json",
+    "total_time_s": 6.679334346,
+    "total_child_evals": 38974090,
+    "total_nodes": 2488917,
+    "solved": 59,
+    "timeouts": 0,
+    "wrong": 0
+  },
+  "m22_default": {
+    "cmd": "--fen M22 --timeout 60",
+    "stdout_md5": "49a08a6d869aa3c002aef9b7e32f50a9",
+    "wall_s": 3.297809080,
+    "golden_check": "match (with --timeout 20 --outcome-only, diff vs tests/fixtures/m22_default_stdout_golden.txt empty)"
+  },
+  "m22_first_outcome": {
+    "cmd": "--fen M22 --timeout 60 --first-outcome",
+    "stdout_md5": "8109ff0db5a03d1e95b20b9f8fe6a605",
+    "wall_s": 2.682206250,
+    "pre_exit_nodes": 858117
+  },
+  "shuffle_first_outcome": {
+    "cmd": "--fen SH --timeout 300 --first-outcome",
+    "stdout_md5": "cfc58bc4419790c9a2f5972d7594302c",
+    "wall_s": 46.690685822,
+    "pre_exit_nodes": 13907467,
+    "phase0_reference_md5": "cfc58bc4... (identical)"
+  },
+  "fens": {
+    "M22": "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+    "SH": "4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21"
+  }
+}

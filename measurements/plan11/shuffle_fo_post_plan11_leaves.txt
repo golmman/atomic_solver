@@ -1,0 +1,28 @@
+    40.51%  plan11_new  plan11_new     [.] <atomic_solver::search::dfpn::Search>::dfpn
+    21.02%  plan11_new  plan11_new     [.] <atomic_solver::search::dfpn::Search>::evaluate_child
+     9.86%  plan11_new  plan11_new     [.] <atomic_movegen::board::Board>::do_move
+     5.04%  plan11_new  plan11_new     [.] <atomic_movegen::board::Board>::undo_move
+     4.48%  plan11_new  plan11_new     [.] atomic_movegen::movegen::has_legal_move_with_state
+     4.01%  plan11_new  plan11_new     [.] <atomic_movegen::board::Board>::compute_checkers
+     3.39%  plan11_new  plan11_new     [.] atomic_movegen::movegen::generate_legal_with_state
+     2.84%  plan11_new  plan11_new     [.] <atomic_movegen::board::Board>::legal
+     2.73%  plan11_new  plan11_new     [.] <atomic_movegen::board::Board>::populate_state
+     1.25%  plan11_new  plan11_new     [.] core::slice::sort::stable::quicksort::quicksort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     1.15%  plan11_new  plan11_new     [.] core::slice::sort::shared::smallsort::insertion_sort_shift_left::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.58%  plan11_new  libc.so.6      [.] __memmove_avx_unaligned_erms
+     0.45%  plan11_new  plan11_new     [.] core::slice::sort::stable::drift::sort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.43%  plan11_new  plan11_new     [.] <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapters::filter::filter_try_fold<&atomic_solver::search::dfpn::children::ChildInfo, (), core::ops::control_flow::ControlFlow<()>, atomic_solver::search::dfpn::selection::select_from_children::{closure#4}, core::iter::traits::iterator::Iterator::all::check<&atomic_solver::search::dfpn::children::ChildInfo, atomic_solver::search::dfpn::selection::select_from_children::{closure#5}>::{closure#0}>::{closure#0}, core::ops::control_flow::ControlFlow<()>>
+     0.42%  plan11_new  plan11_new     [.] <atomic_solver::search::tt::table::TranspositionTable>::store
+     0.38%  plan11_new  plan11_new     [.] atomic_solver::search::dfpn::selection::selection_for_child
+     0.33%  plan11_new  plan11_new     [.] core::slice::sort::shared::smallsort::sort8_stable::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.22%  plan11_new  plan11_new     [.] <atomic_solver::position::Position>::do_move
+     0.22%  plan11_new  plan11_new     [.] <std::hash::random::RandomState as core::hash::BuildHasher>::hash_one::<&(u64, u64)>
+     0.19%  plan11_new  libc.so.6      [.] __memset_avx2_unaligned_erms
+     0.18%  plan11_new  plan11_new     [.] <std::hash::random::DefaultHasher as core::hash::Hasher>::write
+     0.10%  plan11_new  plan11_new     [.] <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapters::filter::filter_try_fold<&atomic_solver::search::dfpn::children::ChildInfo, (), core::ops::control_flow::ControlFlow<()>, atomic_solver::search::dfpn::selection::select_from_children::{closure#6}, core::iter::traits::iterator::Iterator::all::check<&atomic_solver::search::dfpn::children::ChildInfo, atomic_solver::search::dfpn::selection::select_from_children::{closure#7}>::{closure#0}>::{closure#0}, core::ops::control_flow::ControlFlow<()>>
+     0.08%  plan11_new  plan11_new     [.] __udivti3
+     0.08%  plan11_new  plan11_new     [.] atomic_solver::main
+     0.03%  plan11_new  plan11_new     [.] <atomic_solver::search::dfpn::Search>::best_move_repeats_path
+     0.02%  plan11_new  plan11_new     [.] core::slice::sort::stable::driftsort_main::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}, alloc::vec::Vec<(atomic_movegen::types::Move, i32)>>
+     0.00%  plan11_new  libc.so.6      [.] _int_malloc
+     0.00%  plan11_new  libc.so.6      [.] clock_gettime@@GLIBC_2.17

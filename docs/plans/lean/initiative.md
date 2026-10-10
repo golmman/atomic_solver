@@ -5,10 +5,15 @@
 Active, maintained **agile**: the backlog is a living document re-ranked
 after every profile, plans are single-lever and sized to one session, and
 nothing larger than one lever is planned before a fresh profile justifies
-it. Plans 1–10 are done (`report1.md`–`report10.md`). **Re-opened
+it. Plans 1–11 are done (`report1.md`–`report11.md`). **Re-opened
 2026-10-09** by a fresh profile (plan session, `measurements/plan11_phase0/`):
-the 2026-10-09 profile below is the current baseline; plan11 (#18) is the
-next session, plan12 (#19) follows once movegen 2.3.0 ships.
+plan11 (#18, TT child-bucket prefetch pre-pass) shipped 2026-10-10
+(`report11.md`; byte-identical, −24–26% wall on the current x86_64 host);
+plan12 (#19) follows once movegen 2.3.0 ships. **Host caveat:** the
+2026-10-09 phase-0 spike numbers below were measured on the aarch64
+reference VM; plan11 executed on an x86_64 container (AMD 5950X), where
+the same change measured −24–26% — compare hosts before trusting
+percentage deltas across sessions.
 
 ### Fresh profile 2026-10-09 (HEAD `81c8f53`, reference host container, 128 MB TT)
 
@@ -35,7 +40,20 @@ own do/undo is ≈12% of the new wall → #19 (plan12, upstream
 16.1%, `score_with_context` 8.5%, existence cluster 15.5%, full movegen
 4.5%, sort ~4%.
 
-## Motivation
+### Post-plan11 profile (2026-10-10, x86_64 container — **not** the aarch64 reference host)
+
+Host: AMD Ryzen 9 5950X container, 4 vCPU, 31 GiB, rustc 1.99.0 — a
+different machine than the 2026-10-09 phase-0 VM; all plan11 numbers are
+self-consistent A/B pairs on *this* host (raw tables under
+`measurements/plan11/`). Post-plan11 pie (shuffle-win FO, `--timeout 20`,
+leaf table): `evaluate_child` 62.6% → 21.0%, `dfpn` 13.8% → 40.5%
+(renormalized; the frame loop is now the top leaf), `do_move` 4.5% →
+9.9% + `undo_move` 2.6% → 5.0% (incl. the pre-pass), existence cluster
+(`has_legal_move_with_state` + `compute_checkers` + `populate_state` +
+`legal`) 9.6% → 14.1%, `generate_legal_with_state` 2.4% → 3.4%, sort
+leaves ~2.0% → ~2.9%. Next levers by this pie: #19 (pre-pass do/undo,
+≈14% of the new wall, V12-style probe), then the `dfpn` frame loop
+itself.## Motivation
 
 The `nn` branch (archived, `docs/plans/nn/report8.md` on that branch)
 settled the move-ordering question: the headroom is slim. The oracle-floor
@@ -275,8 +293,8 @@ memory, maintainability.
 | 13 | Clock sampling | `time_exceeded()` calls `Instant::now()` at every `dfpn` entry; sample every N nodes (budget mode is eval-count-based and unaffected) | ~2% wall (2.2% post-plan4, unchanged) | wall | S | **done (plan6, phase 2)**: `Instant::now()` sampled every 4096 dfpn entries behind the unchanged `time_exceeded` call sites; clock leaves <0.1% in the post-plan6 profile; see `report6.md` |
 | 15 | `has_legal_move` playout cross-check | Random-playout property test: `Position::has_legal_move` vs `legal_moves_with_state` + `outcome_from_state` (report3 "missing tests") | correctness hardening, no speed | correctness | S | **done (plan5)**: `tests/test_playout_crosscheck.rs`, P1–P4 green in both tiers; see `report5.md` |
 | 5 | AND-side ordering signal (non-NN) | Counter-moves, AND-specific history, TT `work` feedback — disproving work concentrates in 1–2 replies per AND node (median max child-share 52.9%) | **spiked (plan9), closed**: refuter already at final-sorted rank 0 in 100% of refuted AND frames (median rank 0), pre-refuter mass 0.00–0.02% of child evals (both cases), 99.7–99.9% of AND own evals in threshold-cut frames — see `report9.md` | nodes | M | **closed (plan9 spike, no-go)** |
-| 18 | TT child-bucket prefetch | Pre-pass in `evaluate_all_children` plays/unplays every move and prefetches its child bucket before the first probe, so the per-child DRAM misses overlap (2026-10-09 profile: ≈45% of shuffle-win FO wall is the serial miss) | **spiked: −51% m22 default, −55% shuffle-win FO, −48% quick suite**, byte-identical | wall | S | **planned: `plan11.md`** |
-| 19 | Pre-pass keys without make/unmake | Upstream `Board::hash_after`/`rule50_after` (`movegen/plan_hash_after.md`, 2.3.0) replaces #18's do/undo round-trip | ≈12% of post-#18 wall is the pre-pass (spike V12); expected −5–10% | wall | S solver + M upstream | **planned: `plan12.md`** (blocked on movegen 2.3.0 and #18) |
+| 18 | TT child-bucket prefetch | Pre-pass in `evaluate_all_children` plays/unplays every move and prefetches its child bucket before the first probe, so the per-child DRAM misses overlap (2026-10-09 profile: ≈45% of shuffle-win FO wall is the serial miss) | **spiked: −51% m22 default, −55% shuffle-win FO, −48% quick suite** (aarch64 phase 0); shipped: −24% m22 default, −26% shuffle-win FO, −17% quick suite on the x86_64 plan11 host (smaller stall share than the aarch64 VM; see `report11.md`) | wall | S | **done (plan11)**: `TranspositionTable::prefetch` (aarch64 `prfm`, x86_64 `_mm_prefetch`, no-op elsewhere) + pre-pass in `evaluate_all_children`; byte-identical everywhere; see `report11.md` |
+| 19 | Pre-pass keys without make/unmake | Upstream `Board::hash_after`/`rule50_after` (`movegen/plan_hash_after.md`, 2.3.0) replaces #18's do/undo round-trip | pre-pass share **re-measured ≈14% of post-plan11 wall** on the x86_64 host (V12-style double-pre-pass probe, `report11.md`; phase-0 estimate ≈12%); expected −5–10% | wall | S solver + M upstream | **planned: `plan12.md`** (blocked on movegen 2.3.0) |
 | 20 | TT allocation sizing | `with_mb` rounds the entry count up to a power of two with 56 B entries: `--tt-size 128` allocates 224 MiB (1.75×), contradicting the "RAM = TT size" reading of the CLI | memory only; any fix changes capacity → behavior (move-order suite validation) | memory + behavior | S | open (decision: keep, document, or round down) |
 | 7 | Lazy/staged child evaluation | Min-heap: evaluate children in rank order as needed instead of all on first iteration | ~3–10% evals | nodes | M | open |
 | 9 | 2–3-man atomic endgame tablebases | Leaf probes in shallow-material positions | huge where covered, negligible elsewhere | nodes | M–L | **moved to [`egtb`](../egtb/initiative.md) (2026-09-14)**: opened as its own initiative with a generation story and a go/no-go spike; leaf probing is its backlog #3, 2-man layer dropped as degenerate |
@@ -386,6 +404,17 @@ until a plan claims it.
   measured effort (544,749,817 child evals, bit-identical across two runs),
   referencing `dfpn/report9.md` (drift analysis). Slow tier green after the
   change.
+- **plan11** — #18 TT child-bucket prefetch pre-pass: `TranspositionTable::prefetch`
+  (aarch64 `prfm pldl1keep` ×2 / x86_64 `_mm_prefetch` T0 ×2 / no-op
+  elsewhere) + a do/undo pre-pass at the top of `evaluate_all_children`,
+  exactly the phase-0 V10 spike. Drift protocol fully green (quick suite
+  59/59 identical, m22/shuffle stdout byte-identical ×5/×5/×2 interleaved,
+  lean3 golden). Wall −23.8% m22 default, −23.8% m22 FO, −26.4% shuffle-win
+  FO, −17% quick suite on the **x86_64** host — below the −30% acceptance,
+  explained: the phase-0 spikes ran on an aarch64 VM with a larger
+  miss-stall share; environment changed, not the code (host caveat added to
+  the status header). Pre-pass share re-measured ≈14% of post-plan11 wall →
+  #19/plan12 still justified (done, `report11.md`).
 
 - **2026-09-21** — **backlog #2 moved; handover to `parallel`** (no code,
   docs only): the parallel-search item left the backlog for the newly

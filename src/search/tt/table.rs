@@ -49,6 +49,58 @@ impl TranspositionTable {
         (key as usize) & self.mask
     }
 
+    /// Hint the CPU to start loading the bucket `key` maps to.
+    ///
+    /// Pure performance hint: no observable effect on table contents or on
+    /// any probe/store result. Issues one prefetch for the first and one
+    /// for the last byte of the bucket, because a 112-byte bucket can
+    /// straddle two cache lines (line-aligning the table was measured as no
+    /// gain, lean plan11 phase 0). Measured win (lean plan11, spike V10):
+    /// prefetching every child's bucket in a pre-pass before
+    /// `evaluate_all_children`'s eval loop removes the one serial DRAM miss
+    /// per evaluated child and roughly halves wall on the memory-bound
+    /// workloads (−48–55%), stdout byte-identical. No prefetch on other
+    /// architectures: this is then a no-op.
+    #[inline(always)]
+    pub fn prefetch(&self, key: u64) {
+        // The index is masked to bounds, so the addresses below always lie
+        // inside the live `table` allocation; no `unsafe` is needed to form
+        // them.
+        let bucket = &self.table[self.index(key)];
+        let first = bucket.as_ptr().cast::<u8>();
+        let last = first.wrapping_add(std::mem::size_of::<[TtEntry; 2]>() - 1);
+
+        #[cfg(target_arch = "aarch64")]
+        // SAFETY: a prefetch has no architectural side effect and never
+        // faults (even on an invalid address); both addresses lie inside the
+        // live `table` allocation. The measured win is recorded in the doc
+        // comment above (lean plan11).
+        unsafe {
+            core::arch::asm!(
+                "prfm pldl1keep, [{ptr0}]",
+                "prfm pldl1keep, [{ptr1}]",
+                ptr0 = in(reg) first,
+                ptr1 = in(reg) last,
+                options(nostack, readonly, preserves_flags),
+            );
+        }
+
+        #[cfg(target_arch = "x86_64")]
+        // SAFETY: as on aarch64 — hint-only, fault-free, and both addresses
+        // lie inside the live `table` allocation.
+        unsafe {
+            core::arch::x86_64::_mm_prefetch::<{ core::arch::x86_64::_MM_HINT_T0 }>(
+                first.cast::<i8>(),
+            );
+            core::arch::x86_64::_mm_prefetch::<{ core::arch::x86_64::_MM_HINT_T0 }>(
+                last.cast::<i8>(),
+            );
+        }
+
+        #[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64")))]
+        let _ = (first, last);
+    }
+
     #[must_use]
     pub fn probe(&self, key: u64) -> Option<&TtEntry> {
         self.table[self.index(key)]

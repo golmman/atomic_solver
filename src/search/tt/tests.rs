@@ -367,3 +367,46 @@ fn current_generation_reflects_new_generation_and_clear() {
     tt.clear();
     assert_eq!(tt.current_generation(), 1);
 }
+
+#[test]
+fn prefetch_is_observably_a_noop() {
+    // `prefetch` must stay a pure hint: hitting arbitrary keys (including an
+    // empty bucket, a bucket boundary, and a stored key) may not mutate the
+    // table or its statistics (lean plan11).
+    let mut tt = TranspositionTable::with_mb(1);
+    let key = 0xdead_beefu64;
+    tt.store(
+        key,
+        Move::make_move(Square::E2, Square::E4),
+        u8::MAX,
+        42,
+        Some(Outcome::Win),
+        0,
+        crate::zobrist::INF,
+        5,
+        3,
+    );
+
+    let before_probe = tt.probe(key).map(|e| (e.key, e.outcome, e.depth, e.work));
+    let before_stats = tt.stats();
+    let before_entries: Vec<_> = tt
+        .entries()
+        .map(|e| (e.key, e.outcome, e.depth, e.work, e.best_child))
+        .collect();
+
+    tt.prefetch(0);
+    tt.prefetch(u64::MAX);
+    tt.prefetch(key);
+    tt.prefetch(key + tt.bucket_count() as u64);
+
+    assert_eq!(
+        tt.probe(key).map(|e| (e.key, e.outcome, e.depth, e.work)),
+        before_probe
+    );
+    assert_eq!(tt.stats(), before_stats);
+    let after_entries: Vec<_> = tt
+        .entries()
+        .map(|e| (e.key, e.outcome, e.depth, e.work, e.best_child))
+        .collect();
+    assert_eq!(after_entries, before_entries);
+}
