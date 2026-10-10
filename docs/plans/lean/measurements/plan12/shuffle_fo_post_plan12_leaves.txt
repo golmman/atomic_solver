@@ -1,0 +1,25 @@
+    32.08%  atomic_solver  atomic_solver  [.] <atomic_solver::search::dfpn::Search>::dfpn
+    26.12%  atomic_solver  atomic_solver  [.] <atomic_solver::search::dfpn::Search>::evaluate_child
+     9.10%  atomic_solver  atomic_solver  [.] <atomic_movegen::board::Board>::do_move
+     5.04%  atomic_solver  atomic_solver  [.] <atomic_movegen::board::Board>::compute_checkers
+     4.98%  atomic_solver  atomic_solver  [.] atomic_movegen::movegen::has_legal_move_with_state
+     4.15%  atomic_solver  atomic_solver  [.] <atomic_movegen::board::Board>::undo_move
+     3.99%  atomic_solver  atomic_solver  [.] atomic_movegen::movegen::generate_legal_with_state
+     3.43%  atomic_solver  atomic_solver  [.] <atomic_movegen::board::Board>::populate_state
+     3.11%  atomic_solver  atomic_solver  [.] <atomic_movegen::board::Board>::legal
+     1.43%  atomic_solver  atomic_solver  [.] core::slice::sort::stable::quicksort::quicksort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     1.39%  atomic_solver  atomic_solver  [.] core::slice::sort::shared::smallsort::insertion_sort_shift_left::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.78%  atomic_solver  libc.so.6      [.] __memmove_avx_unaligned_erms
+     0.73%  atomic_solver  atomic_solver  [.] atomic_movegen::board::castling_rights_after
+     0.54%  atomic_solver  atomic_solver  [.] core::slice::sort::stable::drift::sort::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.49%  atomic_solver  atomic_solver  [.] <atomic_solver::search::tt::table::TranspositionTable>::store
+     0.45%  atomic_solver  atomic_solver  [.] atomic_solver::search::dfpn::selection::selection_for_child
+     0.43%  atomic_solver  atomic_solver  [.] <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapters::filter::filter_try_fold<&atomic_solver::search::dfpn::children::ChildInfo, (), core::ops::control_flow::ControlFlow<()>, atomic_solver::search::dfpn::selection::select_from_children::{closure#4}, core::iter::traits::iterator::Iterator::all::check<&atomic_solver::search::dfpn::children::ChildInfo, atomic_solver::search::dfpn::selection::select_from_children::{closure#5}>::{closure#0}>::{closure#0}, core::ops::control_flow::ControlFlow<()>>
+     0.33%  atomic_solver  atomic_solver  [.] core::slice::sort::shared::smallsort::sort8_stable::<(atomic_movegen::types::Move, i32), <[(atomic_movegen::types::Move, i32)]>::sort_by_key<core::cmp::Reverse<i32>, <atomic_solver::search::dfpn::Search>::sort_moves::{closure#1}>::{closure#0}>
+     0.31%  atomic_solver  libc.so.6      [.] __memset_avx2_unaligned_erms
+     0.26%  atomic_solver  atomic_solver  [.] <atomic_solver::position::Position>::do_move
+     0.26%  atomic_solver  atomic_solver  [.] <std::hash::random::RandomState as core::hash::BuildHasher>::hash_one::<&(u64, u64)>
+     0.23%  atomic_solver  atomic_solver  [.] <std::hash::random::DefaultHasher as core::hash::Hasher>::write
+     0.13%  atomic_solver  atomic_solver  [.] __udivti3
+     0.12%  atomic_solver  atomic_solver  [.] <core::slice::iter::Iter<atomic_solver::search::dfpn::children::ChildInfo> as core::iter::traits::iterator::Iterator>::try_fold::<(), core::iter::adapters::filter::filter_try_fold<&atomic_solver::search::dfpn::children::ChildInfo, (), core::ops::control_flow::ControlFlow<()>, atomic_solver::search::dfpn::selection::select_from_children::{closure#6}, core::iter::traits::iterator::Iterator::all::check<&atomic_solver::search::dfpn::children::ChildInfo, atomic_solver::search::dfpn::selection::select_from_children::{closure#7}>::{closure#0}>::{closure#0}, core::ops::control_flow::ControlFlow<()>>
+     0.09%  atomic_solver  atomic_solver  [.] atomic_solver::main

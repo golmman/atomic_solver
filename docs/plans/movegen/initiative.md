@@ -17,10 +17,12 @@ directory; do not treat it as a solver initiative backlog.
   playouts; order golden unchanged after the `for_each_pseudo_legal`
   refactor.
 - **report_update_2.0.0.md** — consumer-side notes for movegen 2.0.0.
-- **plan_hash_after.md** (2026-10-09, open) — spec for non-mutating
-  `Board::hash_after` / `Board::rule50_after` (target 2.3.0): the solver's
-  TT prefetch pre-pass (lean plan11) computes every child key via
-  do/undo, ≈12% of wall; consumed by lean plan12.
+- **plan_hash_after.md** (2026-10-09) — spec for non-mutating
+  `Board::hash_after` / `Board::rule50_after`, shipped in movegen **2.3.0**
+  (`report_update_2.3.0.md`): equivalence proven by a seeded-playout property
+  test plus fixtures; the shared castling-rights helper makes `do_move` and
+  `hash_after` drift-proof. Consumed by lean plan12 (−12–14% wall,
+  bit-identical).
 
 ## Consumer-side impact
 

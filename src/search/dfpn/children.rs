@@ -52,10 +52,9 @@ use crate::zobrist::INF;
 /// movegen/`sort_moves`) and from the local existence-check `StateInfo`
 /// inside `evaluate_child`; `evaluate_child` never recurses, so one slot per
 /// depth cannot alias an in-flight call. Any change that makes child
-/// evaluation recursive must revisit this. A third, strictly local scratch
-/// `StateInfo` inside `evaluate_all_children` serves the TT-prefetch pre-pass
-/// (lean plan11); it never outlives the call, so it is exempt from the
-/// one-slot-per-depth rule.
+/// evaluation recursive must revisit this. (Since lean plan12 the
+/// TT-prefetch pre-pass in `evaluate_all_children` uses the non-mutating
+/// `Position::hash_after` and holds no `StateInfo` at all.)
 pub(super) struct ChildPrecompute {
     pub moves: MoveList,
     pub state: StateInfo,
@@ -122,14 +121,11 @@ impl Search {
         children.clear();
         // TT prefetch pre-pass (lean plan11): issue every child's bucket load
         // before the first probe so the misses overlap instead of serializing.
-        // Pure performance: the do/undo pair is net-zero on `pos`, and the
-        // prefetch has no observable effect.
-        let mut prefetch_state = StateInfo::new();
+        // Pure performance: the keys come from the non-mutating
+        // `Position::hash_after` (lean plan12, upstream `Board::hash_after`),
+        // and the prefetch has no observable effect.
         for i in 0..moves.len() {
-            let mv = moves[i];
-            pos.do_move_with_scratch(mv, &mut prefetch_state);
-            self.tt.prefetch(pos.hash());
-            pos.undo_move_with_scratch(mv, &prefetch_state);
+            self.tt.prefetch(pos.hash_after(moves[i]));
         }
         for i in 0..moves.len() {
             let mv = moves[i];

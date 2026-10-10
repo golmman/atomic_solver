@@ -272,6 +272,17 @@ impl Position {
         self.zobrist
     }
 
+    /// TT key ([`Position::hash`]) of the position after `m`, without playing
+    /// it. Equal to `{ do_move(m); hash() }` (upstream `hash_after` /
+    /// `rule50_after` contract, atomic-movegen 2.3.0).
+    ///
+    /// [`rule50_key`](crate::zobrist::rule50_key) clamps at 100, matching the
+    /// recomputation in `Position::refresh_zobrist`.
+    #[must_use]
+    pub fn hash_after(&self, m: Move) -> u64 {
+        self.board.hash_after(m) ^ zobrist::rule50_key(self.board.rule50_after(m))
+    }
+
     /// Board-only key for repetition detection, ignoring the halfmove clock.
     #[must_use]
     pub fn repetition_key(&self) -> u64 {
@@ -401,6 +412,48 @@ mod tests {
             1,
             "illegal move must not change state"
         );
+    }
+
+    #[test]
+    fn hash_after_equals_do_move_hash_for_every_legal_move() {
+        // Lean plan12: `Position::hash_after` must equal the full
+        // `do_move`/`hash` round-trip for every legal move, across the
+        // move-shapes the prefetch pre-pass feeds it (upstream 2.3.0
+        // `hash_after`/`rule50_after` contract, re-checked consumer-side).
+        let fens = [
+            Position::STARTPOS_FEN,
+            // m22 (reference position) and shuffle-win (deep-search workload).
+            "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+            "4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21",
+            // En-passant capture available (exf6 / exd6 both legal).
+            "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3",
+            // Castling for both colors.
+            "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1",
+            "r3k2r/8/8/8/8/8/8/R3K2R b KQkq - 0 1",
+            // Promotion capture (b7xc8 with all four pieces available).
+            "2r5/1P6/8/8/8/8/8/2K1k3 w - - 0 1",
+            // Halfmove clock at the clamp boundary and one below it.
+            "4k3/8/8/8/8/8/8/4K2R w K - 99 1",
+            "4k3/8/8/8/8/8/8/4K2R w K - 100 1",
+        ];
+        for fen in fens {
+            let pos = Position::from_fen(fen).unwrap();
+            let moves = pos.legal_moves_vec();
+            assert!(!moves.is_empty(), "fixture must have legal moves: {fen}");
+            for mv in moves {
+                let mut played = pos.clone();
+                played.do_move(mv);
+                let expected = played.hash();
+                assert_eq!(
+                    pos.hash_after(mv),
+                    expected,
+                    "hash_after mismatch: {fen}, move {mv:?}"
+                );
+                // The position itself is untouched by hash_after: the loop
+                // reuses `pos` across all moves.
+                assert_eq!(pos.fen(), fen);
+            }
+        }
     }
 
     #[test]
