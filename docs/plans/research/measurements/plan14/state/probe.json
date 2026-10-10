@@ -1,0 +1,1614 @@
+{
+ "hygiene": [
+  {
+   "tag": "hyg_dec15_off",
+   "evals": 1077420,
+   "want": 1077420
+  },
+  {
+   "tag": "hyg_dec15_on",
+   "evals": 1077420,
+   "want": 1077420
+  },
+  {
+   "tag": "hyg_dec10_off",
+   "evals": 4262128,
+   "want": 4262128
+  },
+  {
+   "tag": "hyg_dec10_on",
+   "evals": 4262128,
+   "want": 4262128
+  }
+ ],
+ "probe": [
+  {
+   "case": "m22_white",
+   "evals": 14156269,
+   "censored": false,
+   "wall_s": 1.9,
+   "rc": 0,
+   "probe": {
+    "calls": 857953,
+    "moves": 14273288,
+    "tied_moves": 6511462,
+    "top2_tie_calls": 13219,
+    "pct_top2": 1.54,
+    "max_top_tie": 6,
+    "hist": [
+     0,
+     844734,
+     11406,
+     541,
+     1093,
+     0,
+     179,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m20_white",
+   "evals": 20000035,
+   "censored": true,
+   "wall_s": 2.5,
+   "rc": 0,
+   "probe": {
+    "calls": 1008426,
+    "moves": 19441920,
+    "tied_moves": 12695197,
+    "top2_tie_calls": 62394,
+    "pct_top2": 6.19,
+    "max_top_tie": 6,
+    "hist": [
+     0,
+     946032,
+     53800,
+     4798,
+     1010,
+     444,
+     2342,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec13",
+   "evals": 3822602,
+   "censored": false,
+   "wall_s": 0.7,
+   "rc": 0,
+   "probe": {
+    "calls": 164869,
+    "moves": 4539016,
+    "tied_moves": 2355732,
+    "top2_tie_calls": 1733,
+    "pct_top2": 1.05,
+    "max_top_tie": 5,
+    "hist": [
+     0,
+     163136,
+     1503,
+     65,
+     157,
+     8,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec10",
+   "evals": 4262128,
+   "censored": false,
+   "wall_s": 0.7,
+   "rc": 0,
+   "probe": {
+    "calls": 606762,
+    "moves": 3773112,
+    "tied_moves": 1270932,
+    "top2_tie_calls": 27634,
+    "pct_top2": 4.55,
+    "max_top_tie": 7,
+    "hist": [
+     0,
+     579128,
+     24244,
+     1290,
+     2084,
+     15,
+     0,
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec01",
+   "evals": 5713706,
+   "censored": false,
+   "wall_s": 0.8,
+   "rc": 0,
+   "probe": {
+    "calls": 284297,
+    "moves": 5808926,
+    "tied_moves": 2807228,
+    "top2_tie_calls": 9632,
+    "pct_top2": 3.39,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     274665,
+     8869,
+     731,
+     32,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec02",
+   "evals": 138124,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 17625,
+    "moves": 126656,
+    "tied_moves": 58849,
+    "top2_tie_calls": 2174,
+    "pct_top2": 12.33,
+    "max_top_tie": 5,
+    "hist": [
+     0,
+     15451,
+     1665,
+     485,
+     21,
+     3,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec03",
+   "evals": 47068,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 2298,
+    "moves": 51444,
+    "tied_moves": 36033,
+    "top2_tie_calls": 283,
+    "pct_top2": 12.32,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     2015,
+     198,
+     77,
+     8,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec04",
+   "evals": 7352,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 548,
+    "moves": 7275,
+    "tied_moves": 3866,
+    "top2_tie_calls": 18,
+    "pct_top2": 3.28,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     530,
+     13,
+     0,
+     5,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec05",
+   "evals": 314615,
+   "censored": false,
+   "wall_s": 0.2,
+   "rc": 0,
+   "probe": {
+    "calls": 28554,
+    "moves": 306739,
+    "tied_moves": 143804,
+    "top2_tie_calls": 1759,
+    "pct_top2": 6.16,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     26795,
+     1423,
+     102,
+     234,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec06",
+   "evals": 1507474,
+   "censored": false,
+   "wall_s": 0.3,
+   "rc": 0,
+   "probe": {
+    "calls": 137738,
+    "moves": 1421526,
+    "tied_moves": 628307,
+    "top2_tie_calls": 2173,
+    "pct_top2": 1.58,
+    "max_top_tie": 7,
+    "hist": [
+     0,
+     135565,
+     1903,
+     87,
+     150,
+     0,
+     0,
+     33,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec07",
+   "evals": 4021,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 149,
+    "moves": 4254,
+    "tied_moves": 3275,
+    "top2_tie_calls": 16,
+    "pct_top2": 10.74,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     133,
+     10,
+     6,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec08",
+   "evals": 45,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 3,
+    "moves": 85,
+    "tied_moves": 69,
+    "top2_tie_calls": 0,
+    "pct_top2": 0.0,
+    "max_top_tie": 1,
+    "hist": [
+     0,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec09",
+   "evals": 1842,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 78,
+    "moves": 2100,
+    "tied_moves": 1309,
+    "top2_tie_calls": 10,
+    "pct_top2": 12.82,
+    "max_top_tie": 5,
+    "hist": [
+     0,
+     68,
+     6,
+     0,
+     3,
+     1,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec11",
+   "evals": 253890,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 12548,
+    "moves": 268513,
+    "tied_moves": 194693,
+    "top2_tie_calls": 487,
+    "pct_top2": 3.88,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     12061,
+     472,
+     15,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec12",
+   "evals": 303191,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 15063,
+    "moves": 316284,
+    "tied_moves": 194298,
+    "top2_tie_calls": 943,
+    "pct_top2": 6.26,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     14120,
+     905,
+     38,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec14",
+   "evals": 2397489,
+   "censored": false,
+   "wall_s": 0.4,
+   "rc": 0,
+   "probe": {
+    "calls": 103836,
+    "moves": 2762460,
+    "tied_moves": 1574115,
+    "top2_tie_calls": 1817,
+    "pct_top2": 1.75,
+    "max_top_tie": 5,
+    "hist": [
+     0,
+     102019,
+     1550,
+     256,
+     6,
+     5,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec15",
+   "evals": 1077420,
+   "censored": false,
+   "wall_s": 0.2,
+   "rc": 0,
+   "probe": {
+    "calls": 55640,
+    "moves": 1095305,
+    "tied_moves": 659942,
+    "top2_tie_calls": 5015,
+    "pct_top2": 9.01,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     50625,
+     4603,
+     400,
+     12,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec16",
+   "evals": 107110,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 3679,
+    "moves": 117791,
+    "tied_moves": 87057,
+    "top2_tie_calls": 148,
+    "pct_top2": 4.02,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     3531,
+     143,
+     5,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec17",
+   "evals": 539273,
+   "censored": false,
+   "wall_s": 0.2,
+   "rc": 0,
+   "probe": {
+    "calls": 19327,
+    "moves": 649605,
+    "tied_moves": 425744,
+    "top2_tie_calls": 402,
+    "pct_top2": 2.08,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     18925,
+     281,
+     5,
+     116,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec18",
+   "evals": 39549,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 1389,
+    "moves": 39672,
+    "tied_moves": 29151,
+    "top2_tie_calls": 27,
+    "pct_top2": 1.94,
+    "max_top_tie": 2,
+    "hist": [
+     0,
+     1362,
+     27,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec19",
+   "evals": 135708,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 4484,
+    "moves": 150673,
+    "tied_moves": 114000,
+    "top2_tie_calls": 52,
+    "pct_top2": 1.16,
+    "max_top_tie": 5,
+    "hist": [
+     0,
+     4432,
+     44,
+     5,
+     0,
+     3,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec20",
+   "evals": 148862,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 5190,
+    "moves": 158994,
+    "tied_moves": 120363,
+    "top2_tie_calls": 527,
+    "pct_top2": 10.15,
+    "max_top_tie": 5,
+    "hist": [
+     0,
+     4663,
+     506,
+     17,
+     3,
+     1,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec21",
+   "evals": 243842,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 22775,
+    "moves": 238474,
+    "tied_moves": 120748,
+    "top2_tie_calls": 1656,
+    "pct_top2": 7.27,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     21119,
+     1246,
+     224,
+     186,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec22",
+   "evals": 4894,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 186,
+    "moves": 5082,
+    "tied_moves": 4124,
+    "top2_tie_calls": 55,
+    "pct_top2": 29.57,
+    "max_top_tie": 5,
+    "hist": [
+     0,
+     131,
+     3,
+     15,
+     11,
+     26,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec23",
+   "evals": 3471,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 225,
+    "moves": 3668,
+    "tied_moves": 2586,
+    "top2_tie_calls": 15,
+    "pct_top2": 6.67,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     210,
+     13,
+     0,
+     2,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec24",
+   "evals": 32418,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 1252,
+    "moves": 37123,
+    "tied_moves": 23971,
+    "top2_tie_calls": 54,
+    "pct_top2": 4.31,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     1198,
+     51,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec25",
+   "evals": 30761,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 1492,
+    "moves": 35708,
+    "tied_moves": 28987,
+    "top2_tie_calls": 146,
+    "pct_top2": 9.79,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     1346,
+     133,
+     13,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec26",
+   "evals": 151933,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 5290,
+    "moves": 180401,
+    "tied_moves": 133418,
+    "top2_tie_calls": 183,
+    "pct_top2": 3.46,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     5107,
+     179,
+     4,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec27",
+   "evals": 2277,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 125,
+    "moves": 3523,
+    "tied_moves": 2184,
+    "top2_tie_calls": 30,
+    "pct_top2": 24.0,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     95,
+     29,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec28",
+   "evals": 11665,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 507,
+    "moves": 11320,
+    "tied_moves": 9033,
+    "top2_tie_calls": 25,
+    "pct_top2": 4.93,
+    "max_top_tie": 2,
+    "hist": [
+     0,
+     482,
+     25,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec29",
+   "evals": 28040,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 1080,
+    "moves": 31239,
+    "tied_moves": 24422,
+    "top2_tie_calls": 90,
+    "pct_top2": 8.33,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     990,
+     45,
+     9,
+     36,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec30",
+   "evals": 12041,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 699,
+    "moves": 21839,
+    "tied_moves": 15275,
+    "top2_tie_calls": 7,
+    "pct_top2": 1.0,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     692,
+     6,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec31",
+   "evals": 510426,
+   "censored": false,
+   "wall_s": 0.2,
+   "rc": 0,
+   "probe": {
+    "calls": 22152,
+    "moves": 495568,
+    "tied_moves": 293901,
+    "top2_tie_calls": 296,
+    "pct_top2": 1.34,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     21856,
+     287,
+     9,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec32",
+   "evals": 3342,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 174,
+    "moves": 5171,
+    "tied_moves": 3086,
+    "top2_tie_calls": 4,
+    "pct_top2": 2.3,
+    "max_top_tie": 2,
+    "hist": [
+     0,
+     170,
+     4,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec33",
+   "evals": 11984,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 438,
+    "moves": 15741,
+    "tied_moves": 10390,
+    "top2_tie_calls": 15,
+    "pct_top2": 3.42,
+    "max_top_tie": 2,
+    "hist": [
+     0,
+     423,
+     15,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec34",
+   "evals": 26858,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 1232,
+    "moves": 29695,
+    "tied_moves": 22588,
+    "top2_tie_calls": 254,
+    "pct_top2": 20.62,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     978,
+     245,
+     9,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec35",
+   "evals": 1092,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 65,
+    "moves": 1133,
+    "tied_moves": 735,
+    "top2_tie_calls": 0,
+    "pct_top2": 0.0,
+    "max_top_tie": 1,
+    "hist": [
+     0,
+     65,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec36",
+   "evals": 20206,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 1991,
+    "moves": 19535,
+    "tied_moves": 11608,
+    "top2_tie_calls": 101,
+    "pct_top2": 5.07,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     1890,
+     75,
+     17,
+     9,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec37",
+   "evals": 28257,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 2061,
+    "moves": 27778,
+    "tied_moves": 13085,
+    "top2_tie_calls": 86,
+    "pct_top2": 4.17,
+    "max_top_tie": 2,
+    "hist": [
+     0,
+     1975,
+     86,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec38",
+   "evals": 1169070,
+   "censored": false,
+   "wall_s": 0.3,
+   "rc": 0,
+   "probe": {
+    "calls": 63456,
+    "moves": 1178920,
+    "tied_moves": 663300,
+    "top2_tie_calls": 1526,
+    "pct_top2": 2.4,
+    "max_top_tie": 5,
+    "hist": [
+     0,
+     61930,
+     1417,
+     51,
+     56,
+     2,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec39",
+   "evals": 61552,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 2735,
+    "moves": 71056,
+    "tied_moves": 49651,
+    "top2_tie_calls": 116,
+    "pct_top2": 4.24,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     2619,
+     56,
+     60,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec40",
+   "evals": 852716,
+   "censored": false,
+   "wall_s": 0.2,
+   "rc": 0,
+   "probe": {
+    "calls": 42596,
+    "moves": 972245,
+    "tied_moves": 547045,
+    "top2_tie_calls": 915,
+    "pct_top2": 2.15,
+    "max_top_tie": 5,
+    "hist": [
+     0,
+     41681,
+     672,
+     226,
+     15,
+     2,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec41",
+   "evals": 27475,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 1466,
+    "moves": 29410,
+    "tied_moves": 17456,
+    "top2_tie_calls": 48,
+    "pct_top2": 3.27,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     1418,
+     12,
+     0,
+     36,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec42",
+   "evals": 80849,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 4069,
+    "moves": 79846,
+    "tied_moves": 54290,
+    "top2_tie_calls": 218,
+    "pct_top2": 5.36,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     3851,
+     211,
+     7,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec43",
+   "evals": 1506959,
+   "censored": false,
+   "wall_s": 0.3,
+   "rc": 0,
+   "probe": {
+    "calls": 60429,
+    "moves": 1520858,
+    "tied_moves": 884207,
+    "top2_tie_calls": 1576,
+    "pct_top2": 2.61,
+    "max_top_tie": 3,
+    "hist": [
+     0,
+     58853,
+     1381,
+     195,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec44",
+   "evals": 102615,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 11192,
+    "moves": 97355,
+    "tied_moves": 50455,
+    "top2_tie_calls": 553,
+    "pct_top2": 4.94,
+    "max_top_tie": 9,
+    "hist": [
+     0,
+     10639,
+     454,
+     56,
+     0,
+     5,
+     15,
+     9,
+     14
+    ]
+   }
+  },
+  {
+   "case": "dec45",
+   "evals": 3422,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 136,
+    "moves": 3642,
+    "tied_moves": 2274,
+    "top2_tie_calls": 0,
+    "pct_top2": 0.0,
+    "max_top_tie": 1,
+    "hist": [
+     0,
+     136,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "dec46",
+   "evals": 128347,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 11265,
+    "moves": 128529,
+    "tied_moves": 49981,
+    "top2_tie_calls": 709,
+    "pct_top2": 6.29,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     10556,
+     297,
+     1,
+     411,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m23_white",
+   "evals": 9673403,
+   "censored": false,
+   "wall_s": 1.3,
+   "rc": 0,
+   "probe": {
+    "calls": 553100,
+    "moves": 9630792,
+    "tied_moves": 4953413,
+    "top2_tie_calls": 18076,
+    "pct_top2": 3.27,
+    "max_top_tie": 6,
+    "hist": [
+     0,
+     535024,
+     13127,
+     926,
+     3326,
+     4,
+     693,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m23_black",
+   "evals": 2892606,
+   "censored": false,
+   "wall_s": 0.5,
+   "rc": 0,
+   "probe": {
+    "calls": 167349,
+    "moves": 2816438,
+    "tied_moves": 1378605,
+    "top2_tie_calls": 3821,
+    "pct_top2": 2.28,
+    "max_top_tie": 6,
+    "hist": [
+     0,
+     163528,
+     3559,
+     133,
+     77,
+     2,
+     50,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m24_white",
+   "evals": 406737,
+   "censored": false,
+   "wall_s": 0.2,
+   "rc": 0,
+   "probe": {
+    "calls": 22730,
+    "moves": 399400,
+    "tied_moves": 253276,
+    "top2_tie_calls": 1365,
+    "pct_top2": 6.01,
+    "max_top_tie": 6,
+    "hist": [
+     0,
+     21365,
+     928,
+     379,
+     43,
+     0,
+     15,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m24_black",
+   "evals": 93449,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 7799,
+    "moves": 91350,
+    "tied_moves": 48826,
+    "top2_tie_calls": 508,
+    "pct_top2": 6.51,
+    "max_top_tie": 6,
+    "hist": [
+     0,
+     7291,
+     287,
+     202,
+     14,
+     0,
+     5,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m25_white",
+   "evals": 22195,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 2225,
+    "moves": 21170,
+    "tied_moves": 11485,
+    "top2_tie_calls": 184,
+    "pct_top2": 8.27,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     2041,
+     109,
+     72,
+     3,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m25_black",
+   "evals": 5146,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 621,
+    "moves": 5026,
+    "tied_moves": 2914,
+    "top2_tie_calls": 69,
+    "pct_top2": 11.11,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     552,
+     39,
+     27,
+     3,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m26_white",
+   "evals": 1086,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 136,
+    "moves": 1105,
+    "tied_moves": 671,
+    "top2_tie_calls": 29,
+    "pct_top2": 21.32,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     107,
+     5,
+     23,
+     1,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m26_black",
+   "evals": 1011,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 134,
+    "moves": 1032,
+    "tied_moves": 579,
+    "top2_tie_calls": 7,
+    "pct_top2": 5.22,
+    "max_top_tie": 4,
+    "hist": [
+     0,
+     127,
+     5,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m27_white",
+   "evals": 257,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 43,
+    "moves": 279,
+    "tied_moves": 143,
+    "top2_tie_calls": 2,
+    "pct_top2": 4.65,
+    "max_top_tie": 2,
+    "hist": [
+     0,
+     41,
+     2,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m27_black",
+   "evals": 126,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 17,
+    "moves": 175,
+    "tied_moves": 92,
+    "top2_tie_calls": 0,
+    "pct_top2": 0.0,
+    "max_top_tie": 1,
+    "hist": [
+     0,
+     17,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m28_white",
+   "evals": 89,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 14,
+    "moves": 109,
+    "tied_moves": 49,
+    "top2_tie_calls": 0,
+    "pct_top2": 0.0,
+    "max_top_tie": 1,
+    "hist": [
+     0,
+     14,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m28_black",
+   "evals": 3,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 2,
+    "moves": 35,
+    "tied_moves": 20,
+    "top2_tie_calls": 0,
+    "pct_top2": 0.0,
+    "max_top_tie": 1,
+    "hist": [
+     0,
+     2,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "case": "m29_white",
+   "evals": 1,
+   "censored": false,
+   "wall_s": 0.1,
+   "rc": 0,
+   "probe": {
+    "calls": 1,
+    "moves": 34,
+    "tied_moves": 20,
+    "top2_tie_calls": 0,
+    "pct_top2": 0.0,
+    "max_top_tie": 1,
+    "hist": [
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  }
+ ],
+ "hygiene_ok": true,
+ "failures": []
+}
