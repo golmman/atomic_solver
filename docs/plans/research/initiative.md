@@ -2,21 +2,29 @@
 
 ## Status
 
-**Closed** 2026-09-21 (opened 2026-09-19; re-scoped 2026-09-21). The
-initiative closes with deliverable **#16**
-([`structural_floor.md`](structural_floor.md), plan10): the consolidated
-no-go record of everything the solver is locked into and why. Every
-backlog row is answered, closed, or pre-weakened; the node-count program
-closed with plan8; the seesaw thread closed with plan9. Remaining open
-threads live elsewhere and are recorded in `structural_floor.md` §9:
-`conversion` #4 (parallel spike, with `lean` #2) and `lean` #10;
-`conversion` #5e (Gao 2021) stays a reading item. Successor note: any
-future reopener of the recorded blockers starts from `structural_floor.md`
-§9 ("closed for now, reopen trigger X"), not from the backlog below.
-**Re-examined 2026-10-09 (status unchanged — closed):**
-[`reexamination.md`](reexamination.md) finds the single-draw gates below the
-noise floor and leaf initialization (never measured) to be the dominant
-surface; reopening, or opening a successor initiative, is an owner decision.
+**Active (re-opened 2026-10-09, owner decision).** First closed 2026-09-21
+with deliverable **#16** ([`structural_floor.md`](structural_floor.md),
+plan10), the consolidated no-go record of everything the solver was then
+locked into and why. Re-examined 2026-10-09 by
+[`reexamination.md`](reexamination.md), which found two load-bearing
+premises of that record false:
+
+1. **The single-draw gates measured noise.** A semantics-neutral TT-index
+   salt moves stress from 249.5 M to 758 M / censored (3 of 5 draws); the
+   closures of the form "wins on X, regresses control Y" (ε = 0.375/0.5,
+   `dfpn` clock-budget reuse, `lean` plan10 history/killer arms, TT-eviction
+   arm V2) are *unjudged*, not won.
+2. **Leaf initialization was never measured.** 80–88% of child evals are
+   first-sweep cuts of fresh `(1, 1)`-initialized nodes; naive mobility
+   initialization measures stress 0.24× / dec13 0.16× but m22 censored at
+   1 B on all five salts.
+
+Per `reexamination.md` §6, the reopener starts from that document's ranked
+next steps, not from the pre-closure backlog below (all rows there remain
+closed; `structural_floor.md` §9's reopen triggers are unaffected). The
+reopened program is **noise-aware measurement plus the initialization
+surface**: items **#17–#22** in the reopened backlog. #17 is the
+prerequisite for #18–#20.
 
 ## Motivation
 
@@ -71,6 +79,17 @@ maintainability.
 > why, with evidence pointers (#16/plan10). The original goal text above
 > is preserved for the record; hand-offs already made (ε=0.375 note,
 > rescue-mass observation) are unaffected.
+>
+> **Re-opened 2026-10-09 (owner decision):** the initiative re-opens with a
+> two-part program derived from [`reexamination.md`](reexamination.md) §6:
+> (a) replace the single-draw per-case gates with a **salt-seeded
+> statistical gate** (#17) — the prerequisite for every lever below — and
+> make it the normative gate convention for hard-class decisions; (b) under
+> that gate: measure the **leaf-initialization family** (#18, with the m22
+> collapse diagnosed before any shaped variant), **re-score the unjudged
+> closures** (#19), evaluate **salted TT-keeping restarts** (#20), and
+> **in-context child results** (#21). The prior goal texts and the closed
+> backlog rows are history, not open work.
 
 ## Working agreement (research cadence)
 
@@ -145,19 +164,48 @@ document consolidating the no-go record.
 |---|-------------|---------|--------|
 | 16 | **`structural_floor.md`** — the consolidating no-go record | What the solver is locked into, and why, with evidence pointers: the DF-PN+ commitment and plan6's lock-in-cost evidence table; the 1+ε threshold mechanism and the four ε closure legs (no constant, no schedule, no regional structure, no node-local signal — plan4/plan8); GHI first-player-loss shortcut and path-independent TT; RAM = TT only and the best-first/PN² exclusion; ordering and TT-eviction local optima (`lean` plan9, plan7); the seesaw-thread closure (#15/plan9, if it closes); child-level termination surface (#5/plan5). Every claim links to its report or `research_*.md`. | **done (plan10)** — [`structural_floor.md`](structural_floor.md) written; 33-claim Phase 0 audit all verified ([`measurements/plan10/claims.md`](measurements/plan10/claims.md)); COMPLETE gate, zero evidence gaps; see [`report10.md`](report10.md) |
 
+## Reopened backlog (2026-10-09)
+
+Item numbering continues the pre-closure sequence (#16 was the last) for
+stable semantic identity; the pre-closure tables above stay closed.
+Dependency order: #17 first; #18–#20 all require it.
+
+| # | Item | Content | Status |
+|---|------|---------|--------|
+| 17 | **Salt-seeded statistical gate** | Establish a reusable, soundness-neutral noise channel for gate measurement: a `--salt <u64>` knob that remaps TT bucket indices (full-key verification unchanged, so search semantics are identical; salt 0 = shipped behavior, bit-identical), then per-case child-eval distributions over ≥5 salts on a hard corpus (≥20 cases in the full rollout; pilot first), paired comparison, censored runs as right-censored data. Deliverable includes a methodology note defining the gate rule that plans for #18–#20 must pre-register. Other neutral noise channels (tie-breaking jitter, history aging) are recorded as unmeasured caveats, not implemented here. | **open** — plan11 drafted (pilot: salt knob + 6-case corpus) |
+| 18 | **Leaf-initialization family** | Replace the `(1, 1)` unsolved-child initialization (`children.rs` `_ => (1, 1)`) with shaped variants: capped or log mobility, one-sided, blends — **the m22 collapse (censored at 1 B on all five salts under naive mobility, mechanism undiagnosed) is diagnosed first**, as a pre-registered Phase 0. Then cheap atomic features (blast and king-zone threats), then initialization borrowed from the same board stored at another rule50 clock. Soundness-neutral: steers only; solved values are computed exactly as before. Requires #17. | **open** — blocked by #17 |
+| 19 | **Re-score the unjudged closures** | Re-measure the §1 closures under the #17 gate: ε = 0.375 / 0.5 (`conversion` #7, plan4 Phase 0), clock-budget solved-entry reuse (`dfpn` #2, plans 10/11), `lean` plan10 history/killer arms, TT-eviction arm V2 (`lean` plan7). Each arm is re-scored as a per-case distribution over salts, not a single draw; any arm that survives becomes a sized hand-off to its owner initiative. Requires #17; distribution work may be batched per owner initiative. | **open** — blocked by #17 |
+| 20 | **Salted restarts (single-core)** | If the per-salt distribution is heavy-tailed (stress suggests ≥10× spread), restarts that keep the TT but reseed the bucket index cut *expected* work — distinct from the `parallel` plan7 portfolio (separate processes, no shared TT) and from the measured-out single-chunk lever (`reexamination.md` §4). Requires #17's distribution data. | **open** — blocked by #17 |
+| 21 | **In-context child results (dec10 class)** | Keep a child's just-proven repetition-dependent Draw in the parent frame instead of re-reading the TT's `(1, 1)` entry; 38.1% of dec10's evals follow a stale child result (`reexamination.md` §4). Soundness-neutral by construction (the value is recomputed, not assumed); repetition-dependent results still never enter the TT. Independent of #17 (dec10 is the one control where the baseline sits mid-distribution), but gated by it for reporting. | **open** |
+| 22 | **Fringe** | (a) Solve ignoring the 50-move rule and use that table only to seed initialization (the real search still proves everything); (b) Kaneko root threads — owned by `parallel` (`parallel/reexamination.md` idea D), not mined here. | **open** — lowest priority |
+
+The #17 GO consequence amends this initiative's measurement conventions
+(below) and, via each re-score plan, the gate wording of the owner
+initiatives (`conversion`, `dfpn`, `lean`) — those amendments happen in the
+respective plans, not silently here.
+
 ## Non-goals
 
 - **Direct production implementation.** Proven ideas are handed off; this
-  initiative stays research-only.
+  initiative stays research-only. Measurement-only product changes that are
+  default-bit-identical (the #17 `--salt` knob) are in scope.
 - **Re-running closed levers** (plan10/11 cross-clock reuse,
   threshold-cut-frame pricing, EWS/MOPNS ordering, etc.) without a *new*
-  hypothesis that the closed result does not already reject.
+  hypothesis that the closed result does not already reject. (#19's
+  re-scores carry exactly such a new hypothesis: the noise-floor finding.)
 - **Changing the proof-tree layer, `ProofEvent` protocol, or optimizer
   interface contract** (`docs/spec/optimizer_interface.md`).
 - **Wall-time-only optimizations** that do not change node counts. Those
   belong in `lean`.
 
 ## Measurement conventions
+
+> **2026-10-09 amendment (re-examination):** the point baselines below are
+> reinterpreted as salt-0 draws of a heavy-tailed per-case distribution
+> (`reexamination.md` §1); from #17 onward, gate decisions on the hard
+> class use per-case salt distributions (censored runs as right-censored
+> data), not single-draw comparisons. The listed numbers remain the salt-0
+> reproduction targets for trajectory-identity checks.
 
 - POCs use the `m22_white` and stress-case baselines from
   `dfpn/initiative.md` and `lean/initiative.md`:
@@ -427,3 +475,14 @@ Per repo convention, every plan ends with the task of writing its
   outcome, naive WPNS, single work chunk; repetition/bound hygiene small
   except dec10. Addendum added to `structural_floor.md`; next steps ranked
   in `reexamination.md` §6.
+- **2026-10-09** — **Initiative re-opened (owner decision)** on the
+  re-examination's findings: the single-draw gates are below the noise
+  floor and the dominant surface (leaf initialization) was never measured.
+  Reopened backlog **#17–#22** opened per `reexamination.md` §6 (numbering
+  continues the pre-closure sequence); the closed rows above and
+  `structural_floor.md` (with its re-examination addendum) stand as
+  history. `plan11` drafted: **#17 salt-seeded statistical gate, pilot** —
+  `--salt` knob (default bit-identical), 6-case corpus
+  (m20/m21/m22/m23_white, dec13, dec10) × 5 salts, methodology note
+  defining the gate rule for #18–#20. Next plan number after plan11 is
+  **plan12**.
