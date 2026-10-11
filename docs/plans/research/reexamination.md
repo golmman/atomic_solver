@@ -93,7 +93,21 @@ neutral draw moves the gate object by ≥ 3×. Affected closures include:
   the closure is upgraded unjudged → gate grade, the strongest form of
   lean plan10's no-go ([`report18.md`](report18.md),
   [`measurements/plan18/`](measurements/plan18/README.md));
-- TT eviction arm V2 (`report7.md`).
+- TT eviction arm V2 (`report7.md`) — **re-scored, REJECT on the 22-case
+  × 6-salt paired rollout** (plan19): the salt-0 readings replicate
+  exactly (stress 1.382×, m22 1.237×) but dissolve into heavy tails —
+  stress flips to *censored-win* (the arm solves salts 2/3/4 within 2.5 B
+  where the baseline is censored, and kills the baseline's 758 M salt-1
+  tail at 0.369×) while m22 collapses (salt-2 5.30×, salt-5 budget-censored
+  at 2 B where the baseline solves; censored-loss vetoes per the pinned
+  rule), and the arm is near-inert elsewhere (83.6 % exact-null paired
+  ratios). The closure is upgraded unjudged → gate grade: the incumbent
+  eviction priority is not adopted-against, but the strong "measured local
+  optimum everywhere" form does not survive — the stress tail is real
+  improvement evidence for a depth-tiebreak variant, recorded for future
+  eviction work under `lean`'s two-slot layout constraint
+  ([`report19.md`](report19.md),
+  [`measurements/plan19/`](measurements/plan19/README.md));
 
 These are not shown to be wins — they are shown to be *unjudged*. The
 record's own "trajectory chaos" findings (`report4.md`, `report8.md`, `lean`
