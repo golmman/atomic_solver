@@ -1,0 +1,65 @@
+{
+ "stage": "stage2_rem12_baseline",
+ "runs": [
+  {
+   "case": "rem12",
+   "salt": 0,
+   "outcome": "win",
+   "evals": 69605385,
+   "censored": null,
+   "wall_s": 9.46,
+   "budget": 1000000000,
+   "rc": 0
+  },
+  {
+   "case": "rem12",
+   "salt": 1,
+   "outcome": "win",
+   "evals": 64024106,
+   "censored": null,
+   "wall_s": 8.639,
+   "budget": 1000000000,
+   "rc": 0
+  },
+  {
+   "case": "rem12",
+   "salt": 2,
+   "outcome": "win",
+   "evals": 65124029,
+   "censored": null,
+   "wall_s": 8.685,
+   "budget": 1000000000,
+   "rc": 0
+  },
+  {
+   "case": "rem12",
+   "salt": 3,
+   "outcome": "win",
+   "evals": 59573726,
+   "censored": null,
+   "wall_s": 7.913,
+   "budget": 1000000000,
+   "rc": 0
+  },
+  {
+   "case": "rem12",
+   "salt": 4,
+   "outcome": "win",
+   "evals": 77865981,
+   "censored": null,
+   "wall_s": 10.47,
+   "budget": 1000000000,
+   "rc": 0
+  },
+  {
+   "case": "rem12",
+   "salt": 5,
+   "outcome": "win",
+   "evals": 63082193,
+   "censored": null,
+   "wall_s": 8.476,
+   "budget": 1000000000,
+   "rc": 0
+  }
+ ]
+}

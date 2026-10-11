@@ -1,0 +1,14 @@
+{
+  "stage": "stage0_identity_gate",
+  "date": "2026-10-11",
+  "description": "Solo salt-identity re-runs vs the plan12 record (H4a). Binary: target/release/atomic_solver at commit deaee91 (tree clean, git diff --exit-code pass). Config: --tt-size 128 --first-outcome --outcome-only --salt S --budget <case cap> --timeout <race wall cap>.",
+  "plan12_anchor_source": "docs/plans/research/measurements/plan12/state/runs.json",
+  "runs": [
+    {"case": "m22_white", "salt": 0, "evals": 14156269, "plan12_evals": 14156269, "outcome": "win", "plan12_outcome": "win", "match": true, "wall_s": 1.871},
+    {"case": "m22_white", "salt": 2, "evals": 15815489, "plan12_evals": 15815489, "outcome": "win", "plan12_outcome": "win", "match": true, "wall_s": 2.080},
+    {"case": "dec10", "salt": 0, "evals": 4262128, "plan12_evals": 4262128, "outcome": "win", "plan12_outcome": "win", "match": true, "wall_s": 0.677},
+    {"case": "dec10", "salt": 2, "evals": 2918636, "plan12_evals": 2918636, "outcome": "win", "plan12_outcome": "win", "match": true, "wall_s": 0.496},
+    {"case": "stress", "salt": 0, "evals": 249480478, "plan12_evals": 249480478, "outcome": "win", "plan12_outcome": "win", "match": true, "wall_s": 29.807}
+  ],
+  "h4a": "PASS (5/5 exact evals + outcome matches; outcome/pv lines present, pv_status first-outcome)"
+}

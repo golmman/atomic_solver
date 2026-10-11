@@ -1,0 +1,370 @@
+{
+ "racer_salts": [
+  0,
+  2,
+  3,
+  5
+ ],
+ "cases": {
+  "m20_white": {
+   "racer_rows": [
+    {
+     "salt": 0,
+     "evals": 2000000027,
+     "censored": "budget",
+     "outcome": "draw",
+     "wall_s": 339.8618383407593
+    },
+    {
+     "salt": 2,
+     "evals": 1384231894,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 225.77522802352905
+    },
+    {
+     "salt": 3,
+     "evals": 861809196,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 104.2413170337677
+    },
+    {
+     "salt": 5,
+     "evals": 791401553,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 93.70278573036194
+    }
+   ],
+   "salt0": {
+    "evals": 2000000027,
+    "censored": "budget",
+    "outcome": "draw"
+   },
+   "evals_min": 791401553,
+   "prediction": "censored-win (salt-0 censored at cap; racer salt with the min uncensored draw: 791401553 evals)",
+   "basin_count_plan12": 4,
+   "basin_anchors_plan12": [
+    1384231894,
+    861809196,
+    912098074,
+    791401553
+   ],
+   "racer_basin_coverage": [
+    0,
+    1,
+    3
+   ]
+  },
+  "stress": {
+   "racer_rows": [
+    {
+     "salt": 0,
+     "evals": 249480478,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 31.437353372573853
+    },
+    {
+     "salt": 2,
+     "evals": 2500000002,
+     "censored": "budget",
+     "outcome": "draw",
+     "wall_s": 344.09539699554443
+    },
+    {
+     "salt": 3,
+     "evals": 2500000001,
+     "censored": "budget",
+     "outcome": "draw",
+     "wall_s": 436.7928168773651
+    },
+    {
+     "salt": 5,
+     "evals": 252069909,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 31.338237762451172
+    }
+   ],
+   "salt0": {
+    "evals": 249480478,
+    "censored": null,
+    "outcome": "win"
+   },
+   "evals_min": 249480478,
+   "prediction": "1.0000x vs salt-0",
+   "basin_count_plan12": 3,
+   "basin_anchors_plan12": [
+    249480478,
+    758176477,
+    252069909
+   ],
+   "racer_basin_coverage": [
+    0,
+    2
+   ]
+  },
+  "dec10": {
+   "racer_rows": [
+    {
+     "salt": 0,
+     "evals": 4262128,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 0.7155513763427734
+    },
+    {
+     "salt": 2,
+     "evals": 2918636,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 0.5130817890167236
+    },
+    {
+     "salt": 3,
+     "evals": 4802246,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 0.7850627899169922
+    },
+    {
+     "salt": 5,
+     "evals": 3901858,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 0.6571052074432373
+    }
+   ],
+   "salt0": {
+    "evals": 4262128,
+    "censored": null,
+    "outcome": "win"
+   },
+   "evals_min": 2918636,
+   "prediction": "0.6848x vs salt-0",
+   "basin_count_plan12": 4,
+   "basin_anchors_plan12": [
+    4262128,
+    3901844,
+    2918636,
+    4802246,
+    3901847,
+    3901858
+   ],
+   "racer_basin_coverage": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  "m22_white": {
+   "racer_rows": [
+    {
+     "salt": 0,
+     "evals": 14156269,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 1.926682472229004
+    },
+    {
+     "salt": 2,
+     "evals": 15815489,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 2.1672868728637695
+    },
+    {
+     "salt": 3,
+     "evals": 17832300,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 2.4120895862579346
+    },
+    {
+     "salt": 5,
+     "evals": 21236889,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 2.863935947418213
+    }
+   ],
+   "salt0": {
+    "evals": 14156269,
+    "censored": null,
+    "outcome": "win"
+   },
+   "evals_min": 14156269,
+   "prediction": "1.0000x vs salt-0",
+   "basin_count_plan12": 6,
+   "basin_anchors_plan12": [
+    14156269,
+    23653031,
+    15815489,
+    17832300,
+    18071429,
+    21236889
+   ],
+   "racer_basin_coverage": [
+    0,
+    2,
+    3,
+    5
+   ]
+  },
+  "dec13": {
+   "racer_rows": [
+    {
+     "salt": 0,
+     "evals": 3822602,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 0.6634283065795898
+    },
+    {
+     "salt": 2,
+     "evals": 5038383,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 0.8427462577819824
+    },
+    {
+     "salt": 3,
+     "evals": 5032382,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 0.8429388999938965
+    },
+    {
+     "salt": 5,
+     "evals": 5032308,
+     "censored": null,
+     "outcome": "win",
+     "wall_s": 0.839963436126709
+    }
+   ],
+   "salt0": {
+    "evals": 3822602,
+    "censored": null,
+    "outcome": "win"
+   },
+   "evals_min": 3822602,
+   "prediction": "1.0000x vs salt-0",
+   "basin_count_plan12": 2,
+   "basin_anchors_plan12": [
+    3822602,
+    5031242,
+    5038383,
+    5032382,
+    5030825,
+    5032308
+   ],
+   "racer_basin_coverage": [
+    0,
+    1,
+    1,
+    1
+   ]
+  }
+ },
+ "not_raced": {
+  "dec01": {
+   "salt0_evals": 5713706,
+   "salt0_censored": null,
+   "basin_count_plan12": 6,
+   "salt_invariant": false
+  },
+  "dec14": {
+   "salt0_evals": 2397489,
+   "salt0_censored": null,
+   "basin_count_plan12": 3,
+   "salt_invariant": false
+  },
+  "dec02": {
+   "salt0_evals": 138124,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec03": {
+   "salt0_evals": 47068,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec04": {
+   "salt0_evals": 7352,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec05": {
+   "salt0_evals": 314615,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec06": {
+   "salt0_evals": 1507474,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec07": {
+   "salt0_evals": 4021,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec08": {
+   "salt0_evals": 45,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec09": {
+   "salt0_evals": 1842,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec11": {
+   "salt0_evals": 253890,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec12": {
+   "salt0_evals": 303191,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec15": {
+   "salt0_evals": 1077420,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec16": {
+   "salt0_evals": 107110,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec17": {
+   "salt0_evals": 539273,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  },
+  "dec18": {
+   "salt0_evals": 39549,
+   "salt0_censored": null,
+   "basin_count_plan12": 1,
+   "salt_invariant": true
+  }
+ }
+}

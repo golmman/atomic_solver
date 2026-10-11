@@ -1,0 +1,1253 @@
+{
+ "racer_salts": [
+  0,
+  2,
+  3,
+  5
+ ],
+ "rounds": 3,
+ "pilot_excluded": true,
+ "cases": {
+  "dec10": {
+   "n_rounds": 3,
+   "baseline_walls": [
+    0.673,
+    0.68,
+    0.688
+   ],
+   "baseline_walls_median": 0.68,
+   "baseline_evals": [
+    4262128,
+    4262128,
+    4262128
+   ],
+   "baseline_salt0_censored_plan12": null,
+   "w_first_rounds": [
+    0.538,
+    0.513,
+    0.522
+   ],
+   "w_first_median": 0.522,
+   "w_first_min": 0.513,
+   "w_first_max": 0.538,
+   "w_first_spread_rel": 0.04789272030651345,
+   "evals_first_rounds": [
+    2918636,
+    2918636,
+    2918636
+   ],
+   "evals_min_rounds": [
+    2918636,
+    2918636,
+    2918636
+   ],
+   "first_racer": [
+    {
+     "round": 1,
+     "racer": "R1",
+     "salt": 2,
+     "wall_s": 0.538,
+     "evals": 2918636
+    },
+    {
+     "round": 2,
+     "racer": "R1",
+     "salt": 2,
+     "wall_s": 0.513,
+     "evals": 2918636
+    },
+    {
+     "round": 3,
+     "racer": "R1",
+     "salt": 2,
+     "wall_s": 0.522,
+     "evals": 2918636
+    }
+   ],
+   "ratio_w_first_vs_baseline": [
+    0.7623,
+    0.7676,
+    0.782
+   ],
+   "ratio_w_median": 0.7676,
+   "ratio_evals_median": 0.6848,
+   "salt0_racer_decisive_per_round": [
+    true,
+    true,
+    true
+   ],
+   "plan12_prediction": "0.6848x vs salt-0",
+   "plan12_basin_count": 4,
+   "plan12_racer_basin_coverage": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "cpu_core_s_per_race": [
+    2.7,
+    2.7,
+    2.7
+   ],
+   "baseline_core_s": [
+    0.673,
+    0.68,
+    0.688
+   ]
+  },
+  "dec13": {
+   "n_rounds": 3,
+   "baseline_walls": [
+    0.633,
+    0.636,
+    0.645
+   ],
+   "baseline_walls_median": 0.636,
+   "baseline_evals": [
+    3822602,
+    3822602,
+    3822602
+   ],
+   "baseline_salt0_censored_plan12": null,
+   "w_first_rounds": [
+    0.674,
+    0.67,
+    0.67
+   ],
+   "w_first_median": 0.67,
+   "w_first_min": 0.67,
+   "w_first_max": 0.674,
+   "w_first_spread_rel": 0.0059701492537313485,
+   "evals_first_rounds": [
+    3822602,
+    3822602,
+    3822602
+   ],
+   "evals_min_rounds": [
+    3822602,
+    3822602,
+    3822602
+   ],
+   "first_racer": [
+    {
+     "round": 1,
+     "racer": "R0",
+     "salt": 0,
+     "wall_s": 0.674,
+     "evals": 3822602
+    },
+    {
+     "round": 2,
+     "racer": "R0",
+     "salt": 0,
+     "wall_s": 0.67,
+     "evals": 3822602
+    },
+    {
+     "round": 3,
+     "racer": "R0",
+     "salt": 0,
+     "wall_s": 0.67,
+     "evals": 3822602
+    }
+   ],
+   "ratio_w_first_vs_baseline": [
+    1.0585,
+    1.0535,
+    1.045
+   ],
+   "ratio_w_median": 1.0535,
+   "ratio_evals_median": 1.0,
+   "salt0_racer_decisive_per_round": [
+    true,
+    true,
+    true
+   ],
+   "plan12_prediction": "1.0000x vs salt-0",
+   "plan12_basin_count": 2,
+   "plan12_racer_basin_coverage": [
+    0,
+    1,
+    1,
+    1
+   ],
+   "cpu_core_s_per_race": [
+    3.2,
+    3.2,
+    3.2
+   ],
+   "baseline_core_s": [
+    0.633,
+    0.636,
+    0.645
+   ]
+  },
+  "m20_white": {
+   "n_rounds": 3,
+   "baseline_walls": [
+    313.521,
+    319.697,
+    312.551
+   ],
+   "baseline_walls_median": 313.521,
+   "baseline_evals": [
+    2000000027,
+    2000000027,
+    2000000027
+   ],
+   "baseline_salt0_censored_plan12": "budget",
+   "w_first_rounds": [
+    96.248,
+    95.61,
+    95.89
+   ],
+   "w_first_median": 95.89,
+   "w_first_min": 95.61,
+   "w_first_max": 96.248,
+   "w_first_spread_rel": 0.00665345708624471,
+   "evals_first_rounds": [
+    791401553,
+    791401553,
+    791401553
+   ],
+   "evals_min_rounds": [
+    791401553,
+    791401553,
+    791401553
+   ],
+   "first_racer": [
+    {
+     "round": 1,
+     "racer": "R3",
+     "salt": 5,
+     "wall_s": 96.248,
+     "evals": 791401553
+    },
+    {
+     "round": 2,
+     "racer": "R3",
+     "salt": 5,
+     "wall_s": 95.61,
+     "evals": 791401553
+    },
+    {
+     "round": 3,
+     "racer": "R3",
+     "salt": 5,
+     "wall_s": 95.89,
+     "evals": 791401553
+    }
+   ],
+   "ratio_w_first_vs_baseline": [
+    0.3059,
+    0.3058,
+    0.3011
+   ],
+   "ratio_w_median": 0.3058,
+   "ratio_evals_median": 0.3957,
+   "salt0_racer_decisive_per_round": [
+    false,
+    false,
+    false
+   ],
+   "plan12_prediction": "censored-win (salt-0 censored at cap; racer salt with the min uncensored draw: 791401553 evals)",
+   "plan12_basin_count": 4,
+   "plan12_racer_basin_coverage": [
+    0,
+    1,
+    3
+   ],
+   "cpu_core_s_per_race": [
+    751.8,
+    740.0,
+    746.8
+   ],
+   "baseline_core_s": [
+    313.521,
+    319.697,
+    312.551
+   ]
+  },
+  "m22_white": {
+   "n_rounds": 3,
+   "baseline_walls": [
+    1.846,
+    1.865,
+    1.837
+   ],
+   "baseline_walls_median": 1.846,
+   "baseline_evals": [
+    14156269,
+    14156269,
+    14156269
+   ],
+   "baseline_salt0_censored_plan12": null,
+   "w_first_rounds": [
+    1.95,
+    1.962,
+    1.971
+   ],
+   "w_first_median": 1.962,
+   "w_first_min": 1.95,
+   "w_first_max": 1.971,
+   "w_first_spread_rel": 0.010703363914373156,
+   "evals_first_rounds": [
+    14156269,
+    14156269,
+    14156269
+   ],
+   "evals_min_rounds": [
+    14156269,
+    14156269,
+    14156269
+   ],
+   "first_racer": [
+    {
+     "round": 1,
+     "racer": "R0",
+     "salt": 0,
+     "wall_s": 1.95,
+     "evals": 14156269
+    },
+    {
+     "round": 2,
+     "racer": "R0",
+     "salt": 0,
+     "wall_s": 1.962,
+     "evals": 14156269
+    },
+    {
+     "round": 3,
+     "racer": "R0",
+     "salt": 0,
+     "wall_s": 1.971,
+     "evals": 14156269
+    }
+   ],
+   "ratio_w_first_vs_baseline": [
+    1.0615,
+    1.0628,
+    1.0568
+   ],
+   "ratio_w_median": 1.0628,
+   "ratio_evals_median": 1.0,
+   "salt0_racer_decisive_per_round": [
+    true,
+    true,
+    true
+   ],
+   "plan12_prediction": "1.0000x vs salt-0",
+   "plan12_basin_count": 6,
+   "plan12_racer_basin_coverage": [
+    0,
+    2,
+    3,
+    5
+   ],
+   "cpu_core_s_per_race": [
+    9.4,
+    9.4,
+    9.4
+   ],
+   "baseline_core_s": [
+    1.846,
+    1.865,
+    1.837
+   ]
+  },
+  "rem12": {
+   "n_rounds": 3,
+   "baseline_walls": [
+    9.496,
+    9.41,
+    9.41
+   ],
+   "baseline_walls_median": 9.41,
+   "baseline_evals": [
+    69605385,
+    69605385,
+    69605385
+   ],
+   "baseline_salt0_censored_plan12": null,
+   "w_first_rounds": [
+    8.51,
+    8.361,
+    8.352
+   ],
+   "w_first_median": 8.361,
+   "w_first_min": 8.352,
+   "w_first_max": 8.51,
+   "w_first_spread_rel": 0.01889726109317061,
+   "evals_first_rounds": [
+    59573726,
+    59573726,
+    59573726
+   ],
+   "evals_min_rounds": [
+    59573726,
+    59573726,
+    59573726
+   ],
+   "first_racer": [
+    {
+     "round": 1,
+     "racer": "R2",
+     "salt": 3,
+     "wall_s": 8.51,
+     "evals": 59573726
+    },
+    {
+     "round": 2,
+     "racer": "R2",
+     "salt": 3,
+     "wall_s": 8.361,
+     "evals": 59573726
+    },
+    {
+     "round": 3,
+     "racer": "R2",
+     "salt": 3,
+     "wall_s": 8.352,
+     "evals": 59573726
+    }
+   ],
+   "ratio_w_first_vs_baseline": [
+    0.8876,
+    0.8885,
+    0.8962
+   ],
+   "ratio_w_median": 0.8885,
+   "ratio_evals_median": 0.8559,
+   "salt0_racer_decisive_per_round": [
+    true,
+    true,
+    true
+   ],
+   "plan12_prediction": "n/a (stage-2 extension)",
+   "plan12_basin_count": null,
+   "plan12_racer_basin_coverage": null,
+   "cpu_core_s_per_race": [
+    36.3,
+    36.2,
+    36.4
+   ],
+   "baseline_core_s": [
+    9.496,
+    9.41,
+    9.41
+   ]
+  },
+  "stress": {
+   "n_rounds": 3,
+   "baseline_walls": [
+    30.018,
+    29.964,
+    30.062
+   ],
+   "baseline_walls_median": 30.018,
+   "baseline_evals": [
+    249480478,
+    249480478,
+    249480478
+   ],
+   "baseline_salt0_censored_plan12": null,
+   "w_first_rounds": [
+    31.693,
+    31.396,
+    31.337
+   ],
+   "w_first_median": 31.396,
+   "w_first_min": 31.337,
+   "w_first_max": 31.693,
+   "w_first_spread_rel": 0.011339024079500626,
+   "evals_first_rounds": [
+    252069909,
+    249480478,
+    252069909
+   ],
+   "evals_min_rounds": [
+    249480478,
+    249480478,
+    249480478
+   ],
+   "first_racer": [
+    {
+     "round": 1,
+     "racer": "R3",
+     "salt": 5,
+     "wall_s": 31.693,
+     "evals": 252069909
+    },
+    {
+     "round": 2,
+     "racer": "R0",
+     "salt": 0,
+     "wall_s": 31.396,
+     "evals": 249480478
+    },
+    {
+     "round": 3,
+     "racer": "R3",
+     "salt": 5,
+     "wall_s": 31.337,
+     "evals": 252069909
+    }
+   ],
+   "ratio_w_first_vs_baseline": [
+    1.0458,
+    1.0459,
+    1.0543
+   ],
+   "ratio_w_median": 1.0459,
+   "ratio_evals_median": 1.0104,
+   "salt0_racer_decisive_per_round": [
+    true,
+    true,
+    true
+   ],
+   "plan12_prediction": "1.0000x vs salt-0",
+   "plan12_basin_count": 3,
+   "plan12_racer_basin_coverage": [
+    0,
+    2
+   ],
+   "cpu_core_s_per_race": [
+    607.2,
+    605.8,
+    605.6
+   ],
+   "baseline_core_s": [
+    30.018,
+    29.964,
+    30.062
+   ]
+  }
+ },
+ "hypotheses": {
+  "H1": {
+   "every_race_has_decisive_racer": true,
+   "w_first_median_s": 95.89,
+   "gate_s": 160.0,
+   "pass": true
+  },
+  "H2": {
+   "dec10": {
+    "w_first_median": 0.522,
+    "baseline_median": 0.68,
+    "ratio": 0.7676,
+    "gate": 0.8,
+    "pass": true
+   },
+   "m23_white": {
+    "measured": false,
+    "evals_prediction_ratio": 0.975938870736596,
+    "note": "not raced per plan8 fixed-parameters table; recorded from the plan12 pre-computation"
+   }
+  },
+  "H3": {
+   "stress": {
+    "ratio_w_median": 1.0459,
+    "gate": 1.1,
+    "pass": true
+   },
+   "m22_white": {
+    "ratio_w_median": 1.0628,
+    "gate": 1.1,
+    "pass": true
+   },
+   "dec13": {
+    "ratio_w_median": 1.0535,
+    "gate": 1.1,
+    "pass": true
+   }
+  },
+  "H4": {
+   "a_pass": true,
+   "b_pass": true,
+   "b_checks": [
+    {
+     "case": "dec10",
+     "salt": 0,
+     "round": 1,
+     "evals": 4262128,
+     "anchor_evals": 4262128,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec10",
+     "salt": 2,
+     "round": 1,
+     "evals": 2918636,
+     "anchor_evals": 2918636,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec10",
+     "salt": 3,
+     "round": 1,
+     "evals": 4802246,
+     "anchor_evals": 4802246,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec10",
+     "salt": 5,
+     "round": 1,
+     "evals": 3901858,
+     "anchor_evals": 3901858,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec10",
+     "salt": 0,
+     "round": 2,
+     "evals": 4262128,
+     "anchor_evals": 4262128,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec10",
+     "salt": 2,
+     "round": 2,
+     "evals": 2918636,
+     "anchor_evals": 2918636,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec10",
+     "salt": 3,
+     "round": 2,
+     "evals": 4802246,
+     "anchor_evals": 4802246,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec10",
+     "salt": 5,
+     "round": 2,
+     "evals": 3901858,
+     "anchor_evals": 3901858,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec10",
+     "salt": 0,
+     "round": 3,
+     "evals": 4262128,
+     "anchor_evals": 4262128,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec10",
+     "salt": 2,
+     "round": 3,
+     "evals": 2918636,
+     "anchor_evals": 2918636,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec10",
+     "salt": 3,
+     "round": 3,
+     "evals": 4802246,
+     "anchor_evals": 4802246,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec10",
+     "salt": 5,
+     "round": 3,
+     "evals": 3901858,
+     "anchor_evals": 3901858,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec13",
+     "salt": 0,
+     "round": 1,
+     "evals": 3822602,
+     "anchor_evals": 3822602,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec13",
+     "salt": 2,
+     "round": 1,
+     "evals": 5038383,
+     "anchor_evals": 5038383,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec13",
+     "salt": 3,
+     "round": 1,
+     "evals": 5032382,
+     "anchor_evals": 5032382,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec13",
+     "salt": 5,
+     "round": 1,
+     "evals": 5032308,
+     "anchor_evals": 5032308,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec13",
+     "salt": 0,
+     "round": 2,
+     "evals": 3822602,
+     "anchor_evals": 3822602,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec13",
+     "salt": 2,
+     "round": 2,
+     "evals": 5038383,
+     "anchor_evals": 5038383,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec13",
+     "salt": 3,
+     "round": 2,
+     "evals": 5032382,
+     "anchor_evals": 5032382,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec13",
+     "salt": 5,
+     "round": 2,
+     "evals": 5032308,
+     "anchor_evals": 5032308,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec13",
+     "salt": 0,
+     "round": 3,
+     "evals": 3822602,
+     "anchor_evals": 3822602,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec13",
+     "salt": 2,
+     "round": 3,
+     "evals": 5038383,
+     "anchor_evals": 5038383,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec13",
+     "salt": 3,
+     "round": 3,
+     "evals": 5032382,
+     "anchor_evals": 5032382,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "dec13",
+     "salt": 5,
+     "round": 3,
+     "evals": 5032308,
+     "anchor_evals": 5032308,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m20_white",
+     "salt": 2,
+     "round": 1,
+     "evals": 1384231894,
+     "anchor_evals": 1384231894,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m20_white",
+     "salt": 3,
+     "round": 1,
+     "evals": 861809196,
+     "anchor_evals": 861809196,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m20_white",
+     "salt": 5,
+     "round": 1,
+     "evals": 791401553,
+     "anchor_evals": 791401553,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m20_white",
+     "salt": 2,
+     "round": 2,
+     "evals": 1384231894,
+     "anchor_evals": 1384231894,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m20_white",
+     "salt": 3,
+     "round": 2,
+     "evals": 861809196,
+     "anchor_evals": 861809196,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m20_white",
+     "salt": 5,
+     "round": 2,
+     "evals": 791401553,
+     "anchor_evals": 791401553,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m20_white",
+     "salt": 2,
+     "round": 3,
+     "evals": 1384231894,
+     "anchor_evals": 1384231894,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m20_white",
+     "salt": 3,
+     "round": 3,
+     "evals": 861809196,
+     "anchor_evals": 861809196,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m20_white",
+     "salt": 5,
+     "round": 3,
+     "evals": 791401553,
+     "anchor_evals": 791401553,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m22_white",
+     "salt": 0,
+     "round": 1,
+     "evals": 14156269,
+     "anchor_evals": 14156269,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m22_white",
+     "salt": 2,
+     "round": 1,
+     "evals": 15815489,
+     "anchor_evals": 15815489,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m22_white",
+     "salt": 3,
+     "round": 1,
+     "evals": 17832300,
+     "anchor_evals": 17832300,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m22_white",
+     "salt": 5,
+     "round": 1,
+     "evals": 21236889,
+     "anchor_evals": 21236889,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m22_white",
+     "salt": 0,
+     "round": 2,
+     "evals": 14156269,
+     "anchor_evals": 14156269,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m22_white",
+     "salt": 2,
+     "round": 2,
+     "evals": 15815489,
+     "anchor_evals": 15815489,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m22_white",
+     "salt": 3,
+     "round": 2,
+     "evals": 17832300,
+     "anchor_evals": 17832300,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m22_white",
+     "salt": 5,
+     "round": 2,
+     "evals": 21236889,
+     "anchor_evals": 21236889,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m22_white",
+     "salt": 0,
+     "round": 3,
+     "evals": 14156269,
+     "anchor_evals": 14156269,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m22_white",
+     "salt": 2,
+     "round": 3,
+     "evals": 15815489,
+     "anchor_evals": 15815489,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m22_white",
+     "salt": 3,
+     "round": 3,
+     "evals": 17832300,
+     "anchor_evals": 17832300,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "m22_white",
+     "salt": 5,
+     "round": 3,
+     "evals": 21236889,
+     "anchor_evals": 21236889,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "rem12",
+     "salt": 0,
+     "round": 1,
+     "evals": 69605385,
+     "anchor_evals": 69605385,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "rem12",
+     "salt": 2,
+     "round": 1,
+     "evals": 65124029,
+     "anchor_evals": 65124029,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "rem12",
+     "salt": 3,
+     "round": 1,
+     "evals": 59573726,
+     "anchor_evals": 59573726,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "rem12",
+     "salt": 5,
+     "round": 1,
+     "evals": 63082193,
+     "anchor_evals": 63082193,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "rem12",
+     "salt": 0,
+     "round": 2,
+     "evals": 69605385,
+     "anchor_evals": 69605385,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "rem12",
+     "salt": 2,
+     "round": 2,
+     "evals": 65124029,
+     "anchor_evals": 65124029,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "rem12",
+     "salt": 3,
+     "round": 2,
+     "evals": 59573726,
+     "anchor_evals": 59573726,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "rem12",
+     "salt": 5,
+     "round": 2,
+     "evals": 63082193,
+     "anchor_evals": 63082193,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "rem12",
+     "salt": 0,
+     "round": 3,
+     "evals": 69605385,
+     "anchor_evals": 69605385,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "rem12",
+     "salt": 2,
+     "round": 3,
+     "evals": 65124029,
+     "anchor_evals": 65124029,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "rem12",
+     "salt": 3,
+     "round": 3,
+     "evals": 59573726,
+     "anchor_evals": 59573726,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "rem12",
+     "salt": 5,
+     "round": 3,
+     "evals": 63082193,
+     "anchor_evals": 63082193,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "stress",
+     "salt": 0,
+     "round": 1,
+     "evals": 249480478,
+     "anchor_evals": 249480478,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "stress",
+     "salt": 5,
+     "round": 1,
+     "evals": 252069909,
+     "anchor_evals": 252069909,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "stress",
+     "salt": 0,
+     "round": 2,
+     "evals": 249480478,
+     "anchor_evals": 249480478,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "stress",
+     "salt": 5,
+     "round": 2,
+     "evals": 252069909,
+     "anchor_evals": 252069909,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "stress",
+     "salt": 0,
+     "round": 3,
+     "evals": 249480478,
+     "anchor_evals": 249480478,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    },
+    {
+     "case": "stress",
+     "salt": 5,
+     "round": 3,
+     "evals": 252069909,
+     "anchor_evals": 252069909,
+     "outcome": "win",
+     "anchor_outcome": "win",
+     "ok": true
+    }
+   ],
+   "c_pass": true,
+   "c_violations": [],
+   "d_pass": true,
+   "censored_records": [
+    {
+     "case": "m20_white",
+     "round": 1,
+     "salt": 0,
+     "status": "censored_budget",
+     "outcome": "draw"
+    },
+    {
+     "case": "m20_white",
+     "round": 2,
+     "salt": 0,
+     "status": "censored_budget",
+     "outcome": "draw"
+    },
+    {
+     "case": "m20_white",
+     "round": 3,
+     "salt": 0,
+     "status": "censored_budget",
+     "outcome": "draw"
+    }
+   ],
+   "pass": true
+  },
+  "H2_pass_gated_dec10": true,
+  "H3_pass": true,
+  "H4_pass": true,
+  "verdict_rule": "adopt iff H1 and H3 and H4; reject if H3 or H4 fails; defer if all m20 racers censored at the race wall cap",
+  "verdict": "adopt",
+  "contention_anomaly": false
+ },
+ "m20_cost": {
+  "shipped_salt0_solo_core_s": [
+   313.521,
+   319.697,
+   312.551
+  ],
+  "shipped_result": "budget-censored at 2 B evals, no answer",
+  "portfolio_race_core_s": [
+   751.8,
+   740.0,
+   746.8
+  ],
+  "portfolio_w_first_s": [
+   96.248,
+   95.61,
+   95.89
+  ],
+  "portfolio_result": "proven win at 791,401,553 evals (evals_first = evals_min = the plan12 s5 anchor, all three races)"
+ }
+}

@@ -2,6 +2,30 @@
 
 ## Status
 
+**2026-10-11 (later the same day), plan8 executed → ADOPT; backlog #5
+closed WON.** The pre-registered verdict fired mechanically: **H1 pass**
+(the adopt trigger — m20_white converts: every race had ≥ 1 uncensored
+decisive racer, `W_first` median 95.89 s ≤ 160 s gate; the shipped salt-0
+run is budget-censored at 2 B evals / ~313 s with no answer, the portfolio
+proves the win at 791,401,553 evals in every race), **H2 pass** (dec10
+`W_first` 0.768× ≤ 0.80×; m23 clause recorded-not-gated per the fixed
+raced table), **H3 pass** (stress 1.046× / m22 1.063× / dec13 1.054×,
+all ≤ 1.10× — measured 4-way contention tax ≤ 6.3 %), **H4 pass** (5/5
+stage-0 identity; 63/63 decisive racers reproduce their plan12/stage-2
+anchors bit-for-bit under concurrency; zero outcome conflicts; censoring
+discipline held — 3 censored, 6 wall-killed recorded, evals excluded).
+The frozen stage-1 pre-computation held exactly: `evals_first` = the
+predicted basin minimum on every raced case, and the min-evals racer
+finished first in all 18 races (wall tracks evals). Out-of-sample rem12
+(not salt-invariant: 6 basins) confirmed independently — 0.889× wall,
+0.856× evals. Cost: ~747 core-s per m20 race (the first answer ever on
+that case) vs 313 core-s that yield nothing shipped; ~3.9× CPU family-
+wide for ≤ 6 % wall regression elsewhere. Ship-shape decision space
+(operator pattern vs `examples/portfolio` driver vs product flag)
+recorded in `report8.md` §Ship-shape — not implemented; owner's call.
+#6/#7 sequencing unblocked: the draw-luck regime is confirmed at gate
+grade. Measurements: `measurements/plan8/`; report: `report8.md`.
+
 **2026-10-11, owner decision — initiative reopened: salt-seeded portfolio
 at gate grade (plan8, in execution).** The re-examination addendum's
 sequencing resolves in favor of backlog **#5** (diversified portfolio
@@ -314,7 +338,7 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
 | 2 | **Design-space note: architecture selection** | Weigh options A–D above against the design constraints; include the API/consumer story (opt-in `--threads N` vs a process-portfolio harness vs both). Sizing spike allowed per lean's cadence (temporary instrumentation, reverted) | selects the 2–8× lever's shape | — | M | **closed 2026-09-21 (plan2): measured NO-GO** — `design_space.md` + `measurements/plan2/`: option C (root-child race over unmodified processes) measured 0.27× wall (3.7× slowdown) at N=4 on m22, 15.5× work inflation, zero soundness violations; deficit structural (forfeited cross-child TT sharing/interleaving); ship-shape verdict recorded (harness-only, moot); no parallel mode ships |
 | 3 | **Staged implementation** | Gated on #2 GO; one lever per plan; sequential drift protocol green at every stage; parallel mode documented as nondeterministic (or not shipped, per #2) | the actual speedup | wall | L–XL | **closed 2026-09-21** — unblocking condition (#2 GO) failed on the pre-registered rules; no staged implementation exists to stage |
 | 4 | **A-stage: SPDFPN-style shared-TT parallel DF-PN** | Reopened by the 2026-10-02 nondeterminism premise; reference design = `research_spdfpn.md`. Stage 1 (plan4/plan4b): inert TT-concurrency refactor — sharded TT behind interior-mut locking, byte-identical N=1 behavior (gate re-registered 2026-10-03: ≤ +7 % median hard-class wall, byte-identity unchanged). Stage 2 (plan5/plan5b): `--threads N` prototype — W-threshold + same-child resume clause, virtual TT + job lock + `TRYRUNJOB`, thread-local repetition cache, serialized ProofEvents; measured on the hard class (wall speedup, work inflation, outcome agreement) with pre-registered GO bands; **tax acceptance + refactor revert-if-missed** | 2–8× wall on hard solves (expected ≈ 2.9–3.2× at 4 threads; conservative band ~1.8× at the GO edge) | wall | L–XL | **closed 2026-10-04 NO-GO (plan6, second campaign; `report6.md`)**: plan6 re-landed stage 1b+2a verbatim, locked W = 20 000 by the pre-registered long-class confirmation, added mid case rem12 (17.1 s seq), and re-ran the campaign at 8 interleaved reps × N ∈ {2,3,4}: **H1 fails both conjuncts (shuffle-win S4 = 1.65× < 2.0, I4 = 2.22× > 1.5 — the plan5b 2.68× was a 5-rep artifact of a bimodal run distribution)**, rem12 fails twice (S4 = 1.20× < 1.5, I4 = 3.03× > 2), cap-hit gate fails (C = 3/8 > 1/8); soundness clean (64/64 decisive `win`, zero panics); length trend directionally real (ρ = 1.0) but far below every GO threshold. Condition-2 revert executed (0-line diff vs pre-plan4b, all hashes identical). Prior state: closed 2026-10-04 NO-GO (plan5b; `report5.md`) — re-opened same day by owner directive; see `plan6.md` for the second pre-registration: stage 2b campaign (W sweep locked 10 000 — the landed 20 000 measured 3× worse at median; 5 interleaved reps × N ∈ {2,3,4} on m22 + shuffle-win): outcome agreement 29/29 decisive `win`, zero panics; **S4 = 1.79× (m22) / 2.68× (shuffle-win), I4 = 2.06× (m22) / 1.41× (shuffle-win)** → m22 misses both GO conjuncts, I4 > 2× fires NO-GO. **Condition-1 revert executed**: stage 1b + 2a reverted (0-line code diff vs pre-plan4b, `make test` green, quick suite 59/59, snapshot sha identical) — the tax is refunded. Mechanism preserved in history (`b714ef6` + W delta) and `measurements/plan4/`; re-open levers in `report5.md`. Measurements: `measurements/plan4/`, `plan4b/`, `plan5/` |
-| 5 | **Diversified portfolio re-run at gate grade** | Re-test plan7's downgraded-to-unjudged question under the pinned gate v1.0 with the only surviving diversity source: K concurrent sequential racers at different `--salt` values, default-inclusive, take-first decisive. Config arms (ε, history/killer, clock-budget reuse) are closed at gate grade (research plan13/17/18) and are not racer arms. Evals-space result pre-computable from plan12 data (racers are concurrency-independent); the unmeasured surface is contention wall, `W_first` on the m20_white timeout conversion, and out-of-sample rem12 | priority-1 timeout→proof conversions on the deep tier; ~1.0× elsewhere (pointwise dominance) | none (zero product code; `--salt` is shipped) | S | **in execution (plan8, 2026-10-11)** — reopened by owner decision; gate `plan8.md` |
+| 5 | **Diversified portfolio re-run at gate grade** | Re-test plan7's downgraded-to-unjudged question under the pinned gate v1.0 with the only surviving diversity source: K concurrent sequential racers at different `--salt` values, default-inclusive, take-first decisive. Config arms (ε, history/killer, clock-budget reuse) are closed at gate grade (research plan13/17/18) and are not racer arms. Evals-space result pre-computable from plan12 data (racers are concurrency-independent); the unmeasured surface is contention wall, `W_first` on the m20_white timeout conversion, and out-of-sample rem12 | priority-1 timeout→proof conversions on the deep tier; ~1.0× elsewhere (pointwise dominance) | none (zero product code; `--salt` is shipped) | S | **closed 2026-10-11 ADOPT (plan8; `report8.md`)** — H1 pass (m20_white shipped-timeout → proven win at 791.4 M evals, `W_first` median 95.89 s, conversion in 3/3 races), H2 pass (dec10 0.768×), H3 pass (≤ 1.063× everywhere), H4 pass (5/5 identity, 63/63 in-race anchor fidelity, zero conflicts); prediction held exactly (evals_first = predicted basin min, wall tracked evals in 18/18 races); out-of-sample rem12 won independently (0.889×). Ship-shape space recorded, not implemented (owner decision); #6/#7 sequencing unblocked |
 | 6 | **Cooperative portfolio (ManySAT shape)** | Private per-worker TTs + an append-only shared solved-facts table; one pure default racer never consumes it, so the worst case is the sequential wall. Solved entries are path-independent and already reused across paths within a run; keep the `best_move_repeats_path` guard; same root and run only (not the plan10 cross-solve store). Risk (reexamination idea B): extra solved facts can destabilize DF-PN (`dfpn` report10/11) — read under the draw-luck regime plan8 establishes | could harvest cross-racer facts, not just min-of-draws | M (product code) | M | **open** — sequenced behind #5: its pre-registration must read plan8's draw-luck result |
 | 7 | **Any-worker-can-finish SPDFPN** | The reexamination idea C successor: the TT-capacity diagnostic premise is dead (bigger TT regresses sequentially — `research/reexamination.md` §4), so only the architecture point survives, re-motivated from "avoid perturbation variance" to "harvest draw luck with min-selection" (every worker can prove the root, first finish wins). Prerequisite reading: plan6's bad-trajectory tails (5.7–6.3×) sit inside the sequential single-config salt noise band — re-read under plan8's distributions before building | trims the SPDFPN bad tail, if it was not a noise-floor artifact | re-land (`b714ef6` + W delta) | M–L | **open** — sequenced behind #5 |
 | 8 | **Kaneko root threads with virtual pn congestion** | Root-started workers carrying their own in-call path state (`dfpn/research_parallel.md`, never implemented) sidestep the TT-only TRYRUNJOB descent blindness in repetition-heavy regions (first-player-loss GHI shortcut leaves nothing to guide on) | avoids the §2 repetition-region stall that stalled the pure SPDFPN pool | L | L | **open, fringe** — cross-referenced as research backlog #22(b) |
@@ -346,6 +370,27 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
   and outcome agreement across repeated runs (no `wrong` ever).
 
 ## History
+
+- **2026-10-11 — plan8 complete: salt-seeded process portfolio → ADOPT,
+  backlog #5 closed WON (`report8.md`)** (zero product-code changes; all
+  artifacts under `measurements/plan8/`): stage-0 identity gate 5/5 exact;
+  stage-1 pre-computation frozen from the committed plan12 rollout before
+  any race (pointwise dominance confirmed: evals_first = predicted basin
+  minimum on every raced case); stage-2 rem12 extension found rem12 NOT
+  salt-invariant (6 basins, spread 1.31×, all uncensored `win`) — kept as
+  the out-of-sample raced case; pilot clean; campaign 3 rounds × 6 cases
+  (extension trigger never fired; max W_first spread 0.7 %). Verdict
+  mechanical: **adopt** (H1 ∧ H3 ∧ H4; H2 gated dec10 clause also passed).
+  Headlines: m20_white shipped 2 B-eval timeout converted to a proven win
+  at 791,401,553 evals with `W_first` median 95.89 s (contention on the
+  winner 1.023× — essentially nil); dec10 0.768× wall / 0.685× evals;
+  rem12 0.889× wall out of sample; no regression anywhere (≤ 1.063×);
+  determinism survives 4-way concurrency bit-for-bit (63/63 anchor
+  reproductions); zero decisive-outcome conflicts. Cost: ~3.9× CPU
+  family-wide; m20 ~747 core-s per answer (vs a shipped run that never
+  answers). Ship-shape decision space (operator pattern / `examples`
+  driver / product flag) recorded in `report8.md` — owner's call; #6/#7
+  pre-registrations now read the confirmed draw-luck regime.
 
 - **2026-10-11 — initiative reopened (owner decision); plan8 drafted
   (docs only, no code)**: backlog #5–#10 derived from
