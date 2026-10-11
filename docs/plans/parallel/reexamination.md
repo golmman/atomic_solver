@@ -170,3 +170,98 @@ cross-child TT subsidy), and Čížek option D (no safe shared payload).
   diagnosis do not hold (addendum appended to `report7.md`).
 - plan7's NO-GO stands as the measured result *of that portfolio*; it is
   not evidence against diversified portfolios.
+
+## Addendum — cross-reading `research/reexamination.md` (2026-10-13)
+
+The structural-floor re-examination
+([`../research/reexamination.md`](../research/reexamination.md), 2026-10-09)
+landed after this note, and the `research` initiative has since executed
+its §6 next steps (gate pinning plan11/12, plan13–plan17, see
+[`../../README.md`](../../README.md) `research` row). Its findings do not touch
+this note's code facts, §3 (the sequential TT tax) or §4's surface
+critique — the last is *reinforced* — but four claims
+here need correction or downgrading, and the idea ranking in §5 needs a
+sequencing dependency. Corrections, in the order the sections appear:
+
+1. **§1's "passes plan7's H1/H2 gates" is downgraded to *unjudged*.** The
+   re-measured race (`measurements/reexam/state/races.json`) is one race
+   per case: a single draw of the portfolio min against a single-draw
+   denominator. The `research` note's salt probe (its §1) shows a
+   semantics-neutral TT bucket remap moves stress from 249.5 M to 758 M /
+   censored (≥ 10×) — single-draw comparisons on the hard class are below
+   the noise floor, which is exactly the defect this note diagnosed in
+   plan7. Mitigating, not exculpatory: the sequential salt-0 baselines are
+   the best or near-best of five draws on stress, m22 and dec13, so the
+   measured 0.63× / 0.75× ratios plausibly *understate* the portfolio's
+   expected value — an argument, not a measurement. Any future
+   pre-registration must gate on distributions over ≥ 5 salts
+   (`research` re-examination §6.1), not single races.
+2. **§2's TT-capacity hypothesis loses its premise.** The `research` note
+   §4 measured bigger TT on the sequential path: stress +12.5 % (256 MB),
+   +28.1 % (1 GB); m22 +22.5 % (256 MB) — "not a work lever at 128 MB+".
+   Idea C's cheap diagnostic therefore no longer tests "capacity
+   starvation" in a promising way. Related re-reading: plan6's SPDFPN
+   bad-trajectory tails (5.7–6.3× eval inflation) sit *inside* the
+   sequential single-config salt noise band, and plan6's medians were
+   already 0.61–0.99× — the tails may be ordinary draws compared against a
+   lucky salt-0 denominator, not a parallelism pathology. The
+   any-worker-can-finish architecture point survives; its motivation
+   changes from "avoid perturbation variance" to "harvest draw luck with
+   min-selection".
+3. **Idea A's lever list is stale, and the arm readings it was built on
+   are superseded.** Clock-budget solved-entry reuse is no longer "needs
+   an opt-in flag": plan17 (2026-10-11) re-scored it under the pinned
+   22-case × 6-salt gate and **both arms REJECT** (dec01 1.95–41.7×,
+   dec06 2.48×, dec14 1.26–1.46× regressions; m22 censored 6/6 at 1 B in
+   the plan10 full lever). It moves to the "stays closed" list. The ε
+   arms were likewise re-scored at gate grade (plan13, 2026-10-11):
+   global ε = 0.375 / 0.5 **REJECT as shipped-default replacements**, and
+   the plan4 single-draw readings that motivated this note's portfolio
+   arm selection (and fed its VBS estimates) are superseded. Two
+   distinctions keep a narrow question open: plan13 closes ε as a
+   *default*, while a portfolio racer's regressions on controls are
+   covered by the default racer — but the *magnitude* of the racer gains
+   was only ever measured single-draw (item 1 above), so the racer value
+   is unjudged, not promising. The history/killer arms remain unjudged
+   (`research` plan18, pending).
+4. **The chaos diagnosis is strengthened, and gains a zero-risk diversity
+   source — with a basin-structure constraint.** The salt probe shows
+   chaos exists *within* a single config — the strongest evidence yet for
+   "determinism is per config, across realizations there is chaos".
+   Salt/layout diversity is semantics-neutral by construction, needs no
+   product code (the `PROBE_SALT` hook already exists as a probe patch),
+   and directly answers this note's own remark that ε = 1.0 "should be
+   replaced by a different diversity source". Constraint from the landed
+   gate work: per-case **basin counts** are normative
+   (`research/gate_methodology.md` v1.0, plan11/12), and the tie-break
+   noise channel measured silent exactly where the salt channel is
+   basin-limited (plan14, closed H0) — so portfolio arms must be
+   *basin-crossing* to gain anything, and the gate's diversity clause
+   requires basin counts next to any future portfolio measurement.
+
+**Sequencing dependency (§5).** Two of the `research` note's §6 next steps
+have since executed: §6.1 landed as the pinned statistical gate
+(`research/gate_methodology.md` v1.0 — quiet noise band [0.76, 1.32]
+retires single-draw gates; it is the normative gate for any future
+parallel pre-registration), and §6.2 (leaf-initialization family) was
+executed and **closed measured-out** (plan15 Phase 0 + plan16 Phase 1,
+2026-10-11: m22 collapse diagnosed — AND-side `(1, n)` init carries it,
+OR-side `(n, 1)` holds the stress/dec13 wins — but `mob-or` and
+`mobcap8` both REJECT per the pinned gate; later family stages dormant
+pending a new mechanism hypothesis). The factor-level single-core levers
+this note worried about are therefore not sitting behind an unstarted
+door — but the EV-comparison concern inverts into a sequencing rule:
+the live single-core competitor is **#20 salted TT-keeping restarts**
+(open `research` backlog row), which harvests the same heavy tail as the
+portfolio idea without 4× CPU; ideas A and C should be evaluated *against*
+it, not ahead of it, and only after a basin-crossing arm set is
+established under the pinned gate. Idea F's "config-rotating restarts on
+one core" is subsumed for now by #20. Idea B's risk note ("extra solved
+facts can destabilize DF-PN") should be read against the same draw-luck
+regime. Idea D (Kaneko root threads) is unaffected; the `research` note
+§6.6 already cross-references it as fringe (backlog row #22).
+
+**Unchanged:** the no-go for deterministic sibling parallelism (lean plan7
+ceiling), process-per-child option C (plan2) and Čížek option D. This
+addendum commits to no execution; any follow-up remains a new `planN.md`
+with its own pre-registration, now under the salt-seeded gate.

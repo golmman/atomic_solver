@@ -866,3 +866,14 @@ Now in the same vein we could add a random seed and introduce randomness for e.g
 What do you think?
 
 draft plan13
+
+
+---
+
+Some sessions ago we did some independent reexaminations, here are the reports.
+1. docs/plans/parallel/reexamination.md
+2. docs/plans/research/reexamination.md
+
+Since the insights from 2 came after 1 i am worried that we missed the mechanisms and techniques discovered in 2.
+
+Is 1 sound, does it need an amendment?
