@@ -1,0 +1,26 @@
+{
+ "plan10": {
+  "n_claims": 540,
+  "verified": 540,
+  "failed": 0,
+  "ok": true,
+  "verifier": {
+   "verified": 540,
+   "failed": 0,
+   "claims": 540
+  },
+  "stderr_tail": []
+ },
+ "arma": {
+  "n_claims": 498,
+  "verified": 498,
+  "failed": 0,
+  "ok": true,
+  "verifier": {
+   "verified": 498,
+   "failed": 0,
+   "claims": 498
+  },
+  "stderr_tail": []
+ }
+}

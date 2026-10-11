@@ -76,7 +76,14 @@ neutral draw moves the gate object by ≥ 3×. Affected closures include:
 
 - ε = 0.375 / 0.5 (`report4.md` Phase 0; `conversion` #7);
 - clock-budget solved-entry reuse, −37.7% on stress but m22 collapse
-  (`dfpn` #2, plans 10/11);
+  (`dfpn` #2, plans 10/11) — **upgraded to gate grade 2026-10-11
+  (plan17): both arms REJECT on the 22-case × 6-salt paired rollout**
+  (plan10 full lever: dec01 1.95–41.7× / dec06 2.48× / dec14 1.26×
+  regressions, m22 censored 6/6 at 1 B; plan11 arm A: dec14 1.40–1.46×
+  regression vetoes despite stress censored-win / m23 + dec10 wins; m22
+  unclear 0.65–1.28×). Not shown to be wins — and no longer merely
+  unjudged ([`report17.md`](report17.md),
+  [`measurements/plan17/`](measurements/plan17/README.md));
 - the `lean` plan10 history/killer arms (−11 to −20% quick totals, killed by
   per-case flips);
 - TT eviction arm V2 (`report7.md`).
