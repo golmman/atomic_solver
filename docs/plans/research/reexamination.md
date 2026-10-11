@@ -223,6 +223,22 @@ there (`n` = legal moves), instead of `(1, 1)`.
 4. **Restarts as a single-core lever.** If the per-salt distribution is
    heavy-tailed (stress suggests it), salted restarts that keep the TT can
    cut *expected* work; the chunk result (§4) already points this way.
+   **Executed at Phase 0, PIVOT — item #20 closed 2026-10-11 (plan20):**
+   the pre-registered retention kill gate fired on every stress-class
+   probe — re-placing a ~95 %-full 2-slot-bucket TT under a fresh index
+   drops 15–23 % of live entries per reseed (79.4–83.8 % live retention
+   at ≥ ~80 % occupancy; solved entries protected at ≥ 97.6 %), so
+   "keeping the TT" fails exactly at the occupancies where the lever was
+   supposed to pay; a reseed there is a partial-clear restart. Low-
+   occupancy reseeds are lossless but touch only the early chunks whose
+   collision basins the heavy tails do not live in. Effect-probe
+   single draws (stress s1 0.50×/0.39×, s2-rsg solves a censored salt;
+   s0 1.12–1.19×, m22 1.40×) show redrawn collision luck is real but
+   structurally dominated by the retention cost. The hook was
+   `TranspositionTable::reseed` + a chunk-boundary call site, measured and
+   reverted; full retention table and anchors in
+   [`report20.md`](report20.md),
+   [`measurements/plan20/`](measurements/plan20/README.md).
 5. **In-context child results** for the dec10 class: keep a child's
    just-proven repetition-dependent Draw in the parent frame instead of
    re-reading the TT's `(1, 1)` entry (38% of dec10's evals).
