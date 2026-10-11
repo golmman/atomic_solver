@@ -729,3 +729,25 @@ Per repo convention, every plan ends with the task of writing its
   `measurements/plan18/env.json`). Remaining #19 arm: `lean` plan7 eviction
   V2 re-score — the last one ([`report18.md`](report18.md),
   [`measurements/plan18/`](measurements/plan18/)).
+- **2026-10-11** — **plan19 drafted (item #19, fourth and final arm: TT-eviction
+  V2 re-score, research plan7's Phase-1 arm)**: the last unjudged §1 closure —
+  plan7's V2 readings sit at the noise band (stress 1.382×, barely outside;
+  m22 1.237× **inside** the quiet band, formally unjudged), and the eviction
+  surface is the one closure where the salt noise channel is the lever's own
+  substrate (the salt remaps bucket sharing, i.e. the eviction pattern).
+  plan18's structure with the documented simplifications: one candidate arm
+  (`ATOMIC_TT_REPL=v2`, the original plan7 env name; `insert_new` victim score
+  gains the `remaining_depth` tiebreak before `generation`, larger kept, with
+  the direction anchor-arbitrated by the archived scalars), 264 runs
+  (22 × 6 × {base, v2}), V1 excluded with rationale (catastrophic readings,
+  not band-edge; a layout-forbidden mechanism), recorded-scalar anchors with
+  an explicit erratum clause (plan7's phase1 raws were not archived),
+  adopted-claim sub-study dropped as inapplicable. D7 pre-registered:
+  sparse-effect shape (the arm only fires on full buckets — salt-0 occupancy
+  stress 95.4%, m22 4.6%, dec13 0.25%, dec10 0.09%), exact-null mass ≥ 40%.
+  Plan-session read-only probes (2026-10-11): m22 salt-0 14,156,269 and
+  stress 249,480,478 reproduce at HEAD on the existing release build with
+  `git diff --exit-code` clean — D3(a) partially pre-verified. Next plan
+  number after plan19: none queued — with #19 closed, the remaining open
+  reopened-backlog items are #20 (salted restarts), #21 (in-context child
+  results), #22 (fringe).
