@@ -1,0 +1,595 @@
+{
+ "verdicts": {
+  "inctx": {
+   "cases": {
+    "m20_white": {
+     "verdict": "censored-win",
+     "pattern": {
+      "0": "base_only",
+      "1": "base_only",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 2,
+     "n_censored_cand": 0,
+     "ratios": [
+      0.5456632145769645,
+      1.02373588851795,
+      0.9756714473667445,
+      1.078926534530063
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 4,
+     "low_diversity": false,
+     "hard_class": true
+    },
+    "stress": {
+     "verdict": "censored-win",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "base_only",
+      "3": "base_only",
+      "4": "base_only",
+      "5": "neither"
+     },
+     "n_censored_base": 3,
+     "n_censored_cand": 0,
+     "ratios": [
+      0.8331156396132927,
+      0.37622101008549225,
+      0.8587160000918634
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 3,
+     "low_diversity": false,
+     "hard_class": true
+    },
+    "m22_white": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      0.8013454795568221,
+      0.8456479848185208,
+      0.9058892571345255,
+      1.1713441698495455,
+      1.398152469392505,
+      6.501312810600025
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 6,
+     "low_diversity": false,
+     "hard_class": true
+    },
+    "m23_white": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      0.9850076876840976,
+      0.9999623093216914,
+      1.0,
+      1.0,
+      1.0,
+      1.0087600095735634
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 5,
+     "low_diversity": false,
+     "hard_class": true
+    },
+    "dec01": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      0.9099165820738129,
+      0.9439825483204237,
+      0.9658897876870146,
+      0.9735618243561245,
+      0.99945375706203,
+      1.0980262197599946
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 6,
+     "low_diversity": false,
+     "hard_class": false
+    },
+    "dec02": {
+     "verdict": "regression",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.1174669137876112,
+      1.1174669137876112,
+      1.1174669137876112,
+      1.1174669137876112,
+      1.1174669137876112,
+      1.1174669137876112
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec03": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec04": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec05": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec06": {
+     "verdict": "win",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      0.8305133991649651,
+      0.8305145010215724,
+      0.8305273296795583,
+      0.8305331429022519,
+      0.8305363918592619,
+      0.8305549548449923
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec07": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec08": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec09": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec10": {
+     "verdict": "win",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      0.4195826286283543,
+      0.5137698995654363,
+      0.5163282285280968,
+      0.5640154521691907,
+      0.5665954527304684,
+      0.7068682083000415
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 4,
+     "low_diversity": false,
+     "hard_class": false
+    },
+    "dec11": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec12": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec13": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 2,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec14": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 3,
+     "low_diversity": false,
+     "hard_class": false
+    },
+    "dec15": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      0.9855998589222401,
+      0.9855998589222401,
+      0.9856000994952842,
+      0.9856013617172933,
+      0.9856156373559057,
+      0.985628631360101
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec16": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec17": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    },
+    "dec18": {
+     "verdict": "unclear",
+     "pattern": {
+      "0": "neither",
+      "1": "neither",
+      "2": "neither",
+      "3": "neither",
+      "4": "neither",
+      "5": "neither"
+     },
+     "n_censored_base": 0,
+     "n_censored_cand": 0,
+     "ratios": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "under_budget": false,
+     "baseline_basin_count": 1,
+     "low_diversity": true,
+     "hard_class": false
+    }
+   },
+   "lever": "reject",
+   "hard_class_support": [
+    "m20_white",
+    "stress"
+   ],
+   "diverse_hard_class_support": [
+    "m20_white",
+    "stress"
+   ],
+   "negatives": {
+    "dec02": "regression"
+   },
+   "d7_calibration_question": "sole negative is a dec02 regression with all paired ratios in/at the quiet band ([1.117, 1.117, 1.117, 1.117, 1.117, 1.117]); methodology-calibration question for the owner, not an applied rule"
+  }
+ },
+ "dispersion": {
+  "inctx": {
+   "n_pairs": 127,
+   "min": 0.37622101008549225,
+   "max": 6.501312810600025,
+   "p10": 0.8305331429022519,
+   "p25": 0.99945375706203,
+   "median": 1.0,
+   "p75": 1.0,
+   "p90": 1.0,
+   "frac_outside_[0.9,1.1]": 0.2125984251968504,
+   "frac_exactly_1.0": 0.6377952755905512
+  }
+ },
+ "pinned": {
+  "W_LO": 0.9,
+  "W_HI": 1.1,
+  "agreement": 0.75,
+  "hard_class": [
+   "stress",
+   "m20_white",
+   "m22_white",
+   "m23_white"
+  ],
+  "quiet_band": [
+   0.76,
+   1.316
+  ]
+ }
+}

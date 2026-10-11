@@ -242,6 +242,25 @@ there (`n` = legal moves), instead of `(1, 1)`.
 5. **In-context child results** for the dec10 class: keep a child's
    just-proven repetition-dependent Draw in the parent frame instead of
    re-reading the TT's `(1, 1)` entry (38% of dec10's evals).
+   **Executed at gate grade, REJECT — item #21 closed 2026-10-11 (plan21):**
+   the mechanism is live, sound, and captures 100% of the measured stale
+   mass (the C8 counters: 10,956 stale re-eval events / 1,624,604
+   evals-after-stale = 38.1% of dec10's work replicated exactly on the
+   hook-off build; 0 / 0 with the hook on, 340 cache hits from 2.13 M
+   probes) — and it delivers on its own target class (dec10 win, median
+   0.54×, all six salts < 1; dec06 win 0.831×; stress and m20_white
+   censored-wins solving all five baseline budget-censored salts). But the
+   pinned v1.0 rule rejects on any regression: a deterministic dec02
+   regression (1.117× on all six salts, a tiny position whose one
+   trajectory shift costs 11.7% work) vetoes the adopt. m22's
+   pre-registered H2 wildcard fired (salt-5 6.50× — the `(INF, 0)`
+   in-context bounds distorting threshold carry-over; other salts
+   0.80–1.40×). The sparse-effect D7 dispersion prediction was met (63.8%
+   exact-null, 21.3% frac-outside) — effects concentrate exactly where the
+   rep-cache holds entries. The hook (`evaluate_child` rep-cache probe +
+   O(1) child-context plumbing) was measured and reverted; per-case tables
+   and anchors in [`report21.md`](report21.md),
+   [`measurements/plan21/`](measurements/plan21/README.md).
 6. **Fringe.** Solve ignoring the 50-move rule and use that table only to
    seed initialization (the real search still proves everything); Kaneko
    root threads (see `parallel/reexamination.md` idea D).
