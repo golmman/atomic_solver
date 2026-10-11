@@ -85,7 +85,14 @@ neutral draw moves the gate object by ≥ 3×. Affected closures include:
   unjudged ([`report17.md`](report17.md),
   [`measurements/plan17/`](measurements/plan17/README.md));
 - the `lean` plan10 history/killer arms (−11 to −20% quick totals, killed by
-  per-case flips);
+  per-case flips) — **re-scored, both arms REJECT on the 22-case × 6-salt
+  paired rollout** (plan18): the quick-suite wall-cap kills were indeed
+  artifacts, but the arms die anyway on hard-class evidence (hs2ag1: m23
+  censored-loss; hs05ag1: m22 censored-loss at 1 B) plus a deterministic
+  dec05 5.19× / dec14 1.55–1.62× tail on all six salts under both arms —
+  the closure is upgraded unjudged → gate grade, the strongest form of
+  lean plan10's no-go ([`report18.md`](report18.md),
+  [`measurements/plan18/`](measurements/plan18/README.md));
 - TT eviction arm V2 (`report7.md`).
 
 These are not shown to be wins — they are shown to be *unjudged*. The
