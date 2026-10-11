@@ -877,3 +877,10 @@ Some sessions ago we did some independent reexaminations, here are the reports.
 Since the insights from 2 came after 1 i am worried that we missed the mechanisms and techniques discovered in 2.
 
 Is 1 sound, does it need an amendment?
+
+---
+
+* workspace initiative
+* nn re-examination? -> workspace
+* map of all techniques/mechanism
+  * failed and not failed

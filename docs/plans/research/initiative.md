@@ -843,3 +843,29 @@ Per repo convention, every plan ends with the task of writing its
   [`measurements/plan20/`](measurements/plan20/README.md)). Remaining
   open reopened-backlog items: #21 (in-context child results), #22
   (fringe).
+- **2026-10-11** — **plan21 drafted (item #21, in-context child results,
+  dec10 class)**: the last substantive open reopened-backlog item. Mechanism
+  pre-registered from a code-verified read: the first-player-loss shortcut
+  stores a repetition-dependent proven Draw as a TT unsolved `(1, 1)` entry
+  and the plan9 rep-cache holds the exact value under the identical ancestor
+  context — but the cache is only probed at `dfpn` frame entry, never at
+  `evaluate_child`, where the parent re-prices the child at the stale
+  `(1, 1)` (the reexamination's C8 mass: 38.1% of dec10's evals vs stress
+  1.7%). The lever is a rep-cache probe at `evaluate_child`'s unsolved site
+  (sound by the plan9 contract — only proven rep-draws enter the cache; the
+  naive outcome-memo alternative is rejected as unsound — a depth-capped
+  leaf returns an unproven Draw); `repetition_seen: true` on the hit keeps
+  the parent's own suppression correct; child context passed O(1) as a
+  loop-invariant `context_hash + mix(rep_key)` argument. Plan-session
+  read-only probes (2026-10-11, clean tree at 5f2b210): **all six salt-0
+  anchors reproduce exactly** (stress 249,480,478; m22 14,156,269; m23
+  9,673,403; dec13 3,822,602; dec10 4,262,128; m20 budget-censored at 2 B)
+  — D3(a) fully pre-verified; call-site audit confirms `evaluate_child` is
+  the sole child-value funnel (two production call sites; the prefetch
+  pre-pass reads no values). Shape: plan19's 264-run 2-arm rollout, Phase 0
+  liveness/context-fidelity/coverage gates in the plan20 style (K1 inert,
+  K2 soundness, K3 context fidelity; coverage probe prices how much of the
+  38.1% mass the cache route captures). D7 pre-registers a sparse-effect
+  shape with dec10 as the only directional expectation (H1 win) and m22 as
+  the flagged wildcard. Next plan number after plan21: none queued — #22
+  fringe would be the last open item.
