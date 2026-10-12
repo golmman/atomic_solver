@@ -14,8 +14,9 @@
 //! scheduling artifact, not a trajectory property. The anchor pins
 //! outcome, evals, and PV but not the winner salt.
 //!
-//! Resource note: the 4-racer race runs 4 × 128 MB TT = 512 MB peak RAM
-//! (the documented driver RAM contract); wall ≈ 1–2 s per decisive race
+//! Resource note: the 4-racer race runs racers at the shipped CLI default
+//! (label 256 MB since lean plan15 → 224 MiB each, so 896 MiB peak RAM,
+//! the documented driver RAM contract); wall ≈ 1–2 s per decisive race
 //! and ≪ 1 s for the budget-censoring race.
 
 use std::path::PathBuf;

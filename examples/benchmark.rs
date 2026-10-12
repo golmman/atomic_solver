@@ -106,7 +106,10 @@ fn main() {
     let mut runs = 10usize;
     let mut timeout = 5u64;
     let mut epsilon = 0.125f64;
-    let mut tt_size = 128usize;
+    // Locked to the shipped CLI default (lean plan15: label 256 MB = the
+    // old round-up 128 MB table), so the evaluator measures the default
+    // configuration; see docs/spec/optimizer_interface.md.
+    let mut tt_size = 256usize;
     let mut suite = Suite::Default;
     let mut first_outcome = false;
     let mut json = false;

@@ -311,7 +311,8 @@ fn cli_draw_prints_no_pv_status() {
 
 /// `--tt-dump-path` writes a binary TT snapshot after the search; the snapshot
 /// line is printed and the file parses with `solved_count >= 1` and a size
-/// bounded by the TT RAM (default `--tt-size` = 128 MB).
+/// bounded by the TT RAM (default `--tt-size` = 256 MB, which allocates an
+/// honest 224 MiB since lean plan15).
 #[test]
 fn cli_tt_dump_path_writes_parsable_snapshot() {
     let dump_path = "target/tt_snapshot_test_cli.bin";

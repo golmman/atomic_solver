@@ -102,16 +102,63 @@ fn eviction_prefers_lowest_work_among_distinct_scores() {
     }
 }
 
+/// Bucket bytes: 4 × 56 = 224 B per four-slot bucket (lean plan14 layout).
+const BUCKET_BYTES: usize = std::mem::size_of::<TtEntry>() * 4;
+
 #[test]
-fn with_mb_128_yields_quarter_the_buckets_of_the_old_layout() {
-    // Lean plan14 arm A: 128 MB → 2^22 entries in 2^20 four-slot buckets;
-    // the RAM footprint is unchanged (same entry count, wider buckets).
+fn with_mb_128_yields_half_the_old_default_buckets() {
+    // Lean plan15 #20 (round down): the 128 MB label now builds 2^19 buckets
+    // / 2^21 entries / 112 MiB — half of what the old round-up formula
+    // allocated at the same label (2^20 buckets / 224 MiB).
     let tt = TranspositionTable::with_mb(128);
+    assert_eq!(tt.bucket_count(), 1 << 19);
+    assert_eq!(tt.bucket_count() * BUCKET_BYTES, 112 * 1024 * 1024);
+}
+
+#[test]
+fn with_mb_256_equals_the_old_default_table() {
+    // The parity property plan15 relies on: the new default label 256 builds
+    // exactly the table the old (round-up) 128 MB default built — same bucket
+    // count, same entry count, same allocation.
+    let tt = TranspositionTable::with_mb(256);
     assert_eq!(tt.bucket_count(), 1 << 20);
-    assert_eq!(
-        tt.bucket_count() * 4 * std::mem::size_of::<TtEntry>(),
-        (1 << 22) * std::mem::size_of::<TtEntry>()
-    );
+    assert_eq!(tt.bucket_count() * BUCKET_BYTES, 224 * 1024 * 1024);
+}
+
+#[test]
+fn with_mb_exact_divisors_are_unchanged_by_rounding() {
+    // Labels of the form 56·2^k MB divide exactly; round-down keeps the
+    // tables the old round-up formula built for them.
+    for (mb, log2_buckets) in [(56usize, 18usize), (112, 19), (224, 20)] {
+        let tt = TranspositionTable::with_mb(mb);
+        assert_eq!(tt.bucket_count(), 1 << log2_buckets, "mb = {mb}");
+        assert_eq!(tt.bucket_count() * BUCKET_BYTES % (1024 * 1024), 0);
+    }
+}
+
+#[test]
+fn with_mb_1_yields_4096_buckets() {
+    // The generic small-table pin used across this test module: 1 MB →
+    // 2^12 buckets (down from the old round-up's 2^13).
+    let tt = TranspositionTable::with_mb(1);
+    assert_eq!(tt.bucket_count(), 4096);
+}
+
+#[test]
+fn with_mb_never_allocates_more_than_the_label() {
+    // Honest-sizing sweep (lean plan15 #20): every label allocates at most
+    // its own byte count, and the bucket count stays a power of two.
+    let mut mbs: Vec<usize> = (1..=64).collect();
+    mbs.extend([128, 224, 256, 512, 1024]);
+    for mb in mbs {
+        let tt = TranspositionTable::with_mb(mb);
+        assert!(tt.bucket_count().is_power_of_two(), "mb = {mb}");
+        assert!(
+            tt.bucket_count() * BUCKET_BYTES <= mb * 1024 * 1024,
+            "mb = {mb}: {} bytes > label",
+            tt.bucket_count() * BUCKET_BYTES
+        );
+    }
 }
 
 #[test]

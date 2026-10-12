@@ -50,11 +50,15 @@ impl Default for CliOptions {
     fn default() -> Self {
         Self {
             fen: STARTPOS_FEN.to_string(),
-            // 128 MB: the 64 MB default was capacity-bound on hard searches
-            // (m22-class fills ~1M entries for 2.4M nodes; doubling the table
-            // cut first-outcome work 2.6x — see
-            // docs/plans/lean/research_tt_capacity.md).
-            tt_size: 128,
+            // 256 MB label: sizing rounds down to a power-of-two bucket
+            // count (lean plan15 #20), so this label allocates 224 MiB —
+            // byte-identical to the former round-up 128 MB default. The
+            // previous default bump history: 64 MB was capacity-bound on
+            // hard searches (#16, plan4; m22-class fills ~1M entries for
+            // 2.4M nodes; doubling cut first-outcome work 2.6x — see
+            // docs/plans/lean/research_tt_capacity.md), and the second bump
+            // to 256 is label-honesty bookkeeping, not a capacity change.
+            tt_size: 256,
             epsilon: 0.125,
             timeout: 5,
             first_outcome: false,
@@ -248,7 +252,7 @@ mod tests {
             ParseResult::Help => panic!("unexpected help"),
         };
         assert_eq!(fen, STARTPOS_FEN);
-        assert_eq!(tt_size, 128);
+        assert_eq!(tt_size, 256);
         assert_eq!(epsilon, 0.125);
         assert_eq!(timeout, 5);
         assert!(!first_outcome);

@@ -19,7 +19,8 @@
 //! racers' evals are excluded from the summary decision.
 //!
 //! RAM: the driver holds no search state; RAM = K × TT of the spawned
-//! racers (4 × 128 MB = 512 MB at defaults).
+//! racers (at defaults, 4 × 256 MB labels = 4 × 224 MiB = 896 MiB of
+//! actual allocation).
 //!
 //! Usage:
 //!     cargo run --release --example portfolio -- --fen "<FEN>" [options]

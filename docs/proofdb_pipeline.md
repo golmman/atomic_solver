@@ -302,8 +302,10 @@ The knobs that matter, most-used first:
   canonical cycle's 100M keeps a batch predictable; raise it (or drop
   the flag) to let the ladder climb into the multi-billion-eval rungs,
   where a single job runs for hours.
-- **`--tt-mb`** — per-job transposition table (default 128 MB; the
-  canonical cycle uses 1024). Every job runs with a fresh TT, so this
+- **`--tt-mb`** — per-job transposition table (default 128 MB, unchanged;
+  since lean plan15 size labels are exact upper bounds — the allocation
+  never exceeds the label — so 128 MB now means ≤ 112 MiB). The canonical
+  cycle uses 1024. Every job runs with a fresh TT, so this
   bounds peak RAM per job; TT size measurably affects large rungs (a
   multi-billion-eval rung can censor at 128 MB that survives at 1 GB),
   so give the ladder headroom.

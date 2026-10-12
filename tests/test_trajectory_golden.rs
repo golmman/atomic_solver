@@ -22,6 +22,10 @@
 //! (defender reply 'e8c8' not refutable within the PPV horizon) — it stays
 //! an informational `pv_status: cap-cut` line; the test asserts trajectory
 //! identity, not PPV validity.
+//! **Re-validated unchanged by lean plan 15** (honest round-down sizing +
+//! default label 128 → 256 MB): the new default table is byte-identical to
+//! the old round-up 128 MB table, so this golden passes without
+//! regeneration; identity also checked on the quick suite (59/59 eval-identical).
 
 mod common;
 

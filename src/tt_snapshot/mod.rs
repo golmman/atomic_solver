@@ -4,7 +4,9 @@
 //! separate reconstruction tool reads the root FEN plus this snapshot to
 //! rebuild a proof tree without re-running the search. It is written once at
 //! exit and is bounded by the TT RAM (worst case ≈ 0.75×, since records are
-//! 15–42 bytes vs. the four-slot bucket occupancy of the live table).
+//! 15–42 bytes vs. the four-slot bucket occupancy of the live table). The
+//! `tt_size_mb` header field records the *label* the search ran with; since
+//! lean plan15 labels are exact allocation upper bounds (round-down sizing).
 //!
 //! # Format (version 1)
 //!

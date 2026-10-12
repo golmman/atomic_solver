@@ -9,6 +9,16 @@
 //! arm A of the #21 response) — same entry count and RAM as the former
 //! two-slot layout, but `insert_new` compares candidates across a four-key
 //! window instead of two.
+//!
+//! Sizing contract (lean plan15, backlog #20): `with_mb` rounds the bucket
+//! count *down* to a power of two, so the allocation never exceeds the label
+//! (`buckets · 224 B ≤ mb · 2²⁰`). Bucket indexing is `key & (buckets - 1)`
+//! in the shipped salt-0 path, which requires a power-of-two bucket count;
+//! exact-capacity modulo indexing was considered and rejected. Labels of the
+//! form 56·2^k MB (56/112/224/448…) divide exactly and keep identical tables
+//! under either rounding. The default label is 256 MB (`--tt-size`), which
+//! maps to 2²⁰ buckets / 2²² entries / 224 MiB — byte-identical to the old
+//! (round-up) 128 MB default, so the bump changed labels only, not capacity.
 
 use crate::position::Outcome;
 use crate::zobrist::INF;
@@ -44,12 +54,26 @@ impl TranspositionTable {
         }
     }
 
+    /// Construct a table from a size label in megabytes.
+    ///
+    /// The bucket count is rounded *down* to a power of two (the mask-based
+    /// salt-0 indexing requires a power-of-two bucket count), so the
+    /// allocation never exceeds the label: `buckets · 224 B ≤ mb · 2²⁰`.
+    /// Labels of the form 56·2^k MB divide exactly and are unchanged by the
+    /// rounding direction; smaller labels simply trade the wasted tail of the
+    /// round-up for the last ~12.5 % of the label. The default `--tt-size`
+    /// label of 256 MB yields 2²⁰ buckets / 2²² entries / 224 MiB — the same
+    /// table the former round-up formula built for the old 128 MB default.
     #[must_use]
     pub fn with_mb(mb: usize) -> Self {
         let bytes = mb.saturating_mul(1024 * 1024);
-        let entries = (bytes / std::mem::size_of::<TtEntry>()).next_power_of_two();
-        let entries = entries.max(32);
-        let buckets = (entries.max(4) / 4).max(1);
+        let bucket_bytes = std::mem::size_of::<TtEntry>() * 4;
+        let raw = (bytes / bucket_bytes).max(1);
+        let buckets = if raw.is_power_of_two() {
+            raw
+        } else {
+            raw.next_power_of_two() >> 1
+        };
         Self {
             table: vec![[TtEntry::default(); 4]; buckets],
             mask: buckets - 1,
