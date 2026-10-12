@@ -935,3 +935,13 @@ data before committing to a build` — the only open item in the initiative; its
 targeting the twice-measured m20_white conversion (0.575×/0.601×)` — only if the owner  
       weights the demonstrated m20 value channel above the second-strike closure; a new  
       initiative, not plan12.
+
+---
+
+I suspect the separate transposition tables need sufficient overlap. they help each other until they diverge too much and helpful TT entries for one process become noise for the other.
+So here is an idea: make the first process the leader and re-synchronize the others after a certain amount of work was done.
+Would that be worth a try?
+
+---
+
+explain the idea of the mechanism in plain language.
