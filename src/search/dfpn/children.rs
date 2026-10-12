@@ -359,18 +359,29 @@ impl Search {
             }
         };
 
-        if let Some(sender) = &self.proof_event_sender
-            && let Some(outcome) = info.outcome
+        if let Some(outcome) = info.outcome
             && outcome != Outcome::Draw
         {
-            let mut path = self.move_stack.clone();
-            path.push(mv);
-            let _ = sender.send(ProofEvent::NodeProven(NodeProven::new(
-                path,
-                pos.hash(),
-                outcome,
-                info.depth,
-            )));
+            // Solved-fact export (plan11): the terminal child sits one ply
+            // below the current node. Pure observation, no state touched.
+            if let Some(exporter) = &self.fact_exporter {
+                exporter.export(
+                    pos.hash(),
+                    outcome,
+                    info.depth,
+                    u8::try_from(self.move_stack.len() + 1).unwrap_or(u8::MAX),
+                );
+            }
+            if let Some(sender) = &self.proof_event_sender {
+                let mut path = self.move_stack.clone();
+                path.push(mv);
+                let _ = sender.send(ProofEvent::NodeProven(NodeProven::new(
+                    path,
+                    pos.hash(),
+                    outcome,
+                    info.depth,
+                )));
+            }
         }
 
         pos.undo_move_with_scratch(mv, &scratch);

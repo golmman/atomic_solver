@@ -56,28 +56,35 @@
 //!                              evaluations. A run that hits the cap returns
 //!                              `Draw` and prints `budget exhausted`.
 //!   --facts-out <FILE>         Append a 24-byte binary record for every
-//!                              solved Win/Loss fact the search proves (the
-//!                              plan10 cooperative-portfolio export; the
-//!                              search semantics are untouched — emission is
-//!                              fire-and-forget, Draws never enter the
-//!                              channel). Stdout is byte-identical to a run
-//!                              without the flag; stderr gains one
-//!                              `facts_export:` summary line.
+//!                              solved near-root Win/Loss fact the search
+//!                              proves (the plan11 cooperative-portfolio
+//!                              export: key-only emission written
+//!                              synchronously on the search thread through
+//!                              the `FactExporter` hook — no proof-event
+//!                              sender, no writer thread; records beyond
+//!                              `PATH_LEN_CAP = 24` plies from the root are
+//!                              filtered out and counted). The search
+//!                              semantics are untouched — stdout is
+//!                              byte-identical to a run without the flag;
+//!                              stderr gains one `facts_export:` summary
+//!                              line.
 //!   --facts-in <DIR>           Import solved Win/Loss facts from every
 //!                              sibling `facts-*.bin` file in DIR into the
 //!                              transposition table (checksum-verified or
 //!                              dropped; imports happen only between work
 //!                              chunks on the search thread, never during
-//!                              the pre-phase). Stderr gains one
+//!                              the pre-phase, capped at ~1 MiB of reads
+//!                              per chunk boundary). Stderr gains one
 //!                              `facts_import:` summary line.
 //!                              Restatements with the facts options on:
 //!                              determinism — a racer's result is no longer
 //!                              a pure function of (FEN, config, salt), it
 //!                              depends on channel interleaving (the
 //!                              `budget exhausted` → Draw rule is unchanged
-//!                              per run); RAM — TT + ≤ ~2 MiB of bounded
-//!                              I/O buffers. Without the flags both
-//!                              properties are unchanged (RAM = TT only).
+//!                              per run); RAM — TT + ~1 MiB importer read
+//!                              cap/scratch + ~8 KiB exporter buffer.
+//!                              Without the flags both properties are
+//!                              unchanged (RAM = TT only).
 //!
 //! Output:
 //!   Each newly discovered decisive line is logged as
@@ -159,8 +166,9 @@ fn print_help(program: &str) {
     println!("  --config <FILE>            Path to a TOML file overriding scorer");
     println!("                             parameters; defaults to built-in values");
     println!("  --facts-out <FILE>         Append a binary record per solved");
-    println!("                             Win/Loss fact (cooperative-portfolio");
-    println!("                             export; stderr gains facts_export:)");
+    println!("                             near-root Win/Loss fact (key-only");
+    println!("                             export, <= 24 plies; stderr gains");
+    println!("                             facts_export:)");
     println!("  --facts-in <DIR>           Import solved Win/Loss facts from every");
     println!("                             sibling facts-*.bin in DIR (stderr");
     println!("                             gains facts_import:)");
@@ -264,33 +272,31 @@ fn main() {
         search.set_child_eval_budget(budget);
     }
 
-    // Facts channel (plan10): export = fire-and-forget proof-event writer;
-    // import = bounded file-tail importer drained between work chunks. Both
-    // are inert without their flag (no thread, no channel, no TT writes).
-    let mut facts_writer: Option<std::thread::JoinHandle<facts::FactsExportStats>> = None;
+    // Facts channel (plan11): export = the key-only `FactExporter` observer
+    // writing synchronously on the search thread (the proof-event sender
+    // stays `None` — no `move_stack` clone on the facts path); import = the
+    // threadless importer reading the sibling files directly at work-chunk
+    // boundaries. Both are inert without their flag (no I/O, no TT writes).
+    let mut facts_export: Option<Arc<facts::FactsExportShared>> = None;
     if let Some(path) = &facts_out {
-        let (tx, rx) = std::sync::mpsc::channel();
-        search.set_proof_event_sender(Some(tx));
-        match facts::spawn_writer(std::path::Path::new(path), rx) {
-            Ok(handle) => facts_writer = Some(handle),
+        match facts::FactsExportShared::create(std::path::Path::new(path)) {
+            Ok(shared) => {
+                search.set_fact_exporter(Some(Arc::new(facts::FactsExporter::new(Arc::clone(
+                    &shared,
+                )))));
+                facts_export = Some(shared);
+            }
             Err(e) => {
                 eprintln!("failed to create facts export file {path}: {e}");
                 std::process::exit(1);
             }
         }
     }
-    let mut facts_stats: Option<Arc<facts::FactsShared>> = None;
+    let mut facts_import_stats: Option<Arc<facts::ImportStats>> = None;
     if let Some(dir) = &facts_in {
-        match facts::FactsImporter::spawn(std::path::Path::new(dir)) {
-            Ok((importer, stats)) => {
-                facts_stats = Some(stats);
-                search.set_fact_importer(Some(Box::new(importer)));
-            }
-            Err(e) => {
-                eprintln!("failed to open facts import dir {dir}: {e}");
-                std::process::exit(1);
-            }
-        }
+        let importer = facts::FactsImporter::new(std::path::Path::new(dir));
+        facts_import_stats = Some(importer.stats_handle());
+        search.set_fact_importer(Some(Box::new(importer)));
     }
 
     let stop_flag = Arc::new(AtomicBool::new(false));
@@ -398,29 +404,31 @@ fn main() {
     // byte-exact.
     eprintln!("evals: {}", search.child_evaluations());
 
-    // Facts-channel summaries on stderr, after the search: dropping the
-    // search closes the proof-event sender (the writer flushes and exits)
-    // and the importer stop flag ends its reader thread.
+    // Facts-channel summaries on stderr, after the search: the exporter is
+    // flushed at the pre-exit (records are on disk for any reader; at most
+    // the last pre-flush buffer can be lost on an abnormal exit), and the
+    // importer's counters are final once the work-chunk loop is over.
     let totals = search.fact_import_totals();
     drop(search);
-    if let Some(stats) = facts_stats {
-        stats.stop();
+    if let Some(stats) = facts_import_stats {
         let s = stats.snapshot();
         eprintln!(
-            "facts_import: read={} crc_fail={} accepted={} skipped_solved={} skipped_filtered={} files={}",
+            "facts_import: read={} crc_fail={} accepted={} skipped_solved={} files={} bytes={}",
             s.records_read,
             s.checksum_failures,
             totals.accepted,
             totals.skipped,
-            s.skipped_filtered,
             s.files_seen,
+            s.bytes_read,
         );
     }
-    if let Some(handle) = facts_writer {
-        match handle.join() {
-            Ok(s) => eprintln!("facts_export: records={} bytes={}", s.records, s.bytes),
-            Err(_) => eprintln!("facts_export: writer thread panicked"),
-        }
+    if let Some(export) = facts_export {
+        export.finish();
+        let s = export.stats();
+        eprintln!(
+            "facts_export: records={} emitted={} filtered={} bytes={}",
+            s.records_seen, s.emitted, s.filtered, s.bytes,
+        );
     }
 
     if let Some(hook) = hook {

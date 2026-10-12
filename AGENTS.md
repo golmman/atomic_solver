@@ -42,13 +42,17 @@ A pure solver for atomic chess in Rust.
   `docs/proofdb_pipeline.md`, external DB contract in `docs/spec/global_proof_store.md`.
 - `src/zobrist.rs` — deterministic Zobrist keys, including the halfmove clock;
   `src/notation.rs` — UCI move helpers, including `moves_to_uci_path`.
-- `src/facts/` — cross-racer solved-fact channel (plan10): 24 B checksummed
-  record codec, fire-and-forget export writer thread, and a bounded
-  file-tailing importer (`FactsImporter`) implementing the one-method
-  `search::dfpn::FactImporter` hook drained between work chunks. Wins/Losses
-  only (Draws never cross a process boundary); keyed by the full Zobrist
-  hash incl. the halfmove clock. CLI surface: `--facts-out` / `--facts-in`;
-  with the flags off, the search is bit-identical (RAM = TT only).
+- `src/facts/` — cross-racer solved-fact channel (plan11 low-tax carrier):
+  24 B checksummed record codec (v2: key/outcome/path_len/depth), a
+  synchronous `FactsExporter` writing near-root-only records
+  (`PATH_LEN_CAP = 24`) through the one-method `search::dfpn::FactExporter`
+  observer hook (no proof-event sender, no writer thread), and a threadless
+  `FactsImporter` reading sibling `facts-*.bin` files directly at work-chunk
+  boundaries via the one-method `search::dfpn::FactImporter` hook (1 MiB
+  per-call read cap). Wins/Losses only (Draws never cross a process
+  boundary); keyed by the full Zobrist hash incl. the halfmove clock. CLI
+  surface: `--facts-out` / `--facts-in`; with the flags off, the search is
+  bit-identical (RAM = TT only).
 - `src/main.rs` — the CLI (`--fen`, `--tt-size`, `--epsilon`, `--timeout`, `--first-outcome`,
   `--refine-cap`, `--outcome-only`, `--tt-dump-path`, `--facts-out`, `--facts-in`, `--no-preflight`, `-h`; unknown options
   exit with an error). Resource-bounded: RAM = TT only; it never builds proof trees and prints

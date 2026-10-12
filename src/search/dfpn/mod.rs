@@ -44,7 +44,7 @@ pub struct FactImportCounters {
 }
 
 /// One-method hook for cross-racer solved-fact import (plan10, `parallel`
-/// backlog #6).
+/// backlog #6; plan11 carrier rework).
 ///
 /// `search` knows nothing about where facts come from: the concrete file
 /// channel lives in [`crate::facts`], which wires the importer through
@@ -54,9 +54,40 @@ pub struct FactImportCounters {
 /// untouched) — so imports land in the TT at exactly the same boundaries a
 /// native store would.
 pub trait FactImporter: Send {
-    /// Drain pending solved facts into the TT. Called between work chunks;
+    /// Import pending solved facts into the TT. Called between work chunks;
     /// must return promptly and must never panic.
+    ///
+    /// plan11 carrier: the concrete importer reads the sibling facts files
+    /// directly at these hook calls (work-chunk boundaries), bounded by a
+    /// per-call read cap — the boundaries are unchanged from plan10, only
+    /// the I/O location moved onto the search thread (no reader thread, no
+    /// queue).
     fn import(&mut self, tt: &mut TranspositionTable) -> FactImportCounters;
+}
+
+/// One-method hook for cross-racer solved-fact export (plan11, `parallel`
+/// backlog #12; replaces plan10's `ProofEvent`-fed writer thread).
+///
+/// A **pure observer** at the same solved-result sites the proof events
+/// reach (frame exit / TT re-proof via `emit_proof_node`, terminal children
+/// in `children.rs`): it reads only values already computed (the node hash,
+/// outcome, proven depth, and the root distance `path_len`), so the search's
+/// trajectory is bit-identical with it wired or not. `path_len` is the
+/// saturating `u8` cast of the real root distance — the admission filter in
+/// the concrete exporter compares against a cap far below `u8::MAX`, so the
+/// cast cannot change the filter outcome.
+///
+/// Implementations must return promptly (bounded buffered writes, no
+/// unbounded work) and must never panic; a failed export is a lost
+/// optimization, never a search failure. The proof-event sender is
+/// untouched: with the facts options on the CLI keeps the sender `None`, so
+/// no `move_stack` clone happens on the facts path.
+pub trait FactExporter: Send + Sync {
+    /// Observe one solved fact. Called on the search thread at the same
+    /// solved-result sites as the proof events; never with a `Draw` (the
+    /// emission sites filter draws first; implementations re-check as
+    /// defense in depth).
+    fn export(&self, key: u64, outcome: Outcome, depth: u32, path_len: u8);
 }
 
 const DEFAULT_EPSILON: f64 = 0.125;
@@ -218,10 +249,14 @@ pub struct Search {
     /// Last wall-clock reading taken by `time_exceeded`.
     last_clock: std::cell::Cell<Instant>,
     proof_event_sender: Option<std::sync::mpsc::Sender<ProofEvent>>,
-    /// Cross-racer solved-fact importer (plan10), drained between work
+    /// Cross-racer solved-fact importer (plan10), called between work
     /// chunks. `None` (the default) keeps the search bit-identical to a
     /// facts-free run.
     fact_importer: Option<Box<dyn FactImporter>>,
+    /// Cross-racer solved-fact export observer (plan11): pure observation of
+    /// solved results, `None` (the default) by construction. See
+    /// [`FactExporter`] for the hook contract.
+    fact_exporter: Option<std::sync::Arc<dyn FactExporter>>,
     /// Cumulative `FactImportCounters` across all drains of the last run.
     fact_import_totals: FactImportCounters,
     move_stack: Vec<Move>,
@@ -298,6 +333,7 @@ impl Search {
             last_clock: std::cell::Cell::new(Instant::now()),
             proof_event_sender: None,
             fact_importer: None,
+            fact_exporter: None,
             fact_import_totals: FactImportCounters::default(),
             move_stack: Vec::new(),
             child_pool: Vec::new(),
@@ -520,6 +556,13 @@ impl Search {
         self.fact_importer = importer;
     }
 
+    /// Wire the solved-fact export observer (plan11). `None` (the default)
+    /// disables exporting entirely: the search is then bit-identical to a
+    /// facts-free run. See [`FactExporter`] for the hook contract.
+    pub fn set_fact_exporter(&mut self, exporter: Option<std::sync::Arc<dyn FactExporter>>) {
+        self.fact_exporter = exporter;
+    }
+
     /// Cumulative counters of the imported solved facts of the last run.
     #[must_use]
     pub fn fact_import_totals(&self) -> FactImportCounters {
@@ -585,6 +628,18 @@ impl Search {
     fn emit_proof_node(&self, pos: &Position, outcome: Outcome, depth: u32) {
         if outcome == Outcome::Draw {
             return;
+        }
+        // Solved-fact export (plan11): pure observation at the same sites the
+        // proof events reach; `move_stack.len()` is the node's ply from the
+        // root. No state is touched, so the trajectory is bit-identical with
+        // the observer wired or not.
+        if let Some(exporter) = &self.fact_exporter {
+            exporter.export(
+                pos.hash(),
+                outcome,
+                depth,
+                u8::try_from(self.move_stack.len()).unwrap_or(u8::MAX),
+            );
         }
         if let Some(sender) = &self.proof_event_sender {
             let event = ProofEvent::NodeProven(NodeProven::new(

@@ -1,0 +1,4570 @@
+{
+ "cases": {
+  "m20_white": {
+   "role": "hard class, 4 basins - primary H1 candidate",
+   "basins": 4,
+   "A0": {
+    "evals_median": 1152505525,
+    "w_median": 115.583,
+    "n_decisive": 5,
+    "n_winnerless": 0,
+    "winners": [
+     3,
+     3,
+     3,
+     3,
+     3
+    ]
+   },
+   "A1": {
+    "evals_median": 662871094.5,
+    "w_median": 69.43,
+    "n_decisive": 4,
+    "n_winnerless": 1,
+    "winners": [
+     2,
+     2,
+     3,
+     2
+    ]
+   },
+   "rounds": {
+    "A0": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 3,
+       "evals": 1152505525,
+       "wall_ms": 115583,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 462.098,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 115505,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 115505,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 1152505525,
+        "wall_ms": 115583,
+        "decisive_at_ms": 115505,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 115505,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 3,
+       "evals": 1152505525,
+       "wall_ms": 116225,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 464.675,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 116150,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 116150,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 1152505525,
+        "wall_ms": 116225,
+        "decisive_at_ms": 116150,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 116150,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 3,
+       "evals": 1152505525,
+       "wall_ms": 117079,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 468.088,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 117003,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 117003,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 1152505525,
+        "wall_ms": 117079,
+        "decisive_at_ms": 117003,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 117003,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 3,
+       "evals": 1152505525,
+       "wall_ms": 114766,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 458.836,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 114690,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 114690,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 1152505525,
+        "wall_ms": 114766,
+        "decisive_at_ms": 114690,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 114690,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 3,
+       "evals": 1152505525,
+       "wall_ms": 114778,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 458.884,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 114702,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 114702,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 1152505525,
+        "wall_ms": 114778,
+        "decisive_at_ms": 114702,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 114702,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     }
+    ],
+    "A1": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 2,
+       "evals": 423737413,
+       "wall_ms": 43677,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 174.48,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 43601,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 423737413,
+        "wall_ms": 43677,
+        "decisive_at_ms": 43601,
+        "facts_import": {
+         "read": 279378,
+         "crc_fail": 0,
+         "accepted": 29029,
+         "skipped_solved": 250349,
+         "files": 4,
+         "bytes": 6705072
+        },
+        "facts_export": {
+         "records": 3393694,
+         "emitted": 3363666,
+         "filtered": 30028,
+         "bytes": 80727984
+        }
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 43601,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 43601,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 2,
+       "evals": 944838522,
+       "wall_ms": 95630,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 382.289,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 95553,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 944838522,
+        "wall_ms": 95630,
+        "decisive_at_ms": 95553,
+        "facts_import": {
+         "read": 320508,
+         "crc_fail": 0,
+         "accepted": 33170,
+         "skipped_solved": 287338,
+         "files": 4,
+         "bytes": 7692192
+        },
+        "facts_export": {
+         "records": 14356035,
+         "emitted": 6849100,
+         "filtered": 7506935,
+         "bytes": 164378400
+        }
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 95553,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 95553,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 3,
+       "evals": 884162342,
+       "wall_ms": 89765,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 358.823,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 89686,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 89686,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 884162342,
+        "wall_ms": 89765,
+        "decisive_at_ms": 89686,
+        "facts_import": {
+         "read": 343974,
+         "crc_fail": 0,
+         "accepted": 36127,
+         "skipped_solved": 307847,
+         "files": 4,
+         "bytes": 8255376
+        },
+        "facts_export": {
+         "records": 7181624,
+         "emitted": 7143166,
+         "filtered": 38458,
+         "bytes": 171435984
+        }
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 89686,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 4,
+      "first": null,
+      "cpu_core_s": 911.572,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "draw",
+        "censored": true,
+        "killed": false,
+        "evals": 2000000000,
+        "wall_ms": 227893,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": {
+         "records": 9982153,
+         "emitted": 7720009,
+         "filtered": 2262144,
+         "bytes": 185280216
+        }
+       },
+       {
+        "salt": 2,
+        "outcome": "draw",
+        "censored": true,
+        "killed": false,
+        "evals": 2000000000,
+        "wall_ms": 227893,
+        "decisive_at_ms": null,
+        "facts_import": {
+         "read": 369574,
+         "crc_fail": 0,
+         "accepted": 42638,
+         "skipped_solved": 326936,
+         "files": 4,
+         "bytes": 8869776
+        },
+        "facts_export": {
+         "records": 5356790,
+         "emitted": 4089014,
+         "filtered": 1267776,
+         "bytes": 98136336
+        }
+       },
+       {
+        "salt": 3,
+        "outcome": "draw",
+        "censored": true,
+        "killed": false,
+        "evals": 2000000001,
+        "wall_ms": 227893,
+        "decisive_at_ms": null,
+        "facts_import": {
+         "read": 387408,
+         "crc_fail": 0,
+         "accepted": 42765,
+         "skipped_solved": 344643,
+         "files": 4,
+         "bytes": 9297792
+        },
+        "facts_export": {
+         "records": 9339665,
+         "emitted": 7530248,
+         "filtered": 1809417,
+         "bytes": 180725952
+        }
+       },
+       {
+        "salt": 5,
+        "outcome": "draw",
+        "censored": true,
+        "killed": false,
+        "evals": 2000000005,
+        "wall_ms": 227893,
+        "decisive_at_ms": null,
+        "facts_import": {
+         "read": 399952,
+         "crc_fail": 0,
+         "accepted": 42746,
+         "skipped_solved": 357206,
+         "files": 4,
+         "bytes": 9598848
+        },
+        "facts_export": {
+         "records": 7840380,
+         "emitted": 5795378,
+         "filtered": 2045002,
+         "bytes": 139089072
+        }
+       }
+      ]
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 2,
+       "evals": 441579847,
+       "wall_ms": 49095,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 196.149,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 49018,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 441579847,
+        "wall_ms": 49095,
+        "decisive_at_ms": 49018,
+        "facts_import": {
+         "read": 288764,
+         "crc_fail": 0,
+         "accepted": 41975,
+         "skipped_solved": 246789,
+         "files": 4,
+         "bytes": 6930336
+        },
+        "facts_export": {
+         "records": 3573100,
+         "emitted": 3525031,
+         "filtered": 48069,
+         "bytes": 84600744
+        }
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 49018,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 49018,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     }
+    ]
+   },
+   "ratio_evals": 0.5751565438265469,
+   "ratio_w": 0.6006938736665427,
+   "m2": null,
+   "pure_r0": {
+    "evals_A1_rounds": [
+     2000000000
+    ],
+    "solo_anchor_evals": null,
+    "all_match_anchor": false,
+    "evidence_rounds": 1
+   },
+   "facts": {
+    "import_lines": [
+     {
+      "read": 279378,
+      "crc_fail": 0,
+      "accepted": 29029,
+      "skipped_solved": 250349,
+      "files": 4,
+      "bytes": 6705072
+     },
+     {
+      "read": 320508,
+      "crc_fail": 0,
+      "accepted": 33170,
+      "skipped_solved": 287338,
+      "files": 4,
+      "bytes": 7692192
+     },
+     {
+      "read": 343974,
+      "crc_fail": 0,
+      "accepted": 36127,
+      "skipped_solved": 307847,
+      "files": 4,
+      "bytes": 8255376
+     },
+     {
+      "read": 369574,
+      "crc_fail": 0,
+      "accepted": 42638,
+      "skipped_solved": 326936,
+      "files": 4,
+      "bytes": 8869776
+     },
+     {
+      "read": 387408,
+      "crc_fail": 0,
+      "accepted": 42765,
+      "skipped_solved": 344643,
+      "files": 4,
+      "bytes": 9297792
+     },
+     {
+      "read": 399952,
+      "crc_fail": 0,
+      "accepted": 42746,
+      "skipped_solved": 357206,
+      "files": 4,
+      "bytes": 9598848
+     },
+     {
+      "read": 288764,
+      "crc_fail": 0,
+      "accepted": 41975,
+      "skipped_solved": 246789,
+      "files": 4,
+      "bytes": 6930336
+     }
+    ],
+    "export_lines": [
+     {
+      "records": 3393694,
+      "emitted": 3363666,
+      "filtered": 30028,
+      "bytes": 80727984
+     },
+     {
+      "records": 14356035,
+      "emitted": 6849100,
+      "filtered": 7506935,
+      "bytes": 164378400
+     },
+     {
+      "records": 7181624,
+      "emitted": 7143166,
+      "filtered": 38458,
+      "bytes": 171435984
+     },
+     {
+      "records": 9982153,
+      "emitted": 7720009,
+      "filtered": 2262144,
+      "bytes": 185280216
+     },
+     {
+      "records": 5356790,
+      "emitted": 4089014,
+      "filtered": 1267776,
+      "bytes": 98136336
+     },
+     {
+      "records": 9339665,
+      "emitted": 7530248,
+      "filtered": 1809417,
+      "bytes": 180725952
+     },
+     {
+      "records": 7840380,
+      "emitted": 5795378,
+      "filtered": 2045002,
+      "bytes": 139089072
+     },
+     {
+      "records": 3573100,
+      "emitted": 3525031,
+      "filtered": 48069,
+      "bytes": 84600744
+     }
+    ],
+    "read_total": 2389558,
+    "accepted_total": 268450,
+    "crc_fail_total": 0,
+    "import_bytes_total": 57349392,
+    "emitted_total": 46015612,
+    "seen_total": 61023441,
+    "filtered_total": 15007829
+   },
+   "cpu_core_s": {
+    "A0": [
+     462.098,
+     464.675,
+     468.088,
+     458.836,
+     458.884
+    ],
+    "A1": [
+     174.48,
+     382.289,
+     358.823,
+     911.572,
+     196.149
+    ]
+   },
+   "cpu_ratio_median": 0.776508446260317
+  },
+  "stress": {
+   "role": "hard class, 3 basins - H1 candidate + canary",
+   "basins": 3,
+   "A0": {
+    "evals_median": 260688794,
+    "w_median": 27.053,
+    "n_decisive": 5,
+    "n_winnerless": 0,
+    "winners": [
+     5,
+     5,
+     5,
+     5,
+     5
+    ]
+   },
+   "A1": {
+    "evals_median": 305404068,
+    "w_median": 31.33,
+    "n_decisive": 5,
+    "n_winnerless": 0,
+    "winners": [
+     2,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "rounds": {
+    "A0": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 5,
+       "evals": 260688794,
+       "wall_ms": 26866,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 107.236,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 26790,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 26790,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 26790,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 260688794,
+        "wall_ms": 26866,
+        "decisive_at_ms": 26790,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 5,
+       "evals": 260688794,
+       "wall_ms": 28755,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 114.792,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 28679,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 28679,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 28679,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 260688794,
+        "wall_ms": 28755,
+        "decisive_at_ms": 28679,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 5,
+       "evals": 260688794,
+       "wall_ms": 26901,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 107.367,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 26822,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 26822,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 26822,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 260688794,
+        "wall_ms": 26901,
+        "decisive_at_ms": 26822,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 5,
+       "evals": 260688794,
+       "wall_ms": 27053,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 107.984,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 26977,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 26977,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 26977,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 260688794,
+        "wall_ms": 27053,
+        "decisive_at_ms": 26977,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 5,
+       "evals": 260688794,
+       "wall_ms": 28699,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 114.571,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 28624,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 28624,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 28624,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 260688794,
+        "wall_ms": 28699,
+        "decisive_at_ms": 28624,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     }
+    ],
+    "A1": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 2,
+       "evals": 240403986,
+       "wall_ms": 24819,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 99.042,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 24741,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 240403986,
+        "wall_ms": 24819,
+        "decisive_at_ms": 24741,
+        "facts_import": {
+         "read": 248232,
+         "crc_fail": 0,
+         "accepted": 28690,
+         "skipped_solved": 219542,
+         "files": 4,
+         "bytes": 5957568
+        },
+        "facts_export": {
+         "records": 1749907,
+         "emitted": 1731476,
+         "filtered": 18431,
+         "bytes": 41555424
+        }
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 24741,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 24741,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 0,
+       "evals": 305404068,
+       "wall_ms": 31514,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 125.828,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 305404068,
+        "wall_ms": 31514,
+        "decisive_at_ms": 31438,
+        "facts_import": null,
+        "facts_export": {
+         "records": 2356173,
+         "emitted": 2311890,
+         "filtered": 44283,
+         "bytes": 55485360
+        }
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 31438,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 31438,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 31438,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 0,
+       "evals": 305404068,
+       "wall_ms": 31265,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 124.832,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 305404068,
+        "wall_ms": 31265,
+        "decisive_at_ms": 31189,
+        "facts_import": null,
+        "facts_export": {
+         "records": 2356173,
+         "emitted": 2311890,
+         "filtered": 44283,
+         "bytes": 55485360
+        }
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 31189,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 31189,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 31189,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 0,
+       "evals": 305404068,
+       "wall_ms": 31330,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 125.095,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 305404068,
+        "wall_ms": 31330,
+        "decisive_at_ms": 31255,
+        "facts_import": null,
+        "facts_export": {
+         "records": 2356173,
+         "emitted": 2311890,
+         "filtered": 44283,
+         "bytes": 55485360
+        }
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 31255,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 31255,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 31255,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 0,
+       "evals": 305404068,
+       "wall_ms": 31764,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 126.831,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 305404068,
+        "wall_ms": 31764,
+        "decisive_at_ms": 31689,
+        "facts_import": null,
+        "facts_export": {
+         "records": 2356173,
+         "emitted": 2311890,
+         "filtered": 44283,
+         "bytes": 55485360
+        }
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 31689,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 31689,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 31689,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     }
+    ]
+   },
+   "ratio_evals": 1.1715274113393612,
+   "ratio_w": 1.158097068716963,
+   "m2": {
+    "rounds": [
+     1.1439,
+     1.1349,
+     1.1372,
+     1.153
+    ],
+    "median": 1.1405894177390639
+   },
+   "pure_r0": {
+    "evals_A1_rounds": [
+     305404068,
+     305404068,
+     305404068,
+     305404068
+    ],
+    "solo_anchor_evals": 305404068,
+    "all_match_anchor": true,
+    "evidence_rounds": 4
+   },
+   "facts": {
+    "import_lines": [
+     {
+      "read": 248232,
+      "crc_fail": 0,
+      "accepted": 28690,
+      "skipped_solved": 219542,
+      "files": 4,
+      "bytes": 5957568
+     }
+    ],
+    "export_lines": [
+     {
+      "records": 1749907,
+      "emitted": 1731476,
+      "filtered": 18431,
+      "bytes": 41555424
+     },
+     {
+      "records": 2356173,
+      "emitted": 2311890,
+      "filtered": 44283,
+      "bytes": 55485360
+     },
+     {
+      "records": 2356173,
+      "emitted": 2311890,
+      "filtered": 44283,
+      "bytes": 55485360
+     },
+     {
+      "records": 2356173,
+      "emitted": 2311890,
+      "filtered": 44283,
+      "bytes": 55485360
+     },
+     {
+      "records": 2356173,
+      "emitted": 2311890,
+      "filtered": 44283,
+      "bytes": 55485360
+     }
+    ],
+    "read_total": 248232,
+    "accepted_total": 28690,
+    "crc_fail_total": 0,
+    "import_bytes_total": 5957568,
+    "emitted_total": 10979036,
+    "seen_total": 11174599,
+    "filtered_total": 195563
+   },
+   "cpu_core_s": {
+    "A0": [
+     107.236,
+     114.792,
+     107.367,
+     107.984,
+     114.571
+    ],
+    "A1": [
+     99.042,
+     125.828,
+     124.832,
+     125.095,
+     126.831
+    ]
+   },
+   "cpu_ratio_median": 1.1584586605423026
+  },
+  "m22_white": {
+   "role": "hard class, 6 basins - collapse control + H1 candidate",
+   "basins": 6,
+   "A0": {
+    "evals_median": 16339874,
+    "w_median": 1.866,
+    "n_decisive": 5,
+    "n_winnerless": 0,
+    "winners": [
+     2,
+     2,
+     2,
+     2,
+     2
+    ]
+   },
+   "A1": {
+    "evals_median": 17157744,
+    "w_median": 1.969,
+    "n_decisive": 5,
+    "n_winnerless": 0,
+    "winners": [
+     2,
+     3,
+     3,
+     3,
+     0
+    ]
+   },
+   "rounds": {
+    "A0": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 2,
+       "evals": 16339874,
+       "wall_ms": 1847,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.157,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1770,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 16339874,
+        "wall_ms": 1847,
+        "decisive_at_ms": 1770,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1770,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1770,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 2,
+       "evals": 16339874,
+       "wall_ms": 1866,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.224,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1786,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 16339874,
+        "wall_ms": 1866,
+        "decisive_at_ms": 1786,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1786,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1786,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 2,
+       "evals": 16339874,
+       "wall_ms": 1882,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.3,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1806,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 16339874,
+        "wall_ms": 1882,
+        "decisive_at_ms": 1806,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1806,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1806,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 2,
+       "evals": 16339874,
+       "wall_ms": 1868,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.235,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1789,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 16339874,
+        "wall_ms": 1868,
+        "decisive_at_ms": 1789,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1789,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1789,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 2,
+       "evals": 16339874,
+       "wall_ms": 1860,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.218,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1786,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 16339874,
+        "wall_ms": 1860,
+        "decisive_at_ms": 1786,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1786,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1786,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     }
+    ],
+    "A1": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 2,
+       "evals": 17593862,
+       "wall_ms": 1999,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.756,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1919,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 17593862,
+        "wall_ms": 1999,
+        "decisive_at_ms": 1919,
+        "facts_import": {
+         "read": 128852,
+         "crc_fail": 0,
+         "accepted": 13827,
+         "skipped_solved": 115025,
+         "files": 4,
+         "bytes": 3092448
+        },
+        "facts_export": {
+         "records": 223206,
+         "emitted": 206191,
+         "filtered": 17015,
+         "bytes": 4948584
+        }
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1919,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1919,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 3,
+       "evals": 17157744,
+       "wall_ms": 1949,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.553,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1868,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1868,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 17157744,
+        "wall_ms": 1949,
+        "decisive_at_ms": 1868,
+        "facts_import": {
+         "read": 149588,
+         "crc_fail": 0,
+         "accepted": 13660,
+         "skipped_solved": 135928,
+         "files": 4,
+         "bytes": 3590112
+        },
+        "facts_export": {
+         "records": 211209,
+         "emitted": 202855,
+         "filtered": 8354,
+         "bytes": 4868520
+        }
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1868,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 3,
+       "evals": 17157744,
+       "wall_ms": 1949,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.571,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1874,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1874,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 17157744,
+        "wall_ms": 1949,
+        "decisive_at_ms": 1874,
+        "facts_import": {
+         "read": 149588,
+         "crc_fail": 0,
+         "accepted": 13660,
+         "skipped_solved": 135928,
+         "files": 4,
+         "bytes": 3590112
+        },
+        "facts_export": {
+         "records": 211209,
+         "emitted": 202855,
+         "filtered": 8354,
+         "bytes": 4868520
+        }
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1874,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 3,
+       "evals": 17157744,
+       "wall_ms": 1969,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.648,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1893,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1893,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 17157744,
+        "wall_ms": 1969,
+        "decisive_at_ms": 1893,
+        "facts_import": {
+         "read": 149588,
+         "crc_fail": 0,
+         "accepted": 13660,
+         "skipped_solved": 135928,
+         "files": 4,
+         "bytes": 3590112
+        },
+        "facts_export": {
+         "records": 211209,
+         "emitted": 202855,
+         "filtered": 8354,
+         "bytes": 4868520
+        }
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 1893,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 0,
+       "evals": 19111111,
+       "wall_ms": 2157,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 8.4,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 19111111,
+        "wall_ms": 2157,
+        "decisive_at_ms": 2081,
+        "facts_import": null,
+        "facts_export": {
+         "records": 227727,
+         "emitted": 208926,
+         "filtered": 18801,
+         "bytes": 5014224
+        }
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 2081,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 2081,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 2081,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     }
+    ]
+   },
+   "ratio_evals": 1.0500536295445118,
+   "ratio_w": 1.055198285101822,
+   "m2": {
+    "rounds": [
+     1.1101
+    ],
+    "median": 1.1101375534799927
+   },
+   "pure_r0": {
+    "evals_A1_rounds": [
+     19111111
+    ],
+    "solo_anchor_evals": 19111111,
+    "all_match_anchor": true,
+    "evidence_rounds": 1
+   },
+   "facts": {
+    "import_lines": [
+     {
+      "read": 128852,
+      "crc_fail": 0,
+      "accepted": 13827,
+      "skipped_solved": 115025,
+      "files": 4,
+      "bytes": 3092448
+     },
+     {
+      "read": 149588,
+      "crc_fail": 0,
+      "accepted": 13660,
+      "skipped_solved": 135928,
+      "files": 4,
+      "bytes": 3590112
+     },
+     {
+      "read": 149588,
+      "crc_fail": 0,
+      "accepted": 13660,
+      "skipped_solved": 135928,
+      "files": 4,
+      "bytes": 3590112
+     },
+     {
+      "read": 149588,
+      "crc_fail": 0,
+      "accepted": 13660,
+      "skipped_solved": 135928,
+      "files": 4,
+      "bytes": 3590112
+     }
+    ],
+    "export_lines": [
+     {
+      "records": 223206,
+      "emitted": 206191,
+      "filtered": 17015,
+      "bytes": 4948584
+     },
+     {
+      "records": 211209,
+      "emitted": 202855,
+      "filtered": 8354,
+      "bytes": 4868520
+     },
+     {
+      "records": 211209,
+      "emitted": 202855,
+      "filtered": 8354,
+      "bytes": 4868520
+     },
+     {
+      "records": 211209,
+      "emitted": 202855,
+      "filtered": 8354,
+      "bytes": 4868520
+     },
+     {
+      "records": 227727,
+      "emitted": 208926,
+      "filtered": 18801,
+      "bytes": 5014224
+     }
+    ],
+    "read_total": 577616,
+    "accepted_total": 54807,
+    "crc_fail_total": 0,
+    "import_bytes_total": 13862784,
+    "emitted_total": 1023682,
+    "seen_total": 1084560,
+    "filtered_total": 60878
+   },
+   "cpu_core_s": {
+    "A0": [
+     7.157,
+     7.224,
+     7.3,
+     7.235,
+     7.218
+    ],
+    "A1": [
+     7.756,
+     7.553,
+     7.571,
+     7.648,
+     8.4
+    ]
+   },
+   "cpu_ratio_median": 1.0586932447397563
+  },
+  "dec10": {
+   "role": "multi-basin regression channel",
+   "basins": 4,
+   "A0": {
+    "evals_median": 2549882,
+    "w_median": 0.352,
+    "n_decisive": 5,
+    "n_winnerless": 0,
+    "winners": [
+     2,
+     2,
+     2,
+     2,
+     2
+    ]
+   },
+   "A1": {
+    "evals_median": 2937925,
+    "w_median": 0.383,
+    "n_decisive": 5,
+    "n_winnerless": 0,
+    "winners": [
+     3,
+     2,
+     2,
+     3,
+     3
+    ]
+   },
+   "rounds": {
+    "A0": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 364,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.231,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 289,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 2549882,
+        "wall_ms": 364,
+        "decisive_at_ms": 289,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 289,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 289,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 358,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.207,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 283,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 2549882,
+        "wall_ms": 358,
+        "decisive_at_ms": 283,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 283,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 283,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 352,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.183,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 277,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 2549882,
+        "wall_ms": 352,
+        "decisive_at_ms": 277,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 277,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 277,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 345,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.155,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 270,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 2549882,
+        "wall_ms": 345,
+        "decisive_at_ms": 270,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 270,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 270,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 350,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.169,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 273,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 2549882,
+        "wall_ms": 350,
+        "decisive_at_ms": 273,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 273,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 273,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     }
+    ],
+    "A1": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 3,
+       "evals": 2937925,
+       "wall_ms": 385,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.309,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 308,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 308,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 2937925,
+        "wall_ms": 385,
+        "decisive_at_ms": 308,
+        "facts_import": {
+         "read": 77226,
+         "crc_fail": 0,
+         "accepted": 3212,
+         "skipped_solved": 74014,
+         "files": 3,
+         "bytes": 1853424
+        },
+        "facts_export": {
+         "records": 59487,
+         "emitted": 59155,
+         "filtered": 332,
+         "bytes": 1419720
+        }
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 308,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 351,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.173,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 274,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 2549882,
+        "wall_ms": 351,
+        "decisive_at_ms": 274,
+        "facts_import": {
+         "read": 65706,
+         "crc_fail": 0,
+         "accepted": 2448,
+         "skipped_solved": 63258,
+         "files": 2,
+         "bytes": 1576944
+        },
+        "facts_export": {
+         "records": 59852,
+         "emitted": 59424,
+         "filtered": 428,
+         "bytes": 1426176
+        }
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 274,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 274,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 2,
+       "evals": 3550796,
+       "wall_ms": 452,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.58,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 376,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 3550796,
+        "wall_ms": 452,
+        "decisive_at_ms": 376,
+        "facts_import": {
+         "read": 111188,
+         "crc_fail": 0,
+         "accepted": 7556,
+         "skipped_solved": 103632,
+         "files": 2,
+         "bytes": 2668512
+        },
+        "facts_export": {
+         "records": 53143,
+         "emitted": 53102,
+         "filtered": 41,
+         "bytes": 1274448
+        }
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 376,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 376,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 3,
+       "evals": 2750021,
+       "wall_ms": 375,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.272,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 299,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 299,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 2750021,
+        "wall_ms": 375,
+        "decisive_at_ms": 299,
+        "facts_import": {
+         "read": 76714,
+         "crc_fail": 0,
+         "accepted": 3438,
+         "skipped_solved": 73276,
+         "files": 3,
+         "bytes": 1841136
+        },
+        "facts_export": {
+         "records": 64268,
+         "emitted": 64078,
+         "filtered": 190,
+         "bytes": 1537872
+        }
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 299,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 3,
+       "evals": 2937925,
+       "wall_ms": 383,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.301,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 306,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 306,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 2937925,
+        "wall_ms": 383,
+        "decisive_at_ms": 306,
+        "facts_import": {
+         "read": 76458,
+         "crc_fail": 0,
+         "accepted": 3348,
+         "skipped_solved": 73110,
+         "files": 3,
+         "bytes": 1834992
+        },
+        "facts_export": {
+         "records": 59490,
+         "emitted": 59158,
+         "filtered": 332,
+         "bytes": 1419792
+        }
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 306,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     }
+    ]
+   },
+   "ratio_evals": 1.1521807675806175,
+   "ratio_w": 1.0880681818181819,
+   "m2": null,
+   "pure_r0": {
+    "evals_A1_rounds": [],
+    "solo_anchor_evals": 3901847,
+    "all_match_anchor": true,
+    "evidence_rounds": 0
+   },
+   "facts": {
+    "import_lines": [
+     {
+      "read": 77226,
+      "crc_fail": 0,
+      "accepted": 3212,
+      "skipped_solved": 74014,
+      "files": 3,
+      "bytes": 1853424
+     },
+     {
+      "read": 65706,
+      "crc_fail": 0,
+      "accepted": 2448,
+      "skipped_solved": 63258,
+      "files": 2,
+      "bytes": 1576944
+     },
+     {
+      "read": 111188,
+      "crc_fail": 0,
+      "accepted": 7556,
+      "skipped_solved": 103632,
+      "files": 2,
+      "bytes": 2668512
+     },
+     {
+      "read": 76714,
+      "crc_fail": 0,
+      "accepted": 3438,
+      "skipped_solved": 73276,
+      "files": 3,
+      "bytes": 1841136
+     },
+     {
+      "read": 76458,
+      "crc_fail": 0,
+      "accepted": 3348,
+      "skipped_solved": 73110,
+      "files": 3,
+      "bytes": 1834992
+     }
+    ],
+    "export_lines": [
+     {
+      "records": 59487,
+      "emitted": 59155,
+      "filtered": 332,
+      "bytes": 1419720
+     },
+     {
+      "records": 59852,
+      "emitted": 59424,
+      "filtered": 428,
+      "bytes": 1426176
+     },
+     {
+      "records": 53143,
+      "emitted": 53102,
+      "filtered": 41,
+      "bytes": 1274448
+     },
+     {
+      "records": 64268,
+      "emitted": 64078,
+      "filtered": 190,
+      "bytes": 1537872
+     },
+     {
+      "records": 59490,
+      "emitted": 59158,
+      "filtered": 332,
+      "bytes": 1419792
+     }
+    ],
+    "read_total": 407292,
+    "accepted_total": 20002,
+    "crc_fail_total": 0,
+    "import_bytes_total": 9775008,
+    "emitted_total": 294917,
+    "seen_total": 296240,
+    "filtered_total": 1323
+   },
+   "cpu_core_s": {
+    "A0": [
+     1.231,
+     1.207,
+     1.183,
+     1.155,
+     1.169
+    ],
+    "A1": [
+     1.309,
+     1.173,
+     1.58,
+     1.272,
+     1.301
+    ]
+   },
+   "cpu_ratio_median": 1.099746407438715
+  },
+  "rem12": {
+   "role": "out of sample (6 basins)",
+   "basins": 6,
+   "A0": {
+    "evals_median": 61821025,
+    "w_median": 7.198,
+    "n_decisive": 5,
+    "n_winnerless": 0,
+    "winners": [
+     5,
+     5,
+     5,
+     5,
+     5
+    ]
+   },
+   "A1": {
+    "evals_median": 61065683,
+    "w_median": 7.154,
+    "n_decisive": 5,
+    "n_winnerless": 0,
+    "winners": [
+     3,
+     5,
+     5,
+     5,
+     5
+    ]
+   },
+   "rounds": {
+    "A0": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 5,
+       "evals": 61821025,
+       "wall_ms": 7198,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.558,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7120,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7120,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7120,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 61821025,
+        "wall_ms": 7198,
+        "decisive_at_ms": 7120,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 5,
+       "evals": 61821025,
+       "wall_ms": 7211,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.607,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7132,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7132,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7132,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 61821025,
+        "wall_ms": 7211,
+        "decisive_at_ms": 7132,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 5,
+       "evals": 61821025,
+       "wall_ms": 7218,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.644,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7142,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7142,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7142,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 61821025,
+        "wall_ms": 7218,
+        "decisive_at_ms": 7142,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 5,
+       "evals": 61821025,
+       "wall_ms": 7194,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.551,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7119,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7119,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7119,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 61821025,
+        "wall_ms": 7194,
+        "decisive_at_ms": 7119,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 5,
+       "evals": 61821025,
+       "wall_ms": 7160,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.418,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7086,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7086,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7086,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 61821025,
+        "wall_ms": 7160,
+        "decisive_at_ms": 7086,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     }
+    ],
+    "A1": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 3,
+       "evals": 60224932,
+       "wall_ms": 7079,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.079,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7000,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7000,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 60224932,
+        "wall_ms": 7079,
+        "decisive_at_ms": 7000,
+        "facts_import": {
+         "read": 214952,
+         "crc_fail": 0,
+         "accepted": 27412,
+         "skipped_solved": 187540,
+         "files": 4,
+         "bytes": 5158848
+        },
+        "facts_export": {
+         "records": 1147031,
+         "emitted": 1125047,
+         "filtered": 21984,
+         "bytes": 27001128
+        }
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7000,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 5,
+       "evals": 61065683,
+       "wall_ms": 7151,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.376,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7075,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7075,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7075,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 61065683,
+        "wall_ms": 7151,
+        "decisive_at_ms": 7075,
+        "facts_import": {
+         "read": 230568,
+         "crc_fail": 0,
+         "accepted": 28154,
+         "skipped_solved": 202414,
+         "files": 4,
+         "bytes": 5533632
+        },
+        "facts_export": {
+         "records": 1172575,
+         "emitted": 1158778,
+         "filtered": 13797,
+         "bytes": 27810672
+        }
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 5,
+       "evals": 61359590,
+       "wall_ms": 7200,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.557,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7119,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7119,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7119,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 61359590,
+        "wall_ms": 7200,
+        "decisive_at_ms": 7119,
+        "facts_import": {
+         "read": 230056,
+         "crc_fail": 0,
+         "accepted": 28154,
+         "skipped_solved": 201902,
+         "files": 4,
+         "bytes": 5521344
+        },
+        "facts_export": {
+         "records": 1159965,
+         "emitted": 1145474,
+         "filtered": 14491,
+         "bytes": 27491376
+        }
+       }
+      ]
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 5,
+       "evals": 61065681,
+       "wall_ms": 7154,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.379,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7075,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7075,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7075,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 61065681,
+        "wall_ms": 7154,
+        "decisive_at_ms": 7075,
+        "facts_import": {
+         "read": 230312,
+         "crc_fail": 0,
+         "accepted": 28155,
+         "skipped_solved": 202157,
+         "files": 4,
+         "bytes": 5527488
+        },
+        "facts_export": {
+         "records": 1172573,
+         "emitted": 1158776,
+         "filtered": 13797,
+         "bytes": 27810624
+        }
+       }
+      ]
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 5,
+       "evals": 63068574,
+       "wall_ms": 7377,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 29.277,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7300,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7300,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 7300,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 63068574,
+        "wall_ms": 7377,
+        "decisive_at_ms": 7300,
+        "facts_import": {
+         "read": 229800,
+         "crc_fail": 0,
+         "accepted": 28345,
+         "skipped_solved": 201455,
+         "files": 4,
+         "bytes": 5515200
+        },
+        "facts_export": {
+         "records": 1178999,
+         "emitted": 1160975,
+         "filtered": 18024,
+         "bytes": 27863400
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "ratio_evals": 0.9877817943005636,
+   "ratio_w": 0.9938871908863572,
+   "m2": null,
+   "pure_r0": {
+    "evals_A1_rounds": [],
+    "solo_anchor_evals": 69388795,
+    "all_match_anchor": true,
+    "evidence_rounds": 0
+   },
+   "facts": {
+    "import_lines": [
+     {
+      "read": 214952,
+      "crc_fail": 0,
+      "accepted": 27412,
+      "skipped_solved": 187540,
+      "files": 4,
+      "bytes": 5158848
+     },
+     {
+      "read": 230568,
+      "crc_fail": 0,
+      "accepted": 28154,
+      "skipped_solved": 202414,
+      "files": 4,
+      "bytes": 5533632
+     },
+     {
+      "read": 230056,
+      "crc_fail": 0,
+      "accepted": 28154,
+      "skipped_solved": 201902,
+      "files": 4,
+      "bytes": 5521344
+     },
+     {
+      "read": 230312,
+      "crc_fail": 0,
+      "accepted": 28155,
+      "skipped_solved": 202157,
+      "files": 4,
+      "bytes": 5527488
+     },
+     {
+      "read": 229800,
+      "crc_fail": 0,
+      "accepted": 28345,
+      "skipped_solved": 201455,
+      "files": 4,
+      "bytes": 5515200
+     }
+    ],
+    "export_lines": [
+     {
+      "records": 1147031,
+      "emitted": 1125047,
+      "filtered": 21984,
+      "bytes": 27001128
+     },
+     {
+      "records": 1172575,
+      "emitted": 1158778,
+      "filtered": 13797,
+      "bytes": 27810672
+     },
+     {
+      "records": 1159965,
+      "emitted": 1145474,
+      "filtered": 14491,
+      "bytes": 27491376
+     },
+     {
+      "records": 1172573,
+      "emitted": 1158776,
+      "filtered": 13797,
+      "bytes": 27810624
+     },
+     {
+      "records": 1178999,
+      "emitted": 1160975,
+      "filtered": 18024,
+      "bytes": 27863400
+     }
+    ],
+    "read_total": 1135688,
+    "accepted_total": 140220,
+    "crc_fail_total": 0,
+    "import_bytes_total": 27256512,
+    "emitted_total": 5749050,
+    "seen_total": 5831143,
+    "filtered_total": 82093
+   },
+   "cpu_core_s": {
+    "A0": [
+     28.558,
+     28.607,
+     28.644,
+     28.551,
+     28.418
+    ],
+    "A1": [
+     28.079,
+     28.376,
+     28.557,
+     28.379,
+     29.277
+    ]
+   },
+   "cpu_ratio_median": 0.9937320540654108
+  },
+  "dec13": {
+   "role": "veto-only (2 basins)",
+   "basins": 2,
+   "A0": {
+    "evals_median": 5030497,
+    "w_median": 0.651,
+    "n_decisive": 3,
+    "n_winnerless": 0,
+    "winners": [
+     0,
+     0,
+     0
+    ]
+   },
+   "A1": {
+    "evals_median": 3892251,
+    "w_median": 0.532,
+    "n_decisive": 3,
+    "n_winnerless": 0,
+    "winners": [
+     5,
+     3,
+     5
+    ]
+   },
+   "rounds": {
+    "A0": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 0,
+       "evals": 5030497,
+       "wall_ms": 655,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 2.395,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 5030497,
+        "wall_ms": 655,
+        "decisive_at_ms": 580,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 580,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 580,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 580,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 0,
+       "evals": 5030497,
+       "wall_ms": 651,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 2.376,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 5030497,
+        "wall_ms": 651,
+        "decisive_at_ms": 575,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 575,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 575,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 575,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 0,
+       "evals": 5030497,
+       "wall_ms": 649,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 2.371,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 5030497,
+        "wall_ms": 649,
+        "decisive_at_ms": 574,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 574,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 574,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 574,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     }
+    ],
+    "A1": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 5,
+       "evals": 3931372,
+       "wall_ms": 537,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.914,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 459,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 459,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 459,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 3931372,
+        "wall_ms": 537,
+        "decisive_at_ms": 459,
+        "facts_import": {
+         "read": 126036,
+         "crc_fail": 0,
+         "accepted": 14669,
+         "skipped_solved": 111367,
+         "files": 4,
+         "bytes": 3024864
+        },
+        "facts_export": {
+         "records": 110714,
+         "emitted": 110714,
+         "filtered": 0,
+         "bytes": 2657136
+        }
+       }
+      ]
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 3,
+       "evals": 3854514,
+       "wall_ms": 531,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.893,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 454,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 454,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 3854514,
+        "wall_ms": 531,
+        "decisive_at_ms": 454,
+        "facts_import": {
+         "read": 115540,
+         "crc_fail": 0,
+         "accepted": 14714,
+         "skipped_solved": 100826,
+         "files": 3,
+         "bytes": 2772960
+        },
+        "facts_export": {
+         "records": 109163,
+         "emitted": 109163,
+         "filtered": 0,
+         "bytes": 2619912
+        }
+       },
+       {
+        "salt": 5,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 454,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       }
+      ]
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 5,
+       "evals": 3892251,
+       "wall_ms": 532,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.906,
+      "conflict": false,
+      "racers": [
+       {
+        "salt": 0,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 458,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 2,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 458,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 3,
+        "outcome": "killed",
+        "censored": false,
+        "killed": true,
+        "evals": null,
+        "wall_ms": 458,
+        "decisive_at_ms": null,
+        "facts_import": null,
+        "facts_export": null
+       },
+       {
+        "salt": 5,
+        "outcome": "win",
+        "censored": false,
+        "killed": false,
+        "evals": 3892251,
+        "wall_ms": 532,
+        "decisive_at_ms": 458,
+        "facts_import": {
+         "read": 125524,
+         "crc_fail": 0,
+         "accepted": 14270,
+         "skipped_solved": 111254,
+         "files": 4,
+         "bytes": 3012576
+        },
+        "facts_export": {
+         "records": 110063,
+         "emitted": 110063,
+         "filtered": 0,
+         "bytes": 2641512
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "ratio_evals": 0.77373090571369,
+   "ratio_w": 0.8172043010752689,
+   "m2": null,
+   "pure_r0": {
+    "evals_A1_rounds": [],
+    "solo_anchor_evals": 5030497,
+    "all_match_anchor": true,
+    "evidence_rounds": 0
+   },
+   "facts": {
+    "import_lines": [
+     {
+      "read": 126036,
+      "crc_fail": 0,
+      "accepted": 14669,
+      "skipped_solved": 111367,
+      "files": 4,
+      "bytes": 3024864
+     },
+     {
+      "read": 115540,
+      "crc_fail": 0,
+      "accepted": 14714,
+      "skipped_solved": 100826,
+      "files": 3,
+      "bytes": 2772960
+     },
+     {
+      "read": 125524,
+      "crc_fail": 0,
+      "accepted": 14270,
+      "skipped_solved": 111254,
+      "files": 4,
+      "bytes": 3012576
+     }
+    ],
+    "export_lines": [
+     {
+      "records": 110714,
+      "emitted": 110714,
+      "filtered": 0,
+      "bytes": 2657136
+     },
+     {
+      "records": 109163,
+      "emitted": 109163,
+      "filtered": 0,
+      "bytes": 2619912
+     },
+     {
+      "records": 110063,
+      "emitted": 110063,
+      "filtered": 0,
+      "bytes": 2641512
+     }
+    ],
+    "read_total": 367100,
+    "accepted_total": 43653,
+    "crc_fail_total": 0,
+    "import_bytes_total": 8810400,
+    "emitted_total": 329940,
+    "seen_total": 329940,
+    "filtered_total": 0
+   },
+   "cpu_core_s": {
+    "A0": [
+     2.395,
+     2.376,
+     2.371
+    ],
+    "A1": [
+     1.914,
+     1.893,
+     1.906
+    ]
+   },
+   "cpu_ratio_median": 0.8021885521885522
+  }
+ },
+ "canary": {
+  "m22_white": {
+   "present": true,
+   "A0_first": {
+    "salt": 2,
+    "evals": 16339874,
+    "wall_ms": 1843,
+    "outcome": "win",
+    "censored": false
+   },
+   "A1_first": {
+    "salt": 3,
+    "evals": 15030808,
+    "wall_ms": 1703,
+    "outcome": "win",
+    "censored": false
+   },
+   "conflict": false,
+   "w_ratio": 0.9240368963646229,
+   "panic_or_abnormal_rc": false,
+   "within_wall_caps": true
+  },
+  "stress": {
+   "present": true,
+   "A0_first": {
+    "salt": 5,
+    "evals": 260688794,
+    "wall_ms": 28546,
+    "outcome": "win",
+    "censored": false
+   },
+   "A1_first": {
+    "salt": 3,
+    "evals": 274649300,
+    "wall_ms": 28198,
+    "outcome": "win",
+    "censored": false
+   },
+   "conflict": false,
+   "w_ratio": 0.9878091501436278,
+   "panic_or_abnormal_rc": false,
+   "within_wall_caps": true
+  }
+ },
+ "m1": {
+  "dec13": {
+   "median_wall_plain": 0.5217938423156738,
+   "median_wall_facts": 0.5247068405151367,
+   "wall_ratio": 1.0056,
+   "evals_identical": true,
+   "stdout_identical": true,
+   "M1_pass": true
+  },
+  "dec10": {
+   "median_wall_plain": 0.3648488521575928,
+   "median_wall_facts": 0.3631172180175781,
+   "wall_ratio": 0.9953,
+   "evals_identical": true,
+   "stdout_identical": true,
+   "M1_pass": true
+  },
+  "m22_white": {
+   "median_wall_plain": 1.8661489486694336,
+   "median_wall_facts": 1.862579107284546,
+   "wall_ratio": 0.9981,
+   "evals_identical": true,
+   "stdout_identical": true,
+   "M1_pass": true
+  }
+ },
+ "hypotheses": {
+  "M1_solo_tax": {
+   "pass": true,
+   "detail": {
+    "dec13": {
+     "median_wall_plain": 0.5217938423156738,
+     "median_wall_facts": 0.5247068405151367,
+     "wall_ratio": 1.0056,
+     "evals_identical": true,
+     "stdout_identical": true,
+     "M1_pass": true
+    },
+    "dec10": {
+     "median_wall_plain": 0.3648488521575928,
+     "median_wall_facts": 0.3631172180175781,
+     "wall_ratio": 0.9953,
+     "evals_identical": true,
+     "stdout_identical": true,
+     "M1_pass": true
+    },
+    "m22_white": {
+     "median_wall_plain": 1.8661489486694336,
+     "median_wall_facts": 1.862579107284546,
+     "wall_ratio": 0.9981,
+     "evals_identical": true,
+     "stdout_identical": true,
+     "M1_pass": true
+    }
+   }
+  },
+  "M2_contention_tax": {
+   "pass": false,
+   "failures": [
+    "stress",
+    "m22_white"
+   ],
+   "ratios": {
+    "stress": {
+     "rounds": [
+      1.1439,
+      1.1349,
+      1.1372,
+      1.153
+     ],
+     "median": 1.1405894177390639
+    },
+    "m22_white": {
+     "rounds": [
+      1.1101
+     ],
+     "median": 1.1101375534799927
+    }
+   }
+  },
+  "H1_value": [
+   "m20_white"
+  ],
+  "H2_no_regression_failures": [
+   "stress",
+   "dec10"
+  ],
+  "H3_destabilization": {
+   "pass": true,
+   "conflicts": [],
+   "abnormal_rc": [],
+   "canary_clean": true
+  },
+  "H4_fidelity": {
+   "pass": true,
+   "h4a_bit_identical": true,
+   "codec": "unit tests (facts::tests) in the fast gate",
+   "byte_inertness": "stage-1 paired runs: stdout md5 + evals identical (probes11.json)"
+  },
+  "verdict": "reject"
+ }
+}

@@ -918,4 +918,20 @@ Draft docs/plans/parallel/plan11.md: low-tax solved-facts carrier (key-only emis
 
 ---
 
-Please add a final item to the parallel initiative which cleans up the surface and harness introduced in plan10.
+Please add a final item to the parallel initiative which cleans up the surface and harness introduced in plan10 and plan11, if it is not needed anymore.
+
+---
+
+SESSION COMPLETE
+
+- plan11 executed: carrier shipped (drift gate clean, make test green, fmt/clippy/doc clean);  
+  stages 1–4 measured; report11.md written; backlog #12 closed NO-GO; parallel row updated  
+  (thread CLOSED for good per the verdict rule)  
+  Follow-up options:
+  1.  `Evaluate parallel backlog #7 (any-worker-can-finish SPDFPN) against the plan8 distribution                                                                   
+data before committing to a build` — the only open item in the initiative; its premise is  
+      unchanged by this result.
+  2.  `Open a new initiative for a read-only facts consumer (frozen trajectory, no TT pollution)                                                                    
+targeting the twice-measured m20_white conversion (0.575×/0.601×)` — only if the owner  
+      weights the demonstrated m20 value channel above the second-strike closure; a new  
+      initiative, not plan12.

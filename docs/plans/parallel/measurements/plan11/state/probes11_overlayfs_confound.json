@@ -1,0 +1,935 @@
+{
+ "dec13": {
+  "pairs": [
+   {
+    "which": "plain",
+    "tag": "dec13_p1_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.5293083190917969,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "dec13_p1_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/dec13_p1_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.6246528625488281,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    }
+   },
+   {
+    "which": "facts",
+    "tag": "dec13_p2_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/dec13_p2_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.6118321418762207,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    }
+   },
+   {
+    "which": "plain",
+    "tag": "dec13_p2_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.5228230953216553,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": null
+   },
+   {
+    "which": "plain",
+    "tag": "dec13_p3_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.5219223499298096,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "dec13_p3_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/dec13_p3_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.6193692684173584,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    }
+   },
+   {
+    "which": "facts",
+    "tag": "dec13_p4_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/dec13_p4_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.6280715465545654,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    }
+   },
+   {
+    "which": "plain",
+    "tag": "dec13_p4_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.5266480445861816,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": null
+   },
+   {
+    "which": "plain",
+    "tag": "dec13_p5_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.5475594997406006,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "dec13_p5_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/dec13_p5_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.6164028644561768,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    }
+   }
+  ],
+  "volume": {
+   "file": {
+    "records": 147752,
+    "crc_failures": 0,
+    "distinct_keys": 61852,
+    "distinct_share": 0.4186,
+    "path_len_min": 0,
+    "path_len_max": 24,
+    "bytes": 3546048
+   },
+   "exporter_lines": [
+    {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    },
+    {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    },
+    {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    },
+    {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    },
+    {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    }
+   ]
+  }
+ },
+ "dec10": {
+  "pairs": [
+   {
+    "which": "plain",
+    "tag": "dec10_p1_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.3678925037384033,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "dec10_p1_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/dec10_p1_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.40326786041259766,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    }
+   },
+   {
+    "which": "facts",
+    "tag": "dec10_p2_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/dec10_p2_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.4146580696105957,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    }
+   },
+   {
+    "which": "plain",
+    "tag": "dec10_p2_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.3616912364959717,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": null
+   },
+   {
+    "which": "plain",
+    "tag": "dec10_p3_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.36660218238830566,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "dec10_p3_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/dec10_p3_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.4014472961425781,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    }
+   },
+   {
+    "which": "facts",
+    "tag": "dec10_p4_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/dec10_p4_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.3978588581085205,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    }
+   },
+   {
+    "which": "plain",
+    "tag": "dec10_p4_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.36334824562072754,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": null
+   },
+   {
+    "which": "plain",
+    "tag": "dec10_p5_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.37514448165893555,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "dec10_p5_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/dec10_p5_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.4068121910095215,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    }
+   }
+  ],
+  "volume": {
+   "file": {
+    "records": 61152,
+    "crc_failures": 0,
+    "distinct_keys": 12456,
+    "distinct_share": 0.2037,
+    "path_len_min": 0,
+    "path_len_max": 24,
+    "bytes": 1467648
+   },
+   "exporter_lines": [
+    {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    },
+    {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    },
+    {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    },
+    {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    },
+    {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    }
+   ]
+  }
+ },
+ "m22_white": {
+  "pairs": [
+   {
+    "which": "plain",
+    "tag": "m22_white_p1_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 1.8516647815704346,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "m22_white_p1_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/m22_white_p1_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 1.9777653217315674,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    }
+   },
+   {
+    "which": "facts",
+    "tag": "m22_white_p2_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/m22_white_p2_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 1.9812209606170654,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    }
+   },
+   {
+    "which": "plain",
+    "tag": "m22_white_p2_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 1.861739158630371,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": null
+   },
+   {
+    "which": "plain",
+    "tag": "m22_white_p3_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 1.863844394683838,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "m22_white_p3_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/m22_white_p3_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 1.9829695224761963,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    }
+   },
+   {
+    "which": "facts",
+    "tag": "m22_white_p4_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/m22_white_p4_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 1.9869990348815918,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    }
+   },
+   {
+    "which": "plain",
+    "tag": "m22_white_p4_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 1.8986806869506836,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": null
+   },
+   {
+    "which": "plain",
+    "tag": "m22_white_p5_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 1.861609697341919,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "m22_white_p5_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/workspace/atomic_solver/docs/plans/parallel/measurements/plan11/logs/probes11/m22_white_p5_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 2.008162021636963,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    }
+   }
+  ],
+  "volume": {
+   "file": {
+    "records": 208926,
+    "crc_failures": 0,
+    "distinct_keys": 58910,
+    "distinct_share": 0.282,
+    "path_len_min": 0,
+    "path_len_max": 24,
+    "bytes": 5014224
+   },
+   "exporter_lines": [
+    {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    },
+    {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    },
+    {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    },
+    {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    },
+    {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    }
+   ]
+  }
+ },
+ "_m1": {
+  "dec13": {
+   "median_wall_plain": 0.5266480445861816,
+   "median_wall_facts": 0.6193692684173584,
+   "wall_ratio": 1.1761,
+   "evals_identical": true,
+   "stdout_identical": true,
+   "M1_pass": false
+  },
+  "dec10": {
+   "median_wall_plain": 0.36660218238830566,
+   "median_wall_facts": 0.40326786041259766,
+   "wall_ratio": 1.1,
+   "evals_identical": true,
+   "stdout_identical": true,
+   "M1_pass": false
+  },
+  "m22_white": {
+   "median_wall_plain": 1.861739158630371,
+   "median_wall_facts": 1.9829695224761963,
+   "wall_ratio": 1.0651,
+   "evals_identical": true,
+   "stdout_identical": true,
+   "M1_pass": false
+  }
+ },
+ "_m1_pass": false
+}

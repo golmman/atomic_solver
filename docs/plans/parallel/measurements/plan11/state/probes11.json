@@ -1,0 +1,935 @@
+{
+ "dec13": {
+  "pairs": [
+   {
+    "which": "plain",
+    "tag": "dec13_p1_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.5217938423156738,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "dec13_p1_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/dec13_p1_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.5215787887573242,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    }
+   },
+   {
+    "which": "facts",
+    "tag": "dec13_p2_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/dec13_p2_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.5233345031738281,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    }
+   },
+   {
+    "which": "plain",
+    "tag": "dec13_p2_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.5565922260284424,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": null
+   },
+   {
+    "which": "plain",
+    "tag": "dec13_p3_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.5219278335571289,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "dec13_p3_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/dec13_p3_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.5302624702453613,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    }
+   },
+   {
+    "which": "facts",
+    "tag": "dec13_p4_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/dec13_p4_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.5247068405151367,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    }
+   },
+   {
+    "which": "plain",
+    "tag": "dec13_p4_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.5217337608337402,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": null
+   },
+   {
+    "which": "plain",
+    "tag": "dec13_p5_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.5193641185760498,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "dec13_p5_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/dec13_p5_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.5563750267028809,
+    "stdout_md5": "0286c877093e42a086be4dc0a08b2f72",
+    "evals": 5030497,
+    "export": {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    }
+   }
+  ],
+  "volume": {
+   "file": {
+    "records": 147752,
+    "crc_failures": 0,
+    "distinct_keys": 61852,
+    "distinct_share": 0.4186,
+    "path_len_min": 0,
+    "path_len_max": 24,
+    "bytes": 3546048
+   },
+   "exporter_lines": [
+    {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    },
+    {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    },
+    {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    },
+    {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    },
+    {
+     "records": 147868,
+     "emitted": 147752,
+     "filtered": 116,
+     "bytes": 3546048
+    }
+   ]
+  }
+ },
+ "dec10": {
+  "pairs": [
+   {
+    "which": "plain",
+    "tag": "dec10_p1_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.3648488521575928,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "dec10_p1_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/dec10_p1_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.363070011138916,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    }
+   },
+   {
+    "which": "facts",
+    "tag": "dec10_p2_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/dec10_p2_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.3706080913543701,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    }
+   },
+   {
+    "which": "plain",
+    "tag": "dec10_p2_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.3694581985473633,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": null
+   },
+   {
+    "which": "plain",
+    "tag": "dec10_p3_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.35704612731933594,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "dec10_p3_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/dec10_p3_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.3603038787841797,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    }
+   },
+   {
+    "which": "facts",
+    "tag": "dec10_p4_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/dec10_p4_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.369915246963501,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    }
+   },
+   {
+    "which": "plain",
+    "tag": "dec10_p4_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.37798571586608887,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": null
+   },
+   {
+    "which": "plain",
+    "tag": "dec10_p5_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 0.35845422744750977,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "dec10_p5_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/dec10_p5_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 0.3631172180175781,
+    "stdout_md5": "59db566d5a2ca9ced539863e92ed380d",
+    "evals": 3901847,
+    "export": {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    }
+   }
+  ],
+  "volume": {
+   "file": {
+    "records": 61152,
+    "crc_failures": 0,
+    "distinct_keys": 12456,
+    "distinct_share": 0.2037,
+    "path_len_min": 0,
+    "path_len_max": 24,
+    "bytes": 1467648
+   },
+   "exporter_lines": [
+    {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    },
+    {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    },
+    {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    },
+    {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    },
+    {
+     "records": 66309,
+     "emitted": 61152,
+     "filtered": 5157,
+     "bytes": 1467648
+    }
+   ]
+  }
+ },
+ "m22_white": {
+  "pairs": [
+   {
+    "which": "plain",
+    "tag": "m22_white_p1_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 1.842622995376587,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "m22_white_p1_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/m22_white_p1_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 1.849863052368164,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    }
+   },
+   {
+    "which": "facts",
+    "tag": "m22_white_p2_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/m22_white_p2_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 1.8431007862091064,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    }
+   },
+   {
+    "which": "plain",
+    "tag": "m22_white_p2_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 1.8487305641174316,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": null
+   },
+   {
+    "which": "plain",
+    "tag": "m22_white_p3_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 1.8661489486694336,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "m22_white_p3_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/m22_white_p3_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 1.9483304023742676,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    }
+   },
+   {
+    "which": "facts",
+    "tag": "m22_white_p4_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/m22_white_p4_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 1.8627829551696777,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    }
+   },
+   {
+    "which": "plain",
+    "tag": "m22_white_p4_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 1.9421052932739258,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": null
+   },
+   {
+    "which": "plain",
+    "tag": "m22_white_p5_plain",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120"
+    ],
+    "rc": 0,
+    "wall_s": 1.9627501964569092,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": null
+   },
+   {
+    "which": "facts",
+    "tag": "m22_white_p5_facts",
+    "cmd": [
+     "/workspace/atomic_solver/target/release/atomic_solver",
+     "--fen",
+     "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+     "--tt-size",
+     "128",
+     "--first-outcome",
+     "--outcome-only",
+     "--salt",
+     "0",
+     "--timeout",
+     "120",
+     "--facts-out",
+     "/tmp/plan11_facts/probes11/m22_white_p5_facts.bin"
+    ],
+    "rc": 0,
+    "wall_s": 1.862579107284546,
+    "stdout_md5": "207718ba5bd4e740148c6aba7b243d35",
+    "evals": 19111111,
+    "export": {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    }
+   }
+  ],
+  "volume": {
+   "file": {
+    "records": 208926,
+    "crc_failures": 0,
+    "distinct_keys": 58910,
+    "distinct_share": 0.282,
+    "path_len_min": 0,
+    "path_len_max": 24,
+    "bytes": 5014224
+   },
+   "exporter_lines": [
+    {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    },
+    {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    },
+    {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    },
+    {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    },
+    {
+     "records": 227727,
+     "emitted": 208926,
+     "filtered": 18801,
+     "bytes": 5014224
+    }
+   ]
+  }
+ },
+ "_m1": {
+  "dec13": {
+   "median_wall_plain": 0.5217938423156738,
+   "median_wall_facts": 0.5247068405151367,
+   "wall_ratio": 1.0056,
+   "evals_identical": true,
+   "stdout_identical": true,
+   "M1_pass": true
+  },
+  "dec10": {
+   "median_wall_plain": 0.3648488521575928,
+   "median_wall_facts": 0.3631172180175781,
+   "wall_ratio": 0.9953,
+   "evals_identical": true,
+   "stdout_identical": true,
+   "M1_pass": true
+  },
+  "m22_white": {
+   "median_wall_plain": 1.8661489486694336,
+   "median_wall_facts": 1.862579107284546,
+   "wall_ratio": 0.9981,
+   "evals_identical": true,
+   "stdout_identical": true,
+   "M1_pass": true
+  }
+ },
+ "_m1_pass": true
+}

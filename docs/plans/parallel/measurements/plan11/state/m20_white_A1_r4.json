@@ -1,0 +1,187 @@
+{
+ "race": "m20_white_A1_r4",
+ "case": "m20_white",
+ "arm": "A1",
+ "tag": "",
+ "round": 4,
+ "budget": 2000000000,
+ "wall_cap_s": 500,
+ "winner_salt": null,
+ "racers": [
+  {
+   "salt": 0,
+   "pure": true,
+   "outcome": "draw",
+   "censored": true,
+   "killed": false,
+   "exited": true,
+   "rc": 0,
+   "wall_ms": 227893,
+   "evals": 2000000000,
+   "decisive_at_ms": null,
+   "facts_import": null,
+   "facts_export": {
+    "records": 9982153,
+    "emitted": 7720009,
+    "filtered": 2262144,
+    "bytes": 185280216
+   }
+  },
+  {
+   "salt": 2,
+   "pure": false,
+   "outcome": "draw",
+   "censored": true,
+   "killed": false,
+   "exited": true,
+   "rc": 0,
+   "wall_ms": 227893,
+   "evals": 2000000000,
+   "decisive_at_ms": null,
+   "facts_import": {
+    "read": 369574,
+    "crc_fail": 0,
+    "accepted": 42638,
+    "skipped_solved": 326936,
+    "files": 4,
+    "bytes": 8869776
+   },
+   "facts_export": {
+    "records": 5356790,
+    "emitted": 4089014,
+    "filtered": 1267776,
+    "bytes": 98136336
+   }
+  },
+  {
+   "salt": 3,
+   "pure": false,
+   "outcome": "draw",
+   "censored": true,
+   "killed": false,
+   "exited": true,
+   "rc": 0,
+   "wall_ms": 227893,
+   "evals": 2000000001,
+   "decisive_at_ms": null,
+   "facts_import": {
+    "read": 387408,
+    "crc_fail": 0,
+    "accepted": 42765,
+    "skipped_solved": 344643,
+    "files": 4,
+    "bytes": 9297792
+   },
+   "facts_export": {
+    "records": 9339665,
+    "emitted": 7530248,
+    "filtered": 1809417,
+    "bytes": 180725952
+   }
+  },
+  {
+   "salt": 5,
+   "pure": false,
+   "outcome": "draw",
+   "censored": true,
+   "killed": false,
+   "exited": true,
+   "rc": 0,
+   "wall_ms": 227893,
+   "evals": 2000000005,
+   "decisive_at_ms": null,
+   "facts_import": {
+    "read": 399952,
+    "crc_fail": 0,
+    "accepted": 42746,
+    "skipped_solved": 357206,
+    "files": 4,
+    "bytes": 9598848
+   },
+   "facts_export": {
+    "records": 7840380,
+    "emitted": 5795378,
+    "filtered": 2045002,
+    "bytes": 139089072
+   }
+  }
+ ],
+ "cmds": {
+  "0": [
+   "/workspace/atomic_solver/target/release/atomic_solver",
+   "--fen",
+   "4r2k/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R5RK w - - 4 20",
+   "--tt-size",
+   "128",
+   "--first-outcome",
+   "--outcome-only",
+   "--salt",
+   "0",
+   "--budget",
+   "2000000000",
+   "--timeout",
+   "500",
+   "--facts-out",
+   "/tmp/plan11_facts/m20_white_A1_r4/facts-s0.bin"
+  ],
+  "2": [
+   "/workspace/atomic_solver/target/release/atomic_solver",
+   "--fen",
+   "4r2k/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R5RK w - - 4 20",
+   "--tt-size",
+   "128",
+   "--first-outcome",
+   "--outcome-only",
+   "--salt",
+   "2",
+   "--budget",
+   "2000000000",
+   "--timeout",
+   "500",
+   "--facts-out",
+   "/tmp/plan11_facts/m20_white_A1_r4/facts-s2.bin",
+   "--facts-in",
+   "/tmp/plan11_facts/m20_white_A1_r4"
+  ],
+  "3": [
+   "/workspace/atomic_solver/target/release/atomic_solver",
+   "--fen",
+   "4r2k/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R5RK w - - 4 20",
+   "--tt-size",
+   "128",
+   "--first-outcome",
+   "--outcome-only",
+   "--salt",
+   "3",
+   "--budget",
+   "2000000000",
+   "--timeout",
+   "500",
+   "--facts-out",
+   "/tmp/plan11_facts/m20_white_A1_r4/facts-s3.bin",
+   "--facts-in",
+   "/tmp/plan11_facts/m20_white_A1_r4"
+  ],
+  "5": [
+   "/workspace/atomic_solver/target/release/atomic_solver",
+   "--fen",
+   "4r2k/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R5RK w - - 4 20",
+   "--tt-size",
+   "128",
+   "--first-outcome",
+   "--outcome-only",
+   "--salt",
+   "5",
+   "--budget",
+   "2000000000",
+   "--timeout",
+   "500",
+   "--facts-out",
+   "/tmp/plan11_facts/m20_white_A1_r4/facts-s5.bin",
+   "--facts-in",
+   "/tmp/plan11_facts/m20_white_A1_r4"
+  ]
+ },
+ "host_nproc": 6,
+ "finished_s": "2026-10-12T20:59:55"
+}

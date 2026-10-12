@@ -1,0 +1,37 @@
+{
+ "m22_white": {
+  "evals": 19111111,
+  "wall_s": 1.943002462387085,
+  "rc": 0,
+  "decisive": true,
+  "budget_exhausted": false
+ },
+ "dec10": {
+  "evals": 3901847,
+  "wall_s": 0.36560964584350586,
+  "rc": 0,
+  "decisive": true,
+  "budget_exhausted": false
+ },
+ "dec13": {
+  "evals": 5030497,
+  "wall_s": 0.5239303112030029,
+  "rc": 0,
+  "decisive": true,
+  "budget_exhausted": false
+ },
+ "rem12": {
+  "evals": 69388795,
+  "wall_s": 7.063900470733643,
+  "rc": 0,
+  "decisive": true,
+  "budget_exhausted": false
+ },
+ "stress": {
+  "evals": 305404068,
+  "wall_s": 27.548914194107056,
+  "rc": 0,
+  "decisive": true,
+  "budget_exhausted": false
+ }
+}

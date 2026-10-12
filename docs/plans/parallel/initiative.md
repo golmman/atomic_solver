@@ -2,6 +2,21 @@
 
 ## Status
 
+**2026-10-13, plan11 executed → the cooperative-portfolio thread is CLOSED
+for good (second strike, per plan11's verdict rule; backlog #12 closed
+NO-GO).** The low-tax carrier shipped and removed the solo tax (M1 PASS:
+0.995–1.006× vs the ≤ 1.03 ceiling; solo export also proven byte-inert),
+and the m20 value channel strengthened (H1: 0.575× evals / 0.601× wall) —
+but the pre-registered verdict is reject: M2 fails (stress 1.141×, m22
+1.110× vs ≤ 1.06×) and H2 fails on stress + dec10. Diagnosis (report11):
+the M2 excess is the 4-way contention floor of the environment itself
+(fresh facts-free A0 control: pure R0 at 1.24–1.25× solo on dec13), and
+the surviving cost channel is TT pollution (imports perturbing winning
+basins). No plan12; #7 (any-worker-can-finish SPDFPN) is the only open
+item.
+
+Prior state:
+
 **2026-10-13, owner decision — cooperative-portfolio thread reopened for
 plan11 (drafted, docs only, no code).** Report10's next-steps option 2 is
 taken: the owner weights the m20 value channel (0.66× evals / 0.82× wall,
@@ -413,6 +428,7 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
 | 9 | **Sequential-tax removal enabler** | Make `Search` generic over a TT backend (sequential build monomorphizes to today's unsynchronized table, byte-identical by construction) or do not share the TT at all (private per-worker TTs + small shared solved-facts table). Removes owner condition 2 (the ≤ +7 % TT-concurrency tax budget) from any future shared-TT pre-registration (reexamination §3) | entry-fee elimination, not a mechanism | none | M | **open** — only worth scheduling if #6/#7 produce a GO |
 | 10 | **Fringe: frontier/round portfolios** | (a) per-leaf config portfolios for `solve`'s 100 %-cap-pinned frontier (heavy-tailed censoring is the textbook diversity case; coordinate ownership with `solve`); (b) concurrent refinement rounds at several bounds (PV shortening, priority 2). Config-rotating restarts on one core are subsumed and closed (research #20, plan20 Phase-0 PIVOT) | varies | varies | varies | **open, lowest priority** |
 | 11 | **Portfolio ship shape: `examples/portfolio` driver** | Owner decision 2026-10-12 (resolves report8 §Ship-shape): option 2 — a Rust example driver (`examples/portfolio.rs`) launching the racer set (default salts 0/2/3/5, overridable) of unmodified solvers, take-first-decisive, the stop-when-proven kill policy (report8 cost finding: reclaims the grace-burned core-seconds), per-racer evals/wall/censoring accounting with the plan8 censoring discipline (budget-censored never misreported as proven draw). Fixed racer flags `--first-outcome --outcome-only`; RAM = N × TT documented in the module header; solver binary located via the cargo layout (explicit `--solver` override for tests). `--race` product flag deliberately deferred — revisit only if #6/#7 produce a scalable cooperative mechanism | the plan8 win as a durable tool; harness skeleton for #6/#7 | none (examples/tests/docs only; zero `src/` diff) | S | **closed 2026-10-12 (plan9; `report9.md`)** — shipped per plan: driver + 9 unit tests + 2 smoke tests (`make test` green), zero `src/` diff; both plan8 anchors reproduced exactly (dec10 s2 2,918,636; m20 s5 791,401,553); stop-when-proven measured (m20 race ≈ 248 core-s vs 747 with grace) |
+| 12 | **Low-tax solved-facts carrier (plan11)** | The value channel survives report10's reject (m20 0.66× evals / 0.82× wall); rebuild the carrier so all three plumbing artifacts are structurally absent: key-only emission (`search::dfpn::FactExporter` observer hook, synchronous buffered writes on the search thread, proof-event sender stays `None`), threadless chunk-boundary import (the `FactImporter` hook reads sibling files directly, 1 MiB/call cap), fixed near-root admission filter (`PATH_LEN_CAP = 24`); record v2; no escalation arm | H-mech pre-registration: M1 solo wall ratio ≤ 1.03× (plan10: 1.19–1.25×), M2 pure-R0 in-race ≤ 1.06× (plan10: 1.38×); H1/H2 at plan10's 0.9×/1.1× lines; any non-adopt closes the cooperative-portfolio thread (second strike) | m20-class conversions without plan10's uniform tax | M | **closed 2026-10-13 NO-GO (plan11; `report11.md`)** — the carrier shipped and is solo-free (M1 PASS: 0.995–1.006× vs ≤ 1.03; export inert at the CLI level, drift gate clean) and the m20 value channel got stronger (H1 fired at 0.575× evals / 0.601× wall), but the pre-registered verdict is **reject**: M2 fails (stress 1.141×, m22 1.110× vs ≤ 1.06×) and H2 fails on stress (1.172×/1.158×) + dec10 (1.152×/1.088×). Diagnosis: the M2 excess is the environment's 4-way contention floor, not the carrier (fresh facts-free A0-control shows pure R0 at 1.24–1.25× its solo wall on dec13 — the ≤ 1.06 ceiling was miscalibrated for the current binary), so the surviving cost channel is TT pollution (imports perturbing winning basins: dec10 winners shifted off the 2.55 M basin in 4/5 rounds; stress cooperators perturbed off their 238–250 M basins, R0's 305 M anchor winning 4/5). Per the verdict rule the **cooperative-portfolio thread closes for good** (second strike; plan8/plan9 salt portfolio remains the family's only adopted lever)
 
 ## Non-goals
 
@@ -440,6 +456,34 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
 
 ## History
 
+- **2026-10-13 — plan11 complete: low-tax solved-facts carrier → REJECT,
+  backlog #12 closed, cooperative-portfolio thread CLOSED for good
+  (`report11.md`)** (artifacts under `measurements/plan11/`): stage-0
+  carrier rework shipped (record v2 + `PATH_LEN_CAP=24` filter,
+  synchronous `FactsExporter` via the new `search::dfpn::FactExporter`
+  hook, threadless chunk-boundary `FactsImporter`; threads/queue/A2 arm
+  deleted; drift gate clean: quick 59/59 eval-identical, m22 default/FO +
+  shuffle-win FO stdout byte-identical, TT-snapshot sha unchanged; `make
+  test` green with 12 new facts tests). Stage-1 M1 PASS (0.995–1.006× vs
+  ≤ 1.03) after discovering and removing an environmental confound: the
+  overlay-backed repo tree's writeback blocking on exporter flushes costs
+  15–23% wall on solo sub-second runs (task-clock identical,
+  context-switches 1 → 886) — the same confound inflated plan10's stage-1
+  solo numbers; facts dirs moved to tmpfs (documented in
+  `measurements/plan11/env.json`, confounded pass kept as
+  `probes11_overlayfs_confound.json`). Stage-2 canaries clean. Stage-3
+  campaign: H1 fired on m20_white (0.575× evals / 0.601× wall, one
+  winnerless round), dec13 improved (0.774×), rem12 clean (0.988×), but
+  M2 failed (stress 1.141×, m22 1.110× vs ≤ 1.06×) and H2 failed on
+  stress (1.172×) + dec10 (1.152×). Soundness/fidelity all green (zero
+  conflicts, zero CRC failures, canaries clean, R0 evals bit-identical to
+  the fresh solo anchors in every finished round; censoring discipline
+  held incl. the winnerless m20 r4 all-censored round). Attribution
+  resolution: the plan10 solo tax was plumbing + filesystem confound
+  (mostly the latter); the M2 ceiling was miscalibrated for the current
+  binary (facts-free contention floor alone is 1.24–1.25×); the residual
+  regression channel is TT pollution. Verdict rule applied verbatim:
+  reject → thread closes (second strike).
 - **2026-10-13 — plan10 complete: cooperative portfolio (cross-racer
   solved facts) → REJECT/NO-GO, backlog #6 closed (`report10.md`)**
   (first `src/` diff of the initiative: `src/facts/` +
