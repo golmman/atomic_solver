@@ -2,6 +2,17 @@
 
 ## Status
 
+**2026-10-12, owner ship-shape decision: option 2 (`examples/portfolio`
+driver); backlog item #11 opened (plan9 drafted).** Rationale in
+`plan9.md` §Decision record: option 3 (`--race` product flag) rejected for
+now — the salt portfolio is a PoC-scale lever (fixed pre-registered racer
+set tuned on the gate cases, linear CPU/RAM cost, no work sharing), and a
+product surface would freeze that shape in just before the cooperative
+mechanisms (#6/#7) that own actual scaling; option 1 alone leaves the
+measured win behind manual steps. The driver is also the intended harness
+skeleton for #6/#7. Python driver rejected in favor of a Rust example
+(examples/ convention, consistency, tier-tested).
+
 **2026-10-11 (later the same day), plan8 executed → ADOPT; backlog #5
 closed WON.** The pre-registered verdict fired mechanically: **H1 pass**
 (the adopt trigger — m20_white converts: every race had ≥ 1 uncensored
@@ -344,6 +355,7 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
 | 8 | **Kaneko root threads with virtual pn congestion** | Root-started workers carrying their own in-call path state (`dfpn/research_parallel.md`, never implemented) sidestep the TT-only TRYRUNJOB descent blindness in repetition-heavy regions (first-player-loss GHI shortcut leaves nothing to guide on) | avoids the §2 repetition-region stall that stalled the pure SPDFPN pool | L | L | **open, fringe** — cross-referenced as research backlog #22(b) |
 | 9 | **Sequential-tax removal enabler** | Make `Search` generic over a TT backend (sequential build monomorphizes to today's unsynchronized table, byte-identical by construction) or do not share the TT at all (private per-worker TTs + small shared solved-facts table). Removes owner condition 2 (the ≤ +7 % TT-concurrency tax budget) from any future shared-TT pre-registration (reexamination §3) | entry-fee elimination, not a mechanism | none | M | **open** — only worth scheduling if #6/#7 produce a GO |
 | 10 | **Fringe: frontier/round portfolios** | (a) per-leaf config portfolios for `solve`'s 100 %-cap-pinned frontier (heavy-tailed censoring is the textbook diversity case; coordinate ownership with `solve`); (b) concurrent refinement rounds at several bounds (PV shortening, priority 2). Config-rotating restarts on one core are subsumed and closed (research #20, plan20 Phase-0 PIVOT) | varies | varies | varies | **open, lowest priority** |
+| 11 | **Portfolio ship shape: `examples/portfolio` driver** | Owner decision 2026-10-12 (resolves report8 §Ship-shape): option 2 — a Rust example driver (`examples/portfolio.rs`) launching the racer set (default salts 0/2/3/5, overridable) of unmodified solvers, take-first-decisive, the stop-when-proven kill policy (report8 cost finding: reclaims the grace-burned core-seconds), per-racer evals/wall/censoring accounting with the plan8 censoring discipline (budget-censored never misreported as proven draw). Fixed racer flags `--first-outcome --outcome-only`; RAM = N × TT documented in the module header; solver binary located via the cargo layout (explicit `--solver` override for tests). `--race` product flag deliberately deferred — revisit only if #6/#7 produce a scalable cooperative mechanism | the plan8 win as a durable tool; harness skeleton for #6/#7 | none (examples/tests/docs only; zero `src/` diff) | S | **open — plan9 drafted** |
 
 ## Non-goals
 

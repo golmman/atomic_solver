@@ -884,3 +884,25 @@ Is 1 sound, does it need an amendment?
 * nn re-examination? -> workspace
 * map of all techniques/mechanism
   * failed and not failed
+
+---
+
+Help me with the open decisions in `docs/plans/parallel/report8.md`.
+Let's start by explaining in simple language the proposed mechanism, implementation options and tradeoffs.
+
+---
+
+I tend toward Option 3 when this justifies extending the `docs/plans/workspace/` initiative to a split of the core lib and the cli app to dedicated workspaces.
+What do you think?
+
+---
+
+i thought a bit more about it.
+This mechanism does not really scale. it's rather a PoC which demonstrates the salt importance, not a production grade feature.
+so this let's me tend to option 2 again.
+What do you think?
+
+---
+
+layered tt
+FocusLost nvim
