@@ -33,6 +33,32 @@ use super::tt::TranspositionTable;
 
 use repetition_cache::RepetitionCache;
 
+/// Imported solved-fact admission counters, returned by
+/// [`FactImporter::import`] and aggregated per run by [`Search`].
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct FactImportCounters {
+    /// Facts stored into the TT this drain.
+    pub accepted: u64,
+    /// Facts skipped because the TT already held a solved entry at that key.
+    pub skipped: u64,
+}
+
+/// One-method hook for cross-racer solved-fact import (plan10, `parallel`
+/// backlog #6).
+///
+/// `search` knows nothing about where facts come from: the concrete file
+/// channel lives in [`crate::facts`], which wires the importer through
+/// [`Search::set_fact_importer`]. The hook is called **only between work
+/// chunks** on the search thread — never during a `dfpn` recursion, never
+/// during the pre-phase (the preflight's no-TT-interaction contract is
+/// untouched) — so imports land in the TT at exactly the same boundaries a
+/// native store would.
+pub trait FactImporter: Send {
+    /// Drain pending solved facts into the TT. Called between work chunks;
+    /// must return promptly and must never panic.
+    fn import(&mut self, tt: &mut TranspositionTable) -> FactImportCounters;
+}
+
 const DEFAULT_EPSILON: f64 = 0.125;
 const TIMEOUT_SECS: u64 = 5;
 const DEFAULT_MAX_PV_PLIES: usize = 1000;
@@ -192,6 +218,12 @@ pub struct Search {
     /// Last wall-clock reading taken by `time_exceeded`.
     last_clock: std::cell::Cell<Instant>,
     proof_event_sender: Option<std::sync::mpsc::Sender<ProofEvent>>,
+    /// Cross-racer solved-fact importer (plan10), drained between work
+    /// chunks. `None` (the default) keeps the search bit-identical to a
+    /// facts-free run.
+    fact_importer: Option<Box<dyn FactImporter>>,
+    /// Cumulative `FactImportCounters` across all drains of the last run.
+    fact_import_totals: FactImportCounters,
     move_stack: Vec<Move>,
     /// Per-depth pool of `ChildInfo` tables (`dfpn` frames borrow their
     /// depth's vector with `mem::take` and return it at frame exit).
@@ -265,6 +297,8 @@ impl Search {
             clock_sample_at: std::cell::Cell::new(0),
             last_clock: std::cell::Cell::new(Instant::now()),
             proof_event_sender: None,
+            fact_importer: None,
+            fact_import_totals: FactImportCounters::default(),
             move_stack: Vec::new(),
             child_pool: Vec::new(),
             precompute_pool: Vec::new(),
@@ -479,6 +513,38 @@ impl Search {
         self.proof_event_sender = sender;
     }
 
+    /// Wire the solved-fact importer (plan10). `None` (the default) disables
+    /// importing entirely: the search is then bit-identical to a facts-free
+    /// run. See [`FactImporter`] for the hook contract.
+    pub fn set_fact_importer(&mut self, importer: Option<Box<dyn FactImporter>>) {
+        self.fact_importer = importer;
+    }
+
+    /// Cumulative counters of the imported solved facts of the last run.
+    #[must_use]
+    pub fn fact_import_totals(&self) -> FactImportCounters {
+        self.fact_import_totals
+    }
+
+    /// Drain the fact importer (if wired) into the TT between work chunks.
+    fn drain_fact_imports(&mut self) {
+        if let Some(importer) = self.fact_importer.as_mut() {
+            let counters = importer.import(&mut self.tt);
+            self.fact_import_totals.accepted += counters.accepted;
+            self.fact_import_totals.skipped += counters.skipped;
+        }
+    }
+
+    /// Test-only re-export of the solved-entry reuse check for the facts
+    /// module's equivalence tests.
+    #[cfg(test)]
+    pub(crate) fn test_resolved_from_entry(
+        entry: &crate::search::tt::TtEntry,
+        max_depth: u32,
+    ) -> Option<(Outcome, u32)> {
+        Self::resolved_from_entry(entry, max_depth).map(|r| (r.outcome, r.depth))
+    }
+
     /// Read-only access to the transposition table, for snapshot/debug use.
     ///
     /// This exposes the raw table contents (all generations, native bucket
@@ -578,6 +644,10 @@ impl Search {
         let round_evals_start = self.child_evals;
 
         while !self.time_exceeded() && !self.child_eval_budget_exceeded() && chunk > 0 {
+            // Cross-racer solved-fact import (plan10): only ever between work
+            // chunks, on the search thread, after any pre-phase has already
+            // run (see the `FactImporter` hook contract).
+            self.drain_fact_imports();
             self.reset_search_state();
             last_child_evals_before = self.child_evals;
             // Cap the call's work at the remaining child-eval budget (and at
@@ -843,6 +913,7 @@ impl Search {
         self.refinement_evals = 0;
         self.pv_status = PvStatus::None;
         self.last_round_cap_cut = false;
+        self.fact_import_totals = FactImportCounters::default();
         self.start = Instant::now();
         self.deadline = self.start + self.timeout;
         // Clock sampler: read once immediately, then every CLOCK_SAMPLE_INTERVAL.

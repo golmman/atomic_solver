@@ -2,6 +2,30 @@
 
 ## Status
 
+**2026-10-13, plan10 executed → item #6 CLOSED NO-GO (rejected by its own
+pre-registered rule).** The cooperative portfolio shipped as code
+(`--facts-out` / `--facts-in`, `src/facts/` codec + threads, the
+one-method `search::dfpn::FactImporter` hook drained between work chunks;
+drift gate clean: quick 59/59 eval-identical, m22/shuffle-win stdout
+byte-identical, TT-snapshot sha unchanged; fmt/clippy/doc green, `make
+test` green) and the campaign ran fully: stage-1 paired export-inertness
+exact, stage-2 canary clean on m22+stress (A2 fallback never triggered),
+stage-3 5-round × 6-case A0/A1 campaign. Soundness/fidelity all green
+(zero decisive-outcome conflicts in 58 races, zero CRC failures, pure-R0
+evals reproduce fresh same-binary solo anchors bit-for-bit; the dfpn
+report10 destabilization record does **not** extend to exact-key
+ cross-worker sharing). Verdict **reject**: H2 failed on 5/6 cases via a
+uniform facts-plumbing wall tax (1.2–1.4× `W_first` at ≈1.0×
+`evals_first`) while H1 fired exactly where pre-registered (m20_white
+0.66× evals / 0.82× wall — cross-racer subtree dedup below the winner's
+own solo basin minimum) but with a 1-in-5 winnerless tail (m20 A1 r3
+all-censored). Value validated, carrier too expensive; a cheaper facts
+shape (key-only emission, batched imports) is draftable as a new plan if
+the owner weights the m20 channel higher than the uniform tax. Findings:
+plan12/plan8 anchors are stale for the current binary (re-baselined onto
+fresh paired anchors; determinism intact). Measurements:
+`measurements/plan10/`; report: `report10.md`.
+
 **2026-10-12, plan9 executed → item #11 CLOSED (shipped).**
 `examples/portfolio` landed exactly per plan (zero `src/` diff, asserted
 stage 0 and re-asserted in `report9.md`): Rust example driver, default
@@ -366,7 +390,7 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
 | 3 | **Staged implementation** | Gated on #2 GO; one lever per plan; sequential drift protocol green at every stage; parallel mode documented as nondeterministic (or not shipped, per #2) | the actual speedup | wall | L–XL | **closed 2026-09-21** — unblocking condition (#2 GO) failed on the pre-registered rules; no staged implementation exists to stage |
 | 4 | **A-stage: SPDFPN-style shared-TT parallel DF-PN** | Reopened by the 2026-10-02 nondeterminism premise; reference design = `research_spdfpn.md`. Stage 1 (plan4/plan4b): inert TT-concurrency refactor — sharded TT behind interior-mut locking, byte-identical N=1 behavior (gate re-registered 2026-10-03: ≤ +7 % median hard-class wall, byte-identity unchanged). Stage 2 (plan5/plan5b): `--threads N` prototype — W-threshold + same-child resume clause, virtual TT + job lock + `TRYRUNJOB`, thread-local repetition cache, serialized ProofEvents; measured on the hard class (wall speedup, work inflation, outcome agreement) with pre-registered GO bands; **tax acceptance + refactor revert-if-missed** | 2–8× wall on hard solves (expected ≈ 2.9–3.2× at 4 threads; conservative band ~1.8× at the GO edge) | wall | L–XL | **closed 2026-10-04 NO-GO (plan6, second campaign; `report6.md`)**: plan6 re-landed stage 1b+2a verbatim, locked W = 20 000 by the pre-registered long-class confirmation, added mid case rem12 (17.1 s seq), and re-ran the campaign at 8 interleaved reps × N ∈ {2,3,4}: **H1 fails both conjuncts (shuffle-win S4 = 1.65× < 2.0, I4 = 2.22× > 1.5 — the plan5b 2.68× was a 5-rep artifact of a bimodal run distribution)**, rem12 fails twice (S4 = 1.20× < 1.5, I4 = 3.03× > 2), cap-hit gate fails (C = 3/8 > 1/8); soundness clean (64/64 decisive `win`, zero panics); length trend directionally real (ρ = 1.0) but far below every GO threshold. Condition-2 revert executed (0-line diff vs pre-plan4b, all hashes identical). Prior state: closed 2026-10-04 NO-GO (plan5b; `report5.md`) — re-opened same day by owner directive; see `plan6.md` for the second pre-registration: stage 2b campaign (W sweep locked 10 000 — the landed 20 000 measured 3× worse at median; 5 interleaved reps × N ∈ {2,3,4} on m22 + shuffle-win): outcome agreement 29/29 decisive `win`, zero panics; **S4 = 1.79× (m22) / 2.68× (shuffle-win), I4 = 2.06× (m22) / 1.41× (shuffle-win)** → m22 misses both GO conjuncts, I4 > 2× fires NO-GO. **Condition-1 revert executed**: stage 1b + 2a reverted (0-line code diff vs pre-plan4b, `make test` green, quick suite 59/59, snapshot sha identical) — the tax is refunded. Mechanism preserved in history (`b714ef6` + W delta) and `measurements/plan4/`; re-open levers in `report5.md`. Measurements: `measurements/plan4/`, `plan4b/`, `plan5/` |
 | 5 | **Diversified portfolio re-run at gate grade** | Re-test plan7's downgraded-to-unjudged question under the pinned gate v1.0 with the only surviving diversity source: K concurrent sequential racers at different `--salt` values, default-inclusive, take-first decisive. Config arms (ε, history/killer, clock-budget reuse) are closed at gate grade (research plan13/17/18) and are not racer arms. Evals-space result pre-computable from plan12 data (racers are concurrency-independent); the unmeasured surface is contention wall, `W_first` on the m20_white timeout conversion, and out-of-sample rem12 | priority-1 timeout→proof conversions on the deep tier; ~1.0× elsewhere (pointwise dominance) | none (zero product code; `--salt` is shipped) | S | **closed 2026-10-11 ADOPT (plan8; `report8.md`)** — H1 pass (m20_white shipped-timeout → proven win at 791.4 M evals, `W_first` median 95.89 s, conversion in 3/3 races), H2 pass (dec10 0.768×), H3 pass (≤ 1.063× everywhere), H4 pass (5/5 identity, 63/63 in-race anchor fidelity, zero conflicts); prediction held exactly (evals_first = predicted basin min, wall tracked evals in 18/18 races); out-of-sample rem12 won independently (0.889×). Ship-shape space recorded, not implemented (owner decision); #6/#7 sequencing unblocked |
-| 6 | **Cooperative portfolio (ManySAT shape)** | Private per-worker TTs + an append-only shared solved-facts table; one pure default racer never consumes it, so the worst case is the sequential wall. Solved entries are path-independent and already reused across paths within a run; keep the `best_move_repeats_path` guard; same root and run only (not the plan10 cross-solve store). Risk (reexamination idea B): extra solved facts can destabilize DF-PN (`dfpn` report10/11) — read under the draw-luck regime plan8 establishes | could harvest cross-racer facts, not just min-of-draws | M (product code) | M | **open, plan10 drafted 2026-10-13** — unblocked by plan8's ADOPT (draw-luck regime confirmed at gate grade); `plan10.md` pre-registered: import-all exact-key solved-fact sharing via `--facts-out`/`--facts-in` (checksummed 24 B records, one pure R0 racer as the worst-case floor), dfpn report10/11 destabilization as the load-bearing risk with m22 as the designated collapse control, canary-before-campaign with one pre-registered Loss-only fallback arm (A2); H1 = evals_first ≤ 0.9× the A0 portfolio median on a hard-class multi-basin case |
+| 6 | **Cooperative portfolio (ManySAT shape)** | Private per-worker TTs + an append-only shared solved-facts table; one pure default racer never consumes it, so the worst case is the sequential wall. Solved entries are path-independent and already reused across paths within a run; keep the `best_move_repeats_path` guard; same root and run only (not the plan10 cross-solve store). Risk (reexamination idea B): extra solved facts can destabilize DF-PN (`dfpn` report10/11) — read under the draw-luck regime plan8 establishes | could harvest cross-racer facts, not just min-of-draws | M (product code) | M | **closed 2026-10-13 NO-GO (plan10; `report10.md`)** — mechanism shipped (`--facts-out`/`--facts-in`, `src/facts/`, `search::dfpn::FactImporter` hook; drift gate clean, `make test` green) and stayed sound everywhere (zero conflicts/panics/CRC failures in 58 races, canary clean, pure-R0 evals fidelity bit-exact; the dfpn report10 collapse record does NOT extend to exact-key cross-worker sharing). Pre-registered verdict **reject**: H2 failed on 5/6 cases — a uniform facts-plumbing wall tax (1.2–1.4× `W_first` at ≈1.0× `evals_first`; emission path-clone + per-racer writer/reader threads, +15–25% wall even solo) at the stop-when-proven winner's wall, not a search regression; H1 fired exactly where predicted (m20_white 0.66× evals / 0.82× wall — the winner finished below its own solo basin minimum via near-root subtree dedup) but with a 1-in-5 winnerless tail (m20 A1 r3 all-censored). A cheaper facts shape (key-only emission, batched imports) is draftable as a new plan; A2 (Loss-only) fallback never triggered |
 | 7 | **Any-worker-can-finish SPDFPN** | The reexamination idea C successor: the TT-capacity diagnostic premise is dead (bigger TT regresses sequentially — `research/reexamination.md` §4), so only the architecture point survives, re-motivated from "avoid perturbation variance" to "harvest draw luck with min-selection" (every worker can prove the root, first finish wins). Prerequisite reading: plan6's bad-trajectory tails (5.7–6.3×) sit inside the sequential single-config salt noise band — re-read under plan8's distributions before building | trims the SPDFPN bad tail, if it was not a noise-floor artifact | re-land (`b714ef6` + W delta) | M–L | **open** — sequenced behind #5 |
 | 8 | **Kaneko root threads with virtual pn congestion** | Root-started workers carrying their own in-call path state (`dfpn/research_parallel.md`, never implemented) sidestep the TT-only TRYRUNJOB descent blindness in repetition-heavy regions (first-player-loss GHI shortcut leaves nothing to guide on) | avoids the §2 repetition-region stall that stalled the pure SPDFPN pool | L | L | **open, fringe** — cross-referenced as research backlog #22(b) |
 | 9 | **Sequential-tax removal enabler** | Make `Search` generic over a TT backend (sequential build monomorphizes to today's unsynchronized table, byte-identical by construction) or do not share the TT at all (private per-worker TTs + small shared solved-facts table). Removes owner condition 2 (the ≤ +7 % TT-concurrency tax budget) from any future shared-TT pre-registration (reexamination §3) | entry-fee elimination, not a mechanism | none | M | **open** — only worth scheduling if #6/#7 produce a GO |
@@ -399,6 +423,28 @@ mine SPDFPN 2014 and measure a 2-thread drift-safe prototype.
 
 ## History
 
+- **2026-10-13 — plan10 complete: cooperative portfolio (cross-racer
+  solved facts) → REJECT/NO-GO, backlog #6 closed (`report10.md`)**
+  (first `src/` diff of the initiative: `src/facts/` +
+  `search::dfpn::FactImporter` + `--facts-out`/`--facts-in`; artifacts
+  under `measurements/plan10/`): stage-0 drift gate clean; stage-1 paired
+  export-inertness byte-exact (plan12/plan8 anchors found stale for the
+  current binary — re-baselined onto fresh paired solo anchors);
+  stage-2 canary clean on m22 + stress (A2 Loss-only fallback never
+  triggered); stage-3 campaign 5 rounds × 6 cases interleaved A0/A1.
+  Soundness clean everywhere (0 conflicts / 0 panics / 0 CRC failures in
+  58 races; no Draw ever crossed a process boundary; m22 wall ratio 1.21
+  — nowhere near the dfpn report10 39× collapse signature). Verdict per
+  the pre-registered rule: **reject** — H2 wall failures on stress/m22/
+  dec10/rem12/dec13 (1.21–1.32× `W_first` at 1.00–1.09× `evals_first`),
+  diagnosed as the facts-plumbing tax (per-event path-clone emission on
+  the search thread + one writer/reader thread per racer: +15–25 % wall
+  even solo, +20–38 % under 4-way contention), not a search regression;
+  H1 fired on m20_white (0.66× evals / 0.82× wall; winner below its own
+  solo basin minimum via near-root subtree dedup) with a 1-in-5
+  winnerless tail (m20 A1 r3 all-censored). Facts-channel totals: 5.45 M
+  records delivered, 186 k accepted, 0 checksum failures. Follow-up
+  options recorded in the report; #7 untouched.
 - **2026-10-11 — plan8 complete: salt-seeded process portfolio → ADOPT,
   backlog #5 closed WON (`report8.md`)** (zero product-code changes; all
   artifacts under `measurements/plan8/`): stage-0 identity gate 5/5 exact;

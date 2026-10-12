@@ -1,0 +1,4026 @@
+{
+ "cases": {
+  "m20_white": {
+   "role": "hard class, 4 basins - primary H1 candidate",
+   "basins": 4,
+   "A0": {
+    "evals_first": [
+     1152505525,
+     1152505525,
+     1152505525,
+     1152505525,
+     1152505525
+    ],
+    "w_first": [
+     114.19,
+     114.698,
+     113.99,
+     115.691,
+     115.689
+    ],
+    "evals_median": 1152505525,
+    "w_median": 114.698,
+    "n_decisive": 5,
+    "n_censored_first": 0,
+    "winners": [
+     3,
+     3,
+     3,
+     3,
+     3
+    ]
+   },
+   "A1": {
+    "evals_first": [
+     456439611,
+     1202766422,
+     465474324,
+     1058964037
+    ],
+    "w_first": [
+     55.368,
+     131.831,
+     55.542,
+     135.52
+    ],
+    "evals_median": 762219180.5,
+    "w_median": 93.6865,
+    "n_decisive": 4,
+    "n_censored_first": 0,
+    "winners": [
+     2,
+     2,
+     2,
+     5
+    ]
+   },
+   "rounds": {
+    "A0": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 3,
+       "evals": 1152505525,
+       "wall_ms": 114190,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 456.523,
+      "conflict": false
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 3,
+       "evals": 1152505525,
+       "wall_ms": 114698,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 458.564,
+      "conflict": false
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 3,
+       "evals": 1152505525,
+       "wall_ms": 113990,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 455.729,
+      "conflict": false
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 3,
+       "evals": 1152505525,
+       "wall_ms": 115691,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 462.539,
+      "conflict": false
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 3,
+       "evals": 1152505525,
+       "wall_ms": 115689,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 462.522,
+      "conflict": false
+     }
+    ],
+    "A1": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 2,
+       "evals": 456439611,
+       "wall_ms": 55368,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 221.23,
+      "conflict": false
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 2,
+       "evals": 1202766422,
+       "wall_ms": 131831,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 527.092,
+      "conflict": false
+     },
+     {
+      "round": 3,
+      "first": null,
+      "cpu_core_s": 994.852,
+      "conflict": false
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 2,
+       "evals": 465474324,
+       "wall_ms": 55542,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 221.937,
+      "conflict": false
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 5,
+       "evals": 1058964037,
+       "wall_ms": 135520,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 541.851,
+      "conflict": false
+     }
+    ]
+   },
+   "racer_detail": [
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2000000027,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 1384231894,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 3,
+     "evals": 1152505525,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 861809196,
+     "evals_vs_solo": 1.3373093839671677
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 791401553,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2000000027,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 1384231894,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 3,
+     "evals": 1152505525,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 861809196,
+     "evals_vs_solo": 1.3373093839671677
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 791401553,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2000000027,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 1384231894,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 3,
+     "evals": 1152505525,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 861809196,
+     "evals_vs_solo": 1.3373093839671677
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 791401553,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2000000027,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 1384231894,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 3,
+     "evals": 1152505525,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 861809196,
+     "evals_vs_solo": 1.3373093839671677
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 791401553,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2000000027,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 1384231894,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 3,
+     "evals": 1152505525,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 861809196,
+     "evals_vs_solo": 1.3373093839671677
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 791401553,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2000000027,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 2,
+     "evals": 456439611,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 1384231894,
+     "evals_vs_solo": 0.32974215734982915
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 861809196,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 791401553,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2000000027,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 2,
+     "evals": 1202766422,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 1384231894,
+     "evals_vs_solo": 0.86890529485228
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 861809196,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 791401553,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 0,
+     "evals": 2000000000,
+     "outcome": "draw",
+     "censored": true,
+     "solo_reference": 2000000027,
+     "evals_vs_solo": 0.9999999865000002
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 2,
+     "evals": 2000000013,
+     "outcome": "draw",
+     "censored": true,
+     "solo_reference": 1384231894,
+     "evals_vs_solo": 1.4448446258672898
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 3,
+     "evals": 2000000017,
+     "outcome": "draw",
+     "censored": true,
+     "solo_reference": 861809196,
+     "evals_vs_solo": 2.3206993221733967
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 5,
+     "evals": 2000000000,
+     "outcome": "draw",
+     "censored": true,
+     "solo_reference": 791401553,
+     "evals_vs_solo": 2.5271620865773055
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2000000027,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 2,
+     "evals": 465474324,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 1384231894,
+     "evals_vs_solo": 0.3362690355695561
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 861809196,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 791401553,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2000000027,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 1384231894,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 861809196,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 5,
+     "evals": 1058964037,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 791401553,
+     "evals_vs_solo": 1.3380868826776235
+    }
+   ],
+   "facts": {
+    "imports": [
+     {
+      "read": 324093,
+      "crc_fail": 0,
+      "accepted": 19735,
+      "skipped_solved": 260667,
+      "skipped_filtered": 0,
+      "files": 4
+     },
+     {
+      "read": 411985,
+      "crc_fail": 0,
+      "accepted": 27815,
+      "skipped_solved": 340479,
+      "skipped_filtered": 0,
+      "files": 4
+     },
+     {
+      "read": 386130,
+      "crc_fail": 0,
+      "accepted": 23657,
+      "skipped_solved": 318781,
+      "skipped_filtered": 0,
+      "files": 3
+     },
+     {
+      "read": 386665,
+      "crc_fail": 0,
+      "accepted": 22679,
+      "skipped_solved": 319759,
+      "skipped_filtered": 0,
+      "files": 3
+     },
+     {
+      "read": 392529,
+      "crc_fail": 0,
+      "accepted": 24350,
+      "skipped_solved": 324488,
+      "skipped_filtered": 0,
+      "files": 4
+     },
+     {
+      "read": 305661,
+      "crc_fail": 0,
+      "accepted": 13819,
+      "skipped_solved": 248151,
+      "skipped_filtered": 0,
+      "files": 4
+     },
+     {
+      "read": 398152,
+      "crc_fail": 0,
+      "accepted": 24452,
+      "skipped_solved": 323618,
+      "skipped_filtered": 0,
+      "files": 4
+     }
+    ],
+    "exports": [
+     {
+      "records": 3721090,
+      "bytes": 89306160
+     },
+     {
+      "records": 8709033,
+      "bytes": 209016792
+     },
+     {
+      "records": 9982153,
+      "bytes": 239571672
+     },
+     {
+      "records": 10443005,
+      "bytes": 250632120
+     },
+     {
+      "records": 3775810,
+      "bytes": 90619440
+     },
+     {
+      "records": 9475968,
+      "bytes": 227423232
+     },
+     {
+      "records": 3746988,
+      "bytes": 89927712
+     },
+     {
+      "records": 23205697,
+      "bytes": 556936728
+     }
+    ],
+    "crc_fail_total": 0,
+    "accepted_total": 156507,
+    "read_total": 2605215
+   },
+   "pure_r0": {
+    "evals_A1_rounds": [
+     2000000000
+    ],
+    "evals_A0_rounds": [],
+    "solo_anchor": null,
+    "constant_A1": true,
+    "matches_A0": null
+   },
+   "cpu_core_s": {
+    "A0": [
+     456.523,
+     458.564,
+     455.729,
+     462.539,
+     462.522
+    ],
+    "A1": [
+     221.23,
+     527.092,
+     994.852,
+     221.937,
+     541.851
+    ]
+   },
+   "ratio_evals": 0.6613583743991163,
+   "ratio_w": 0.8168102320877435
+  },
+  "stress": {
+   "role": "hard class, 3 basins - H1 candidate + canary",
+   "basins": 3,
+   "A0": {
+    "evals_first": [
+     260688794,
+     260688794,
+     260688794,
+     260688794,
+     260688794
+    ],
+    "w_first": [
+     26.659,
+     27.776,
+     27.271,
+     27.749,
+     27.235
+    ],
+    "evals_median": 260688794,
+    "w_median": 27.271,
+    "n_decisive": 5,
+    "n_censored_first": 0,
+    "winners": [
+     5,
+     5,
+     5,
+     5,
+     5
+    ]
+   },
+   "A1": {
+    "evals_first": [
+     305404068,
+     285054582,
+     293463382,
+     249099496,
+     238008560
+    ],
+    "w_first": [
+     37.869,
+     37.154,
+     35.908,
+     30.395,
+     28.923
+    ],
+    "evals_median": 285054582,
+    "w_median": 35.908,
+    "n_decisive": 5,
+    "n_censored_first": 0,
+    "winners": [
+     0,
+     3,
+     5,
+     3,
+     3
+    ]
+   },
+   "rounds": {
+    "A0": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 5,
+       "evals": 260688794,
+       "wall_ms": 26659,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 106.402,
+      "conflict": false
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 5,
+       "evals": 260688794,
+       "wall_ms": 27776,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 110.879,
+      "conflict": false
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 5,
+       "evals": 260688794,
+       "wall_ms": 27271,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 108.85,
+      "conflict": false
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 5,
+       "evals": 260688794,
+       "wall_ms": 27749,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 110.768,
+      "conflict": false
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 5,
+       "evals": 260688794,
+       "wall_ms": 27235,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 108.712,
+      "conflict": false
+     }
+    ],
+    "A1": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 0,
+       "evals": 305404068,
+       "wall_ms": 37869,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 151.254,
+      "conflict": false
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 3,
+       "evals": 285054582,
+       "wall_ms": 37154,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 148.367,
+      "conflict": false
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 5,
+       "evals": 293463382,
+       "wall_ms": 35908,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 143.398,
+      "conflict": false
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 3,
+       "evals": 249099496,
+       "wall_ms": 30395,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 121.344,
+      "conflict": false
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 3,
+       "evals": 238008560,
+       "wall_ms": 28923,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 115.458,
+      "conflict": false
+     }
+    ]
+   },
+   "racer_detail": [
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 249480478,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000002,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000001,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 5,
+     "evals": 260688794,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 252069909,
+     "evals_vs_solo": 1.034192439050708
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 249480478,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000002,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000001,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 5,
+     "evals": 260688794,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 252069909,
+     "evals_vs_solo": 1.034192439050708
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 249480478,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000002,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000001,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 5,
+     "evals": 260688794,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 252069909,
+     "evals_vs_solo": 1.034192439050708
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 249480478,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000002,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000001,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 5,
+     "evals": 260688794,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 252069909,
+     "evals_vs_solo": 1.034192439050708
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 249480478,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000002,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000001,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 5,
+     "evals": 260688794,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 252069909,
+     "evals_vs_solo": 1.034192439050708
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 0,
+     "evals": 305404068,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 249480478,
+     "evals_vs_solo": 1.2241601845896737
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000002,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000001,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 252069909,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 249480478,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000002,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 3,
+     "evals": 285054582,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2500000001,
+     "evals_vs_solo": 0.11402183275439126
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 252069909,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 249480478,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000002,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000001,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 5,
+     "evals": 293463382,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 252069909,
+     "evals_vs_solo": 1.1642142577200676
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 249480478,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000002,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 3,
+     "evals": 249099496,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2500000001,
+     "evals_vs_solo": 0.09963979836014408
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 252069909,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 249480478,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 2500000002,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 3,
+     "evals": 238008560,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2500000001,
+     "evals_vs_solo": 0.09520342396191864
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 252069909,
+     "evals_vs_solo": null
+    }
+   ],
+   "facts": {
+    "imports": [
+     {
+      "read": 315133,
+      "crc_fail": 0,
+      "accepted": 17408,
+      "skipped_solved": 254034,
+      "skipped_filtered": 0,
+      "files": 3
+     },
+     {
+      "read": 281010,
+      "crc_fail": 0,
+      "accepted": 15860,
+      "skipped_solved": 221278,
+      "skipped_filtered": 0,
+      "files": 4
+     },
+     {
+      "read": 267859,
+      "crc_fail": 0,
+      "accepted": 14701,
+      "skipped_solved": 209467,
+      "skipped_filtered": 0,
+      "files": 4
+     },
+     {
+      "read": 279635,
+      "crc_fail": 0,
+      "accepted": 14009,
+      "skipped_solved": 221935,
+      "skipped_filtered": 0,
+      "files": 4
+     }
+    ],
+    "exports": [
+     {
+      "records": 2356173,
+      "bytes": 56548152
+     },
+     {
+      "records": 2196589,
+      "bytes": 52718136
+     },
+     {
+      "records": 2200931,
+      "bytes": 52822344
+     },
+     {
+      "records": 1863376,
+      "bytes": 44721024
+     },
+     {
+      "records": 1859236,
+      "bytes": 44621664
+     }
+    ],
+    "crc_fail_total": 0,
+    "accepted_total": 61978,
+    "read_total": 1143637
+   },
+   "pure_r0": {
+    "evals_A1_rounds": [
+     305404068
+    ],
+    "evals_A0_rounds": [],
+    "solo_anchor": {
+     "evals": 305404068,
+     "wall_s": 27.379067420959473,
+     "rc": 0,
+     "decisive": true,
+     "budget_exhausted": false
+    },
+    "constant_A1": true,
+    "matches_A0": null
+   },
+   "cpu_core_s": {
+    "A0": [
+     106.402,
+     110.879,
+     108.85,
+     110.768,
+     108.712
+    ],
+    "A1": [
+     151.254,
+     148.367,
+     143.398,
+     121.344,
+     115.458
+    ]
+   },
+   "ratio_evals": 1.0934669558523487,
+   "ratio_w": 1.3167100583036926
+  },
+  "m22_white": {
+   "role": "hard class, 6 basins - collapse control + H1 candidate",
+   "basins": 6,
+   "A0": {
+    "evals_first": [
+     16339874,
+     16339874,
+     16339874,
+     16339874,
+     16339874
+    ],
+    "w_first": [
+     1.837,
+     1.846,
+     1.851,
+     1.883,
+     1.846
+    ],
+    "evals_median": 16339874,
+    "w_median": 1.846,
+    "n_decisive": 5,
+    "n_censored_first": 0,
+    "winners": [
+     2,
+     2,
+     2,
+     2,
+     2
+    ]
+   },
+   "A1": {
+    "evals_first": [
+     17149928,
+     16274421,
+     16551691,
+     15662474,
+     16551679
+    ],
+    "w_first": [
+     2.387,
+     2.193,
+     2.235,
+     2.12,
+     2.229
+    ],
+    "evals_median": 16551679,
+    "w_median": 2.229,
+    "n_decisive": 5,
+    "n_censored_first": 0,
+    "winners": [
+     2,
+     2,
+     3,
+     5,
+     3
+    ]
+   },
+   "rounds": {
+    "A0": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 2,
+       "evals": 16339874,
+       "wall_ms": 1837,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.123,
+      "conflict": false
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 2,
+       "evals": 16339874,
+       "wall_ms": 1846,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.159,
+      "conflict": false
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 2,
+       "evals": 16339874,
+       "wall_ms": 1851,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.179,
+      "conflict": false
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 2,
+       "evals": 16339874,
+       "wall_ms": 1883,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.304,
+      "conflict": false
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 2,
+       "evals": 16339874,
+       "wall_ms": 1846,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 7.147,
+      "conflict": false
+     }
+    ],
+    "A1": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 2,
+       "evals": 17149928,
+       "wall_ms": 2387,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 9.301,
+      "conflict": false
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 2,
+       "evals": 16274421,
+       "wall_ms": 2193,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 8.514,
+      "conflict": false
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 3,
+       "evals": 16551691,
+       "wall_ms": 2235,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 8.691,
+      "conflict": false
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 5,
+       "evals": 15662474,
+       "wall_ms": 2120,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 8.219,
+      "conflict": false
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 3,
+       "evals": 16551679,
+       "wall_ms": 2229,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 8.673,
+      "conflict": false
+     }
+    ]
+   },
+   "racer_detail": [
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 14156269,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 2,
+     "evals": 16339874,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 15815489,
+     "evals_vs_solo": 1.033156420266234
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 17832300,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 21236889,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 14156269,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 2,
+     "evals": 16339874,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 15815489,
+     "evals_vs_solo": 1.033156420266234
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 17832300,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 21236889,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 14156269,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 2,
+     "evals": 16339874,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 15815489,
+     "evals_vs_solo": 1.033156420266234
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 17832300,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 21236889,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 14156269,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 2,
+     "evals": 16339874,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 15815489,
+     "evals_vs_solo": 1.033156420266234
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 17832300,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 21236889,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 14156269,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 2,
+     "evals": 16339874,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 15815489,
+     "evals_vs_solo": 1.033156420266234
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 17832300,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 21236889,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 14156269,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 2,
+     "evals": 17149928,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 15815489,
+     "evals_vs_solo": 1.0843754499149536
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 17832300,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 21236889,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 14156269,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 2,
+     "evals": 16274421,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 15815489,
+     "evals_vs_solo": 1.0290178824062917
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 17832300,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 21236889,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 14156269,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 15815489,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 3,
+     "evals": 16551691,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 17832300,
+     "evals_vs_solo": 0.9281859883469883
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 21236889,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 14156269,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 15815489,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 17832300,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 5,
+     "evals": 15662474,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 21236889,
+     "evals_vs_solo": 0.7375126366201754
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 14156269,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 15815489,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 3,
+     "evals": 16551679,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 17832300,
+     "evals_vs_solo": 0.9281853154107995
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 21236889,
+     "evals_vs_solo": null
+    }
+   ],
+   "facts": {
+    "imports": [
+     {
+      "read": 62599,
+      "crc_fail": 0,
+      "accepted": 3970,
+      "skipped_solved": 57896,
+      "skipped_filtered": 0,
+      "files": 3
+     },
+     {
+      "read": 79096,
+      "crc_fail": 0,
+      "accepted": 5566,
+      "skipped_solved": 73452,
+      "skipped_filtered": 0,
+      "files": 2
+     },
+     {
+      "read": 96427,
+      "crc_fail": 0,
+      "accepted": 4539,
+      "skipped_solved": 91887,
+      "skipped_filtered": 0,
+      "files": 3
+     },
+     {
+      "read": 59622,
+      "crc_fail": 0,
+      "accepted": 2400,
+      "skipped_solved": 56138,
+      "skipped_filtered": 0,
+      "files": 4
+     },
+     {
+      "read": 94124,
+      "crc_fail": 0,
+      "accepted": 4632,
+      "skipped_solved": 89490,
+      "skipped_filtered": 0,
+      "files": 3
+     }
+    ],
+    "exports": [
+     {
+      "records": 198385,
+      "bytes": 4761240
+     },
+     {
+      "records": 201994,
+      "bytes": 4847856
+     },
+     {
+      "records": 206318,
+      "bytes": 4951632
+     },
+     {
+      "records": 182316,
+      "bytes": 4375584
+     },
+     {
+      "records": 206315,
+      "bytes": 4951560
+     }
+    ],
+    "crc_fail_total": 0,
+    "accepted_total": 21107,
+    "read_total": 391868
+   },
+   "pure_r0": {
+    "evals_A1_rounds": [],
+    "evals_A0_rounds": [],
+    "solo_anchor": {
+     "evals": 19111111,
+     "wall_s": 1.8190150260925293,
+     "rc": 0,
+     "decisive": true,
+     "budget_exhausted": false
+    },
+    "constant_A1": true,
+    "matches_A0": null
+   },
+   "cpu_core_s": {
+    "A0": [
+     7.123,
+     7.159,
+     7.179,
+     7.304,
+     7.147
+    ],
+    "A1": [
+     9.301,
+     8.514,
+     8.691,
+     8.219,
+     8.673
+    ]
+   },
+   "ratio_evals": 1.0129624622564408,
+   "ratio_w": 1.2074756229685808
+  },
+  "dec10": {
+   "role": "multi-basin regression channel",
+   "basins": 4,
+   "A0": {
+    "evals_first": [
+     2549882,
+     2549882,
+     2549882,
+     2549882,
+     2549882
+    ],
+    "w_first": [
+     0.343,
+     0.362,
+     0.346,
+     0.345,
+     0.344
+    ],
+    "evals_median": 2549882,
+    "w_median": 0.345,
+    "n_decisive": 5,
+    "n_censored_first": 0,
+    "winners": [
+     2,
+     2,
+     2,
+     2,
+     2
+    ]
+   },
+   "A1": {
+    "evals_first": [
+     2193318,
+     2549882,
+     2549882,
+     2549882,
+     2549882
+    ],
+    "w_first": [
+     0.433,
+     0.413,
+     0.492,
+     0.437,
+     0.424
+    ],
+    "evals_median": 2549882,
+    "w_median": 0.433,
+    "n_decisive": 5,
+    "n_censored_first": 0,
+    "winners": [
+     2,
+     2,
+     2,
+     2,
+     2
+    ]
+   },
+   "rounds": {
+    "A0": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 343,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.147,
+      "conflict": false
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 362,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.217,
+      "conflict": false
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 346,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.153,
+      "conflict": false
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 345,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.149,
+      "conflict": false
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 344,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.151,
+      "conflict": false
+     }
+    ],
+    "A1": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 2,
+       "evals": 2193318,
+       "wall_ms": 433,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.502,
+      "conflict": false
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 413,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.418,
+      "conflict": false
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 492,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.731,
+      "conflict": false
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 437,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.52,
+      "conflict": false
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 2,
+       "evals": 2549882,
+       "wall_ms": 424,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 1.471,
+      "conflict": false
+     }
+    ]
+   },
+   "racer_detail": [
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4262128,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 2,
+     "evals": 2549882,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2918636,
+     "evals_vs_solo": 0.8736553650403819
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4802246,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3901858,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4262128,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 2,
+     "evals": 2549882,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2918636,
+     "evals_vs_solo": 0.8736553650403819
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4802246,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3901858,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4262128,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 2,
+     "evals": 2549882,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2918636,
+     "evals_vs_solo": 0.8736553650403819
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4802246,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3901858,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4262128,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 2,
+     "evals": 2549882,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2918636,
+     "evals_vs_solo": 0.8736553650403819
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4802246,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3901858,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4262128,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 2,
+     "evals": 2549882,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2918636,
+     "evals_vs_solo": 0.8736553650403819
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4802246,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3901858,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4262128,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 2,
+     "evals": 2193318,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2918636,
+     "evals_vs_solo": 0.751487338606116
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4802246,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3901858,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4262128,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 2,
+     "evals": 2549882,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2918636,
+     "evals_vs_solo": 0.8736553650403819
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4802246,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3901858,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4262128,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 2,
+     "evals": 2549882,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2918636,
+     "evals_vs_solo": 0.8736553650403819
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4802246,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3901858,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4262128,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 2,
+     "evals": 2549882,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2918636,
+     "evals_vs_solo": 0.8736553650403819
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4802246,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3901858,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4262128,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 2,
+     "evals": 2549882,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 2918636,
+     "evals_vs_solo": 0.8736553650403819
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 4802246,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3901858,
+     "evals_vs_solo": null
+    }
+   ],
+   "facts": {
+    "imports": [
+     {
+      "read": 73899,
+      "crc_fail": 0,
+      "accepted": 6678,
+      "skipped_solved": 67220,
+      "skipped_filtered": 0,
+      "files": 2
+     },
+     {
+      "read": 64170,
+      "crc_fail": 0,
+      "accepted": 2121,
+      "skipped_solved": 59745,
+      "skipped_filtered": 0,
+      "files": 2
+     },
+     {
+      "read": 65451,
+      "crc_fail": 0,
+      "accepted": 1871,
+      "skipped_solved": 63579,
+      "skipped_filtered": 0,
+      "files": 3
+     },
+     {
+      "read": 98475,
+      "crc_fail": 0,
+      "accepted": 2019,
+      "skipped_solved": 52765,
+      "skipped_filtered": 0,
+      "files": 2
+     },
+     {
+      "read": 101547,
+      "crc_fail": 0,
+      "accepted": 1947,
+      "skipped_solved": 55909,
+      "skipped_filtered": 0,
+      "files": 2
+     }
+    ],
+    "exports": [
+     {
+      "records": 43645,
+      "bytes": 1047480
+     },
+     {
+      "records": 59852,
+      "bytes": 1436448
+     },
+     {
+      "records": 59852,
+      "bytes": 1436448
+     },
+     {
+      "records": 59852,
+      "bytes": 1436448
+     },
+     {
+      "records": 59852,
+      "bytes": 1436448
+     }
+    ],
+    "crc_fail_total": 0,
+    "accepted_total": 14636,
+    "read_total": 403542
+   },
+   "pure_r0": {
+    "evals_A1_rounds": [],
+    "evals_A0_rounds": [],
+    "solo_anchor": {
+     "evals": 3901847,
+     "wall_s": 0.3614816665649414,
+     "rc": 0,
+     "decisive": true,
+     "budget_exhausted": false
+    },
+    "constant_A1": true,
+    "matches_A0": null
+   },
+   "cpu_core_s": {
+    "A0": [
+     1.147,
+     1.217,
+     1.153,
+     1.149,
+     1.151
+    ],
+    "A1": [
+     1.502,
+     1.418,
+     1.731,
+     1.52,
+     1.471
+    ]
+   },
+   "ratio_evals": 1.0,
+   "ratio_w": 1.255072463768116
+  },
+  "rem12": {
+   "role": "out of sample (6 basins)",
+   "basins": 6,
+   "A0": {
+    "evals_first": [
+     61821025,
+     61821025,
+     61821025,
+     61821025,
+     61821025
+    ],
+    "w_first": [
+     7.201,
+     7.095,
+     7.096,
+     7.101,
+     7.096
+    ],
+    "evals_median": 61821025,
+    "w_median": 7.096,
+    "n_decisive": 5,
+    "n_censored_first": 0,
+    "winners": [
+     5,
+     5,
+     5,
+     5,
+     5
+    ]
+   },
+   "A1": {
+    "evals_first": [
+     66130588,
+     61687771,
+     61917037,
+     61586647,
+     64900509
+    ],
+    "w_first": [
+     9.878,
+     9.101,
+     8.684,
+     8.956,
+     9.304
+    ],
+    "evals_median": 61917037,
+    "w_median": 9.101,
+    "n_decisive": 5,
+    "n_censored_first": 0,
+    "winners": [
+     2,
+     5,
+     3,
+     5,
+     3
+    ]
+   },
+   "rounds": {
+    "A0": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 5,
+       "evals": 61821025,
+       "wall_ms": 7201,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.576,
+      "conflict": false
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 5,
+       "evals": 61821025,
+       "wall_ms": 7095,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.155,
+      "conflict": false
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 5,
+       "evals": 61821025,
+       "wall_ms": 7096,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.153,
+      "conflict": false
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 5,
+       "evals": 61821025,
+       "wall_ms": 7101,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.179,
+      "conflict": false
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 5,
+       "evals": 61821025,
+       "wall_ms": 7096,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 28.159,
+      "conflict": false
+     }
+    ],
+    "A1": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 2,
+       "evals": 66130588,
+       "wall_ms": 9878,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 39.26,
+      "conflict": false
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 5,
+       "evals": 61687771,
+       "wall_ms": 9101,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 36.148,
+      "conflict": false
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 3,
+       "evals": 61917037,
+       "wall_ms": 8684,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 34.496,
+      "conflict": false
+     },
+     {
+      "round": 4,
+      "first": {
+       "salt": 5,
+       "evals": 61586647,
+       "wall_ms": 8956,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 35.578,
+      "conflict": false
+     },
+     {
+      "round": 5,
+      "first": {
+       "salt": 3,
+       "evals": 64900509,
+       "wall_ms": 9304,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 36.955,
+      "conflict": false
+     }
+    ]
+   },
+   "racer_detail": [
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 69605385,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 65124029,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 59573726,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 5,
+     "evals": 61821025,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 63082193,
+     "evals_vs_solo": 0.9800075434917109
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 69605385,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 65124029,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 59573726,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 5,
+     "evals": 61821025,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 63082193,
+     "evals_vs_solo": 0.9800075434917109
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 69605385,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 65124029,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 59573726,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 5,
+     "evals": 61821025,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 63082193,
+     "evals_vs_solo": 0.9800075434917109
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 69605385,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 65124029,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 59573726,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 4,
+     "salt": 5,
+     "evals": 61821025,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 63082193,
+     "evals_vs_solo": 0.9800075434917109
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 69605385,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 65124029,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 59573726,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 5,
+     "salt": 5,
+     "evals": 61821025,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 63082193,
+     "evals_vs_solo": 0.9800075434917109
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 69605385,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 2,
+     "evals": 66130588,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 65124029,
+     "evals_vs_solo": 1.0154560308300336
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 59573726,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 63082193,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 69605385,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 65124029,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 59573726,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 5,
+     "evals": 61687771,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 63082193,
+     "evals_vs_solo": 0.9778951565618526
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 69605385,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 65124029,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 3,
+     "evals": 61917037,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 59573726,
+     "evals_vs_solo": 1.0393346388976912
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 63082193,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 69605385,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 65124029,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 59573726,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 4,
+     "salt": 5,
+     "evals": 61586647,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 63082193,
+     "evals_vs_solo": 0.9762921051270365
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 69605385,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 65124029,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 3,
+     "evals": 64900509,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 59573726,
+     "evals_vs_solo": 1.0894149712912031
+    },
+    {
+     "arm": "A1",
+     "round": 5,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 63082193,
+     "evals_vs_solo": null
+    }
+   ],
+   "facts": {
+    "imports": [
+     {
+      "read": 155135,
+      "crc_fail": 0,
+      "accepted": 20742,
+      "skipped_solved": 134392,
+      "skipped_filtered": 0,
+      "files": 4
+     },
+     {
+      "read": 132863,
+      "crc_fail": 0,
+      "accepted": 10126,
+      "skipped_solved": 79046,
+      "skipped_filtered": 0,
+      "files": 4
+     },
+     {
+      "read": 183295,
+      "crc_fail": 0,
+      "accepted": 11670,
+      "skipped_solved": 127934,
+      "skipped_filtered": 0,
+      "files": 4
+     },
+     {
+      "read": 134224,
+      "crc_fail": 0,
+      "accepted": 10051,
+      "skipped_solved": 77585,
+      "skipped_filtered": 0,
+      "files": 4
+     },
+     {
+      "read": 163152,
+      "crc_fail": 0,
+      "accepted": 17510,
+      "skipped_solved": 143512,
+      "skipped_filtered": 0,
+      "files": 4
+     }
+    ],
+    "exports": [
+     {
+      "records": 1257932,
+      "bytes": 30190368
+     },
+     {
+      "records": 1153964,
+      "bytes": 27695136
+     },
+     {
+      "records": 1156685,
+      "bytes": 27760440
+     },
+     {
+      "records": 1152711,
+      "bytes": 27665064
+     },
+     {
+      "records": 1235107,
+      "bytes": 29642568
+     }
+    ],
+    "crc_fail_total": 0,
+    "accepted_total": 70099,
+    "read_total": 768669
+   },
+   "pure_r0": {
+    "evals_A1_rounds": [],
+    "evals_A0_rounds": [],
+    "solo_anchor": {
+     "evals": 69388795,
+     "wall_s": 6.833120346069336,
+     "rc": 0,
+     "decisive": true,
+     "budget_exhausted": false
+    },
+    "constant_A1": true,
+    "matches_A0": null
+   },
+   "cpu_core_s": {
+    "A0": [
+     28.576,
+     28.155,
+     28.153,
+     28.179,
+     28.159
+    ],
+    "A1": [
+     39.26,
+     36.148,
+     34.496,
+     35.578,
+     36.955
+    ]
+   },
+   "ratio_evals": 1.0015530638645995,
+   "ratio_w": 1.2825535512965052
+  },
+  "dec13": {
+   "role": "veto-only (2 basins)",
+   "basins": 2,
+   "A0": {
+    "evals_first": [
+     5030497,
+     5030497,
+     5030497
+    ],
+    "w_first": [
+     0.67,
+     0.659,
+     0.648
+    ],
+    "evals_median": 5030497,
+    "w_median": 0.659,
+    "n_decisive": 3,
+    "n_censored_first": 0,
+    "winners": [
+     0,
+     5,
+     0
+    ]
+   },
+   "A1": {
+    "evals_first": [
+     5030497,
+     5030497,
+     3714964
+    ],
+    "w_first": [
+     0.869,
+     0.824,
+     0.734
+    ],
+    "evals_median": 5030497,
+    "w_median": 0.824,
+    "n_decisive": 3,
+    "n_censored_first": 0,
+    "winners": [
+     3,
+     0,
+     3
+    ]
+   },
+   "rounds": {
+    "A0": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 0,
+       "evals": 5030497,
+       "wall_ms": 670,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 2.434,
+      "conflict": false
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 5,
+       "evals": 5030497,
+       "wall_ms": 659,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 2.396,
+      "conflict": false
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 0,
+       "evals": 5030497,
+       "wall_ms": 648,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 2.364,
+      "conflict": false
+     }
+    ],
+    "A1": [
+     {
+      "round": 1,
+      "first": {
+       "salt": 3,
+       "evals": 5030497,
+       "wall_ms": 869,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 3.233,
+      "conflict": false
+     },
+     {
+      "round": 2,
+      "first": {
+       "salt": 0,
+       "evals": 5030497,
+       "wall_ms": 824,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 3.05,
+      "conflict": false
+     },
+     {
+      "round": 3,
+      "first": {
+       "salt": 3,
+       "evals": 3714964,
+       "wall_ms": 734,
+       "outcome": "win",
+       "censored": false
+      },
+      "cpu_core_s": 2.693,
+      "conflict": false
+     }
+    ]
+   },
+   "racer_detail": [
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 0,
+     "evals": 5030497,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 3822602,
+     "evals_vs_solo": 1.3159876440183937
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 2,
+     "evals": 5030597,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 5038383,
+     "evals_vs_solo": 0.9984546629345169
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 3,
+     "evals": 5030497,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 5032382,
+     "evals_vs_solo": 0.9996254258917546
+    },
+    {
+     "arm": "A0",
+     "round": 1,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 5032308,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3822602,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 5038383,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 3,
+     "evals": 5030497,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 5032382,
+     "evals_vs_solo": 0.9996254258917546
+    },
+    {
+     "arm": "A0",
+     "round": 2,
+     "salt": 5,
+     "evals": 5030497,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 5032308,
+     "evals_vs_solo": 0.9996401253659355
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 0,
+     "evals": 5030497,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 3822602,
+     "evals_vs_solo": 1.3159876440183937
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 5038383,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 5032382,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A0",
+     "round": 3,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 5032308,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3822602,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 5038383,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 3,
+     "evals": 5030497,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 5032382,
+     "evals_vs_solo": 0.9996254258917546
+    },
+    {
+     "arm": "A1",
+     "round": 1,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 5032308,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 0,
+     "evals": 5030497,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 3822602,
+     "evals_vs_solo": 1.3159876440183937
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 5038383,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 3,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 5032382,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 2,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 5032308,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 0,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 3822602,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 2,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 5038383,
+     "evals_vs_solo": null
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 3,
+     "evals": 3714964,
+     "outcome": "win",
+     "censored": false,
+     "solo_reference": 5032382,
+     "evals_vs_solo": 0.7382118448082836
+    },
+    {
+     "arm": "A1",
+     "round": 3,
+     "salt": 5,
+     "evals": null,
+     "outcome": "killed",
+     "censored": false,
+     "solo_reference": 5032308,
+     "evals_vs_solo": null
+    }
+   ],
+   "facts": {
+    "imports": [
+     {
+      "read": 61355,
+      "crc_fail": 0,
+      "accepted": 4911,
+      "skipped_solved": 56443,
+      "skipped_filtered": 0,
+      "files": 3
+     },
+     {
+      "read": 82347,
+      "crc_fail": 0,
+      "accepted": 10873,
+      "skipped_solved": 71473,
+      "skipped_filtered": 0,
+      "files": 3
+     }
+    ],
+    "exports": [
+     {
+      "records": 147868,
+      "bytes": 3548832
+     },
+     {
+      "records": 147868,
+      "bytes": 3548832
+     },
+     {
+      "records": 102052,
+      "bytes": 2449248
+     }
+    ],
+    "crc_fail_total": 0,
+    "accepted_total": 15784,
+    "read_total": 143702
+   },
+   "pure_r0": {
+    "evals_A1_rounds": [
+     5030497
+    ],
+    "evals_A0_rounds": [
+     5030497,
+     5030497
+    ],
+    "solo_anchor": {
+     "evals": 5030497,
+     "wall_s": 0.5059642791748047,
+     "rc": 0,
+     "decisive": true,
+     "budget_exhausted": false
+    },
+    "constant_A1": true,
+    "matches_A0": true
+   },
+   "cpu_core_s": {
+    "A0": [
+     2.434,
+     2.396,
+     2.364
+    ],
+    "A1": [
+     3.233,
+     3.05,
+     2.693
+    ]
+   },
+   "ratio_evals": 1.0,
+   "ratio_w": 1.2503793626707131
+  }
+ },
+ "canary": {
+  "m22_white": {
+   "present": true,
+   "A0_first": {
+    "salt": 3,
+    "evals": 16735608,
+    "wall_ms": 2016,
+    "outcome": "win",
+    "censored": false
+   },
+   "A1_first": {
+    "salt": 2,
+    "evals": 16073986,
+    "wall_ms": 2214,
+    "outcome": "win",
+    "censored": false
+   },
+   "conflict": false,
+   "w_ratio": 1.0982142857142858,
+   "panic_or_abnormal_rc": false,
+   "within_wall_caps": true
+  },
+  "stress": {
+   "present": true,
+   "A0_first": {
+    "salt": 5,
+    "evals": 260688794,
+    "wall_ms": 26440,
+    "outcome": "win",
+    "censored": false
+   },
+   "A1_first": {
+    "salt": 5,
+    "evals": 281528122,
+    "wall_ms": 34739,
+    "outcome": "win",
+    "censored": false
+   },
+   "conflict": false,
+   "w_ratio": 1.3138804841149774,
+   "panic_or_abnormal_rc": false,
+   "within_wall_caps": true
+  }
+ },
+ "hypotheses": {
+  "H1_value": [
+   "m20_white"
+  ],
+  "H2_no_regression_failures": [
+   "stress",
+   "m22_white",
+   "dec10",
+   "rem12",
+   "dec13"
+  ],
+  "H3_destabilization": {
+   "conflicts": [],
+   "canary_clean": true
+  },
+  "H4_fidelity": {
+   "pure_r0": {
+    "m20_white": {
+     "evals_A1_rounds": [
+      2000000000
+     ],
+     "evals_A0_rounds": [],
+     "solo_anchor": null,
+     "constant_A1": true,
+     "matches_A0": null
+    },
+    "stress": {
+     "evals_A1_rounds": [
+      305404068
+     ],
+     "evals_A0_rounds": [],
+     "solo_anchor": {
+      "evals": 305404068,
+      "wall_s": 27.379067420959473,
+      "rc": 0,
+      "decisive": true,
+      "budget_exhausted": false
+     },
+     "constant_A1": true,
+     "matches_A0": null
+    },
+    "m22_white": {
+     "evals_A1_rounds": [],
+     "evals_A0_rounds": [],
+     "solo_anchor": {
+      "evals": 19111111,
+      "wall_s": 1.8190150260925293,
+      "rc": 0,
+      "decisive": true,
+      "budget_exhausted": false
+     },
+     "constant_A1": true,
+     "matches_A0": null
+    },
+    "dec10": {
+     "evals_A1_rounds": [],
+     "evals_A0_rounds": [],
+     "solo_anchor": {
+      "evals": 3901847,
+      "wall_s": 0.3614816665649414,
+      "rc": 0,
+      "decisive": true,
+      "budget_exhausted": false
+     },
+     "constant_A1": true,
+     "matches_A0": null
+    },
+    "rem12": {
+     "evals_A1_rounds": [],
+     "evals_A0_rounds": [],
+     "solo_anchor": {
+      "evals": 69388795,
+      "wall_s": 6.833120346069336,
+      "rc": 0,
+      "decisive": true,
+      "budget_exhausted": false
+     },
+     "constant_A1": true,
+     "matches_A0": null
+    },
+    "dec13": {
+     "evals_A1_rounds": [
+      5030497
+     ],
+     "evals_A0_rounds": [
+      5030497,
+      5030497
+     ],
+     "solo_anchor": {
+      "evals": 5030497,
+      "wall_s": 0.5059642791748047,
+      "rc": 0,
+      "decisive": true,
+      "budget_exhausted": false
+     },
+     "constant_A1": true,
+     "matches_A0": true
+    }
+   },
+   "export_inertness": "stage-1 paired runs: stdout byte-identical, evals identical (see README)",
+   "codec": "unit tests (facts::tests) in the fast gate"
+  },
+  "verdict": "reject"
+ }
+}

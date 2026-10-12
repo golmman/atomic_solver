@@ -44,6 +44,12 @@ pub struct CliOptions {
     /// unbounded; a run that exhausts the budget returns `Draw` and reports
     /// `budget exhausted`.
     pub budget: Option<u64>,
+    /// Append-only solved-facts export file (plan10 cooperative portfolio).
+    /// `None` (default) disables exporting.
+    pub facts_out: Option<String>,
+    /// Directory of sibling `facts-*.bin` files to import solved facts from
+    /// (plan10). `None` (default) disables importing.
+    pub facts_in: Option<String>,
 }
 
 impl Default for CliOptions {
@@ -69,6 +75,8 @@ impl Default for CliOptions {
             no_preflight: false,
             salt: 0,
             budget: None,
+            facts_out: None,
+            facts_in: None,
         }
     }
 }
@@ -212,6 +220,20 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 opts.budget = Some(v);
                 i += 2;
             }
+            "--facts-out" => {
+                let value = args
+                    .get(i + 1)
+                    .ok_or_else(|| "error: --facts-out requires a value".to_string())?;
+                opts.facts_out = Some(value.clone());
+                i += 2;
+            }
+            "--facts-in" => {
+                let value = args
+                    .get(i + 1)
+                    .ok_or_else(|| "error: --facts-in requires a value".to_string())?;
+                opts.facts_in = Some(value.clone());
+                i += 2;
+            }
             _ => {
                 return Err(format!(
                     "error: unknown option '{arg}'\nRun with --help for usage."
@@ -247,6 +269,8 @@ mod tests {
             no_preflight,
             salt,
             budget,
+            facts_out: _,
+            facts_in: _,
         } = match parsed {
             ParseResult::Options(o) => o,
             ParseResult::Help => panic!("unexpected help"),
@@ -438,6 +462,32 @@ mod tests {
     }
 
     #[test]
+    fn facts_options_are_parsed() {
+        let parsed = parse_args(&args(&["atomic_solver", "--facts-out", "facts-s0.bin"])).unwrap();
+        match parsed {
+            ParseResult::Options(o) => {
+                assert_eq!(o.facts_out.as_deref(), Some("facts-s0.bin"));
+                assert!(o.facts_in.is_none());
+            }
+            ParseResult::Help => panic!("unexpected help"),
+        }
+        let parsed = parse_args(&args(&["atomic_solver", "--facts-in", "/tmp/race/"])).unwrap();
+        match parsed {
+            ParseResult::Options(o) => {
+                assert!(o.facts_out.is_none());
+                assert_eq!(o.facts_in.as_deref(), Some("/tmp/race/"));
+            }
+            ParseResult::Help => panic!("unexpected help"),
+        }
+    }
+
+    #[test]
+    fn facts_options_require_values() {
+        assert!(parse_args(&args(&["atomic_solver", "--facts-out"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--facts-in"])).is_err());
+    }
+
+    #[test]
     fn missing_value_returns_err() {
         assert!(parse_args(&args(&["atomic_solver", "--fen"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--tt-size"])).is_err());
@@ -448,6 +498,8 @@ mod tests {
         assert!(parse_args(&args(&["atomic_solver", "--refine-cap"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--salt"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--budget"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--facts-out"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--facts-in"])).is_err());
     }
 
     /// `--pt-size` / `--dump-path` were removed from the search CLI with plan7:

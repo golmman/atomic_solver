@@ -1,0 +1,180 @@
+{
+ "race": "m20_white_A1_r3",
+ "case": "m20_white",
+ "arm": "A1",
+ "tag": "",
+ "round": 3,
+ "a2_env": false,
+ "budget": 2000000000,
+ "wall_cap_s": 500,
+ "winner_salt": null,
+ "racers": [
+  {
+   "salt": 0,
+   "pure": true,
+   "outcome": "draw",
+   "censored": true,
+   "killed": false,
+   "exited": true,
+   "rc": 0,
+   "wall_ms": 248713,
+   "evals": 2000000000,
+   "decisive_at_ms": null,
+   "facts_import": null,
+   "facts_export": {
+    "records": 9982153,
+    "bytes": 239571672
+   }
+  },
+  {
+   "salt": 2,
+   "pure": false,
+   "outcome": "draw",
+   "censored": true,
+   "killed": false,
+   "exited": true,
+   "rc": 0,
+   "wall_ms": 248713,
+   "evals": 2000000013,
+   "decisive_at_ms": null,
+   "facts_import": {
+    "read": 386130,
+    "crc_fail": 0,
+    "accepted": 23657,
+    "skipped_solved": 318781,
+    "skipped_filtered": 0,
+    "files": 3
+   },
+   "facts_export": {
+    "records": 10443005,
+    "bytes": 250632120
+   }
+  },
+  {
+   "salt": 3,
+   "pure": false,
+   "outcome": "draw",
+   "censored": true,
+   "killed": false,
+   "exited": true,
+   "rc": 0,
+   "wall_ms": 248713,
+   "evals": 2000000017,
+   "decisive_at_ms": null,
+   "facts_import": {
+    "read": 386665,
+    "crc_fail": 0,
+    "accepted": 22679,
+    "skipped_solved": 319759,
+    "skipped_filtered": 0,
+    "files": 3
+   },
+   "facts_export": {
+    "records": 3775810,
+    "bytes": 90619440
+   }
+  },
+  {
+   "salt": 5,
+   "pure": false,
+   "outcome": "draw",
+   "censored": true,
+   "killed": false,
+   "exited": true,
+   "rc": 0,
+   "wall_ms": 248713,
+   "evals": 2000000000,
+   "decisive_at_ms": null,
+   "facts_import": {
+    "read": 392529,
+    "crc_fail": 0,
+    "accepted": 24350,
+    "skipped_solved": 324488,
+    "skipped_filtered": 0,
+    "files": 4
+   },
+   "facts_export": {
+    "records": 9475968,
+    "bytes": 227423232
+   }
+  }
+ ],
+ "cmds": {
+  "0": [
+   "/workspace/atomic_solver/target/release/atomic_solver",
+   "--fen",
+   "4r2k/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R5RK w - - 4 20",
+   "--tt-size",
+   "128",
+   "--first-outcome",
+   "--outcome-only",
+   "--salt",
+   "0",
+   "--budget",
+   "2000000000",
+   "--timeout",
+   "500",
+   "--facts-out",
+   "/workspace/atomic_solver/docs/plans/parallel/measurements/plan10/logs/m20_white_A1_r3/facts/facts-s0.bin"
+  ],
+  "2": [
+   "/workspace/atomic_solver/target/release/atomic_solver",
+   "--fen",
+   "4r2k/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R5RK w - - 4 20",
+   "--tt-size",
+   "128",
+   "--first-outcome",
+   "--outcome-only",
+   "--salt",
+   "2",
+   "--budget",
+   "2000000000",
+   "--timeout",
+   "500",
+   "--facts-out",
+   "/workspace/atomic_solver/docs/plans/parallel/measurements/plan10/logs/m20_white_A1_r3/facts/facts-s2.bin",
+   "--facts-in",
+   "/workspace/atomic_solver/docs/plans/parallel/measurements/plan10/logs/m20_white_A1_r3/facts"
+  ],
+  "3": [
+   "/workspace/atomic_solver/target/release/atomic_solver",
+   "--fen",
+   "4r2k/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R5RK w - - 4 20",
+   "--tt-size",
+   "128",
+   "--first-outcome",
+   "--outcome-only",
+   "--salt",
+   "3",
+   "--budget",
+   "2000000000",
+   "--timeout",
+   "500",
+   "--facts-out",
+   "/workspace/atomic_solver/docs/plans/parallel/measurements/plan10/logs/m20_white_A1_r3/facts/facts-s3.bin",
+   "--facts-in",
+   "/workspace/atomic_solver/docs/plans/parallel/measurements/plan10/logs/m20_white_A1_r3/facts"
+  ],
+  "5": [
+   "/workspace/atomic_solver/target/release/atomic_solver",
+   "--fen",
+   "4r2k/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R5RK w - - 4 20",
+   "--tt-size",
+   "128",
+   "--first-outcome",
+   "--outcome-only",
+   "--salt",
+   "5",
+   "--budget",
+   "2000000000",
+   "--timeout",
+   "500",
+   "--facts-out",
+   "/workspace/atomic_solver/docs/plans/parallel/measurements/plan10/logs/m20_white_A1_r3/facts/facts-s5.bin",
+   "--facts-in",
+   "/workspace/atomic_solver/docs/plans/parallel/measurements/plan10/logs/m20_white_A1_r3/facts"
+  ]
+ },
+ "host_nproc": 6,
+ "finished_s": "2026-10-12T19:06:35"
+}

@@ -55,6 +55,29 @@
 //!   --budget <EVALS>           Cap the whole search at this many child
 //!                              evaluations. A run that hits the cap returns
 //!                              `Draw` and prints `budget exhausted`.
+//!   --facts-out <FILE>         Append a 24-byte binary record for every
+//!                              solved Win/Loss fact the search proves (the
+//!                              plan10 cooperative-portfolio export; the
+//!                              search semantics are untouched — emission is
+//!                              fire-and-forget, Draws never enter the
+//!                              channel). Stdout is byte-identical to a run
+//!                              without the flag; stderr gains one
+//!                              `facts_export:` summary line.
+//!   --facts-in <DIR>           Import solved Win/Loss facts from every
+//!                              sibling `facts-*.bin` file in DIR into the
+//!                              transposition table (checksum-verified or
+//!                              dropped; imports happen only between work
+//!                              chunks on the search thread, never during
+//!                              the pre-phase). Stderr gains one
+//!                              `facts_import:` summary line.
+//!                              Restatements with the facts options on:
+//!                              determinism — a racer's result is no longer
+//!                              a pure function of (FEN, config, salt), it
+//!                              depends on channel interleaving (the
+//!                              `budget exhausted` → Draw rule is unchanged
+//!                              per run); RAM — TT + ≤ ~2 MiB of bounded
+//!                              I/O buffers. Without the flags both
+//!                              properties are unchanged (RAM = TT only).
 //!
 //! Output:
 //!   Each newly discovered decisive line is logged as
@@ -80,6 +103,7 @@
 
 use atomic_movegen::types::Move;
 use atomic_solver::config;
+use atomic_solver::facts;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::{ExitReason, PvStatus, Search};
@@ -134,6 +158,12 @@ fn print_help(program: &str) {
     println!("                             draw and prints 'budget exhausted'");
     println!("  --config <FILE>            Path to a TOML file overriding scorer");
     println!("                             parameters; defaults to built-in values");
+    println!("  --facts-out <FILE>         Append a binary record per solved");
+    println!("                             Win/Loss fact (cooperative-portfolio");
+    println!("                             export; stderr gains facts_export:)");
+    println!("  --facts-in <DIR>           Import solved Win/Loss facts from every");
+    println!("                             sibling facts-*.bin in DIR (stderr");
+    println!("                             gains facts_import:)");
     println!();
     println!("Examples:");
     println!("  {program} --help");
@@ -200,6 +230,8 @@ fn main() {
         no_preflight,
         salt,
         budget,
+        facts_out,
+        facts_in,
     } = opts;
 
     let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
@@ -230,6 +262,35 @@ fn main() {
     search.set_salt(salt);
     if let Some(budget) = budget {
         search.set_child_eval_budget(budget);
+    }
+
+    // Facts channel (plan10): export = fire-and-forget proof-event writer;
+    // import = bounded file-tail importer drained between work chunks. Both
+    // are inert without their flag (no thread, no channel, no TT writes).
+    let mut facts_writer: Option<std::thread::JoinHandle<facts::FactsExportStats>> = None;
+    if let Some(path) = &facts_out {
+        let (tx, rx) = std::sync::mpsc::channel();
+        search.set_proof_event_sender(Some(tx));
+        match facts::spawn_writer(std::path::Path::new(path), rx) {
+            Ok(handle) => facts_writer = Some(handle),
+            Err(e) => {
+                eprintln!("failed to create facts export file {path}: {e}");
+                std::process::exit(1);
+            }
+        }
+    }
+    let mut facts_stats: Option<Arc<facts::FactsShared>> = None;
+    if let Some(dir) = &facts_in {
+        match facts::FactsImporter::spawn(std::path::Path::new(dir)) {
+            Ok((importer, stats)) => {
+                facts_stats = Some(stats);
+                search.set_fact_importer(Some(Box::new(importer)));
+            }
+            Err(e) => {
+                eprintln!("failed to open facts import dir {dir}: {e}");
+                std::process::exit(1);
+            }
+        }
     }
 
     let stop_flag = Arc::new(AtomicBool::new(false));
@@ -293,6 +354,8 @@ fn main() {
         let budget_exhausted = matches!(search.exit_reason(), ExitReason::BudgetExhausted);
         (outcome, pv, search.time_exceeded() || budget_exhausted)
     };
+    let search_exit_reason = search.exit_reason();
+    let search_nodes = search.nodes();
 
     // Write the TT snapshot on the normal exit path. Written regardless of
     // `--outcome-only`; a failed debug artifact must not turn a good search
@@ -335,9 +398,32 @@ fn main() {
     // byte-exact.
     eprintln!("evals: {}", search.child_evaluations());
 
-    if let Some(hook) = hook {
-        hook(search.exit_reason(), outcome, search.nodes(), &pv);
+    // Facts-channel summaries on stderr, after the search: dropping the
+    // search closes the proof-event sender (the writer flushes and exits)
+    // and the importer stop flag ends its reader thread.
+    let totals = search.fact_import_totals();
+    drop(search);
+    if let Some(stats) = facts_stats {
+        stats.stop();
+        let s = stats.snapshot();
+        eprintln!(
+            "facts_import: read={} crc_fail={} accepted={} skipped_solved={} skipped_filtered={} files={}",
+            s.records_read,
+            s.checksum_failures,
+            totals.accepted,
+            totals.skipped,
+            s.skipped_filtered,
+            s.files_seen,
+        );
+    }
+    if let Some(handle) = facts_writer {
+        match handle.join() {
+            Ok(s) => eprintln!("facts_export: records={} bytes={}", s.records, s.bytes),
+            Err(_) => eprintln!("facts_export: writer thread panicked"),
+        }
     }
 
-    drop(search);
+    if let Some(hook) = hook {
+        hook(search_exit_reason, outcome, search_nodes, &pv);
+    }
 }
