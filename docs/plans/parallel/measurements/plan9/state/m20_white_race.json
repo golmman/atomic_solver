@@ -1,0 +1,30 @@
+{
+  "case": "m20_white",
+  "fen": "4r2k/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R5RK w - - 4 20",
+  "salts": [0, 2, 3, 5],
+  "budget_evals": 2000000000,
+  "timeout_s": 500,
+  "exit_code": 0,
+  "race_wall_s": 64.292,
+  "race_user_cpu_s": 247.9,
+  "racers": [
+    {"salt": 0, "wall_ms": 64271, "evals": null, "outcome": "killed", "censored": false},
+    {"salt": 2, "wall_ms": 64272, "evals": null, "outcome": "killed", "censored": false},
+    {"salt": 3, "wall_ms": 64272, "evals": null, "outcome": "killed", "censored": false},
+    {"salt": 5, "wall_ms": 64272, "evals": 791401553, "outcome": "win", "censored": false}
+  ],
+  "summary": "portfolio: outcome=win salt=5 evals=791401553 wall=64272 racers=4",
+  "winner_pv_status": "first-outcome",
+  "anchor_check": {
+    "plan8_winner_salt": 5,
+    "plan8_winner_evals": 791401553,
+    "evals_match": true,
+    "winner_match": true,
+    "note": "wall 64.3 s vs plan8 W_first median 95.89 s — wall is timing-dependent by design; the evals anchor is the fidelity gate"
+  },
+  "stop_when_proven_effect": {
+    "plan8_race_core_s_with_grace": 747,
+    "this_race_core_s": 248,
+    "note": "three remaining racers killed at first-decisive; no grace period"
+  }
+}

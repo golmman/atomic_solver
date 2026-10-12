@@ -72,6 +72,7 @@ A pure solver for atomic chess in Rust.
   format stores no hashes, so keys are recomputed by replay).
 - `move_order_debug` — static/history/killer/total ordering scores (`--name <case>`).
 - `play_and_solve` — play a given move, then solve the resulting position.
+- `portfolio` — salt-seeded racer portfolio driver: K unmodified solvers (`--first-outcome --outcome-only --salt <s>`, the measured plan8 configuration) race one FEN, take-first-decisive with the stop-when-proven kill policy; per-racer evals/wall/censoring accounting (budget-censored never misreported as a proven draw); RAM = K × TT of the spawned racers.
 - `proofdb_flip` — read-only implied-flip analysis over a grown proof DB (plan8); exits non-zero on any unverified flip. DB defaults to `data/proofdb/proofdb.db`, report to `data/proofdb/flip.json`.
 - `proofdb_harvest` — the harvest loop: solve budgeted frontier jobs (or, under `--policy descend`, off-tree startpos-rooted bootstrap candidates of length ≤ `--descend-plies`), export validated shards, extend the manifest (never merges; run `proofdb_merge` after each batch). DB/manifest/shard-dir/ledger default wholly under `data/proofdb/`. Operator manual: `docs/proofdb_pipeline.md`.
 - `proofdb_ledger_union` — N-way merge of harvest work ledgers (`--expect` digest pins; deterministic output).

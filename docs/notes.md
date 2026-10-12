@@ -904,5 +904,8 @@ What do you think?
 
 ---
 
-layered tt
-FocusLost nvim
+have we tried using a layered transposition table?
+
+the idea goes as follows:
+* increase a counter for each tt hit, reset on eviction
+* when the counter reaches a certain threshold move the entry to a dedicated second tt
