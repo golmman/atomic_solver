@@ -2,6 +2,23 @@
 
 ## Status
 
+**2026-10-13, owner decision — cooperative-portfolio thread reopened for
+plan11 (drafted, docs only, no code).** Report10's next-steps option 2 is
+taken: the owner weights the m20 value channel (0.66× evals / 0.82× wall,
+winner below its own solo basin minimum) higher than the uniform tax.
+`plan11.md` pre-registers a **low-tax facts carrier** — key-only emission
+(dedicated `FactExporter` hook, no path clone, no channel, no writer
+thread), chunk-boundary handoff (threadless importer reading sibling files
+directly at the existing hook, bounded 1 MiB/call), and a fixed admission
+filter (`PATH_LEN_CAP = 24`, near-root emission) — reusing plan10's
+soundness surface, harness, and race-pairing gate adaptation verbatim.
+The pre-registered mechanism hypothesis quantifies report10's wall-tax
+attribution (M1 solo ≤ 1.03× vs plan10's 1.19–1.25×; M2 in-race R0 ≤ 1.06×
+vs plan10's 1.38×); H1/H2 keep plan10's 0.9×/1.1× lines. No escalation
+arm: any reject or defer closes the cooperative-portfolio thread for good.
+Backlog item #12 row added at execution start; #6 stays closed NO-GO.
+Prior state:
+
 **2026-10-13, plan10 executed → item #6 CLOSED NO-GO (rejected by its own
 pre-registered rule).** The cooperative portfolio shipped as code
 (`--facts-out` / `--facts-in`, `src/facts/` codec + threads, the

@@ -814,12 +814,13 @@ The project has grown, examples and side projects have spawned.
 In particular the proofdb example is huge and growing and deserves its dedicated space.
 
 So with a split we could achieve
-* better de-coupling
-* better maintainability
-* better extensibility
-* isolated and higher testability
-* focussed implementation
-* dedicated AGENTS.md and better context engineering capabilities
+
+- better de-coupling
+- better maintainability
+- better extensibility
+- isolated and higher testability
+- focussed implementation
+- dedicated AGENTS.md and better context engineering capabilities
 
 ## Proposed structure
 
@@ -867,10 +868,10 @@ What do you think?
 
 draft plan13
 
-
 ---
 
 Some sessions ago we did some independent reexaminations, here are the reports.
+
 1. docs/plans/parallel/reexamination.md
 2. docs/plans/research/reexamination.md
 
@@ -880,10 +881,10 @@ Is 1 sound, does it need an amendment?
 
 ---
 
-* workspace initiative
-* nn re-examination? -> workspace
-* map of all techniques/mechanism
-  * failed and not failed
+- workspace initiative
+- nn re-examination? -> workspace
+- map of all techniques/mechanism
+  - failed and not failed
 
 ---
 
@@ -907,5 +908,14 @@ What do you think?
 have we tried using a layered transposition table?
 
 the idea goes as follows:
-* increase a counter for each tt hit, reset on eviction
-* when the counter reaches a certain threshold move the entry to a dedicated second tt
+
+- increase a counter for each tt hit, reset on eviction
+- when the counter reaches a certain threshold move the entry to a dedicated second tt
+
+---
+
+Draft docs/plans/parallel/plan11.md: low-tax solved-facts carrier (key-only emission, chunk-boundary handoff, admission filter), reusing the plan10 soundness surface and harness; pre-register H1/H2 with the report10 wall-tax attribution as the mechanism hypothesis.
+
+---
+
+Please add a final item to the parallel initiative which cleans up the surface and harness introduced in plan10.
