@@ -296,10 +296,6 @@ impl RaceTracker {
             .collect()
     }
 
-    fn all_settled(&self) -> bool {
-        self.racers.values().all(|o| o.exited)
-    }
-
     fn records(&self) -> Vec<RacerRecord> {
         self.racers
             .iter()
@@ -489,13 +485,16 @@ fn main() {
             }
         }
     }
+    // The race ends when the channel disconnects (all reader/watcher threads
+    // done), not when the children settle: a child can exit while its pipes
+    // still hold unflushed lines, and breaking at `all_settled()` drops those
+    // trailing lines (misreporting e.g. a budget-censored racer as `error`).
+    // Dropping the last sender makes `Disconnected` reachable.
+    drop(tx);
 
     let start = Instant::now();
     let wall_cap = Duration::from_secs(args.timeout);
     loop {
-        if tracker.all_settled() || children.is_empty() {
-            break;
-        }
         let now = Instant::now();
         if now.duration_since(start) >= wall_cap {
             for salt in tracker.live_salts_except(0) {

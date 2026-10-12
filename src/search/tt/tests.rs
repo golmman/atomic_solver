@@ -16,40 +16,26 @@ fn with_capacity_rounds_to_power_of_two() {
 
 #[test]
 fn with_capacity_forces_deterministic_eviction() {
-    // One bucket, two slots: a third distinct key must evict a live slot.
+    // One bucket, four slots: a fifth distinct key must evict a live slot.
     let mut tt = TranspositionTable::with_capacity(1);
 
-    let key1 = 1u64;
-    let key2 = 2u64;
-    let key3 = 3u64;
-
-    tt.store(
-        key1,
-        Move::NONE,
-        u8::MAX,
-        0,
+    let keys = [1u64, 2, 3, 4];
+    let outcomes = [
         Some(Outcome::Win),
-        0,
-        0,
-        0,
-        u32::MAX,
-    );
-    tt.store(
-        key2,
-        Move::NONE,
-        u8::MAX,
-        0,
         Some(Outcome::Loss),
-        0,
-        0,
-        0,
-        u32::MAX,
-    );
-    assert!(tt.probe(key1).is_some());
-    assert!(tt.probe(key2).is_some());
+        Some(Outcome::Draw),
+        None,
+    ];
+    for (i, &key) in keys.iter().enumerate() {
+        tt.store(key, Move::NONE, u8::MAX, 0, outcomes[i], 0, 0, 0, u32::MAX);
+    }
+    for &key in &keys {
+        assert!(tt.probe(key).is_some());
+    }
 
+    let key5 = 5u64;
     tt.store(
-        key3,
+        key5,
         Move::NONE,
         u8::MAX,
         0,
@@ -60,16 +46,71 @@ fn with_capacity_forces_deterministic_eviction() {
         u32::MAX,
     );
     assert!(
-        tt.probe(key3).is_some(),
+        tt.probe(key5).is_some(),
         "new entry should be present after eviction"
     );
-    let remaining = [tt.probe(key1).is_some(), tt.probe(key2).is_some()]
-        .iter()
-        .filter(|&&b| b)
-        .count();
+    let remaining = keys.iter().filter(|&&k| tt.probe(k).is_some()).count();
     assert_eq!(
-        remaining, 1,
-        "exactly one old entry should survive eviction"
+        remaining, 3,
+        "exactly one old entry should be evicted by the fifth key"
+    );
+}
+
+#[test]
+fn eviction_tie_breaks_to_highest_index() {
+    // Four live entries with identical scores (all unsolved, work 0, same
+    // generation): the fifth key must evict the highest-index slot (slot 3,
+    // holding key4), the generalization of the two-slot tie rule.
+    let mut tt = TranspositionTable::with_capacity(1);
+    for key in 1..=4u64 {
+        tt.store(key, Move::NONE, u8::MAX, 0, None, 1, 1, 0, u32::MAX);
+    }
+    tt.store(5, Move::NONE, u8::MAX, 0, None, 1, 1, 0, u32::MAX);
+
+    assert!(tt.probe(5).is_some());
+    assert!(tt.probe(4).is_none(), "highest-index tie loser is evicted");
+    for key in 1..=3u64 {
+        assert!(tt.probe(key).is_some(), "lower-index ties survive: {key}");
+    }
+}
+
+#[test]
+fn eviction_prefers_lowest_work_among_distinct_scores() {
+    // Distinct work values: the minimum-work live entry dies, regardless of
+    // insertion order.
+    let mut tt = TranspositionTable::with_capacity(1);
+    let works = [100u64, 200, 300, 0];
+    for (i, &w) in works.iter().enumerate() {
+        tt.store(
+            (i + 1) as u64,
+            Move::NONE,
+            u8::MAX,
+            w,
+            None,
+            1,
+            1,
+            0,
+            u32::MAX,
+        );
+    }
+    tt.store(5, Move::NONE, u8::MAX, 50, None, 1, 1, 0, u32::MAX);
+
+    assert!(tt.probe(4).is_none(), "work-0 entry is the argmin victim");
+    for (i, &key) in [1u64, 2, 3].iter().enumerate() {
+        assert!(tt.probe(key).is_some());
+        assert_eq!(tt.probe(key).map(|e| e.work), Some(works[i]));
+    }
+}
+
+#[test]
+fn with_mb_128_yields_quarter_the_buckets_of_the_old_layout() {
+    // Lean plan14 arm A: 128 MB → 2^22 entries in 2^20 four-slot buckets;
+    // the RAM footprint is unchanged (same entry count, wider buckets).
+    let tt = TranspositionTable::with_mb(128);
+    assert_eq!(tt.bucket_count(), 1 << 20);
+    assert_eq!(
+        tt.bucket_count() * 4 * std::mem::size_of::<TtEntry>(),
+        (1 << 22) * std::mem::size_of::<TtEntry>()
     );
 }
 
@@ -260,7 +301,7 @@ fn new_generation_marks_old_entries_stale() {
 fn new_generation_prefers_stale_slot() {
     let mut tt = TranspositionTable::with_mb(1);
     let key1 = 1u64;
-    // Force two slots in the same bucket by using keys that differ by a
+    // Force keys into the same bucket by using keys that differ by a
     // multiple of the bucket count.
     let bucket_count = tt.bucket_count() as u64;
     let key2 = key1 + bucket_count;

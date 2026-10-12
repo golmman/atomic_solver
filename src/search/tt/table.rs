@@ -4,6 +4,11 @@
 //! salted bucket-index mapping, the architecture-specific prefetch, and the
 //! eviction policy all share one indexing scheme and its invariants; unit
 //! tests are split out (`tests.rs`).
+//!
+//! Bucket topology: four 56-byte entries per 224-byte bucket (lean plan14,
+//! arm A of the #21 response) — same entry count and RAM as the former
+//! two-slot layout, but `insert_new` compares candidates across a four-key
+//! window instead of two.
 
 use crate::position::Outcome;
 use crate::zobrist::INF;
@@ -12,7 +17,7 @@ use atomic_movegen::types::Move;
 use super::entry::TtEntry;
 
 pub struct TranspositionTable {
-    table: Vec<[TtEntry; 2]>,
+    table: Vec<[TtEntry; 4]>,
     mask: usize,
     current_generation: u32,
     /// Bucket-index salt (see [`TranspositionTable::set_salt`]).
@@ -32,7 +37,7 @@ impl TranspositionTable {
     pub(crate) fn with_capacity(buckets: usize) -> Self {
         let buckets = buckets.next_power_of_two().max(1);
         Self {
-            table: vec![[TtEntry::default(); 2]; buckets],
+            table: vec![[TtEntry::default(); 4]; buckets],
             mask: buckets - 1,
             current_generation: 1,
             salt: 0,
@@ -44,9 +49,9 @@ impl TranspositionTable {
         let bytes = mb.saturating_mul(1024 * 1024);
         let entries = (bytes / std::mem::size_of::<TtEntry>()).next_power_of_two();
         let entries = entries.max(32);
-        let buckets = entries.max(2) / 2;
+        let buckets = (entries.max(4) / 4).max(1);
         Self {
-            table: vec![[TtEntry::default(); 2]; buckets],
+            table: vec![[TtEntry::default(); 4]; buckets],
             mask: buckets - 1,
             current_generation: 1,
             salt: 0,
@@ -100,15 +105,17 @@ impl TranspositionTable {
     /// Hint the CPU to start loading the bucket `key` maps to.
     ///
     /// Pure performance hint: no observable effect on table contents or on
-    /// any probe/store result. Issues one prefetch for the first and one
-    /// for the last byte of the bucket, because a 112-byte bucket can
-    /// straddle two cache lines (line-aligning the table was measured as no
-    /// gain, lean plan11 phase 0). Measured win (lean plan11, spike V10):
-    /// prefetching every child's bucket in a pre-pass before
-    /// `evaluate_all_children`'s eval loop removes the one serial DRAM miss
-    /// per evaluated child and roughly halves wall on the memory-bound
-    /// workloads (−48–55%), stdout byte-identical. No prefetch on other
-    /// architectures: this is then a no-op.
+    /// any probe/store result. Issues four prefetches at byte offsets
+    /// 0/64/128/192 of the bucket: a 224-byte bucket can straddle up to four
+    /// cache lines, and the hint count/coverage was measured explicitly when
+    /// the bucket widened from 112 to 224 bytes (lean plan14 task 3; the
+    /// two-line 2-hint form of lean plan11 lost to full coverage). Line
+    /// alignment itself was measured as no gain (lean plan11 phase 0).
+    /// Measured win (lean plan11, spike V10): prefetching every child's
+    /// bucket in a pre-pass before `evaluate_all_children`'s eval loop
+    /// removes the one serial DRAM miss per evaluated child and roughly
+    /// halves wall on the memory-bound workloads (−48–55%). No prefetch on
+    /// other architectures: this is then a no-op.
     #[inline(always)]
     pub fn prefetch(&self, key: u64) {
         // The index is masked to bounds, so the addresses below always lie
@@ -116,37 +123,49 @@ impl TranspositionTable {
         // them.
         let bucket = &self.table[self.index(key)];
         let first = bucket.as_ptr().cast::<u8>();
-        let last = first.wrapping_add(std::mem::size_of::<[TtEntry; 2]>() - 1);
+        let o64 = first.wrapping_add(64);
+        let o128 = first.wrapping_add(128);
+        let o192 = first.wrapping_add(192);
 
         #[cfg(target_arch = "aarch64")]
         // SAFETY: a prefetch has no architectural side effect and never
-        // faults (even on an invalid address); both addresses lie inside the
-        // live `table` allocation. The measured win is recorded in the doc
-        // comment above (lean plan11).
+        // faults (even on an invalid address); all four addresses lie inside
+        // the live `table` allocation. The measured win is recorded in the
+        // doc comment above (lean plan11, lean plan14 task 3).
         unsafe {
             core::arch::asm!(
                 "prfm pldl1keep, [{ptr0}]",
                 "prfm pldl1keep, [{ptr1}]",
+                "prfm pldl1keep, [{ptr2}]",
+                "prfm pldl1keep, [{ptr3}]",
                 ptr0 = in(reg) first,
-                ptr1 = in(reg) last,
+                ptr1 = in(reg) o64,
+                ptr2 = in(reg) o128,
+                ptr3 = in(reg) o192,
                 options(nostack, readonly, preserves_flags),
             );
         }
 
         #[cfg(target_arch = "x86_64")]
-        // SAFETY: as on aarch64 — hint-only, fault-free, and both addresses
-        // lie inside the live `table` allocation.
+        // SAFETY: as on aarch64 — hint-only, fault-free, and all four
+        // addresses lie inside the live `table` allocation.
         unsafe {
             core::arch::x86_64::_mm_prefetch::<{ core::arch::x86_64::_MM_HINT_T0 }>(
                 first.cast::<i8>(),
             );
             core::arch::x86_64::_mm_prefetch::<{ core::arch::x86_64::_MM_HINT_T0 }>(
-                last.cast::<i8>(),
+                o64.cast::<i8>(),
+            );
+            core::arch::x86_64::_mm_prefetch::<{ core::arch::x86_64::_MM_HINT_T0 }>(
+                o128.cast::<i8>(),
+            );
+            core::arch::x86_64::_mm_prefetch::<{ core::arch::x86_64::_MM_HINT_T0 }>(
+                o192.cast::<i8>(),
             );
         }
 
         #[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64")))]
-        let _ = (first, last);
+        let _ = (first, o64, o128, o192);
     }
 
     #[must_use]
@@ -158,7 +177,7 @@ impl TranspositionTable {
 
     pub fn clear(&mut self) {
         for bucket in &mut self.table {
-            *bucket = [TtEntry::default(); 2];
+            *bucket = [TtEntry::default(); 4];
         }
         self.current_generation = 1;
     }
@@ -319,7 +338,13 @@ impl TranspositionTable {
         )
     }
 
-    /// Place a new entry into `idx`, preferring the two most valuable entries.
+    /// Place a new entry into `idx`.
+    ///
+    /// Empty or stale slots are preferred, lowest index first. Otherwise the
+    /// victim is the argmin of the `(live, solved, work, generation)` score
+    /// across the whole four-slot bucket; score ties evict the highest-index
+    /// tied slot (the generalization of the former two-slot behavior, where
+    /// equal scores evicted slot 1).
     fn insert_new(&mut self, idx: usize, new: TtEntry) {
         let current_generation = self.current_generation;
         let score = |e: &TtEntry| {
@@ -329,13 +354,23 @@ impl TranspositionTable {
         };
 
         let bucket = &mut self.table[idx];
-        if !bucket[0].valid || bucket[0].generation != current_generation {
-            bucket[0] = new;
-        } else if !bucket[1].valid || bucket[1].generation != current_generation {
-            bucket[1] = new;
-        } else {
-            let evict = usize::from(score(&bucket[0]) >= score(&bucket[1]));
-            bucket[evict] = new;
+        for slot in bucket.iter_mut() {
+            if !slot.valid || slot.generation != current_generation {
+                *slot = new;
+                return;
+            }
         }
+        // All four slots hold live entries: evict the argmin, ties to the
+        // highest index (`<=` keeps scanning on equal scores).
+        let mut victim = 0;
+        let mut victim_score = score(&bucket[0]);
+        for (i, slot) in bucket.iter().enumerate().skip(1) {
+            let s = score(slot);
+            if s <= victim_score {
+                victim = i;
+                victim_score = s;
+            }
+        }
+        bucket[victim] = new;
     }
 }

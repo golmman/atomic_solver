@@ -5,6 +5,15 @@
 //! must reproduce *exactly* — this is a fidelity gate, not a tolerance
 //! check.
 //!
+//! **Anchor re-baselined by lean plan 14** (TT bucket width 2 → 4 at
+//! unchanged entry count, arm A of backlog #21): the plan8 anchor
+//! (salt 2, 2,918,636 evals) belonged to the two-slot layout. Under the
+//! four-slot bucket all four salts settle at exactly 3,901,847 evals with
+//! an identical 36-ply PV, so the race is salt-insensitive and the winner
+//! salt is *which* decisive line the watcher observes first — a
+//! scheduling artifact, not a trajectory property. The anchor pins
+//! outcome, evals, and PV but not the winner salt.
+//!
 //! Resource note: the 4-racer race runs 4 × 128 MB TT = 512 MB peak RAM
 //! (the documented driver RAM contract); wall ≈ 1–2 s per decisive race
 //! and ≪ 1 s for the budget-censoring race.
@@ -14,9 +23,8 @@ use std::process::Command;
 
 /// The plan12/plan8 campaign dec10 case, verbatim.
 const DEC10_FEN: &str = "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41";
-/// The plan8 campaign dec10 winner anchor: salt 2 at exactly 2,918,636 evals.
-const DEC10_WINNER_SALT: u64 = 2;
-const DEC10_WINNER_EVALS: u64 = 2_918_636;
+/// The lean-plan14 dec10 anchor: every salt settles at exactly this count.
+const DEC10_WINNER_EVALS: u64 = 3_901_847;
 
 fn portfolio_bin() -> PathBuf {
     // Integration tests run from target/<profile>/deps/; examples live in
@@ -85,7 +93,8 @@ fn budget_censored_race_reports_none_and_censored_racers() {
 }
 
 /// The driver's fidelity gate: the 4-racer dec10 race must reproduce the
-/// plan8 campaign anchor exactly (winner salt 2, 2,918,636 evals, win).
+/// plan14 anchor exactly (3,901,847 evals, win, identical PV); the winner
+/// salt is not pinned (salt-insensitive race, see module docs).
 #[test]
 fn dec10_race_reproduces_plan8_winner_anchor_exactly() {
     let (lines, code) = run_portfolio(&[]);
@@ -94,11 +103,13 @@ fn dec10_race_reproduces_plan8_winner_anchor_exactly() {
         .iter()
         .find(|l| l.starts_with("portfolio: outcome="))
         .expect("summary line");
-    let expected_summary_prefix =
-        format!("portfolio: outcome=win salt={DEC10_WINNER_SALT} evals={DEC10_WINNER_EVALS} wall=");
     assert!(
-        summary.starts_with(&expected_summary_prefix),
-        "plan8 dec10 anchor must reproduce exactly: {summary}"
+        summary.starts_with("portfolio: outcome=win salt="),
+        "plan14 dec10 anchor must reproduce exactly: {summary}"
+    );
+    assert!(
+        summary.contains(&format!(" evals={DEC10_WINNER_EVALS} wall=")),
+        "plan14 dec10 anchor evals must reproduce exactly: {summary}"
     );
     assert!(
         summary.ends_with(" racers=4"),
@@ -115,10 +126,14 @@ fn dec10_race_reproduces_plan8_winner_anchor_exactly() {
         tail.get(1).is_some_and(|l| l.starts_with("pv_status: ")),
         "winner pv_status line echoed: {tail:?}"
     );
-    // Winner racer line agrees with the summary.
+    // Winner racer line agrees with the summary (salt parsed from the
+    // summary; the race is salt-insensitive under the 4-slot bucket).
+    let winner_salt = summary["portfolio: outcome=win salt=".len()
+        ..summary.find(" evals=").expect("evals field present")]
+        .to_string();
     let winner_line = lines
         .iter()
-        .find(|l| l.starts_with(&format!("racer: salt={DEC10_WINNER_SALT} ")))
+        .find(|l| l.starts_with(&format!("racer: salt={winner_salt} ")))
         .expect("winner racer line");
     assert!(
         winner_line.contains("outcome=win censored=no")

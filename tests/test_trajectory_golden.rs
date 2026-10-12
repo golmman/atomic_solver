@@ -13,6 +13,15 @@
 //! `pv_status:` diagnostic line; the pre-existing lines are unchanged and the
 //! search trajectory is drift-verified (identical `child_evals`) in
 //! `docs/plans/dfpn/report8.md`.
+//! **Re-baselined by lean plan 14** (TT bucket width 2 → 4 at unchanged
+//! entry count, arm A of backlog #21): the search trajectory on this
+//! capacity-sensitive position intentionally changed (bit-identity drift
+//! protocol N/A per plan14); the new golden is deterministic across reruns
+//! of the arm-A build (18,779,890 child evals, verified 3×). Unlike the
+//! plan4 golden, the cap-cut PV did **not** pass the `verify_ppv` check
+//! (defender reply 'e8c8' not refutable within the PPV horizon) — it stays
+//! an informational `pv_status: cap-cut` line; the test asserts trajectory
+//! identity, not PPV validity.
 
 mod common;
 

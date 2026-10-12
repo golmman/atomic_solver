@@ -1,0 +1,696 @@
+{
+ "per_case": {
+  "dec01": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0539471229356219,
+   "ratios": [
+    1.0539,
+    0.9275,
+    1.0819,
+    1.0901,
+    0.8728,
+    1.038
+   ],
+   "frac_below": 0.3333333333333333,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 6,
+   "low_diversity": true
+  },
+  "dec02": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec03": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec04": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec05": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec06": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0000013267174357,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec07": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec08": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec09": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec10": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    0.9155,
+    1.0,
+    1.3369,
+    0.8125,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.5,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 4,
+   "low_diversity": true
+  },
+  "dec11": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec12": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec13": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 0.9998519252303905,
+   "ratios": [
+    1.316,
+    0.9999,
+    0.9984,
+    0.9996,
+    0.9999,
+    0.9996
+   ],
+   "frac_below": 0.8333333333333334,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 2,
+   "low_diversity": true
+  },
+  "dec14": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0000126846226365,
+   "ratios": [
+    1.0194,
+    1.0,
+    1.0,
+    1.0,
+    0.9791,
+    1.0
+   ],
+   "frac_below": 0.5,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 3,
+   "low_diversity": true
+  },
+  "dec15": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.3333333333333333,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec16": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec17": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "dec18": {
+   "verdict": "unclear",
+   "hard_class": false,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0,
+   "ratios": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 1,
+   "base_basins": 1,
+   "low_diversity": true
+  },
+  "m20_white": {
+   "verdict": "under-budgeted",
+   "hard_class": true,
+   "n_pairs": 6,
+   "n_ratios": 0,
+   "median_ratio": null,
+   "ratios": [],
+   "frac_below": null,
+   "cand_censored": {
+    "n": 5,
+    "salts": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "evals": [
+     2000000001,
+     2000000005,
+     2000000000,
+     2000000001,
+     2000000000
+    ]
+   },
+   "base_censored": {
+    "n": 2,
+    "salts": [
+     0,
+     1
+    ],
+    "evals": [
+     2000000027,
+     2000000029
+    ]
+   },
+   "both_censored_salts": [
+    1
+   ],
+   "cand_basins": 1,
+   "base_basins": 4,
+   "low_diversity": true
+  },
+  "m22_white": {
+   "verdict": "unclear",
+   "hard_class": true,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.0152678573454263,
+   "ratios": [
+    1.0613,
+    0.6302,
+    1.0077,
+    1.0118,
+    1.0153,
+    1.0155
+   ],
+   "frac_below": 0.16666666666666666,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 6,
+   "base_basins": 6,
+   "low_diversity": false
+  },
+  "m23_white": {
+   "verdict": "unclear",
+   "hard_class": true,
+   "n_pairs": 6,
+   "n_ratios": 6,
+   "median_ratio": 1.009726131145631,
+   "ratios": [
+    1.2014,
+    0.7692,
+    1.0097,
+    1.2858,
+    0.7978,
+    1.0008
+   ],
+   "frac_below": 0.3333333333333333,
+   "cand_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "base_censored": {
+    "n": 0,
+    "salts": [],
+    "evals": []
+   },
+   "both_censored_salts": [],
+   "cand_basins": 6,
+   "base_basins": 5,
+   "low_diversity": false
+  },
+  "stress": {
+   "verdict": "censored-win",
+   "hard_class": true,
+   "n_pairs": 6,
+   "n_ratios": 3,
+   "median_ratio": 1.2367727398989143,
+   "ratios": [
+    1.1539,
+    1.5011,
+    1.2368
+   ],
+   "frac_below": 0.0,
+   "cand_censored": {
+    "n": 1,
+    "salts": [
+     2
+    ],
+    "evals": [
+     2500000024
+    ]
+   },
+   "base_censored": {
+    "n": 3,
+    "salts": [
+     2,
+     3,
+     4
+    ],
+    "evals": [
+     2500000002,
+     2500000001,
+     2500000003
+    ]
+   },
+   "both_censored_salts": [
+    2
+   ],
+   "cand_basins": 5,
+   "base_basins": 3,
+   "low_diversity": false
+  }
+ },
+ "lever": "adopt",
+ "wins": [
+  "stress"
+ ],
+ "losses": [],
+ "adopt_support": [
+  "stress"
+ ]
+}

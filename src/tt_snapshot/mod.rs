@@ -4,7 +4,7 @@
 //! separate reconstruction tool reads the root FEN plus this snapshot to
 //! rebuild a proof tree without re-running the search. It is written once at
 //! exit and is bounded by the TT RAM (worst case ≈ 0.75×, since records are
-//! 15–42 bytes vs. the two-slot bucket occupancy of the live table).
+//! 15–42 bytes vs. the four-slot bucket occupancy of the live table).
 //!
 //! # Format (version 1)
 //!

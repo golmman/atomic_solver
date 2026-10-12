@@ -1,0 +1,493 @@
+{
+ "summary": {
+  "dec06": {
+   "expected": "loss",
+   "decisive_outcomes": [
+    "loss"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    1507482,
+    1507482,
+    1507482,
+    1507482,
+    1507482,
+    1507482
+   ],
+   "censored": [],
+   "min": 1507482,
+   "median": 1507482.0,
+   "max": 1507482,
+   "spread_max_over_min": 1.0
+  },
+  "m20_white": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 5,
+   "n_runs": 6,
+   "uncensored_evals": [
+    715390942
+   ],
+   "censored": [
+    {
+     "salt": 1,
+     "by": "budget",
+     "evals": 2000000001
+    },
+    {
+     "salt": 2,
+     "by": "budget",
+     "evals": 2000000005
+    },
+    {
+     "salt": 3,
+     "by": "budget",
+     "evals": 2000000000
+    },
+    {
+     "salt": 4,
+     "by": "budget",
+     "evals": 2000000001
+    },
+    {
+     "salt": 5,
+     "by": "budget",
+     "evals": 2000000000
+    }
+   ],
+   "min": 715390942,
+   "median": 715390942,
+   "max": 715390942,
+   "spread_max_over_min": null
+  },
+  "m22_white": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    14907023,
+    15023911,
+    15937219,
+    18042502,
+    18347341,
+    21565531
+   ],
+   "censored": [],
+   "min": 14907023,
+   "median": 16989860.5,
+   "max": 21565531,
+   "spread_max_over_min": 1.446669197464846
+  },
+  "dec16": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    107110,
+    107110,
+    107110,
+    107110,
+    107110,
+    107110
+   ],
+   "censored": [],
+   "min": 107110,
+   "median": 107110.0,
+   "max": 107110,
+   "spread_max_over_min": 1.0
+  },
+  "dec10": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    3901847,
+    3901847,
+    3901847,
+    3901847,
+    3901847,
+    3901847
+   ],
+   "censored": [],
+   "min": 3901847,
+   "median": 3901847.0,
+   "max": 3901847,
+   "spread_max_over_min": 1.0
+  },
+  "dec11": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    253890,
+    253890,
+    253890,
+    253890,
+    253890,
+    253890
+   ],
+   "censored": [],
+   "min": 253890,
+   "median": 253890.0,
+   "max": 253890,
+   "spread_max_over_min": 1.0
+  },
+  "dec07": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    4021,
+    4021,
+    4021,
+    4021,
+    4021,
+    4021
+   ],
+   "censored": [],
+   "min": 4021,
+   "median": 4021.0,
+   "max": 4021,
+   "spread_max_over_min": 1.0
+  },
+  "dec18": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    39549,
+    39549,
+    39549,
+    39549,
+    39549,
+    39549
+   ],
+   "censored": [],
+   "min": 39549,
+   "median": 39549.0,
+   "max": 39549,
+   "spread_max_over_min": 1.0
+  },
+  "dec09": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    1842,
+    1842,
+    1842,
+    1842,
+    1842,
+    1842
+   ],
+   "censored": [],
+   "min": 1842,
+   "median": 1842.0,
+   "max": 1842,
+   "spread_max_over_min": 1.0
+  },
+  "dec05": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    314615,
+    314615,
+    314615,
+    314615,
+    314615,
+    314615
+   ],
+   "censored": [],
+   "min": 314615,
+   "median": 314615.0,
+   "max": 314615,
+   "spread_max_over_min": 1.0
+  },
+  "dec02": {
+   "expected": "loss",
+   "decisive_outcomes": [
+    "loss"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    138124,
+    138124,
+    138124,
+    138124,
+    138124,
+    138124
+   ],
+   "censored": [],
+   "min": 138124,
+   "median": 138124.0,
+   "max": 138124,
+   "spread_max_over_min": 1.0
+  },
+  "dec12": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    303191,
+    303191,
+    303191,
+    303191,
+    303191,
+    303191
+   ],
+   "censored": [],
+   "min": 303191,
+   "median": 303191.0,
+   "max": 303191,
+   "spread_max_over_min": 1.0
+  },
+  "dec15": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    1077420,
+    1077420,
+    1077420,
+    1077420,
+    1077420,
+    1077420
+   ],
+   "censored": [],
+   "min": 1077420,
+   "median": 1077420.0,
+   "max": 1077420,
+   "spread_max_over_min": 1.0
+  },
+  "dec08": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    45,
+    45,
+    45,
+    45,
+    45,
+    45
+   ],
+   "censored": [],
+   "min": 45,
+   "median": 45.0,
+   "max": 45,
+   "spread_max_over_min": 1.0
+  },
+  "stress": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 1,
+   "n_runs": 6,
+   "uncensored_evals": [
+    217246328,
+    287872755,
+    311753192,
+    346222232,
+    1138108966
+   ],
+   "censored": [
+    {
+     "salt": 2,
+     "by": "budget",
+     "evals": 2500000024
+    }
+   ],
+   "min": 217246328,
+   "median": 311753192,
+   "max": 1138108966,
+   "spread_max_over_min": 5.23879494985066
+  },
+  "dec17": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    539273,
+    539273,
+    539273,
+    539273,
+    539273,
+    539273
+   ],
+   "censored": [],
+   "min": 539273,
+   "median": 539273.0,
+   "max": 539273,
+   "spread_max_over_min": 1.0
+  },
+  "dec14": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    2443935,
+    2443935,
+    2443935,
+    2443935,
+    2443935,
+    2443935
+   ],
+   "censored": [],
+   "min": 2443935,
+   "median": 2443935.0,
+   "max": 2443935,
+   "spread_max_over_min": 1.0
+  },
+  "dec04": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    7352,
+    7352,
+    7352,
+    7352,
+    7352,
+    7352
+   ],
+   "censored": [],
+   "min": 7352,
+   "median": 7352.0,
+   "max": 7352,
+   "spread_max_over_min": 1.0
+  },
+  "dec01": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    6021944,
+    6021944,
+    6021944,
+    6021944,
+    6021944,
+    6021961
+   ],
+   "censored": [],
+   "min": 6021944,
+   "median": 6021944.0,
+   "max": 6021961,
+   "spread_max_over_min": 1.0000028230086497
+  },
+  "dec13": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    5030497,
+    5030497,
+    5030497,
+    5030497,
+    5030497,
+    5030497
+   ],
+   "censored": [],
+   "min": 5030497,
+   "median": 5030497.0,
+   "max": 5030497,
+   "spread_max_over_min": 1.0
+  },
+  "m23_white": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    9229062,
+    9265117,
+    9532471,
+    11238191,
+    11621376,
+    15505001
+   ],
+   "censored": [],
+   "min": 9229062,
+   "median": 10385331.0,
+   "max": 15505001,
+   "spread_max_over_min": 1.6800191612105326
+  },
+  "dec03": {
+   "expected": "win",
+   "decisive_outcomes": [
+    "win"
+   ],
+   "n_censored": 0,
+   "n_runs": 6,
+   "uncensored_evals": [
+    47068,
+    47068,
+    47068,
+    47068,
+    47068,
+    47068
+   ],
+   "censored": [],
+   "min": 47068,
+   "median": 47068.0,
+   "max": 47068,
+   "spread_max_over_min": 1.0
+  }
+ },
+ "failures": []
+}
