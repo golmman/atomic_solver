@@ -298,7 +298,7 @@ The knobs that matter, most-used first:
   to stop a run before its eval budget is spent.
 - **`--and-close-max-budget`** — caps the ladder: jobs whose granted
   budget would exceed the cap are dropped (`and-close-filter: jobs N of
-  M` echoes the effect). Bounds the worst-case single job — the
+M` echoes the effect). Bounds the worst-case single job — the
   canonical cycle's 100M keeps a batch predictable; raise it (or drop
   the flag) to let the ladder climb into the multi-billion-eval rungs,
   where a single job runs for hours.
@@ -589,26 +589,80 @@ default manifest aborts cleanly naming
                            [--and-close-max-budget <evals>] [--descend-plies <n>]
                            [--out-db <grown.db>] [--dump <nodes.txt>]
 
-| Option                   | Default                             | Meaning                                                                                                          |
-| ------------------------ | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `--db`                   | `data/proofdb/proofdb.db`           | the merged DB to work against (read-only)                                                                        |
-| `--manifest`             | `data/proofdb/shards/manifest.json` | manifest to extend (rewritten after the batch)                                                                   |
-| `--shard-dir`            | `data/proofdb/shards`               | where new shard files are written (created on first write)                                                       |
-| `--policy`               | `breadth-pns`                       | `breadth-pns` \| `and-close` \| `descend` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail`             |
-| `--ledger`               | `data/proofdb/work.json`            | pick-up state; a missing file is a fresh ledger                                                                  |
-| `--budget-evals`         | policy default                      | base child-eval budget per job (breadth-pns base: 4,000,000); screens for the legacy policies                    |
-| `--max-total-evals`      | `0` (unlimited)                     | session cap across jobs                                                                                          |
-| `--heavy-budget-evals`   | `40,000,000`                        | heavy-job budget (`sharp-heavy-tail`)                                                                            |
-| `--heavy-sample`         | `5`                                 | heavy jobs per screen pass (`sharp-heavy-tail`)                                                                  |
-| `--tt-mb`                | `128`                               | per-session transposition table (MB)                                                                             |
-| `--max-jobs`             | `0` (unlimited)                     | stop after n jobs                                                                                                |
-| `--max-runtime`          | `0` (unlimited)                     | stop after n seconds                                                                                             |
-| `--stop-file`            | `STOP`                              | batch stops (gracefully, after the in-flight job) when this file appears                                         |
-| `--pns-config`           | compiled defaults                   | breadth-pns mechanism knobs (TOML); effective only under `breadth-pns`                                           |
-| `--and-close-order`      | `completion`                        | `completion` \| `fresh` (effective only under `and-close`)                                                       |
-| `--and-close-max-budget` | `0` (unlimited)                     | per-job budget cap under `and-close`                                                                             |
-| `--descend-plies`        | `2`                                 | candidate-path depth under `descend` (accepted range 1..=3; ply 3 enumerates ~9k paths — user-controlled cost)   |
-| `--out-db` / `--dump`    | off                                 | recorded in the summary only — **the caller runs `proofdb_merge` separately** (by design; this CLI never merges) |
+| Option                   | Default                             | Meaning                                                                                                                                          |
+| ------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--db`                   | `data/proofdb/proofdb.db`           | the merged DB to work against (read-only)                                                                                                        |
+| `--manifest`             | `data/proofdb/shards/manifest.json` | manifest to extend (rewritten after the batch)                                                                                                   |
+| `--shard-dir`            | `data/proofdb/shards`               | where new shard files are written (created on first write)                                                                                       |
+| `--policy`               | `breadth-pns`                       | `breadth-pns` \| `and-close` \| `descend` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail` — semantics in **Coverage policies** below |
+| `--ledger`               | `data/proofdb/work.json`            | pick-up state; a missing file is a fresh ledger                                                                                                  |
+| `--budget-evals`         | policy default                      | base child-eval budget per job (breadth-pns base: 4,000,000); screens for the legacy policies                                                    |
+| `--max-total-evals`      | `0` (unlimited)                     | session cap across jobs                                                                                                                          |
+| `--heavy-budget-evals`   | `40,000,000`                        | heavy-job budget (`sharp-heavy-tail`)                                                                                                            |
+| `--heavy-sample`         | `5`                                 | heavy jobs per screen pass (`sharp-heavy-tail`)                                                                                                  |
+| `--tt-mb`                | `128`                               | per-session transposition table (MB)                                                                                                             |
+| `--max-jobs`             | `0` (unlimited)                     | stop after n jobs                                                                                                                                |
+| `--max-runtime`          | `0` (unlimited)                     | stop after n seconds                                                                                                                             |
+| `--stop-file`            | `STOP`                              | batch stops (gracefully, after the in-flight job) when this file appears                                                                         |
+| `--pns-config`           | compiled defaults                   | breadth-pns mechanism knobs (TOML); effective only under `breadth-pns`                                                                           |
+| `--and-close-order`      | `completion`                        | `completion` \| `fresh` (effective only under `and-close`)                                                                                       |
+| `--and-close-max-budget` | `0` (unlimited)                     | per-job budget cap under `and-close`                                                                                                             |
+| `--descend-plies`        | `2`                                 | candidate-path depth under `descend` (accepted range 1..=3; ply 3 enumerates ~9k paths — user-controlled cost)                                   |
+| `--out-db` / `--dump`    | off                                 | recorded in the summary only — **the caller runs `proofdb_merge` separately** (by design; this CLI never merges)                                 |
+
+**Coverage policies (`--policy`).** A policy decides which jobs a harvest
+session runs. Two families: the DB-frontier policies select from the
+frontier classes extracted from the merged DB at session start, while
+`and-close` and `descend` derive their job set from other state (the
+classified tree + ledger, or off-tree enumeration) and consume no frontier
+sequence.
+
+The frontier classes (shown in the session-start census line):
+
+- **C1** — open rows (`outcome IS NULL`);
+- **C2** — unexpanded children of proven `win` rows — the unexpanded
+  _siblings_ of each proving child, i.e. exactly the positions a consumer
+  hits by replaying a non-stored move;
+- **C3** — unexpanded children of open rows.
+
+Children of proven `loss` rows are never in the frontier (AND-completeness:
+every legal reply is already a row).
+
+The policies:
+
+- **`breadth-pns`** (default) — a live priority queue over structural
+  proof/disproof numbers across the whole open frontier (no precomputed
+  sequence). Broadens the frontier with proven subtrees where they are
+  cheapest to prove. Base budget 4,000,000 evals (overridable with
+  `--budget-evals`); mechanism knobs via `--pns-config`.
+- **`and-close`** — the completion-gradient harvest: solves the missing
+  replies of the _active_ open rows, in completion-gradient order (row
+  closest to being closed first; `--and-close-order completion|fresh`).
+  Closes and decides rows instead of broadening; jobs are class `C3`,
+  budgets on the strict-growth ladder (`--budget-evals` base, capped by
+  `--and-close-max-budget`).
+- **`descend`** — the self-bootstrapping harvest: enumerates all legal
+  startpos-rooted candidate paths of length 1..=`--descend-plies` that are
+  not covered by DB/manifest/ledger territory and solves them (class `D`).
+  This is the cold-start policy: it works on a root-only DB where every
+  frontier policy has nothing to select. Budgets come from each candidate's
+  own ledger record on the strict-growth ladder.
+- **`open-deepest`** (legacy) — C1 only, deepest-first; every job screens
+  at the 4,000,000-eval screen budget. Superseded by `breadth-pns`.
+- **`sharp-siblings`** (legacy) — C2 in sharpness order (parent
+  `depth_bound` ascending: siblings of the closest-to-proving win rows
+  first), then C3, then C1 deepest-first. C2 jobs screen at 1,000,000
+  evals (cheap territory — censor fast and move on), C1/C3 at the
+  4,000,000-eval screen budget. The measured A/B winner among the
+  frontier-gradient policies; superseded by `breadth-pns`. Under all
+  legacy policies a nonzero `--budget-evals` overrides the screen budgets.
+- **`sharp-heavy-tail`** (legacy) — the `sharp-siblings` sequence plus a
+  heavy re-run of the C2 jobs its cheap screen censored, at
+  `--heavy-budget-evals`, sampled `--heavy-sample` per screen pass.
+
+The legacy policies are retained for measurement/reproduction; new growth
+should use `breadth-pns` (broaden), `and-close` (close), or `descend`
+(bootstrap).
 
 **Exit codes.** `0` batch completed (then the manifest is rewritten); `1`
 usage error; `2` ABORT on any defect — the session aborts _before_ the
@@ -657,24 +711,24 @@ twelve; `pass`/`work_before` are emitted by the PNS, `and-close`, and
 `descend`
 policies, `number`/`kind` only by `breadth-pns` and omitted otherwise):
 
-| field          | meaning                                                                           |
-| -------------- | --------------------------------------------------------------------------------- |
-| `path`         | UCI path of the job position (space-separated)                                    |
-| `policy`       | the `--policy` used                                                               |
-| `class`        | frontier class of the job (`C1`/`C2`/`C3`; `and-close` jobs are `C3`; `descend` jobs are `D`) |
-| `parent_bound` | the parent node's proven `depth_bound`, if proven                                 |
+| field          | meaning                                                                                                                |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `path`         | UCI path of the job position (space-separated)                                                                         |
+| `policy`       | the `--policy` used                                                                                                    |
+| `class`        | frontier class of the job (`C1`/`C2`/`C3`; `and-close` jobs are `C3`; `descend` jobs are `D`)                          |
+| `parent_bound` | the parent node's proven `depth_bound`, if proven                                                                      |
 | `tier`         | job tier (`screen`/`heavy`/policy name — `and-close` labels all jobs `and-close`, `descend` labels all jobs `descend`) |
-| `budget`       | child-eval budget granted for this visit                                          |
-| `child_evals`  | child-evals actually spent                                                        |
-| `wall_s`       | job wall time (seconds)                                                           |
-| `outcome`      | `"win"` / `"loss"` (decisive, shard exported) or `"censored"` (no fact)           |
-| `exit_reason`  | solver exit: `Complete` (decisive) or `BudgetExhausted` (censored)                |
-| `tag`          | shard tag if decisive (manifest tag; matches `provenance` in the DB)              |
-| `shard_nodes`  | exported shard's node count if decisive                                           |
-| `pass`         | visit rung: `passes_failed + 1` (PNS, `and-close`, and `descend` census)          |
-| `number`       | PNS effective number at selection time (PNS only)                                 |
-| `work_before`  | ledger `work_done` recorded before this visit (PNS, `and-close`, and `descend`)   |
-| `kind`         | PNS visit kind (`expand` \| `rung`) (PNS only)                                    |
+| `budget`       | child-eval budget granted for this visit                                                                               |
+| `child_evals`  | child-evals actually spent                                                                                             |
+| `wall_s`       | job wall time (seconds)                                                                                                |
+| `outcome`      | `"win"` / `"loss"` (decisive, shard exported) or `"censored"` (no fact)                                                |
+| `exit_reason`  | solver exit: `Complete` (decisive) or `BudgetExhausted` (censored)                                                     |
+| `tag`          | shard tag if decisive (manifest tag; matches `provenance` in the DB)                                                   |
+| `shard_nodes`  | exported shard's node count if decisive                                                                                |
+| `pass`         | visit rung: `passes_failed + 1` (PNS, `and-close`, and `descend` census)                                               |
+| `number`       | PNS effective number at selection time (PNS only)                                                                      |
+| `work_before`  | ledger `work_done` recorded before this visit (PNS, `and-close`, and `descend`)                                        |
+| `kind`         | PNS visit kind (`expand` \| `rung`) (PNS only)                                                                         |
 
 A **censored** job (quickstart §3.1, verbatim; `wall_s` varies by host):
 
