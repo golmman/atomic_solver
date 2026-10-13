@@ -952,3 +952,13 @@ i want a new proofdb policy that bootstraps itself and goes as follows:
 - if it was searched before with less than the given budget, search it
 - if not, expand it and search one of the children with the given budget
 - repeat
+
+
+---
+
+
+I want that after every finished search (= ledger update) the set of shards is consistent.
+That way unexpected crashes or ctrl-c exits only lose the latest batch of work and subsequent `proofdb_merge` runs add the collected shards (minus the last one) just fine.
+i don't need a dedicated sigint handler though.
+Can we draft a plan for this?
+
