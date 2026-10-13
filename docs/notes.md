@@ -948,4 +948,9 @@ explain the idea of the mechanism in plain language.
 
 ---
 
+i want a new proofdb policy that bootstraps itself and goes as follows:
+* of all frontier nodes in the ledger pick one with the shallowest depth so far (if empty: root)
+* if it was searched before with less than the given budget, search it
+* if not, expand it and search one of the children with the given budget
+* repeat
 
