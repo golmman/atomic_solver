@@ -1,7 +1,7 @@
 .PHONY: macos_cleanup
 .PHONY: test test-full test-lite
 .PHONY: stress quick_check quick_check2 quick_check3
-.PHONY: proofdb_init proofdb_cycle proofdb_stats
+.PHONY: proofdb_init proofdb_cycle_run proofdb_cycle_stop proofdb_stats
 
 BIN := target/release/examples
 
@@ -45,12 +45,15 @@ proofdb_init:
 	printf '{"entries":[]}' > data/proofdb/shards/manifest.json
 	$(BIN)/proofdb_merge
 
-proofdb_cycle:
-	rm STOP
+proofdb_cycle_run:
+	-rm STOP
 	cargo build --release --examples
 	$(BIN)/proofdb_harvest --policy frontier-walk --budget-evals 100000000
 	$(BIN)/proofdb_merge
 	$(BIN)/proofdb_flip
+
+proofdb_cycle_stop:
+	touch STOP
 
 proofdb_stats:
 	@printf "number of shards: "
