@@ -1,0 +1,35 @@
+{
+ "fen": "4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21",
+ "runs": [
+  {
+   "salt": 0,
+   "rc": 0,
+   "wall_s": 27.303,
+   "outcome": "win",
+   "decisive": true,
+   "budget_exhausted": false,
+   "evals": 287872755,
+   "budget": 2500000000
+  },
+  {
+   "salt": 1,
+   "rc": 0,
+   "wall_s": 118.551,
+   "outcome": "win",
+   "decisive": true,
+   "budget_exhausted": false,
+   "evals": 1138108966,
+   "budget": 2500000000
+  },
+  {
+   "salt": 5,
+   "rc": 0,
+   "wall_s": 30.448,
+   "outcome": "win",
+   "decisive": true,
+   "budget_exhausted": false,
+   "evals": 311753192,
+   "budget": 2500000000
+  }
+ ]
+}

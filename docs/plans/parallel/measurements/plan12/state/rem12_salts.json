@@ -1,0 +1,65 @@
+{
+ "fen": "rnbqkbnr/8/6pp/pppppp1B/3PPP2/N5PN/PPP4P/R1BQ1RK1 w kq - 0 10",
+ "runs": [
+  {
+   "salt": 0,
+   "rc": 0,
+   "wall_s": 6.818,
+   "outcome": "win",
+   "decisive": true,
+   "budget_exhausted": false,
+   "evals": 66604453,
+   "budget": 1000000000
+  },
+  {
+   "salt": 1,
+   "rc": 0,
+   "wall_s": 7.454,
+   "outcome": "win",
+   "decisive": true,
+   "budget_exhausted": false,
+   "evals": 72419259,
+   "budget": 1000000000
+  },
+  {
+   "salt": 2,
+   "rc": 0,
+   "wall_s": 7.012,
+   "outcome": "win",
+   "decisive": true,
+   "budget_exhausted": false,
+   "evals": 67676024,
+   "budget": 1000000000
+  },
+  {
+   "salt": 3,
+   "rc": 0,
+   "wall_s": 6.598,
+   "outcome": "win",
+   "decisive": true,
+   "budget_exhausted": false,
+   "evals": 64123057,
+   "budget": 1000000000
+  },
+  {
+   "salt": 4,
+   "rc": 0,
+   "wall_s": 6.97,
+   "outcome": "win",
+   "decisive": true,
+   "budget_exhausted": false,
+   "evals": 67270040,
+   "budget": 1000000000
+  },
+  {
+   "salt": 5,
+   "rc": 0,
+   "wall_s": 7.018,
+   "outcome": "win",
+   "decisive": true,
+   "budget_exhausted": false,
+   "evals": 67599334,
+   "budget": 1000000000
+  }
+ ]
+}

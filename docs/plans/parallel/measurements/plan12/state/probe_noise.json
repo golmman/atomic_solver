@@ -1,0 +1,451 @@
+{
+ "probe": "plan12 stage-0 Phase-0 noise probe (H0)",
+ "h0": "plan6 bad-trajectory tails = ordinary realization draws under the measured per-run parallel overhead",
+ "pre_registered_test_set": [
+  "shuffle_win",
+  "rem12"
+ ],
+ "seq_refs": {
+  "evals": {
+   "m22": 14156269,
+   "rem12": 69605385,
+   "shuffle_win": 249480478
+  },
+  "wall": {
+   "m22": 3.263,
+   "rem12": 16.886,
+   "shuffle_win": 57.707
+  },
+  "note": "plan6-era in-session references; shuffle_win and m22 equal the research-plan12 corpus salt-0 draws exactly (same flags/era); rem12 fresh current-binary salt0 = 66,604,453 (-4.3% drift, declared)"
+ },
+ "ratio_bands": {
+  "shuffle_win_corpus(plan6-era)": {
+   "n_draws": 6,
+   "n_uncensored": 3,
+   "n_censored": 3,
+   "uncensored_min": 1.0,
+   "uncensored_max": 3.039021261615508,
+   "spread": 3.039021261615508,
+   "censored_ratio_lower_bounds": [
+    10.02082416244208,
+    10.02082415843375,
+    10.02082416645041
+   ],
+   "tails_ge_2x": 4,
+   "base_evals": 249480478,
+   "draws": [
+    {
+     "salt": 0,
+     "censored": false,
+     "ratio": 1.0
+    },
+    {
+     "salt": 1,
+     "censored": false,
+     "ratio": 3.039021261615508
+    },
+    {
+     "salt": 2,
+     "censored": true,
+     "ratio_lower_bound": 10.02082416244208
+    },
+    {
+     "salt": 3,
+     "censored": true,
+     "ratio_lower_bound": 10.02082415843375
+    },
+    {
+     "salt": 4,
+     "censored": true,
+     "ratio_lower_bound": 10.02082416645041
+    },
+    {
+     "salt": 5,
+     "censored": false,
+     "ratio": 1.010379293084407
+    }
+   ]
+  },
+  "m22_corpus(plan6-era)": {
+   "n_draws": 6,
+   "n_uncensored": 6,
+   "n_censored": 0,
+   "uncensored_min": 1.0,
+   "uncensored_max": 1.670852044419331,
+   "spread": 1.670852044419331,
+   "censored_ratio_lower_bounds": [],
+   "tails_ge_2x": 0,
+   "base_evals": 14156269,
+   "draws": [
+    {
+     "salt": 0,
+     "censored": false,
+     "ratio": 1.0
+    },
+    {
+     "salt": 1,
+     "censored": false,
+     "ratio": 1.670852044419331
+    },
+    {
+     "salt": 2,
+     "censored": false,
+     "ratio": 1.1172074365074582
+    },
+    {
+     "salt": 3,
+     "censored": false,
+     "ratio": 1.259675130502253
+    },
+    {
+     "salt": 4,
+     "censored": false,
+     "ratio": 1.276567222620593
+    },
+    {
+     "salt": 5,
+     "censored": false,
+     "ratio": 1.5001755759232889
+    }
+   ]
+  },
+  "rem12_fresh(current binary)": {
+   "n_draws": 6,
+   "n_uncensored": 6,
+   "n_censored": 0,
+   "uncensored_min": 0.962744292787751,
+   "uncensored_max": 1.0873035621206888,
+   "spread": 1.1293793900063123,
+   "censored_ratio_lower_bounds": [],
+   "tails_ge_2x": 0,
+   "base_evals": 66604453,
+   "draws": [
+    {
+     "salt": 0,
+     "censored": false,
+     "ratio": 1.0
+    },
+    {
+     "salt": 1,
+     "censored": false,
+     "ratio": 1.0873035621206888
+    },
+    {
+     "salt": 2,
+     "censored": false,
+     "ratio": 1.016088578942312
+    },
+    {
+     "salt": 3,
+     "censored": false,
+     "ratio": 0.962744292787751
+    },
+    {
+     "salt": 4,
+     "censored": false,
+     "ratio": 1.0099931306394785
+    },
+    {
+     "salt": 5,
+     "censored": false,
+     "ratio": 1.0149371544271972
+    }
+   ]
+  },
+  "stress_fresh_current_binary_robustness": {
+   "n_draws": 3,
+   "n_uncensored": 3,
+   "n_censored": 0,
+   "uncensored_min": 1.0,
+   "uncensored_max": 3.953513996140413,
+   "spread": 3.953513996140413,
+   "censored_ratio_lower_bounds": [],
+   "tails_ge_2x": 1,
+   "base_evals": 287872755,
+   "draws": [
+    {
+     "salt": 0,
+     "censored": false,
+     "ratio": 1.0
+    },
+    {
+     "salt": 1,
+     "censored": false,
+     "ratio": 3.953513996140413
+    },
+    {
+     "salt": 5,
+     "censored": false,
+     "ratio": 1.0829548353750948
+    }
+   ]
+  }
+ },
+ "magnitude": {
+  "shuffle_win": {
+   "case": "shuffle_win",
+   "ratio_max_uncensored": 3.039,
+   "tail_inflations_t4": [
+    5.668228726096958,
+    6.325402807669785,
+    5.9288699334622885
+   ],
+   "products": [
+    {
+     "n": 2,
+     "overhead_est": "inmax",
+     "overhead": 1.997,
+     "ratio": 3.039,
+     "product": 6.069
+    },
+    {
+     "n": 2,
+     "overhead_est": "inmed",
+     "overhead": 1.368,
+     "ratio": 3.039,
+     "product": 4.158
+    },
+    {
+     "n": 2,
+     "overhead_est": "decomp",
+     "overhead": 1.951,
+     "ratio": 3.039,
+     "product": 5.928
+    },
+    {
+     "n": 3,
+     "overhead_est": "inmax",
+     "overhead": 2.679,
+     "ratio": 3.039,
+     "product": 8.142
+    },
+    {
+     "n": 3,
+     "overhead_est": "inmed",
+     "overhead": 1.644,
+     "ratio": 3.039,
+     "product": 4.996
+    },
+    {
+     "n": 3,
+     "overhead_est": "decomp",
+     "overhead": 2.891,
+     "ratio": 3.039,
+     "product": 8.787
+    },
+    {
+     "n": 4,
+     "overhead_est": "inmax",
+     "overhead": 2.469,
+     "ratio": 3.039,
+     "product": 7.504
+    },
+    {
+     "n": 4,
+     "overhead_est": "inmed",
+     "overhead": 1.59,
+     "ratio": 3.039,
+     "product": 4.833
+    },
+    {
+     "n": 4,
+     "overhead_est": "decomp",
+     "overhead": 3.819,
+     "ratio": 3.039,
+     "product": 11.605
+    }
+   ],
+   "observed_max_tail_inflation": 6.325,
+   "max_product_t4": 11.605,
+   "max_product_any_N": 11.605,
+   "rejected_at_magnitude": false,
+   "rule": "reject iff observed > 1.2 x every {ratio_max_uncensored x overhead_est} product at t4"
+  },
+  "rem12": {
+   "case": "rem12",
+   "note": "no bad tails (0/8 cap-hits, max wall 17.8 s < 1.5x seq); sharper pre-registered test: median inflation vs 1.31x-quoted realization band x median overhead",
+   "realization_band_fresh": {
+    "uncensored_max": 1.087,
+    "spread": 1.129
+   },
+   "median_inflation_t4": 3.03,
+   "overhead_decomp_med_t4": 3.826,
+   "overhead_decomp_runs_t4": [
+    3.863,
+    3.923,
+    3.81,
+    3.891,
+    3.827,
+    3.792,
+    3.78,
+    3.824
+   ],
+   "products": [
+    {
+     "overhead_est": "inmax",
+     "overhead": 3.795,
+     "product": 4.127
+    },
+    {
+     "overhead_est": "inmed",
+     "overhead": 3.03,
+     "product": 3.294
+    },
+    {
+     "overhead_est": "decomp",
+     "overhead": 3.826,
+     "product": 4.16
+    }
+   ],
+   "median_test": {
+    "median_inflation": 3.03,
+    "threshold_1.31x_overhead_decomp": 5.011,
+    "exceeded": false
+   },
+   "rejected_at_magnitude": false,
+   "rule": "no tails to reject; median test evaluates whether the parallelism-specific overhead itself is realization luck"
+  },
+  "m22_OUT_OF_SCOPE_finding": {
+   "case": "m22 (plan6 control, measurement-only; NOT in the pre-registered test set)",
+   "tail_inflations": [
+    11.48,
+    6.57,
+    33.86
+   ],
+   "ratio_max_uncensored": 1.671,
+   "max_overhead_est_any_cell": 4.238,
+   "max_product": 7.08,
+   "rejected_at_magnitude": true,
+   "sequential_tail_frequency": "0/6 (max uncensored draw 1.671 < 2x)",
+   "parallel_tail_frequency": "2/8 across t3/t4 (t3 r3 11.5x win, t4 r2 33.9x cap-hit)"
+  }
+ },
+ "frequency": {
+  "shuffle_win": {
+   "parallel_tail_rate_t4": "3/8",
+   "sequential_tail_freq_uncensored": "1/3 (salt1 3.04x; salt0 1.00, salt5 1.01)",
+   "censored": "3/6 draws budget-censored at 2.5 G (ratio >= 10.0x, tails a fortiori)",
+   "sequential_tail_freq_all_draws": "4/6",
+   "verdict": "no veto (3/8 = 0.375 inside [1/3, 1]; below the 4/6 all-draws rate)"
+  },
+  "rem12": {
+   "parallel_tail_rate": "0/8 at all N",
+   "sequential_tail_freq_fresh": "0/6",
+   "verdict": "consistent; nothing to veto"
+  }
+ },
+ "decomposition_t4_all_cases": {
+  "m22": {
+   "overhead_decomp_runs": [
+    3.563,
+    3.898,
+    3.855,
+    3.87,
+    3.802,
+    3.793,
+    3.698,
+    3.863
+   ],
+   "overhead_decomp_med": 3.829,
+   "coord_ratio_range": [
+    0.443,
+    8.687
+   ]
+  },
+  "rem12": {
+   "overhead_decomp_runs": [
+    3.863,
+    3.923,
+    3.81,
+    3.891,
+    3.827,
+    3.792,
+    3.78,
+    3.824
+   ],
+   "overhead_decomp_med": 3.826,
+   "coord_ratio_range": [
+    0.657,
+    1.001
+   ]
+  },
+  "shuffle_win": {
+   "overhead_decomp_runs": [
+    3.759,
+    3.717,
+    3.668,
+    3.835,
+    3.803,
+    3.852,
+    3.862,
+    3.838
+   ],
+   "overhead_decomp_med": 3.819,
+   "coord_ratio_range": [
+    0.333,
+    1.702
+   ]
+  }
+ },
+ "decomposition_shuffle_win_t4": {
+  "bad_tails": [
+   {
+    "round": 1,
+    "coord_ratio": 1.508,
+    "helper_ratio": 4.16,
+    "overhead_decomp": 3.759
+   },
+   {
+    "round": 2,
+    "coord_ratio": 1.702,
+    "helper_ratio": 4.624,
+    "overhead_decomp": 3.717
+   },
+   {
+    "round": 3,
+    "coord_ratio": 1.616,
+    "helper_ratio": 4.313,
+    "overhead_decomp": 3.668
+   }
+  ],
+  "good_runs": [
+   {
+    "round": 4,
+    "coord_ratio": 0.333,
+    "helper_ratio": 0.944,
+    "overhead_decomp": 3.835
+   },
+   {
+    "round": 5,
+    "coord_ratio": 0.649,
+    "helper_ratio": 1.82,
+    "overhead_decomp": 3.803
+   },
+   {
+    "round": 6,
+    "coord_ratio": 0.372,
+    "helper_ratio": 1.06,
+    "overhead_decomp": 3.852
+   },
+   {
+    "round": 7,
+    "coord_ratio": 0.511,
+    "helper_ratio": 1.463,
+    "overhead_decomp": 3.862
+   },
+   {
+    "round": 8,
+    "coord_ratio": 0.414,
+    "helper_ratio": 1.176,
+    "overhead_decomp": 3.838
+   }
+  ],
+  "reading": "overhead_decomp = inflation / coordinator_ratio is ~3.7-3.9x on EVERY t4 run (good and bad): the mechanism work multiplier is near-constant; what varies is the coordinator's realized difficulty (0.33-1.70x salt0). Bad-tail coordinator draws (1.51-1.70x) sit between the quiet cluster (~1.0x) and the loud draw (3.04x) - plausible mid-band draws, unobserved among only 3 uncensored stress draws. Excess work vs good-run medians: ~72% helper-side (+3.1 salt0-units), ~28% coordinator-side (+1.2).",
+  "cross_case_note": "the same decomposition on m22 and rem12 t4 gives the identical ~3.8x multiplier (m22 3.56-3.90, rem12 3.78-3.92): the SPDFPN t4 total-work multiplier is ~3.8x the coordinator's realized work on all three plan6 cases; plan6's differing I4 medians (2.22/3.03/3.54) reflect coordinator realization differences, not mechanism behavior. Identification caveat: coordinator_evals is itself perturbation-contaminated (good runs' coord ratios 0.33-0.66 fall below the sequential band minimum - impossible for a pure realization), so 'coordinator realization' conflates the salt draw with helper-TT pollution; the magnitude verdict above does not rest on this identification (it holds under the estimator-free inmax bound too)."
+ },
+ "verdict": {
+  "H0": "not rejected on both pre-registered cases (magnitude); frequency cannot veto (shuffle-win parallel tail 3/8 inside the sequential tail band [1/3, 1])",
+  "D1": "NO-GO branch (mechanical): the bad-tail premise of backlog #7 is dead; the salt portfolio remains the family's only mechanism",
+  "caveat": "out-of-scope m22 finding: the t3/t4 tails (11.5x / 33.9x) DO exceed every noise product - a parallelism-specific inflation component exists on the short control case (repetition-stall / perturbation signature: jobs 10-50x typical); it does not rescue #7's long-case premise (S4(m22) = 1.01x: parallelism is pointless there regardless)"
+ }
+}
