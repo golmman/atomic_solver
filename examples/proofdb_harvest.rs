@@ -54,10 +54,11 @@
 //! `class`, for `breadth-pns` the `kind`/`pass`/`number`/`work_before`
 //! quadruple, and for `and-close` the `pass`/`work_before` pair with
 //! `number`/`kind` null), then `manifest:`/`harvest:` summary lines. On
-//! any defect the session aborts non-zero before the manifest rewrite —
-//! nothing inconsistent enters the durable layer (shard files of jobs
-//! completed before the abort are unreferenced orphans and are
-//! deterministically overwritten by the retry).
+//! any defect the session aborts non-zero — nothing inconsistent enters
+//! the durable layer: the manifest is atomically rewritten after every
+//! decisive job (plan17), so a crash or ctrl-c mid-session leaves at most
+//! the in-flight job's shard unreferenced (deterministically overwritten
+//! by the retry).
 
 mod proofdb;
 use proofdb::harvest_args::parse_args;
@@ -104,6 +105,7 @@ fn main() {
     let mut session = Session::new(
         args.tt_mb,
         args.shard_dir.clone(),
+        args.manifest.clone(),
         manifest.entries.clone(),
         args.policy.as_str(),
     );

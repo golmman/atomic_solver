@@ -338,9 +338,11 @@ Operational notes:
   wall clock in any decision. Given the same DB and ledger state, the
   same command reproduces the same job set; the summary's `wall` is the
   only host-dependent number (§7.2).
-- Censor records are saved to the ledger atomically per censor; shards
-  and the manifest rewrite are append-only and abort-safe (exit 2 leaves
-  the durable layer consistent, §7.2). The durable layer
+- Censor records are saved to the ledger atomically per censor, and the
+  manifest is atomically rewritten after every decisive job (plan17: tmp
+  + rename) — after every finished job the durable layer (shards +
+  manifest) is consistent, so an unexpected crash or ctrl-c loses at
+  most the in-flight job's work (§7.2, §10). The durable layer
   `data/proofdb/shards/` is unversioned — back it up (§2.1).
 
 ### 3.3 Alternative quickstart — the `frontier-walk` boot
@@ -701,7 +703,7 @@ default manifest aborts cleanly naming
 | Option                   | Default                             | Meaning                                                                                                                                          |
 | ------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `--db`                   | `data/proofdb/proofdb.db`           | the merged DB to work against (read-only)                                                                                                        |
-| `--manifest`             | `data/proofdb/shards/manifest.json` | manifest to extend (rewritten after the batch)                                                                                                   |
+| `--manifest`             | `data/proofdb/shards/manifest.json` | manifest to extend (rewritten atomically after every decisive job and at batch end)                                                              |
 | `--shard-dir`            | `data/proofdb/shards`               | where new shard files are written (created on first write)                                                                                       |
 | `--policy`               | `breadth-pns`                       | `breadth-pns` \| `and-close` \| `descend` \| `frontier-walk` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail` — semantics in **Coverage policies** below |
 | `--ledger`               | `data/proofdb/work.json`            | pick-up state; a missing file is a fresh ledger                                                                                                  |
@@ -786,15 +788,21 @@ The legacy policies are retained for measurement/reproduction; new growth
 should use `breadth-pns` (broaden), `and-close` (close), `descend`
 (bootstrap), or `frontier-walk` (a ledger-driven alternative grow sweep).
 
-**Exit codes.** `0` batch completed (then the manifest is rewritten); `1`
-usage error; `2` ABORT on any defect — the session aborts _before_ the
-manifest rewrite, so the durable layer never becomes inconsistent. Shards
-of jobs already completed when an abort hits remain as unreferenced orphan
-files and are deterministically overwritten by the retry. Stop reasons in
-the summary: `budget` (`--max-total-evals` cap reached), `max-jobs`,
-`max-runtime`, `stop-file`, `exhausted` (job sequence completed). All stop
-conditions are checked between jobs only — a started job always runs to
-its granted budget.
+**Exit codes.** `0` batch completed (then the batch-end manifest line is
+printed); `1` usage error; `2` ABORT on any defect. The manifest is
+atomically rewritten (tmp + rename) immediately after every decisive
+job's shard write, so after every finished job the durable layer is
+consistent: every `*.bin` written so far is referenced by the on-disk
+manifest, and an unexpected crash or ctrl-c loses at most the in-flight
+job's work — at most one unreferenced orphan shard remains (from a job
+interrupted between the shard write and its manifest entry, or whose
+manifest write failed), deterministically overwritten by the retry. There
+is no signal handling: the stop conditions below stay the only graceful
+exits; this contract only narrows what an unclean exit costs. Stop
+reasons in the summary: `budget` (`--max-total-evals` cap reached),
+`max-jobs`, `max-runtime`, `stop-file`, `exhausted` (job sequence
+completed). All stop conditions are checked between jobs only — a started
+job always runs to its granted budget.
 
 **Output grammar.**
 
@@ -889,7 +897,9 @@ harvest: policy and-close stop=max-jobs jobs 2 decisive 0 censored 2 evals 40003
 ```
 
 - `manifest:` — entries + full manifest digest after the rewrite
-  (byte-identical when no decisive job occurred).
+  (byte-identical when no decisive job occurred; the per-job sync means
+  the rewrite at batch end is an idempotent no-op byte-wise — the line is
+  the batch-end confirmation, not the first write).
 - `harvest:` — `stop=` reason; then per policy family: PNS
   (`pns_jobs N rungs M decisive D evals E new_shards S wall Ws`), and-close (`jobs N decisive D censored C evals E new_shards S wall Ws` — the
   shape `descend` and `frontier-walk` use too), legacy
@@ -1281,11 +1291,18 @@ partially written DB. Read the abort message: it names the shard/manifest
 defect. Never "fix" a proven-outcome conflict by editing the manifest —
 that is a soundness bug in the pipeline and belongs in a bug report.
 
-**Orphan shards after a harvest abort.** A batch aborted mid-way (exit 2,
-or a crash) leaves already-written shard files unreferenced — the manifest
-rewrite is skipped on abort. The retry deterministically overwrites them;
-no manual cleanup is needed, but an unreferenced `*.bin` in the shard dir
-is a symptom worth noting in the operator log.
+**Orphan shards after a harvest abort.** The manifest is atomically
+rewritten after every decisive job, so a mid-session crash or ctrl-c
+(exit 2, or killed) leaves a consistent layer: everything collected up to
+the last finished job is referenced and a subsequent bare `proofdb_merge`
+folds it in. At most one orphan remains — the shard of the job that was
+in flight (interrupted between the shard write and its manifest entry, or
+whose manifest write failed; the rename keeps the previous complete
+manifest). The retry deterministically overwrites it; no manual cleanup
+is needed, but an unreferenced `*.bin` in the shard dir is a symptom
+worth noting in the operator log. A merge after any batch with decisive
+jobs is still required before the next harvest session (the stale-
+`built_from` guard above).
 
 **Fresh vs seeded ledger.** A fresh ledger (missing `--ledger` file) is
 sound but re-censors every frontier reply at the base budget on first
@@ -1308,6 +1325,13 @@ record the intended targets in the summary; after each batch, run
 `proofdb_merge` yourself (recipe R2).
 
 ## 11. History
+
+plan17 (2026-10-13) made the harvest session crash-consistent: the
+manifest is atomically rewritten (tmp + rename, the ledger's pattern)
+after every decisive job — no signal handling, no format change — so an
+unexpected crash or ctrl-c loses at most the in-flight job's work and the
+next bare `proofdb_merge` folds in everything collected up to the last
+finished job (§3.2 operational notes, §7.2 exit codes, §10 orphans).
 
 plan16 (2026-10-13) added the `frontier-walk` harvest policy — the
 shallowest-first ledger walk with a flat budget, an alternative grow sweep

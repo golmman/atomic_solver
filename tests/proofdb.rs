@@ -622,8 +622,13 @@ fn and_close_driver_censored_jobs_grow_ledger_by_censor_count() {
     let start_records = sel.ledger.len();
 
     let run = |ledger_path: &std::path::Path| {
-        let mut session =
-            Session::new(4, dir.join("shards"), manifest.entries.clone(), "and-close");
+        let mut session = Session::new(
+            4,
+            dir.join("shards"),
+            dir.join("shards/manifest.json"),
+            manifest.entries.clone(),
+            "and-close",
+        );
         let opts = AndCloseOptions {
             max_total_evals: 0,
             max_jobs: 5,
@@ -1118,7 +1123,13 @@ fn descend_driver_censored_jobs_grow_ledger_by_censor_count() {
     let ledger_path = dir.join("ledger.json");
 
     let run = |ledger_path: &std::path::Path| {
-        let mut session = Session::new(4, dir.join("shards"), manifest.entries.clone(), "descend");
+        let mut session = Session::new(
+            4,
+            dir.join("shards"),
+            dir.join("shards/manifest.json"),
+            manifest.entries.clone(),
+            "descend",
+        );
         let built = descend_build_sequence(
             &db,
             &std::collections::HashSet::new(),
@@ -1185,7 +1196,13 @@ fn descend_boot_from_empty_layer() {
     let db = proofdb::db::load_db_rows(&dir.join("proofdb.db"), &digest).unwrap();
 
     // Batch 1: descend at 20k base budget, plies default (2).
-    let mut session = Session::new(4, dir.join("shards"), Vec::new(), "descend");
+    let mut session = Session::new(
+        4,
+        dir.join("shards"),
+        dir.join("shards/manifest.json"),
+        Vec::new(),
+        "descend",
+    );
     let built = descend_build_sequence(
         &db,
         &std::collections::HashSet::new(),
@@ -1214,6 +1231,18 @@ fn descend_boot_from_empty_layer() {
     assert_eq!(summary.stop_reason, "", "batch runs to exhaustion");
     assert!(summary.decisive >= 1, "boot yield: >= 1 decisive shard");
     assert_eq!(session.new_shards, summary.decisive);
+    // Plan17 D1: the per-job sync — the manifest on disk already references
+    // every shard the batch wrote, before the post-batch rewrite runs.
+    let pre_sync = read_manifest(&dir.join("shards/manifest.json")).unwrap();
+    assert_eq!(
+        pre_sync.entries.len(),
+        summary.decisive,
+        "manifest not current pre-rewrite"
+    );
+    assert!(
+        !dir.join("shards/manifest.json.tmp").exists(),
+        "tmp residue"
+    );
     // The CLI's post-batch manifest rewrite (the batch never writes it).
     session.rewrite_manifest(&dir.join("shards/manifest.json"), &digest);
 
@@ -1290,6 +1319,7 @@ fn walk_driver_root_expansion_and_ledger_growth() {
         let mut session = Session::new(
             4,
             dir.join("shards"),
+            dir.join("shards/manifest.json"),
             manifest.entries.clone(),
             "frontier-walk",
         );
@@ -1379,7 +1409,13 @@ fn walk_complete_rule_no_livelock_and_exhaustion() {
     }
     let ledger = Ledger::from_entries(m);
 
-    let mut session = Session::new(4, dir.join("shards"), Vec::new(), "frontier-walk");
+    let mut session = Session::new(
+        4,
+        dir.join("shards"),
+        dir.join("shards/manifest.json"),
+        Vec::new(),
+        "frontier-walk",
+    );
     let (mut frontier, census) = WalkFrontier::new(&ledger, &db);
     assert_eq!(census.records, 21);
     let mut led = ledger.clone();
@@ -1415,7 +1451,13 @@ fn walk_root_proven_exhausts() {
     let dir = ac_dir("walk_proven_root");
     let db = ac_crafted(&[("", 0, Some(Outcome::Win))]);
     let ledger = ledger_of(&[("a2a3", 100, 1)]);
-    let mut session = Session::new(4, dir.join("shards"), Vec::new(), "frontier-walk");
+    let mut session = Session::new(
+        4,
+        dir.join("shards"),
+        dir.join("shards/manifest.json"),
+        Vec::new(),
+        "frontier-walk",
+    );
     let (mut frontier, mut census) = WalkFrontier::new(&ledger, &db);
     // The record sits behind the proven root row: ancestor drop (the empty
     // prefix), the root itself is proven-stored.
@@ -1462,7 +1504,13 @@ fn walk_boot_from_empty_layer() {
     .unwrap();
     let db = proofdb::db::load_db_rows(&dir.join("proofdb.db"), &digest).unwrap();
 
-    let mut session = Session::new(4, dir.join("shards"), Vec::new(), "frontier-walk");
+    let mut session = Session::new(
+        4,
+        dir.join("shards"),
+        dir.join("shards/manifest.json"),
+        Vec::new(),
+        "frontier-walk",
+    );
     let summary = run_walk_session(
         &mut session,
         &db,
@@ -1474,6 +1522,18 @@ fn walk_boot_from_empty_layer() {
     assert_eq!(summary.stop_reason, "budget");
     assert!(summary.decisive >= 1, "boot yield: >= 1 decisive shard");
     assert_eq!(session.new_shards, summary.decisive);
+    // Plan17 D1: the per-job sync — the manifest on disk already references
+    // every shard the batch wrote, before the post-batch rewrite runs.
+    let pre_sync = read_manifest(&dir.join("shards/manifest.json")).unwrap();
+    assert_eq!(
+        pre_sync.entries.len(),
+        summary.decisive,
+        "manifest not current pre-rewrite"
+    );
+    assert!(
+        !dir.join("shards/manifest.json.tmp").exists(),
+        "tmp residue"
+    );
     // The D4 signature over a full session.
     let ledger = Ledger::load(&dir.join("work.json")).unwrap();
     assert_eq!(ledger.len(), summary.fresh_censored);
@@ -1535,7 +1595,13 @@ fn walk_zero_eval_censor_guard_completes_the_node() {
     let db = ac_crafted(&[("", 0, None)]);
     let rep = "g1f3 g8f6 f3g1 f6g8";
     let ledger = ledger_of(&[(rep, 4, 1)]);
-    let mut session = Session::new(4, dir.join("shards"), Vec::new(), "frontier-walk");
+    let mut session = Session::new(
+        4,
+        dir.join("shards"),
+        dir.join("shards/manifest.json"),
+        Vec::new(),
+        "frontier-walk",
+    );
     let (mut frontier, mut census) = WalkFrontier::new(&ledger, &db);
     assert_eq!(census.records, 1);
     census.root = root_state(&db, &session);
@@ -1562,5 +1628,98 @@ fn walk_zero_eval_censor_guard_completes_the_node() {
     let e = led.get(rep).unwrap();
     assert_eq!((e.work_done, e.passes_failed), (4, 2));
     assert!(led.contains(""));
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+// --- plan17: the per-job crash-consistent manifest sync (D1–D4) ---
+
+/// Plan17 task 3: censored jobs must not touch the manifest file — censors
+/// live in the ledger only, so the on-disk manifest bytes are unchanged by
+/// a censor-only session (and no `.tmp` residue appears).
+#[test]
+fn session_censored_jobs_leave_manifest_bytes_untouched() {
+    let dir = ac_dir("p17_censored");
+    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
+    let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
+    let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
+    let manifest_path = dir.join("shards/manifest.json");
+    std::fs::create_dir_all(dir.join("shards")).unwrap();
+    // The current manifest content, serialized at the session's sync path.
+    let before = std::fs::read(dir.join("manifest.json")).unwrap();
+    std::fs::write(&manifest_path, &before).unwrap();
+
+    let mut session = Session::new(
+        4,
+        dir.join("shards"),
+        manifest_path.clone(),
+        manifest.entries.clone(),
+        "frontier-walk",
+    );
+    let (mut frontier, mut census) = WalkFrontier::new(&Ledger::default(), &db);
+    census.root = root_state(&db, &session);
+    assert_eq!(census.root, RootState::Open);
+    let mut led = Ledger::default();
+    // Tiny budget on the quiet fixture: every job censors (the walk driver
+    // test pins the same shape), so nothing durable is produced.
+    let summary = run_walk_batch(
+        &mut session,
+        &db,
+        &mut frontier,
+        &mut led,
+        &dir.join("ledger.json"),
+        1_000,
+        &walk_opts(5, 0),
+    )
+    .unwrap();
+    assert_eq!(summary.decisive, 0);
+    assert_eq!(summary.censored, 5);
+    assert_eq!(session.new_shards, 0);
+    // The manifest file was never touched.
+    assert_eq!(std::fs::read(&manifest_path).unwrap(), before);
+    assert!(
+        !manifest_path.with_extension("json.tmp").exists(),
+        "tmp residue"
+    );
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// Plan17 task 3 / D4: the interrupted-write window. A session state where
+/// the shard `.bin` is already written but the manifest sync fails (the tmp
+/// path occupied by a directory — the root-proof failure injector of the
+/// writer tests) returns the error: the previous manifest stays intact and
+/// the written shard is exactly one unreferenced orphan, overwritten by the
+/// retry. (The process-exit abort itself is `fail()` — untestable
+/// in-process; the error path of the sync is what carries the contract.)
+#[test]
+fn session_manifest_write_failure_leaves_previous_manifest_and_one_orphan() {
+    use proofdb::session::Session;
+    let dir = ac_dir("p17_orphan");
+    let shard_dir = dir.join("shards");
+    std::fs::create_dir_all(&shard_dir).unwrap();
+    let manifest_path = shard_dir.join("manifest.json");
+    // The previous (consistent) manifest on disk.
+    let old = b"{\"entries\":[]}".to_vec();
+    std::fs::write(&manifest_path, &old).unwrap();
+    // The in-flight job's shard: written, not yet referenced.
+    let orphan = shard_dir.join("h_orphan.bin");
+    std::fs::write(&orphan, b"orphan-bytes").unwrap();
+    // The failure injector: a directory occupying the tmp path.
+    std::fs::create_dir(manifest_path.with_extension("json.tmp")).unwrap();
+
+    let session = Session::new(
+        4,
+        shard_dir.clone(),
+        manifest_path.clone(),
+        Vec::new(),
+        "frontier-walk",
+    );
+    let err = session.sync_manifest().unwrap_err();
+    assert!(err.contains("cannot write manifest"), "unexpected: {err}");
+    // The previous manifest is intact; the shard is the one orphan; the
+    // failed tmp attempt changed nothing durable beyond it.
+    assert_eq!(std::fs::read(&manifest_path).unwrap(), old);
+    assert!(orphan.is_file());
+    let m = read_manifest(&manifest_path).unwrap();
+    assert_eq!(m.entries.len(), 0);
     std::fs::remove_dir_all(&dir).ok();
 }

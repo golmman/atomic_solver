@@ -17,6 +17,12 @@ use super::{ShardEntry, digest_hex};
 /// Seed provenance extras are intentionally not carried here; they remain
 /// reproducible from the plan manifests that produced the entries.
 ///
+/// The bytes are written atomically (plan17 D3, the ledger's pattern):
+/// serialize → write `manifest.json.tmp` next to the target → `fs::rename`
+/// over the target — a crash mid-write never truncates the manifest (the
+/// rename is all-or-nothing), and a leftover `.tmp` from a killed write is
+/// never read by anyone and is overwritten by the next write.
+///
 /// Returns the SHA-256 hex digest of the written bytes (the value the DB's
 /// `built_from` meta row will carry after the next merge).
 ///
@@ -46,8 +52,11 @@ pub fn write_manifest(path: &std::path::Path, entries: &[ShardEntry]) -> Result<
         })).collect::<Vec<_>>(),
     });
     let bytes = serde_json::to_vec_pretty(&doc).map_err(|e| format!("manifest serialize: {e}"))?;
-    std::fs::write(path, &bytes)
-        .map_err(|e| format!("cannot write manifest {}: {e}", path.display()))?;
+    let tmp = path.with_extension("json.tmp");
+    std::fs::write(&tmp, &bytes)
+        .map_err(|e| format!("cannot write manifest {}: {e}", tmp.display()))?;
+    std::fs::rename(&tmp, path)
+        .map_err(|e| format!("cannot rename manifest {} into place: {e}", path.display()))?;
     Ok(digest_hex(&bytes))
 }
 
@@ -113,5 +122,55 @@ mod tests {
         for p in [&p1, &p2, &p3, &p4] {
             std::fs::remove_file(p).ok();
         }
+    }
+
+    /// Plan17 task 1: a successful write leaves no `.json.tmp` residue.
+    #[test]
+    fn write_manifest_leaves_no_tmp_residue() {
+        let dir = std::env::temp_dir();
+        let p = dir.join(format!("proofdb_wmtmp_{}.json", std::process::id()));
+        let entries = vec![ShardEntry {
+            tag: "h_x".into(),
+            file: "h_x.bin".into(),
+            fen: "F".into(),
+            moves: vec![],
+            outcome: Outcome::Win,
+            validate: "ok".into(),
+        }];
+        write_manifest(&p, &entries).unwrap();
+        assert!(!p.with_extension("json.tmp").exists(), "tmp residue");
+        std::fs::remove_file(&p).ok();
+    }
+
+    /// Plan17 task 1: an I/O failure at the tmp write (simulated root-proof
+    /// way: a directory occupying the tmp path — permission bits are not a
+    /// portable failure injector under a root test runner) returns the error
+    /// and leaves the previous manifest file byte-identical.
+    #[test]
+    fn write_manifest_io_failure_leaves_previous_file_intact() {
+        let dir = std::env::temp_dir();
+        let p = dir.join(format!("proofdb_wmfail_{}.json", std::process::id()));
+        let old = b"{\"entries\":[]}";
+        std::fs::write(&p, old).unwrap();
+        // Occupy the tmp path with a directory: the tmp write fails.
+        let tmp = p.with_extension("json.tmp");
+        std::fs::create_dir(&tmp).unwrap();
+        let entries = vec![ShardEntry {
+            tag: "h_y".into(),
+            file: "h_y.bin".into(),
+            fen: "F".into(),
+            moves: vec![],
+            outcome: Outcome::Loss,
+            validate: "ok".into(),
+        }];
+        let err = write_manifest(&p, &entries).unwrap_err();
+        assert!(err.contains("cannot write manifest"), "unexpected: {err}");
+        assert_eq!(
+            std::fs::read(&p).unwrap(),
+            old,
+            "previous manifest clobbered"
+        );
+        std::fs::remove_dir(&tmp).ok();
+        std::fs::remove_file(&p).ok();
     }
 }

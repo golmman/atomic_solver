@@ -170,7 +170,13 @@ fn walk_census_line_and_root_states() {
     std::fs::create_dir_all(&dir).unwrap();
     // Open root (the fresh-layer bootstrap shape).
     let db = crafted(&[("", 0, None), ("a2a3", 1, Some(Outcome::Win))]);
-    let session = Session::new(4, dir.join("s"), Vec::new(), "frontier-walk");
+    let session = Session::new(
+        4,
+        dir.join("s"),
+        dir.join("s/manifest.json"),
+        Vec::new(),
+        "frontier-walk",
+    );
     let (f, census) = WalkFrontier::new(&Ledger::default(), &db);
     let mut census = census;
     census.root = root_state(&db, &session);
@@ -188,6 +194,7 @@ fn walk_census_line_and_root_states() {
     let session_shard = Session::new(
         4,
         dir.join("s2"),
+        dir.join("s2/manifest.json"),
         vec![crate::proofdb::ShardEntry {
             tag: "root".to_string(),
             file: "root.bin".to_string(),

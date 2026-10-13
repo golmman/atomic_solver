@@ -9,6 +9,21 @@
 //! census of a session order-dependent (recorded per job); soundness is
 //! unaffected — every fact crosses the boundary only through reconstruction
 //! + replay validation.
+//!
+//! Crash consistency (plan17 D1/D4): after every decisive job's shard write
+//! the session atomically rewrites the on-disk manifest (tmp + rename, the
+//! ledger's pattern), so an unexpected crash or ctrl-c loses at most the
+//! in-flight job's work — the on-disk manifest is always a prefix of the
+//! session's decisive sequence, and every `*.bin` written so far but the
+//! (at most one) orphan of an interrupted job is referenced by it. Censored
+//! jobs touch only the ledger (its per-censor save is already atomic).
+//!
+//! ~11 KB (justified per the file-size convention): the whole job pipeline
+//! (replay → budgeted search → classify → shard export → per-job durable
+//! manifest sync → census records) shares one `Session` state — splitting
+//! it would fragment the produce/sync ordering the crash-consistency
+//! contract rests on; tests live in `tests/proofdb.rs` (cargo does not run
+//! unit tests inside example targets) and `record.rs`.
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -37,6 +52,10 @@ pub struct Session {
     search: Search,
     export_cfg: ReconstructConfig,
     shard_dir: PathBuf,
+    /// The manifest path the per-job sync (plan17 D2) rewrites after every
+    /// decisive job; the same file the end-of-batch `rewrite_manifest`
+    /// covers.
+    manifest_path: PathBuf,
     entries: Vec<ShardEntry>,
     known_tags: HashSet<String>,
     known_paths: HashSet<String>,
@@ -53,6 +72,7 @@ impl Session {
     pub fn new(
         tt_mb: usize,
         shard_dir: PathBuf,
+        manifest_path: PathBuf,
         seed_entries: Vec<ShardEntry>,
         policy: &'static str,
     ) -> Self {
@@ -73,6 +93,7 @@ impl Session {
             search,
             export_cfg,
             shard_dir,
+            manifest_path,
             entries: seed_entries,
             known_tags,
             known_paths,
@@ -120,7 +141,33 @@ impl Session {
             .unwrap_or_else(|e| fail(&format!("cannot write {}: {e}", path.display())));
         self.entries.push(entry.clone());
         self.new_shards += 1;
+        // Plan17 D1/D4: the per-job durable manifest sync — from here on the
+        // on-disk manifest references every `*.bin` written so far. Silent
+        // (no stdout line; the batch-end `manifest:` line is unchanged). A
+        // write failure aborts the session like every other durable-layer
+        // defect: exit 2, the previous manifest intact, this job's shard the
+        // one orphan.
+        self.sync_manifest().unwrap_or_else(|e| {
+            fail(&format!(
+                "manifest sync after job {}: {e}",
+                job.path.join(" ")
+            ))
+        });
         (entry.tag, tree.nodes.len())
+    }
+
+    /// Atomically rewrite the on-disk manifest over the current entry set
+    /// (the ledger's tmp + rename pattern via [`write_manifest`]). Called
+    /// after every decisive job (the crash-consistency sync, plan17 D1) and
+    /// testable directly; the end-of-batch rewrite goes through
+    /// [`Self::rewrite_manifest`], which keeps its CLI-facing signature and
+    /// stdout line.
+    ///
+    /// # Errors
+    /// Any I/O error, as a message (the caller aborts the session).
+    pub(crate) fn sync_manifest(&self) -> Result<String, String> {
+        super::create_parent_dir(&self.manifest_path)?;
+        write_manifest(&self.manifest_path, &self.entries)
     }
 
     /// Run one job at its policy-resolved screen budget: replay the
