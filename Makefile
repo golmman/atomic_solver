@@ -1,7 +1,7 @@
 .PHONY: macos_cleanup
 .PHONY: test test-full test-lite
 .PHONY: stress quick_check quick_check2 quick_check3
-.PHONY: proofdb_init proofdb_cycle proofdb_descend proofdb_stats
+.PHONY: proofdb_init proofdb_cycle proofdb_stats
 
 BIN := target/release/examples
 
@@ -44,26 +44,11 @@ proofdb_init:
 	mkdir -p data/proofdb/shards
 	printf '{"entries":[]}' > data/proofdb/shards/manifest.json
 	$(BIN)/proofdb_merge
-	$(BIN)/proofdb_harvest --policy and-close --budget-evals 200000 --max-jobs 2
-	
-	echo "Next: creating bootstrap batch"
-	sleep 10
-	$(BIN)/proofdb_harvest --policy descend
-	$(BIN)/proofdb_merge
-	$(BIN)/proofdb_flip
 
 proofdb_cycle:
+	rm STOP
 	cargo build --release --examples
-	$(BIN)/proofdb_harvest --policy and-close --budget-evals 4000000 \
-		--and-close-max-budget 100000000 --tt-mb 1024 \
-		--max-total-evals 0
-	$(BIN)/proofdb_merge
-	$(BIN)/proofdb_flip
-
-proofdb_descend:
-	cargo build --release --examples
-	$(BIN)/proofdb_harvest --policy descend --descend-plies 3 \
-	   --budget-evals 4000000 --tt-mb 1024 --max-total-evals 0
+	$(BIN)/proofdb_harvest --policy frontier-walk --budget-evals 100000000
 	$(BIN)/proofdb_merge
 	$(BIN)/proofdb_flip
 

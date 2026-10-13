@@ -33,6 +33,7 @@ proof_tree.bin.tt
 # nn branch. Backing up data/proofdb/shards/ is the operator's
 # responsibility (manual §2.1).
 data/
+STOP
 
 # Raw measurement run data: solver run transcripts (.out/.err/.log/.time,
 # captured stdout/stderr, superseded by the parsed results in
