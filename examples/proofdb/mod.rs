@@ -32,6 +32,7 @@ pub mod policy;
 pub mod schema;
 pub mod session;
 pub mod shard_export;
+pub mod walk;
 
 #[cfg(test)]
 pub(crate) mod fixture;

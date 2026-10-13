@@ -21,8 +21,9 @@
 //! legacy policies in `policy.rs`, the PNS selection in `pns.rs` + `pns/`,
 //! the `and-close` completion-gradient policy (plan8, ladder plan9 §2) in
 //! `and_close.rs` + `and_close/`, the `descend` self-bootstrapping policy
-//! (plan15, off-tree bootstrap candidates) in `descend.rs`, and the sidecar
-//! work ledger in `ledger.rs`.
+//! (plan15, off-tree bootstrap candidates) in `descend.rs`, the
+//! `frontier-walk` shallowest-first ledger walk (plan16) in `walk.rs`, and
+//! the sidecar work ledger in `ledger.rs`.
 //!
 //! Coverage policies (`--policy`; default `breadth-pns`, the plan4 pivot):
 //! `breadth-pns` — the plan6 selection mechanism (eligibility, pacing,
@@ -39,8 +40,12 @@
 //! bump-only censor hook (no exposure); the plan15 `descend` — the
 //! self-bootstrapping enumeration of off-tree startpos-rooted candidate
 //! paths of length 1..=`--descend-plies` (default 2, range 1..=3) at the
-//! same ladder, the batch-1 bootstrap before any DB-frontier policy; plus
-//! the plan3 legacy gradients
+//! same ladder, the batch-1 bootstrap before any DB-frontier policy; the
+//! plan16 `frontier-walk` — the shallowest-first ledger walk over the
+//! shared ledger (flat `--budget-evals` budget, no ladder; search visits on
+//! underworked records, expansion into the first unhandled child otherwise,
+//! bump-only censors, in-session complete rule); plus the plan3 legacy
+//! gradients
 //! `open-deepest`, `sharp-siblings`, `sharp-heavy-tail` (heavy options and
 //! `--pns-config` are effective only under `breadth-pns`; `--descend-plies`
 //! only under `descend`).
@@ -70,6 +75,7 @@ use proofdb::pns::driver::{PnsOptions, run_pns_batch};
 use proofdb::pns::{BUDGET_PNS_BASE_EVALS, Pns, PnsConfig};
 use proofdb::policy::{Policy, jobs_for_policy};
 use proofdb::session::{Session, fail};
+use proofdb::walk::driver::{WalkOptions, run_walk_session};
 
 fn main() {
     let args = parse_args();
@@ -207,6 +213,36 @@ fn main() {
             &opts,
         )
         .unwrap_or_else(|e| fail(&e));
+        format!(
+            "harvest: policy {} stop={} jobs {} decisive {} censored {} evals {} \
+             new_shards {} wall {:.1}s",
+            args.policy.as_str(),
+            if summary.stop_reason.is_empty() {
+                "exhausted"
+            } else {
+                &summary.stop_reason
+            },
+            summary.jobs,
+            summary.decisive,
+            summary.censored,
+            summary.evals,
+            session.new_shards,
+            t_start.elapsed().as_secs_f64(),
+        )
+    } else if args.policy == Policy::FrontierWalk {
+        // Plan16 D1: the shallowest-first ledger walk (selection loop,
+        // census echo, and batch live in the walk module). It consults the
+        // DB rows + the ledger and the session's stored-territory state;
+        // the frontier classes are not its input.
+        let db = load_db_rows(&args.db, &manifest.sha256_hex).unwrap_or_else(|e| fail(&e));
+        let opts = WalkOptions {
+            max_total_evals: args.max_total_evals,
+            max_jobs: args.max_jobs,
+            max_runtime: args.max_runtime,
+            stop_file: args.stop_file.clone(),
+        };
+        let summary = run_walk_session(&mut session, &db, &args.ledger, args.budget_evals, &opts)
+            .unwrap_or_else(|e| fail(&e));
         format!(
             "harvest: policy {} stop={} jobs {} decisive {} censored {} evals {} \
              new_shards {} wall {:.1}s",

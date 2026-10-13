@@ -12,6 +12,9 @@
 //!   the frontier** — off-tree bootstrap candidates (all legal
 //!   startpos-rooted paths of length 1..=K minus covered territory), built
 //!   over the DB rows + manifest + ledger in [`super::descend`];
+//! - `frontier-walk` (plan16) — the shallowest-first ledger walk: **no
+//!   sequence from the frontier** — a live selection loop over the ledger
+//!   frontier in [`super::walk`];
 //! - `open-deepest` — C1 only, deepest-first (plan2's rule);
 //! - `sharp-siblings` — C2 (sharpness order), then C3, then C1 deepest-first;
 //!   C2 jobs screen at [`BUDGET_C2_EVALS`] (cheap territory — censor fast
@@ -63,6 +66,10 @@ pub enum Policy {
     /// (no sequence from the frontier — built over the DB rows + manifest
     /// + ledger, see [`super::descend`]).
     Descend,
+    /// The plan16 shallowest-first ledger walk (no sequence from the
+    /// frontier — a live selection loop over the ledger + DB rows, see
+    /// [`super::walk`]).
+    FrontierWalk,
     /// C1 only, deepest-first (plan2's rule).
     OpenDeepest,
     /// C2 (sharpness order), then C3, then C1 deepest-first.
@@ -79,6 +86,7 @@ impl Policy {
             Self::BreadthPns => "breadth-pns",
             Self::AndClose => "and-close",
             Self::Descend => "descend",
+            Self::FrontierWalk => "frontier-walk",
             Self::OpenDeepest => "open-deepest",
             Self::SharpSiblings => "sharp-siblings",
             Self::SharpHeavyTail => "sharp-heavy-tail",
@@ -94,6 +102,7 @@ impl Policy {
             "breadth-pns" => Ok(Self::BreadthPns),
             "and-close" => Ok(Self::AndClose),
             "descend" => Ok(Self::Descend),
+            "frontier-walk" => Ok(Self::FrontierWalk),
             "open-deepest" => Ok(Self::OpenDeepest),
             "sharp-siblings" => Ok(Self::SharpSiblings),
             "sharp-heavy-tail" => Ok(Self::SharpHeavyTail),
@@ -116,7 +125,11 @@ pub fn jobs_for_policy(policy: Policy, f: &Frontier) -> Vec<Job> {
         // (the CLI branch owns that; the frontier is not its input).
         // `descend` builds its sequence over the DB rows + manifest + ledger
         // in `super::descend` (the CLI branch owns that likewise).
-        Policy::BreadthPns | Policy::AndClose | Policy::Descend => Vec::new(),
+        // `frontier-walk` runs a live selection loop over the ledger
+        // frontier in `super::walk` (the CLI branch owns that likewise).
+        Policy::BreadthPns | Policy::AndClose | Policy::Descend | Policy::FrontierWalk => {
+            Vec::new()
+        }
         Policy::OpenDeepest => f.c1.clone(),
         Policy::SharpSiblings | Policy::SharpHeavyTail => {
             f.c2.iter().chain(&f.c3).chain(&f.c1).cloned().collect()

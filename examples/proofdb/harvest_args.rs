@@ -53,8 +53,8 @@ fn usage() -> ! {
          [--out-db <grown.db>] [--dump <nodes.txt>]  \
          (defaults: --db data/proofdb/proofdb.db --manifest data/proofdb/shards/manifest.json \
          --shard-dir data/proofdb/shards --ledger data/proofdb/work.json; \
-         policies: breadth-pns | and-close | descend | open-deepest | sharp-siblings | \
-         sharp-heavy-tail)"
+         policies: breadth-pns | and-close | descend | frontier-walk | open-deepest | \
+         sharp-siblings | sharp-heavy-tail)"
     );
     std::process::exit(1);
 }

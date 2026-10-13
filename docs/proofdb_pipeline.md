@@ -266,6 +266,21 @@ ledger growth and the session-start census (the `and-close-gradient`
 shows which rows are closest to completion), not from one batch's shard
 count.
 
+**Alternative grow sweep — `frontier-walk` (plan16).** Beside the
+completion-gradient cycle above, `--policy frontier-walk` runs a
+ledger-frontier sweep with a flat per-visit budget: it repeatedly solves
+the shallowest still-unsolved ledger record (or, once a record has had its
+full budget, the first of its children that is not yet stored/handled),
+so it walks the frontier breadth-first by `(ply, path)` order and prices
+every fresh node at exactly `--budget-evals` — no ladder, no PNS numbers.
+Its censors land in the same shared `work.json`, so the next
+`and-close`/`breadth-pns` batch picks the walk's frontier up with its
+ladder state intact, and vice versa: walk sessions and gradient batches
+compose freely in any order. The boot path stays `descend` (batch 1);
+the walk can also bootstrap a root-only layer itself (its first visit is
+the root), but unlike `descend` it never retires — cap every walk session
+(`--max-total-evals` is the deterministic choice).
+
 **Cold start, resolved (plan15).** Before the `descend` policy existed,
 skipping the bootstrap merge left the only active row at the root, so the
 job set was the root's 20 first-move replies — the deepest, effectively
@@ -594,7 +609,7 @@ default manifest aborts cleanly naming
 | `--db`                   | `data/proofdb/proofdb.db`           | the merged DB to work against (read-only)                                                                                                        |
 | `--manifest`             | `data/proofdb/shards/manifest.json` | manifest to extend (rewritten after the batch)                                                                                                   |
 | `--shard-dir`            | `data/proofdb/shards`               | where new shard files are written (created on first write)                                                                                       |
-| `--policy`               | `breadth-pns`                       | `breadth-pns` \| `and-close` \| `descend` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail` — semantics in **Coverage policies** below |
+| `--policy`               | `breadth-pns`                       | `breadth-pns` \| `and-close` \| `descend` \| `frontier-walk` \| `open-deepest` \| `sharp-siblings` \| `sharp-heavy-tail` — semantics in **Coverage policies** below |
 | `--ledger`               | `data/proofdb/work.json`            | pick-up state; a missing file is a fresh ledger                                                                                                  |
 | `--budget-evals`         | policy default                      | base child-eval budget per job (breadth-pns base: 4,000,000); screens for the legacy policies                                                    |
 | `--max-total-evals`      | `0` (unlimited)                     | session cap across jobs                                                                                                                          |
@@ -647,6 +662,19 @@ The policies:
   This is the cold-start policy: it works on a root-only DB where every
   frontier policy has nothing to select. Budgets come from each candidate's
   own ledger record on the strict-growth ladder.
+- **`frontier-walk`** — the shallowest-first ledger walk: a live loop that
+  repeatedly picks the *shallowest* ledger-frontier candidate (ply, path
+  lex tie-break; empty ledger → the root itself) and, if its accumulated
+  `work_done` is below the budget, searches it at the flat budget `B`
+  (`--budget-evals`, **no ladder**), else *expands* it — searches the first
+  not-yet-handled child (not a stored row/shard path, not a record already
+  at ≥ `B`) at `B`. Censors bump the shared ledger (the pick-up state the
+  ladder policies resume from); a node whose children are all handled is
+  marked complete in-session. Deliberately number-free (no PNS numbers, no
+  structural exclusions); works on any layer including a root-only one,
+  but — unlike `descend` — it never retires: on an undecided layer it
+  always has work, so a session needs a cap (`--max-total-evals`,
+  `--max-jobs`, …) to stop.
 - **`open-deepest`** (legacy) — C1 only, deepest-first; every job screens
   at the 4,000,000-eval screen budget. Superseded by `breadth-pns`.
 - **`sharp-siblings`** (legacy) — C2 in sharpness order (parent
@@ -661,8 +689,8 @@ The policies:
   `--heavy-budget-evals`, sampled `--heavy-sample` per screen pass.
 
 The legacy policies are retained for measurement/reproduction; new growth
-should use `breadth-pns` (broaden), `and-close` (close), or `descend`
-(bootstrap).
+should use `breadth-pns` (broaden), `and-close` (close), `descend`
+(bootstrap), or `frontier-walk` (a ledger-driven alternative grow sweep).
 
 **Exit codes.** `0` batch completed (then the manifest is rewritten); `1`
 usage error; `2` ABORT on any defect — the session aborts _before_ the
@@ -694,6 +722,18 @@ base budget 4,000,000):
 descend: candidates 420 (kept 420, covered 0) — ply 1: 20 kept, ply 2: 400 kept; base budget 4000000
 ```
 
+Under `--policy frontier-walk`, the census line reports the ledger-frontier
+state: total records, the lineage/ancestor drops (records on or behind a
+proven DB row — not candidates), the in-session complete marks (0 at
+session start), the root state, and the flat budget (the reference boot on
+a root-only DB, and the grown-layer smoke over the standing fixture layer
+with the plan10 ledger seeded):
+
+```text
+frontier-walk: records 0 (lineage 0, ancestor 0, complete 0) — root open; base budget 4000000
+frontier-walk: records 8446 (lineage 6, ancestor 0, complete 0) — root open; base budget 200000
+```
+
 - the `harvest: db …` line: DB path, node count, `built_from` prefix, then
   the frontier classes extracted from the DB — **C1** open rows, **C2**
   unexpanded siblings of proving children, **C3** unexpanded children of
@@ -715,9 +755,9 @@ policies, `number`/`kind` only by `breadth-pns` and omitted otherwise):
 | -------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `path`         | UCI path of the job position (space-separated)                                                                         |
 | `policy`       | the `--policy` used                                                                                                    |
-| `class`        | frontier class of the job (`C1`/`C2`/`C3`; `and-close` jobs are `C3`; `descend` jobs are `D`)                          |
+| `class`        | frontier class of the job (`C1`/`C2`/`C3`; `and-close` jobs are `C3`; `descend` jobs are `D`; `frontier-walk` jobs are `L` on a ledger record, `C3` on a fresh child, `C1` on the virtual root)  |
 | `parent_bound` | the parent node's proven `depth_bound`, if proven                                                                      |
-| `tier`         | job tier (`screen`/`heavy`/policy name — `and-close` labels all jobs `and-close`, `descend` labels all jobs `descend`) |
+| `tier`         | job tier (`screen`/`heavy`/policy name — `and-close` labels all jobs `and-close`, `descend` and `frontier-walk` label all jobs by their policy name)                                   |
 | `budget`       | child-eval budget granted for this visit                                                                               |
 | `child_evals`  | child-evals actually spent                                                                                             |
 | `wall_s`       | job wall time (seconds)                                                                                                |
@@ -725,10 +765,10 @@ policies, `number`/`kind` only by `breadth-pns` and omitted otherwise):
 | `exit_reason`  | solver exit: `Complete` (decisive) or `BudgetExhausted` (censored)                                                     |
 | `tag`          | shard tag if decisive (manifest tag; matches `provenance` in the DB)                                                   |
 | `shard_nodes`  | exported shard's node count if decisive                                                                                |
-| `pass`         | visit rung: `passes_failed + 1` (PNS, `and-close`, and `descend` census)                                               |
+| `pass`         | visit rung: `passes_failed + 1` (PNS, `and-close`, `descend`, and `frontier-walk` census)                              |
 | `number`       | PNS effective number at selection time (PNS only)                                                                      |
-| `work_before`  | ledger `work_done` recorded before this visit (PNS, `and-close`, and `descend`)                                        |
-| `kind`         | PNS visit kind (`expand` \| `rung`) (PNS only)                                                                         |
+| `work_before`  | ledger `work_done` recorded before this visit (PNS, `and-close`, `descend`, and `frontier-walk`)                       |
+| `kind`         | visit kind: `expand` \| `rung` (PNS), `search` \| `expand` (`frontier-walk`); PNS-only otherwise                       |
 
 A **censored** job (quickstart §3.1, verbatim; `wall_s` varies by host):
 
@@ -758,7 +798,7 @@ harvest: policy and-close stop=max-jobs jobs 2 decisive 0 censored 2 evals 40003
   (byte-identical when no decisive job occurred).
 - `harvest:` — `stop=` reason; then per policy family: PNS
   (`pns_jobs N rungs M decisive D evals E new_shards S wall Ws`), and-close (`jobs N decisive D censored C evals E new_shards S wall Ws` — the
-  shape `descend` uses too), legacy
+  shape `descend` and `frontier-walk` use too), legacy
   screen/heavy policies (`screen_jobs/screen_decisive/screen_evals
 heavy_jobs/heavy_decisive new_shards wall`). `decisive` counts jobs that
   exported a shard; `censored` counts facts of absence.
@@ -770,6 +810,21 @@ job at the 4M base and the boot summary):
 job: {"budget":4000000,"child_evals":4000024,"class":"D","exit_reason":"BudgetExhausted","outcome":"censored","parent_bound":null,"pass":1,"path":"a2a3","policy":"descend","shard_nodes":null,"tag":null,"tier":"descend","wall_s":0.78,"work_before":0}
 harvest: policy descend stop=exhausted jobs 420 decisive 52 censored 368 evals 1474704787 new_shards 52 wall 361.9s
 ```
+
+A **`frontier-walk`** job record pair (the reference boot, plan16; the
+virtual-root search visit, then a decisive expansion visit on a fresh
+child, then the 2G-capped boot summary):
+
+```text
+job: {"budget":4000000,"child_evals":4000041,"class":"C1","exit_reason":"BudgetExhausted","kind":"search","outcome":"censored","parent_bound":null,"pass":1,"path":"","policy":"frontier-walk","shard_nodes":null,"tag":null,"tier":"frontier-walk","wall_s":0.362,"work_before":0}
+job: {"budget":4000000,"child_evals":6990,"class":"C3","exit_reason":"Complete","kind":"expand","outcome":"win","parent_bound":null,"pass":1,"path":"c2c3 g7g5","policy":"frontier-walk","shard_nodes":334,"tag":"h_2fd82f9a8230a668","tier":"frontier-walk","wall_s":0.0006,"work_before":0}
+harvest: policy frontier-walk stop=budget jobs 553 decisive 53 censored 500 evals 2001311002 new_shards 53 wall 216.2s
+```
+
+Under `frontier-walk`, `stop=exhausted` means no candidate can yield a
+visit (every candidate complete and the root proven-stored or
+complete-blocked); on any undecided layer the walk always has work, so
+capped stops (`budget`/`max-jobs`) are the normal way a session ends.
 
 _stderr, during jobs_ — `[bounded_search] chunk done: …` progress lines
 (one per budget chunk); informational, safe to ignore in scripts.
@@ -1159,6 +1214,10 @@ record the intended targets in the summary; after each batch, run
 `proofdb_merge` yourself (recipe R2).
 
 ## 11. History
+
+plan16 (2026-10-13) added the `frontier-walk` harvest policy — the
+shallowest-first ledger walk with a flat budget, an alternative grow sweep
+beside `and-close` that composes through the shared ledger (§3.2, §7.2).
 
 The pipeline was built and hardened by the `proofdb` initiative
 (`docs/plans/proofdb/`); the tooling-completeness audit that produced this

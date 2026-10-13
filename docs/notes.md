@@ -924,16 +924,14 @@ Please add a final item to the parallel initiative which cleans up the surface a
 
 SESSION COMPLETE
 
-- plan11 executed: carrier shipped (drift gate clean, make test green, fmt/clippy/doc clean);  
-  stages 1–4 measured; report11.md written; backlog #12 closed NO-GO; parallel row updated  
-  (thread CLOSED for good per the verdict rule)  
+- plan11 executed: carrier shipped (drift gate clean, make test green, fmt/clippy/doc clean);
+  stages 1–4 measured; report11.md written; backlog #12 closed NO-GO; parallel row updated
+  (thread CLOSED for good per the verdict rule)
   Follow-up options:
-  1.  `Evaluate parallel backlog #7 (any-worker-can-finish SPDFPN) against the plan8 distribution                                                                   
-data before committing to a build` — the only open item in the initiative; its premise is  
+  1.  `Evaluate parallel backlog #7 (any-worker-can-finish SPDFPN) against the plan8 distribution data before committing to a build` — the only open item in the initiative; its premise is  
       unchanged by this result.
-  2.  `Open a new initiative for a read-only facts consumer (frozen trajectory, no TT pollution)                                                                    
-targeting the twice-measured m20_white conversion (0.575×/0.601×)` — only if the owner  
-      weights the demonstrated m20 value channel above the second-strike closure; a new  
+  2.  `Open a new initiative for a read-only facts consumer (frozen trajectory, no TT pollution) targeting the twice-measured m20_white conversion (0.575×/0.601×)` — only if the owner  
+      weights the demonstrated m20 value channel above the second-strike closure; a new
       initiative, not plan12.
 
 ---
@@ -949,8 +947,8 @@ explain the idea of the mechanism in plain language.
 ---
 
 i want a new proofdb policy that bootstraps itself and goes as follows:
-* of all frontier nodes in the ledger pick one with the shallowest depth so far (if empty: root)
-* if it was searched before with less than the given budget, search it
-* if not, expand it and search one of the children with the given budget
-* repeat
 
+- of all frontier nodes in the ledger pick one with the shallowest depth so far (if empty: root)
+- if it was searched before with less than the given budget, search it
+- if not, expand it and search one of the children with the given budget
+- repeat

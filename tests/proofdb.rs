@@ -1259,3 +1259,308 @@ fn descend_boot_from_empty_layer() {
     assert!(node_count > 1, "grown DB has more than the root");
     std::fs::remove_dir_all(&dir).ok();
 }
+
+// --- plan16 D1: the frontier-walk shallowest-first ledger walk (walk.rs) ---
+
+use proofdb::walk::driver::{WalkOptions, run_walk_batch, run_walk_session};
+use proofdb::walk::{RootState, WalkFrontier, root_state};
+
+fn walk_opts(max_jobs: usize, max_total_evals: u64) -> WalkOptions {
+    WalkOptions {
+        max_total_evals,
+        max_jobs,
+        max_runtime: 0,
+        stop_file: std::path::PathBuf::new(),
+    }
+}
+
+/// Plan16 task 1: the driver's root-expansion phase on the fixture DB at a
+/// tiny budget — the first visit is the virtual-root search (class C1), the
+/// following ones are expansion visits on fresh children (class C3, kind
+/// `expand`); the ledger grows by exactly the censor count (the D4
+/// signature) and a fresh run reproduces the post-run ledger bytes.
+#[test]
+fn walk_driver_root_expansion_and_ledger_growth() {
+    let dir = ac_dir("walk_driver");
+    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
+    let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
+    let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
+
+    let run = |ledger_path: &std::path::Path| {
+        let mut session = Session::new(
+            4,
+            dir.join("shards"),
+            manifest.entries.clone(),
+            "frontier-walk",
+        );
+        let (mut frontier, mut census) = WalkFrontier::new(&Ledger::default(), &db);
+        census.root = root_state(&db, &session);
+        assert_eq!(census.records, 0);
+        assert_eq!(census.root, RootState::Open);
+        let mut ledger = Ledger::default();
+        let summary = run_walk_batch(
+            &mut session,
+            &db,
+            &mut frontier,
+            &mut ledger,
+            ledger_path,
+            1_000,
+            &walk_opts(5, 0),
+        )
+        .unwrap();
+        (summary, ledger)
+    };
+    let (summary, ledger) = run(&dir.join("ledger.json"));
+    assert_eq!(summary.jobs, 5);
+    assert_eq!(summary.stop_reason, "max-jobs");
+    assert_eq!(summary.decisive, 0);
+    assert_eq!(summary.censored, 5);
+    // The D4 signature: ledger growth == fresh-node censor count.
+    assert_eq!(summary.fresh_censored, 5);
+    assert_eq!(ledger.len(), 5);
+    // Visit 1: the virtual root (class C1, kind search, pass 1,
+    // work_before 0); visits 2+: the root's expansion targets (class C3,
+    // kind expand), lex order — and the fixture's stored rows (f2f3, g2g4)
+    // are skipped as handled territory. The ledger keys pin the sequence.
+    let keys: Vec<String> = ledger.iter().map(|(k, _)| k.clone()).collect();
+    assert_eq!(keys, vec!["", "a2a3", "a2a4", "b1a3", "b1c3"]);
+    let root = ledger.get("").unwrap();
+    assert!(
+        root.work_done >= 1_000,
+        "root censor spent at least the budget"
+    );
+    assert_eq!(root.passes_failed, 1);
+    // Determinism: a fresh session over the same inputs reproduces the
+    // post-run ledger byte-for-byte.
+    let ledger_path2 = dir.join("ledger2.json");
+    let (summary2, ledger2) = run(&ledger_path2);
+    assert_eq!(summary2.jobs, summary.jobs);
+    assert_eq!(entries(&ledger), entries(&ledger2));
+    assert_eq!(
+        std::fs::read(dir.join("ledger.json")).unwrap(),
+        std::fs::read(&ledger_path2).unwrap()
+    );
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// Plan16 task 1: the complete rule (D3) — a candidate whose every legal
+/// child is handled (here: the root's 20 first moves all carry ledger
+/// records at work ≥ B) is complete-marked by a pick-only iteration; no
+/// job runs, the loop cannot stall, and the session exhausts.
+#[test]
+fn walk_complete_rule_no_livelock_and_exhaustion() {
+    let dir = ac_dir("walk_complete");
+    let db = ac_crafted(&[("", 0, None)]);
+    // The root's 20 first-move children, all at work ≥ the budget.
+    let (pos, _) = replay_job_path(&[]).unwrap();
+    let mut children: Vec<String> = pos
+        .legal_moves_vec()
+        .iter()
+        .map(|&m| atomic_solver::notation::move_to_uci(m))
+        .collect();
+    children.sort();
+    assert_eq!(children.len(), 20);
+    let mut m = std::collections::BTreeMap::new();
+    m.insert(
+        "".to_string(),
+        proofdb::ledger::LedgerEntry {
+            work_done: 2_000,
+            passes_failed: 1,
+        },
+    );
+    for uci in &children {
+        m.insert(
+            uci.clone(),
+            proofdb::ledger::LedgerEntry {
+                work_done: 2_000,
+                passes_failed: 1,
+            },
+        );
+    }
+    let ledger = Ledger::from_entries(m);
+
+    let mut session = Session::new(4, dir.join("shards"), Vec::new(), "frontier-walk");
+    let (mut frontier, census) = WalkFrontier::new(&ledger, &db);
+    assert_eq!(census.records, 21);
+    let mut led = ledger.clone();
+    // The root completes pick-only (no job); its 20 children then become
+    // the pick and expand into fresh grandchildren — capped at 3 searches.
+    let summary = run_walk_batch(
+        &mut session,
+        &db,
+        &mut frontier,
+        &mut led,
+        &dir.join("ledger.json"),
+        1_000,
+        &walk_opts(3, 0),
+    )
+    .unwrap();
+    // The root was complete-marked by a pick-only iteration (the no-livelock
+    // design-out); the searches that ran are its children's expansions.
+    assert_eq!(summary.stop_reason, "max-jobs");
+    assert_eq!(summary.jobs, 3);
+    assert_eq!(summary.completes, 1);
+    assert_eq!(summary.fresh_censored, 3);
+    // The complete-marked root's ledger record is retained (complete ≠
+    // deletion) and the three fresh grandchildren joined the ledger.
+    assert_eq!(led.len(), 24);
+    assert_eq!(led.get("").unwrap().work_done, 2_000);
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// Plan16 task 1: the root rule's exhausted case — a proven-stored root
+/// (proven DB row) ends the session before any job.
+#[test]
+fn walk_root_proven_exhausts() {
+    let dir = ac_dir("walk_proven_root");
+    let db = ac_crafted(&[("", 0, Some(Outcome::Win))]);
+    let ledger = ledger_of(&[("a2a3", 100, 1)]);
+    let mut session = Session::new(4, dir.join("shards"), Vec::new(), "frontier-walk");
+    let (mut frontier, mut census) = WalkFrontier::new(&ledger, &db);
+    // The record sits behind the proven root row: ancestor drop (the empty
+    // prefix), the root itself is proven-stored.
+    assert_eq!((census.lineage, census.ancestor), (0, 1));
+    census.root = root_state(&db, &session);
+    assert_eq!(census.root, RootState::Proven);
+    let mut led = ledger.clone();
+    let summary = run_walk_batch(
+        &mut session,
+        &db,
+        &mut frontier,
+        &mut led,
+        &dir.join("ledger.json"),
+        1_000,
+        &walk_opts(0, 0),
+    )
+    .unwrap();
+    assert_eq!(summary.stop_reason, "");
+    assert_eq!(summary.jobs, 0);
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// Plan16 task 5: the fresh-layer boot at a small budget on a temp layer —
+/// the R0 bootstrap merge (root-only DB) → capped `frontier-walk` batch →
+/// merge → the grown DB has more than the root. The walk does not
+/// self-retire (D6), so the batch is eval-capped; 20k budget, 10M cap
+/// (measured: the first decisive shard lands at ~4.4M evals).
+#[test]
+fn walk_boot_from_empty_layer() {
+    let dir = ac_dir("walk_boot");
+    // The R0 bootstrap shape: empty manifest + root-only DB.
+    let manifest_bytes = b"{\"entries\":[]}".to_vec();
+    let digest = proofdb::digest_hex(&manifest_bytes);
+    std::fs::write(dir.join("manifest.json"), &manifest_bytes).unwrap();
+    let mut pt = proofdb::merge::PathTree::new();
+    pt.finalize().unwrap();
+    proofdb::schema::write_db(
+        &dir.join("proofdb.db"),
+        Position::STARTPOS_FEN,
+        &digest,
+        &[],
+        &pt,
+    )
+    .unwrap();
+    let db = proofdb::db::load_db_rows(&dir.join("proofdb.db"), &digest).unwrap();
+
+    let mut session = Session::new(4, dir.join("shards"), Vec::new(), "frontier-walk");
+    let summary = run_walk_session(
+        &mut session,
+        &db,
+        &dir.join("work.json"),
+        20_000,
+        &walk_opts(0, 10_000_000),
+    )
+    .unwrap();
+    assert_eq!(summary.stop_reason, "budget");
+    assert!(summary.decisive >= 1, "boot yield: >= 1 decisive shard");
+    assert_eq!(session.new_shards, summary.decisive);
+    // The D4 signature over a full session.
+    let ledger = Ledger::load(&dir.join("work.json")).unwrap();
+    assert_eq!(ledger.len(), summary.fresh_censored);
+    // The CLI's post-batch manifest rewrite (the batch never writes it).
+    session.rewrite_manifest(&dir.join("shards/manifest.json"), &digest);
+
+    // Merge the grown set (the harvest never merges) → DB > 1 node.
+    let manifest = read_manifest(&dir.join("shards/manifest.json")).unwrap();
+    assert_eq!(manifest.entries.len(), summary.decisive);
+    let mut tree = proofdb::merge::PathTree::new();
+    let mut rows = Vec::new();
+    for entry in &manifest.entries {
+        let bytes = std::fs::read(dir.join("shards").join(&entry.file)).unwrap();
+        let mut shard = atomic_solver::proof_tree::ProofTree::from_bin(&mut bytes.as_slice())
+            .unwrap_or_else(|e| panic!("shard {}: {e}", entry.tag));
+        atomic_solver::proof_tree::validate_proof_tree(&shard)
+            .unwrap_or_else(|d| panic!("shard {}: {d:?}", entry.tag));
+        assert_eq!(shard.nodes[0].outcome, Some(entry.outcome));
+        let graft = tree.graft_path(&moves_from_path(&entry.moves), &entry.tag);
+        tree.overlay_subtree(graft, &shard, &entry.tag).unwrap();
+        rows.push(proofdb::schema::ShardRow {
+            tag: entry.tag.clone(),
+            file: entry.file.clone(),
+            sha256: proofdb::digest_hex(&bytes),
+            root_fen: std::mem::take(&mut shard.root_fen),
+            path: entry.moves.join(" "),
+            outcome: entry.outcome,
+            depth_bound: shard.nodes[0].depth,
+            n_nodes: shard.nodes.len(),
+        });
+    }
+    tree.finalize().unwrap();
+    let grown = dir.join("grown.db");
+    proofdb::schema::write_db(
+        &grown,
+        Position::STARTPOS_FEN,
+        &manifest.sha256_hex,
+        &rows,
+        &tree,
+    )
+    .unwrap();
+    let conn = rusqlite::Connection::open(&grown).unwrap();
+    let node_count: i64 = conn
+        .query_row("SELECT COUNT(*) FROM nodes", [], |r| r.get(0))
+        .unwrap();
+    assert!(node_count > 1, "grown DB has more than the root");
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// Plan16 D3's zero-eval no-progress guard: a ledger record on an on-path
+/// repetition (`g1f3 g8f6 f3g1 f6g8` returns to the startpos) censors at
+/// zero child-evals — a non-budget Draw that cannot advance the flat
+/// budget. The visit bumps the record (passes, +0 work), complete-marks
+/// the node, and the walk moves on to the virtual root instead of
+/// re-picking the stalled record forever.
+#[test]
+fn walk_zero_eval_censor_guard_completes_the_node() {
+    let dir = ac_dir("walk_repetition");
+    let db = ac_crafted(&[("", 0, None)]);
+    let rep = "g1f3 g8f6 f3g1 f6g8";
+    let ledger = ledger_of(&[(rep, 4, 1)]);
+    let mut session = Session::new(4, dir.join("shards"), Vec::new(), "frontier-walk");
+    let (mut frontier, mut census) = WalkFrontier::new(&ledger, &db);
+    assert_eq!(census.records, 1);
+    census.root = root_state(&db, &session);
+    assert_eq!(census.root, RootState::Open);
+    let mut led = ledger.clone();
+    let summary = run_walk_batch(
+        &mut session,
+        &db,
+        &mut frontier,
+        &mut led,
+        &dir.join("ledger.json"),
+        20_000,
+        &walk_opts(4, 0),
+    )
+    .unwrap();
+    // Visit 1: the repetition record (0 evals, censored, complete-marked);
+    // visits 2–4: the virtual root search (C1) and two root expansions.
+    assert_eq!(summary.jobs, 4);
+    assert_eq!(summary.stop_reason, "max-jobs");
+    assert_eq!(summary.censored, 4);
+    assert_eq!(summary.completes, 1);
+    // The stalled record stays at its 4 evals (the bump added nothing) but
+    // keeps its pass count; the root record was created by the root censor.
+    let e = led.get(rep).unwrap();
+    assert_eq!((e.work_done, e.passes_failed), (4, 2));
+    assert!(led.contains(""));
+    std::fs::remove_dir_all(&dir).ok();
+}
