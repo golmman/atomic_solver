@@ -21,6 +21,7 @@ serves two readers:
 3. [Quickstart](#3-quickstart)
    - [3.1 Initial run](#31-initial-run)
    - [3.2 Production run](#32-production-run)
+   - [3.3 Alternative quickstart — the `frontier-walk` boot](#33-alternative-quickstart--the-frontier-walk-boot)
 4. [Ledger pick-up](#4-ledger-pick-up)
 5. [Data model primer (consumer)](#5-data-model-primer-consumer)
 6. [Shard provenance — where a shard comes from](#6-shard-provenance--where-a-shard-comes-from)
@@ -130,6 +131,8 @@ nothing under `docs/plans/` is touched, and cleanup is a single
 `rm -rf data/proofdb`. Run it from the repo root. §3.1 prepares everything the
 pipeline needs — bootstrap merge plus a deliberately tiny smoke harvest; §3.2
 grows the database batch by batch from exactly the state §3.1 leaves behind.
+§3.3 is an alternative walkthrough of the same bootstrap-and-grow shape,
+driven by the `frontier-walk` policy instead of `descend` + `and-close`.
 
 ### 3.1 Initial run
 
@@ -279,7 +282,8 @@ ladder state intact, and vice versa: walk sessions and gradient batches
 compose freely in any order. The boot path stays `descend` (batch 1);
 the walk can also bootstrap a root-only layer itself (its first visit is
 the root), but unlike `descend` it never retires — cap every walk session
-(`--max-total-evals` is the deterministic choice).
+(`--max-total-evals` is the deterministic choice). The full walkthrough —
+booting and growing a layer with the walk alone — is §3.3.
 
 **Cold start, resolved (plan15).** Before the `descend` policy existed,
 skipping the bootstrap merge left the only active row at the root, so the
@@ -338,6 +342,96 @@ Operational notes:
   and the manifest rewrite are append-only and abort-safe (exit 2 leaves
   the durable layer consistent, §7.2). The durable layer
   `data/proofdb/shards/` is unversioned — back it up (§2.1).
+
+### 3.3 Alternative quickstart — the `frontier-walk` boot
+
+This is the `frontier-walk` counterpart to the §3.1 + §3.2 walkthrough:
+the same bootstrap (empty manifest → bare merge) followed by growth driven
+by the shallowest-first ledger walk instead of the `descend` boot plus the
+`and-close` completion-gradient cycle. Run it from the repo root with
+`BIN=target/release/examples` as in §3.1. The walk prices every fresh node
+at one flat budget and sweeps breadth-first by `(ply, path)`; it never
+retires, so every session is explicitly capped. The §3.2 path remains the
+default recommendation; the two compose freely through the shared ledger
+(§4), so this section doubles as "how to start growing with the walk, then
+hand over to §3.2".
+
+**Batch 0 — bootstrap.** Identical to §3.1 (empty manifest, bare merge);
+the `and-close` smoke harvest is skippable here — batch 1 exercises the
+bare defaults itself:
+
+```bash
+cargo build --release --examples
+mkdir -p data/proofdb/shards
+printf '{"entries":[]}' > data/proofdb/shards/manifest.json
+BIN=target/release/examples
+"$BIN/proofdb_merge"   # root-only DB, built_from d801aa1fb7ddcc33
+```
+
+**Batch 1 — the capped walk boot.** A bare `--policy frontier-walk` does
+not terminate on an undecided layer (unlike `descend`, the walk has no
+self-retiring bootstrap — §7.2), so every walk session needs a stop
+condition; `--max-total-evals` is the deterministic choice:
+
+```bash
+"$BIN/proofdb_harvest" --policy frontier-walk --max-total-evals 2000000000
+"$BIN/proofdb_merge"   # fold the batch's shards into the DB (the harvest never merges)
+"$BIN/proofdb_flip"    # soundness sanity over the grown DB (expect: flips 0 verified 0)
+```
+
+Expected census and summary (the reference boot, plan16), with the first
+two job records — the virtual-root search (class `C1`, censored at the
+flat 4M budget) and, later in the session, the first decisive expansion
+visit (the `c2c3 g7g5` win, 6,990 evals); `wall_s` varies by host:
+
+```text
+frontier-walk: records 0 (lineage 0, ancestor 0, complete 0) — root open; base budget 4000000
+job: {"budget":4000000,"child_evals":4000041,"class":"C1","exit_reason":"BudgetExhausted","kind":"search","outcome":"censored","parent_bound":null,"pass":1,"path":"","policy":"frontier-walk","shard_nodes":null,"tag":null,"tier":"frontier-walk","wall_s":0.362,"work_before":0}
+job: {"budget":4000000,"child_evals":6990,"class":"C3","exit_reason":"Complete","kind":"expand","outcome":"win","parent_bound":null,"pass":1,"path":"c2c3 g7g5","policy":"frontier-walk","shard_nodes":334,"tag":"h_2fd82f9a8230a668","tier":"frontier-walk","wall_s":0.0006,"work_before":0}
+harvest: policy frontier-walk stop=budget jobs 553 decisive 53 censored 500 evals 2001311002 new_shards 53 wall 216.2s
+manifest: 53 entries, digest 8a7644b15822054bbe87a39ad68a8230fdefe953ad11b1d0529544525d0b6860
+```
+
+(exit 0; the field grammar of the `job:` lines is §7.2.) The boot's 553
+jobs are 1 search visit + 552 expansion visits: after the root censor,
+*expansion replaces deepening* — the sweep is breadth-first by `(ply,
+path)`, each candidate running to completion before the next at its ply.
+The first decisive lands at ~620M cumulative child-evals (~2.5 min in);
+`descend`'s wide ply-2 enumeration reaches its first fact around 30M
+evals, but the walk then harvests the same class densely — the boot grew
+the layer to **6,706 nodes** (1 root + 6,647 overlay + 58 open-ancestor
+insertions, 6 open rows) with `flips 0 verified 0`, against `descend`'s
+4,314 nodes (§3.2). The determinism gate: a second boot in a fresh layer
+reproduced the manifest digest, the ledger bytes, all 53 shards, and the
+merged DB byte-identically.
+
+**The walk's budget model.** `--budget-evals` is the flat per-visit
+budget `B` (0 → the 4,000,000 base) and there is **no ladder**: a node
+censored at `B` is never re-searched deeper by this policy — once its
+`work_done` reaches `B`, the walk moves to *expansion* (searching its
+first not-yet-handled child at `B`). So unlike `and-close`, raising
+`--budget-evals` is not a screening-versus-ladder trade-off; it is the
+depth of every visit, and the sweep slows proportionally.
+`--and-close-max-budget` and `--pns-config` have no effect under the
+walk. A censor that spends zero evals (an on-path repetition draw) is
+complete-marked instead of re-queued — the walk cannot livelock on it.
+
+**Growing on.** `stop=budget` is the *normal* end of a walk session on an
+undecided layer, not a sign of truncation — the walk always has work.
+Continue with either path, in any order:
+
+- **More walk sessions** — another capped session at the same or a raised
+  `B`; the ledger's censor records carry over, and records left below `B`
+  by another policy's smaller budget are re-searched once at the walk's
+  `B` (the walk's one accepted re-search waste, §7.2).
+- **An `and-close` batch** — the completion-gradient cycle of §3.2 picks
+  the walk's frontier up with its ladder state intact, and a later walk
+  session picks the gradient batch's censors up in turn; the ledger is
+  the shared currency (§4).
+
+After every session with decisive jobs, run the bare `proofdb_merge`
+before the next one (the stale-`built_from` guard, §10) — the batch
+cycle's rules apply unchanged.
 
 ## 4. Ledger pick-up
 
@@ -1217,7 +1311,8 @@ record the intended targets in the summary; after each batch, run
 
 plan16 (2026-10-13) added the `frontier-walk` harvest policy — the
 shallowest-first ledger walk with a flat budget, an alternative grow sweep
-beside `and-close` that composes through the shared ledger (§3.2, §7.2).
+beside `and-close` that composes through the shared ledger (§3.2, §3.3,
+§7.2); the plan16 boot gate doubled as this manual's §3.3 walkthrough.
 
 The pipeline was built and hardened by the `proofdb` initiative
 (`docs/plans/proofdb/`); the tooling-completeness audit that produced this
