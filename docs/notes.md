@@ -973,15 +973,16 @@ Feel free to push back if you see issues with that.
 
 ---
 
-
 I want the following new feature for the proofdb harvests: `--moves 'a2a4 b7b5 b1a3'`.
 
 Happy Path
-* `--moves` is given a path of uci moves from the starting position
-* only the resulting node or its descendants are searched / expanded
+
+- `--moves` is given a path of uci moves from the starting position
+- only the resulting node or its descendants are searched / expanded
 
 Unhappy Paths
-* nonsense / illegal moves -> error
+
+- nonsense / illegal moves -> error
 
 Please challenge my idea, let's discuss open question, and then draft a plan.
 
@@ -1003,7 +1004,39 @@ i don't understand the "challenge" or open question here.
 
 I have no in depth knowledge about the code, so i don't know and i probably don't need to know details like `ply_of, the drop-rule prefix loop, root_state, root_proven_stored`. So for me to understand we need to talk on a level of systems, components and mechanisms, not individual cli flags, variables or code.
 
+---
+
+i want to implement the external proofdb browser.
+Look at the `proofdb` initiative and prepare a handoff document for a coding agent.
+Then tell me which files i need to copy over and how to kick off the session.
 
 ---
 
---moves "g1f3 d7d6 f3g6 f7f6"
+Done. The brief lives at docs/plans/proofdb/measurements/plan13/handoff/BROWSER_BRIEF.md, alongside the existing item-5 handoff package it extends.
+
+**What I found in the initiative**
+
+- The website is an explicit non-goal of proofdb — the initiative owns the pipeline; item 5 ("website handoff", plan13, 2026-10-02) shipped the handoff package precisely so an external project could consume the DB.
+- The contract is narrow and pinned: docs/spec/global_proof_store.md (schema v1, invariants, example queries), a digest-stamped DB (0d929f4c…, 55,703 nodes —  
+  verified just now against the committed file), and a read-only consumption statement.
+- The one real gap a browser must close: the DB stores no positions, FENs, or legal-move lists — only paths and facts. Displaying a board and distinguishing "legal reply, no row" from "illegal" requires an atomic-chess rules engine. Two options, both spelled out in the brief: port the rules to TS, or compile the existing atomic-movegen v2.3 crate (crates.io — the exact rules the proofs were validated against) to WASM for bit-exact replay fidelity. I flagged this as the decision to make first, before any UI code.
+- The classic consumer traps (partial tree: absence ≠ refuted; open ≠ draw; path identity, no transposition merging; bound-vs-exact depth) are called out as hard rules in §4, with concrete acceptance gates in §8.
+
+**Files to copy over to the new project**
+
+From docs/plans/proofdb/measurements/plan13/handoff/:
+
+1.  proofdb.db — the data (3.7 MB, the only artifact needed)
+2.  global_proof_store.md — the normative contract
+3.  HANDOFF.md — version stamp + provenance
+4.  BROWSER_BRIEF.md — the new agent kickoff brief
+
+Optionally docs/proofdb_pipeline.md as background (§5 consumer primer, §8.2 verified consumer SQL) — helpful, but explicitly not part of the contract.
+
+How to kick off the session
+
+Create the new repo/directory, copy the four files in, and open the session with §10 of the brief, which is written to be paste-ready:
+
+> Read BROWSER_BRIEF.md, then global_proof_store.md (the normative contract) and HANDOFF.md in full. Verify the proofdb.db sha256 and meta census against §5 of the brief. Decide the rules-engine option (§6: TS port vs Rust/WASM of atomic-movegen 2.3) and record the decision + rationale in a short DECISIONS.md before writing UI code. Then scaffold the static site: DB load + version-stamp gate + structural invariant checks (§8) first, board navigation second, node facts panel third.
+
+One thing to be aware of: if the coding agent will work inside this repo's session protocol, the brief should not become a planN.md here — the website is out of the initiative's scope by owner decision, and BROWSER_BRIEF.md is a handoff artifact like HANDOFF.md, not a plan. If you'd rather track the browser project's own sessions in this repo, that would be a new initiative directory (e.g. docs/plans/browser/) — your call, but I'd keep it external and clean.
