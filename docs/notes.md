@@ -973,7 +973,32 @@ Feel free to push back if you see issues with that.
 
 ---
 
-I want the following new feature for the proofdb.
-`--moves 'a2a4 b7b5 b1a3'`
 
-all policies (in particular must
+I want the following new feature for the proofdb harvests: `--moves 'a2a4 b7b5 b1a3'`.
+
+Happy Path
+* `--moves` is given a path of uci moves from the starting position
+* only the resulting node or its descendants are searched / expanded
+
+Unhappy Paths
+* nonsense / illegal moves -> error
+
+Please challenge my idea, let's discuss open question, and then draft a plan.
+
+---
+
+i am confused by your wording. to me "proven" means all (or at least one) decisive outcomes were found. of course, if the root was proven we had nothing left to do, we were finished at that point. but we are far from it.
+So that wording mix up makes challenge 1 and 2 unintelligible to me.
+
+---
+
+I don't understand the open questions. This is probably because the challenges are still elusive to me.
+
+challenge 1
+filter vs. re-anchoring: why is this a relevant difference?
+
+challenge 2
+when the `--moves` point to a completely proven position the run stops immediatly, since there is nothing left to do.
+i don't understand the "challenge" or open question here.
+
+I have no in depth knowledge about the code, so i don't know and i probably don't need to know details like `ply_of, the drop-rule prefix loop, root_state, root_proven_stored`. So for me to understand we need to talk on a level of systems, components and mechanisms, not individual cli flags, variables or code.
