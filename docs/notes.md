@@ -1002,3 +1002,8 @@ when the `--moves` point to a completely proven position the run stops immediatl
 i don't understand the "challenge" or open question here.
 
 I have no in depth knowledge about the code, so i don't know and i probably don't need to know details like `ply_of, the drop-rule prefix loop, root_state, root_proven_stored`. So for me to understand we need to talk on a level of systems, components and mechanisms, not individual cli flags, variables or code.
+
+
+---
+
+--moves "g1f3 d7d6 f3g6 f7f6"

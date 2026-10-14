@@ -168,7 +168,7 @@ the default path:
 
 ```
 harvest: db data/proofdb/proofdb.db (1 rows, built_from d801aa1fb7ddcc33) — policy frontier-walk over ledger data/proofdb/work.json
-frontier-walk: records 0 (lineage 0, ancestor 0, complete 0) — root open; base budget 200000
+frontier-walk: records 0 (lineage 0, ancestor 0, out_of_scope 0, complete 0) — root open; base budget 200000; scope global
 ```
 
 then two `job: {…}` lines (stdout): the virtual-root **search visit**
@@ -564,7 +564,7 @@ default manifest aborts cleanly naming
                            [--ledger <path>] [--budget-evals <n>]
                            [--max-total-evals <n>] [--tt-mb <mb>]
                            [--max-jobs <n>] [--max-runtime <s>]
-                           [--stop-file <path>]
+                           [--stop-file <path>] [--moves '<uci path>']
                            [--out-db <grown.db>] [--dump <nodes.txt>]
 
 | Option               | Default                             | Meaning                                                                             |
@@ -580,6 +580,7 @@ default manifest aborts cleanly naming
 | `--max-jobs`         | `0` (unlimited)                     | stop after n jobs                                                                   |
 | `--max-runtime`      | `0` (unlimited)                     | stop after n seconds                                                                |
 | `--stop-file`        | `STOP`                              | batch stops (gracefully, after the in-flight job) when this file appears            |
+| `--moves`            | off (global session)                | scoped harvest: whitespace-separated UCI moves naming a startpos path — the session runs with its world rooted at that node (selection only: same ledger, DB, shards, manifest); the path is replay-validated before any state is loaded (nonsense or prefix-illegal → usage exit 1); `--moves ''` is rejected (the flag's absence already means global) |
 | `--out-db` / `--dump`| off                                 | recorded in the summary only — **the caller runs `proofdb_merge` separately** (by design; this CLI never merges) |
 
 **Selection policy — `frontier-walk` (plan16; the only policy since the
@@ -607,10 +608,28 @@ is no precomputed job sequence. The mechanism, in operator terms:
   candidate completes at most once, so the loop cannot stall. A censor
   that spends zero child-evals (a non-budget draw, e.g. an on-path
   repetition) is also complete-marked.
-- **Root rule**: when the candidate set is empty, the root becomes a
-  virtual candidate (this is how a root-only layer bootstraps, §3.2) —
-  unless the root is proven-stored, in which case the session stops
-  `exhausted`.
+- **Root rule**: when the candidate set is empty, the scope root (see the
+  next bullet) becomes a virtual candidate (this is how a root-only layer
+  bootstraps, §3.2) — unless the scope root is proven-stored, in which
+  case the session stops `exhausted`.
+- **Scoped harvest (`--moves`)**: `--moves 'a2a4 b7b5 b1a3'` re-anchors
+  the session at the node reached by replaying the moves from the
+  startpos — the scope node *is* the walk's root (a re-anchor, not a
+  filter): the virtual-root bootstrap, the lineage/ancestor drops, the
+  ordering, and the census all evaluate scope-relative values, so no
+  budget is spent above the scope and no in-scope record is silently
+  excluded behind settled territory. Out-of-scope ledger records are
+  never candidates, never visited, and never written — but stay in the
+  shared ledger untouched (censors only bump visited nodes), so later
+  global sessions pick them up unchanged; they are counted in the census
+  as `out_of_scope`. Proven DB rows *above* the scope root are ignored
+  (the operator chose the scope deliberately); a proven-stored scope root
+  (a proven DB row or a manifest/shard path at the scope key) ends the
+  session `exhausted` with an explanatory stderr note — no work is done
+  beneath proven nodes. Everything else (budget, caps, stop file, ledger,
+  manifest, shards) keeps its tool-wide semantics, and the searches and
+  their results are identical wherever the walk starts (every job replays
+  the full startpos path).
 - **No ladder**: a node censored at `B` is never re-searched deeper by
   this policy. Raising `--budget-evals` between sessions is the
   deepening mechanism (underworked records are re-searched once at the
@@ -641,14 +660,18 @@ state):
 
 ```text
 harvest: db data/proofdb/proofdb.db (55703 rows, built_from e91ad57b44008fee) — policy frontier-walk over ledger data/proofdb/work.json
-frontier-walk: records 8446 (lineage 6, ancestor 0, complete 0) — root open; base budget 200000
+frontier-walk: records 8446 (lineage 6, ancestor 0, out_of_scope 0, complete 0) — root open; base budget 200000; scope global
 ```
 
 The census line reports: total ledger records, the lineage/ancestor drops
-(records on or behind a proven DB row — not candidates), the in-session
-complete marks (0 at session start), the root state (`root open` /
-`root proven` / `root stored`), and the flat budget (the reference boot on
-a root-only DB prints `records 0 … — root open; base budget 4000000`).
+(records on or behind a proven DB row — not candidates), the out-of-scope
+records (outside the session scope — never candidates, preserved for later
+global sessions; `0` for a global session), the in-session complete marks
+(0 at session start), the root state of the session's scope root (`root
+open` / `root proven` / `root fresh`), the flat budget, and the scope (the
+`--moves` path, or `global`; the reference boot on a root-only DB prints
+`records 0 … — root open; base budget 4000000; scope global`). When
+scoped, the `harvest: db` echo above carries `; scope <path>` as well.
 
 _stdout, per job_ — one `job: {…}` JSON line per visit. Field table (as
 emitted by `examples/proofdb/session/record.rs`; `pass`/`work_before`/
@@ -706,9 +729,11 @@ harvest: policy frontier-walk stop=max-jobs jobs 2 decisive 0 censored 2 evals 4
   shard; `censored` counts facts of absence.
 
 Under `frontier-walk`, `stop=exhausted` means no candidate can yield a
-visit (every candidate complete and the root proven-stored or
-complete-blocked); on any undecided layer the walk always has work, so
-capped stops (`budget`/`max-jobs`) are the normal way a session ends.
+visit (every candidate complete and the scope root proven-stored or
+complete-blocked — a scoped session with a proven-stored scope root
+exhausts immediately, with the explanatory stderr note); on any undecided
+layer the walk always has work, so capped stops (`budget`/`max-jobs`) are
+the normal way a session ends.
 
 _stderr, during jobs_ — `[bounded_search] chunk done: …` progress lines
 (one per budget chunk); informational, safe to ignore in scripts.

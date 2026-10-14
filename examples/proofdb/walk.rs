@@ -4,11 +4,25 @@
 //! loop: the frontier mutates between iterations, so the selection loop
 //! and the batch driver are one module here.
 //!
-//! **D1 — scope.** `--policy frontier-walk` (the only accepted value), no
-//! new flags: the flat budget `B` is `--budget-evals` (0 → the standing
-//! base [`BASE_EVALS`]); stop conditions and path flags keep their
-//! tool-wide semantics. `--pns-config` and other legacy flags were removed
-//! with the plan18 policy consolidation.
+//! **D1 — scope.** `--policy frontier-walk` (the only accepted value); the
+//! one selection-layer flag is `--moves <uci path>` (plan19): the session
+//! is **re-anchored** at the node reached by replaying the given moves from
+//! the startpos — the scope node *is* the walk's root (not a filter): the
+//! virtual-root bootstrap, the drop rules, the ordering, and the census all
+//! evaluate scope-relative values, so no budget is spent above the scope
+//! and no in-scope record is silently excluded behind settled territory.
+//! Out-of-scope ledger records are never candidates, never visited, and
+//! never written — but stay in the shared ledger untouched (censors only
+//! bump visited nodes), counted in the census as `out_of_scope`. Proven DB
+//! rows *above* the scope root are ignored (the operator chose the scope
+//! deliberately); a proven-stored scope root ends the session `exhausted`
+//! with an explanatory stderr note (decision-9 philosophy: no work beneath
+//! proven nodes). With the flag absent (scope = `""`) every scope-relative
+//! rule degenerates to the global one — the session is behaviorally
+//! identical to the pre-plan19 walk. The flat budget `B` is `--budget-evals`
+//! (0 → the standing base [`BASE_EVALS`]); stop conditions and path flags
+//! keep their tool-wide semantics. `--pns-config` and other legacy flags
+//! were removed with the plan18 policy consolidation.
 //! Census class tags reuse the existing classes — no `JobClass` change (the
 //! classes carry the true territory meaning; the `policy` field already
 //! identifies the session): `L` for a search visit on a ledger record, `C3`
@@ -23,11 +37,16 @@
 //! empty prefix included, so a proven root row drops everything
 //! (sibling-skip, decision 9); (c) in-session complete/decided nodes.
 //! Selection: the minimum of `(ply, space-joined path)` — shallowest first,
-//! path-lexicographic tie-break (the codebase convention). **Root rule:**
-//! when the candidate set is empty, the root becomes a virtual candidate
-//! (ply 0, work 0) — *unless* the root is proven-stored (a proven DB row or
-//! a manifest/shard path, [`Session::has_path`]), in which case the session
-//! stops `exhausted`. A stored open root row is a legitimate first target
+//! path-lexicographic tie-break (the codebase convention; both computed on
+//! scope-relative values — the scope root is ply 0, the same special
+//! position the game start has globally; among in-scope records the
+//! relative order equals the absolute order, since all share the scope
+//! prefix). **Root rule:** when the candidate set is empty, the scope root
+//! becomes a virtual candidate (ply 0, work 0) — *unless* the scope root is
+//! proven-stored (a proven DB row at the scope key, or a manifest/shard
+//! path there, [`Session::has_path`]), in which case the session stops
+//! `exhausted` (a scoped session prints an explanatory stderr note; ruling
+//! plan19-b: no work beneath proven nodes). A stored open root row is a legitimate first target
 //! (the fresh-layer bootstrap); its censor creates the root's ledger record
 //! via the bump hook — the same "a censored open DB row gets its record on
 //! first censor" semantics. Accepted consequence: on a
@@ -74,11 +93,13 @@
 //! **D5 — census, summary.** Session-start census line (the `complete`
 //! counter is live and starts at 0 — the complete/decided sets are
 //! in-session state; the session's final count is [`WalkSummary::
-//! completes`]). Job records: the twelve standard fields with
-//! `policy: "frontier-walk"`, `tier: "frontier-walk"`, `kind: "search" |
-//! "expand"`, `pass = passes_failed + 1`, `work_before` = the record's
-//! `work_done` before the visit (a fresh child's first visit is `pass 1`,
-//! `work_before 0`). Summary line: the standard harvest shape.
+//! completes`]; `out_of_scope` counts the ledger records outside the
+//! session scope and `scope` names the session's world). Job records: the
+//! twelve standard fields with `policy: "frontier-walk"`, `tier:
+//! "frontier-walk"`, `kind: "search" | "expand"`, `pass = passes_failed +
+//! 1`, `work_before` = the record's `work_done` before the visit (a fresh
+//! child's first visit is `pass 1`, `work_before 0`). Summary line: the
+//! standard harvest shape.
 //!
 //! **D6 — termination, determinism.** Stop conditions are checked between
 //! iterations only (`max_total_evals` on cumulative child-evals, `max_jobs`
@@ -94,10 +115,14 @@
 //! cargo does not run unit tests inside example targets) plus the inline
 //! selection unit tests below.
 //!
-//! File-size justification: ~14.7 KB — the normative D1–D7 contract lives
-//! in this module doc and shares one indexing scheme with the selection
-//! state ([`WalkFrontier`]); the batch driver is split out
-//! ([`driver`], the driver-split file-size pattern).
+//! File-size justification: ~19.8 KB (plan19 scoped-harvest growth) — the
+//! normative D1–D7 contract lives in this module doc and shares one
+//! indexing scheme with the selection state ([`WalkFrontier`]) and the
+//! scope-relative key helpers ([`in_scope`]/[`rel_of`]/[`join_scope`]);
+//! the batch driver is split out ([`driver`], the driver-split file-size
+//! pattern) and the unit tests into `walk/tests.rs`; at the ~20 KB line
+//! the next natural split would peel the census/`RootState` types off —
+//! deferred until a further feature actually crosses it.
 
 use std::collections::{BTreeSet, HashMap, HashSet};
 
@@ -147,7 +172,9 @@ impl RootState {
     }
 }
 
-/// The session-start census (D5; the exact wording is pinned by report16).
+/// The session-start census (D5; the wording shape is pinned by report16 —
+/// the `out_of_scope`/`scope` fields were added by plan19's scoped harvest,
+/// an accepted format change).
 #[derive(Debug, Default)]
 pub struct WalkCensus {
     /// Ledger records at session start.
@@ -157,10 +184,15 @@ pub struct WalkCensus {
     /// Records behind a proven DB row proper prefix (shallowest reason
     /// wins; lineage wins only if no shallower prefix is proven).
     pub ancestor: usize,
+    /// Records outside the session scope (never candidates, never written;
+    /// preserved in the shared ledger for later global sessions).
+    pub out_of_scope: usize,
     /// Complete-marked candidates at emission time (0 at session start —
     /// the complete/decided sets are in-session state).
     pub complete: usize,
     pub root: RootState,
+    /// The session's world: the scope key, or empty for a global session.
+    pub scope: String,
 }
 
 impl WalkCensus {
@@ -168,26 +200,71 @@ impl WalkCensus {
     #[must_use]
     pub fn describe(&self, base: u64) -> String {
         format!(
-            "frontier-walk: records {} (lineage {}, ancestor {}, complete {}) \
-             — root {}; base budget {}",
+            "frontier-walk: records {} (lineage {}, ancestor {}, out_of_scope {}, \
+             complete {}) — root {}; base budget {}; scope {}",
             self.records,
             self.lineage,
             self.ancestor,
+            self.out_of_scope,
             self.complete,
             self.root.as_str(),
             base,
+            if self.scope.is_empty() {
+                "global"
+            } else {
+                &self.scope
+            },
         )
     }
 }
 
-/// The live selection state: the viable candidates in `(ply, path)` order
-/// plus the in-session complete/decided exclusions (D2/D3). The frontier
-/// mutates as the walk runs — censors admit fresh records, complete/decided
-/// marks retire candidates.
+/// Is `key` within the session scope? `""` (global) admits everything;
+/// otherwise the key must equal the scope or extend it by a full move
+/// token (`scope + " " + …`) — a key that merely shares a string prefix is
+/// out of scope.
+#[must_use]
+fn in_scope(scope: &str, key: &str) -> bool {
+    scope.is_empty() || key == scope || key.strip_prefix(scope).is_some_and(|r| r.starts_with(' '))
+}
+
+/// The scope-relative path of an in-scope key: the prefix stripped, the
+/// scope root itself maps to `""` (the walk-relative root).
+#[must_use]
+fn rel_of<'a>(scope: &str, key: &'a str) -> &'a str {
+    if scope.is_empty() {
+        key
+    } else if key == scope {
+        ""
+    } else {
+        &key[scope.len() + 1..]
+    }
+}
+
+/// The absolute key of a scope-relative path (the inverse of [`rel_of`]).
+#[must_use]
+fn join_scope(scope: &str, rel: &str) -> String {
+    if scope.is_empty() {
+        rel.to_string()
+    } else if rel.is_empty() {
+        scope.to_string()
+    } else {
+        format!("{scope} {rel}")
+    }
+}
+
+/// The live selection state: the viable candidates in `(relative ply,
+/// relative path)` order plus the in-session complete/decided exclusions
+/// (D2/D3). The frontier mutates as the walk runs — censors admit fresh
+/// records, complete/decided marks retire candidates. Keys are stored
+/// scope-relative (a global session's scope is `""`, so its relative keys
+/// are the absolute ones — the pre-plan19 representation).
 pub struct WalkFrontier {
-    /// Viable candidates, ordered by `(ply, space-joined path)`.
+    /// The session scope (empty = global).
+    scope: String,
+    /// Viable candidates, ordered by `(relative ply, relative path)`.
     order: BTreeSet<(usize, String)>,
-    /// Proven DB-row paths (the D2 drop rules' input; static per session).
+    /// Proven DB-row paths *relative to the scope* (the D2 drop rules'
+    /// input; static per session; rows above the scope root excluded).
     proven: HashSet<String>,
     complete: HashSet<String>,
     decided: HashSet<String>,
@@ -214,33 +291,51 @@ fn path_of(key: &str) -> Vec<String> {
 }
 
 impl WalkFrontier {
-    /// Build over the ledger + DB rows: admit every record not dropped by
-    /// the lineage/ancestor rules (D2 a/b) and count the census. Read-only
-    /// over both inputs.
+    /// Build over the ledger + DB rows: admit every in-scope record not
+    /// dropped by the lineage/ancestor rules (D2 a/b — evaluated on the
+    /// scope-relative path against proven rows *relative to the scope*;
+    /// proven rows above the scope root are ignored) and count the census.
+    /// Read-only over both inputs.
     #[must_use]
-    pub fn new(ledger: &Ledger, db: &DbContent) -> (Self, WalkCensus) {
-        let proven: HashSet<String> = db
+    pub fn new(ledger: &Ledger, db: &DbContent, scope: &str) -> (Self, WalkCensus) {
+        let proven_abs: HashSet<String> = db
             .rows
             .iter()
             .filter(|r| r.outcome.is_some())
             .map(|r| r.path.join(" "))
             .collect();
+        let proven: HashSet<String> = if scope.is_empty() {
+            proven_abs
+        } else {
+            proven_abs
+                .iter()
+                .filter(|p| in_scope(scope, p))
+                .map(|p| rel_of(scope, p).to_string())
+                .collect()
+        };
         let mut order = BTreeSet::new();
         let mut census = WalkCensus {
             records: ledger.len(),
+            scope: scope.to_string(),
             ..WalkCensus::default()
         };
         for (key, _) in ledger.iter() {
-            match Self::drop_reason(key, &proven) {
+            if !in_scope(scope, key) {
+                census.out_of_scope += 1;
+                continue;
+            }
+            let rel = rel_of(scope, key);
+            match Self::drop_reason(rel, &proven) {
                 Some(Drop::Lineage) => census.lineage += 1,
                 Some(Drop::Ancestor) => census.ancestor += 1,
                 None => {
-                    order.insert((ply_of(key), key.clone()));
+                    order.insert((ply_of(rel), rel.to_string()));
                 }
             }
         }
         (
             Self {
+                scope: scope.to_string(),
                 order,
                 proven,
                 complete: HashSet::new(),
@@ -274,17 +369,20 @@ impl WalkFrontier {
     }
 
     /// The next candidate: the shallowest viable record with its live
-    /// ledger work; `None` = no candidate (the caller applies the root
-    /// rule).
+    /// ledger work (the returned key is absolute — the driver and the job
+    /// records speak absolute paths); `None` = no candidate (the caller
+    /// applies the root rule).
     #[must_use]
     pub fn pick(&self, ledger: &Ledger) -> Option<(String, u64)> {
-        let (_, key) = self.order.iter().next()?;
-        let work = ledger.get(key).map_or(0, |e| e.work_done);
-        Some((key.clone(), work))
+        let (_, rel) = self.order.iter().next()?;
+        let key = join_scope(&self.scope, rel);
+        let work = ledger.get(&key).map_or(0, |e| e.work_done);
+        Some((key, work))
     }
 
-    /// Is the root blocked as a virtual candidate (complete-marked; a
-    /// decided root is covered by the proven-stored check instead)?
+    /// Is the scope root blocked as a virtual candidate (complete-marked;
+    /// a decided scope root is covered by the proven-stored check instead)?
+    /// The scope root's relative key is always `""`.
     #[must_use]
     pub fn root_blocked(&self) -> bool {
         self.complete.contains("")
@@ -294,24 +392,32 @@ impl WalkFrontier {
     /// zero-eval censor): removed from in-session candidacy, record
     /// retained.
     pub fn mark_complete(&mut self, key: &str) {
-        if self.complete.insert(key.to_string()) {
+        let rel = rel_of(&self.scope, key).to_string();
+        if self.complete.insert(rel.clone()) {
             self.completes += 1;
         }
-        self.order.remove(&(ply_of(key), key.to_string()));
+        self.order.remove(&(ply_of(&rel), rel));
     }
 
     /// Mark a decided node (a decisive visit's target): removed from
     /// in-session candidacy, ledger record left in place.
     pub fn mark_decided(&mut self, key: &str) {
-        self.decided.insert(key.to_string());
-        self.order.remove(&(ply_of(key), key.to_string()));
+        let rel = rel_of(&self.scope, key).to_string();
+        self.decided.insert(rel.clone());
+        self.order.remove(&(ply_of(&rel), rel));
     }
 
-    /// Admit a record as a candidate (after its creating censor): no-op
-    /// unless it survives the D2 drop rules and is not already admitted.
+    /// Admit a record as a candidate (after its creating censor): a no-op
+    /// for out-of-scope keys (a censor only ever visits in-scope nodes, so
+    /// this is defensive) and for keys dropped by the D2 rules (evaluated
+    /// scope-relative) or already admitted.
     pub fn admit(&mut self, key: &str) {
-        if WalkFrontier::drop_reason(key, &self.proven).is_none() {
-            self.order.insert((ply_of(key), key.to_string()));
+        if !in_scope(&self.scope, key) {
+            return;
+        }
+        let rel = rel_of(&self.scope, key);
+        if WalkFrontier::drop_reason(rel, &self.proven).is_none() {
+            self.order.insert((ply_of(rel), rel.to_string()));
         }
     }
 }
@@ -329,12 +435,14 @@ pub fn is_handled(
     rows.contains_key(key) || has_shard(key) || ledger.get(key).is_some_and(|e| e.work_done >= base)
 }
 
-/// The session-start root state for the census (D5): proven-stored, else a
-/// stored open row, else fresh (no root row — pathological).
+/// The session-start root state for the census (D5): the state of the
+/// scope root row (the game root for a global session) — proven-stored,
+/// else a stored open row, else fresh (no row — pathological for the game
+/// root, normal for a fresh scope).
 #[must_use]
-pub fn root_state(db: &DbContent, session: &Session) -> RootState {
-    let root_row = db.rows.iter().find(|r| r.ply == 0);
-    if root_row.is_some_and(|r| r.outcome.is_some()) || session.has_path("") {
+pub fn root_state(db: &DbContent, session: &Session, scope: &str) -> RootState {
+    let root_row = db.rows.iter().find(|r| r.path.join(" ") == scope);
+    if root_row.is_some_and(|r| r.outcome.is_some()) || session.has_path(scope) {
         RootState::Proven
     } else if root_row.is_some() {
         RootState::Open

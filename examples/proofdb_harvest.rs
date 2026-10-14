@@ -41,16 +41,24 @@ use proofdb::walk::driver::{WalkOptions, run_walk_session};
 
 fn main() {
     let args = parse_args();
+    // The session scope (plan19): the `--moves` tokens joined by single
+    // spaces (the path-key join); empty = the flag's absence = global.
+    let scope = args.moves.join(" ");
     let t_start = Instant::now();
     let manifest = proofdb::read_manifest(&args.manifest).unwrap_or_else(|e| fail(&e));
     let db = load_db_rows(&args.db, &manifest.sha256_hex).unwrap_or_else(|e| fail(&e));
     eprintln!(
-        "harvest: db {} ({} rows, built_from {}) — policy {} over ledger {}",
+        "harvest: db {} ({} rows, built_from {}) — policy {} over ledger {}{}",
         args.db.display(),
         db.rows.len(),
         &manifest.sha256_hex[..16],
         proofdb::harvest_args::POLICY,
         args.ledger.display(),
+        if scope.is_empty() {
+            String::new()
+        } else {
+            format!("; scope {scope}")
+        },
     );
 
     let mut session = Session::new(
@@ -67,8 +75,15 @@ fn main() {
         max_runtime: args.max_runtime,
         stop_file: args.stop_file.clone(),
     };
-    let summary = run_walk_session(&mut session, &db, &args.ledger, args.budget_evals, &opts)
-        .unwrap_or_else(|e| fail(&e));
+    let summary = run_walk_session(
+        &mut session,
+        &db,
+        &args.ledger,
+        args.budget_evals,
+        &opts,
+        &scope,
+    )
+    .unwrap_or_else(|e| fail(&e));
     let summary_line = format!(
         "harvest: policy {} stop={} jobs {} decisive {} censored {} evals {} \
          new_shards {} wall {:.1}s",

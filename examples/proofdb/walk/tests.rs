@@ -59,7 +59,7 @@ fn walk_selection_order_and_tie_break() {
         ("", 100, 1),
     ]);
     let db = crafted(&[("", 0, None)]);
-    let (mut f, census) = WalkFrontier::new(&ledger, &db);
+    let (mut f, census) = WalkFrontier::new(&ledger, &db, "");
     assert_eq!(census.records, 4);
     assert_eq!((census.lineage, census.ancestor), (0, 0));
     // Shallowest first, path-lex tie-break (D2).
@@ -91,7 +91,7 @@ fn walk_lineage_and_ancestor_drops() {
         ("a2a4", 100, 1),
         ("b1c3", 100, 1),
     ]);
-    let (f, census) = WalkFrontier::new(&ledger, &db);
+    let (f, census) = WalkFrontier::new(&ledger, &db, "");
     assert_eq!((census.records, census.lineage, census.ancestor), (5, 1, 1));
     // Survivors: the root record, the open-row sibling, the unrelated one.
     let mut f = f;
@@ -110,7 +110,7 @@ fn walk_proven_root_row_drops_everything() {
     // counts): the whole ledger drops and the walk is exhausted (D2/D6).
     let db = crafted(&[("", 0, Some(Outcome::Win))]);
     let ledger = ledger_of(&[("", 0, 1), ("a2a3", 100, 1), ("a2a3 b1b2", 100, 1)]);
-    let (f, census) = WalkFrontier::new(&ledger, &db);
+    let (f, census) = WalkFrontier::new(&ledger, &db, "");
     assert_eq!((census.lineage, census.ancestor), (1, 2));
     assert!(f.pick(&ledger).is_none());
 }
@@ -141,7 +141,7 @@ fn walk_handled_rule_categories() {
 fn walk_frontier_admit_and_live_work() {
     let db = crafted(&[("", 0, None), ("a2a3", 1, Some(Outcome::Win))]);
     let ledger = ledger_of(&[("", 0, 1)]);
-    let (mut f, census) = WalkFrontier::new(&ledger, &db);
+    let (mut f, census) = WalkFrontier::new(&ledger, &db, "");
     assert_eq!(census.records, 1);
     // The root record is the pick (ply 0); retire it, then admit a fresh
     // record: it becomes a candidate (ply 1 here).
@@ -177,20 +177,20 @@ fn walk_census_line_and_root_states() {
         Vec::new(),
         "frontier-walk",
     );
-    let (f, census) = WalkFrontier::new(&Ledger::default(), &db);
+    let (f, census) = WalkFrontier::new(&Ledger::default(), &db, "");
     let mut census = census;
-    census.root = root_state(&db, &session);
+    census.root = root_state(&db, &session, "");
     assert_eq!(census.root, RootState::Open);
     assert_eq!(
         census.describe(4_000_000),
-        "frontier-walk: records 0 (lineage 0, ancestor 0, complete 0) \
-         — root open; base budget 4000000"
+        "frontier-walk: records 0 (lineage 0, ancestor 0, out_of_scope 0, complete 0) \
+         — root open; base budget 4000000; scope global"
     );
     assert_eq!(f.completes, 0);
     // Proven root row → proven; a manifest shard path at the root is
     // proven-stored even over an open row.
     let db_proven = crafted(&[("", 0, Some(Outcome::Loss))]);
-    assert_eq!(root_state(&db_proven, &session), RootState::Proven);
+    assert_eq!(root_state(&db_proven, &session, ""), RootState::Proven);
     let session_shard = Session::new(
         4,
         dir.join("s2"),
@@ -205,9 +205,142 @@ fn walk_census_line_and_root_states() {
         }],
         "frontier-walk",
     );
-    assert_eq!(root_state(&db, &session_shard), RootState::Proven);
+    assert_eq!(root_state(&db, &session_shard, ""), RootState::Proven);
     // Fresh root: no root row at all (pathological, but pinned).
     let db_empty = crafted(&[]);
-    assert_eq!(root_state(&db_empty, &session), RootState::Fresh);
+    assert_eq!(root_state(&db_empty, &session, ""), RootState::Fresh);
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+// --- plan19: the scoped walk (`--moves` re-anchor) ---
+
+#[test]
+fn walk_scope_candidacy_filtering_and_ordering() {
+    // Scope "a2a3": in-scope records are "a2a3" (the scope root itself,
+    // relative ply 0) and "a2a3 b1b2"; everything else is out of scope and
+    // never pickable. The scope root record's live work is respected.
+    let ledger = ledger_of(&[
+        ("", 100, 1),
+        ("b1c3", 100, 1),
+        ("a2a3", 5_000, 1),
+        ("a2a3 b1b2", 100, 1),
+    ]);
+    let db = crafted(&[("", 0, None)]);
+    let (mut f, census) = WalkFrontier::new(&ledger, &db, "a2a3");
+    assert_eq!(census.records, 4);
+    assert_eq!(census.out_of_scope, 2);
+    assert_eq!((census.lineage, census.ancestor), (0, 0));
+    assert_eq!(census.scope, "a2a3");
+    assert_eq!(f.pick(&ledger).unwrap(), ("a2a3".to_string(), 5_000));
+    f.mark_decided("a2a3");
+    assert_eq!(f.pick(&ledger).unwrap().0, "a2a3 b1b2");
+    f.mark_decided("a2a3 b1b2");
+    assert!(f.pick(&ledger).is_none());
+}
+
+#[test]
+fn walk_scope_drops_are_relative_and_ignore_above_scope() {
+    // Proven rows: the game root "" (above the scope — ignored, the
+    // operator chose the scope deliberately) and "a2a3 b1b2 c2c3" (in
+    // scope). Scope "a2a3": the record at the deep proven row drops by
+    // lineage (relative), the record behind it by ancestor, the records
+    // between survive; out-of-scope records are counted, not visited.
+    let db = crafted(&[
+        ("", 0, Some(Outcome::Win)),
+        ("a2a3", 1, None),
+        ("a2a3 b1b2 c2c3", 3, Some(Outcome::Loss)),
+    ]);
+    let ledger = ledger_of(&[
+        ("", 100, 1),
+        ("b1c3", 100, 1),
+        ("a2a3", 100, 1),
+        ("a2a3 b1b2", 100, 1),
+        ("a2a3 b1b2 c2c3", 100, 1),
+        ("a2a3 b1b2 c2c3 d2d3", 100, 1),
+    ]);
+    let (mut f, census) = WalkFrontier::new(&ledger, &db, "a2a3");
+    assert_eq!(census.records, 6);
+    assert_eq!(census.out_of_scope, 2);
+    assert_eq!((census.lineage, census.ancestor), (1, 1));
+    let mut picked = Vec::new();
+    for _ in 0..2 {
+        let (k, _) = f.pick(&ledger).unwrap();
+        f.mark_decided(&k);
+        picked.push(k);
+    }
+    assert_eq!(picked, vec!["a2a3", "a2a3 b1b2"]);
+    assert!(f.pick(&ledger).is_none());
+}
+
+#[test]
+fn walk_scope_proven_scope_root_drops_everything_in_scope() {
+    // A proven row at the scope key is the relative root: everything in
+    // scope drops (the empty relative prefix counts), out-of-scope records
+    // survive untouched for later global sessions.
+    let db = crafted(&[("", 0, None), ("a2a3", 1, Some(Outcome::Win))]);
+    let ledger = ledger_of(&[
+        ("", 0, 1),
+        ("a2a3", 100, 1),
+        ("a2a3 b1b2", 100, 1),
+        ("b1c3", 100, 1),
+    ]);
+    let (f, census) = WalkFrontier::new(&ledger, &db, "a2a3");
+    assert_eq!(census.records, 4);
+    assert_eq!(census.out_of_scope, 2);
+    assert_eq!((census.lineage, census.ancestor), (1, 1));
+    assert!(f.pick(&ledger).is_none());
+}
+
+#[test]
+fn walk_scope_root_states_and_census_line() {
+    use super::super::session::Session;
+    let dir = std::env::temp_dir().join(format!("proofdb_walk_scope_{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let session = Session::new(
+        4,
+        dir.join("s"),
+        dir.join("s/manifest.json"),
+        Vec::new(),
+        "frontier-walk",
+    );
+    // The scope root row decides the state (open / proven); no row at the
+    // scope key is a fresh scope (normal — the game-root case is the
+    // pathological one).
+    let db_open = crafted(&[("", 0, None), ("a2a3 b1b2", 2, None)]);
+    assert_eq!(root_state(&db_open, &session, "a2a3 b1b2"), RootState::Open);
+    assert_eq!(root_state(&db_open, &session, "a2a3"), RootState::Fresh);
+    let db_proven = crafted(&[("", 0, None), ("a2a3 b1b2", 2, Some(Outcome::Loss))]);
+    assert_eq!(
+        root_state(&db_proven, &session, "a2a3 b1b2"),
+        RootState::Proven
+    );
+    // A manifest/in-session shard path at the scope key is proven-stored.
+    let session_shard = Session::new(
+        4,
+        dir.join("s2"),
+        dir.join("s2/manifest.json"),
+        vec![crate::proofdb::ShardEntry {
+            tag: "scope".to_string(),
+            file: "scope.bin".to_string(),
+            fen: Position::STARTPOS_FEN.to_string(),
+            moves: vec!["a2a3".to_string(), "b1b2".to_string()],
+            outcome: Outcome::Win,
+            validate: "ok".to_string(),
+        }],
+        "frontier-walk",
+    );
+    assert_eq!(
+        root_state(&db_open, &session_shard, "a2a3 b1b2"),
+        RootState::Proven
+    );
+    // The scoped census line shape (S3).
+    let ledger = ledger_of(&[("a2a3 b1b2", 100, 1), ("b1c3", 100, 1)]);
+    let (_, mut census) = WalkFrontier::new(&ledger, &db_open, "a2a3 b1b2");
+    census.root = root_state(&db_open, &session, "a2a3 b1b2");
+    assert_eq!(
+        census.describe(1_000),
+        "frontier-walk: records 2 (lineage 0, ancestor 0, out_of_scope 1, \
+         complete 0) — root open; base budget 1000; scope a2a3 b1b2"
+    );
     std::fs::remove_dir_all(&dir).ok();
 }

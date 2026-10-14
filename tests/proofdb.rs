@@ -579,8 +579,8 @@ fn walk_driver_root_expansion_and_ledger_growth() {
             manifest.entries.clone(),
             "frontier-walk",
         );
-        let (mut frontier, mut census) = WalkFrontier::new(&Ledger::default(), &db);
-        census.root = root_state(&db, &session);
+        let (mut frontier, mut census) = WalkFrontier::new(&Ledger::default(), &db, "");
+        census.root = root_state(&db, &session, "");
         assert_eq!(census.records, 0);
         assert_eq!(census.root, RootState::Open);
         let mut ledger = Ledger::default();
@@ -592,6 +592,7 @@ fn walk_driver_root_expansion_and_ledger_growth() {
             ledger_path,
             1_000,
             &walk_opts(5, 0),
+            "",
         )
         .unwrap();
         (summary, ledger)
@@ -672,7 +673,7 @@ fn walk_complete_rule_no_livelock_and_exhaustion() {
         Vec::new(),
         "frontier-walk",
     );
-    let (mut frontier, census) = WalkFrontier::new(&ledger, &db);
+    let (mut frontier, census) = WalkFrontier::new(&ledger, &db, "");
     assert_eq!(census.records, 21);
     let mut led = ledger.clone();
     // The root completes pick-only (no job); its 20 children then become
@@ -685,6 +686,7 @@ fn walk_complete_rule_no_livelock_and_exhaustion() {
         &dir.join("ledger.json"),
         1_000,
         &walk_opts(3, 0),
+        "",
     )
     .unwrap();
     // The root was complete-marked by a pick-only iteration (the no-livelock
@@ -714,11 +716,11 @@ fn walk_root_proven_exhausts() {
         Vec::new(),
         "frontier-walk",
     );
-    let (mut frontier, mut census) = WalkFrontier::new(&ledger, &db);
+    let (mut frontier, mut census) = WalkFrontier::new(&ledger, &db, "");
     // The record sits behind the proven root row: ancestor drop (the empty
     // prefix), the root itself is proven-stored.
     assert_eq!((census.lineage, census.ancestor), (0, 1));
-    census.root = root_state(&db, &session);
+    census.root = root_state(&db, &session, "");
     assert_eq!(census.root, RootState::Proven);
     let mut led = ledger.clone();
     let summary = run_walk_batch(
@@ -729,6 +731,7 @@ fn walk_root_proven_exhausts() {
         &dir.join("ledger.json"),
         1_000,
         &walk_opts(0, 0),
+        "",
     )
     .unwrap();
     assert_eq!(summary.stop_reason, "");
@@ -773,6 +776,7 @@ fn walk_boot_from_empty_layer() {
         &dir.join("work.json"),
         20_000,
         &walk_opts(0, 10_000_000),
+        "",
     )
     .unwrap();
     assert_eq!(summary.stop_reason, "budget");
@@ -858,9 +862,9 @@ fn walk_zero_eval_censor_guard_completes_the_node() {
         Vec::new(),
         "frontier-walk",
     );
-    let (mut frontier, mut census) = WalkFrontier::new(&ledger, &db);
+    let (mut frontier, mut census) = WalkFrontier::new(&ledger, &db, "");
     assert_eq!(census.records, 1);
-    census.root = root_state(&db, &session);
+    census.root = root_state(&db, &session, "");
     assert_eq!(census.root, RootState::Open);
     let mut led = ledger.clone();
     let summary = run_walk_batch(
@@ -871,6 +875,7 @@ fn walk_zero_eval_censor_guard_completes_the_node() {
         &dir.join("ledger.json"),
         20_000,
         &walk_opts(4, 0),
+        "",
     )
     .unwrap();
     // Visit 1: the repetition record (0 evals, censored, complete-marked);
@@ -911,8 +916,8 @@ fn session_censored_jobs_leave_manifest_bytes_untouched() {
         manifest.entries.clone(),
         "frontier-walk",
     );
-    let (mut frontier, mut census) = WalkFrontier::new(&Ledger::default(), &db);
-    census.root = root_state(&db, &session);
+    let (mut frontier, mut census) = WalkFrontier::new(&Ledger::default(), &db, "");
+    census.root = root_state(&db, &session, "");
     assert_eq!(census.root, RootState::Open);
     let mut led = Ledger::default();
     // Tiny budget on the quiet fixture: every job censors (the walk driver
@@ -925,6 +930,7 @@ fn session_censored_jobs_leave_manifest_bytes_untouched() {
         &dir.join("ledger.json"),
         1_000,
         &walk_opts(5, 0),
+        "",
     )
     .unwrap();
     assert_eq!(summary.decisive, 0);
@@ -977,5 +983,140 @@ fn session_manifest_write_failure_leaves_previous_manifest_and_one_orphan() {
     assert!(orphan.is_file());
     let m = read_manifest(&manifest_path).unwrap();
     assert_eq!(m.entries.len(), 0);
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+// --- plan19: the scoped session (`--moves` re-anchor) ---
+
+/// Plan19 task 3: the scoped session's root rule — with an empty ledger the
+/// virtual-root search runs at the scope key (class C1, the scope root's
+/// special position), and its expansion children stay inside the scope by
+/// construction.
+#[test]
+fn walk_scope_virtual_root_and_expansion_stay_in_scope() {
+    let dir = walk_dir("walk_scope_root");
+    // An open row at the scope root (the fresh-layer bootstrap,
+    // transplanted); no game-root row needed for a scoped session.
+    let db = walk_db(&[("a2a3", 1, None)]);
+    let mut session = Session::new(
+        4,
+        dir.join("shards"),
+        dir.join("shards/manifest.json"),
+        Vec::new(),
+        "frontier-walk",
+    );
+    let ledger = Ledger::default();
+    let (mut frontier, mut census) = WalkFrontier::new(&ledger, &db, "a2a3");
+    assert_eq!(census.out_of_scope, 0);
+    assert_eq!(census.scope, "a2a3");
+    census.root = root_state(&db, &session, "a2a3");
+    assert_eq!(census.root, RootState::Open);
+    let mut led = Ledger::default();
+    let summary = run_walk_batch(
+        &mut session,
+        &db,
+        &mut frontier,
+        &mut led,
+        &dir.join("ledger.json"),
+        1_000,
+        &walk_opts(3, 0),
+        "a2a3",
+    )
+    .unwrap();
+    assert_eq!(summary.stop_reason, "max-jobs");
+    assert_eq!(summary.jobs, 3);
+    assert_eq!(summary.censored, 3);
+    // Visit 1: the virtual root at the scope key (ledger key == scope);
+    // visits 2–3: expansion children of the scope root, in scope by
+    // construction (absolute keys carry the scope prefix).
+    let keys: Vec<String> = led.iter().map(|(k, _)| k.clone()).collect();
+    assert_eq!(keys, vec!["a2a3", "a2a3 a7a5", "a2a3 a7a6"]);
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// Plan19 task 3: a proven-stored scope root ends the session before any
+/// job (`exhausted`, the stderr note fires in the binary; ruling b: no
+/// work beneath proven nodes) — out-of-scope records are never picked.
+#[test]
+fn walk_scope_proven_scope_root_exhausts() {
+    let dir = walk_dir("walk_scope_proven");
+    let db = walk_db(&[("a2a3", 1, Some(Outcome::Win))]);
+    let ledger = ledger_of(&[("b1c3", 100, 1)]);
+    let mut session = Session::new(
+        4,
+        dir.join("shards"),
+        dir.join("shards/manifest.json"),
+        Vec::new(),
+        "frontier-walk",
+    );
+    let (mut frontier, census) = WalkFrontier::new(&ledger, &db, "a2a3");
+    assert_eq!(census.out_of_scope, 1);
+    assert_eq!(root_state(&db, &session, "a2a3"), RootState::Proven);
+    let mut led = ledger.clone();
+    let summary = run_walk_batch(
+        &mut session,
+        &db,
+        &mut frontier,
+        &mut led,
+        &dir.join("ledger.json"),
+        1_000,
+        &walk_opts(0, 0),
+        "a2a3",
+    )
+    .unwrap();
+    assert_eq!(summary.stop_reason, "");
+    assert_eq!(summary.jobs, 0);
+    // The shared ledger is untouched by the exhausted scoped session.
+    assert_eq!(entries(&led), entries(&ledger));
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// Plan19 task 4: the scoped session end-to-end through
+/// `run_walk_session` — the census line describes the scoped world and the
+/// ledger only grows inside the scope; out-of-scope records are preserved
+/// byte-identically.
+#[test]
+fn walk_scope_session_pickup_and_preservation() {
+    let dir = walk_dir("walk_scope_session");
+    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
+    let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
+    let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
+    // A shared ledger with an out-of-scope record (work ≥ B so it would be
+    // an expansion candidate in a global session — but out of scope here).
+    let ledger_path = dir.join("work.json");
+    let pre = b"{\"records\":[{\"path\":[\"b1c3\"],\"work_done\":50000,\"passes_failed\":1}]}";
+    std::fs::write(&ledger_path, pre).unwrap();
+
+    let mut session = Session::new(
+        4,
+        dir.join("shards"),
+        dir.join("shards/manifest.json"),
+        manifest.entries.clone(),
+        "frontier-walk",
+    );
+    let summary = run_walk_session(
+        &mut session,
+        &db,
+        &ledger_path,
+        1_000,
+        &walk_opts(2, 0),
+        "f2f3 e7e6",
+    )
+    .unwrap();
+    assert_eq!(summary.stop_reason, "max-jobs");
+    assert_eq!(summary.jobs, 2);
+    // Every job path is the scope or a descendant; the first visit is the
+    // virtual root at the open scope row.
+    let ledger = Ledger::load(&ledger_path).unwrap();
+    let in_scope: Vec<&String> = ledger
+        .iter()
+        .map(|(k, _)| k)
+        .filter(|k| *k == "f2f3 e7e6" || k.starts_with("f2f3 e7e6 "))
+        .collect();
+    assert_eq!(in_scope.len(), 2, "two scoped censors: {in_scope:?}");
+    assert!(ledger.contains("f2f3 e7e6"), "virtual root recorded");
+    // The out-of-scope record survives untouched.
+    assert_eq!(ledger.get("b1c3").unwrap().work_done, 50_000);
+    assert_eq!(ledger.get("b1c3").unwrap().passes_failed, 1);
     std::fs::remove_dir_all(&dir).ok();
 }

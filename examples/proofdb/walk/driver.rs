@@ -3,7 +3,9 @@
 //! kinds, the complete rule, and the root rule. Split from [`super`] for
 //! the 10 KB file-size convention; the selection state and its doc (the
 //! normative D1–D7 contract) remain there. The CLI drives this from
-//! `main`.
+//! `main`. Size note: ~10 KB — the whole live selection loop (visit
+//! bookkeeping, batch loop, session assembly) shares one state shape;
+//! further growth would split the session assembly off.
 //!
 //! Stop conditions are checked **between iterations only** (`max_jobs`
 //! counts searches; pick-only complete iterations count toward neither cap;
@@ -25,10 +27,15 @@ use super::super::ledger::{Ledger, on_censored};
 use super::super::session::Session;
 use super::{BASE_EVALS, WalkFrontier, is_handled, path_of, ply_of, root_state};
 
-/// Is the root proven-stored (a proven DB row or a manifest/shard path)?
+/// Is the scope root proven-stored (a proven DB row or a manifest/shard
+/// path at the scope key)? The scope key is `""` for a global session.
 #[must_use]
-fn root_proven_stored(rows: &HashMap<String, Option<Outcome>>, session: &Session) -> bool {
-    rows.get("").is_some_and(|o| o.is_some()) || session.has_path("")
+fn root_proven_stored(
+    rows: &HashMap<String, Option<Outcome>>,
+    session: &Session,
+    scope: &str,
+) -> bool {
+    rows.get(scope).is_some_and(|o| o.is_some()) || session.has_path(scope)
 }
 
 /// Batch options (stop conditions, checked between iterations only; 0 =
@@ -132,11 +139,14 @@ fn visit(
 }
 
 /// Run the `frontier-walk` batch: one search per iteration; the shallowest
-/// candidate first; expansion instead of deepening (D2/D3/D6).
+/// candidate first; expansion instead of deepening (D2/D3/D6). `scope` is
+/// the session's re-anchor key (`""` = global): the virtual-root rule and
+/// the proven-stored check speak the scope root.
 ///
 /// # Errors
 /// A ledger save failure on a censor, or an illegal replay of a ledger
 /// record at expansion time (the lineage-gate contract — a defect, abort).
+#[allow(clippy::too_many_arguments)] // the walk's per-batch state, one arg each
 pub fn run_walk_batch(
     session: &mut Session,
     db: &DbContent,
@@ -145,6 +155,7 @@ pub fn run_walk_batch(
     ledger_path: &Path,
     base: u64,
     opts: &WalkOptions,
+    scope: &str,
 ) -> Result<WalkSummary, String> {
     let t_start = Instant::now();
     let mut summary = WalkSummary::default();
@@ -164,9 +175,22 @@ pub fn run_walk_batch(
         }
         let picked = frontier.pick(ledger);
         let Some((key, work)) = picked else {
-            // Root rule (D2/D6): virtual root candidate, unless the root is
-            // proven-stored or complete-blocked — then the walk is done.
-            if root_proven_stored(&rows, session) || frontier.root_blocked() {
+            // Root rule (D2/D6): the scope root as a virtual candidate,
+            // unless the scope root is proven-stored or complete-blocked —
+            // then the walk is done. A scoped session's proven-stored
+            // scope root explains itself on stderr (plan19 ruling b: no
+            // work beneath proven nodes; the global session's shape is
+            // unchanged, so the note fires only under a scope).
+            if root_proven_stored(&rows, session, scope) {
+                if !scope.is_empty() {
+                    eprintln!(
+                        "frontier-walk: scope root {scope:?} is proven-stored — \
+                         nothing to harvest"
+                    );
+                }
+                break; // exhausted (empty stop reason)
+            }
+            if frontier.root_blocked() {
                 break; // exhausted (empty stop reason)
             }
             visit(
@@ -174,7 +198,7 @@ pub fn run_walk_batch(
                 frontier,
                 ledger,
                 ledger_path,
-                "",
+                scope,
                 base,
                 JobClass::Open,
                 "search",
@@ -237,7 +261,8 @@ pub fn run_walk_batch(
 /// The CLI-side session assembly (the `proofdb_harvest` frontier-walk
 /// branch): load the ledger, build the frontier + census, echo the census
 /// line, run the batch. `budget_evals = 0` selects the standing base
-/// ([`BASE_EVALS`]).
+/// ([`BASE_EVALS`]). `scope` is the `--moves` re-anchor key (`""` =
+/// global; plan19).
 ///
 /// # Errors
 /// Anything the ledger load or a ledger save on censor rejects (a defect —
@@ -248,6 +273,7 @@ pub fn run_walk_session(
     ledger_path: &Path,
     budget_evals: u64,
     opts: &WalkOptions,
+    scope: &str,
 ) -> Result<WalkSummary, String> {
     let mut ledger = Ledger::load(ledger_path)?;
     let base = if budget_evals > 0 {
@@ -255,8 +281,8 @@ pub fn run_walk_session(
     } else {
         BASE_EVALS
     };
-    let (mut frontier, mut census) = WalkFrontier::new(&ledger, db);
-    census.root = root_state(db, session);
+    let (mut frontier, mut census) = WalkFrontier::new(&ledger, db, scope);
+    census.root = root_state(db, session, scope);
     eprintln!("{}", census.describe(base));
     run_walk_batch(
         session,
@@ -266,5 +292,6 @@ pub fn run_walk_session(
         ledger_path,
         base,
         opts,
+        scope,
     )
 }
