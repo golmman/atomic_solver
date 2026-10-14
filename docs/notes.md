@@ -1012,6 +1012,8 @@ Then tell me which files i need to copy over and how to kick off the session.
 
 ---
 
+## HANDOFF
+
 Done. The brief lives at docs/plans/proofdb/measurements/plan13/handoff/BROWSER_BRIEF.md, alongside the existing item-5 handoff package it extends.
 
 **What I found in the initiative**
@@ -1040,3 +1042,14 @@ Create the new repo/directory, copy the four files in, and open the session with
 > Read BROWSER_BRIEF.md, then global_proof_store.md (the normative contract) and HANDOFF.md in full. Verify the proofdb.db sha256 and meta census against §5 of the brief. Decide the rules-engine option (§6: TS port vs Rust/WASM of atomic-movegen 2.3) and record the decision + rationale in a short DECISIONS.md before writing UI code. Then scaffold the static site: DB load + version-stamp gate + structural invariant checks (§8) first, board navigation second, node facts panel third.
 
 One thing to be aware of: if the coding agent will work inside this repo's session protocol, the brief should not become a planN.md here — the website is out of the initiative's scope by owner decision, and BROWSER_BRIEF.md is a handoff artifact like HANDOFF.md, not a plan. If you'd rather track the browser project's own sessions in this repo, that would be a new initiative directory (e.g. docs/plans/browser/) — your call, but I'd keep it external and clean.
+
+---
+
+What happens when i delete shards that were already merged into the `data/proofdb/proofdb.db`?
+
+So my reasoning is that it will get hard to keep track of potentially tens of thousands maybe even millions of individual shards.
+I'd rather have a single file (the `proofdb.db`) which can grow to multiple gigabytes but is the single source of truth.
+I also doubt we still need the `work.json`. It was needed for laddered harvesting (e.g. `and-close` policy) but we should be able to get all necessary info directly from the `proofdb.db` for the only remaining `frontier-walk` policy.
+I think the shards are still fine so we can cleanly decouple the harvest from the merge, but it should be ok to delete them after the merge.
+
+What do you think?

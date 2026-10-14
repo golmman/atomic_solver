@@ -34,6 +34,27 @@ is what eventually makes the handover rule executable.
 
 ## Motivation
 
+**Extended 2026-10-15 (owner decision).** The durable-layer architecture
+is pivoted: the shard set does not scale to the campaign sizes the owner
+targets (10⁵–10⁷ shards; the per-decisive-job manifest rewrite is already
+O(N²) over a campaign, and a million-file durable layer fails on
+filesystem grounds regardless of tooling). The **DB becomes the single
+source of truth** — one `proofdb.db` file growing to multiple GB — and
+shards are reclassified as ephemeral transport, deletable after merge.
+Correction established in the design dialogue: the work ledger is *not*
+laddered-harvest legacy — its censor history (`passes_failed`/
+`work_done`) records the facts of absence of censored draw jobs, which
+are not representable in the tree model and not derivable from the tree
+tables; it is therefore **relocated into the DB** (a `censor` table),
+not dropped. Program: item 17 (censor into the DB, retire `work.json` +
+`proofdb_ledger_union`; plan20 drafted) → item 18 (incremental merge
+fold, deletable shards, `proofdb_verify` replacing the byte-identical
+rebuild contract) → item 19 (spec v2 + manual rewrite + standing-layer
+migration). Until item 18 ships, the durable layer (shards + manifest +
+`built_from` gate) remains normative and shard deletion stays unsafe.
+
+## Motivation (pre-pivot record)
+
 The `solve` initiative's plan4 pilot demonstrated that a real, one-sided,
 cheap tactical class of startpos-provable lines exists (55 ply-2 refutations;
 a validated 10,177-position proof artifact at 83 KB) — but that the artifact
@@ -166,6 +187,9 @@ value.
 | 14 | **Crash-consistent manifest (per-job durable manifest sync)** | the harvest session rewrites the manifest atomically (tmp + rename, the ledger's pattern) after every decisive job, inside the single `Session::produce_shard` choke point — no signal handling, no format change, all five policy drivers covered at once; end-of-batch rewrite and stdout grammar unchanged (idempotent byte-wise) | an unexpected crash or ctrl-c loses at most the in-flight job's work instead of every shard exported in the session; every subsequent bare `proofdb_merge` folds in everything collected up to the last finished job; the operator "merge after a batch" discipline is unchanged (the stale-`built_from` guard still applies) | S | **done (plan17, 2026-10-13)**: per-job atomic manifest sync in `Session::produce_shard` (`sync_manifest`, tmp + rename writer); abort/error window test-pinned (previous manifest intact, one orphan); censored jobs byte-pin the manifest as untouched; boot tests assert the pre-rewrite current manifest; gate green, `0d929f4c…` digest pin unchanged; see `report17.md` |
 | 15 | **Policy consolidation — `frontier-walk` becomes the only harvest policy** | remove `breadth-pns`, `and-close`, `descend`, and the plan3 legacy gradients (plans 2–15 surface) from `proofdb_harvest`; the walk absorbs the boot (its root rule bootstraps a root-only layer, §3.2 of the manual) and the flat budget replaces the ladder as the deepening mechanism (raising `--budget-evals` between sessions re-prices underworked records); the `--policy` flag is kept but accepts only `frontier-walk` | every new harvest feature must work and be tested against all policies — an unreasonable maintenance/extensibility cost for surface the owner does not use (owner request 2026-10-14); accepted trade-offs: `descend`'s fast ply-2 boot enumeration and the `and-close` auto-deepening ladder are gone | S | **done (plan18, 2026-10-14)**: ~5.4k lines removed (`pns/`, `and_close/`, `descend.rs`, `batch.rs`, `frontier.rs`, `policy.rs` modules; the legacy CLI flags); walk-only CLI, operator manual rewritten to the walk-only boot-and-grow cycle, job-JSON grammar drops `parent_bound`/`number`; ledger pick-up and durable-layer formats unchanged; gate green; see `report18.md` |
 | 16 | **Scoped harvest (`--moves` — the walk re-anchored at a startpos path)** | `proofdb_harvest --moves 'a2a4 b7b5 b1a3'`: the frontier-walk session runs with its world rooted at the node reached by replaying the given moves from the startpos — only that node and its descendants are searched/expanded. Re-anchor, not filter (the scope node is the walk's root: virtual-root bootstrap, drop rules evaluated scope-relative, census scoped + out-of-scope count); a proven-stored scope node ends the session `exhausted` with an explanatory note; tokens whitespace-separated and prefix-validated by startpos replay (nonsense/illegal → usage exit 1, fail-fast before any state load); absent flag = exact today behavior (bit-identity) | targeted growth without disturbing the global frontier: an operator can commit work to one line's subtree (deepen/resolve a chosen opening) while the shared ledger and DB stay untouched elsewhere — scoping is a selection-layer change only since every job already replays the full startpos path | S | **done (plan19, 2026-10-14)**: shipped; the frontier keys its order/complete/decided sets scope-relative (`rel_of`/`join_scope`; the scope root is relative `""`), proven rows above the scope invisible, `pick` returns absolute keys (job JSON unchanged); census line gains `out_of_scope O …; scope <path\|global>`; proven-scope stderr note; parser validated by startpos replay with the offending token named; CLI-level test target `tests/proofdb_harvest_cli.rs` (exit-1 unhappy paths touch no state, in-scope-only jobs, proven-scope exhausted, absent-flag global shape); global call sites re-pinned bit-identical; see `report19.md` |
+| 17 | **Censor state into the DB — one-artifact frontier (retire `work.json` and `proofdb_ledger_union`)** | a `censor` table in the DB (schema v2, additive: `path`/`work_done`/`passes_failed`, the exact ledger relocation — the ledger is censor-history only, verified by code read); the in-memory `Ledger` type and all walk selection code stay untouched, only the persistence backend swaps (JSON file → SQLite, per-bump committed transaction = today's per-censor atomic save); harvest gains a narrow writer carve-out (censor rows only — merge stays sole writer of `nodes`/`shards`/`meta`); merge preserves `censor` across its full rebuild; one-shot `proofdb_merge --import-censor` migrates a legacy ledger under the union max-rule | the frontier state lives in the one file the owner wants as truth; the first step of the 2026-10-15 durable-layer pivot (items 17→18→19); kills two artifacts (`work.json`, `proofdb_ledger_union`) and un-blocks item 6 (parallel censor merging becomes SQL) | S–M | **plan20 drafted (2026-10-15)** — open |
+| 18 | **DB as the source of truth: incremental merge fold, shards deletable post-merge, `proofdb_verify` audit** | `proofdb_merge` becomes an incremental fold: validate a shard, graft into the *standing* DB in one transaction keyed on the `shards`-table sha256 (idempotent, conflicts abort without writes); shards are reclassified from durable truth to ephemeral transport — deletable after merge; the byte-identical full-rebuild contract (constraint 3) is retired and replaced by `proofdb_verify` (replay-validate the whole DB tree read back from the DB itself — validation is path replay, it needs no shards) plus a documented `VACUUM INTO` offsite-backup duty; the `built_from` manifest-digest staleness gate is replaced by unmerged-shard detection (a `*.bin` present in the shard dir but absent from the DB `shards` table → harvest/flip refuse) | the scaling fix: removes the O(N²) per-decisive-job manifest rewrite and the millions-of-files durable layer the owner called out; crash consistency *simplifies* (one SQLite transaction per shard/batch replaces the atomic manifest dance); accepted losses, each deliberately replaced: byte-identical rebuild → verify + backup; post-deletion excision of a wrong proven fact → impossible, append-only truth (soundness bugs were never patched over anyway) | M | open — added 2026-10-15 (owner direction); open decisions to settle in its plan: manifest retirement path (per-shard sidecar vs. shard-format v2 graft-path header — note the `proof` initiative's "dump format v1 unchanged; no reopening" constraint) and whether a DB→shardset export is retained for portability/audit |
+| 19 | **Contract migration: spec v2, manual rewrite, standing-layer consolidation** | `docs/spec/global_proof_store.md` rewritten as the v2 contract (DB = truth; `censor` table semantics; per-shard provenance as the audit trail; deletion/backup policy) — standalone, no plans vocabulary; `docs/proofdb_pipeline.md` rewritten around the new artifact graph (R-recipes: backup replaces rebuild; no more re-merge-from-shards); AGENTS.md; migration of the standing layer (fold existing shards once, adopt the new contract) | the external agreement (`solve` handover, website) tracks the reality; closes the 2026-10-15 pivot | S–M | open — added 2026-10-15 (owner direction); runs after item 18 |
 
 ## Non-goals
 
@@ -187,6 +211,20 @@ value.
 
 ## History
 
+- **2026-10-15 — durable-layer pivot; items 17–19 added; plan20 drafted
+  (docs-only plan session, owner dialogue).** Owner direction: the shard
+  set will not scale (10⁵–10⁷ shards), the DB should be the single source
+  of truth, `work.json` looks obsolete under the walk-only policy, and
+  merged shards should be deletable. Design dialogue settled: (i) the
+  ledger's censor history is facts-of-absence (censored draw jobs are not
+  representable in the tree model) — it moves *into* the DB as a `censor`
+  table rather than being dropped; (ii) shard deletion requires the
+  incremental fold + `proofdb_verify` + backup duty first, so deletion
+  stays unsafe until item 18; (iii) the byte-identical rebuild contract
+  is retired deliberately, replaced rather than silently lost. Backlog:
+  item 17 (censor into DB; plan20 drafted, S–M), item 18 (incremental
+  fold + deletable shards + verify, M), item 19 (spec v2 + manual +
+  standing-layer migration, S–M). Plan: `plan20.md`.
 - **2026-10-14 — item 16 executed and closed (plan19).** Scoped harvest
   shipped: `proofdb_harvest --moves '<uci path>'` re-anchors the
   frontier-walk at a subtree root — a selection-layer change only (no
