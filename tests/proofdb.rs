@@ -341,426 +341,6 @@ fn union_ledger_save_roundtrip_is_deterministic() {
     std::fs::remove_dir_all(&dir).ok();
 }
 
-// --- plan8 D1: the and-close completion-gradient policy (and_close.rs) ---
-
-use proofdb::and_close::driver::{
-    AndCloseOptions, apply_budget_filter, on_censored, run_and_close_batch,
-};
-use proofdb::and_close::{AndCloseCensus, AndCloseOrder, build_sequence, ladder_budget};
-use proofdb::pns::{Pns, PnsConfig};
-use proofdb::policy::Policy;
-use proofdb::session::Session;
-
-/// A `DbContent` from hand-written rows (path, ply, outcome) — paths must
-/// replay legally (the and-close extraction movegens at every active row).
-/// Same shape as `pns::tests::crafted`, which is not reachable from here
-/// (private `mod tests`).
-fn ac_crafted(rows: &[(&str, usize, Option<Outcome>)]) -> proofdb::db::DbContent {
-    let rows = rows
-        .iter()
-        .map(|&(p, ply, o)| proofdb::db::DbRow {
-            path: if p.is_empty() {
-                Vec::new()
-            } else {
-                p.split(' ').map(str::to_string).collect()
-            },
-            ply,
-            outcome: o,
-            depth_bound: o.map(|_| 1),
-        })
-        .collect();
-    proofdb::db::DbContent {
-        root_fen: Position::STARTPOS_FEN.to_string(),
-        rows,
-    }
-}
-
-fn ac_dir(name: &str) -> std::path::PathBuf {
-    let dir = std::env::temp_dir().join(format!("proofdb_ac_{name}_{}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
-    dir
-}
-
-fn ac_build(db: &proofdb::db::DbContent, ledger: Ledger, dir: &std::path::Path, base: u64) -> Pns {
-    Pns::build(
-        db,
-        ledger,
-        dir.join("ledger.json"),
-        base,
-        PnsConfig::default(),
-        0,
-    )
-    .unwrap()
-}
-
-fn ac_paths(jobs: &[proofdb::harvest::Job]) -> Vec<String> {
-    jobs.iter().map(|j| j.path.join(" ")).collect()
-}
-
-#[test]
-fn and_close_completion_order_ties_and_budgets() {
-    let dir = ac_dir("order");
-    // Root (18 missing: a2a3/b1c3 stored), then a tie at 20 between the two
-    // stored rows (both ply 1, 20 unvisited replies each).
-    let db = ac_crafted(&[("", 0, None), ("a2a3", 1, None), ("b1c3", 1, None)]);
-    let mut sel = ac_build(&db, Ledger::default(), &dir, 1_000_000);
-    let built = build_sequence(&mut sel, AndCloseOrder::Completion, 1_000_000).unwrap();
-    let c = &built.census;
-    assert_eq!(c.rows_open, 3);
-    assert_eq!(c.active_rows, 3);
-    assert_eq!(c.excluded, [0, 0, 0]);
-    assert_eq!(c.replies(), 58);
-    assert_eq!(c.replies_fresh, 58);
-    assert_eq!(c.replies_censored, 0);
-    // Gradient: root first (18), then the (missing, ply, path) tie broken
-    // by path: a2a3 before b1c3.
-    assert_eq!(
-        built.gradient,
-        vec![
-            ("".to_string(), 18),
-            ("a2a3".to_string(), 20),
-            ("b1c3".to_string(), 20)
-        ]
-    );
-    let paths = ac_paths(&built.jobs);
-    // Root's 18 replies first, path-lex (a2a3/b1c3 are stored rows).
-    assert!(paths[..18].iter().all(|p| !p.contains(' ')));
-    let mut sorted = paths[..18].to_vec();
-    sorted.sort();
-    assert_eq!(paths[..18], sorted[..]);
-    assert!(!paths[..18].contains(&"a2a3".to_string()));
-    assert!(!paths[..18].contains(&"b1c3".to_string()));
-    // Then a2a3's 20 replies (path-lex), then b1c3's.
-    assert!(paths[18..38].iter().all(|p| p.starts_with("a2a3 ")));
-    assert!(paths[38..].iter().all(|p| p.starts_with("b1c3 ")));
-    let mut sorted = paths[18..38].to_vec();
-    sorted.sort();
-    assert_eq!(paths[18..38], sorted[..]);
-    // Fresh ledger: every budget = the base.
-    assert!(built.jobs.iter().all(|j| j.budget == 1_000_000));
-    // Jobs are C3-class children (plan8 §2: the standard shard pipeline).
-    assert!(built.jobs.iter().all(|j| j.ply == j.path.len()));
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-#[test]
-fn and_close_ladder_budgets_and_strict_growth() {
-    // The pure ladder: 2^(k-1) × base.
-    assert_eq!(ladder_budget(0, 0, 4_000_000), 4_000_000);
-    assert_eq!(ladder_budget(1, 0, 4_000_000), 8_000_000);
-    assert_eq!(ladder_budget(2, 0, 4_000_000), 16_000_000);
-    assert_eq!(ladder_budget(3, 0, 1_000_000), 8_000_000);
-    // The strict-growth floor (plan9 §2): the floor doubles accumulated
-    // work instead of matching it — a revisit at budget ≤ work_done is a
-    // byte-identical deterministic repeat and must be impossible.
-    assert_eq!(ladder_budget(1, 100_000_000, 4_000_000), 200_000_000);
-    assert_eq!(ladder_budget(2, 20_000_000, 4_000_000), 40_000_000);
-    // The equal-work regression case (plan9 §2): pass 1 at work =
-    // 2^(k−1) × base must yield 2 × work, not work (the plan8 monotone
-    // rule revisited a 1B-censored defense at exactly 1B — pure waste).
-    assert_eq!(ladder_budget(1, 8_000_000, 4_000_000), 16_000_000);
-    // The g1f3 deep-probe case with the standing base 4M: ≈ 2B (the
-    // pre-registered plan9 rung, reached without a base change).
-    assert_eq!(ladder_budget(1, 1_000_000_060, 4_000_000), 2_000_000_120);
-    // Fresh (pass 0, work 0) stays at the base.
-    assert_eq!(ladder_budget(0, 0, 4_000_000), 4_000_000);
-    // Saturation guard.
-    assert_eq!(ladder_budget(63, 0, u64::MAX), u64::MAX);
-
-    // Integration: sequence budgets read from the ledger.
-    let dir = ac_dir("ladder");
-    let db = ac_crafted(&[("", 0, None)]);
-    let ledger = ledger_of(&[
-        ("c2c4", 100_000_000, 3),
-        ("d2d4", 4_000_000, 1),
-        ("e2e4", 0, 0),
-    ]);
-    let mut sel = ac_build(&db, ledger, &dir, 1_000_000);
-    let built = build_sequence(&mut sel, AndCloseOrder::Completion, 1_000_000).unwrap();
-    assert_eq!(built.census.replies(), 20);
-    assert_eq!(built.census.replies_fresh, 18); // e2e4 (pass-0 record) + 17 bare
-    assert_eq!(built.census.replies_censored, 2);
-    let budget = |p: &str| {
-        built
-            .jobs
-            .iter()
-            .find(|j| j.path.join(" ") == p)
-            .unwrap()
-            .budget
-    };
-    // Strict growth: the 100M-deep-censored reply revisits at 2 × work,
-    // never at ≤ work (the plan9 §2 floor); a pass-1 4M reply revisits at
-    // max(8M rung, 8M floor) = 8M — plan8's behavior where the old floor
-    // was strictly exceeded.
-    assert_eq!(budget("c2c4"), 200_000_000);
-    assert_eq!(budget("d2d4"), 8_000_000); // max(8M rung, 2 × 4M work)
-    assert_eq!(budget("e2e4"), 1_000_000); // pass-0 record: fresh budget
-    assert_eq!(budget("a2a3"), 1_000_000);
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-#[test]
-fn and_close_fresh_order_excludes_ledger_censored() {
-    let dir = ac_dir("fresh");
-    let db = ac_crafted(&[("", 0, None)]);
-    let ledger = ledger_of(&[
-        ("c2c4", 0, 0),         // pass-0 record: still fresh (§2)
-        ("d2d4", 4_000_000, 1), // censored once: excluded
-    ]);
-    let mut sel = ac_build(&db, ledger, &dir, 1_000_000);
-    let built = build_sequence(&mut sel, AndCloseOrder::Fresh, 1_000_000).unwrap();
-    assert_eq!(built.census.replies(), 20);
-    assert_eq!(built.census.replies_fresh, 19);
-    assert_eq!(built.census.replies_censored, 1);
-    let paths = ac_paths(&built.jobs);
-    assert_eq!(paths.len(), 19);
-    assert!(!paths.iter().any(|p| p == "d2d4"));
-    // (reply ply asc, path asc): all ply 1 here, so path-lex overall.
-    let mut sorted = paths.clone();
-    sorted.sort();
-    assert_eq!(paths, sorted);
-    // The completion order over the same state still has all 20.
-    let ledger = ledger_of(&[("d2d4", 4_000_000, 1)]);
-    let mut sel = ac_build(&db, ledger, &dir, 1_000_000);
-    let built = build_sequence(&mut sel, AndCloseOrder::Completion, 1_000_000).unwrap();
-    assert_eq!(built.jobs.len(), 20);
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-#[test]
-fn and_close_exclusions_decisions_9_10() {
-    let dir = ac_dir("excl");
-    // Decision 9 (proven ancestor): e7e6 sits behind the proven f2f3, so
-    // its replies are excluded; the root's replies (minus f2f3) remain.
-    let db = ac_crafted(&[
-        ("", 0, None),
-        ("f2f3", 1, Some(Outcome::Win)),
-        ("f2f3 e7e6", 2, None),
-    ]);
-    let mut sel = ac_build(&db, Ledger::default(), &dir, 1_000_000);
-    let built = build_sequence(&mut sel, AndCloseOrder::Completion, 1_000_000).unwrap();
-    assert_eq!(built.census.rows_open, 2);
-    assert_eq!(built.census.active_rows, 1);
-    assert_eq!(built.census.excluded, [1, 0, 0]);
-    let paths = ac_paths(&built.jobs);
-    assert_eq!(paths.len(), 19);
-    assert!(paths.iter().all(|p| !p.starts_with("f2f3 ")));
-
-    // Decision 10 (implied-decided): f2f3 with all 20 replies proven
-    // root-player wins (even ply + win) is an implied AND-loss; its
-    // (zero) missing replies drop out and the row is excluded.
-    let pos_after_f3 = {
-        let mut pos = Position::from_fen(Position::STARTPOS_FEN).unwrap();
-        let mv = atomic_solver::notation::uci_to_move("f2f3", &pos).unwrap();
-        pos.do_move(mv);
-        pos
-    };
-    let mut rows: Vec<(&str, usize, Option<Outcome>)> = vec![("", 0, None), ("f2f3", 1, None)];
-    for mv in pos_after_f3.legal_moves_vec() {
-        let uci = atomic_solver::notation::move_to_uci(mv).leak() as &str;
-        rows.push((format!("f2f3 {uci}").leak(), 2, Some(Outcome::Win)));
-    }
-    let db = ac_crafted(&rows);
-    let mut sel = ac_build(&db, Ledger::default(), &dir, 1_000_000);
-    let built = build_sequence(&mut sel, AndCloseOrder::Completion, 1_000_000).unwrap();
-    assert_eq!(built.census.rows_open, 2);
-    // The exclusion cascades (decision 10): f2f3 is an implied AND-loss and
-    // the root (OR) is implied-win through it — both rows drop out, no jobs.
-    assert_eq!(built.census.active_rows, 0);
-    assert_eq!(built.census.excluded, [0, 2, 0], "implied-win cascade");
-    assert_eq!(built.jobs.len(), 0);
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-#[test]
-fn and_close_censor_hook_bumps_only() {
-    let dir = ac_dir("hook");
-    let db = ac_crafted(&[("", 0, None)]);
-    let mut sel = ac_build(&db, Ledger::default(), &dir, 1_000_000);
-    let nodes_before = sel.nodes.len();
-    let mut ledger = std::mem::take(&mut sel.ledger);
-    on_censored(&mut ledger, &dir.join("ledger.json"), "a2a3", 4_000_000).unwrap();
-    // Bump-only: exactly the censored reply's record — no child exposure,
-    // no tree growth (the decision-11 deviation, plan8 §2).
-    assert_eq!(ledger.len(), 1);
-    assert_eq!(
-        ledger.get("a2a3"),
-        Some(&LedgerEntry {
-            work_done: 4_000_000,
-            passes_failed: 1
-        })
-    );
-    assert_eq!(sel.nodes.len(), nodes_before);
-    assert!(ledger.get("a2a3 a7a5").is_none());
-    // A second censor compounds (pass 2, work added).
-    on_censored(&mut ledger, &dir.join("ledger.json"), "a2a3", 8_000_000).unwrap();
-    assert_eq!(
-        ledger.get("a2a3"),
-        Some(&LedgerEntry {
-            work_done: 12_000_000,
-            passes_failed: 2
-        })
-    );
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-#[test]
-fn and_close_driver_censored_jobs_grow_ledger_by_censor_count() {
-    let dir = ac_dir("driver");
-    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
-    let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
-    let shard_dir = dir.join("shards");
-    std::fs::create_dir_all(&shard_dir).unwrap();
-    let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
-    let ledger_path = dir.join("ledger.json");
-    let mut sel = ac_build(&db, Ledger::default(), &dir, 1_000);
-    let built = build_sequence(&mut sel, AndCloseOrder::Completion, 1_000).unwrap();
-    assert!(
-        built.jobs.len() > 5,
-        "fixture has plenty of missing replies"
-    );
-    let start_records = sel.ledger.len();
-
-    let run = |ledger_path: &std::path::Path| {
-        let mut session = Session::new(
-            4,
-            dir.join("shards"),
-            dir.join("shards/manifest.json"),
-            manifest.entries.clone(),
-            "and-close",
-        );
-        let opts = AndCloseOptions {
-            max_total_evals: 0,
-            max_jobs: 5,
-            max_runtime: 0,
-            stop_file: std::path::PathBuf::new(),
-            max_budget: 0,
-        };
-        let mut sel = ac_build(&db, Ledger::default(), &dir, 1_000);
-        let built = build_sequence(&mut sel, AndCloseOrder::Completion, 1_000).unwrap();
-        let mut ledger = std::mem::take(&mut sel.ledger);
-        let summary =
-            run_and_close_batch(&mut session, &built.jobs, &mut ledger, ledger_path, &opts)
-                .unwrap();
-        (summary, ledger)
-    };
-    let (summary, ledger) = run(&ledger_path);
-    // Tiny budgets on quiet fixture positions: every job censors.
-    assert_eq!(summary.jobs, 5);
-    assert_eq!(summary.stop_reason, "max-jobs");
-    assert_eq!(summary.decisive, 0);
-    assert_eq!(summary.censored, 5);
-    // The H1 no-exposure signature: ledger growth == censor count.
-    assert_eq!(ledger.len(), start_records + 5);
-    // Determinism: a fresh session over the same inputs reproduces the
-    // post-run ledger byte-for-byte.
-    let ledger_path2 = dir.join("ledger2.json");
-    let (summary2, ledger2) = run(&ledger_path2);
-    assert_eq!(summary2.jobs, summary.jobs);
-    assert_eq!(entries(&ledger), entries(&ledger2));
-    let b1 = std::fs::read(&ledger_path).unwrap();
-    let b2 = std::fs::read(&ledger_path2).unwrap();
-    assert_eq!(b1, b2, "post-run ledger bytes identical");
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-#[test]
-fn and_close_budget_filter_plan10_d1() {
-    let dir = ac_dir("filter");
-    // Fresh (pass-0, budget = base) and ledger-censored replies at pass 1
-    // (budget = 2 × work) — a filter cap between the two classes must keep
-    // exactly the fresh ones.
-    let db = ac_crafted(&[("", 0, None)]);
-    let mut ledger = Ledger::default();
-    ledger.bump("a2a3", 1_000_000); // pass 1, work 1M → budget 2M
-    let mut sel = ac_build(&db, ledger, &dir, 1_000_000);
-    let built = build_sequence(&mut sel, AndCloseOrder::Completion, 1_000_000).unwrap();
-    assert!(built.jobs.iter().any(|j| j.budget == 1_000_000));
-    assert!(built.jobs.iter().any(|j| j.budget == 2_000_000));
-    let total = built.jobs.len();
-
-    // Unlimited (0): no-op, empty echo.
-    let mut jobs = built.jobs.clone();
-    assert_eq!(apply_budget_filter(&mut jobs, 0), "");
-    assert_eq!(jobs.len(), total);
-
-    // Cap between the classes: fresh kept, bumped dropped, echo exact.
-    let mut jobs = built.jobs.clone();
-    let line = apply_budget_filter(&mut jobs, 1_000_000);
-    assert_eq!(
-        line,
-        format!(
-            "and-close-filter: max-budget 1000000, jobs {} of {total}",
-            jobs.len()
-        )
-    );
-    assert!(jobs.iter().all(|j| j.budget == 1_000_000));
-    assert_eq!(jobs.len(), total - 1);
-    assert!(jobs.iter().all(|j| j.path != vec!["a2a3"]));
-
-    // Cap above every budget: nothing dropped.
-    let mut jobs = built.jobs.clone();
-    let line = apply_budget_filter(&mut jobs, 1_000_000_000);
-    assert_eq!(
-        line,
-        format!("and-close-filter: max-budget 1000000000, jobs {total} of {total}")
-    );
-    assert_eq!(jobs.len(), total);
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-#[test]
-fn and_close_census_lines_and_parsing() {
-    let c = AndCloseCensus {
-        rows_open: 75,
-        active_rows: 49,
-        excluded: [26, 0, 0],
-        replies_fresh: 1041,
-        replies_censored: 101,
-    };
-    assert_eq!(c.replies(), 1142);
-    let line = c.describe(AndCloseOrder::Completion, 1_000_000_000);
-    assert_eq!(
-        line,
-        "and-close: active rows 49, replies 1142 (fresh 1041, ledger-censored 101); \
-         order completion; base budget 1000000000"
-    );
-    let line = c.describe(AndCloseOrder::Fresh, 4_000_000);
-    assert!(line.contains("order fresh; base budget 4000000"));
-    let excl = c.describe_exclusions();
-    assert_eq!(
-        excl,
-        "and-close-excluded: open rows 75 (active 49); proven-ancestor 26, \
-         implied-win 0, implied-loss 0"
-    );
-    let grad = proofdb::and_close::describe_gradient(&[
-        ("".to_string(), 13),
-        ("g1f3".to_string(), 3),
-        ("e2e3".to_string(), 7),
-    ]);
-    assert_eq!(grad, "and-close-gradient: root:13 g1f3:3 e2e3:7");
-
-    // Parsing: policy name, order round-trip, unknown rejected.
-    assert_eq!(Policy::parse("and-close"), Ok(Policy::AndClose));
-    assert_eq!(Policy::AndClose.as_str(), "and-close");
-    assert_eq!(
-        AndCloseOrder::parse("completion"),
-        Ok(AndCloseOrder::Completion)
-    );
-    assert_eq!(AndCloseOrder::parse("fresh"), Ok(AndCloseOrder::Fresh));
-    assert!(AndCloseOrder::parse("deep").is_err());
-    assert!(Policy::parse("andclose").is_err());
-    // The legacy frontier sequence builder has no and-close jobs (the CLI
-    // branch builds them over the classified PNS tree instead).
-    let dir = ac_dir("jfp");
-    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
-    let f =
-        proofdb::frontier::extract_frontier(&db_path, &digest, &std::collections::HashSet::new())
-            .unwrap();
-    assert!(proofdb::policy::jobs_for_policy(Policy::AndClose, &f).is_empty());
-    std::fs::remove_dir_all(&dir).ok();
-}
-
 // --- plan12 D3: the derived-DB gate as a repeatable test ---
 
 /// The standing shard set (committed under `docs/plans/proofdb/shards/`)
@@ -934,365 +514,41 @@ fn cli_defaults_are_centralized_under_data_proofdb() {
     }
 }
 
-// --- plan15 D1: the descend self-bootstrapping policy (descend.rs) ---
-
-use proofdb::descend::{
-    DescendCensus, DescendOptions, build_sequence as descend_build_sequence, enumerate_paths,
-    plies_in_range, run_descend_batch,
-};
-use proofdb::harvest::replay_job_path;
-
-#[test]
-fn descend_enumeration_counts_and_order() {
-    // Ply 1: the root's 20 legal first moves.
-    let p1 = enumerate_paths(1);
-    assert_eq!(p1.len(), 20);
-    assert!(p1.iter().all(|p| p.len() == 1));
-    // Ply 2: 20 × 20 = 400 reply paths (the measured plan15 count) + the 20
-    // ply-1 paths = 420 candidates of length 1..=2.
-    let all = enumerate_paths(2);
-    assert_eq!(all.len(), 420);
-    assert_eq!(all.iter().filter(|p| p.len() == 2).count(), 400);
-    // Lexicographic UCI order (plan15 D2), no duplicates, every path
-    // replays legally (the enumeration is movegen-driven, not string art).
-    let joined: Vec<String> = all.iter().map(|p| p.join(" ")).collect();
-    let mut sorted = joined.clone();
-    sorted.sort();
-    assert_eq!(joined, sorted);
-    assert_eq!(
-        joined
-            .iter()
-            .collect::<std::collections::HashSet<_>>()
-            .len(),
-        420
-    );
-    for p in &all {
-        replay_job_path(p).unwrap_or_else(|e| panic!("path {:?}: {e}", p.join(" ")));
-    }
-    // Ply 3: ~10k paths (plan15 D1's documented cost scale) — pinned for
-    // determinism.
-    let all3 = enumerate_paths(3);
-    assert_eq!(all3.len(), 9322); // 20 + 400 + 8902
-    assert_eq!(all3.iter().filter(|p| p.len() == 3).count(), 8902);
-    let joined3: Vec<String> = all3.iter().map(|p| p.join(" ")).collect();
-    let mut sorted3 = joined3.clone();
-    sorted3.sort();
-    assert_eq!(joined3, sorted3);
-}
-
-#[test]
-fn descend_root_row_never_suppresses_candidates() {
-    // Plan15 D2's subtle case: the root row (id 0) is stored territory, but
-    // every path's ultimate prefix is the root — the root being stored must
-    // not suppress ply-1 candidates. A root-only DB keeps all 420.
-    let dir = ac_dir("desc_root");
-    let db = ac_crafted(&[("", 0, None)]);
-    let built = descend_build_sequence(
-        &db,
-        &std::collections::HashSet::new(),
-        &Ledger::default(),
-        2,
-        1_000_000,
-    )
-    .unwrap();
-    assert_eq!(built.census.candidates, 420);
-    assert_eq!(built.census.kept, 420);
-    assert_eq!(built.census.covered, 0);
-    assert_eq!(built.census.kept_per_ply, [20, 400, 0]);
-    let paths = ac_paths(&built.jobs);
-    assert!(paths.contains(&"a2a3".to_string()));
-    assert!(
-        built
-            .jobs
-            .iter()
-            .all(|j| j.class == proofdb::harvest::JobClass::Descend)
-    );
-    assert!(built.jobs.iter().all(|j| j.class.as_str() == "D"));
-    assert!(built.jobs.iter().all(|j| j.ply == j.path.len()));
-    // Fresh ledger: every budget = the base (the plan15 D3 ladder).
-    assert!(built.jobs.iter().all(|j| j.budget == 1_000_000));
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-#[test]
-fn descend_skip_rule_rows_and_manifest_prefixes() {
-    // Stored DB rows (any outcome, including open) and manifest shard paths
-    // cover themselves and all their descendants; a proper prefix of length
-    // >= 1 triggers, the root (empty path) never does.
-    let dir = ac_dir("desc_skip");
-    let db = ac_crafted(&[("", 0, None), ("a2a3", 1, None), ("e2e4 e7e5", 2, None)]);
-    let mut manifest_paths = std::collections::HashSet::new();
-    manifest_paths.insert("g1f3".to_string());
-    let built =
-        descend_build_sequence(&db, &manifest_paths, &Ledger::default(), 2, 1_000_000).unwrap();
-    // Covered: a2a3 + its 20 children; g1f3 (manifest) + its 20 children;
-    // the stored ply-2 row e2e4 e7e5 itself → 21 + 21 + 1 = 43.
-    assert_eq!(built.census.candidates, 420);
-    assert_eq!(built.census.covered, 43);
-    assert_eq!(built.census.kept, 377);
-    let paths = ac_paths(&built.jobs);
-    assert!(paths.iter().all(|p| !p.starts_with("a2a3")));
-    assert!(paths.iter().all(|p| !p.starts_with("g1f3")));
-    assert!(!paths.contains(&"e2e4 e7e5".to_string()));
-    // The stored row's parent and siblings stay (its ancestor e2e4 is open
-    // frontier territory, not coverage).
-    assert!(paths.contains(&"e2e4".to_string()));
-    assert!(paths.contains(&"e2e4 e7e6".to_string()));
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-#[test]
-fn descend_ladder_budgets_from_ledger() {
-    let dir = ac_dir("desc_ladder");
-    let db = ac_crafted(&[("", 0, None)]);
-    let ledger = ledger_of(&[("e2e4 e7e5", 4_000_000, 1)]);
-    let built = descend_build_sequence(
-        &db,
-        &std::collections::HashSet::new(),
-        &ledger,
-        2,
-        1_000_000,
-    )
-    .unwrap();
-    let budget = |p: &str| {
-        built
-            .jobs
-            .iter()
-            .find(|j| j.path.join(" ") == p)
-            .unwrap()
-            .budget
-    };
-    // The plan15 D3 ladder (and-close semantics): censored candidate at
-    // pass 1 with 4M work → max(2^1 × base, 2 × work) = 8M; fresh at base.
-    assert_eq!(budget("e2e4 e7e5"), 8_000_000);
-    assert_eq!(budget("a2a3"), 1_000_000);
-    assert_eq!(budget("e2e4 e7e6"), 1_000_000);
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-#[test]
-fn descend_census_line_and_helpers() {
-    let c = DescendCensus {
-        candidates: 420,
-        kept: 420,
-        covered: 0,
-        kept_per_ply: [20, 400, 0],
-    };
-    assert_eq!(
-        c.describe(2, 4_000_000),
-        "descend: candidates 420 (kept 420, covered 0) — \
-         ply 1: 20 kept, ply 2: 400 kept; base budget 4000000"
-    );
-    let c1 = DescendCensus {
-        candidates: 20,
-        kept: 18,
-        covered: 2,
-        kept_per_ply: [18, 0, 0],
-    };
-    assert_eq!(
-        c1.describe(1, 20_000),
-        "descend: candidates 20 (kept 18, covered 2) — \
-         ply 1: 18 kept; base budget 20000"
-    );
-    // plies range + policy round-trip.
-    assert!(plies_in_range(1) && plies_in_range(2) && plies_in_range(3));
-    assert!(!plies_in_range(0) && !plies_in_range(4));
-    assert_eq!(
-        Policy::parse("descend"),
-        Ok(proofdb::policy::Policy::Descend)
-    );
-    assert_eq!(proofdb::policy::Policy::Descend.as_str(), "descend");
-    assert!(Policy::parse("descent").is_err());
-    // The frontier sequence builder has no descend jobs (the CLI branch
-    // builds them over DB rows + manifest + ledger instead).
-    let dir = ac_dir("desc_jfp");
-    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
-    let f =
-        proofdb::frontier::extract_frontier(&db_path, &digest, &std::collections::HashSet::new())
-            .unwrap();
-    assert!(proofdb::policy::jobs_for_policy(proofdb::policy::Policy::Descend, &f).is_empty());
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-#[test]
-fn descend_driver_censored_jobs_grow_ledger_by_censor_count() {
-    let dir = ac_dir("desc_driver");
-    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
-    let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
-    let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
-    let ledger_path = dir.join("ledger.json");
-
-    let run = |ledger_path: &std::path::Path| {
-        let mut session = Session::new(
-            4,
-            dir.join("shards"),
-            dir.join("shards/manifest.json"),
-            manifest.entries.clone(),
-            "descend",
-        );
-        let built = descend_build_sequence(
-            &db,
-            &std::collections::HashSet::new(),
-            &Ledger::default(),
-            2,
-            1_000,
-        )
-        .unwrap();
-        assert!(built.jobs.len() > 5, "fixture keeps plenty of candidates");
-        let opts = DescendOptions {
-            max_total_evals: 0,
-            max_jobs: 5,
-            max_runtime: 0,
-            stop_file: std::path::PathBuf::new(),
-        };
-        let mut ledger = Ledger::default();
-        let summary =
-            run_descend_batch(&mut session, &built.jobs, &mut ledger, ledger_path, &opts).unwrap();
-        (summary, ledger)
-    };
-    let (summary, ledger) = run(&ledger_path);
-    // Tiny budgets on quiet fixture positions: every job censors.
-    assert_eq!(summary.jobs, 5);
-    assert_eq!(summary.stop_reason, "max-jobs");
-    assert_eq!(summary.decisive, 0);
-    assert_eq!(summary.censored, 5);
-    // The ledger takes the off-tree censor records as first-class entries
-    // (plan15 D3): growth == censor count.
-    assert_eq!(ledger.len(), 5);
-    // Determinism: a fresh session over the same inputs reproduces the
-    // post-run ledger byte-for-byte.
-    let ledger_path2 = dir.join("ledger2.json");
-    let (summary2, ledger2) = run(&ledger_path2);
-    assert_eq!(summary2.jobs, summary.jobs);
-    assert_eq!(entries(&ledger), entries(&ledger2));
-    assert_eq!(
-        std::fs::read(&ledger_path).unwrap(),
-        std::fs::read(&ledger_path2).unwrap()
-    );
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-/// Plan15 task 5: boot-from-empty at a small budget on a temp layer — the
-/// R0 bootstrap merge (root-only DB) → `descend` batch → merge → the grown
-/// DB has more than the root. Fast tier: no wall clock, small TT, budget
-/// 20k (the plan4 decisive finds sit at 82–4.7k solver nodes).
-#[test]
-fn descend_boot_from_empty_layer() {
-    let dir = ac_dir("desc_boot");
-    // The R0 bootstrap shape: empty manifest + root-only DB.
-    let manifest_bytes = b"{\"entries\":[]}".to_vec();
-    let digest = proofdb::digest_hex(&manifest_bytes);
-    std::fs::write(dir.join("manifest.json"), &manifest_bytes).unwrap();
-    let mut pt = proofdb::merge::PathTree::new();
-    pt.finalize().unwrap();
-    proofdb::schema::write_db(
-        &dir.join("proofdb.db"),
-        Position::STARTPOS_FEN,
-        &digest,
-        &[],
-        &pt,
-    )
-    .unwrap();
-    let db = proofdb::db::load_db_rows(&dir.join("proofdb.db"), &digest).unwrap();
-
-    // Batch 1: descend at 20k base budget, plies default (2).
-    let mut session = Session::new(
-        4,
-        dir.join("shards"),
-        dir.join("shards/manifest.json"),
-        Vec::new(),
-        "descend",
-    );
-    let built = descend_build_sequence(
-        &db,
-        &std::collections::HashSet::new(),
-        &Ledger::default(),
-        2,
-        20_000,
-    )
-    .unwrap();
-    assert_eq!(built.census.candidates, 420);
-    assert_eq!(built.census.kept, 420);
-    let opts = DescendOptions {
-        max_total_evals: 0,
-        max_jobs: 0,
-        max_runtime: 0,
-        stop_file: std::path::PathBuf::new(),
-    };
-    let mut ledger = Ledger::default();
-    let summary = run_descend_batch(
-        &mut session,
-        &built.jobs,
-        &mut ledger,
-        &dir.join("work.json"),
-        &opts,
-    )
-    .unwrap();
-    assert_eq!(summary.stop_reason, "", "batch runs to exhaustion");
-    assert!(summary.decisive >= 1, "boot yield: >= 1 decisive shard");
-    assert_eq!(session.new_shards, summary.decisive);
-    // Plan17 D1: the per-job sync — the manifest on disk already references
-    // every shard the batch wrote, before the post-batch rewrite runs.
-    let pre_sync = read_manifest(&dir.join("shards/manifest.json")).unwrap();
-    assert_eq!(
-        pre_sync.entries.len(),
-        summary.decisive,
-        "manifest not current pre-rewrite"
-    );
-    assert!(
-        !dir.join("shards/manifest.json.tmp").exists(),
-        "tmp residue"
-    );
-    // The CLI's post-batch manifest rewrite (the batch never writes it).
-    session.rewrite_manifest(&dir.join("shards/manifest.json"), &digest);
-
-    // Merge the grown set (the harvest never merges) → DB > 1 node.
-    let manifest = read_manifest(&dir.join("shards/manifest.json")).unwrap();
-    assert_eq!(manifest.entries.len(), summary.decisive);
-    let mut tree = proofdb::merge::PathTree::new();
-    let mut rows = Vec::new();
-    for entry in &manifest.entries {
-        let bytes = std::fs::read(dir.join("shards").join(&entry.file)).unwrap();
-        let mut shard = atomic_solver::proof_tree::ProofTree::from_bin(&mut bytes.as_slice())
-            .unwrap_or_else(|e| panic!("shard {}: {e}", entry.tag));
-        atomic_solver::proof_tree::validate_proof_tree(&shard)
-            .unwrap_or_else(|d| panic!("shard {}: {d:?}", entry.tag));
-        assert_eq!(shard.nodes[0].outcome, Some(entry.outcome));
-        let graft = tree.graft_path(&moves_from_path(&entry.moves), &entry.tag);
-        tree.overlay_subtree(graft, &shard, &entry.tag).unwrap();
-        rows.push(proofdb::schema::ShardRow {
-            tag: entry.tag.clone(),
-            file: entry.file.clone(),
-            sha256: proofdb::digest_hex(&bytes),
-            root_fen: std::mem::take(&mut shard.root_fen),
-            path: entry.moves.join(" "),
-            outcome: entry.outcome,
-            depth_bound: shard.nodes[0].depth,
-            n_nodes: shard.nodes.len(),
-        });
-    }
-    tree.finalize().unwrap();
-    let grown = dir.join("grown.db");
-    proofdb::schema::write_db(
-        &grown,
-        Position::STARTPOS_FEN,
-        &manifest.sha256_hex,
-        &rows,
-        &tree,
-    )
-    .unwrap();
-    let conn = rusqlite::Connection::open(&grown).unwrap();
-    let node_count: i64 = conn
-        .query_row("SELECT COUNT(*) FROM nodes", [], |r| r.get(0))
-        .unwrap();
-    assert!(node_count > 1, "grown DB has more than the root");
-    std::fs::remove_dir_all(&dir).ok();
-}
-
 // --- plan16 D1: the frontier-walk shallowest-first ledger walk (walk.rs) ---
 
 use proofdb::walk::driver::{WalkOptions, run_walk_batch, run_walk_session};
 use proofdb::walk::{RootState, WalkFrontier, root_state};
+
+use proofdb::harvest::replay_job_path;
+use proofdb::session::Session;
+
+/// A crafted DB content (the and-close section's helper, kept for the walk
+/// and crash-sync tests): rows of (space-joined path, ply, outcome).
+fn walk_db(rows: &[(&str, usize, Option<Outcome>)]) -> proofdb::db::DbContent {
+    let rows = rows
+        .iter()
+        .map(|&(p, ply, o)| proofdb::db::DbRow {
+            path: if p.is_empty() {
+                Vec::new()
+            } else {
+                p.split(' ').map(str::to_string).collect()
+            },
+            ply,
+            outcome: o,
+            depth_bound: o.map(|_| 1),
+        })
+        .collect();
+    proofdb::db::DbContent {
+        root_fen: Position::STARTPOS_FEN.to_string(),
+        rows,
+    }
+}
+
+fn walk_dir(name: &str) -> std::path::PathBuf {
+    let dir = std::env::temp_dir().join(format!("proofdb_walk_{name}_{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    dir
+}
 
 fn walk_opts(max_jobs: usize, max_total_evals: u64) -> WalkOptions {
     WalkOptions {
@@ -1310,7 +566,7 @@ fn walk_opts(max_jobs: usize, max_total_evals: u64) -> WalkOptions {
 /// signature) and a fresh run reproduces the post-run ledger bytes.
 #[test]
 fn walk_driver_root_expansion_and_ledger_growth() {
-    let dir = ac_dir("walk_driver");
+    let dir = walk_dir("walk_driver");
     let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
     let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
     let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
@@ -1379,8 +635,8 @@ fn walk_driver_root_expansion_and_ledger_growth() {
 /// job runs, the loop cannot stall, and the session exhausts.
 #[test]
 fn walk_complete_rule_no_livelock_and_exhaustion() {
-    let dir = ac_dir("walk_complete");
-    let db = ac_crafted(&[("", 0, None)]);
+    let dir = walk_dir("walk_complete");
+    let db = walk_db(&[("", 0, None)]);
     // The root's 20 first-move children, all at work ≥ the budget.
     let (pos, _) = replay_job_path(&[]).unwrap();
     let mut children: Vec<String> = pos
@@ -1448,8 +704,8 @@ fn walk_complete_rule_no_livelock_and_exhaustion() {
 /// (proven DB row) ends the session before any job.
 #[test]
 fn walk_root_proven_exhausts() {
-    let dir = ac_dir("walk_proven_root");
-    let db = ac_crafted(&[("", 0, Some(Outcome::Win))]);
+    let dir = walk_dir("walk_proven_root");
+    let db = walk_db(&[("", 0, Some(Outcome::Win))]);
     let ledger = ledger_of(&[("a2a3", 100, 1)]);
     let mut session = Session::new(
         4,
@@ -1487,7 +743,7 @@ fn walk_root_proven_exhausts() {
 /// (measured: the first decisive shard lands at ~4.4M evals).
 #[test]
 fn walk_boot_from_empty_layer() {
-    let dir = ac_dir("walk_boot");
+    let dir = walk_dir("walk_boot");
     // The R0 bootstrap shape: empty manifest + root-only DB.
     let manifest_bytes = b"{\"entries\":[]}".to_vec();
     let digest = proofdb::digest_hex(&manifest_bytes);
@@ -1591,8 +847,8 @@ fn walk_boot_from_empty_layer() {
 /// re-picking the stalled record forever.
 #[test]
 fn walk_zero_eval_censor_guard_completes_the_node() {
-    let dir = ac_dir("walk_repetition");
-    let db = ac_crafted(&[("", 0, None)]);
+    let dir = walk_dir("walk_repetition");
+    let db = walk_db(&[("", 0, None)]);
     let rep = "g1f3 g8f6 f3g1 f6g8";
     let ledger = ledger_of(&[(rep, 4, 1)]);
     let mut session = Session::new(
@@ -1638,7 +894,7 @@ fn walk_zero_eval_censor_guard_completes_the_node() {
 /// a censor-only session (and no `.tmp` residue appears).
 #[test]
 fn session_censored_jobs_leave_manifest_bytes_untouched() {
-    let dir = ac_dir("p17_censored");
+    let dir = walk_dir("p17_censored");
     let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
     let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
     let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
@@ -1693,7 +949,7 @@ fn session_censored_jobs_leave_manifest_bytes_untouched() {
 #[test]
 fn session_manifest_write_failure_leaves_previous_manifest_and_one_orphan() {
     use proofdb::session::Session;
-    let dir = ac_dir("p17_orphan");
+    let dir = walk_dir("p17_orphan");
     let shard_dir = dir.join("shards");
     std::fs::create_dir_all(&shard_dir).unwrap();
     let manifest_path = shard_dir.join("manifest.json");

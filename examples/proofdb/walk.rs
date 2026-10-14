@@ -1,19 +1,21 @@
-//! The `frontier-walk` policy (plan16): the self-advancing shallowest-first
-//! ledger walk — a *live* selection policy (the breadth-pns/driver shape,
-//! not a precomputed sequence): the frontier mutates between iterations, so
-//! the selection loop and the batch driver are one module here.
+//! The `frontier-walk` policy (plan16; the only harvest policy since the
+//! plan18 policy consolidation): the self-advancing shallowest-first
+//! ledger walk — a *live* selection policy with a driver-shaped selection
+//! loop: the frontier mutates between iterations, so the selection loop
+//! and the batch driver are one module here.
 //!
-//! **D1 — scope.** `--policy frontier-walk`, no new flags: the flat budget
-//! `B` is `--budget-evals` (0 → the standing base
-//! [`BUDGET_PNS_BASE_EVALS`]); stop conditions and path flags keep their
-//! tool-wide semantics. Heavy options and `--pns-config` have no effect
-//! under the walk (the "effective only under their policy" convention).
+//! **D1 — scope.** `--policy frontier-walk` (the only accepted value), no
+//! new flags: the flat budget `B` is `--budget-evals` (0 → the standing
+//! base [`BASE_EVALS`]); stop conditions and path flags keep their
+//! tool-wide semantics. `--pns-config` and other legacy flags were removed
+//! with the plan18 policy consolidation.
 //! Census class tags reuse the existing classes — no `JobClass` change (the
 //! classes carry the true territory meaning; the `policy` field already
 //! identifies the session): `L` for a search visit on a ledger record, `C3`
 //! for an expansion visit on a fresh child, `C1` for the virtual-root
-//! search visit (an open DB row). The walk never flows through
-//! `policy::jobs_for_policy` (or `budget_for`).
+//! search visit (an open DB row). The walk never built a precomputed
+//! sequence over the frontier classes (the plan18 consolidation removed
+//! the machinery that did).
 //!
 //! **D2 — candidate set and selection.** Candidates = ledger records,
 //! minus: (a) records whose own path is a proven DB row (lineage drop,
@@ -28,7 +30,7 @@
 //! stops `exhausted`. A stored open root row is a legitimate first target
 //! (the fresh-layer bootstrap); its censor creates the root's ledger record
 //! via the bump hook — the same "a censored open DB row gets its record on
-//! first censor" semantics pns already has. Accepted consequence: on a
+//! first censor" semantics. Accepted consequence: on a
 //! grown-but-not-merged layer an empty ledger always spends one root search
 //! at `B` unless the root is proven — the spec's bootstrap behavior.
 //!
@@ -59,11 +61,12 @@
 //! **D4 — budget and ledger semantics.** Flat budget `B`, **no ladder**: a
 //! node censored at `B` is never re-searched deeper by this policy —
 //! expansion replaces deepening. Bump-only censor hook
-//! ([`and_close::driver::on_censored`]), no child exposure (the
+//! ([`super::ledger::on_censored`]), no child exposure (the
 //! decision-11 deviation verbatim — children are derived by movegen at
 //! expansion time). The ledger is rewritten between jobs (crash-safe).
 //! Measurable signature: the session's ledger growth equals its fresh-node
-//! censor count. Accepted deviations from the pns conventions, recorded as
+//! censor count. Accepted deviations from the earlier PNS conventions,
+//! recorded as
 //! limitations: no structural-number exclusions (decision 10 is not
 //! applied), and the search visit's re-search can re-spend known work (the
 //! retained TT softens this). The walk is deliberately number-free.
@@ -94,7 +97,7 @@
 //! File-size justification: ~14.7 KB — the normative D1–D7 contract lives
 //! in this module doc and shares one indexing scheme with the selection
 //! state ([`WalkFrontier`]); the batch driver is split out
-//! ([`driver`], same pattern as `and_close.rs` + `and_close/driver.rs`).
+//! ([`driver`], the driver-split file-size pattern).
 
 use std::collections::{BTreeSet, HashMap, HashSet};
 
@@ -105,6 +108,10 @@ use super::ledger::Ledger;
 use super::session::Session;
 
 pub mod driver;
+
+/// The standing base per-visit child-eval budget (used when
+/// `--budget-evals` is 0).
+pub const BASE_EVALS: u64 = 4_000_000;
 
 /// Why a ledger record is not a walk candidate (D2's lineage/ancestor
 /// drops; a record can carry both — the shallowest proven prefix wins).

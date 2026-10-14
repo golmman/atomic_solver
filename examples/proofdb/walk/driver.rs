@@ -9,7 +9,7 @@
 //! counts searches; pick-only complete iterations count toward neither cap;
 //! 0 = unlimited) — a started job always runs to its granted budget, and a
 //! fired cap is a normal stop. The censor hook is bump-only
-//! ([`super::super::and_close::driver::on_censored`]); the ledger is saved
+//! ([`super::super::ledger::on_censored`]); the ledger is saved
 //! atomically per censor (crash-safe).
 
 use std::collections::HashMap;
@@ -19,13 +19,11 @@ use std::time::Instant;
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::Outcome;
 
-use super::super::and_close::driver::on_censored;
 use super::super::db::DbContent;
-use super::super::harvest::{Job, JobClass, replay_job_path};
-use super::super::ledger::Ledger;
-use super::super::pns::{BUDGET_PNS_BASE_EVALS, Pns};
+use super::super::harvest::{Job, JobClass, child_key, replay_job_path};
+use super::super::ledger::{Ledger, on_censored};
 use super::super::session::Session;
-use super::{WalkFrontier, is_handled, path_of, ply_of, root_state};
+use super::{BASE_EVALS, WalkFrontier, is_handled, path_of, ply_of, root_state};
 
 /// Is the root proven-stored (a proven DB row or a manifest/shard path)?
 #[must_use]
@@ -103,7 +101,6 @@ fn visit(
         path: path_of(key),
         ply: ply_of(key),
         class,
-        parent_bound: None,
         budget,
     };
     let mut rec = session.run_job_with_budget(&job, "frontier-walk", budget);
@@ -210,7 +207,7 @@ pub fn run_walk_batch(
         ucis.sort();
         let target = ucis
             .iter()
-            .map(|u| Pns::child_key(&key, u))
+            .map(|u| child_key(&key, u))
             .find(|ck| !is_handled(ck, &rows, ledger, base, |k| session.has_path(k)));
         let Some(child_key) = target else {
             frontier.mark_complete(&key);
@@ -240,7 +237,7 @@ pub fn run_walk_batch(
 /// The CLI-side session assembly (the `proofdb_harvest` frontier-walk
 /// branch): load the ledger, build the frontier + census, echo the census
 /// line, run the batch. `budget_evals = 0` selects the standing base
-/// ([`BUDGET_PNS_BASE_EVALS`]).
+/// ([`BASE_EVALS`]).
 ///
 /// # Errors
 /// Anything the ledger load or a ledger save on censor rejects (a defect —
@@ -256,7 +253,7 @@ pub fn run_walk_session(
     let base = if budget_evals > 0 {
         budget_evals
     } else {
-        BUDGET_PNS_BASE_EVALS
+        BASE_EVALS
     };
     let (mut frontier, mut census) = WalkFrontier::new(&ledger, db);
     census.root = root_state(db, session);

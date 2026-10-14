@@ -2,13 +2,14 @@
 //! classification, tag derivation, and path replay.
 //!
 //! A harvest **job** is one frontier position of the current DB, by path
-//! identity. Frontier classes (plan3 §2): `C1` open DB nodes, `C2`
-//! unexpanded children of proven `win` nodes, `C3` unexpanded children of
-//! open nodes — the DB-facing extraction and the coverage policies live in
-//! [`super::policy`]. A decisive solve at a job produces a shard that grafts
-//! exactly there (plan1's ancestor-upgrade machinery handles the overlay).
-//! Proven nodes are never jobs; job paths are asserted disjoint from all DB
-//! rows and the standing manifest's shard paths (plan3 decision 3).
+//! identity. Frontier classes (plan3 §2, reused by the walk's census as
+//! territory tags, plan16 D1): `C1` open DB nodes, `C3` unexpanded
+//! children of open nodes, `L` ledger-known-open nodes. The plan18 policy
+//! consolidation removed the C2 sharp-sibling class and the
+//! precomputed-sequence machinery with the legacy policies; the only
+//! remaining policy is the `frontier-walk` ledger walk ([`super::walk`]).
+//! A decisive solve at a job produces a shard that grafts exactly there
+//! (plan1's ancestor-upgrade machinery handles the overlay).
 //!
 //! Search-side context lives in the CLI (`proofdb_harvest`): path replay +
 //! `search_depth_with_prefix`, deterministic child-eval budgets, TT
@@ -16,7 +17,8 @@
 //! ([`classify`]) — no fact, no DB write.
 //!
 //! Tests run in `tests/proofdb.rs` (which includes this module verbatim;
-//! cargo does not run unit tests inside example targets).
+//! cargo does not run unit tests inside example targets) and in
+//! `harvest/tests.rs`.
 
 use atomic_solver::notation::uci_to_move;
 use atomic_solver::position::Outcome;
@@ -24,23 +26,17 @@ use atomic_solver::position::Position;
 
 use super::ShardEntry;
 
-/// Frontier class of a job (plan3 §2).
+/// Frontier class of a job (plan3 §2; plan18 removed the C2/D classes
+/// with the legacy and `descend` policies).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JobClass {
     /// Open DB node (`outcome IS NULL` row).
     Open,
-    /// Unexpanded child of a proven `win` node; ranked by the parent's
-    /// `depth_bound` ascending (the sharpness gradient).
-    SharpSibling,
     /// Unexpanded child of an open node.
     OpenChild,
     /// Ledger-known-open frontier node (no DB row; a sidecar record from a
     /// previous censoring or exposure, plan4 D1).
     Ledger,
-    /// Off-tree bootstrap candidate of the `descend` policy (plan15 D1; a
-    /// startpos-rooted path of length 1..=K not covered by stored
-    /// territory — see [`super::descend`]).
-    Descend,
 }
 
 impl JobClass {
@@ -48,11 +44,20 @@ impl JobClass {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Open => "C1",
-            Self::SharpSibling => "C2",
             Self::OpenChild => "C3",
             Self::Ledger => "L",
-            Self::Descend => "D",
         }
+    }
+}
+
+/// The space-joined key of a child path (empty parent = root). The path
+/// identity convention shared by the ledger, the DB rows, and the census.
+#[must_use]
+pub fn child_key(parent_key: &str, uci: &str) -> String {
+    if parent_key.is_empty() {
+        uci.to_string()
+    } else {
+        format!("{parent_key} {uci}")
     }
 }
 
@@ -65,9 +70,7 @@ pub struct Job {
     pub ply: usize,
     /// Frontier class.
     pub class: JobClass,
-    /// The parent's proven depth bound (C2 only; the sharpness ranking key).
-    pub parent_bound: Option<u32>,
-    /// Screen budget (child-evals) resolved by the coverage policy.
+    /// Search budget (child-evals) granted to the job.
     pub budget: u64,
 }
 

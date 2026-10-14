@@ -1,16 +1,15 @@
-//! The sidecar work ledger (plan4 D1): the pick-up state of the
-//! breadth-first PNS harvester, kept next to the working DB under
-//! `data/proofdb/` (gitignored working layer; plan14 centralized the
-//! default paths there). One record per **known-open frontier node**
-//! — a node the harvester has exposed (censor-time frontier exposure,
-//! plan4 decision 11) or censored — with the non-derivable selection state:
-//! how many passes failed at it and how much work was spent. Record
-//! presence = known-open; the numbers themselves are *derived* at session
-//! start from the DB tree + this ledger (see [`super::pns`]) and never
-//! enter the DB (schema v1 stands) or the census facts (decision 3).
+//! The sidecar work ledger (plan4 D1): the harvester's pick-up state,
+//! kept next to the working DB under `data/proofdb/` (gitignored working
+//! layer; plan14 centralized the default paths there). One record per
+//! **known-open frontier node** — a node the harvester has censored (or
+//! exposed) — with the non-derivable selection state: how many passes
+//! failed at it and how much work was spent. Record presence =
+//! known-open; the numbers never enter the DB (schema v1 stands) or the
+//! census facts. All harvest policies have been consolidated into the
+//! `frontier-walk` ledger walk (plan18); the ledger is its pick-up state.
 //!
-//! Lineage gate (decision 6, enforced by [`super::pns::Pns::build`] which
-//! owns the DB rows): a record whose path is now a *proven* DB row is
+//! Lineage gate (decision 6, enforced by the walk frontier's construction,
+//! which owns the DB rows): a record whose path is now a *proven* DB row is
 //! dropped (the node was decided after the ledger was written); a record
 //! whose path does not replay legally from the startpos aborts the session
 //! (the plan2 replay contract, now covering persisted state). Records on
@@ -21,6 +20,10 @@
 //! in-flight job, never the exposed frontier) with deterministic, sorted
 //! bytes — the same DB + the same ledger reproduce the same job sequence
 //! (gate H5).
+//!
+//! One record per path also serves as the censor bookkeeping shared by
+//! every session: [`on_censored`] bumps and atomically saves, so an
+//! aborted session never loses a completed job's censor record.
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -186,6 +189,23 @@ impl Ledger {
             .map_err(|e| format!("cannot rename {} into place: {e}", tmp.display()))?;
         Ok(())
     }
+}
+
+/// The bump-only censor hook (plan8 D1, now the walk's hook): bump the
+/// record at `key` with the censored visit's evals and save the ledger
+/// atomically (crash-safe; a save failure aborts the batch, the ledger's
+/// last saved state is consistent).
+///
+/// # Errors
+/// A ledger save failure, as a message.
+pub fn on_censored(
+    ledger: &mut Ledger,
+    ledger_path: &Path,
+    key: &str,
+    child_evals: u64,
+) -> Result<(), String> {
+    ledger.bump(key, child_evals);
+    ledger.save(ledger_path)
 }
 
 #[cfg(test)]

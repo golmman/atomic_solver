@@ -1,7 +1,6 @@
 //! Harvest job-mechanics unit tests (plan2): censored classification, tag
 //! determinism, manifest-entry shape, and the replay-prefix contract.
-//! Extraction/policy tests live in `policy/tests.rs`. Included by
-//! `harvest.rs`; also runs via `tests/proofdb.rs`.
+//! Included by `harvest.rs`; also runs via `tests/proofdb.rs`.
 
 use super::*;
 use atomic_solver::position::Position;
@@ -30,8 +29,7 @@ fn entry_carries_path_fen_outcome() {
     let job = Job {
         path: vec!["e2e4".into()],
         ply: 1,
-        class: JobClass::SharpSibling,
-        parent_bound: Some(3),
+        class: JobClass::OpenChild,
         budget: 1_000_000,
     };
     let e = make_entry(&job, "FEN", Outcome::Loss);

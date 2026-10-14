@@ -953,12 +953,27 @@ i want a new proofdb policy that bootstraps itself and goes as follows:
 - if not, expand it and search one of the children with the given budget
 - repeat
 
-
 ---
-
 
 I want that after every finished search (= ledger update) the set of shards is consistent.
 That way unexpected crashes or ctrl-c exits only lose the latest batch of work and subsequent `proofdb_merge` runs add the collected shards (minus the last one) just fine.
 i don't need a dedicated sigint handler though.
 Can we draft a plan for this?
 
+---
+
+I want all proofdb harvest policies but `frontier-walk` removed.
+
+Reasoning:
+
+- i only use `frontier-walk`
+- new harvest features must work and be tested against all existing policies -> unreasonable maintenance and extensibility cost
+
+Feel free to push back if you see issues with that.
+
+---
+
+I want the following new feature for the proofdb.
+`--moves 'a2a4 b7b5 b1a3'`
+
+all policies (in particular must

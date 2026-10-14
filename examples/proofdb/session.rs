@@ -197,7 +197,6 @@ impl Session {
                 path: path_str,
                 policy: self.policy,
                 class: job.class.as_str(),
-                parent_bound: job.parent_bound,
                 tier,
                 budget,
                 child_evals,
@@ -207,7 +206,6 @@ impl Session {
                 tag: None,
                 shard_nodes: None,
                 pass: None,
-                number: None,
                 work_before: None,
                 kind: None,
             };
@@ -223,7 +221,6 @@ impl Session {
             path: path_str,
             policy: self.policy,
             class: job.class.as_str(),
-            parent_bound: job.parent_bound,
             tier,
             budget,
             child_evals,
@@ -233,31 +230,9 @@ impl Session {
             tag: Some(tag),
             shard_nodes: Some(shard_nodes),
             pass: None,
-            number: None,
             work_before: None,
             kind: None,
         }
-    }
-
-    /// Run one breadth-PNS job at its ladder budget, with the PNS census
-    /// quadruple (`kind`, `pass`, `number`, `work_before`) attached to the
-    /// record (plan4 D2 + plan6 D1). Same pipeline as
-    /// [`Self::run_job_with_budget`].
-    pub fn run_pns_job(
-        &mut self,
-        job: &Job,
-        budget: u64,
-        pass: u32,
-        number: u64,
-        work_before: u64,
-        kind: &'static str,
-    ) -> JobRecord {
-        let mut rec = self.run_job_with_budget(job, "pns", budget);
-        rec.pass = Some(pass);
-        rec.number = Some(number);
-        rec.work_before = Some(work_before);
-        rec.kind = Some(kind);
-        rec
     }
 
     /// Rewrite the manifest (sorted, deterministic) only when the batch grew

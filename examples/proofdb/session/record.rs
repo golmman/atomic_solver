@@ -3,24 +3,17 @@
 //! `session.rs` for the 10 KB file-size convention; the session type and
 //! the job pipeline remain there.
 //!
-//! The `pass`/`number`/`work_before` triple is present only for the
-//! breadth-PNS policy (plan4 D2); legacy policies emit without it. The
-//! `kind` field (plan6 D1: `expand` | `rung`) is likewise PNS-only and
-//! traces the selection mechanism's split. The `and-close` policy (plan8)
-//! emits `pass` + `work_before` with `number`/`kind` null (pns-specific
-//! fields).
+//! The `pass`/`work_before` pair is the frontier-walk census (plan16 D3:
+//! the ledger visit rung and the `work_done` before the visit); `kind`
+//! (`search` | `expand`) distinguishes the walk's two visit kinds.
 
 /// One census record, emitted as a `job: {…}` JSON line (the census input).
-/// The `pass`/`number`/`work_before` triple is present only for the
-/// breadth-PNS policy (plan4 D2); legacy policies emit without it; the
-/// `and-close` policy (plan8) emits `pass` + `work_before` with
-/// `number`/`kind` null. The `kind` field (plan6 D1: `expand` | `rung`)
-/// is PNS-only and traces the selection mechanism's split.
+/// The `pass`/`work_before` pair is the frontier-walk census (plan16 D3);
+/// `kind` (`search` | `expand`) distinguishes the walk's two visit kinds.
 pub struct JobRecord {
     pub path: String,
     pub policy: &'static str,
     pub class: &'static str,
-    pub parent_bound: Option<u32>,
     pub tier: &'static str,
     pub budget: u64,
     pub child_evals: u64,
@@ -29,23 +22,19 @@ pub struct JobRecord {
     pub exit_reason: String,
     pub tag: Option<String>,
     pub shard_nodes: Option<usize>,
-    /// PNS/and-close census: 1-based visit rung (`passes_failed + 1`).
+    /// The walk census: 1-based visit rung (`passes_failed + 1`).
     pub pass: Option<u32>,
-    /// PNS census: effective number at selection time (null for
-    /// `and-close`).
-    pub number: Option<u64>,
-    /// PNS/and-close census: ledger `work_done` before this visit.
+    /// The walk census: ledger `work_done` before this visit.
     pub work_before: Option<u64>,
-    /// PNS census: visit kind (plan6 D1; `None` = legacy policy).
+    /// The walk census: visit kind (`search` | `expand`).
     pub kind: Option<&'static str>,
 }
 
 impl JobRecord {
-    #[allow(clippy::too_many_lines)]
     pub fn emit(&self) {
         let mut o = serde_json::json!({
                 "path": self.path, "policy": self.policy, "class": self.class,
-                "parent_bound": self.parent_bound, "tier": self.tier,
+                "tier": self.tier,
                 "budget": self.budget, "child_evals": self.child_evals,
                 "wall_s": self.wall_s, "outcome": self.outcome,
                 "exit_reason": self.exit_reason, "tag": self.tag,
@@ -56,9 +45,6 @@ impl JobRecord {
         }
         if let Some(work_before) = self.work_before {
             o["work_before"] = serde_json::json!(work_before);
-        }
-        if let Some(number) = self.number {
-            o["number"] = serde_json::json!(number);
         }
         if let Some(kind) = self.kind {
             o["kind"] = serde_json::json!(kind);
