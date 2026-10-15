@@ -85,9 +85,25 @@ A pure solver for atomic chess in Rust.
 - `play_and_solve` — play a given move, then solve the resulting position.
 - `portfolio` — salt-seeded racer portfolio driver: K unmodified solvers (`--first-outcome --outcome-only --salt <s>`, the measured plan8 configuration) race one FEN, take-first-decisive with the stop-when-proven kill policy; per-racer evals/wall/censoring accounting (budget-censored never misreported as a proven draw); RAM = K × TT of the spawned racers.
 - `proofdb_flip` — read-only implied-flip analysis over a grown proof DB (plan8); exits non-zero on any unverified flip. DB defaults to `data/proofdb/proofdb.db`, report to `data/proofdb/flip.json`.
-- `proofdb_harvest` — the harvest loop: the `frontier-walk` shallowest-first ledger walk at a flat budget (the only harvest policy since the plan18 consolidation; `--policy` is kept but accepts only `frontier-walk`; `--moves '<uci path>'` re-anchors the session at a startpos path's subtree — a selection-layer scope, out-of-scope ledger records preserved), export validated shards, extend the manifest (atomically rewritten after every decisive job — crash-consistent durable layer, an unclean exit loses at most the in-flight job's shard; never merges; run `proofdb_merge` after each batch). DB/manifest/shard-dir/ledger default wholly under `data/proofdb/`. Operator manual: `docs/proofdb_pipeline.md`.
-- `proofdb_ledger_union` — N-way merge of harvest work ledgers (`--expect` digest pins; deterministic output).
-- `proofdb_merge` — the single-writer merger: manifest + shards → replay-validated, grafted SQLite DB (schema v1) + canonical dump; conflicts abort unmerged. Manifest/shard-dir/DB default under `data/proofdb/`.
+- `proofdb_harvest` — the harvest loop: the `frontier-walk` shallowest-first
+  censor-frontier walk at a flat budget (the only harvest policy since the
+  plan18 consolidation; `--policy` is kept but accepts only `frontier-walk`;
+  `--moves '<uci path>'` re-anchors the session at a startpos path's subtree
+  — a selection-layer scope, out-of-scope censor records preserved), export
+  validated shards, extend the manifest (atomically rewritten after every
+  decisive job — crash-consistent durable layer, an unclean exit loses at
+  most the in-flight job's shard; never merges; run `proofdb_merge` after
+  each batch). Censor state lives in the DB's `censor` table (schema v2,
+  plan20): the harvest's only DB writes are committed censor rows; the
+  pre-plan20 `work.json` sidecar and the `proofdb_ledger_union` tool are
+  retired (`proofdb_merge --import-censor` migrates a legacy ledger). DB/
+  manifest/shard-dir default wholly under `data/proofdb/`. Operator manual:
+  `docs/proofdb_pipeline.md`.
+- `proofdb_merge` — the single-writer merger: manifest + shards →
+  replay-validated, grafted SQLite DB (schema v2; sole writer of
+  `meta`/`shards`/`nodes`, preserves the `censor` table across rebuilds,
+  `--import-censor` for legacy ledgers) + canonical dump; conflicts abort
+  unmerged. Manifest/shard-dir/DB default under `data/proofdb/`.
 - `reconstruct_pt` — rebuild a proof tree offline from a FEN + TT snapshot (`--snapshot`); reports `validate: ok|FAILED n`, exits non-zero on defects; `--oracle` and `--experiment` run the dual-build oracle.
 - `replay` — replay a UCI line from a FEN, then solve the resulting position.
 - `solve_depth_limited` — fixed-`max_depth` search without the iterative-deepening bootstrap.

@@ -1,18 +1,19 @@
 //! The `frontier-walk` batch driver (plan16 D3–D6): the live selection
 //! loop over the [`WalkFrontier`](super::WalkFrontier) with the two visit
-//! kinds, the complete rule, and the root rule. Split from [`super`] for
-//! the 10 KB file-size convention; the selection state and its doc (the
-//! normative D1–D7 contract) remain there. The CLI drives this from
-//! `main`. Size note: ~10 KB — the whole live selection loop (visit
+//! kinds, the complete rule, and the root rule. The CLI drives this from
+//! `main`. Since plan20 the censor hook commits to the DB's `censor`
+//! table (one transaction per censor) instead of saving a JSON sidecar.
+//!
+//! File-size justification: ~10 KB — the whole live selection loop (visit
 //! bookkeeping, batch loop, session assembly) shares one state shape;
-//! further growth would split the session assembly off.
+//! the selection state's normative D1–D7 contract lives in [`super`].
 //!
 //! Stop conditions are checked **between iterations only** (`max_jobs`
 //! counts searches; pick-only complete iterations count toward neither cap;
 //! 0 = unlimited) — a started job always runs to its granted budget, and a
 //! fired cap is a normal stop. The censor hook is bump-only
-//! ([`super::super::ledger::on_censored`]); the ledger is saved
-//! atomically per censor (crash-safe).
+//! ([`super::super::ledger::on_censored`]); every censor is committed to
+//! the DB's `censor` table in its own transaction (crash-safe, plan20 D3).
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -20,6 +21,7 @@ use std::time::Instant;
 
 use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::Outcome;
+use rusqlite::Connection;
 
 use super::super::db::DbContent;
 use super::super::harvest::{Job, JobClass, child_key, replay_job_path};
@@ -83,18 +85,19 @@ fn user_stop(opts: &WalkOptions, completed: usize, t_start: &Instant) -> Option<
 }
 
 /// Run one visit's job at `budget` and book its outcome (D3/D5): shard on
-/// decisive, bump + save on censor (with the zero-eval no-progress guard
-/// and the candidate admission), census fields `pass`/`work_before`/`kind`.
+/// decisive, bump + censor-row commit on censor (with the zero-eval
+/// no-progress guard and the candidate admission), census fields
+/// `pass`/`work_before`/`kind`.
 ///
 /// # Errors
-/// A ledger save failure on a censor — aborts the batch; the ledger's last
-/// saved state is consistent.
+/// A censor commit failure on a censor — aborts the batch; the DB's last
+/// committed state is consistent (plan20 D4).
 #[allow(clippy::too_many_arguments)] // the walk's per-visit state, one arg each
 fn visit(
     session: &mut Session,
     frontier: &mut WalkFrontier,
     ledger: &mut Ledger,
-    ledger_path: &Path,
+    censor: &Connection,
     key: &str,
     budget: u64,
     class: JobClass,
@@ -116,7 +119,7 @@ fn visit(
         if !ledger.contains(key) {
             summary.fresh_censored += 1;
         }
-        on_censored(ledger, ledger_path, key, rec.child_evals)?;
+        on_censored(ledger, censor, key, rec.child_evals)?;
         if rec.child_evals == 0 {
             // A censor that spends nothing cannot advance the flat budget
             // (a non-budget Draw — e.g. an on-path repetition); complete-
@@ -144,7 +147,7 @@ fn visit(
 /// the proven-stored check speak the scope root.
 ///
 /// # Errors
-/// A ledger save failure on a censor, or an illegal replay of a ledger
+/// A censor commit failure on a censor, or an illegal replay of a censor
 /// record at expansion time (the lineage-gate contract — a defect, abort).
 #[allow(clippy::too_many_arguments)] // the walk's per-batch state, one arg each
 pub fn run_walk_batch(
@@ -152,7 +155,7 @@ pub fn run_walk_batch(
     db: &DbContent,
     frontier: &mut WalkFrontier,
     ledger: &mut Ledger,
-    ledger_path: &Path,
+    censor: &Connection,
     base: u64,
     opts: &WalkOptions,
     scope: &str,
@@ -197,7 +200,7 @@ pub fn run_walk_batch(
                 session,
                 frontier,
                 ledger,
-                ledger_path,
+                censor,
                 scope,
                 base,
                 JobClass::Open,
@@ -211,7 +214,7 @@ pub fn run_walk_batch(
                 session,
                 frontier,
                 ledger,
-                ledger_path,
+                censor,
                 &key,
                 base,
                 JobClass::Ledger,
@@ -246,7 +249,7 @@ pub fn run_walk_batch(
             session,
             frontier,
             ledger,
-            ledger_path,
+            censor,
             &child_key,
             base,
             class,
@@ -259,23 +262,24 @@ pub fn run_walk_batch(
 }
 
 /// The CLI-side session assembly (the `proofdb_harvest` frontier-walk
-/// branch): load the ledger, build the frontier + census, echo the census
-/// line, run the batch. `budget_evals = 0` selects the standing base
-/// ([`BASE_EVALS`]). `scope` is the `--moves` re-anchor key (`""` =
-/// global; plan19).
+/// branch): load the censor state from the DB, build the frontier +
+/// census, echo the census line, run the batch. `budget_evals = 0` selects
+/// the standing base ([`BASE_EVALS`]). `scope` is the `--moves` re-anchor
+/// key (`""` = global; plan19). `censor` is the RW connection to the
+/// session DB (plan20 D3's carve-out: `censor` rows only).
 ///
 /// # Errors
-/// Anything the ledger load or a ledger save on censor rejects (a defect —
-/// abort, never patched).
+/// Anything the censor-state load or a censor commit on censor rejects (a
+/// defect — abort, never patched).
 pub fn run_walk_session(
     session: &mut Session,
     db: &DbContent,
-    ledger_path: &Path,
+    censor: &Connection,
     budget_evals: u64,
     opts: &WalkOptions,
     scope: &str,
 ) -> Result<WalkSummary, String> {
-    let mut ledger = Ledger::load(ledger_path)?;
+    let mut ledger = Ledger::load_db(censor)?;
     let base = if budget_evals > 0 {
         budget_evals
     } else {
@@ -289,7 +293,7 @@ pub fn run_walk_session(
         db,
         &mut frontier,
         &mut ledger,
-        ledger_path,
+        censor,
         base,
         opts,
         scope,

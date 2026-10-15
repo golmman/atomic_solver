@@ -82,7 +82,8 @@
 //! expansion replaces deepening. Bump-only censor hook
 //! ([`super::ledger::on_censored`]), no child exposure (the
 //! decision-11 deviation verbatim — children are derived by movegen at
-//! expansion time). The ledger is rewritten between jobs (crash-safe).
+//! expansion time). Every censor commits one `censor`-table transaction
+//! (crash-safe; plan20).
 //! Measurable signature: the session's ledger growth equals its fresh-node
 //! censor count. Accepted deviations from the earlier PNS conventions,
 //! recorded as

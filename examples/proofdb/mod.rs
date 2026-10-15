@@ -4,8 +4,10 @@
 //! This is example-side tooling for the startpos proof-line database; the
 //! product solver (`src/`) is untouched. The durable truth is the validated
 //! shard set (binary proof trees, `docs/spec/proof_tree_dump.md`) plus its
-//! manifest; the SQLite database is a derived, rebuildable view whose schema
-//! and semantics are normative in `docs/spec/global_proof_store.md`.
+//! manifest; the SQLite database (schema v2) is the derived, rebuildable
+//! view **plus** the censor state (the relocated work ledger — the
+//! frontier's censor history, plan20): the schema and semantics are
+//! normative in `docs/spec/global_proof_store.md`.
 //!
 //! A **manifest** lists the shards to merge. Required per-entry fields are
 //! `tag`, `file`, `fen`, `moves` (UCI path from the startpos to the shard
@@ -20,7 +22,6 @@ pub mod db;
 pub mod harvest;
 pub mod harvest_args;
 pub mod ledger;
-pub mod ledger_union;
 pub mod manifest;
 pub mod merge;
 pub mod schema;
@@ -46,8 +47,6 @@ pub const DEFAULT_DB: &str = "data/proofdb/proofdb.db";
 pub const DEFAULT_MANIFEST: &str = "data/proofdb/shards/manifest.json";
 /// Default shard directory (the durable layer; back it up).
 pub const DEFAULT_SHARD_DIR: &str = "data/proofdb/shards";
-/// Default harvest work-ledger path (pick-up state).
-pub const DEFAULT_LEDGER: &str = "data/proofdb/work.json";
 /// Default `proofdb_flip --out` report path (throwaway analysis output).
 pub const DEFAULT_FLIP_OUT: &str = "data/proofdb/flip.json";
 

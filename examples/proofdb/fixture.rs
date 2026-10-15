@@ -83,6 +83,6 @@ pub(crate) fn fixture_db(dir: &std::path::Path) -> (std::path::PathBuf, String) 
     let digest = crate::proofdb::digest_hex(&manifest_bytes);
     std::fs::write(dir.join("manifest.json"), &manifest_bytes).unwrap();
     let db = dir.join("fixture.db");
-    write_db(&db, Position::STARTPOS_FEN, &digest, &rows, &pt).unwrap();
+    write_db(&db, Position::STARTPOS_FEN, &digest, &rows, &pt, &[]).unwrap();
     (db, digest)
 }

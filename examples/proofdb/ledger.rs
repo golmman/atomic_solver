@@ -1,73 +1,131 @@
-//! The sidecar work ledger (plan4 D1): the harvester's pick-up state,
-//! kept next to the working DB under `data/proofdb/` (gitignored working
-//! layer; plan14 centralized the default paths there). One record per
-//! **known-open frontier node** — a node the harvester has censored (or
-//! exposed) — with the non-derivable selection state: how many passes
-//! failed at it and how much work was spent. Record presence =
-//! known-open; the numbers never enter the DB (schema v1 stands) or the
-//! census facts. All harvest policies have been consolidated into the
-//! `frontier-walk` ledger walk (plan18); the ledger is its pick-up state.
+//! The censor state (plan20): the harvester's pick-up state, relocated from
+//! the sidecar `work.json` into the DB's `censor` table (schema v2,
+//! `docs/spec/global_proof_store.md`). One record per **known-open frontier
+//! node** — a node the harvester has censed (or exposed) — with the
+//! non-derivable selection state: how many passes failed at it and how much
+//! work was spent. Record presence = known-open; the numbers are censor
+//! history (*facts of absence* — a censored draw job is not representable
+//! in the tree model), never census facts. The DB is the single source of
+//! truth for them: the in-memory [`Ledger`] is the same `BTreeMap` the
+//! file-backed ledger always was; only the persistence backend changed.
 //!
 //! Lineage gate (decision 6, enforced by the walk frontier's construction,
 //! which owns the DB rows): a record whose path is now a *proven* DB row is
-//! dropped (the node was decided after the ledger was written); a record
+//! dropped (the node was decided after the record was written); a record
 //! whose path does not replay legally from the startpos aborts the session
 //! (the plan2 replay contract, now covering persisted state). Records on
 //! open rows are kept (the row is undecided; the record carries its censor
 //! history).
 //!
-//! The file is rewritten between jobs (crash-safe: a crash loses only the
-//! in-flight job, never the exposed frontier) with deterministic, sorted
-//! bytes — the same DB + the same ledger reproduce the same job sequence
-//! (gate H5).
-//!
-//! One record per path also serves as the censor bookkeeping shared by
-//! every session: [`on_censored`] bumps and atomically saves, so an
-//! aborted session never loses a completed job's censor record.
+//! Durability (plan20 D3/D4, the file ledger's per-censor atomic-save
+//! discipline): [`on_censored`] bumps the map and commits one `INSERT OR
+//! REPLACE` transaction on the DB connection — a censor is durable the
+//! moment the call returns, and a failed commit aborts the batch with the
+//! DB's last committed state consistent (the in-flight censor is lost,
+//! matching the plan17 loss window). Writer carve-out: the harvest writes
+//! **`censor` rows only**; `proofdb_merge` stays the sole writer of
+//! `nodes`/`shards`/`meta` and preserves `censor` across its rebuild (D5).
 
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use serde::Deserialize;
+use rusqlite::Connection;
+
+use super::schema::{CensorRow, insert_censor_row};
 
 /// One known-open frontier record.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct LedgerEntry {
     /// Cumulative child-evals spent at this node (all passes).
     pub work_done: u64,
-    /// Number of censored (budget-exhausted) visits so far; the k-th visit
-    /// of the node runs at the geometric-ladder budget `2^(k-1) × base`.
+    /// Number of censored (budget-exhausted) visits so far.
     pub passes_failed: u32,
 }
 
-/// The parsed ledger: path key (space-joined UCI, empty for the root) →
-/// entry, in a `BTreeMap` so the serialized bytes are deterministic.
+/// The censor map: path key (space-joined UCI, empty for the root) →
+/// entry, in a `BTreeMap` so the iteration order is deterministic.
 #[derive(Debug, Default, Clone)]
 pub struct Ledger {
     entries: BTreeMap<String, LedgerEntry>,
 }
 
-#[derive(Deserialize)]
-struct RawLedger {
-    records: Vec<RawRecord>,
-}
-
-#[derive(Deserialize)]
-struct RawRecord {
-    path: Vec<String>,
-    work_done: u64,
-    passes_failed: u32,
-}
-
 impl Ledger {
-    /// Load the ledger at `path`; a missing file is an empty (fresh) ledger.
+    /// Load the censor state from the DB connection (schema v2). A missing
+    /// `censor` table is a clean abort with the upgrade hint — a schema-v1
+    /// DB must be rebuilt by `proofdb_merge` first (plan20 D1).
+    ///
+    /// # Errors
+    /// Any SQLite error, or a missing `censor` table.
+    pub fn load_db(conn: &Connection) -> Result<Self, String> {
+        let present: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='censor'",
+                [],
+                |r| r.get(0),
+            )
+            .map_err(|e| format!("cannot inspect DB schema: {e}"))?;
+        if present == 0 {
+            return Err(
+                "DB has no censor table (schema v1) — re-run proofdb_merge to \
+                 rebuild it with schema v2 (the censor state lives in the DB \
+                 since plan20)"
+                    .to_string(),
+            );
+        }
+        let mut stmt = conn
+            .prepare("SELECT path, work_done, passes_failed FROM censor ORDER BY path")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map([], |r| {
+                Ok((
+                    r.get::<_, String>(0)?,
+                    r.get::<_, i64>(1)?,
+                    r.get::<_, i64>(2)?,
+                ))
+            })
+            .map_err(|e| e.to_string())?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())?;
+        let mut entries = BTreeMap::new();
+        for (path, work, passes) in rows {
+            if entries
+                .insert(
+                    path,
+                    LedgerEntry {
+                        work_done: work.max(0) as u64,
+                        passes_failed: passes.max(0) as u32,
+                    },
+                )
+                .is_some()
+            {
+                return Err("censor table has a duplicate path".to_string());
+            }
+        }
+        Ok(Self { entries })
+    }
+
+    /// Parse a legacy JSON work ledger (`work.json`, the pre-plan20 sidecar
+    /// format) — migration only (`proofdb_merge --import-censor`, plan20
+    /// D6); the format is otherwise retired.
     ///
     /// # Errors
     /// Any I/O error or malformed JSON (with the offending path/message).
-    pub fn load(path: &Path) -> Result<Self, String> {
+    pub fn load_legacy_json(path: &Path) -> Result<Self, String> {
+        #[derive(serde::Deserialize)]
+        struct RawLedger {
+            records: Vec<RawRecord>,
+        }
+        #[derive(serde::Deserialize)]
+        struct RawRecord {
+            path: Vec<String>,
+            work_done: u64,
+            passes_failed: u32,
+        }
         let bytes = match std::fs::read(path) {
             Ok(b) => b,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Self::default_ok(),
+            // The import flag names an existing file — a missing ledger is
+            // an operator error, not a fresh state (the harvest's old
+            // fresh-init semantic died with the file backend).
             Err(e) => return Err(format!("cannot read ledger {}: {e}", path.display())),
         };
         let raw: RawLedger = serde_json::from_slice(&bytes)
@@ -86,14 +144,9 @@ impl Ledger {
         Ok(Self { entries })
     }
 
-    fn default_ok() -> Result<Self, String> {
-        Ok(Self::default())
-    }
-
-    /// Build a ledger from an already-keyed map (the ledger-union's output;
-    /// keys are space-joined UCI paths, empty for the root, exactly as
-    /// [`Ledger::load`] produces them). The bytes written by [`Ledger::save`]
-    /// are the map's iteration order, so a `BTreeMap` keeps them sorted.
+    /// Build a ledger from an already-keyed map (keys are space-joined UCI
+    /// paths, empty for the root, exactly as [`Ledger::load_db`] produces
+    /// them; the `BTreeMap` keeps the iteration sorted).
     #[must_use]
     pub fn from_entries(entries: BTreeMap<String, LedgerEntry>) -> Self {
         Self { entries }
@@ -152,60 +205,45 @@ impl Ledger {
         *e
     }
 
-    /// Rewrite the ledger file with deterministic sorted bytes (temp file +
-    /// rename, so a crash never leaves a half-written ledger).
-    ///
-    /// # Errors
-    /// Any I/O error, as a message.
-    pub fn save(&self, path: &Path) -> Result<(), String> {
-        if let Some(dir) = path.parent()
-            && !dir.as_os_str().is_empty()
-        {
-            std::fs::create_dir_all(dir)
-                .map_err(|e| format!("cannot create {}: {e}", dir.display()))?;
-        }
-        let mut out = String::from("{\"records\":[");
-        for (i, (key, e)) in self.entries.iter().enumerate() {
-            if i > 0 {
-                out.push(',');
-            }
-            // The root's empty key serializes as an empty path sequence.
-            let path_json = if key.is_empty() {
-                "[]".to_string()
-            } else {
-                serde_json::to_string(&key.split(' ').collect::<Vec<&str>>())
-                    .expect("sequence serializes")
-            };
-            out.push_str(&format!(
-                "{{\"path\":{path_json},\"work_done\":{},\"passes_failed\":{}}}",
-                e.work_done, e.passes_failed
-            ));
-        }
-        out.push_str("]}\n");
-        let tmp = path.with_extension("json.tmp");
-        std::fs::write(&tmp, out.as_bytes())
-            .map_err(|e| format!("cannot write {}: {e}", tmp.display()))?;
-        std::fs::rename(&tmp, path)
-            .map_err(|e| format!("cannot rename {} into place: {e}", tmp.display()))?;
-        Ok(())
+    /// Upsert under the import max rule (plan20 D6, per field): `work_done`
+    /// and `passes_failed` each keep the max of the stored vs the incoming
+    /// value; a new key is inserted. Total, deterministic, idempotent, and
+    /// never decreases a stored value (a stale import is harmless).
+    pub fn upsert_max(&mut self, key: &str, entry: LedgerEntry) {
+        let cur = self.entries.entry(key.to_string()).or_default();
+        cur.work_done = cur.work_done.max(entry.work_done);
+        cur.passes_failed = cur.passes_failed.max(entry.passes_failed);
     }
 }
 
 /// The bump-only censor hook (plan8 D1, now the walk's hook): bump the
-/// record at `key` with the censored visit's evals and save the ledger
-/// atomically (crash-safe; a save failure aborts the batch, the ledger's
-/// last saved state is consistent).
+/// record at `key` with the censored visit's evals and commit it to the
+/// DB's `censor` table in one transaction (plan20 D3/D4 — a commit failure
+/// aborts the batch; the DB's last committed state is consistent).
 ///
 /// # Errors
-/// A ledger save failure, as a message.
+/// A censor commit failure (including a `work_done` beyond the i64 storage
+/// width), as a message.
 pub fn on_censored(
     ledger: &mut Ledger,
-    ledger_path: &Path,
+    censor: &Connection,
     key: &str,
     child_evals: u64,
 ) -> Result<(), String> {
+    // Compute the post-bump entry and commit it before touching the map —
+    // a failed commit leaves the in-memory state untouched (plan20 D4; the
+    // batch aborts on the error either way).
+    let cur = ledger.get(key).copied().unwrap_or_default();
+    insert_censor_row(
+        censor,
+        &CensorRow {
+            path: key.to_string(),
+            work_done: cur.work_done.saturating_add(child_evals),
+            passes_failed: cur.passes_failed + 1,
+        },
+    )?;
     ledger.bump(key, child_evals);
-    ledger.save(ledger_path)
+    Ok(())
 }
 
 #[cfg(test)]

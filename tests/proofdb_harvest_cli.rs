@@ -1,19 +1,21 @@
 //! Binary-level tests for the `proofdb_harvest` scoped harvest (plan19):
 //! the `--moves` fail-fast validation (usage exit 1 before any manifest/
-//! DB/ledger state is touched), a scoped session's in-scope-only job
-//! paths and preserved out-of-scope ledger records, the proven-scope
-//! exhausted note, and the absent-flag global shape (bit-identity at the
-//! CLI surface). The example binaries are driven through
-//! `cargo run --example` (the `test_benchmark_json` harness style —
-//! `CARGO_BIN_EXE_*` is not set for example targets); invocations are
-//! serialized by a lock because each one goes through cargo's build lock.
+//! DB state is touched), a scoped session's in-scope-only job paths and
+//! preserved out-of-scope censor records, the proven-scope exhausted note,
+//! and the absent-flag global shape (bit-identity at the CLI surface).
+//! Since plan20 the censor state lives in the DB's `censor` table, so every
+//! test works on its own copy of the fixture DB (the harvest writes censor
+//! rows there) and seeds censor state with plain SQL. The example binaries
+//! are driven through `cargo run --example` (the `test_benchmark_json`
+//! harness style — `CARGO_BIN_EXE_*` is not set for example targets);
+//! invocations are serialized by a lock because each one goes through
+//! cargo's build lock.
 //!
 //! The fixture DB is built once per test process (lazily, shared) by a
 //! real `proofdb_merge` over a one-shard manifest: root (open) + the spine
 //! `f2f3` / `f2f3 e7e6` (open) + `f2f3 e7e6 g2g4` (win, bound 1) +
 //! `f2f3 e7e6 g2g4 d8h4` (loss terminal).
 
-use std::io::Write;
 use std::process::Command;
 use std::sync::{Mutex, OnceLock};
 
@@ -120,7 +122,6 @@ struct Run {
 /// Run `proofdb_harvest` with explicit paths (no defaults touched).
 fn run_harvest(tmp: &std::path::Path, extra: &[&str]) -> Run {
     let _guard = RUN_LOCK.lock().unwrap();
-    let fixture = fixture();
     let mut args: Vec<String> = vec![
         "run".into(),
         "--release".into(),
@@ -129,13 +130,11 @@ fn run_harvest(tmp: &std::path::Path, extra: &[&str]) -> Run {
         "proofdb_harvest".into(),
         "--".into(),
         "--db".into(),
-        format!("{fixture}/fixture.db"),
+        tmp.join("fixture.db").to_str().unwrap().into(),
         "--manifest".into(),
         tmp.join("shards/manifest.json").to_str().unwrap().into(),
         "--shard-dir".into(),
         tmp.join("shards").to_str().unwrap().into(),
-        "--ledger".into(),
-        tmp.join("work.json").to_str().unwrap().into(),
         "--budget-evals".into(),
         "1000".into(),
         "--tt-mb".into(),
@@ -161,6 +160,9 @@ fn temp_dir(name: &str) -> std::path::PathBuf {
         std::fs::read(format!("{}/manifest.json", fixture())).unwrap(),
     )
     .unwrap();
+    // The session's own DB copy: the harvest commits censor rows to it
+    // (plan20), so the shared fixture DB must stay untouched.
+    std::fs::copy(format!("{}/fixture.db", fixture()), dir.join("fixture.db")).unwrap();
     dir
 }
 
@@ -171,6 +173,36 @@ fn empty_dir(name: &str) -> std::path::PathBuf {
         std::env::temp_dir().join(format!("proofdb_harvest_cli_{name}_{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     dir
+}
+
+/// The censor state of the test's DB copy, as `(path, work_done,
+/// passes_failed)` rows in path order.
+fn censor_rows(dir: &std::path::Path) -> Vec<(String, u64, u32)> {
+    let conn = rusqlite::Connection::open(dir.join("fixture.db")).unwrap();
+    let mut stmt = conn
+        .prepare("SELECT path, work_done, passes_failed FROM censor ORDER BY path")
+        .unwrap();
+    stmt.query_map([], |r| {
+        Ok((
+            r.get::<_, String>(0)?,
+            r.get::<_, i64>(1)? as u64,
+            r.get::<_, i64>(2)? as u32,
+        ))
+    })
+    .unwrap()
+    .collect::<Result<Vec<_>, _>>()
+    .unwrap()
+}
+
+/// Seed one censor row into the test's DB copy (the standing-layer shape:
+/// censor state lives in the DB, plan20).
+fn seed_censor(dir: &std::path::Path, path: &str, work: u64, passes: u32) {
+    let conn = rusqlite::Connection::open(dir.join("fixture.db")).unwrap();
+    conn.execute(
+        "INSERT INTO censor (path, work_done, passes_failed) VALUES (?1, ?2, ?3)",
+        rusqlite::params![path, work as i64, passes as i64],
+    )
+    .unwrap();
 }
 
 fn job_paths(stdout: &str) -> Vec<String> {
@@ -247,20 +279,14 @@ fn walk_files(dir: &std::path::Path) -> Vec<String> {
 
 /// A scoped session: the census describes the scoped world, the jobs run
 /// only inside the scope (virtual root at the open scope row, then its
-/// first unhandled child), and the shared ledger's out-of-scope record is
-/// preserved untouched.
+/// first unhandled child), and the shared censor state's out-of-scope
+/// record is preserved untouched.
 #[test]
 fn scoped_session_jobs_and_census_stay_in_scope() {
     let dir = temp_dir("scoped");
-    // A shared ledger with one out-of-scope record (work ≥ B — an
-    // expansion candidate in a global session, invisible here).
-    let mut f = std::fs::File::create(dir.join("work.json")).unwrap();
-    writeln!(
-        f,
-        r#"{{"records":[{{"path":["b1c3"],"work_done":50000,"passes_failed":1}}]}}"#
-    )
-    .unwrap();
-    drop(f);
+    // An out-of-scope censor record (work ≥ B — an expansion candidate in a
+    // global session, invisible here), seeded into the DB (plan20).
+    seed_censor(&dir, "b1c3", 50_000, 1);
     let run = run_harvest(&dir, &["--moves", "f2f3 e7e6", "--max-jobs", "2"]);
     assert_eq!(run.code, Some(0), "stderr: {}", run.stderr);
     // The session-start census: scoped world, out-of-scope count, root
@@ -285,12 +311,15 @@ fn scoped_session_jobs_and_census_stay_in_scope() {
     assert!(run.stdout.contains(r#""class":"C1""#));
     assert!(run.stdout.contains(r#""class":"C3""#));
     assert!(run.stdout.contains(r#""kind":"expand""#));
-    // The ledger: two in-scope records joined, the out-of-scope record
-    // preserved byte-value-wise.
-    let ledger = std::fs::read_to_string(dir.join("work.json")).unwrap();
-    assert!(ledger.contains(r#""path":["b1c3"],"work_done":50000,"passes_failed":1"#));
-    assert!(ledger.contains(r#""path":["f2f3","e7e6"]"#));
-    assert!(ledger.contains(r#""path":["f2f3","e7e6","a2a3"]"#));
+    // The censor state (read back from the DB): two in-scope records
+    // joined at ≥ the budget, the out-of-scope record preserved value-wise.
+    let rows = censor_rows(&dir);
+    assert_eq!(rows.len(), 3);
+    assert_eq!(rows[0], ("b1c3".to_string(), 50_000, 1));
+    assert_eq!(rows[1].0, "f2f3 e7e6");
+    assert!(rows[1].1 >= 1_000 && rows[1].2 == 1, "{:?}", rows[1]);
+    assert_eq!(rows[2].0, "f2f3 e7e6 a2a3");
+    assert!(rows[2].1 >= 1_000 && rows[2].2 == 1, "{:?}", rows[2]);
     std::fs::remove_dir_all(&dir).ok();
 }
 

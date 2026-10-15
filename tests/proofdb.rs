@@ -116,7 +116,7 @@ fn end_to_end_fixture_pipeline() {
     assert!(validate_proof_tree(&skeleton).is_ok());
 
     let db_path = dir.join("proofdb.db");
-    write_db(&db_path, ROOT_FEN, &manifest.sha256_hex, &rows, &tree).unwrap();
+    write_db(&db_path, ROOT_FEN, &manifest.sha256_hex, &rows, &tree, &[]).unwrap();
     let conn = rusqlite::Connection::open(&db_path).unwrap();
     let schema_version: String = conn
         .query_row(
@@ -125,7 +125,7 @@ fn end_to_end_fixture_pipeline() {
             |r| r.get(0),
         )
         .unwrap();
-    assert_eq!(schema_version, "1");
+    assert_eq!(schema_version, "2");
     let node_count: i64 = conn
         .query_row("SELECT COUNT(*) FROM nodes", [], |r| r.get(0))
         .unwrap();
@@ -160,13 +160,14 @@ fn end_to_end_fixture_pipeline() {
     std::fs::remove_dir_all(&dir).ok();
 }
 
-// --- plan7 D1: the N-way ledger union (examples/proofdb/ledger_union.rs) ---
+// --- censor-state helpers (plan20; the ledger-union tooling is retired) ---
 
 use proofdb::ledger::{Ledger, LedgerEntry};
-use proofdb::ledger_union::union;
+use rusqlite::Connection;
 
-/// Build a ledger from `(space-joined path key, work_done, passes_failed)`
-/// records (the key "" is the root, exactly as `Ledger::load` produces).
+/// Build a censor-state map from `(space-joined path key, work_done,
+/// passes_failed)` records (the key "" is the root, exactly as
+/// `Ledger::load_db` produces).
 fn ledger_of(records: &[(&str, u64, u32)]) -> Ledger {
     let mut m = std::collections::BTreeMap::new();
     for (key, work, passes) in records {
@@ -188,157 +189,28 @@ fn entries(led: &Ledger) -> Vec<(String, u64, u32)> {
         .collect()
 }
 
-/// §2.2 coverage: for every input and every path in it, the union's record
-/// has `passes_failed ≥` that input's — and at equal passes,
-/// `work_done ≥` too (the same-pass max).
-fn assert_coverage(union_led: &Ledger, inputs: &[Ledger]) {
-    for input in inputs {
-        for (k, e) in input.iter() {
-            let u = union_led
-                .get(k)
-                .unwrap_or_else(|| panic!("coverage: missing {k:?}"));
-            assert!(
-                u.passes_failed > e.passes_failed
-                    || (u.passes_failed == e.passes_failed && u.work_done >= e.work_done),
-                "coverage violated at {k:?}: input {e:?}, union {u:?}"
-            );
-        }
-    }
+/// An in-memory censor DB (the schema-v2 table shape `write_db` creates) —
+/// the driver tests' censor-state backend where persistence isn't asserted.
+fn censor_mem() -> Connection {
+    let conn = Connection::open_in_memory().unwrap();
+    conn.execute_batch(
+        "CREATE TABLE censor (path TEXT PRIMARY KEY, work_done INTEGER NOT NULL, \
+         passes_failed INTEGER NOT NULL);",
+    )
+    .unwrap();
+    conn
 }
 
-#[test]
-fn union_rule_edges_pass_upgrade_and_work_tiebreak() {
-    // Pass upgrade beats any work_done at a lower pass; the winning pass's
-    // work is kept (a lower pass's higher work does not leak through).
-    let a = ledger_of(&[("", 0, 0), ("a2a3", 100_000_000, 0)]);
-    let b = ledger_of(&[("", 4_000_000, 1), ("a2a3", 4_000_000, 1)]);
-    let (u, _) = union(&[a, b]);
-    assert_eq!(
-        u.get(""),
-        Some(&LedgerEntry {
-            work_done: 4_000_000,
-            passes_failed: 1
-        })
-    );
-    assert_eq!(
-        u.get("a2a3"),
-        Some(&LedgerEntry {
-            work_done: 4_000_000,
-            passes_failed: 1
-        })
-    );
-
-    // Pass tie → the higher work_done wins.
-    let a = ledger_of(&[("b1c3", 8_000_000, 1)]);
-    let b = ledger_of(&[("b1c3", 4_000_000, 1)]);
-    let (u, _) = union(&[a, b]);
-    assert_eq!(
-        u.get("b1c3"),
-        Some(&LedgerEntry {
-            work_done: 8_000_000,
-            passes_failed: 1
-        })
-    );
-
-    // Full pass+work tie → either record (identical) stands.
-    let a = ledger_of(&[("b1c3", 8_000_000, 1)]);
-    let (u, st) = union(&[a.clone(), a]);
-    assert_eq!(
-        u.get("b1c3"),
-        Some(&LedgerEntry {
-            work_done: 8_000_000,
-            passes_failed: 1
-        })
-    );
-    assert_eq!(st.union_records, 1);
-    assert_eq!(st.new_paths, [0, 0]); // known in both inputs
-    assert_eq!(st.sole_pass_upgrades, [0, 0]); // no strict pass upgrade anywhere
-}
-
-#[test]
-fn union_disjoint_paths_and_nway_order_independence() {
-    let a = ledger_of(&[("", 0, 0), ("a2a3", 4_000_000, 1)]);
-    let b = ledger_of(&[("b1c3", 0, 0)]);
-    let c = ledger_of(&[("a2a3 a7a5", 4_000_009, 1), ("c2c3", 4_000_000, 1)]);
-    let base = union(&[a.clone(), b.clone(), c.clone()]).0;
-    assert_eq!(base.len(), 5);
-    // Every input order (and pairwise repetition) gives the same records.
-    for perm in [
-        vec![a.clone(), b.clone(), c.clone()],
-        vec![c.clone(), b.clone(), a.clone()],
-        vec![b.clone(), a.clone(), c.clone()],
-        vec![c.clone(), a.clone(), b.clone()],
-        vec![a.clone(), a.clone(), b.clone(), c.clone(), a.clone()],
-    ] {
-        let (u, _) = union(&perm);
-        assert_eq!(entries(&u), entries(&base), "order dependence");
-    }
-    assert_coverage(&base, &[a.clone(), b.clone(), c.clone()]);
-    // Attribution: a and c each solely know one path; c holds the sole
-    // pass upgrade at "a2a3 a7a5"? No — no other input knows it, so it is
-    // a new path, not an upgrade.
-    let (_, st) = union(&[a, b, c.clone()]);
-    assert_eq!(st.new_paths, [2, 1, 2]); // ""+a2a3 / b1c3 / a2a3 a7a5+c2c3
-    assert_eq!(st.sole_pass_upgrades, [0, 0, 0]);
-}
-
-#[test]
-fn union_idempotent_and_normalize_single_input() {
-    let a = ledger_of(&[
-        ("", 0, 0),
-        ("a2a3", 4_000_000, 1),
-        ("a2a3 a7a5", 4_000_009, 1),
-    ]);
-    let b = ledger_of(&[("a2a3", 8_000_000, 2), ("c2c3", 0, 0)]);
-    let (u, _) = union(&[a.clone(), b.clone()]);
-    // Idempotence: union(u, inputs) = u (record-set equality).
-    let (u2, st2) = union(&[u.clone(), a.clone(), b.clone()]);
-    assert_eq!(entries(&u2), entries(&u));
-    assert_eq!(st2.union_records, 4);
-    assert_eq!(st2.new_paths, [0, 0, 0]);
-    assert_eq!(st2.sole_pass_upgrades, [0, 0, 0]);
-    assert_coverage(&u2, &[u.clone(), a.clone(), b.clone()]);
-    // N = 1 normalizes: the record set passes through unchanged.
-    let (one, st) = union(std::slice::from_ref(&a));
-    assert_eq!(entries(&one), entries(&a));
-    assert_eq!(st.union_records, 3);
-    assert_eq!(st.new_paths, [3]);
-    // Empty input set: the empty ledger (the CLI requires N ≥ 1; the
-    // function is total).
-    let (empty, st) = union(&[]);
-    assert_eq!(empty.len(), 0);
-    assert_eq!(st.union_records, 0);
-}
-
-#[test]
-fn union_ledger_save_roundtrip_is_deterministic() {
-    let dir = std::env::temp_dir().join(format!("proofdb_union_{}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
-    let a = ledger_of(&[("", 0, 0), ("a2a3", 4_000_000, 1), ("a2a3 a7a5", 0, 0)]);
-    let b = ledger_of(&[("a2a3", 8_000_000, 2)]);
-    let (u, _) = union(&[a, b]);
-    u.save(&dir.join("u1.json")).unwrap();
-    // A rebuild from the written bytes + a second save are byte-identical
-    // (the gate's determinism check, at fixture scale).
-    let reloaded = Ledger::load(&dir.join("u1.json")).unwrap();
-    reloaded.save(&dir.join("u2.json")).unwrap();
-    let b1 = std::fs::read(dir.join("u1.json")).unwrap();
-    let b2 = std::fs::read(dir.join("u2.json")).unwrap();
-    assert_eq!(b1, b2);
-    // The union's record: the pass-2 record wins, "a2a3 a7a5" stays fresh.
-    let got: Vec<_> = reloaded
-        .iter()
-        .map(|(k, e)| (k.clone(), e.passes_failed))
-        .collect();
-    assert_eq!(
-        got,
-        vec![
-            ("".to_string(), 0),
-            ("a2a3".to_string(), 2),
-            ("a2a3 a7a5".to_string(), 0),
-        ]
-    );
-    std::fs::remove_dir_all(&dir).ok();
+/// A file-backed censor DB at `<dir>/<name>` (persists across connections —
+/// the second-session pick-up tests).
+fn censor_file(dir: &std::path::Path, name: &str) -> Connection {
+    let conn = Connection::open(dir.join(name)).unwrap();
+    conn.execute_batch(
+        "CREATE TABLE censor (path TEXT PRIMARY KEY, work_done INTEGER NOT NULL, \
+         passes_failed INTEGER NOT NULL);",
+    )
+    .unwrap();
+    conn
 }
 
 // --- plan12 D3: the derived-DB gate as a repeatable test ---
@@ -428,13 +300,16 @@ fn standing_layer_rebuilds_byte_identical() {
         &manifest.sha256_hex,
         &rows,
         &tree,
+        &[],
     )
     .unwrap();
 
-    // The pinned standing DB: byte-identical rebuild + node census.
+    // The pinned standing DB: byte-identical rebuild + node census. The
+    // plan20 schema-v2 fixture digest (the censor table is additive; the
+    // pre-plan20 pin was 0d929f4c…).
     assert_eq!(
         proofdb::digest_hex(&std::fs::read(&db_path).unwrap()),
-        "0d929f4c3c62e4bbb87e9b043b582716297b23e2f7332a36e82763b1486070b8",
+        "406752cc93fb5fd8667615b4720fbd39c20a4df5b014dde97bf8311a22130fb6",
         "rebuilt DB digest (the standing data/proofdb.db)"
     );
     assert_eq!(tree.nodes.len(), 55_703, "merged node count");
@@ -485,21 +360,17 @@ fn stale_db_guard_is_length_safe_on_malformed_built_from() {
 /// bare file name in the cwd is exactly what this item removed).
 #[test]
 fn cli_defaults_are_centralized_under_data_proofdb() {
-    use proofdb::{
-        DEFAULT_DB, DEFAULT_FLIP_OUT, DEFAULT_LEDGER, DEFAULT_MANIFEST, DEFAULT_SHARD_DIR,
-    };
+    use proofdb::{DEFAULT_DB, DEFAULT_FLIP_OUT, DEFAULT_MANIFEST, DEFAULT_SHARD_DIR};
 
     assert_eq!(DEFAULT_DB, "data/proofdb/proofdb.db");
     assert_eq!(DEFAULT_MANIFEST, "data/proofdb/shards/manifest.json");
     assert_eq!(DEFAULT_SHARD_DIR, "data/proofdb/shards");
-    assert_eq!(DEFAULT_LEDGER, "data/proofdb/work.json");
     assert_eq!(DEFAULT_FLIP_OUT, "data/proofdb/flip.json");
 
     for path in [
         DEFAULT_DB,
         DEFAULT_MANIFEST,
         DEFAULT_SHARD_DIR,
-        DEFAULT_LEDGER,
         DEFAULT_FLIP_OUT,
     ] {
         let p = std::path::Path::new(path);
@@ -562,8 +433,8 @@ fn walk_opts(max_jobs: usize, max_total_evals: u64) -> WalkOptions {
 /// Plan16 task 1: the driver's root-expansion phase on the fixture DB at a
 /// tiny budget — the first visit is the virtual-root search (class C1), the
 /// following ones are expansion visits on fresh children (class C3, kind
-/// `expand`); the ledger grows by exactly the censor count (the D4
-/// signature) and a fresh run reproduces the post-run ledger bytes.
+/// `expand`); the censor state grows by exactly the censor count (the D4
+/// signature) and a fresh run reproduces the post-run censor rows.
 #[test]
 fn walk_driver_root_expansion_and_ledger_growth() {
     let dir = walk_dir("walk_driver");
@@ -571,7 +442,7 @@ fn walk_driver_root_expansion_and_ledger_growth() {
     let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
     let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
 
-    let run = |ledger_path: &std::path::Path| {
+    let run = |censor: &Connection| {
         let mut session = Session::new(
             4,
             dir.join("shards"),
@@ -589,7 +460,7 @@ fn walk_driver_root_expansion_and_ledger_growth() {
             &db,
             &mut frontier,
             &mut ledger,
-            ledger_path,
+            censor,
             1_000,
             &walk_opts(5, 0),
             "",
@@ -597,18 +468,19 @@ fn walk_driver_root_expansion_and_ledger_growth() {
         .unwrap();
         (summary, ledger)
     };
-    let (summary, ledger) = run(&dir.join("ledger.json"));
+    let censor1 = censor_file(&dir, "censor1.db");
+    let (summary, ledger) = run(&censor1);
     assert_eq!(summary.jobs, 5);
     assert_eq!(summary.stop_reason, "max-jobs");
     assert_eq!(summary.decisive, 0);
     assert_eq!(summary.censored, 5);
-    // The D4 signature: ledger growth == fresh-node censor count.
+    // The D4 signature: censor-state growth == fresh-node censor count.
     assert_eq!(summary.fresh_censored, 5);
     assert_eq!(ledger.len(), 5);
     // Visit 1: the virtual root (class C1, kind search, pass 1,
     // work_before 0); visits 2+: the root's expansion targets (class C3,
     // kind expand), lex order — and the fixture's stored rows (f2f3, g2g4)
-    // are skipped as handled territory. The ledger keys pin the sequence.
+    // are skipped as handled territory. The censor keys pin the sequence.
     let keys: Vec<String> = ledger.iter().map(|(k, _)| k.clone()).collect();
     assert_eq!(keys, vec!["", "a2a3", "a2a4", "b1a3", "b1c3"]);
     let root = ledger.get("").unwrap();
@@ -618,14 +490,15 @@ fn walk_driver_root_expansion_and_ledger_growth() {
     );
     assert_eq!(root.passes_failed, 1);
     // Determinism: a fresh session over the same inputs reproduces the
-    // post-run ledger byte-for-byte.
-    let ledger_path2 = dir.join("ledger2.json");
-    let (summary2, ledger2) = run(&ledger_path2);
+    // post-run censor rows (row-for-row — the censor state lives in the
+    // DB since plan20, so the old byte-pin becomes a row pin).
+    let censor2 = censor_file(&dir, "censor2.db");
+    let (summary2, ledger2) = run(&censor2);
     assert_eq!(summary2.jobs, summary.jobs);
     assert_eq!(entries(&ledger), entries(&ledger2));
     assert_eq!(
-        std::fs::read(dir.join("ledger.json")).unwrap(),
-        std::fs::read(&ledger_path2).unwrap()
+        entries(&Ledger::load_db(&censor1).unwrap()),
+        entries(&Ledger::load_db(&censor2).unwrap())
     );
     std::fs::remove_dir_all(&dir).ok();
 }
@@ -683,7 +556,7 @@ fn walk_complete_rule_no_livelock_and_exhaustion() {
         &db,
         &mut frontier,
         &mut led,
-        &dir.join("ledger.json"),
+        &censor_mem(),
         1_000,
         &walk_opts(3, 0),
         "",
@@ -728,7 +601,7 @@ fn walk_root_proven_exhausts() {
         &db,
         &mut frontier,
         &mut led,
-        &dir.join("ledger.json"),
+        &censor_mem(),
         1_000,
         &walk_opts(0, 0),
         "",
@@ -759,6 +632,7 @@ fn walk_boot_from_empty_layer() {
         &digest,
         &[],
         &pt,
+        &[],
     )
     .unwrap();
     let db = proofdb::db::load_db_rows(&dir.join("proofdb.db"), &digest).unwrap();
@@ -770,10 +644,11 @@ fn walk_boot_from_empty_layer() {
         Vec::new(),
         "frontier-walk",
     );
+    let censor_conn = Connection::open(dir.join("proofdb.db")).unwrap();
     let summary = run_walk_session(
         &mut session,
         &db,
-        &dir.join("work.json"),
+        &censor_conn,
         20_000,
         &walk_opts(0, 10_000_000),
         "",
@@ -794,8 +669,9 @@ fn walk_boot_from_empty_layer() {
         !dir.join("shards/manifest.json.tmp").exists(),
         "tmp residue"
     );
-    // The D4 signature over a full session.
-    let ledger = Ledger::load(&dir.join("work.json")).unwrap();
+    // The D4 signature over a full session: the censor rows landed in the
+    // boot DB (plan20 — the censor state lives in the DB).
+    let ledger = Ledger::load_db(&Connection::open(dir.join("proofdb.db")).unwrap()).unwrap();
     assert_eq!(ledger.len(), summary.fresh_censored);
     // The CLI's post-batch manifest rewrite (the batch never writes it).
     session.rewrite_manifest(&dir.join("shards/manifest.json"), &digest);
@@ -833,6 +709,7 @@ fn walk_boot_from_empty_layer() {
         &manifest.sha256_hex,
         &rows,
         &tree,
+        &[],
     )
     .unwrap();
     let conn = rusqlite::Connection::open(&grown).unwrap();
@@ -872,7 +749,7 @@ fn walk_zero_eval_censor_guard_completes_the_node() {
         &db,
         &mut frontier,
         &mut led,
-        &dir.join("ledger.json"),
+        &censor_mem(),
         20_000,
         &walk_opts(4, 0),
         "",
@@ -927,7 +804,7 @@ fn session_censored_jobs_leave_manifest_bytes_untouched() {
         &db,
         &mut frontier,
         &mut led,
-        &dir.join("ledger.json"),
+        &censor_mem(),
         1_000,
         &walk_opts(5, 0),
         "",
@@ -1017,7 +894,7 @@ fn walk_scope_virtual_root_and_expansion_stay_in_scope() {
         &db,
         &mut frontier,
         &mut led,
-        &dir.join("ledger.json"),
+        &censor_mem(),
         1_000,
         &walk_opts(3, 0),
         "a2a3",
@@ -1058,7 +935,7 @@ fn walk_scope_proven_scope_root_exhausts() {
         &db,
         &mut frontier,
         &mut led,
-        &dir.join("ledger.json"),
+        &censor_mem(),
         1_000,
         &walk_opts(0, 0),
         "a2a3",
@@ -1083,9 +960,16 @@ fn walk_scope_session_pickup_and_preservation() {
     let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
     // A shared ledger with an out-of-scope record (work ≥ B so it would be
     // an expansion candidate in a global session — but out of scope here).
-    let ledger_path = dir.join("work.json");
-    let pre = b"{\"records\":[{\"path\":[\"b1c3\"],\"work_done\":50000,\"passes_failed\":1}]}";
-    std::fs::write(&ledger_path, pre).unwrap();
+    // A shared censor DB with an out-of-scope record (work ≥ B so it would
+    // be an expansion candidate in a global session — but out of scope
+    // here); seeded the way a standing layer carries it (plan20).
+    let censor = censor_file(&dir, "censor.db");
+    censor
+        .execute(
+            "INSERT INTO censor (path, work_done, passes_failed) VALUES ('b1c3', 50000, 1)",
+            [],
+        )
+        .unwrap();
 
     let mut session = Session::new(
         4,
@@ -1097,7 +981,7 @@ fn walk_scope_session_pickup_and_preservation() {
     let summary = run_walk_session(
         &mut session,
         &db,
-        &ledger_path,
+        &censor,
         1_000,
         &walk_opts(2, 0),
         "f2f3 e7e6",
@@ -1106,8 +990,9 @@ fn walk_scope_session_pickup_and_preservation() {
     assert_eq!(summary.stop_reason, "max-jobs");
     assert_eq!(summary.jobs, 2);
     // Every job path is the scope or a descendant; the first visit is the
-    // virtual root at the open scope row.
-    let ledger = Ledger::load(&ledger_path).unwrap();
+    // virtual root at the open scope row. Reloaded from the DB: the censor
+    // commits are durable (plan20 D3).
+    let ledger = Ledger::load_db(&censor).unwrap();
     let in_scope: Vec<&String> = ledger
         .iter()
         .map(|(k, _)| k)
@@ -1118,5 +1003,196 @@ fn walk_scope_session_pickup_and_preservation() {
     // The out-of-scope record survives untouched.
     assert_eq!(ledger.get("b1c3").unwrap().work_done, 50_000);
     assert_eq!(ledger.get("b1c3").unwrap().passes_failed, 1);
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+// --- plan20: censor state in the DB (schema v2; D5/D6) ---
+
+/// S1: the censor table round-trips through `write_db`/`read_censor_rows`,
+/// the schema-version row says 2, and the v1 surfaces are unchanged.
+#[test]
+fn censor_table_roundtrip_and_schema_version_row() {
+    let dir = walk_dir("p20_roundtrip");
+    let mut pt = proofdb::merge::PathTree::new();
+    pt.finalize().unwrap();
+    let rows = [
+        proofdb::schema::CensorRow {
+            path: String::new(),
+            work_done: 4_000_000,
+            passes_failed: 1,
+        },
+        proofdb::schema::CensorRow {
+            path: "a2a3".to_string(),
+            work_done: 0, // a zero-eval censor (repetition) is retained
+            passes_failed: 1,
+        },
+    ];
+    let db = dir.join("proofdb.db");
+    proofdb::schema::write_db(&db, Position::STARTPOS_FEN, "d", &[], &pt, &rows).unwrap();
+    let conn = Connection::open(&db).unwrap();
+    let version: String = conn
+        .query_row(
+            "SELECT value FROM meta WHERE key='schema_version'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(version, "2");
+    let got = proofdb::schema::read_censor_rows(&conn).unwrap();
+    assert_eq!(got.len(), 2);
+    assert_eq!(got[0].path, ""); // path order: the root first
+    assert_eq!((got[0].work_done, got[0].passes_failed), (4_000_000, 1));
+    assert_eq!(got[1].path, "a2a3");
+    assert_eq!((got[1].work_done, got[1].passes_failed), (0, 1));
+    // The ledger view agrees.
+    let ledger = Ledger::load_db(&conn).unwrap();
+    assert_eq!(ledger.len(), 2);
+    assert!(ledger.contains("a2a3"));
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// S1/S3 (D5): reading a schema-v1 DB (no censor table) is empty, not an
+/// error — the merger's preserve-and-rebuild must not fail on a pre-v2 file.
+#[test]
+fn censor_read_on_a_v1_db_is_empty() {
+    let dir = walk_dir("p20_v1");
+    let conn = Connection::open(dir.join("v1.db")).unwrap();
+    conn.execute_batch("CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);")
+        .unwrap();
+    assert!(proofdb::schema::read_censor_rows(&conn).unwrap().is_empty());
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// S3 (D5, normative edge case): a rebuild preserves censor rows exactly
+/// (row-for-row, including keys never proven) — the merger reads the old
+/// DB's rows before replacing the file and re-inserts them into the fresh
+/// one; a rebuild on a missing DB starts with an empty censor state.
+#[test]
+fn rebuild_preserves_censor_rows_exactly() {
+    let dir = walk_dir("p20_preserve");
+    let mut pt = proofdb::merge::PathTree::new();
+    pt.finalize().unwrap();
+    let censor_rows = vec![proofdb::schema::CensorRow {
+        path: "g1f3 g8f6 f3g1 f6g8".to_string(),
+        work_done: 4,
+        passes_failed: 2,
+    }];
+    // Round 1: a DB carrying censor rows.
+    let db = dir.join("proofdb.db");
+    proofdb::schema::write_db(&db, Position::STARTPOS_FEN, "d", &[], &pt, &censor_rows).unwrap();
+    // Round 2: the merge's preserve-and-rebuild (read → replace → insert).
+    let old = proofdb::schema::read_censor_rows(&Connection::open(&db).unwrap()).unwrap();
+    proofdb::schema::write_db(&db, Position::STARTPOS_FEN, "d", &[], &pt, &old).unwrap();
+    let after = proofdb::schema::read_censor_rows(&Connection::open(&db).unwrap()).unwrap();
+    assert_eq!(after, censor_rows, "row-for-row preservation");
+    // A rebuild on a missing DB → empty censor (fresh layer).
+    std::fs::remove_file(&db).unwrap();
+    assert!(!db.exists());
+    let conn = Connection::open(&db).unwrap();
+    conn.execute_batch(
+        "CREATE TABLE censor (path TEXT PRIMARY KEY, work_done INTEGER NOT NULL, \
+         passes_failed INTEGER NOT NULL);",
+    )
+    .unwrap();
+    assert!(proofdb::schema::read_censor_rows(&conn).unwrap().is_empty());
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// S2 integration: censor rows committed by one session are visible to a
+/// second session's frontier (pick-up across sessions, the plan20 analogue
+/// of the file-ledger gate). Runs through `run_walk_session` — the CLI's
+/// own assembly path — on a file-backed censor DB.
+#[test]
+fn censor_commits_are_visible_to_a_second_session() {
+    let dir = walk_dir("p20_second_session");
+    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
+    let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
+    let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
+    let censor = censor_file(&dir, "censor.db");
+
+    let run = || {
+        let mut session = Session::new(
+            4,
+            dir.join("shards"),
+            dir.join("shards/manifest.json"),
+            manifest.entries.clone(),
+            "frontier-walk",
+        );
+        run_walk_session(&mut session, &db, &censor, 1_000, &walk_opts(2, 0), "").unwrap()
+    };
+    let first = run();
+    assert_eq!(first.fresh_censored, 2);
+    // A second session picks the committed rows up: they are its census
+    // records, and its work_before values continue from them (no re-censor
+    // from zero).
+    let second = run();
+    let ledger = Ledger::load_db(&censor).unwrap();
+    assert_eq!(ledger.len(), first.fresh_censored + second.fresh_censored);
+    assert_eq!(second.jobs, 2);
+    for (_, e) in ledger.iter() {
+        assert!(
+            e.work_done >= 1_000,
+            "picked up at its recorded work: {e:?}"
+        );
+        assert!(e.passes_failed >= 1);
+    }
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// S3 (D6 import primitives): a legacy JSON ledger merges under the
+/// per-field max rule — idempotent for a repeated import, never decreasing
+/// a stored (newer) value, new keys inserted, and a `work_done` beyond the
+/// i64 storage width saturates on import. These are the exact primitives
+/// `proofdb_merge --import-censor` composes.
+#[test]
+fn legacy_import_max_rule_idempotence_and_clamp() {
+    let dir = walk_dir("p20_import");
+    let legacy_path = dir.join("work.json");
+    std::fs::write(
+        &legacy_path,
+        format!(
+            r#"{{"records":[
+                {{"path":["a2a3"],"work_done":100,"passes_failed":1}},
+                {{"path":["b1c3"],"work_done":{},"passes_failed":1}}]}}"#,
+            u64::MAX
+        ),
+    )
+    .unwrap();
+
+    // The standing (newer) censor state.
+    let mut standing = ledger_of(&[("a2a3", 4_000_000, 2)]);
+    let legacy = Ledger::load_legacy_json(&legacy_path).unwrap();
+    assert_eq!(legacy.len(), 2);
+
+    // Import: per-field max; the stale record at "a2a3" changes nothing;
+    // "b1c3" is new with the clamped work value.
+    for (k, e) in legacy.iter() {
+        let e = LedgerEntry {
+            work_done: e.work_done.min(i64::MAX as u64),
+            passes_failed: e.passes_failed,
+        };
+        standing.upsert_max(k, e);
+    }
+    assert_eq!(
+        standing.get("a2a3"),
+        Some(&LedgerEntry {
+            work_done: 4_000_000,
+            passes_failed: 2
+        })
+    );
+    let b = standing.get("b1c3").unwrap();
+    assert_eq!(b.work_done, i64::MAX as u64, "saturating clamp");
+    assert_eq!(b.passes_failed, 1);
+
+    // Idempotence: importing the same ledger again changes nothing.
+    let before = entries(&standing);
+    for (k, e) in Ledger::load_legacy_json(&legacy_path).unwrap().iter() {
+        let e = LedgerEntry {
+            work_done: e.work_done.min(i64::MAX as u64),
+            passes_failed: e.passes_failed,
+        };
+        standing.upsert_max(k, e);
+    }
+    assert_eq!(entries(&standing), before, "idempotent import");
     std::fs::remove_dir_all(&dir).ok();
 }

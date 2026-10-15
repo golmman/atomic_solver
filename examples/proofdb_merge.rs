@@ -8,8 +8,17 @@
 //! must be the same position) → graft open ancestors → overlay the proven
 //! subtree. After all shards: the depth-refinement fixpoint
 //! (`proofdb::merge::PathTree::finalize`), per-graft skeleton re-validation,
-//! then the SQLite DB (`docs/spec/global_proof_store.md`, schema v1) and the
+//! then the SQLite DB (`docs/spec/global_proof_store.md`, schema v2) and the
 //! canonical dump.
+//!
+//! Censor state (plan20 D5/D6): the merger is the sole writer of
+//! `nodes`/`shards`/`meta` but *preserves* the DB's `censor` rows (the
+//! relocated work ledger — harvest's selection state) across its full
+//! rebuild: rows are read from the existing DB before it is replaced and
+//! re-inserted into the fresh one, never modified. `--import-censor
+//! <work.json>` additionally merges a legacy pre-plan20 JSON ledger into
+//! the table under the per-field max rule (idempotent; never decreases a
+//! stored value).
 //!
 //! Output: a census on stdout; the DB at `--db` and the dump at `--dump`
 //! when requested. Generated state defaults wholly under `data/proofdb/`
@@ -19,9 +28,10 @@
 //! cross-check mismatch, or proven-outcome conflict aborts with a non-zero
 //! exit and writes nothing — conflicts are never patched.
 //!
-//! File-size justification: 11.6 KB — the argument parsing, the shard
-//! pipeline, and the census/summary emission are one self-contained CLI
-//! flow; the heavy lifting is already split into `proofdb/merge/`.
+//! File-size justification: 15.5 KB — the argument parsing, the shard
+//! pipeline, the censor collect/preserve/import step (plan20), and the
+//! census/summary emission are one self-contained CLI flow; the heavy
+//! lifting is already split into `proofdb/merge/`.
 
 use std::path::{Path, PathBuf};
 
@@ -33,8 +43,9 @@ use atomic_solver::proof_tree::{ProofTree, validate_proof_tree};
 
 mod proofdb;
 
+use proofdb::ledger::Ledger;
 use proofdb::merge::PathTree;
-use proofdb::schema::{ShardRow, canonical_dump, write_db};
+use proofdb::schema::{CensorRow, ShardRow, canonical_dump, read_censor_rows, write_db};
 use proofdb::{
     DEFAULT_DB, DEFAULT_MANIFEST, DEFAULT_SHARD_DIR, ShardEntry, create_parent_dir, digest_hex,
     read_manifest,
@@ -55,7 +66,8 @@ fn fail(msg: &str) -> ! {
 fn usage() -> ! {
     eprintln!(
         "usage: proofdb_merge [--manifest <index.json>] [--shard-dir <dir>] \
-         [--db <out.db>] [--dump <nodes.txt>] [--sample-lines <n>]  \
+         [--db <out.db>] [--dump <nodes.txt>] [--sample-lines <n>] \
+         [--import-censor <work.json>]  \
          (defaults: --manifest data/proofdb/shards/manifest.json \
          --shard-dir data/proofdb/shards --db data/proofdb/proofdb.db)"
     );
@@ -68,6 +80,7 @@ struct Args {
     db: PathBuf,
     dump: Option<PathBuf>,
     sample_lines: usize,
+    import_censor: Option<PathBuf>,
 }
 
 fn parse_args() -> Args {
@@ -77,6 +90,7 @@ fn parse_args() -> Args {
         db: PathBuf::from(DEFAULT_DB),
         dump: None,
         sample_lines: 0,
+        import_censor: None,
     };
     let mut it = std::env::args().skip(1);
     while let Some(arg) = it.next() {
@@ -86,6 +100,7 @@ fn parse_args() -> Args {
             "--shard-dir" => args.shard_dir = PathBuf::from(next()),
             "--db" => args.db = PathBuf::from(next()),
             "--dump" => args.dump = Some(PathBuf::from(next())),
+            "--import-censor" => args.import_censor = Some(PathBuf::from(next())),
             "--sample-lines" => {
                 let v = next().parse::<usize>().unwrap_or_else(|_e| usage());
                 args.sample_lines = v;
@@ -94,6 +109,72 @@ fn parse_args() -> Args {
         }
     }
     args
+}
+
+/// The censor state for the fresh DB (plan20 D5/D6): the existing DB's rows
+/// (preserved across the full rebuild — a bare merge-after-batch or recipe
+/// R5 must never wipe selection state) plus, with `--import-censor`, a
+/// legacy JSON work ledger merged in under the per-field max rule
+/// (`work_done`/`passes_failed` each keep the max; a `work_done` beyond the
+/// i64 storage width saturates on import). Idempotent for a repeated
+/// import; never decreases a stored value.
+fn collect_censor_rows(args: &Args) -> Result<Vec<CensorRow>, String> {
+    let mut merged: std::collections::BTreeMap<String, proofdb::ledger::LedgerEntry> =
+        std::collections::BTreeMap::new();
+    if args.db.exists() {
+        let conn = rusqlite::Connection::open_with_flags(
+            &args.db,
+            rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
+        )
+        .map_err(|e| format!("cannot open existing DB {}: {e}", args.db.display()))?;
+        for row in read_censor_rows(&conn)? {
+            merged.insert(
+                row.path,
+                proofdb::ledger::LedgerEntry {
+                    work_done: row.work_done,
+                    passes_failed: row.passes_failed,
+                },
+            );
+        }
+    }
+    let preserved = merged.len();
+    let imported = match &args.import_censor {
+        None => 0,
+        Some(path) => {
+            let legacy = Ledger::load_legacy_json(path)?;
+            let n = legacy.len();
+            for (k, e) in legacy.iter() {
+                let e = proofdb::ledger::LedgerEntry {
+                    work_done: e.work_done.min(i64::MAX as u64),
+                    passes_failed: e.passes_failed,
+                };
+                match merged.get_mut(k.as_str()) {
+                    Some(cur) => {
+                        cur.work_done = cur.work_done.max(e.work_done);
+                        cur.passes_failed = cur.passes_failed.max(e.passes_failed);
+                    }
+                    None => {
+                        merged.insert(k.clone(), e);
+                    }
+                }
+            }
+            n
+        }
+    };
+    if preserved > 0 || imported > 0 {
+        println!(
+            "censor: {preserved} censor rows preserved + {imported} imported records -> {} rows",
+            merged.len()
+        );
+    }
+    Ok(merged
+        .into_iter()
+        .map(|(path, e)| CensorRow {
+            path,
+            work_done: e.work_done,
+            passes_failed: e.passes_failed,
+        })
+        .collect())
 }
 
 /// Load, cross-check, replay-validate, and hash-verify one shard. Returns the
@@ -227,6 +308,9 @@ fn sample_lines(tree: &PathTree, n: usize) {
 
 fn main() {
     let args = parse_args();
+    // The censor state (plan20 D5/D6) must be read before write_db replaces
+    // the DB file.
+    let censor_rows = collect_censor_rows(&args).unwrap_or_else(|e| fail(&e));
     let manifest = read_manifest(&args.manifest).unwrap_or_else(|e| fail(&e));
     let mut census = Census {
         shards_total: manifest.entries.len(),
@@ -294,6 +378,7 @@ fn main() {
         &manifest.sha256_hex,
         &shard_rows,
         &tree,
+        &censor_rows,
     ) {
         fail(&e);
     }

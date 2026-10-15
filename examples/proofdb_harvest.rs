@@ -2,25 +2,30 @@
 //! (proofdb initiative; plan2/plan16; plan18 policy consolidation).
 //!
 //! The single coverage policy is the plan16 `frontier-walk` shallowest-first
-//! ledger walk: a live selection loop over the shared work ledger (`--ledger`
-//! pick-up state; flat `--budget-evals` budget, no ladder; search visits on
-//! underworked records, expansion into the first unhandled child otherwise,
-//! bump-only censors, in-session complete rule). Per job: replay the full
+//! censor-frontier walk: a live selection loop over the censor state in the
+//! DB's `censor` table (schema v2; the relocated work ledger, plan20 — the
+//! pre-plan20 `--ledger <work.json>` sidecar is retired) with a flat
+//! `--budget-evals` budget, no ladder; search visits on underworked
+//! records, expansion into the first unhandled child otherwise, bump-only
+//! censors, in-session complete rule. Per job: replay the full
 //! startpos→node path (context contract — repetition verdicts are
 //! path-dependent), run `Search::search_depth_with_prefix` under the job's
 //! child-eval budget, and for a decisive outcome export a validator-clean
 //! proof subtree via the product's offline pipeline (TT snapshot →
 //! `reconstruct` → `validate_proof_tree`), writing the shard into the
 //! standing shard directory and recording its manifest entry. `Draw` from
-//! any cause is **censored** (no fact, no write). The merger runs after the
-//! batch as a separate tool — this CLI never merges and never writes a DB;
-//! `--out-db` / `--dump` are the caller's `proofdb_merge` output targets,
-//! recorded in the summary only.
+//! any cause is **censored** (no fact, no shard): the visit bumps the
+//! record and commits one `censor`-table transaction (plan20 D3 — the
+//! harvest's only DB writes; `nodes`/`shards`/`meta` stay
+//! `proofdb_merge`-only). The merger runs after the batch as a separate
+//! tool — this CLI never merges and never writes tree rows; `--out-db` /
+//! `--dump` are the caller's `proofdb_merge` output targets, recorded in
+//! the summary only.
 //!
 //! Module map (all under `examples/proofdb/`): the job pipeline in
 //! `session.rs`, the DB-facing engine in `db.rs`, the `frontier-walk`
-//! selection loop + batch driver in `walk.rs` + `walk/`, the sidecar work
-//! ledger (incl. the bump-only censor hook) in `ledger.rs`.
+//! selection loop + batch driver in `walk.rs` + `walk/`, the censor state
+//! (incl. the bump-only censor hook) in `ledger.rs`.
 //!
 //! Output: one `job: {…}` JSON line per job (fields include `policy`,
 //! `class`, and the walk census `pass`/`work_before`/`kind`), then
@@ -28,7 +33,8 @@
 //! non-zero — nothing inconsistent enters the durable layer: the manifest is
 //! atomically rewritten after every decisive job (plan17), so a crash or
 //! ctrl-c mid-session leaves at most the in-flight job's shard unreferenced
-//! (deterministically overwritten by the retry).
+//! (deterministically overwritten by the retry), and every committed censor
+//! stays committed (one transaction per censor, plan20 D4).
 
 mod proofdb;
 use proofdb::harvest_args::parse_args;
@@ -47,13 +53,20 @@ fn main() {
     let t_start = Instant::now();
     let manifest = proofdb::read_manifest(&args.manifest).unwrap_or_else(|e| fail(&e));
     let db = load_db_rows(&args.db, &manifest.sha256_hex).unwrap_or_else(|e| fail(&e));
+    // The censor-state connection (plan20 D3): read-write — the flag set
+    // without SQLITE_OPEN_CREATE refuses to create a missing file, so an
+    // absent DB is the stale/absent-layer abort, not a fresh layer.
+    let censor = rusqlite::Connection::open_with_flags(
+        &args.db,
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE,
+    )
+    .unwrap_or_else(|e| fail(&format!("cannot open DB {}: {e}", args.db.display())));
     eprintln!(
-        "harvest: db {} ({} rows, built_from {}) — policy {} over ledger {}{}",
+        "harvest: db {} ({} rows, built_from {}) — policy {}{}",
         args.db.display(),
         db.rows.len(),
         &manifest.sha256_hex[..16],
         proofdb::harvest_args::POLICY,
-        args.ledger.display(),
         if scope.is_empty() {
             String::new()
         } else {
@@ -75,15 +88,8 @@ fn main() {
         max_runtime: args.max_runtime,
         stop_file: args.stop_file.clone(),
     };
-    let summary = run_walk_session(
-        &mut session,
-        &db,
-        &args.ledger,
-        args.budget_evals,
-        &opts,
-        &scope,
-    )
-    .unwrap_or_else(|e| fail(&e));
+    let summary = run_walk_session(&mut session, &db, &censor, args.budget_evals, &opts, &scope)
+        .unwrap_or_else(|e| fail(&e));
     let summary_line = format!(
         "harvest: policy {} stop={} jobs {} decisive {} censored {} evals {} \
          new_shards {} wall {:.1}s",

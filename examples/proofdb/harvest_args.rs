@@ -1,19 +1,20 @@
 //! The `proofdb_harvest` CLI arguments (plan2/3/4/6; slimmed by the plan18
-//! policy consolidation): `Args`, `usage`, `parse_args`. Split from the
-//! example target root for the 10 KB file-size convention; `main` remains
-//! there.
+//! policy consolidation; censor state moved into the DB by plan20):
+//! `Args`, `usage`, `parse_args`. Split from the example target root for
+//! the 10 KB file-size convention; `main` remains there.
 //!
 //! Generated state defaults wholly under `data/proofdb/` (plan14): DB,
-//! manifest, shard dir, and ledger — a production harvest needs no path
-//! flags. The committed fixture at `docs/plans/proofdb/shards/` is a
-//! development/validation fixture, used only via explicit flags.
+//! manifest, and shard dir — a production harvest needs no path flags.
+//! The censor state lives in the DB's `censor` table (schema v2); the
+//! pre-plan20 `--ledger <work.json>` flag is retired with the JSON
+//! sidecar.
 
 use std::path::PathBuf;
 
 use atomic_solver::notation::uci_to_move;
 use atomic_solver::position::Position;
 
-use super::{DEFAULT_DB, DEFAULT_LEDGER, DEFAULT_MANIFEST, DEFAULT_SHARD_DIR};
+use super::{DEFAULT_DB, DEFAULT_MANIFEST, DEFAULT_SHARD_DIR};
 
 /// The only harvest policy (plan18 policy consolidation): the plan16
 /// shallowest-first ledger walk. The `--policy` flag is kept so existing
@@ -24,7 +25,6 @@ pub struct Args {
     pub db: PathBuf,
     pub manifest: PathBuf,
     pub shard_dir: PathBuf,
-    pub ledger: PathBuf,
     pub budget_evals: u64,
     pub max_total_evals: u64,
     pub tt_mb: usize,
@@ -41,16 +41,17 @@ pub struct Args {
 fn usage() -> ! {
     eprintln!(
         "usage: proofdb_harvest [--db <proofdb.db>] [--manifest <manifest.json>] \
-         [--shard-dir <dir>] [--policy frontier-walk] [--ledger <path>] \
+         [--shard-dir <dir>] [--policy frontier-walk] \
          [--budget-evals <n>] [--max-total-evals <n>] [--tt-mb <mb>] \
          [--max-jobs <n>] [--max-runtime <s>] [--stop-file <path>] \
          [--moves '<uci path>'] \
          [--out-db <grown.db>] [--dump <nodes.txt>]  \
          (defaults: --db data/proofdb/proofdb.db --manifest data/proofdb/shards/manifest.json \
-         --shard-dir data/proofdb/shards --ledger data/proofdb/work.json; \
+         --shard-dir data/proofdb/shards; \
          policy: frontier-walk — the only harvest policy; --budget-evals 0 \
          selects the standing base 4000000; --moves scopes the session to \
-         the subtree of the startpos path it names)"
+         the subtree of the startpos path it names; censor state lives in \
+         the DB's censor table — the pre-plan20 --ledger flag is retired)"
     );
     std::process::exit(1);
 }
@@ -60,7 +61,6 @@ pub fn parse_args() -> Args {
         db: PathBuf::from(DEFAULT_DB),
         manifest: PathBuf::from(DEFAULT_MANIFEST),
         shard_dir: PathBuf::from(DEFAULT_SHARD_DIR),
-        ledger: PathBuf::from(DEFAULT_LEDGER),
         budget_evals: 0,
         max_total_evals: 0,
         tt_mb: 128,
@@ -87,7 +87,14 @@ pub fn parse_args() -> Args {
                     usage();
                 }
             }
-            "--ledger" => a.ledger = PathBuf::from(next()),
+            "--ledger" => {
+                eprintln!(
+                    "proofdb_harvest: --ledger is retired (plan20): censor state \
+                     lives in the DB's censor table; migrate a legacy work.json \
+                     with proofdb_merge --import-censor"
+                );
+                usage()
+            }
             "--budget-evals" => a.budget_evals = next().parse().unwrap_or_else(|_| usage()),
             "--max-total-evals" => a.max_total_evals = next().parse().unwrap_or_else(|_| usage()),
             "--tt-mb" => a.tt_mb = next().parse().unwrap_or_else(|_| usage()),
@@ -115,7 +122,7 @@ pub fn parse_args() -> Args {
 /// replayed sequentially from the startpos — a malformed token or a line
 /// that becomes illegal at any prefix is rejected with a message naming
 /// the offending token. Called from [`parse_args`], before any manifest/
-/// DB/ledger state is loaded (fail fast, usage-class exit 1).
+/// DB state is loaded (fail fast, usage-class exit 1).
 ///
 /// # Errors
 /// An empty value, or a token that is not a legal move at its path prefix.

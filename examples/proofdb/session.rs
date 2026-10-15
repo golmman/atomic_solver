@@ -11,12 +11,13 @@
 //! + replay validation.
 //!
 //! Crash consistency (plan17 D1/D4): after every decisive job's shard write
-//! the session atomically rewrites the on-disk manifest (tmp + rename, the
-//! ledger's pattern), so an unexpected crash or ctrl-c loses at most the
-//! in-flight job's work — the on-disk manifest is always a prefix of the
-//! session's decisive sequence, and every `*.bin` written so far but the
-//! (at most one) orphan of an interrupted job is referenced by it. Censored
-//! jobs touch only the ledger (its per-censor save is already atomic).
+//! the session atomically rewrites the on-disk manifest (tmp + rename), so
+//! an unexpected crash or ctrl-c loses at most the in-flight job's work —
+//! the on-disk manifest is always a prefix of the session's decisive
+//! sequence, and every `*.bin` written so far but the (at most one) orphan
+//! of an interrupted job is referenced by it. Censored jobs touch only the
+//! censor state (one committed `censor`-table transaction per censor,
+//! plan20 — already atomic).
 //!
 //! ~11 KB (justified per the file-size convention): the whole job pipeline
 //! (replay → budgeted search → classify → shard export → per-job durable
@@ -157,9 +158,9 @@ impl Session {
     }
 
     /// Atomically rewrite the on-disk manifest over the current entry set
-    /// (the ledger's tmp + rename pattern via [`write_manifest`]). Called
-    /// after every decisive job (the crash-consistency sync, plan17 D1) and
-    /// testable directly; the end-of-batch rewrite goes through
+    /// (tmp + rename). Called at batch end by the CLI (the per-decisive-job
+    /// sync is [`Self::sync_manifest`]), and testable directly; the
+    /// end-of-batch rewrite goes through
     /// [`Self::rewrite_manifest`], which keeps its CLI-facing signature and
     /// stdout line.
     ///
