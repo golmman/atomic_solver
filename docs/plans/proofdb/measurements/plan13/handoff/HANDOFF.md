@@ -1,14 +1,18 @@
-# Handoff — the startpos proof-line database (SQLite, schema v1)
+# Handoff — the startpos proof-line database (SQLite, schema v2)
 
 **For:** the external exploratory-website project (read-only consumer).
-**Date:** 2026-10-02 · **From:** the `atomic_solver` proofdb pipeline.
+**Date:** 2026-10-16 · **From:** the producer of the database — the
+`atomic_solver` chess-solver project. This delivery is a **re-cut** of the
+2026-10-02 package: same contract shape, newer data snapshot, schema v2.
+Any copy of the 2026-10-02 delivery (schema v1, sha256 `0d929f4c…`) is
+superseded by this one and should be discarded.
 
 ## What is in this directory
 
 | file | content |
 | --- | --- |
-| `proofdb.db` | the proof-line database — one SQLite file, the only artifact a consumer needs |
-| `global_proof_store.md` | **the normative contract**: schema v1, field semantics, invariants, example consumer queries (frozen snapshot of the repo's `docs/spec/global_proof_store.md` as of the 2026-10-02 delivery; the repo spec has since moved to schema v2 — see the status note below) |
+| `proofdb.db` | the proof-line database — one SQLite file, the only data artifact a consumer needs |
+| `global_proof_store.md` | **the normative contract**: schema v2, field semantics, invariants, example consumer queries (copy of the producer's current contract, lightly edited only to inline one reference to a producer-internal format document — the encoding itself is fully specified inline) |
 | `HANDOFF.md` | this file |
 
 ## The contract in one paragraph
@@ -23,47 +27,36 @@ side-to-move perspective (`'win'` / `'loss'`, `NULL` = undecided);
 from its parent chain on a rules-correct atomic-chess implementation. The
 tree is partial: a missing child row means "no proven fact recorded", not
 "illegal" or "refuted". Non-terminal draws are undecided (`NULL`), never
-`'draw'`. Read-only consumption; schema and semantics are exactly the
+`'draw'`. The DB also carries a `censor` table (schema v2) — producer-side
+harvest scheduling state, no proof facts, no invariant touches it; ignore
+it entirely. Read-only consumption; schema and semantics are exactly the
 copied spec — nothing else is guaranteed to a consumer.
 
 ## Version stamp (verify after receiving)
 
 ```text
-sha256(proofdb.db) = 0d929f4c3c62e4bbb87e9b043b582716297b23e2f7332a36e82763b1486070b8
-meta.schema_version = 1
-meta.node_count     = 55703        (55628 proven: 27768 win + 27860 loss; 75 open)
-meta.built_from     = e91ad57b44008fee65ab0b124fab51365c17d08f891777cde525cfecb61fb5fd
+sha256(proofdb.db) = 02fc7d60bc588ef5a1589671c7dc8dcd899ae8f8afe11d23c208dfc0300210ae
+meta.schema_version = 2
+meta.node_count     = 43092        (43028 proven: 21514 win + 21514 loss; 64 open)
+meta.built_from     = 70a160a65c9b08271de0865c09f2667779962741b4b8cf31f4695d347be79a58
 meta.root_fen       = rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 ```
 
-`built_from` identifies the shard set (the durable layer) the DB was built
-from; future deliveries will carry a different `built_from` and node census
-— that is growth, not drift (the census may move in either direction; a
-delivery is not necessarily a node-count superset). The DB is a derived
-view: it can be rebuilt byte-identically from the shard set for the same
-`built_from`.
-
-## Status note (2026-10-16)
-
-The repo's `docs/spec/global_proof_store.md` has since moved to
-**schema v2**, which is purely additive: a `censor` table (harvest
-scheduling state — explicitly no proof facts, meaningless to a consumer)
-and `meta.schema_version = 2`. This delivery is unchanged — the sha256
-above still pins the v1 file — and the frozen v1 spec copy in this
-directory remains its normative contract; no invariant or field semantic
-changed. Consumers should tolerate unknown extra tables (and the
-`schema_version = 2` meta value) in future deliveries.
-
-Separately, the producer roadmap plans to replace the
-`built_from`-as-integrity-stamp semantics with an unmerged-shard
-staleness gate; until then `built_from` remains the data version stamp.
-A refreshed brief will accompany any delivery whose stamp semantics
-change.
+`built_from` identifies the source data set the DB was built from; future
+deliveries will carry a different `built_from` and node census — that is
+growth, not drift (the census may move in either direction; a delivery is
+not necessarily a node-count superset of a previous one). The `nodes`
+content is a derived view, deterministically rebuildable from the same
+source set; the *file's* sha256 is per-build provenance — a rebuild can
+change file bytes without changing a single row, so verify `built_from`
+and the census against a claim, not only file bytes.
 
 ## Read-only consumption statement
 
 - Consume the SQLite file read-only; the producing pipeline owns all
   writes. Any future update is a new file delivery (new `built_from`).
+  This includes the `censor` table — never write to any table, never
+  delete "unused-looking" rows.
 - Do not infer facts from absent rows (§ contract: partial tree, open
   semantics). A row's `outcome IS NULL` is genuinely undecided.
 - The spec's §4 invariants are the guarantee surface (replay-verifiable
@@ -72,17 +65,12 @@ change.
 
 ## Provenance
 
-Built by `proofdb_merge` (the single-writer merger) from the standing
-validated shard set — 262/262 shards, each replay-validated twice at merge
-time (per shard, and as a re-assembled skeleton). Merge census:
+Built by the producer's single-writer merger from its validated source
+set (405 shards, manifest digest = `built_from` above), with the
+harvest scheduling state preserved row-for-row. Independent checks at
+delivery time (2026-10-16): all §4 structural invariants verified by the
+producer's replay validator; an independent implied-value flip analysis
+reported 0 unverified flips over the 64 open rows.
 
-```text
-census: shards merged 262/262; shard tree nodes 56226; overlay new 55360; dedupes 866;
-        open-ancestor insertions 342; open nodes upgraded 268; merged nodes 55703
-        (proven 55628, open 75); skeleton re-validations 262
-db: proofdb.db (nodes 55703), manifest built_from e91ad57b44008fee
-```
-
-Questions about the data or the pipeline: refer to the `atomic_solver`
-repository's `docs/proofdb_pipeline.md` (operator and user manual) or
-contact the owner.
+Questions about the data or the pipeline: contact the owner (the
+producer's operator manual is available on request).

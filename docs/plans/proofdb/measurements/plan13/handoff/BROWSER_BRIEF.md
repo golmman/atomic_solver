@@ -1,7 +1,8 @@
 # Brief — the proofdb browser (external project)
 
 **For:** the coding agent building the exploratory proof-line website.
-**From:** the `atomic_solver` repo, `proofdb` initiative (item 5 handoff).
+**From:** the producer of the database — the `atomic_solver` chess-solver
+project (proof-database team).
 **Status of this brief:** informational handoff; the normative contract is
 `global_proof_store.md` in this directory. Nothing in this brief overrides
 the spec.
@@ -20,18 +21,20 @@ disproven atomic-chess lines, grown incrementally by a harvester pipeline
 
 | file | role |
 | --- | --- |
-| `proofdb.db` | the database — the only data artifact. SQLite, read-only, schema v1 |
+| `proofdb.db` | the database — the only data artifact. SQLite, read-only, schema v2 (the `censor` table it carries is producer scheduling state — ignore it) |
 | `global_proof_store.md` | **the sole normative contract**: schema, field semantics, invariants, example queries. Read it fully before writing code |
 | `HANDOFF.md` | version stamp + provenance + read-only consumption statement |
 
 Verify on receipt: `sha256(proofdb.db) =
-0d929f4c3c62e4bbb87e9b043b582716297b23e2f7332a36e82763b1486070b8`, and the
-meta census below (§5).
+02fc7d60bc588ef5a1589671c7dc8dcd899ae8f8afe11d23c208dfc0300210ae`, and the
+meta census below (§5). This is the 2026-10-16 re-cut of the original
+2026-10-02 delivery; discard any copy of the earlier v1 file
+(sha256 `0d929f4c…`).
 
-Optional background (copy from the source repo if desired, not part of the
-contract): `docs/proofdb_pipeline.md` — §5 is a consumer data-model primer,
-§8.2 has ready-to-run consumer SQL recipes that were verified against this
-exact DB.
+Optional background (not part of the contract, and not included in this
+package — ask the owner if you want it): the producer's operator manual,
+whose §5 is a consumer data-model primer and whose §8.2 has ready-to-run
+consumer SQL recipes verified against this exact DB.
 
 ## 3. The data in one paragraph
 
@@ -47,7 +50,7 @@ parent chain on a rules-correct atomic-chess implementation.
 
 ## 4. Semantics you must not get wrong
 
-These are the two failure modes the data model primer calls out explicitly:
+These are the two classic failure modes:
 
 1. **The tree is partial, and absence is not evidence.** A missing child row
    means "no proven fact recorded (yet)" — not illegal, not refuted, not
@@ -57,7 +60,7 @@ These are the two failure modes the data model primer calls out explicitly:
 2. **Open is open.** `outcome IS NULL` covers both "searched, no decisive
    result within some bounded budget" and "never searched"; the DB does not
    distinguish them. A non-terminal draw is also `NULL` — there is no
-   `'draw'` outcome in v1. Display open nodes as *undecided*, never as
+   `'draw'` outcome exists. Display open nodes as *undecided*, never as
    draws.
 
 Also: node identity is the path (never merge across paths); a bound
@@ -67,21 +70,24 @@ comma-separated shard tags (display as "evidence", no semantics implied).
 ## 5. Version stamp of the delivery (verify after receiving)
 
 ```text
-sha256(proofdb.db) = 0d929f4c3c62e4bbb87e9b043b582716297b23e2f7332a36e82763b1486070b8
-schema_version = 1
+sha256(proofdb.db) = 02fc7d60bc588ef5a1589671c7dc8dcd899ae8f8afe11d23c208dfc0300210ae
+schema_version = 2
 root_fen       = rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-node_count     = 55703  (27768 win + 27860 loss proven, 75 open; 24833 terminals)
-built_from     = e91ad57b44008fee65ab0b124fab51365c17d08f891777cde525cfecb61fb5fd
-root children  = g1f3, g1h3, a2a3, c2c3, d2d4, e2e3, e2e4 — all open; root undecided
-max ply        = 48; exact-status rows = 24833; shards table = 262 tags
+node_count     = 43092  (21514 win + 21514 loss proven, 64 open; 20220 terminals)
+built_from     = 70a160a65c9b08271de0865c09f2667779962741b4b8cf31f4695d347be79a58
+root children  = g1f3, g1h3, a2a3, a2a4, c2c3, e2e3, e2e4 — all open; root undecided
+max ply        = 22; exact-status rows = 20220; shards table = 405 tags
+censor table  = 3617 rows (producer scheduling state — never render it)
 ```
 
 Future deliveries carry a different `built_from` and census — that is
-growth, not drift. Surface `built_from` (+ node census) in the UI as the
-data version stamp. (Addendum 2026-10-16: future deliveries will carry
-`schema_version = 2` — additive, see the addendum after §9 — and a
-delivery is *not* necessarily a node-count superset of this one; treat
-the census as an opaque per-delivery fact.)
+growth, not drift (a delivery is *not* necessarily a node-count superset
+of this one; treat the census as an opaque per-delivery fact — this
+delivery itself is smaller than the 2026-10-02 one). Surface `built_from`
+(+ node census) in the UI as the data version stamp. A file's sha256 is
+per-build provenance — rebuilding from the same source set can change the
+file bytes without changing a row — so treat a *claim* about the data as
+verified by `built_from` + census, and the *delivered file* by its sha.
 
 ## 6. The one real design decision: the rules engine
 
@@ -111,7 +117,7 @@ UI code — everything downstream depends on it.
 
 ## 7. Suggested architecture (not normative)
 
-The whole DB is 3.7 MB — it fits in a browser tab trivially. A static,
+The whole DB is 3.2 MB — it fits in a browser tab trivially. A static,
 backend-free site is feasible:
 
 - Load `proofdb.db` once (sql.js / wa-sqlite WASM SQLite, or ship a
@@ -134,7 +140,7 @@ Feature sketch, ascending:
    terminality, provenance.
 3. Principal-line rendering: from an OR-node follow its unique `'loss'`
    proving child; from an AND-node any reply — a walk to a `depth_bound = 0`
-   terminal renders a complete proof line (24,833 terminal rows exist).
+   terminal renders a complete proof line (20,220 terminal rows exist).
 4. Views: open frontier (`outcome IS NULL ORDER BY ply, id`), shallowest
    proven wins (min `depth_bound` among `'win'`), a search by UCI line,
    shard/provenance browser (`shards` table).
@@ -142,11 +148,12 @@ Feature sketch, ascending:
 
 ## 8. Acceptance gates (build these as automated checks, not vibes)
 
-1. **Version stamp gate** — on load: `schema_version` ∈ {1, 2},
-   `node_count` matches `COUNT(*)`, display `built_from`. Abort with a
-   clear error on a `schema_version` ∉ {1, 2} file; tolerate extra tables
-   (schema v2 adds a `censor` table — scheduling state of the producing
-   pipeline, meaningless to a consumer; see the addendum after §9).
+1. **Version stamp gate** — on load: `schema_version` = 2 (this
+   delivery; also accept 1 for older deliveries), `node_count` matches
+   `COUNT(*)`, display `built_from`. Abort with a clear error on any
+   other `schema_version`; tolerate unknown extra tables (this delivery
+   carries a `censor` table — producer scheduling state, meaningless to
+   a consumer; ignore it, never render anything from it).
 2. **Structural invariant checks** (run over the whole DB at load or in CI;
    all are cheap SQL/application checks against the spec §4):
    - depth monotonicity: proven non-terminal OR-nodes have exactly one
@@ -172,45 +179,20 @@ Feature sketch, ascending:
   outside §4's invariants is promised. Do not build features that need
   facts the schema does not carry (e.g. "which unvisited replies are
   actually losing" — unknowable from the DB).
-- The producer repo (`atomic_solver`) is out of scope for changes; if the
+- The producer (`atomic_solver`) is out of scope for changes; if the
   data seems wrong, that is a defect report back to the owner, not a local
   patch.
-
-## Addendum — 2026-10-16: producer-side changes since the delivery
-
-The browser project had not started when these producer changes landed;
-this addendum keeps the brief accurate without re-cutting the delivery.
-
-- **Schema v2 (additive).** The repo's `docs/spec/global_proof_store.md`
-  moved to schema v2: a new `censor` table (`path`, `work_done`,
-  `passes_failed` — harvest scheduling state, explicitly *not* proof
-  facts) and `meta.schema_version = 2`. The `global_proof_store.md` copy
-  in this directory is the frozen v1 snapshot of the 2026-10-02 delivery
-  and remains the normative contract *for this delivery*; it is no longer
-  verbatim-identical to the repo spec. Nothing in the v1 contract
-  (invariants, outcome semantics, path identity) changed.
-- **Gate 1 of §8 relaxed accordingly** (see above): accept
-  `schema_version` ∈ {1, 2}; ignore or flag unknown extra tables, never
-  render anything from them.
-- **`built_from` shelf life.** The producer roadmap plans to replace the
-  `built_from`-as-integrity-stamp semantics with an unmerged-shard
-  staleness gate. Until that lands, `built_from` remains the data version
-  stamp; if the stamp semantics change, a refreshed brief will accompany
-  the delivery.
-- **Census direction.** The current production layer (2026-10-14) holds
-  43,092 nodes / 405 shards — below this delivery's 55,703 / 262. A
-  future delivery is therefore not a superset of this snapshot; the
-  "growth, not drift" framing applies to *change*, not monotonicity.
 
 ## 10. Suggested kickoff prompt for the coding agent
 
 > Read `BROWSER_BRIEF.md`, then `global_proof_store.md` (the normative
-> contract) and `HANDOFF.md` in full. Verify the `proofdb.db` sha256 and
-> meta census against §5 of the brief, and read the 2026-10-16 addendum
-> (after §9) for producer-side schema changes. Decide the rules-engine option
-> (§6: TS port vs Rust/WASM of `atomic-movegen` 2.3) and record the
-> decision + rationale in a short `DECISIONS.md` before writing UI code.
-> Then scaffold the static site: DB load + version-stamp gate + structural
-> invariant checks (§8) first, board navigation second, node facts panel
-> third. The tree is a partial AND/OR proof tree — re-read §4 of the brief
-> before rendering any missing child or open node.
+> contract, schema v2) and `HANDOFF.md` in full. Verify the `proofdb.db`
+> sha256 and meta census against §5 of the brief — this is the
+> 2026-10-16 schema-v2 re-cut; discard any earlier v1 copy. The `censor`
+> table is producer scheduling state: ignore it everywhere. Decide the
+> rules-engine option (§6: TS port vs Rust/WASM of `atomic-movegen` 2.3)
+> and record the decision + rationale in a short `DECISIONS.md` before
+> writing UI code. Then scaffold the static site: DB load + version-stamp
+> gate + structural invariant checks (§8) first, board navigation second,
+> node facts panel third. The tree is a partial AND/OR proof tree —
+> re-read §4 of the brief before rendering any missing child or open node.

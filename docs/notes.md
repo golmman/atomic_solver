@@ -1053,3 +1053,7 @@ I also doubt we still need the `work.json`. It was needed for laddered harvestin
 I think the shards are still fine so we can cleanly decouple the harvest from the merge, but it should be ok to delete them after the merge.
 
 What do you think?
+
+---
+
+And yes, I actually intended a delivery re-cut (ship the current v2 production DB to the browser project)

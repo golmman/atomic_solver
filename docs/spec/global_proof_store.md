@@ -31,7 +31,7 @@ evidence?*
 
 ```sql
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
--- rows: schema_version=1, root_fen=STARTPOS_FEN, node_count, built_from
+-- rows: schema_version=2, root_fen=STARTPOS_FEN, node_count, built_from
 --       (SHA-256 of the manifest file), generator
 
 CREATE TABLE shards (

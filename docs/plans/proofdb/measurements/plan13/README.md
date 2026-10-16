@@ -1,28 +1,39 @@
-# plan13 measurements — the website handoff package (2026-10-02)
+# plan13 measurements — the website handoff package (2026-10-02; re-cut 2026-10-16)
 
 Executes `../../plan13.md` (item 5: website handoff + user manual).
 Docs + measurement artifacts only — no `src/`/`examples/`/`tests/` changes.
 
-**Deliverable:** a single directory the owner can forward to the external
-website project. The DB was **rebuilt this session** from the committed
-manifest + shard set by `proofdb_merge` (not copied from `data/`); the
-digest equals the plan12 pin, confirming the byte-identical rebuild
-guarantee end-to-end.
+**Re-cut 2026-10-16:** the delivery DB was replaced with the current
+production layer (schema v2, sha256 `02fc7d60…`, 43,092 nodes, `built_from
+70a160a6…`, 405 shards) and the package docs re-pinned to it (HANDOFF
+version stamp + provenance rewritten, BROWSER_BRIEF census/stamps updated,
+spec copy swapped for the v2 spec); the owner confirmed the re-cut — the
+2026-10-02 v1 delivery (sha256 `0d929f4c…`, 55,703 nodes) is superseded.
+Everything below under "Provenance" and "Session runs" describes the
+original 2026-10-02 delivery unless marked otherwise.
 
-## Provenance
+**Deliverable:** a single directory the owner can forward to the external
+website project. The original DB was **rebuilt that session** from the
+committed manifest + shard set by `proofdb_merge` (not copied from
+`data/`); the digest equaled the plan12 pin, confirming the byte-identical
+rebuild guarantee end-to-end.
+
+## Provenance (updated for the 2026-10-16 re-cut)
 
 | file | content |
 | --- | --- |
-| `handoff/proofdb.db` | the rebuilt standing DB, sha256 `0d929f4c…` (= plan12 pin), 55,703 nodes (proven 55,628 / open 75), schema v1 |
-| `handoff/HANDOFF.md` | the consumer-facing one-pager: contract pointer, digest + census, read-only consumption statement, merge-census provenance |
-| `handoff/global_proof_store.md` | verbatim copy of `docs/spec/global_proof_store.md` incl. the new §7 example consumer queries (diff-verified identical) |
-| `env.json` | environment + rev + input/output state |
+| `handoff/proofdb.db` | the current production layer, sha256 `02fc7d60…`, 43,092 nodes (proven 43,028: 21,514 win + 21,514 loss / open 64), schema v2, `built_from 70a160a6…`, 3,617 censor rows |
+| `handoff/HANDOFF.md` | the consumer-facing one-pager: contract pointer, digest + census, read-only consumption statement, provenance — rewritten for the re-cut |
+| `handoff/BROWSER_BRIEF.md` | the consumer-facing project brief — census/stamps/gates updated for the re-cut, obsolete addendum removed |
+| `handoff/global_proof_store.md` | copy of the current `docs/spec/global_proof_store.md` (schema v2); lightly edited to inline the two `proof_tree_dump.md` references (standalone package) |
+| `env.json` | environment + rev + input/output state (from the original delivery) |
 
-Input state: committed manifest `e91ad57b…` (262 entries) + shard dir —
-the only durable layer, re-verified this session. Merge census (verbatim,
-handoff build): shards merged 262/262; overlay new 55360; dedupes 866;
-open-ancestor insertions 342; open nodes upgraded 268; merged 55,703
-(proven 55,628, open 75); skeleton re-validations 262.
+Re-cut input state: production manifest `70a160a6…` (405 entries) + shard
+dir; `proofdb_flip` over the delivered DB: flips 0, open_rows 64 (clean).
+Historical (original delivery): committed manifest `e91ad57b…` (262
+entries) + shard dir; merge census — shards merged 262/262; overlay new
+55360; dedupes 866; open-ancestor insertions 342; open nodes upgraded
+268; merged 55,703 (proven 55,628, open 75); skeleton re-validations 262.
 
 ## Session runs (transcript sources for the manual's pinned outputs)
 

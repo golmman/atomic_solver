@@ -1,4 +1,4 @@
-# Global proof store (SQLite), schema v1
+# Global proof store (SQLite), schema v2
 
 **Status: normative.** This document is the sole external contract for the
 global proof-line database of atomic chess. A consumer (e.g. an exploratory
@@ -31,7 +31,7 @@ evidence?*
 
 ```sql
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
--- rows: schema_version=1, root_fen=STARTPOS_FEN, node_count, built_from
+-- rows: schema_version=2, root_fen=STARTPOS_FEN, node_count, built_from
 --       (SHA-256 of the manifest file), generator
 
 CREATE TABLE shards (
@@ -51,17 +51,46 @@ CREATE TABLE nodes (
   provenance TEXT                      -- shard tags, comma-separated sorted-unique
 );
 CREATE INDEX idx_nodes_parent ON nodes(parent_id);
+CREATE TABLE censor (                -- schema v2, additive (see §2.1)
+  path TEXT PRIMARY KEY,             -- space-separated UCI ('' for the root)
+  work_done INTEGER NOT NULL,        -- cumulative child-evals spent
+  passes_failed INTEGER NOT NULL     -- censored (budget-exhausted) visits
+);
 ```
 
-`move_code` is the 16-bit move encoding of `docs/spec/proof_tree_dump.md`
+`move_code` is a 16-bit move encoding (the producer's internal proof-tree
+dump format):
 (bits 0–5 `to_sq`, 6–11 `from_sq`, 12–13 move type, 14–15 promotion piece;
 `0xFFFF` is reserved as the null sentinel).
+
+### The censor table (schema v2, additive)
+
+Schema v2 adds one table over v1: `censor`, the relocated harvest work
+ledger. One row per **known-open frontier node** the harvester has censored
+(a bounded search ended without a decisive result — a *fact of absence*, not
+representable in the tree model, since a non-terminal draw is `open`).
+`work_done` is the cumulative child-evals spent at the node (all visits);
+`passes_failed` counts its censored visits. `path` uses the same
+space-separated-UCI convention as `nodes`-derived paths, with `''` for the
+root; it is selection-state identity, not a foreign key into `nodes` (most
+censor paths have no row).
+
+The table is **harvest scheduling state**, not proof data:
+
+- The harvest loop is the only writer of `censor` rows (each censor commits
+  one `INSERT OR REPLACE` transaction); the merger never modifies them — it
+  preserves them row-for-row across its full rebuild.
+- Consumers may ignore the table entirely: every v1 surface (`meta`,
+  `shards`, `nodes`, and all invariants below) is unchanged in v2. No
+  invariant of §4 involves `censor`.
+- `censor` rows are replay-independent scheduling hints; deleting them
+  costs re-searched work, never soundness.
 
 ### Meta rows
 
 | key | value |
 | --- | --- |
-| `schema_version` | `1` |
+| `schema_version` | `2` (v1 files carry `1`; v2 is additive — the `censor` table only) |
 | `root_fen` | the startpos FEN every path is relative to |
 | `node_count` | number of rows in `nodes` |
 | `built_from` | SHA-256 (hex) of the manifest file the DB was built from |
@@ -114,6 +143,9 @@ CREATE INDEX idx_nodes_parent ON nodes(parent_id);
    extensions; the root path is least — equivalently, a depth-first walk
    visiting children by increasing `move_code`). Rebuilding the DB from an
    identical shard set yields identical `nodes` content.
+8. **The censor table is scheduling state.** The `censor` table (schema v2)
+   carries no proof facts and participates in no invariant above; only the
+   harvest writes it, and a rebuild preserves it unchanged (see §2.1).
 
 ## 5. Manifest contract
 
@@ -123,7 +155,7 @@ with an `entries` array; each entry requires:
 | field | type | meaning |
 | --- | --- | --- |
 | `tag` | string | unique shard identifier |
-| `file` | string | shard binary file name (`proof_tree_dump.md` format), resolved against the shard directory |
+| `file` | string | shard binary file name, resolved against the shard directory |
 | `fen` | string | the shard's own root position FEN |
 | `moves` | string array | UCI path from the startpos to the shard root (`[]` iff the shard root is the startpos) |
 | `outcome` | string | `'win'` or `'loss'`, the proven outcome of the shard root, side-to-move perspective |
