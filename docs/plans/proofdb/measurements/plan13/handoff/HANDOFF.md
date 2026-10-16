@@ -8,7 +8,7 @@
 | file | content |
 | --- | --- |
 | `proofdb.db` | the proof-line database — one SQLite file, the only artifact a consumer needs |
-| `global_proof_store.md` | **the normative contract**: schema v1, field semantics, invariants, example consumer queries (verbatim copy of the repo's `docs/spec/global_proof_store.md`) |
+| `global_proof_store.md` | **the normative contract**: schema v1, field semantics, invariants, example consumer queries (frozen snapshot of the repo's `docs/spec/global_proof_store.md` as of the 2026-10-02 delivery; the repo spec has since moved to schema v2 — see the status note below) |
 | `HANDOFF.md` | this file |
 
 ## The contract in one paragraph
@@ -38,8 +38,27 @@ meta.root_fen       = rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 
 `built_from` identifies the shard set (the durable layer) the DB was built
 from; future deliveries will carry a different `built_from` and node census
-— that is growth, not drift. The DB is a derived view: it can be rebuilt
-byte-identically from the shard set for the same `built_from`.
+— that is growth, not drift (the census may move in either direction; a
+delivery is not necessarily a node-count superset). The DB is a derived
+view: it can be rebuilt byte-identically from the shard set for the same
+`built_from`.
+
+## Status note (2026-10-16)
+
+The repo's `docs/spec/global_proof_store.md` has since moved to
+**schema v2**, which is purely additive: a `censor` table (harvest
+scheduling state — explicitly no proof facts, meaningless to a consumer)
+and `meta.schema_version = 2`. This delivery is unchanged — the sha256
+above still pins the v1 file — and the frozen v1 spec copy in this
+directory remains its normative contract; no invariant or field semantic
+changed. Consumers should tolerate unknown extra tables (and the
+`schema_version = 2` meta value) in future deliveries.
+
+Separately, the producer roadmap plans to replace the
+`built_from`-as-integrity-stamp semantics with an unmerged-shard
+staleness gate; until then `built_from` remains the data version stamp.
+A refreshed brief will accompany any delivery whose stamp semantics
+change.
 
 ## Read-only consumption statement
 

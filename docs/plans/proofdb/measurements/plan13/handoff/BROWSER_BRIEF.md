@@ -78,7 +78,10 @@ max ply        = 48; exact-status rows = 24833; shards table = 262 tags
 
 Future deliveries carry a different `built_from` and census — that is
 growth, not drift. Surface `built_from` (+ node census) in the UI as the
-data version stamp.
+data version stamp. (Addendum 2026-10-16: future deliveries will carry
+`schema_version = 2` — additive, see the addendum after §9 — and a
+delivery is *not* necessarily a node-count superset of this one; treat
+the census as an opaque per-delivery fact.)
 
 ## 6. The one real design decision: the rules engine
 
@@ -139,9 +142,11 @@ Feature sketch, ascending:
 
 ## 8. Acceptance gates (build these as automated checks, not vibes)
 
-1. **Version stamp gate** — on load: `schema_version = 1`, `node_count`
-   matches `COUNT(*)`, display `built_from`. Abort with a clear error on a
-   schema_version ≠ 1 file.
+1. **Version stamp gate** — on load: `schema_version` ∈ {1, 2},
+   `node_count` matches `COUNT(*)`, display `built_from`. Abort with a
+   clear error on a `schema_version` ∉ {1, 2} file; tolerate extra tables
+   (schema v2 adds a `censor` table — scheduling state of the producing
+   pipeline, meaningless to a consumer; see the addendum after §9).
 2. **Structural invariant checks** (run over the whole DB at load or in CI;
    all are cheap SQL/application checks against the spec §4):
    - depth monotonicity: proven non-terminal OR-nodes have exactly one
@@ -171,11 +176,38 @@ Feature sketch, ascending:
   data seems wrong, that is a defect report back to the owner, not a local
   patch.
 
+## Addendum — 2026-10-16: producer-side changes since the delivery
+
+The browser project had not started when these producer changes landed;
+this addendum keeps the brief accurate without re-cutting the delivery.
+
+- **Schema v2 (additive).** The repo's `docs/spec/global_proof_store.md`
+  moved to schema v2: a new `censor` table (`path`, `work_done`,
+  `passes_failed` — harvest scheduling state, explicitly *not* proof
+  facts) and `meta.schema_version = 2`. The `global_proof_store.md` copy
+  in this directory is the frozen v1 snapshot of the 2026-10-02 delivery
+  and remains the normative contract *for this delivery*; it is no longer
+  verbatim-identical to the repo spec. Nothing in the v1 contract
+  (invariants, outcome semantics, path identity) changed.
+- **Gate 1 of §8 relaxed accordingly** (see above): accept
+  `schema_version` ∈ {1, 2}; ignore or flag unknown extra tables, never
+  render anything from them.
+- **`built_from` shelf life.** The producer roadmap plans to replace the
+  `built_from`-as-integrity-stamp semantics with an unmerged-shard
+  staleness gate. Until that lands, `built_from` remains the data version
+  stamp; if the stamp semantics change, a refreshed brief will accompany
+  the delivery.
+- **Census direction.** The current production layer (2026-10-14) holds
+  43,092 nodes / 405 shards — below this delivery's 55,703 / 262. A
+  future delivery is therefore not a superset of this snapshot; the
+  "growth, not drift" framing applies to *change*, not monotonicity.
+
 ## 10. Suggested kickoff prompt for the coding agent
 
 > Read `BROWSER_BRIEF.md`, then `global_proof_store.md` (the normative
 > contract) and `HANDOFF.md` in full. Verify the `proofdb.db` sha256 and
-> meta census against §5 of the brief. Decide the rules-engine option
+> meta census against §5 of the brief, and read the 2026-10-16 addendum
+> (after §9) for producer-side schema changes. Decide the rules-engine option
 > (§6: TS port vs Rust/WASM of `atomic-movegen` 2.3) and record the
 > decision + rationale in a short `DECISIONS.md` before writing UI code.
 > Then scaffold the static site: DB load + version-stamp gate + structural
