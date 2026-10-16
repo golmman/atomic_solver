@@ -1057,3 +1057,12 @@ What do you think?
 ---
 
 And yes, I actually intended a delivery re-cut (ship the current v2 production DB to the browser project)
+
+---
+
+I want the following change for the proofdb harvest `frontier-walk` policy:
+In positions where it is white to move, once one move is proven a decisive win we don't explore their sibling moves.
+
+Background and Justification: We assume white is ultimately winning atomic chess. Our goal is to narrow the corridors. To be more efficient we only need to prove one winning move for white (attacking OR-node).
+
+Please draft a plan in the proofdb initiative.
