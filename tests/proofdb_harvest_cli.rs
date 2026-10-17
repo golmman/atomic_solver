@@ -293,7 +293,7 @@ fn scoped_session_jobs_and_census_stay_in_scope() {
     // state of the scope row (open).
     assert!(
         run.stderr.contains(
-            "records 1 (lineage 0, ancestor 0, out_of_scope 1, complete 0) \
+            "records 1 (lineage 0, ancestor 0, or_closed 0, out_of_scope 1, complete 0) \
              — root open; base budget 1000; scope f2f3 e7e6",
         ),
         "census: {}",
@@ -361,7 +361,7 @@ fn absent_moves_flag_keeps_the_global_shape() {
     assert_eq!(run.code, Some(0), "stderr: {}", run.stderr);
     assert!(
         run.stderr
-            .contains("out_of_scope 0, complete 0) — root open; base budget 1000; scope global"),
+            .contains("lineage 0, ancestor 0, or_closed 0, out_of_scope 0, complete 0) — root open; base budget 1000; scope global"),
         "census: {}",
         run.stderr
     );
@@ -371,5 +371,64 @@ fn absent_moves_flag_keeps_the_global_shape() {
     // The `harvest: db` echo (stderr's first line) carries no scope.
     let echo = run.stderr.lines().next().unwrap();
     assert!(!echo.contains("scope"), "no scope echo: {echo}");
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+// --- plan21: the OR-node sibling skip ---
+
+/// A synthetic or-closed parent: the stored `f2f3 e7e6 g2g4` row is flipped
+/// to `loss` by SQL on the test's DB copy (documented test-craft — the real
+/// row is `win`, and a `loss` child at ply 3 or-closes its white-to-move
+/// parent `f2f3 e7e6`, plan21 D1/D3). A seeded censor record under the
+/// or-closed parent is never visited and counted `or_closed 1`; the scoped
+/// session at the or-closed scope root exhausts before any job, with the
+/// explanatory stderr note; the seeded record survives untouched.
+#[test]
+fn or_closed_parent_drops_records_and_exhausts() {
+    let dir = temp_dir("orclosed");
+    {
+        let conn = rusqlite::Connection::open(dir.join("fixture.db")).unwrap();
+        conn.execute(
+            "WITH RECURSIVE chain(id, pth) AS ( \
+                 SELECT id, COALESCE(move_uci,'') FROM nodes WHERE parent_id IS NULL \
+                 UNION ALL \
+                 SELECT n.id, chain.pth || CASE WHEN chain.pth='' THEN '' ELSE ' ' END \
+                      || n.move_uci FROM nodes n JOIN chain ON n.parent_id = chain.id) \
+             UPDATE nodes SET outcome='loss' \
+             WHERE id IN (SELECT id FROM chain WHERE pth='f2f3 e7e6 g2g4')",
+            [],
+        )
+        .unwrap();
+    }
+    seed_censor(&dir, "f2f3 e7e6 a2a3", 50_000, 1);
+    let run = run_harvest(&dir, &["--moves", "f2f3 e7e6"]);
+    assert_eq!(run.code, Some(0), "stderr: {}", run.stderr);
+    assert!(
+        run.stderr.contains(
+            "records 1 (lineage 0, ancestor 0, or_closed 1, out_of_scope 0, \
+             complete 0) — root open; base budget 1000; scope f2f3 e7e6",
+        ),
+        "census: {}",
+        run.stderr
+    );
+    assert!(
+        run.stderr.contains(
+            "scope root \"f2f3 e7e6\" is or-closed by proven winning child — \
+             nothing to harvest",
+        ),
+        "note: {}",
+        run.stderr
+    );
+    assert!(!run.stdout.contains("job: "), "no jobs ran: {}", run.stdout);
+    assert!(
+        run.stdout.contains("stop=exhausted jobs 0"),
+        "summary: {}",
+        run.stdout
+    );
+    // The seeded record is preserved (drops are candidacy-only).
+    assert_eq!(
+        censor_rows(&dir),
+        vec![("f2f3 e7e6 a2a3".to_string(), 50_000, 1)]
+    );
     std::fs::remove_dir_all(&dir).ok();
 }

@@ -387,8 +387,9 @@ fn cli_defaults_are_centralized_under_data_proofdb() {
 
 // --- plan16 D1: the frontier-walk shallowest-first ledger walk (walk.rs) ---
 
+use proofdb::walk::census::RootState;
 use proofdb::walk::driver::{WalkOptions, run_walk_batch, run_walk_session};
-use proofdb::walk::{RootState, WalkFrontier, root_state};
+use proofdb::walk::{WalkFrontier, root_state};
 
 use proofdb::harvest::replay_job_path;
 use proofdb::session::Session;
@@ -1004,6 +1005,176 @@ fn walk_scope_session_pickup_and_preservation() {
     assert_eq!(ledger.get("b1c3").unwrap().work_done, 50_000);
     assert_eq!(ledger.get("b1c3").unwrap().passes_failed, 1);
     std::fs::remove_dir_all(&dir).ok();
+}
+
+// --- plan21: the OR-node sibling skip ---
+
+/// Plan21 G2 (rule A): a session over a statically or-closed layer visits
+/// only the non-pruned records — the or-closed parent (white-to-move, a
+/// proven `Loss` child row) and everything under it is never visited, and
+/// the dropped ledger records stay untouched (candidacy-only drop).
+#[test]
+fn walk_or_closed_layer_visits_only_open_records() {
+    let dir = walk_dir("walk_orclosed_static");
+    // The or-closed parent "a2a3 b1b2" (white-to-move, ply 2) is proven by
+    // the crafted loss child at ply 3 (rows are data — but the *visited*
+    // paths must replay, and "a2a3"/"a2a3 a7a5" do).
+    let db = walk_db(&[
+        ("", 0, None),
+        ("a2a3", 1, None),
+        ("a2a3 b1b2 c2c3", 3, Some(Outcome::Loss)),
+    ]);
+    let ledger = ledger_of(&[
+        ("a2a3", 100, 1),
+        ("a2a3 a7a5", 100, 1),
+        ("a2a3 b1b2", 100, 1),
+        ("a2a3 b1b2 c2c3 e2e4", 100, 1),
+    ]);
+    let mut session = Session::new(
+        4,
+        dir.join("shards"),
+        dir.join("shards/manifest.json"),
+        Vec::new(),
+        "frontier-walk",
+    );
+    let (mut frontier, census) = WalkFrontier::new(&ledger, &db, "a2a3");
+    assert_eq!(
+        (census.lineage, census.ancestor, census.or_closed),
+        (0, 0, 2)
+    );
+    let mut led = ledger.clone();
+    let summary = run_walk_batch(
+        &mut session,
+        &db,
+        &mut frontier,
+        &mut led,
+        &censor_mem(),
+        1_000,
+        &walk_opts(2, 0),
+        "a2a3",
+    )
+    .unwrap();
+    assert_eq!(summary.stop_reason, "max-jobs");
+    assert_eq!(summary.jobs, 2);
+    assert_eq!(summary.or_closes, 0);
+    // Visits: the scope-root record, then its lex-first legal black reply
+    // (a7a5); nothing at-or-under the or-closed parent. The ledger keeps
+    // every seeded record (drops are candidacy-only) — the visited ones are
+    // bumped to the budget, the dropped ones untouched.
+    let bumped = |led: &Ledger, k: &str| {
+        let e = led.get(k).unwrap();
+        assert!(e.work_done >= 1_000, "{k} bumped to the budget: {e:?}");
+        assert_eq!(e.passes_failed, 2, "{k} censored once");
+    };
+    bumped(&led, "a2a3");
+    bumped(&led, "a2a3 a7a5");
+    assert_eq!(led.get("a2a3 b1b2").unwrap().work_done, 100);
+    assert_eq!(led.get("a2a3 b1b2 c2c3 e2e4").unwrap().work_done, 100);
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// Plan21 G2 (rule B + D5): an in-session decisive `loss` child or-closes
+/// its white-to-move parent: the scope root's expansion target — the
+/// win-in-1 knight capture `e5d7` that explodes the black king — decides as
+/// a terminal loss, the parent or-closes, and the session exhausts with no
+/// further visit at-or-under the parent. The or-close is not a complete
+/// (D8); the seeded scope-root record is untouched; a full re-run
+/// reproduces the summary and censor state (determinism).
+#[test]
+fn walk_in_session_or_close_after_decisive_loss() {
+    use atomic_solver::notation::move_to_uci;
+
+    let dir = walk_dir("walk_orclosed_dynamic");
+    // The scope root: white to move (absolute ply 4), every legal child
+    // crafted as a stored open row except the win-in-1 `e5d7` — the walk's
+    // expansion target, whose position is a terminal loss for the defender.
+    let scope = "g1f3 a7a5 f3e5 a5a4";
+    let path: Vec<String> = scope.split(' ').map(str::to_string).collect();
+    let (pos, _) = replay_job_path(&path).unwrap();
+    let mut ucis: Vec<String> = pos
+        .legal_moves_vec()
+        .iter()
+        .map(|&m| move_to_uci(m))
+        .collect();
+    ucis.sort();
+    assert!(
+        ucis.iter().any(|u| u == "e5d7"),
+        "win-in-1 is a legal child"
+    );
+    let rows: Vec<proofdb::db::DbRow> = ucis
+        .iter()
+        .filter(|u| u.as_str() != "e5d7")
+        .map(|u| proofdb::db::DbRow {
+            path: format!("{scope} {u}")
+                .split(' ')
+                .map(str::to_string)
+                .collect(),
+            ply: 5,
+            outcome: None,
+            depth_bound: None,
+        })
+        .collect();
+    let db = proofdb::db::DbContent {
+        root_fen: Position::STARTPOS_FEN.to_string(),
+        rows,
+    };
+    // The scope root itself: a record at the budget (an expansion candidate;
+    // never a search visit — the flat budget is spent on its children).
+    let ledger = ledger_of(&[(scope, 1_000, 1)]);
+
+    let run = |censor: &Connection| {
+        let mut session = Session::new(
+            4,
+            dir.join("shards"),
+            dir.join("shards/manifest.json"),
+            Vec::new(),
+            "frontier-walk",
+        );
+        let (mut frontier, census) = WalkFrontier::new(&ledger, &db, scope);
+        assert_eq!(census.or_closed, 0, "nothing or-closed at session start");
+        let mut led = ledger.clone();
+        let summary = run_walk_batch(
+            &mut session,
+            &db,
+            &mut frontier,
+            &mut led,
+            censor,
+            1_000,
+            &walk_opts(5, 0),
+            scope,
+        )
+        .unwrap();
+        (summary, led)
+    };
+    let (summary, led) = run(&censor_mem());
+    // The single expansion job: decisive loss at the win-in-1 child, then
+    // the or-close of the scope root exhausts the session.
+    assert_eq!(summary.stop_reason, "", "exhausted");
+    assert_eq!(summary.jobs, 1);
+    assert_eq!(summary.decisive, 1);
+    assert_eq!(summary.censored, 0);
+    assert_eq!(summary.or_closes, 1);
+    assert_eq!(summary.completes, 0, "an or-close is not a complete (D8)");
+    assert_eq!(session_new_shards(&dir), 1);
+    // The seeded scope-root record is untouched; no record appeared at or
+    // under the parent beyond it (the decided subtree was swept before it
+    // could gain one).
+    assert_eq!(entries(&led), entries(&ledger));
+    // Determinism: a fresh session reproduces summary + censor state.
+    let (summary2, led2) = run(&censor_mem());
+    assert_eq!(summary2.jobs, summary.jobs);
+    assert_eq!(summary2.or_closes, summary.or_closes);
+    assert_eq!(summary2.completes, summary.completes);
+    assert_eq!(entries(&led), entries(&led2));
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+/// The shard count the or-close driver test's session produced (the
+/// manifest on disk is the session's own record; the two runs share one
+/// shard dir, so the file count pins the decisive total).
+fn session_new_shards(dir: &std::path::Path) -> usize {
+    let manifest = read_manifest(&dir.join("shards/manifest.json")).unwrap();
+    manifest.entries.len()
 }
 
 // --- plan20: censor state in the DB (schema v2; D5/D6) ---

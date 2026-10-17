@@ -4,9 +4,9 @@
 //! `main`. Since plan20 the censor hook commits to the DB's `censor`
 //! table (one transaction per censor) instead of saving a JSON sidecar.
 //!
-//! File-size justification: ~10 KB — the whole live selection loop (visit
+//! File-size justification: ~11 KB — the whole live selection loop (visit
 //! bookkeeping, batch loop, session assembly) shares one state shape;
-//! the selection state's normative D1–D7 contract lives in [`super`].
+//! the selection state's normative D1–D6 contract lives in [`super`].
 //!
 //! Stop conditions are checked **between iterations only** (`max_jobs`
 //! counts searches; pick-only complete iterations count toward neither cap;
@@ -61,8 +61,12 @@ pub struct WalkSummary {
     /// signature (D4).
     pub fresh_censored: usize,
     pub evals: u64,
-    /// Complete-marked candidates this session.
+    /// Complete-marked candidates this session (or-close complete-marks do
+    /// not count — D8).
     pub completes: usize,
+    /// Dynamic or-closes this session (plan21 D4; the static D2(b') drops
+    /// are the census's `or_closed`, not this).
+    pub or_closes: usize,
     /// `""` = exhausted; otherwise `budget`/`max-jobs`/`max-runtime`/
     /// `stop-file`.
     pub stop_reason: String,
@@ -131,6 +135,14 @@ fn visit(
     } else {
         summary.decisive += 1;
         frontier.mark_decided(key);
+        // Plan21 D4: a decisive `Loss` at an odd-absolute-ply child
+        // (defender to move loses ⇒ the parent's white move wins) or-closes
+        // the in-scope white-to-move parent — one proving child suffices at
+        // an OR node. A decisive `Win` child refutes the parent's move and
+        // must not trigger; black-to-move parents never trigger (D2).
+        if rec.outcome == "loss" && frontier.or_close_parent(key) {
+            summary.or_closes += 1;
+        }
     }
     rec.pass = Some(passes + 1);
     rec.work_before = Some(work_before);
@@ -179,16 +191,28 @@ pub fn run_walk_batch(
         let picked = frontier.pick(ledger);
         let Some((key, work)) = picked else {
             // Root rule (D2/D6): the scope root as a virtual candidate,
-            // unless the scope root is proven-stored or complete-blocked —
-            // then the walk is done. A scoped session's proven-stored
-            // scope root explains itself on stderr (plan19 ruling b: no
-            // work beneath proven nodes; the global session's shape is
-            // unchanged, so the note fires only under a scope).
+            // unless the scope root is proven-stored, or-closed (plan21 D6:
+            // statically via a proven `Loss` child row, or dynamically via
+            // an in-session or-close — both get the scoped stderr note), or
+            // complete-blocked — then the walk is done. A scoped session's
+            // proven-stored/or-closed scope root explains itself on stderr
+            // (plan19 ruling b: no work beneath proven nodes; the global
+            // session's shape is unchanged, so the notes fire only under a
+            // scope).
             if root_proven_stored(&rows, session, scope) {
                 if !scope.is_empty() {
                     eprintln!(
                         "frontier-walk: scope root {scope:?} is proven-stored — \
                          nothing to harvest"
+                    );
+                }
+                break; // exhausted (empty stop reason)
+            }
+            if frontier.root_or_closed() {
+                if !scope.is_empty() {
+                    eprintln!(
+                        "frontier-walk: scope root {scope:?} is or-closed by proven \
+                         winning child — nothing to harvest"
                     );
                 }
                 break; // exhausted (empty stop reason)

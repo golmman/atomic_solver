@@ -35,8 +35,14 @@
 //! minus: (a) records whose own path is a proven DB row (lineage drop,
 //! decision 6); (b) records with a proven DB row on a proper prefix — the
 //! empty prefix included, so a proven root row drops everything
-//! (sibling-skip, decision 9); (c) in-session complete/decided nodes.
-//! Selection: the minimum of `(ply, space-joined path)` — shallowest first,
+//! (sibling-skip, decision 9); (b') records at-or-under an in-scope
+//! **or-closed** white-to-move parent (`Drop::OrClosed`, plan21 D3): a
+//! proven `Loss` DB-row child already proves the parent — one winning move
+//! per OR node — so the parent and everything under it leaves candidacy
+//! (candidacy-only: censor rows are never deleted). The drop rules are
+//! evaluated scope-relative; or-closedness above the scope root is ignored
+//! (the operator chose the scope deliberately). Selection: the minimum of
+//! `(ply, space-joined path)` — shallowest first,
 //! path-lexicographic tie-break (the codebase convention; both computed on
 //! scope-relative values — the scope root is ply 0, the same special
 //! position the game start has globally; among in-scope records the
@@ -44,9 +50,12 @@
 //! prefix). **Root rule:** when the candidate set is empty, the scope root
 //! becomes a virtual candidate (ply 0, work 0) — *unless* the scope root is
 //! proven-stored (a proven DB row at the scope key, or a manifest/shard
-//! path there, [`Session::has_path`]), in which case the session stops
-//! `exhausted` (a scoped session prints an explanatory stderr note; ruling
-//! plan19-b: no work beneath proven nodes). A stored open root row is a legitimate first target
+//! path there, [`super::session::Session::has_path`]), or **or-closed**
+//! (plan21 D6: a white-to-move scope root with a proven `Loss` child row —
+//! statically, per D2(b') — or or-closed in-session), in which case the
+//! session stops `exhausted` (a scoped session prints an explanatory
+//! stderr note in either case; ruling plan19-b: no work beneath proven
+//! nodes). A stored open root row is a legitimate first target
 //! (the fresh-layer bootstrap); its censor creates the root's ledger record
 //! via the bump hook — the same "a censored open DB row gets its record on
 //! first censor" semantics. Accepted consequence: on a
@@ -73,9 +82,18 @@
 //! **zero child-evals** (a non-budget Draw — e.g. an on-path repetition)
 //! cannot advance the flat budget; the visit target is complete-marked with
 //! its (bumped) record retained, the same no-ladder territory rule applied
-//! to a degenerate censor. No intra-session AND/OR propagation: a decisive
-//! child does not decide its parent in-session — the merger's closure owns
-//! that; the walk is a producer of facts, not an inference engine.
+//! to a degenerate censor. Intra-session propagation is limited to the
+//! plan21 OR-node sibling skip: a decisive `Loss` at a child **or-closes**
+//! its in-scope white-to-move parent (one proving child suffices at an OR
+//! node; the child is at odd absolute ply exactly when its parent is
+//! white-to-move) — complete-marking the parent, sweeping its subtree from
+//! candidacy — and a decided node's subtree leaves candidacy (the
+//! in-session form of the cross-session lineage gate: everything under an
+//! in-session decided node is inside its stored proof subtree or an
+//! off-proof branch unnecessary under the skip policy). Otherwise there is
+//! no AND/OR propagation: a decisive child does not decide its parent
+//! in-session — the merger's closure owns that; the walk is a producer of
+//! facts, not an inference engine.
 //!
 //! **D4 — budget and ledger semantics.** Flat budget `B`, **no ladder**: a
 //! node censored at `B` is never re-searched deeper by this policy —
@@ -95,12 +113,15 @@
 //! counter is live and starts at 0 — the complete/decided sets are
 //! in-session state; the session's final count is [`WalkSummary::
 //! completes`]; `out_of_scope` counts the ledger records outside the
-//! session scope and `scope` names the session's world). Job records: the
+//! session scope and `scope` names the session's world; `or_closed` counts
+//! the D2(b') drops — the shallowest decisive prefix wins the attribution).
+//! Job records: the
 //! twelve standard fields with `policy: "frontier-walk"`, `tier:
 //! "frontier-walk"`, `kind: "search" | "expand"`, `pass = passes_failed +
 //! 1`, `work_before` = the record's `work_done` before the visit (a fresh
 //! child's first visit is `pass 1`, `work_before 0`). Summary line: the
-//! standard harvest shape.
+//! standard harvest shape plus `or_closes N` (the dynamic or-closes of the
+//! skip; complete-marks via or-close do not count toward `completes`).
 //!
 //! **D6 — termination, determinism.** Stop conditions are checked between
 //! iterations only (`max_total_evals` on cumulative child-evals, `max_jobs`
@@ -116,142 +137,35 @@
 //! cargo does not run unit tests inside example targets) plus the inline
 //! selection unit tests below.
 //!
-//! File-size justification: ~19.8 KB (plan19 scoped-harvest growth) — the
-//! normative D1–D7 contract lives in this module doc and shares one
-//! indexing scheme with the selection state ([`WalkFrontier`]) and the
-//! scope-relative key helpers ([`in_scope`]/[`rel_of`]/[`join_scope`]);
-//! the batch driver is split out ([`driver`], the driver-split file-size
-//! pattern) and the unit tests into `walk/tests.rs`; at the ~20 KB line
-//! the next natural split would peel the census/`RootState` types off —
-//! deferred until a further feature actually crosses it.
+//! File-size justification: ~20 KB (the plan21 OR-node sibling skip grew
+//! the selection state; the census/`RootState` types were peeled off into
+//! [`census`] and the scope-relative key algebra plus the drop/handled
+//! classification into [`keys`] — the splits the pre-plan21 header deferred
+//! until a feature actually crossed the ~20 KB line) — the normative D1–D6
+//! contract lives in this module doc and shares one indexing scheme with
+//! the selection state ([`WalkFrontier`]); the batch driver is split out
+//! ([`driver`], the driver-split file-size pattern) and the unit tests into
+//! `walk/tests.rs`.
 
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashSet};
 
 use atomic_solver::position::Outcome;
 
 use super::db::DbContent;
 use super::ledger::Ledger;
-use super::session::Session;
 
+pub mod census;
 pub mod driver;
+pub mod keys;
+
+pub use census::{WalkCensus, root_state};
+use keys::{
+    Drop, drop_reason, in_scope, is_handled, join_scope, path_of, ply_of, rel_of, under_closed,
+};
 
 /// The standing base per-visit child-eval budget (used when
 /// `--budget-evals` is 0).
 pub const BASE_EVALS: u64 = 4_000_000;
-
-/// Why a ledger record is not a walk candidate (D2's lineage/ancestor
-/// drops; a record can carry both — the shallowest proven prefix wins).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Drop {
-    /// The record's own path is a proven DB row (decision 6).
-    Lineage,
-    /// A proven DB row on a proper prefix (decision 9; the empty prefix
-    /// included — a proven root row drops everything).
-    Ancestor,
-}
-
-/// The session-start root state (the census's `root` field, D5).
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub enum RootState {
-    /// No root row in the DB (pathological — a DB always has the root).
-    #[default]
-    Fresh,
-    /// The root is a stored open row (the fresh-layer bootstrap target).
-    Open,
-    /// The root is proven-stored (a proven DB row or a manifest/shard path).
-    Proven,
-}
-
-impl RootState {
-    #[must_use]
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::Fresh => "fresh",
-            Self::Open => "open",
-            Self::Proven => "proven",
-        }
-    }
-}
-
-/// The session-start census (D5; the wording shape is pinned by report16 —
-/// the `out_of_scope`/`scope` fields were added by plan19's scoped harvest,
-/// an accepted format change).
-#[derive(Debug, Default)]
-pub struct WalkCensus {
-    /// Ledger records at session start.
-    pub records: usize,
-    /// Records whose own path is a proven DB row (lineage drop).
-    pub lineage: usize,
-    /// Records behind a proven DB row proper prefix (shallowest reason
-    /// wins; lineage wins only if no shallower prefix is proven).
-    pub ancestor: usize,
-    /// Records outside the session scope (never candidates, never written;
-    /// preserved in the shared ledger for later global sessions).
-    pub out_of_scope: usize,
-    /// Complete-marked candidates at emission time (0 at session start —
-    /// the complete/decided sets are in-session state).
-    pub complete: usize,
-    pub root: RootState,
-    /// The session's world: the scope key, or empty for a global session.
-    pub scope: String,
-}
-
-impl WalkCensus {
-    /// The one-line session-start census (D5).
-    #[must_use]
-    pub fn describe(&self, base: u64) -> String {
-        format!(
-            "frontier-walk: records {} (lineage {}, ancestor {}, out_of_scope {}, \
-             complete {}) — root {}; base budget {}; scope {}",
-            self.records,
-            self.lineage,
-            self.ancestor,
-            self.out_of_scope,
-            self.complete,
-            self.root.as_str(),
-            base,
-            if self.scope.is_empty() {
-                "global"
-            } else {
-                &self.scope
-            },
-        )
-    }
-}
-
-/// Is `key` within the session scope? `""` (global) admits everything;
-/// otherwise the key must equal the scope or extend it by a full move
-/// token (`scope + " " + …`) — a key that merely shares a string prefix is
-/// out of scope.
-#[must_use]
-fn in_scope(scope: &str, key: &str) -> bool {
-    scope.is_empty() || key == scope || key.strip_prefix(scope).is_some_and(|r| r.starts_with(' '))
-}
-
-/// The scope-relative path of an in-scope key: the prefix stripped, the
-/// scope root itself maps to `""` (the walk-relative root).
-#[must_use]
-fn rel_of<'a>(scope: &str, key: &'a str) -> &'a str {
-    if scope.is_empty() {
-        key
-    } else if key == scope {
-        ""
-    } else {
-        &key[scope.len() + 1..]
-    }
-}
-
-/// The absolute key of a scope-relative path (the inverse of [`rel_of`]).
-#[must_use]
-fn join_scope(scope: &str, rel: &str) -> String {
-    if scope.is_empty() {
-        rel.to_string()
-    } else if rel.is_empty() {
-        scope.to_string()
-    } else {
-        format!("{scope} {rel}")
-    }
-}
 
 /// The live selection state: the viable candidates in `(relative ply,
 /// relative path)` order plus the in-session complete/decided exclusions
@@ -267,36 +181,24 @@ pub struct WalkFrontier {
     /// Proven DB-row paths *relative to the scope* (the D2 drop rules'
     /// input; static per session; rows above the scope root excluded).
     proven: HashSet<String>,
+    /// In-scope or-closed white-to-move parents *relative to the scope*
+    /// (plan21 D3, static: a proven `Loss` child row in the DB); rows above
+    /// the scope root excluded, like `proven`.
+    or_closed: HashSet<String>,
+    /// Or-closed in-session (plan21 D4, dynamic: a decisive `Loss` child).
+    or_closed_dyn: HashSet<String>,
     complete: HashSet<String>,
     decided: HashSet<String>,
     /// Complete-marked candidates this session (summary/report metric).
     pub completes: usize,
 }
 
-/// Plies of a space-joined path key (0 for the root).
-fn ply_of(key: &str) -> usize {
-    if key.is_empty() {
-        0
-    } else {
-        key.split(' ').count()
-    }
-}
-
-/// The path vector of a key (empty for the root).
-fn path_of(key: &str) -> Vec<String> {
-    if key.is_empty() {
-        Vec::new()
-    } else {
-        key.split(' ').map(str::to_string).collect()
-    }
-}
-
 impl WalkFrontier {
     /// Build over the ledger + DB rows: admit every in-scope record not
-    /// dropped by the lineage/ancestor rules (D2 a/b — evaluated on the
-    /// scope-relative path against proven rows *relative to the scope*;
-    /// proven rows above the scope root are ignored) and count the census.
-    /// Read-only over both inputs.
+    /// dropped by the D2 rules (evaluated on the scope-relative path against
+    /// proven rows and or-closed parents *relative to the scope*; rows above
+    /// the scope root are ignored) and count the census. Read-only over both
+    /// inputs.
     #[must_use]
     pub fn new(ledger: &Ledger, db: &DbContent, scope: &str) -> (Self, WalkCensus) {
         let proven_abs: HashSet<String> = db
@@ -314,6 +216,23 @@ impl WalkFrontier {
                 .map(|p| rel_of(scope, p).to_string())
                 .collect()
         };
+        // The or-closed parents (plan21 D3): in-scope nodes at even absolute
+        // ply (white to move) with a proven `Loss` child row — one winning
+        // move already proves the OR node. The scope root's own
+        // or-closedness comes from a loss child *inside* the scope; a loss
+        // row at the scope root itself has its parent above the scope and is
+        // ignored.
+        let mut or_closed = HashSet::new();
+        for r in &db.rows {
+            if r.outcome != Some(Outcome::Loss) || r.path.is_empty() {
+                continue;
+            }
+            let parent_abs = r.path[..r.path.len() - 1].join(" ");
+            if !in_scope(scope, &parent_abs) || !ply_of(&parent_abs).is_multiple_of(2) {
+                continue;
+            }
+            or_closed.insert(rel_of(scope, &parent_abs).to_string());
+        }
         let mut order = BTreeSet::new();
         let mut census = WalkCensus {
             records: ledger.len(),
@@ -326,9 +245,10 @@ impl WalkFrontier {
                 continue;
             }
             let rel = rel_of(scope, key);
-            match Self::drop_reason(rel, &proven) {
+            match drop_reason(rel, &proven, &or_closed) {
                 Some(Drop::Lineage) => census.lineage += 1,
                 Some(Drop::Ancestor) => census.ancestor += 1,
+                Some(Drop::OrClosed) => census.or_closed += 1,
                 None => {
                     order.insert((ply_of(rel), rel.to_string()));
                 }
@@ -339,34 +259,14 @@ impl WalkFrontier {
                 scope: scope.to_string(),
                 order,
                 proven,
+                or_closed,
+                or_closed_dyn: HashSet::new(),
                 complete: HashSet::new(),
                 decided: HashSet::new(),
                 completes: 0,
             },
             census,
         )
-    }
-
-    /// The D2 drop rule for one key: `Some(Lineage)` iff the key's own path
-    /// is a proven row, `Some(Ancestor)` iff a proper prefix (the empty
-    /// prefix included) is; the shallowest proven prefix decides.
-    #[must_use]
-    fn drop_reason(key: &str, proven: &HashSet<String>) -> Option<Drop> {
-        let parts: Vec<&str> = if key.is_empty() {
-            Vec::new()
-        } else {
-            key.split(' ').collect()
-        };
-        for i in 0..=parts.len() {
-            if proven.contains(&parts[..i].join(" ")) {
-                return Some(if i == parts.len() {
-                    Drop::Lineage
-                } else {
-                    Drop::Ancestor
-                });
-            }
-        }
-        None
     }
 
     /// The next candidate: the shallowest viable record with its live
@@ -389,6 +289,15 @@ impl WalkFrontier {
         self.complete.contains("")
     }
 
+    /// Is the scope root or-closed (plan21 D6)? Statically (an in-scope
+    /// proven `Loss` child row — D2(b')) or dynamically (or-closed
+    /// in-session via [`Self::or_close`]); a plain complete-mark does not
+    /// count — the caller keeps that case silent.
+    #[must_use]
+    pub fn root_or_closed(&self) -> bool {
+        self.or_closed.contains("") || self.or_closed_dyn.contains("")
+    }
+
     /// Mark a candidate complete (D3: pick-only, no unhandled child — or a
     /// zero-eval censor): removed from in-session candidacy, record
     /// retained.
@@ -401,66 +310,89 @@ impl WalkFrontier {
     }
 
     /// Mark a decided node (a decisive visit's target): removed from
-    /// in-session candidacy, ledger record left in place.
+    /// in-session candidacy, ledger record left in place — and (plan21 D5)
+    /// its whole subtree leaves candidacy: every node under an in-session
+    /// decided node is either inside its stored proof subtree (proven
+    /// territory, the next session's lineage gate drops it) or an off-proof
+    /// branch unnecessary under the skip policy. This is what makes an
+    /// or-close of the winner's parent sound without a winner-subtree
+    /// exception.
     pub fn mark_decided(&mut self, key: &str) {
         let rel = rel_of(&self.scope, key).to_string();
         self.decided.insert(rel.clone());
-        self.order.remove(&(ply_of(&rel), rel));
+        self.sweep_subtree(&rel);
+    }
+
+    /// Remove every candidate at-or-under `rel` from the order set (the
+    /// D4/D5 sweeps; candidacy-only — ledger records and censor rows stay).
+    fn sweep_subtree(&mut self, rel: &str) {
+        let prefix = if rel.is_empty() {
+            String::new()
+        } else {
+            format!("{rel} ")
+        };
+        self.order
+            .retain(|(_, r)| r != rel && !r.starts_with(&prefix));
+    }
+
+    /// Or-close `key` (plan21 D4): its value is established by one proven
+    /// winning child — complete-mark it (without counting toward
+    /// `completes`; D8 — an or-close is a pick-only iteration, no job) and
+    /// sweep its subtree from candidacy. Idempotent: an already complete
+    /// node is neither re-swept nor re-counted. Returns whether a new
+    /// or-close happened (the summary's `or_closes`).
+    pub fn or_close(&mut self, key: &str) -> bool {
+        let rel = rel_of(&self.scope, key).to_string();
+        if !self.complete.insert(rel.clone()) {
+            return false;
+        }
+        self.or_closed_dyn.insert(rel.clone());
+        self.sweep_subtree(&rel);
+        true
+    }
+
+    /// The plan21 D4 in-session trigger: after a decisive `Loss` visit at
+    /// `key`, or-close `key`'s parent if it is an in-scope white-to-move
+    /// node (the child at odd absolute ply exactly when its parent is
+    /// white-to-move; the startpos is white, strict alternation — D2's
+    /// absolute-color rule). A decisive `Win` child refutes the parent's
+    /// move and must not trigger (the caller only calls this on a `Loss`).
+    /// Returns whether a new or-close happened.
+    pub fn or_close_parent(&mut self, key: &str) -> bool {
+        if ply_of(key) % 2 != 1 {
+            return false;
+        }
+        // The parent of a single-token key is the root (the empty path);
+        // only the root itself has none.
+        let parent = match key.rsplit_once(' ') {
+            Some((p, _)) => p.to_string(),
+            None if !key.is_empty() => String::new(),
+            None => return false,
+        };
+        if !in_scope(&self.scope, &parent) {
+            return false;
+        }
+        self.or_close(&parent)
     }
 
     /// Admit a record as a candidate (after its creating censor): a no-op
     /// for out-of-scope keys (a censor only ever visits in-scope nodes, so
     /// this is defensive) and for keys dropped by the D2 rules (evaluated
-    /// scope-relative) or already admitted.
+    /// scope-relative; the plan21 D3 or-closed check included) or already
+    /// admitted. Defensively also a no-op under an in-session or-closed
+    /// ancestor — unreachable today, since no visit happens under an
+    /// or-closed parent (plan21 D3).
     pub fn admit(&mut self, key: &str) {
         if !in_scope(&self.scope, key) {
             return;
         }
         let rel = rel_of(&self.scope, key);
-        if WalkFrontier::drop_reason(rel, &self.proven).is_none() {
-            self.order.insert((ply_of(rel), rel.to_string()));
+        if drop_reason(rel, &self.proven, &self.or_closed).is_some()
+            || under_closed(rel, &self.or_closed_dyn)
+        {
+            return;
         }
-    }
-}
-
-/// The handled rule (D3): a stored DB row (any outcome), a manifest ∪
-/// in-session shard path, or a ledger record with `work_done ≥ B`.
-#[must_use]
-pub fn is_handled(
-    key: &str,
-    rows: &HashMap<String, Option<Outcome>>,
-    ledger: &Ledger,
-    base: u64,
-    has_shard: impl Fn(&str) -> bool,
-) -> bool {
-    rows.contains_key(key) || has_shard(key) || ledger.get(key).is_some_and(|e| e.work_done >= base)
-}
-
-/// The session-start root state for the census (D5): the state of the
-/// scope root row (the game root for a global session) — proven-stored,
-/// else a stored open row, else fresh (no row — pathological for the game
-/// root, normal for a fresh scope).
-#[must_use]
-pub fn root_state(db: &DbContent, session: &Session, scope: &str) -> RootState {
-    let root_row = db.rows.iter().find(|r| r.path.join(" ") == scope);
-    if root_row.is_some_and(|r| r.outcome.is_some()) || session.has_path(scope) {
-        RootState::Proven
-    } else if root_row.is_some() {
-        RootState::Open
-    } else {
-        RootState::Fresh
-    }
-}
-
-impl WalkFrontier {
-    /// All DB-row paths keyed by outcome — the expansion handled-rule's
-    /// row map, built once per batch (and reused by the census root state).
-    #[must_use]
-    pub fn rows_map(db: &DbContent) -> HashMap<String, Option<Outcome>> {
-        db.rows
-            .iter()
-            .map(|r| (r.path.join(" "), r.outcome))
-            .collect()
+        self.order.insert((ply_of(rel), rel.to_string()));
     }
 }
 

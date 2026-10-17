@@ -170,7 +170,7 @@ the default path:
 
 ```
 harvest: db data/proofdb/proofdb.db (1 rows, built_from d801aa1fb7ddcc33) — policy frontier-walk
-frontier-walk: records 0 (lineage 0, ancestor 0, out_of_scope 0, complete 0) — root open; base budget 200000; scope global
+frontier-walk: records 0 (lineage 0, ancestor 0, or_closed 0, out_of_scope 0, complete 0) — root open; base budget 200000; scope global
 ```
 
 then two `job: {…}` lines (stdout): the virtual-root **search visit**
@@ -179,11 +179,14 @@ first unhandled child `a2a3` (class `C3`, `kind: "expand"`), both
 `"outcome": "censored"`, `"pass": 1`, `"work_before": 0`, and
 
 ```
-harvest: policy frontier-walk stop=max-jobs jobs 2 decisive 0 censored 2 evals 400021 new_shards 0 wall 0.1s
+harvest: policy frontier-walk stop=max-jobs jobs 2 decisive 0 censored 2 evals 400015 new_shards 0 or_closes 0 wall 0.1s
 ```
 
-(exit 0; `wall` and the `wall_s` fields are host-dependent, the counts are
-deterministic). Censored jobs write no facts, so
+(exit 0; `wall`, the `wall_s` fields, and the small chunk-overshoot
+deltas on the `child_evals` values — here 200015 over the 200000 budget —
+are host-dependent; the counts are deterministic per host, re-pinned by
+report20 on the reference host at 200021 and by report21 on the dev
+container at 200015). Censored jobs write no facts, so
 `data/proofdb/shards/manifest.json` is **unchanged**
 (`built_from d801aa1fb7ddcc33…`) and the DB's `censor` table (schema v2) now
 holds two censor rows — the root and `a2a3`, each at the 200k flat budget:
@@ -191,7 +194,7 @@ holds two censor rows — the root and `a2a3`, each at the 200k flat budget:
 ```sql
 SELECT path, work_done, passes_failed FROM censor;
 -- ''      | 200000 | 1
--- 'a2a3'  | 200021 | 1
+-- 'a2a3'  | 200015 | 1
 ```
 
 Re-running the same command continues the sweep instead of repeating the
@@ -220,8 +223,10 @@ creates it). **Never re-create the empty manifest on an existing layer**
 Set `BIN=target/release/examples` as in §3.1.
 
 **The batch cycle.** The walk is a live selection loop that never retires
-— on an undecided layer it always has work — so every session needs a
-stop condition; `--max-total-evals` is the deterministic choice:
+— on an undecided layer it always has work (the plan21 exception: a fully
+or-closed world legitimately exhausts, see the sibling-skip bullet below) —
+so every session needs a stop condition; `--max-total-evals` is the
+deterministic choice:
 
 ```bash
 $BIN/proofdb_harvest --policy frontier-walk --budget-evals 10000000 \
@@ -238,18 +243,23 @@ Repeat the cycle. After a batch with decisive jobs the manifest digest
 changes — that is growth, not drift (§10) — and the bare merge before the
 next session is mandatory (the stale-`built_from` guard).
 
-**The reference boot.** On the reference host, a 2G-capped boot over a
-root-only layer (plan16's boot gate, budget 4,000,000) ran
-`stop=budget jobs 553 decisive 53 censored 500 evals 2001311002
-wall 216.2s` — 53 decisive shards, no flags beyond the policy and the
-cap. The boot's 553 jobs are 1 search visit + 552 expansion visits: after
-the root censor, _expansion replaces deepening_ — the sweep is
-breadth-first by `(ply, path)`, each candidate running to completion
-before the next at its ply. The boot grew the layer to **6,706 nodes**
-(1 root + 6,647 overlay + 58 open-ancestor insertions, 6 open rows) with
-`flips 0 verified 0`; a second boot in a fresh layer reproduced the
-manifest digest, the censor rows, all 53 shards, and the merged DB
-byte-identically (the determinism gate).
+**The reference boot.** A 2G-capped boot over a root-only layer (the
+plan16 boot-gate protocol, budget 4,000,000) runs `stop=budget jobs 549
+decisive 49 censored 500 evals 2000051685 or_closes 0 wall 414.3s` — 49
+decisive shards, no flags beyond the policy and the cap (re-pinned by
+report21 on the dev container; the plan16 gate's 553 jobs / 53 shards /
+6,706 nodes predate both the plan20 chunk-accounting change and the plan21
+skip, and the overshoot/wall values are host-dependent). The boot's jobs
+are 1 search visit + expansion visits: after the root censor, _expansion
+replaces deepening_ — the sweep is breadth-first by `(ply, path)`, each
+candidate running to completion before the next at its ply. The boot grew
+the layer to **4,030 nodes** (1 root + 3,975 overlay + 54 open-ancestor
+insertions, 6 open rows) with `flips 0 verified 0`; a second boot in a
+fresh layer reproduced the manifest digest, the censor rows, all 49
+shards, and the merged DB byte-identically (the determinism gate,
+re-verified across the plan21 skip — which does not fire on a fresh
+layer: every decisive boot job is an odd-ply refutation win, so
+`or_closes 0` and the pre-plan21 HEAD build agrees job-for-job).
 
 **The walk's budget model.** `--budget-evals` is the flat per-visit
 budget `B` (0 → the 4,000,000 base) and there is **no ladder**: a node
@@ -605,9 +615,10 @@ is no precomputed job sequence. The mechanism, in operator terms:
 
 - **Candidates** are the censor records, minus records whose path (or a
   proper prefix, the empty prefix included) is a *proven* DB row —
-  lineage/ancestor drops, the pick-up gate — and records decided or
-  complete-marked earlier in the session. Selection is the shallowest
-  candidate first, `(ply, path)`-lexicographic.
+  lineage/ancestor drops, the pick-up gate — records at-or-under an
+  **or-closed** white-to-move parent (the plan21 OR-node sibling skip, see
+  below), and records decided or complete-marked earlier in the session.
+  Selection is the shallowest candidate first, `(ply, path)`-lexicographic.
 - **Search visit** (candidate with `work_done < B`): replay the path,
   search at the flat budget `B` (retained TT, so a revisit is never a
   byte-identical repeat); decisive → shard pipeline; censored → bump the
@@ -626,8 +637,28 @@ is no precomputed job sequence. The mechanism, in operator terms:
   repetition) is also complete-marked.
 - **Root rule**: when the candidate set is empty, the scope root (see the
   next bullet) becomes a virtual candidate (this is how a root-only layer
-  bootstraps, §3.2) — unless the scope root is proven-stored, in which
-  case the session stops `exhausted`.
+  bootstraps, §3.2) — unless the scope root is proven-stored, or-closed, or
+  complete-blocked, in which case the session stops `exhausted`.
+- **OR-node sibling skip (plan21; always on, no flag).** At a
+  **white-to-move** node (even absolute ply — the startpos is white, strict
+  alternation), one child proven `Loss` (the defender to move loses ⇒ the
+  white move into it wins) establishes the node: the walk prunes all
+  sibling work there. Statically, every censor record at-or-under such a
+  parent is a non-candidate (`or_closed` in the census); dynamically, a
+  decisive `loss` job at an odd-ply child or-closes its parent in-session
+  (`or_closes N` in the summary) and a decided job's whole subtree leaves
+  candidacy — the in-session form of the cross-session lineage gate.
+  Standard AND/OR semantics: at an OR node one proving child suffices; a
+  child proven `Win` is a *refutation* of the parent's move and never
+  triggers, and black-to-move nodes behave exactly as before (their
+  refutation corridors are wanted in full). The drops are
+  candidacy-only — censor rows are never deleted — so the next policy
+  change or scope re-picks the territory up. An or-closed scope root ends
+  the session `exhausted` (a scoped session prints an explanatory stderr
+  note, like a proven-stored one). The white-wins assumption motivates the
+  corridor narrowing but is not required for soundness: if a white-to-move
+  node is in fact a loss, no child ever proves `Loss`, nothing triggers,
+  and all its children are explored exactly as before.
 - **Scoped harvest (`--moves`)**: `--moves 'a2a4 b7b5 b1a3'` re-anchors
   the session at the node reached by replaying the moves from the
   startpos — the scope node *is* the walk's root (a re-anchor, not a
@@ -639,10 +670,12 @@ is no precomputed job sequence. The mechanism, in operator terms:
   shared censor state untouched (censors only bump visited nodes), so later
   global sessions pick them up unchanged; they are counted in the census
   as `out_of_scope`. Proven DB rows *above* the scope root are ignored
-  (the operator chose the scope deliberately); a proven-stored scope root
-  (a proven DB row or a manifest/shard path at the scope key) ends the
-  session `exhausted` with an explanatory stderr note — no work is done
-  beneath proven nodes. Everything else (budget, caps, stop file, censor
+  (the operator chose the scope deliberately — the same holds for
+  or-closedness above the scope root, plan21); a proven-stored or
+  or-closed scope root (a proven DB row or a manifest/shard path at the
+  scope key, or a white-to-move scope root with a proven `Loss` child row)
+  ends the session `exhausted` with an explanatory stderr note — no work
+  is done beneath proven or or-closed nodes. Everything else (budget, caps, stop file, censor
   state, manifest, shards) keeps its tool-wide semantics, and the searches and
   their results are identical wherever the walk starts (every job replays
   the full startpos path).
@@ -651,7 +684,9 @@ is no precomputed job sequence. The mechanism, in operator terms:
   deepening mechanism (underworked records are re-searched once at the
   new `B`, §3.2). The walk never retires: on an undecided layer it always
   has work, so a session needs a cap (`--max-total-evals`, `--max-jobs`,
-  …) to stop.
+  …) to stop — the only exception is the plan21 skip's endgame: a fully
+  or-closed scope (every white-to-move node covered by a proven winning
+  child) legitimately exhausts.
 
 **Exit codes.** `0` batch completed (then the batch-end manifest line is
 printed); `1` usage error; `2` ABORT on any defect. The manifest is
@@ -675,14 +710,22 @@ _stderr, session start_ (informational; the numbers are the censor-frontier
 state):
 
 ```text
-harvest: db data/proofdb/proofdb.db (55703 rows, built_from e91ad57b44008fee) — policy frontier-walk
-frontier-walk: records 8446 (lineage 6, ancestor 0, out_of_scope 0, complete 0) — root open; base budget 200000; scope global
+harvest: db data/proofdb/proofdb.db (4314 rows, built_from b90b62b86efb9d04) — policy frontier-walk
+frontier-walk: records 368 (lineage 0, ancestor 0, or_closed 0, out_of_scope 0, complete 0) — root open; base budget 4000000; scope global
 ```
 
 Since plan20 the `harvest:` echo no longer names a ledger path — the censor
 state lives in the DB named on the line. The census line reports: total
 censor records, the lineage/ancestor drops
-(records on or behind a proven DB row — not candidates), the out-of-scope
+(records on or behind a proven DB row — not candidates), the plan21
+`or_closed` drops (records at-or-under an or-closed white-to-move parent —
+not candidates; the shallowest decisive prefix wins the attribution, so a
+record behind both a proven row and an or-closed parent counts whichever
+prefix is shallower; the reference layer above currently carries no such
+records — its frontier sits outside the 2,154 or-closed subtrees — but on
+layers grown past the skip the count reaches the thousands: the committed
+fixture carries 23,885 or-closed parents covering 90% of its nodes), the
+out-of-scope
 records (outside the session scope — never candidates, preserved for later
 global sessions; `0` for a global session), the in-session complete marks
 (0 at session start), the root state of the session's scope root (`root
@@ -717,15 +760,15 @@ emitted by `examples/proofdb/session/record.rs`; `pass`/`work_before`/
 
 ```text
 job: {"budget":200000,"child_evals":200000,"class":"C1","exit_reason":"BudgetExhausted","kind":"search","outcome":"censored","pass":1,"path":"","policy":"frontier-walk","shard_nodes":null,"tag":null,"tier":"frontier-walk","wall_s":0.02,"work_before":0}
-job: {"budget":200000,"child_evals":200021,"class":"C3","exit_reason":"BudgetExhausted","kind":"expand","outcome":"censored","pass":1,"path":"a2a3","policy":"frontier-walk","shard_nodes":null,"tag":null,"tier":"frontier-walk","wall_s":0.02,"work_before":0}
+job: {"budget":200000,"child_evals":200015,"class":"C3","exit_reason":"BudgetExhausted","kind":"expand","outcome":"censored","pass":1,"path":"a2a3","policy":"frontier-walk","shard_nodes":null,"tag":null,"tier":"frontier-walk","wall_s":0.02,"work_before":0}
 ```
 
-A **decisive** job record (the plan16 reference boot's first decisive
-expansion visit, shown in the current grammar):
+A **decisive** job record (the reference boot's first decisive expansion
+visit, shown in the current grammar; `wall_s` varies by host):
 
 ```text
-job: {"budget":4000000,"child_evals":6990,"class":"C3","exit_reason":"Complete","kind":"expand","outcome":"win","pass":1,"path":"c2c3 g7g5","policy":"frontier-walk","shard_nodes":334,"tag":"h_2fd82f9a8230a668","tier":"frontier-walk","wall_s":0.0006,"work_before":0}
-harvest: policy frontier-walk stop=budget jobs 553 decisive 53 censored 500 evals 2001311002 new_shards 53 wall 216.2s
+job: {"budget":4000000,"child_evals":11554,"class":"C3","exit_reason":"Complete","kind":"expand","outcome":"win","pass":1,"path":"c2c3 g7g5","policy":"frontier-walk","shard_nodes":334,"tag":"h_2fd82f9a8230a668","tier":"frontier-walk","wall_s":0.0017,"work_before":0}
+harvest: policy frontier-walk stop=budget jobs 549 decisive 49 censored 500 evals 2000051685 new_shards 49 or_closes 0 wall 414.3s
 ```
 
 _stdout, after the last job_ — the manifest line (printed only when the
@@ -735,7 +778,7 @@ given:
 
 ```text
 manifest: unchanged (0 entries, digest d801aa1fb7ddcc33…)
-harvest: policy frontier-walk stop=max-jobs jobs 2 decisive 0 censored 2 evals 400021 new_shards 0 wall 0.1s
+harvest: policy frontier-walk stop=max-jobs jobs 2 decisive 0 censored 2 evals 400015 new_shards 0 or_closes 0 wall 0.1s
 ```
 
 - `manifest:` — entries + full manifest digest after the rewrite
@@ -743,15 +786,18 @@ harvest: policy frontier-walk stop=max-jobs jobs 2 decisive 0 censored 2 evals 4
   the rewrite at batch end is an idempotent no-op byte-wise — the line is
   the batch-end confirmation, not the first write).
 - `harvest:` — the `stop=` reason, then `jobs N decisive D censored C
-  evals E new_shards S wall Ws`. `decisive` counts jobs that exported a
-  shard; `censored` counts facts of absence.
+  evals E new_shards S or_closes O wall Ws`. `decisive` counts jobs that
+  exported a shard; `censored` counts facts of absence; `or_closes` counts
+  the plan21 dynamic or-closes (in-session closures of white-to-move
+  parents on a decisive `loss` child; the static census drops are the
+  `or_closed` census field, not this).
 
 Under `frontier-walk`, `stop=exhausted` means no candidate can yield a
-visit (every candidate complete and the scope root proven-stored or
-complete-blocked — a scoped session with a proven-stored scope root
-exhausts immediately, with the explanatory stderr note); on any undecided
-layer the walk always has work, so capped stops (`budget`/`max-jobs`) are
-the normal way a session ends.
+visit (every candidate complete and the scope root proven-stored, or-closed,
+or complete-blocked — a scoped session with a proven-stored or or-closed
+scope root exhausts immediately, with the explanatory stderr note); on any
+undecided layer the walk always has work, so capped stops
+(`budget`/`max-jobs`) are the normal way a session ends.
 
 _stderr, during jobs_ — `[bounded_search] chunk done: …` progress lines
 (one per budget chunk); informational, safe to ignore in scripts.
@@ -840,8 +886,8 @@ proofdb_merge
 proofdb_flip
 ```
 
-On the reference host a 2G-capped boot at the 4M base budget grew the
-layer from 1 to 6,706 nodes with 53 shards in ~4 minutes (§3.2). From
+On the dev container a 2G-capped boot at the 4M base budget grew the
+layer from 1 to 4,030 nodes with 49 shards in ~7 minutes (§3.2). From
 batch 2 on, grow with R2. The committed fixture shard set keeps a
 development/validation role only (R1, tests); the plan10 legacy-ledger
 snapshot remains an optional R4 import for resuming censor history, never

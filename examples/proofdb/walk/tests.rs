@@ -7,6 +7,8 @@
 //! verbatim.
 
 use super::super::db::DbContent;
+use super::census::RootState;
+use super::keys::rows_map;
 use super::*;
 use crate::proofdb::ledger::LedgerEntry;
 use atomic_solver::position::Position;
@@ -62,15 +64,16 @@ fn walk_selection_order_and_tie_break() {
     let (mut f, census) = WalkFrontier::new(&ledger, &db, "");
     assert_eq!(census.records, 4);
     assert_eq!((census.lineage, census.ancestor), (0, 0));
-    // Shallowest first, path-lex tie-break (D2).
+    // Shallowest first, path-lex tie-break (D2). Complete-marks retire one
+    // candidate each (a decided mark would sweep the subtree — plan21 D5).
     assert_eq!(f.pick(&ledger).unwrap().0, "");
-    f.mark_decided("");
+    f.mark_complete("");
     assert_eq!(f.pick(&ledger).unwrap().0, "a2a3");
-    f.mark_decided("a2a3");
+    f.mark_complete("a2a3");
     assert_eq!(f.pick(&ledger).unwrap().0, "b1c3");
-    f.mark_decided("b1c3");
+    f.mark_complete("b1c3");
     assert_eq!(f.pick(&ledger).unwrap().0, "a2a3 b1b2");
-    f.mark_decided("a2a3 b1b2");
+    f.mark_complete("a2a3 b1b2");
     assert!(f.pick(&ledger).is_none());
 }
 
@@ -98,7 +101,7 @@ fn walk_lineage_and_ancestor_drops() {
     let mut picked = Vec::new();
     for _ in 0..3 {
         let (k, _) = f.pick(&ledger).unwrap();
-        f.mark_decided(&k);
+        f.mark_complete(&k);
         picked.push(k);
     }
     assert_eq!(picked, vec!["", "a2a4", "b1c3"]);
@@ -122,7 +125,7 @@ fn walk_handled_rule_categories() {
         ("a2a3", 1, None),               // stored open row → handled
         ("b1c3", 1, Some(Outcome::Win)), // stored proven row → handled
     ]);
-    let rows = WalkFrontier::rows_map(&db);
+    let rows = rows_map(&db);
     let ledger = ledger_of(&[
         ("c2c3", 500, 1),   // underworked record → NOT handled (D3)
         ("d2d4", 1_000, 3), // record at the budget → handled
@@ -183,8 +186,8 @@ fn walk_census_line_and_root_states() {
     assert_eq!(census.root, RootState::Open);
     assert_eq!(
         census.describe(4_000_000),
-        "frontier-walk: records 0 (lineage 0, ancestor 0, out_of_scope 0, complete 0) \
-         — root open; base budget 4000000; scope global"
+        "frontier-walk: records 0 (lineage 0, ancestor 0, or_closed 0, out_of_scope 0, \
+         complete 0) — root open; base budget 4000000; scope global"
     );
     assert_eq!(f.completes, 0);
     // Proven root row → proven; a manifest shard path at the root is
@@ -232,9 +235,9 @@ fn walk_scope_candidacy_filtering_and_ordering() {
     assert_eq!((census.lineage, census.ancestor), (0, 0));
     assert_eq!(census.scope, "a2a3");
     assert_eq!(f.pick(&ledger).unwrap(), ("a2a3".to_string(), 5_000));
-    f.mark_decided("a2a3");
+    f.mark_complete("a2a3");
     assert_eq!(f.pick(&ledger).unwrap().0, "a2a3 b1b2");
-    f.mark_decided("a2a3 b1b2");
+    f.mark_complete("a2a3 b1b2");
     assert!(f.pick(&ledger).is_none());
 }
 
@@ -261,14 +264,21 @@ fn walk_scope_drops_are_relative_and_ignore_above_scope() {
     let (mut f, census) = WalkFrontier::new(&ledger, &db, "a2a3");
     assert_eq!(census.records, 6);
     assert_eq!(census.out_of_scope, 2);
-    assert_eq!((census.lineage, census.ancestor), (1, 1));
+    // Plan21: the loss row at "a2a3 b1b2 c2c3" or-closes its in-scope
+    // white-to-move parent "a2a3 b1b2" — both records behind it drop by
+    // OrClosed (the or-closed prefix is shallower than the proven row, so
+    // the attribution prefers OrClosed over lineage/ancestor here).
+    assert_eq!(
+        (census.lineage, census.ancestor, census.or_closed),
+        (0, 0, 3)
+    );
     let mut picked = Vec::new();
-    for _ in 0..2 {
+    for _ in 0..1 {
         let (k, _) = f.pick(&ledger).unwrap();
-        f.mark_decided(&k);
+        f.mark_complete(&k);
         picked.push(k);
     }
-    assert_eq!(picked, vec!["a2a3", "a2a3 b1b2"]);
+    assert_eq!(picked, vec!["a2a3"]);
     assert!(f.pick(&ledger).is_none());
 }
 
@@ -339,8 +349,179 @@ fn walk_scope_root_states_and_census_line() {
     census.root = root_state(&db_open, &session, "a2a3 b1b2");
     assert_eq!(
         census.describe(1_000),
-        "frontier-walk: records 2 (lineage 0, ancestor 0, out_of_scope 1, \
+        "frontier-walk: records 2 (lineage 0, ancestor 0, or_closed 0, out_of_scope 1, \
          complete 0) — root open; base budget 1000; scope a2a3 b1b2"
     );
     std::fs::remove_dir_all(&dir).ok();
+}
+
+// --- plan21: the OR-node sibling skip ---
+
+#[test]
+fn walk_or_closed_static_drop_and_attribution() {
+    // The or-closed parent: "a2a3 b1b2" (white-to-move, absolute ply 2) has
+    // the proven Loss child "a2a3 b1b2 c2c3" (ply 3 — the defender to move
+    // loses, so the parent's move wins; plan21 D1/D3). Every record at or
+    // under the parent drops; the shallowest decisive prefix decides the
+    // attribution (the or-closed prefix beats the deeper proven row).
+    let db = crafted(&[
+        ("", 0, None),
+        ("a2a3", 1, None),
+        ("a2a3 b1b2 c2c3", 3, Some(Outcome::Loss)),
+    ]);
+    let ledger = ledger_of(&[
+        ("", 100, 1),
+        ("a2a3", 100, 1),
+        ("a2a3 b1b2", 100, 1),      // the or-closed parent itself
+        ("a2a3 b1b2 c2c3", 100, 1), // also a proven row — but OrClosed is shallower
+        ("a2a3 b1b2 c2c3 e2e4", 100, 1),
+        ("b1c3", 100, 1), // outside the or-closed subtree
+    ]);
+    let (mut f, census) = WalkFrontier::new(&ledger, &db, "");
+    assert_eq!(census.records, 6);
+    assert_eq!(
+        (census.lineage, census.ancestor, census.or_closed),
+        (0, 0, 3)
+    );
+    let mut picked = Vec::new();
+    for _ in 0..3 {
+        let (k, _) = f.pick(&ledger).unwrap();
+        f.mark_complete(&k);
+        picked.push(k);
+    }
+    assert_eq!(picked, vec!["", "a2a3", "b1c3"]);
+    assert!(f.pick(&ledger).is_none());
+}
+
+#[test]
+fn walk_or_closed_needs_white_to_move_parent_and_loss_child() {
+    // A `win` child under a white-to-move parent does not trigger (it
+    // refutes the parent's move — plan21 D1); a `loss` child under a
+    // black-to-move parent does not trigger either (D2: white-only by
+    // absolute parity).
+    let db = crafted(&[
+        ("", 0, None),
+        ("b1c3", 1, Some(Outcome::Win)), // win child of a white-to-move parent
+        ("a2a3 b1b2", 2, Some(Outcome::Loss)), // loss child of a black-to-move parent
+    ]);
+    let ledger = ledger_of(&[
+        ("", 100, 1),
+        ("a2a3", 100, 1),
+        ("a2a3 b1b2", 100, 1),
+        ("a2a3 b1b2 c2c3", 100, 1), // behind the proven loss row (black-to-move parent)
+        ("b1c3", 100, 1),
+        ("b1c3 d2d3", 100, 1),
+    ]);
+    let (mut f, census) = WalkFrontier::new(&ledger, &db, "");
+    assert_eq!(census.records, 6);
+    assert_eq!(
+        (census.lineage, census.ancestor, census.or_closed),
+        (2, 2, 0)
+    );
+    let mut picked = Vec::new();
+    for _ in 0..2 {
+        let (k, _) = f.pick(&ledger).unwrap();
+        f.mark_complete(&k);
+        picked.push(k);
+    }
+    assert_eq!(picked, vec!["", "a2a3"]);
+    assert!(f.pick(&ledger).is_none());
+}
+
+#[test]
+fn walk_or_closed_shallowest_proven_prefix_wins() {
+    // A proven root row is shallower than any or-closed parent: everything
+    // drops by lineage/ancestor even though the loss child also or-closes
+    // the root (which root_or_closed() still reports — the D6 root rule).
+    let db = crafted(&[
+        ("", 0, Some(Outcome::Win)),
+        ("a2a3", 1, Some(Outcome::Loss)), // would or-close the root
+    ]);
+    let ledger = ledger_of(&[("", 100, 1), ("a2a3", 100, 1), ("a2a3 b1b2", 100, 1)]);
+    let (f, census) = WalkFrontier::new(&ledger, &db, "");
+    assert_eq!(
+        (census.lineage, census.ancestor, census.or_closed),
+        (1, 2, 0)
+    );
+    assert!(f.pick(&ledger).is_none());
+    assert!(f.root_or_closed());
+}
+
+#[test]
+fn walk_decided_subtree_sweep_and_admit_guard() {
+    // D5: mark_decided sweeps the decided node's subtree from candidacy but
+    // keeps non-descendant candidates; the ledger records stay (drops are
+    // candidacy-only); the defensive admission check is also pinned.
+    let ledger = ledger_of(&[
+        ("", 100, 1),
+        ("a2a3", 100, 1),
+        ("a2a3 b1b2", 100, 1),
+        ("b1c3", 100, 1),
+    ]);
+    let db = crafted(&[("", 0, None)]);
+    let (mut f, _) = WalkFrontier::new(&ledger, &db, "");
+    f.mark_decided("a2a3");
+    // The decided node and its subtree left candidacy; the root and the
+    // sibling branch survive.
+    assert_eq!(f.pick(&ledger).unwrap().0, "");
+    f.mark_complete(""); // a complete mark retires the node itself only
+    assert_eq!(f.pick(&ledger).unwrap().0, "b1c3");
+    f.mark_decided("b1c3");
+    assert!(f.pick(&ledger).is_none());
+    // The records were never deleted (candidacy-only drop).
+    for key in ["", "a2a3", "a2a3 b1b2", "b1c3"] {
+        assert!(ledger.contains(key), "{key} retained in the ledger");
+    }
+    // The defensive admission check (plan21 D3): under an in-session
+    // or-closed ancestor nothing is admitted — unreachable today, but
+    // pinned. (A plain decided mark does not guard admission: the order
+    // sweep already removed the subtree, and the driver never visits under
+    // a decided node.)
+    assert!(f.or_close("b1c3"));
+    f.admit("b1c3 d2d3");
+    assert!(f.pick(&ledger).is_none());
+}
+
+#[test]
+fn walk_or_close_completes_and_sweeps_without_counting() {
+    let ledger = ledger_of(&[("a2a3", 100, 1), ("a2a3 b1b2", 100, 1), ("b1c3", 100, 1)]);
+    let db = crafted(&[("", 0, None)]);
+    let (mut f, _) = WalkFrontier::new(&ledger, &db, "a2a3");
+    assert_eq!(f.pick(&ledger).unwrap().0, "a2a3");
+    // Or-close the scope root (D4 on the scope key): complete-marked
+    // without counting toward completes, subtree swept.
+    assert!(f.or_close("a2a3"));
+    assert_eq!(f.completes, 0); // D8: an or-close is not a complete
+    assert!(f.root_blocked()); // the scope root is complete-marked
+    assert!(f.root_or_closed()); // dynamically or-closed
+    assert!(f.pick(&ledger).is_none());
+    // Idempotent: a repeated or-close neither re-sweeps nor re-counts.
+    assert!(!f.or_close("a2a3"));
+    assert_eq!(f.completes, 0);
+    // A plain complete-mark does not make the root or-closed.
+    let (mut g, _) = WalkFrontier::new(&ledger, &db, "a2a3");
+    g.mark_complete("a2a3");
+    assert!(g.root_blocked());
+    assert!(!g.root_or_closed());
+}
+
+#[test]
+fn walk_or_close_parent_parity_and_scope() {
+    // The D4 trigger: odd absolute ply, an existing parent, and scope
+    // membership.
+    let db = crafted(&[("", 0, None)]);
+    let (mut f, _) = WalkFrontier::new(&Ledger::default(), &db, "");
+    assert!(!f.or_close_parent("")); // the root has no parent
+    assert!(!f.or_close_parent("a2a3 b1b2")); // ply 2: the parent is black-to-move
+    assert!(f.or_close_parent("a2a3")); // parent = the root (white to move)
+    assert!(!f.or_close_parent("b1c3")); // the root is already or-closed
+    // Scoped: a scoped session at an odd-absolute-ply scope root — the
+    // root itself is black-to-move; its would-be parent is above the scope
+    // and or-closedness above the scope root is ignored (D3's scope rule).
+    let (mut g, _) = WalkFrontier::new(&Ledger::default(), &db, "f2f3");
+    assert!(!g.or_close_parent("f2f3"));
+    // Scoped deeper: the parent in scope triggers; idempotence holds.
+    let (mut h, _) = WalkFrontier::new(&Ledger::default(), &db, "a2a3 b1b2");
+    assert!(h.or_close_parent("a2a3 b1b2 c2c3")); // parent = the scope root
+    assert!(!h.or_close_parent("a2a3 b1b2 c2c3 d2d3")); // parent already closed
 }

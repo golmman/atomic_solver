@@ -92,7 +92,7 @@ fn main() {
         .unwrap_or_else(|e| fail(&e));
     let summary_line = format!(
         "harvest: policy {} stop={} jobs {} decisive {} censored {} evals {} \
-         new_shards {} wall {:.1}s",
+         new_shards {} or_closes {} wall {:.1}s",
         proofdb::harvest_args::POLICY,
         if summary.stop_reason.is_empty() {
             "exhausted"
@@ -104,6 +104,7 @@ fn main() {
         summary.censored,
         summary.evals,
         session.new_shards,
+        summary.or_closes,
         t_start.elapsed().as_secs_f64(),
     );
 

@@ -89,7 +89,9 @@ A pure solver for atomic chess in Rust.
   censor-frontier walk at a flat budget (the only harvest policy since the
   plan18 consolidation; `--policy` is kept but accepts only `frontier-walk`;
   `--moves '<uci path>'` re-anchors the session at a startpos path's subtree
-  — a selection-layer scope, out-of-scope censor records preserved), export
+  — a selection-layer scope, out-of-scope censor records preserved; the
+  plan21 OR-node sibling skip closes white-to-move OR nodes on one proven
+  winning child, pruning the sibling corridors), export
   validated shards, extend the manifest (atomically rewritten after every
   decisive job — crash-consistent durable layer, an unclean exit loses at
   most the in-flight job's shard; never merges; run `proofdb_merge` after
