@@ -1,7 +1,7 @@
 .PHONY: macos_cleanup
 .PHONY: test test-full test-lite
 .PHONY: stress quick_check quick_check2 quick_check3
-.PHONY: proofdb_init proofdb_cycle_run proofdb_cycle_stop proofdb_stats
+.PHONY: proofdb_init proofdb_cycle_run proofdb_cycle_stop proofdb_stats proofdb_sync
 
 BIN := target/release/examples
 
@@ -62,3 +62,6 @@ proofdb_stats:
 	@wc -c < data/proofdb/work.json
 	@printf "number of ledger paths: "
 	@jq ".records | length" < data/proofdb/work.json
+
+proofdb_sync:
+	examples/proofdb/sync.sh
