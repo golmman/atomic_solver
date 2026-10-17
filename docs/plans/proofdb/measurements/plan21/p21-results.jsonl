@@ -1,2 +1,3 @@
 {"db": "/tmp/p21probe/fixture.db", "nodes": 55703, "loss_rows_odd_ply": 23977, "or_closed_parents": 23885, "censor_records": 0, "or_closed_dropped_records": 0, "nodes_under_or_closed": 50258}
 {"db": "/tmp/p21prod/proofdb.db", "nodes": 4314, "loss_rows_odd_ply": 2154, "or_closed_parents": 2154, "censor_records": 368, "or_closed_dropped_records": 0, "nodes_under_or_closed": 4308}
+{"db": "data/proofdb/proofdb.db", "nodes": 43092, "loss_rows_odd_ply": 6306, "or_closed_parents": 6306, "censor_records": 3617, "or_closed_dropped_records": 0, "nodes_under_or_closed": 12612}

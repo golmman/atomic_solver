@@ -721,10 +721,7 @@ censor records, the lineage/ancestor drops
 `or_closed` drops (records at-or-under an or-closed white-to-move parent —
 not candidates; the shallowest decisive prefix wins the attribution, so a
 record behind both a proven row and an or-closed parent counts whichever
-prefix is shallower; the reference layer above currently carries no such
-records — its frontier sits outside the 2,154 or-closed subtrees — but on
-layers grown past the skip the count reaches the thousands: the committed
-fixture carries 23,885 or-closed parents covering 90% of its nodes), the
+prefix is shallower), the
 out-of-scope
 records (outside the session scope — never candidates, preserved for later
 global sessions; `0` for a global session), the in-session complete marks
@@ -733,6 +730,13 @@ open` / `root proven` / `root fresh`), the flat budget, and the scope (the
 `--moves` path, or `global`; the reference boot on a root-only DB prints
 `records 0 … — root open; base budget 4000000; scope global`). When
 scoped, the `harvest: db` echo above carries `; scope <path>` as well.
+
+The example above is the regenerable 52-shard dev layer. On layers grown
+past the skip the `or_closed` count reaches the thousands: the committed
+fixture carries 23,885 or-closed parents covering 90% of its nodes, and
+the standing layer 6,306 covering 29% — but their *current* censor
+frontiers also sit entirely outside the or-closed subtrees, so today's
+census lines still read `or_closed 0` on both (report21 §6).
 
 _stdout, per job_ — one `job: {…}` JSON line per visit. Field table (as
 emitted by `examples/proofdb/session/record.rs`; `pass`/`work_before`/

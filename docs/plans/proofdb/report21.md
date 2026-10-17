@@ -70,16 +70,25 @@ they predate), and `walk_scope_drops_…` pins the new attribution.
   expectation (`or_closed` in the thousands) — see §6 for the census
   caveat: the fixture copy has no censor records, so the *current*
   static drop count is 0 there too.
-- **Production dev layer** (`data/proofdb/shards`, 4,314 nodes): 2,154
-  loss rows at odd ply = 2,154 distinct or-closed parents (each loss row
-  has its own parent here); **4,308 / 4,314 nodes** at-or-under one — only
-  the 6 open frontier rows are outside the or-closed territory. The
-  layer's current 368 censor records drop **0** (`or_closed 0` in the
-  fresh census line re-pinned into the manual): the pre-plan21 sessions
-  never created records inside or-closed subtrees, because the territory
-  under them was already fully harvested before the or-close could fire.
-  The skip will bite going forward: the moment a session censors inside
-  what a later merge proves, the next session drops those records.
+- **Production dev layer** (`data/proofdb/shards`, 52 shards, rebuilt
+  into a temp DB with the legacy `work.json` censor rows imported — see
+  the file-swap finding in §6): 2,154 loss rows at odd ply = 2,154
+  distinct or-closed parents; **4,308 / 4,314 nodes** at-or-under one —
+  only the 6 open frontier rows are outside the or-closed territory. The
+  layer's 368 censor records drop **0**: the pre-plan21 sessions never
+  created records inside or-closed subtrees, because the territory under
+  them was already fully harvested before the or-close could fire. The
+  skip will bite going forward: the moment a session censors inside what
+  a later merge proves, the next session drops those records.
+- **The real standing layer** (`data/proofdb/proofdb.db`, restored after
+  this session — 43,092 nodes, schema v2, 405 shards, 3,617 censor
+  records): 6,306 loss rows at odd ply = 6,306 distinct or-closed
+  parents; **12,612 / 43,092 nodes (29.3%)** at-or-under one; census
+  attribution over the 3,617 records: `lineage 0, ancestor 0, or_closed
+  0` (all records sit on the open frontier, outside the or-closed
+  subtrees — same shape as the dev layer), root row open. A session
+  against it would print `records 3617 (lineage 0, ancestor 0, or_closed
+  0, out_of_scope 0, complete 0) — root open`.
 - **CLI crafted fixture**: no or-closed structure (the `d8h4` loss sits
   under a black-to-move parent) — its count pins are unchanged; only the
   census strings re-pinned, as pre-registered.
@@ -139,13 +148,14 @@ layers (the fixture/production probes in §2), not on boots.
 ## 5. Tools and files
 
 - No new tools; probes via `proofdb_merge` (+ `--import-censor` for the
-  production layer's legacy `work.json`) and python `sqlite3` queries
-  (the container has no `sqlite3` CLI). Committed under
+  dev set's legacy `work.json`) and python `sqlite3` queries (the
+  container has no `sqlite3` CLI). Committed under
   `docs/plans/proofdb/measurements/plan21/`: `README.md` (protocol +
   tables), `env.json`, `p21-probe.py` (the read-only or-closed census
-  probe), `p21-results.jsonl` (the two standing-layer probe lines), and
-  `p21-boot-comparison.jsonl` (the plan21 vs HEAD boot comparison). No
-  solver transcripts committed (regenerable from the manual's recipes).
+  probe), `p21-results.jsonl` (the three probe lines: committed fixture,
+  dev shard set, standing layer), and `p21-boot-comparison.jsonl` (the
+  plan21 vs HEAD boot comparison). No solver transcripts committed
+  (regenerable from the manual's recipes).
 - Code: `examples/proofdb/walk.rs` (D2/D3/D5/D6 + census `or_closed`),
   `walk/census.rs` (new), `walk/keys.rs` (new), `walk/driver.rs`
   (or-close hook, root rule, `or_closes`), `examples/proofdb_harvest.rs`
@@ -166,13 +176,36 @@ layers (the fixture/production probes in §2), not on boots.
 - **Unresolved:** the symmetric black-side skip (plan21 D2 non-goal) is
   recorded as a possible follow-up. Item 12's closure promotion (an
   or-closed open row staying `open` in the DB until then) is untouched,
-  as scoped. The production DB at `data/proofdb/` still predates the
-  plan20 schema-v2 migration (no `censor` table; the probe rebuilt it
-  from its shards into a temp DB with `--import-censor`) — noted by
-  plan21, untouched here.
+  as scoped. Item 12 remains the natural next durable-layer step once
+  enough or-closed territory accumulates un-proven.
+- **Finding — the `data/proofdb` file swap.** The file sitting at
+  `data/proofdb/proofdb.db` during the plan21 *plan* session (Oct 16)
+  and this *execution* session (Oct 17) was **not** the plan20-migrated
+  standing layer: it was a 4,314-node, schema-v1 (no `censor` table)
+  rebuild of the 52-shard `data/proofdb/shards` dev set (315,392 bytes;
+  the schema-v2 rebuild of the same shard set with the legacy censor
+  rows imported measures 339,968 bytes — the Δ is the `censor` table's
+  pages). The real standing layer (43,092 nodes, schema v2, `censor`
+  table, 405 shards, built_from `70a160a6…`) was restored afterwards,
+  with its original mtime preserved (2026-10-16 16:03 — before this
+  session's start; no write in this session touched it: every tool call
+  used explicit `/tmp` paths). Consequences:
+  (a) plan21 §0's note "the production DB predates the plan20
+  schema-v2 migration" described the swapped file — the real standing
+  layer **is** schema v2 with its censor state intact;
+  (b) this report's §2 production-layer probe was re-run against the
+  restored layer (see §2, "The real standing layer") — the §7.2 manual
+  census example stays pinned to the regenerable 52-shard rebuild;
+  (c) the operator should reconcile `data/proofdb/shards` (52 shards,
+  dev set) with the standing layer's 405-shard set — with the standing
+  layer restored, a default-path `proofdb_merge` aborts on the
+  stale-`built_from` guard (`70a160a6…` vs the 52-shard manifest's
+  `b90b62b8…`), which is what protects the standing layer from a
+  clobbering rebuild.
 - **Unresolved (2):** the static drop does **not** bite on either
   standing layer's *current* censor state (0 records dropped on both —
-  the frontiers sit outside the or-closed subtrees), so the plan's
+  the frontiers sit outside the or-closed subtrees; verified on the
+  restored real layer too), so the plan's
   pre-registered "or_closed in the thousands" expectation applies to
   future sessions once records exist inside or-closed territory, not to
   today's census lines. The manual's census paragraph states this

@@ -12,12 +12,13 @@ Read-only parent-chain reconstruction over two layers:
 | layer | nodes | loss rows (odd ply) | or-closed parents | nodes at-or-under one | censor records | dropped by the static rule |
 | ----- | ----- | ------------------- | ----------------- | --------------------- | -------------- | -------------------------- |
 | committed fixture (`docs/plans/proofdb/shards` → temp merge) | 55,703 | 23,977 | 23,885 | 50,258 (90.2%) | 0 (fresh copy) | — |
-| production dev layer (`data/proofdb`, rebuilt from its shards into a temp DB, censor rows imported from the legacy `work.json`) | 4,314 | 2,154 | 2,154 | 4,308 | 368 | **0** |
+| dev shard set (`data/proofdb/shards`, 52 shards → temp merge, legacy `work.json` censor rows imported) | 4,314 | 2,154 | 2,154 | 4,308 | 368 | **0** |
+| standing layer (`data/proofdb/proofdb.db`, restored after the session — see report21 §6 on the file swap) | 43,092 | 6,306 | 6,306 | 12,612 (29.3%) | 3,617 | **0** |
 
-The production layer's censor frontier sits entirely outside the
+On both live layers the censor frontier sits entirely outside the
 or-closed subtrees (pre-plan21 sessions harvested the territory under
 them before any or-close could fire), so the plan21 static drop does not
-bite on that layer today — it bites going forward, as soon as a session
+bite on them today — it bites going forward, as soon as a session
 censors inside territory a later merge proves.
 
 ## §3.1 quickstart re-pin (dev container, release build)
