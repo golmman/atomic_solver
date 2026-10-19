@@ -1,20 +1,22 @@
 //! The `proofdb_harvest` CLI arguments (plan2/3/4/6; slimmed by the plan18
-//! policy consolidation; censor state moved into the DB by plan20):
-//! `Args`, `usage`, `parse_args`. Split from the example target root for
-//! the 10 KB file-size convention; `main` remains there.
+//! policy consolidation; censor state moved into the DB by plan20; the
+//! manifest retired by plan22): `Args`, `usage`, `parse_args`. Split from
+//! the example target root for the 10 KB file-size convention; `main`
+//! remains there.
 //!
-//! Generated state defaults wholly under `data/proofdb/` (plan14): DB,
-//! manifest, and shard dir — a production harvest needs no path flags.
-//! The censor state lives in the DB's `censor` table (schema v2); the
-//! pre-plan20 `--ledger <work.json>` flag is retired with the JSON
-//! sidecar.
+//! Generated state defaults wholly under `data/proofdb/` (plan14): DB and
+//! shard dir — a production harvest needs no path flags. The censor state
+//! lives in the DB's `censor` table (schema v2); the pre-plan20
+//! `--ledger <work.json>` flag is retired with the JSON sidecar, and the
+//! manifest is retired with plan22's per-shard sidecars (both flags refuse
+//! with a migration pointer).
 
 use std::path::PathBuf;
 
 use atomic_solver::notation::uci_to_move;
 use atomic_solver::position::Position;
 
-use super::{DEFAULT_DB, DEFAULT_MANIFEST, DEFAULT_SHARD_DIR};
+use super::{DEFAULT_DB, DEFAULT_SHARD_DIR};
 
 /// The only harvest policy (plan18 policy consolidation): the plan16
 /// shallowest-first ledger walk. The `--policy` flag is kept so existing
@@ -23,7 +25,6 @@ pub const POLICY: &str = "frontier-walk";
 
 pub struct Args {
     pub db: PathBuf,
-    pub manifest: PathBuf,
     pub shard_dir: PathBuf,
     pub budget_evals: u64,
     pub max_total_evals: u64,
@@ -40,18 +41,19 @@ pub struct Args {
 
 fn usage() -> ! {
     eprintln!(
-        "usage: proofdb_harvest [--db <proofdb.db>] [--manifest <manifest.json>] \
+        "usage: proofdb_harvest [--db <proofdb.db>] \
          [--shard-dir <dir>] [--policy frontier-walk] \
          [--budget-evals <n>] [--max-total-evals <n>] [--tt-mb <mb>] \
          [--max-jobs <n>] [--max-runtime <s>] [--stop-file <path>] \
          [--moves '<uci path>'] \
          [--out-db <grown.db>] [--dump <nodes.txt>]  \
-         (defaults: --db data/proofdb/proofdb.db --manifest data/proofdb/shards/manifest.json \
+         (defaults: --db data/proofdb/proofdb.db \
          --shard-dir data/proofdb/shards; \
          policy: frontier-walk — the only harvest policy; --budget-evals 0 \
          selects the standing base 4000000; --moves scopes the session to \
          the subtree of the startpos path it names; censor state lives in \
-         the DB's censor table — the pre-plan20 --ledger flag is retired)"
+         the DB's censor table — the pre-plan20 --ledger flag and the \
+         plan22-retired --manifest flag are both gone)"
     );
     std::process::exit(1);
 }
@@ -59,7 +61,6 @@ fn usage() -> ! {
 pub fn parse_args() -> Args {
     let mut a = Args {
         db: PathBuf::from(DEFAULT_DB),
-        manifest: PathBuf::from(DEFAULT_MANIFEST),
         shard_dir: PathBuf::from(DEFAULT_SHARD_DIR),
         budget_evals: 0,
         max_total_evals: 0,
@@ -76,7 +77,6 @@ pub fn parse_args() -> Args {
         let mut next = || it.next().unwrap_or_else(|| usage());
         match arg.as_str() {
             "--db" => a.db = PathBuf::from(next()),
-            "--manifest" => a.manifest = PathBuf::from(next()),
             "--shard-dir" => a.shard_dir = PathBuf::from(next()),
             "--policy" => {
                 if next() != POLICY {
@@ -92,6 +92,14 @@ pub fn parse_args() -> Args {
                     "proofdb_harvest: --ledger is retired (plan20): censor state \
                      lives in the DB's censor table; migrate a legacy work.json \
                      with proofdb_merge --import-censor"
+                );
+                usage()
+            }
+            "--manifest" => {
+                eprintln!(
+                    "proofdb_harvest: --manifest is retired (plan22): shards are \
+                     self-describing (<tag>.meta.json sidecars written by the \
+                     session); the standing DB's shards table seeds the session"
                 );
                 usage()
             }

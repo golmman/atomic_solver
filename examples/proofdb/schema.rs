@@ -1,11 +1,14 @@
-//! The derived SQLite database and the canonical text dump
+//! The SQLite database and the canonical text dump
 //! (`docs/spec/global_proof_store.md`, schema v2).
 //!
-//! The DB is a derived, rebuildable view of the shard set; this module is its
-//! only writer (`nodes`/`shards`/`meta` — the harvest's censor-row carve-out
-//! writes the `censor` table only). The canonical dump is the
-//! byte-determinism gate artifact: rebuilding from an identical shard set
-//! must reproduce it byte-for-byte.
+//! Since plan22 the DB is the single source of truth and grows by the
+//! incremental fold (`proofdb_merge`, one transaction per invocation); this
+//! module keeps the tree-surface writers. [`write_db`] remains the
+//! fixture/legacy fresh-init helper (a whole-tree write into a fresh file,
+//! used by tests and fixtures — the fold's delta writer lives in
+//! `merge/fold.rs`). The canonical dump is the byte-determinism gate
+//! artifact: folding the identical shard set into an identical standing DB
+//! must reproduce it byte-for-byte (ids are stable surrogate keys, D4).
 //!
 //! Schema v2 (plan20) is additive over v1: the `censor` table relocates the
 //! harvest work ledger (the frontier's censor history — facts of absence,
@@ -20,9 +23,10 @@ use rusqlite::Connection;
 use super::GENERATOR;
 use super::merge::{DepthStatus, PathTree};
 use atomic_solver::notation::{move_to_bits, move_to_uci};
-use atomic_solver::position::Outcome;
+use atomic_solver::position::{Outcome, Position};
 
 /// One `shards` table row (the shard's own claims, not merged refinements).
+#[derive(Debug, Clone)]
 pub struct ShardRow {
     pub tag: String,
     pub file: String,
@@ -37,6 +41,59 @@ pub struct ShardRow {
 
 type Res<T> = Result<T, String>;
 
+/// A row-id assignment over a finalized [`PathTree`]: creation index → row
+/// id, plus the row-id-sorted creation order the writers iterate. Ids are
+/// stable surrogate keys (plan22 D4): existing rows keep their ids across
+/// folds; only a fresh-init fold assigns over the whole tree (global lex
+/// order — identical to the retired full rebuild's assignment).
+#[derive(Debug, Clone)]
+pub struct RowIds {
+    /// Creation index → row id.
+    pub id_of: Vec<i64>,
+    /// Creation indices in row-id order (the writers' iteration order).
+    pub order: Vec<usize>,
+}
+
+impl RowIds {
+    /// The fresh-init assignment: finalize's row ids (global lexicographic
+    /// path order; `finalize` must have run).
+    #[must_use]
+    pub fn from_finalize(tree: &super::merge::PathTree) -> Self {
+        let mut id_of = vec![0i64; tree.nodes.len()];
+        for (rank, &idx) in tree.row_order.iter().enumerate() {
+            id_of[idx] = rank as i64;
+        }
+        Self {
+            id_of,
+            order: tree.row_order.clone(),
+        }
+    }
+
+    /// The incremental fold's assignment: the nodes loaded from the DB keep
+    /// their ids (`loaded_ids[creation index]`, dense over the loaded
+    /// prefix), new nodes get `max_id+1…` in finalize's DFS (lexicographic)
+    /// order filtered to the new nodes — parents sort before children.
+    /// `finalize` must have run. A fresh-init fold (`loaded_ids` empty) is
+    /// exactly finalize's assignment.
+    #[must_use]
+    pub fn fold(tree: &super::merge::PathTree, loaded_ids: &[i64], max_id: i64) -> Self {
+        let mut id_of = vec![0i64; tree.nodes.len()];
+        id_of[..loaded_ids.len()].copy_from_slice(loaded_ids);
+        let mut next = max_id + 1;
+        for &idx in &tree.row_order {
+            if idx >= loaded_ids.len() {
+                id_of[idx] = next;
+                next += 1;
+            }
+        }
+        // The writers iterate rows in row-id order; appended ids need not
+        // follow the global DFS order, so sort explicitly.
+        let mut order: Vec<usize> = (0..tree.nodes.len()).collect();
+        order.sort_by_key(|&idx| id_of[idx]);
+        Self { id_of, order }
+    }
+}
+
 /// One `censor` table row (schema v2): the relocated work-ledger record.
 /// `path` is the absolute space-joined UCI path key (`""` = the root),
 /// byte-for-byte the ledger key.
@@ -49,6 +106,88 @@ pub struct CensorRow {
 
 const CENSOR_DDL: &str = "CREATE TABLE censor (path TEXT PRIMARY KEY, work_done INTEGER NOT NULL, \
      passes_failed INTEGER NOT NULL);";
+
+/// Ensure the standing DB carries the fold's schema (plan22 D3): a fresh
+/// file gets the full schema-v2 DDL; an existing file must be schema v2
+/// (schema-version meta row = 2 *and* the censor table present — a v1 file
+/// aborts with the rebuild hint). Run inside the fold's transaction.
+///
+/// # Errors
+/// Any SQLite error, or a pre-v2 existing file, as a message.
+pub fn ensure_fold_schema(conn: &Connection) -> Res<()> {
+    let has_meta: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='meta'",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("cannot inspect DB schema: {e}"))?;
+    if has_meta == 0 {
+        let batch = "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
+             CREATE TABLE shards (
+               tag TEXT PRIMARY KEY, file TEXT, sha256 TEXT,
+               root_fen TEXT, path TEXT,
+               outcome TEXT, depth_bound INTEGER, n_nodes INTEGER
+             );
+             CREATE TABLE nodes (
+               id INTEGER PRIMARY KEY,
+               parent_id INTEGER,
+               ply INTEGER NOT NULL,
+               move_uci TEXT,
+               move_code INTEGER,
+               outcome TEXT,
+               depth_bound INTEGER,
+               depth_status TEXT,
+               provenance TEXT
+             );
+             CREATE INDEX idx_nodes_parent ON nodes(parent_id);
+             ";
+        conn.execute_batch(&format!("{batch}{CENSOR_DDL}"))
+            .map_err(|e| format!("cannot create schema: {e}"))?;
+        let mut stmt = conn
+            .prepare("INSERT INTO meta VALUES (?1, ?2)")
+            .map_err(|e| e.to_string())?;
+        for (k, v) in [
+            ("schema_version", "2"),
+            ("root_fen", Position::STARTPOS_FEN),
+        ] {
+            stmt.execute(rusqlite::params![k, v])
+                .map_err(|e| format!("cannot seed meta {k}: {e}"))?;
+        }
+        return Ok(());
+    }
+    let version: String = conn
+        .query_row(
+            "SELECT value FROM meta WHERE key='schema_version'",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("meta row schema_version: {e}"))?;
+    if version != "2" {
+        return Err(format!(
+            "DB schema version {version:?} is not v2 — the fold never rewrites an \
+             existing file; move the old file aside and re-run proofdb_merge over \
+             the shard set (a fresh fold recreates schema v2; --import-censor \
+             migrates a legacy censor ledger)"
+        ));
+    }
+    let has_censor: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='censor'",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("cannot inspect DB schema: {e}"))?;
+    if has_censor == 0 {
+        return Err(
+            "DB has no censor table (schema v1) — the fold never rewrites an \
+             existing file; move the old file aside and re-run proofdb_merge \
+             over the shard set (a fresh fold recreates schema v2)"
+                .to_string(),
+        );
+    }
+    Ok(())
+}
 
 /// Read every `censor` row, ordered by path. A missing table (a schema-v1
 /// DB) reads as empty — the merger's preserve-and-rebuild (plan20 D5) must
@@ -178,18 +317,20 @@ pub fn write_db(
         ])
         .map_err(|e| format!("cannot insert shard {}: {e}", s.tag))?;
     }
+    let ids = RowIds::from_finalize(tree);
     let mut stmt = conn
         .prepare("INSERT INTO nodes VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)")
         .map_err(|e| e.to_string())?;
-    for (row, &ci) in tree.row_order.iter().enumerate() {
+    for &ci in &ids.order {
+        let row = ids.id_of[ci];
         let node = &tree.nodes[ci];
-        let parent_row = node.parent.map(|p| tree.row_of[p]);
+        let parent_row = node.parent.map(|p| ids.id_of[p]);
         let (mv_uci, mv_code) = node.mv.map_or((None, None), |mv| {
             (Some(move_to_uci(mv)), Some(i64::from(move_to_bits(mv))))
         });
         stmt.execute(rusqlite::params![
-            row as i64,
-            parent_row.map(|p| p as i64),
+            row,
+            parent_row,
             node.ply as i64,
             mv_uci,
             mv_code,
@@ -210,10 +351,70 @@ pub fn write_db(
     Ok(())
 }
 
+/// Read every `shards` row, ordered by tag. The unmerged-shard gate's and
+/// the harvest session-seeding's input (plan22 D6).
+///
+/// # Errors
+/// Any SQLite error, as a message.
+pub fn read_shard_rows(conn: &Connection) -> Res<Vec<ShardRow>> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT tag, file, sha256, root_fen, path, outcome, depth_bound, n_nodes
+             FROM shards ORDER BY tag",
+        )
+        .map_err(|e| e.to_string())?;
+    let raw = stmt
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, String>(3)?,
+                r.get::<_, String>(4)?,
+                r.get::<_, String>(5)?,
+                r.get::<_, i64>(6)?,
+                r.get::<_, i64>(7)?,
+            ))
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    let mut rows = Vec::with_capacity(raw.len());
+    for (tag, file, sha256, root_fen, path, outcome_s, bound, n_nodes) in raw {
+        let outcome = outcome_s
+            .parse::<Outcome>()
+            .map_err(|_| format!("shards row {tag:?}: bad outcome {outcome_s:?}"))?;
+        rows.push(ShardRow {
+            tag,
+            file,
+            sha256,
+            root_fen,
+            path,
+            outcome,
+            depth_bound: u32::try_from(bound.max(0)).unwrap_or(u32::MAX),
+            n_nodes: n_nodes.max(0) as usize,
+        });
+    }
+    Ok(rows)
+}
+
 /// Render the canonical dump: `#`-prefixed meta lines, one TSV header, then
-/// one line per node in row-id order. NULL fields render as empty strings.
+/// one line per node in row-id order (finalize's assignment). NULL fields
+/// render as empty strings.
 #[must_use]
 pub fn canonical_dump(root_fen: &str, built_from: &str, tree: &PathTree) -> String {
+    canonical_dump_with_ids(root_fen, built_from, tree, &RowIds::from_finalize(tree))
+}
+
+/// The dump over an explicit row-id assignment (the fold's stable-ids
+/// variant).
+#[must_use]
+pub fn canonical_dump_with_ids(
+    root_fen: &str,
+    built_from: &str,
+    tree: &PathTree,
+    ids: &RowIds,
+) -> String {
     let mut out = String::new();
     out.push_str("# proofdb canonical dump v1 (docs/spec/global_proof_store.md)\n");
     out.push_str("# schema_version 2\n");
@@ -232,11 +433,12 @@ pub fn canonical_dump(root_fen: &str, built_from: &str, tree: &PathTree) -> Stri
     out.push_str(
         "id\tparent_id\tply\tmove_uci\tmove_code\toutcome\tdepth_bound\tdepth_status\tprovenance\n",
     );
-    for (row, &ci) in tree.row_order.iter().enumerate() {
+    for &ci in &ids.order {
+        let row = ids.id_of[ci];
         let node = &tree.nodes[ci];
         let parent = node
             .parent
-            .map_or(String::new(), |p| tree.row_of[p].to_string());
+            .map_or(String::new(), |p| ids.id_of[p].to_string());
         let (mv_uci, mv_code) = node.mv.map_or((String::new(), String::new()), |mv| {
             (move_to_uci(mv), move_to_bits(mv).to_string())
         });

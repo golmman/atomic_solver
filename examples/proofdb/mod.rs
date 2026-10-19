@@ -1,22 +1,21 @@
 //! Shared protocol for the `proofdb` tooling (`proofdb_merge`,
-//! `proofdb_harvest`).
+//! `proofdb_harvest`, `proofdb_verify`).
 //!
 //! This is example-side tooling for the startpos proof-line database; the
-//! product solver (`src/`) is untouched. The durable truth is the validated
-//! shard set (binary proof trees, `docs/spec/proof_tree_dump.md`) plus its
-//! manifest; the SQLite database (schema v2) is the derived, rebuildable
-//! view **plus** the censor state (the relocated work ledger — the
-//! frontier's censor history, plan20): the schema and semantics are
-//! normative in `docs/spec/global_proof_store.md`.
+//! product solver (`src/`) is untouched. Since plan22 the SQLite database
+//! (schema v2) is the **single source of truth** and grows by the
+//! incremental fold; shards are ephemeral transport — self-describing
+//! `<tag>.bin` + `<tag>.meta.json` sidecar pairs, deletable after merge —
+//! and the censor state (the relocated work ledger — the frontier's censor
+//! history, plan20) lives in the DB's `censor` table. The schema and
+//! semantics are normative in `docs/spec/global_proof_store.md`.
 //!
-//! A **manifest** lists the shards to merge. Required per-entry fields are
-//! `tag`, `file`, `fen`, `moves` (UCI path from the startpos to the shard
-//! root), `outcome` (`win`/`loss`, side-to-move perspective), and `validate`
-//! (only `ok` enters a merge). Unknown extra fields are ignored.
+//! A **manifest** is retired: at merge time, if the legacy file exists, its
+//! entries serve as metadata for unmerged tags that lack a sidecar and the
+//! merge backfills their sidecars; sidecar metadata wins when both exist.
 #![allow(dead_code)]
 
 use atomic_solver::position::Outcome;
-use serde::Deserialize;
 
 pub mod db;
 pub mod harvest;
@@ -27,12 +26,12 @@ pub mod merge;
 pub mod schema;
 pub mod session;
 pub mod shard_export;
+pub mod sidecar;
+pub mod verify;
 pub mod walk;
 
 #[cfg(test)]
 pub(crate) mod fixture;
-
-pub use manifest::write_manifest;
 
 /// Generator identification written into the DB `meta` table.
 pub const GENERATOR: &str = concat!("proofdb_merge ", env!("CARGO_PKG_VERSION"));
@@ -43,16 +42,18 @@ pub const GENERATOR: &str = concat!("proofdb_merge ", env!("CARGO_PKG_VERSION"))
 /// `docs/plans/proofdb/shards/` is a development/validation fixture and is
 /// never read or written by these defaults.
 pub const DEFAULT_DB: &str = "data/proofdb/proofdb.db";
-/// Default manifest path (co-located with the shards it indexes).
+/// Default manifest path (legacy: the merge reads it only when the file
+/// exists and uses it as the migration/metadata source, plan22 D2).
 pub const DEFAULT_MANIFEST: &str = "data/proofdb/shards/manifest.json";
-/// Default shard directory (the durable layer; back it up).
+/// Default shard directory (the ephemeral transport layer; deletable
+/// after merge, D8).
 pub const DEFAULT_SHARD_DIR: &str = "data/proofdb/shards";
 /// Default `proofdb_flip --out` report path (throwaway analysis output).
 pub const DEFAULT_FLIP_OUT: &str = "data/proofdb/flip.json";
 
 /// Create the parent directory of an output path (no-op for a bare file
 /// name). Only for *write* paths — reading never creates anything (plan14
-/// D3: a missing default DB or manifest is a clean abort naming the path).
+/// D3: a missing default DB is a clean abort naming the path).
 ///
 /// # Errors
 /// Any I/O error, as a message.
@@ -77,97 +78,13 @@ pub struct ShardEntry {
     pub validate: String,
 }
 
-/// The parsed manifest: the shard list in file order plus the raw bytes'
-/// SHA-256 digest (recorded as the DB `built_from` meta row).
+/// The parsed legacy manifest (the merge's migration/metadata source, D2).
 #[derive(Debug)]
 pub struct Manifest {
     pub entries: Vec<ShardEntry>,
-    pub sha256_hex: String,
 }
 
-#[derive(Deserialize)]
-struct RawEntry {
-    tag: serde_json::Value,
-    file: serde_json::Value,
-    fen: serde_json::Value,
-    moves: serde_json::Value,
-    outcome: serde_json::Value,
-    validate: serde_json::Value,
-}
-
-#[derive(Deserialize)]
-struct RawManifest {
-    entries: Vec<RawEntry>,
-}
-
-fn as_str(v: &serde_json::Value, field: &str, tag: &str) -> Result<String, String> {
-    v.as_str().map_or_else(
-        || {
-            Err(format!(
-                "manifest entry {tag:?}: field {field:?} must be a string"
-            ))
-        },
-        |s| Ok(s.to_string()),
-    )
-}
-
-/// Parse the manifest at `path`, requiring the six per-entry fields of the
-/// `global_proof_store.md` manifest contract. Entries are returned sorted by
-/// `tag` so the merge is independent of manifest order.
-pub fn read_manifest(path: &std::path::Path) -> Result<Manifest, String> {
-    let bytes =
-        std::fs::read(path).map_err(|e| format!("cannot read manifest {}: {e}", path.display()))?;
-    let digest = digest_hex(&bytes);
-    let raw: RawManifest = serde_json::from_slice(&bytes)
-        .map_err(|e| format!("manifest {} is not valid JSON: {e}", path.display()))?;
-    let mut entries = Vec::with_capacity(raw.entries.len());
-    for e in raw.entries {
-        let tag = as_str(&e.tag, "tag", "?")?;
-        let file = as_str(&e.file, "file", &tag)?;
-        let fen = as_str(&e.fen, "fen", &tag)?;
-        let validate = as_str(&e.validate, "validate", &tag)?;
-        let outcome = {
-            let s = as_str(&e.outcome, "outcome", &tag)?;
-            s.parse::<Outcome>()
-                .map_err(|_| format!("manifest entry {tag:?}: bad outcome {s:?}"))?
-        };
-        let moves = e
-            .moves
-            .as_array()
-            .ok_or_else(|| format!("manifest entry {tag:?}: field \"moves\" must be an array"))?
-            .iter()
-            .map(|m| as_str(m, "moves[]", &tag))
-            .collect::<Result<Vec<_>, _>>()?;
-        entries.push(ShardEntry {
-            tag,
-            file,
-            fen,
-            moves,
-            outcome,
-            validate,
-        });
-    }
-    entries.sort_by(|a, b| a.tag.cmp(&b.tag));
-    let mut seen = std::collections::HashSet::new();
-    let mut paths = std::collections::HashSet::new();
-    for e in &entries {
-        if !seen.insert(e.tag.clone()) {
-            return Err(format!("manifest has duplicate tag {:?}", e.tag));
-        }
-        if !paths.insert(e.moves.join(" ")) {
-            return Err(format!(
-                "manifest has a duplicate moves path (tag {:?})",
-                e.tag
-            ));
-        }
-    }
-    Ok(Manifest {
-        entries,
-        sha256_hex: digest,
-    })
-}
-
-/// SHA-256 of `bytes` as lowercase hex (manifest digest for `built_from`).
+/// SHA-256 of `bytes` as lowercase hex.
 #[must_use]
 pub fn digest_hex(bytes: &[u8]) -> String {
     use sha2::{Digest, Sha256};
@@ -184,47 +101,6 @@ pub fn digest_hex(bytes: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn write_tmp(name: &str, content: &str) -> std::path::PathBuf {
-        let mut p = std::env::temp_dir();
-        p.push(format!("proofdb_test_{}_{name}", std::process::id()));
-        std::fs::write(&p, content).unwrap();
-        p
-    }
-
-    #[test]
-    fn manifest_requires_fields_and_sorts_by_tag() {
-        let p = write_tmp(
-            "ok.json",
-            r#"{"n":1,"entries":[
-                {"tag":"b","file":"b.bin","fen":"F2","moves":["a2a3"],"outcome":"win","validate":"ok","extra":7},
-                {"tag":"a","file":"a.bin","fen":"F1","moves":[],"outcome":"loss","validate":"ok"}]}"#,
-        );
-        let m = read_manifest(&p).unwrap();
-        assert_eq!(m.entries.len(), 2);
-        assert_eq!(m.entries[0].tag, "a");
-        assert!(m.entries[0].moves.is_empty());
-        assert_eq!(m.entries[1].moves, vec!["a2a3".to_string()]);
-        assert_eq!(m.sha256_hex.len(), 64);
-        std::fs::remove_file(&p).ok();
-    }
-
-    #[test]
-    fn manifest_rejects_missing_moves_and_duplicate_tags() {
-        let p = write_tmp(
-            "nomoves.json",
-            r#"{"entries":[{"tag":"a","file":"a.bin","fen":"F","outcome":"win","validate":"ok"}]}"#,
-        );
-        assert!(read_manifest(&p).unwrap_err().contains("moves"));
-        let p = write_tmp(
-            "duptag.json",
-            r#"{"entries":[
-                {"tag":"a","file":"x.bin","fen":"F","moves":[],"outcome":"win","validate":"ok"},
-                {"tag":"a","file":"y.bin","fen":"F","moves":[],"outcome":"win","validate":"ok"}]}"#,
-        );
-        assert!(read_manifest(&p).unwrap_err().contains("duplicate tag"));
-        std::fs::remove_file(&p).ok();
-    }
 
     #[test]
     fn digest_hex_is_sha256() {

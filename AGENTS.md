@@ -38,7 +38,11 @@ A pure solver for atomic chess in Rust.
   builds trees. `Search::set_memory_limited` / `ExitReason::MemoryLimit` are a
   reconstruct-side contract only (`src/reconstruct/walker.rs`). The offline proof-tree
   pipeline is consumed by the proofdb tooling (`examples/proofdb*`, all in `examples/`):
-  shards → `proofdb_merge` → SQLite DB → `proofdb_harvest` loop; operator manual at
+  the SQLite DB is the single source of truth, grown by the incremental fold
+  (`proofdb_merge`); shards are self-describing `<tag>.bin` + `<tag>.meta.json`
+  sidecar pairs (ephemeral transport, deletable after their fold), the harvest
+  (`proofdb_harvest`) writes bin+sidecar pairs, `proofdb_verify` replay-validates
+  the whole DB from the DB alone; operator manual at
   `docs/proofdb_pipeline.md`, external DB contract in `docs/spec/global_proof_store.md`.
 - `src/zobrist.rs` — deterministic Zobrist keys, including the halfmove clock;
   `src/notation.rs` — UCI move helpers, including `moves_to_uci_path`.
@@ -84,28 +88,33 @@ A pure solver for atomic chess in Rust.
 - `move_order_debug` — static/history/killer/total ordering scores (`--name <case>`).
 - `play_and_solve` — play a given move, then solve the resulting position.
 - `portfolio` — salt-seeded racer portfolio driver: K unmodified solvers (`--first-outcome --outcome-only --salt <s>`, the measured plan8 configuration) race one FEN, take-first-decisive with the stop-when-proven kill policy; per-racer evals/wall/censoring accounting (budget-censored never misreported as a proven draw); RAM = K × TT of the spawned racers.
-- `proofdb_flip` — read-only implied-flip analysis over a grown proof DB (plan8); exits non-zero on any unverified flip. DB defaults to `data/proofdb/proofdb.db`, report to `data/proofdb/flip.json`.
+- `proofdb_flip` — read-only implied-flip analysis over a grown proof DB (plan8); exits non-zero on any unverified flip; refuses on unmerged shards (`--shard-dir` gate, plan22). DB defaults to `data/proofdb/proofdb.db`, report to `data/proofdb/flip.json`.
+- `proofdb_verify` — read-only whole-DB replay validator (plan22): the tree read back from the DB alone is replayed from the startpos and checked against the spec invariants (path replay, AND/OR structure, terminal claims, depth monotonicity, provenance, reachability, meta census); `--backup` writes a `VACUUM INTO` offsite copy on a green verdict; exit 2 on defects. DB defaults to `data/proofdb/proofdb.db`.
 - `proofdb_harvest` — the harvest loop: the `frontier-walk` shallowest-first
   censor-frontier walk at a flat budget (the only harvest policy since the
   plan18 consolidation; `--policy` is kept but accepts only `frontier-walk`;
   `--moves '<uci path>'` re-anchors the session at a startpos path's subtree
   — a selection-layer scope, out-of-scope censor records preserved; the
   plan21 OR-node sibling skip closes white-to-move OR nodes on one proven
-  winning child, pruning the sibling corridors), export
-  validated shards, extend the manifest (atomically rewritten after every
-  decisive job — crash-consistent durable layer, an unclean exit loses at
-  most the in-flight job's shard; never merges; run `proofdb_merge` after
-  each batch). Censor state lives in the DB's `censor` table (schema v2,
-  plan20): the harvest's only DB writes are committed censor rows; the
-  pre-plan20 `work.json` sidecar and the `proofdb_ledger_union` tool are
-  retired (`proofdb_merge --import-censor` migrates a legacy ledger). DB/
-  manifest/shard-dir default wholly under `data/proofdb/`. Operator manual:
-  `docs/proofdb_pipeline.md`.
-- `proofdb_merge` — the single-writer merger: manifest + shards →
-  replay-validated, grafted SQLite DB (schema v2; sole writer of
-  `meta`/`shards`/`nodes`, preserves the `censor` table across rebuilds,
-  `--import-censor` for legacy ledgers) + canonical dump; conflicts abort
-  unmerged. Manifest/shard-dir/DB default under `data/proofdb/`.
+  winning child, pruning the sibling corridors), export validated shards as
+  durable `<tag>.bin` + `<tag>.meta.json` sidecar pairs (plan22: the sidecar
+  is the commit marker — an unclean exit loses at most the in-flight job's
+  bin; never merges; run `proofdb_merge` after each batch, whose
+  unmerged-shard gate refuses until then). Censor state lives in the DB's
+  `censor` table (schema v2, plan20): the harvest's only DB writes are
+  committed censor rows; the pre-plan20 `work.json` sidecar, the
+  `proofdb_ledger_union` tool, and the `--manifest`/`--ledger` flags are
+  retired. DB/shard-dir default wholly under `data/proofdb/`. Operator
+  manual: `docs/proofdb_pipeline.md`.
+- `proofdb_merge` — the single-writer incremental fold (plan22): shard
+  pairs → the standing SQLite DB, one transaction per invocation (schema
+  v2; sole writer of `meta`/`shards`/`nodes`; row ids preserved and
+  appended, never renumbered; `built_from` = the fold digest over the
+  `shards` table; the `censor` table untouched in place;
+  `--import-censor` for legacy ledgers, in place under the max rule;
+  `--manifest` is a legacy migration source that backfills sidecars) +
+  canonical dump; idempotent by tag skip (sha256 cross-checked), conflicts
+  abort without writes. Shard-dir/DB default under `data/proofdb/`.
 - `reconstruct_pt` — rebuild a proof tree offline from a FEN + TT snapshot (`--snapshot`); reports `validate: ok|FAILED n`, exits non-zero on defects; `--oracle` and `--experiment` run the dual-build oracle.
 - `replay` — replay a UCI line from a FEN, then solve the resulting position.
 - `solve_depth_limited` — fixed-`max_depth` search without the iterative-deepening bootstrap.

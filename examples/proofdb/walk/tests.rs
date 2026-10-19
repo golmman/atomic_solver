@@ -32,6 +32,7 @@ fn crafted(rows: &[(&str, usize, Option<Outcome>)]) -> DbContent {
         .collect();
     DbContent {
         root_fen: Position::STARTPOS_FEN.to_string(),
+        built_from: "0".repeat(64),
         rows,
     }
 }
@@ -130,7 +131,7 @@ fn walk_handled_rule_categories() {
         ("c2c3", 500, 1),   // underworked record → NOT handled (D3)
         ("d2d4", 1_000, 3), // record at the budget → handled
     ]);
-    let shard = |k: &str| k == "f2f4"; // the manifest ∪ in-session shard part
+    let shard = |k: &str| k == "f2f4"; // the standing ∪ in-session shard part
     let h = |k: &str| is_handled(k, &rows, &ledger, 1_000, shard);
     assert!(h("a2a3"), "stored open row is handled (any outcome)");
     assert!(h("b1c3"), "stored proven row is handled");
@@ -173,11 +174,12 @@ fn walk_census_line_and_root_states() {
     std::fs::create_dir_all(&dir).unwrap();
     // Open root (the fresh-layer bootstrap shape).
     let db = crafted(&[("", 0, None), ("a2a3", 1, Some(Outcome::Win))]);
+    // The standing shard paths (plan22 D6): seed_paths are space-joined
+    // UCI paths of the DB's shard rows.
     let session = Session::new(
         4,
         dir.join("s"),
-        dir.join("s/manifest.json"),
-        Vec::new(),
+        std::collections::HashSet::new(),
         "frontier-walk",
     );
     let (f, census) = WalkFrontier::new(&Ledger::default(), &db, "");
@@ -190,22 +192,14 @@ fn walk_census_line_and_root_states() {
          complete 0) — root open; base budget 4000000; scope global"
     );
     assert_eq!(f.completes, 0);
-    // Proven root row → proven; a manifest shard path at the root is
+    // Proven root row → proven; a standing shard path at the root is
     // proven-stored even over an open row.
     let db_proven = crafted(&[("", 0, Some(Outcome::Loss))]);
     assert_eq!(root_state(&db_proven, &session, ""), RootState::Proven);
     let session_shard = Session::new(
         4,
         dir.join("s2"),
-        dir.join("s2/manifest.json"),
-        vec![crate::proofdb::ShardEntry {
-            tag: "root".to_string(),
-            file: "root.bin".to_string(),
-            fen: Position::STARTPOS_FEN.to_string(),
-            moves: Vec::new(),
-            outcome: Outcome::Win,
-            validate: "ok".to_string(),
-        }],
+        [String::new()].into_iter().collect(),
         "frontier-walk",
     );
     assert_eq!(root_state(&db, &session_shard, ""), RootState::Proven);
@@ -309,8 +303,7 @@ fn walk_scope_root_states_and_census_line() {
     let session = Session::new(
         4,
         dir.join("s"),
-        dir.join("s/manifest.json"),
-        Vec::new(),
+        std::collections::HashSet::new(),
         "frontier-walk",
     );
     // The scope root row decides the state (open / proven); no row at the
@@ -324,19 +317,11 @@ fn walk_scope_root_states_and_census_line() {
         root_state(&db_proven, &session, "a2a3 b1b2"),
         RootState::Proven
     );
-    // A manifest/in-session shard path at the scope key is proven-stored.
+    // A standing/in-session shard path at the scope key is proven-stored.
     let session_shard = Session::new(
         4,
         dir.join("s2"),
-        dir.join("s2/manifest.json"),
-        vec![crate::proofdb::ShardEntry {
-            tag: "scope".to_string(),
-            file: "scope.bin".to_string(),
-            fen: Position::STARTPOS_FEN.to_string(),
-            moves: vec!["a2a3".to_string(), "b1b2".to_string()],
-            outcome: Outcome::Win,
-            validate: "ok".to_string(),
-        }],
+        ["a2a3 b1b2".to_string()].into_iter().collect(),
         "frontier-walk",
     );
     assert_eq!(

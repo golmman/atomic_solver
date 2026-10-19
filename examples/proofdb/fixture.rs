@@ -1,6 +1,6 @@
 //! Shared fixture DB for the proofdb tool tests (merger-built, physical:
 //! every row replays legally). Included only under `#[cfg(test)]` from
-//! `mod.rs`; used by `frontier/tests.rs` and `policy/tests.rs`.
+//! `mod.rs`; used by the walk/driver and censor tests.
 
 use crate::proofdb::merge::PathTree;
 use crate::proofdb::schema::{ShardRow, write_db};
@@ -18,8 +18,9 @@ pub(crate) const TACTIC_FEN: &str =
 /// `g2g4 e7e6 f2f3`), so every row replays and the path-tree dedupe is
 /// exercised. Open: root, `f2f3`, `g2g4`, `f2f3 e7e6`, `g2g4 e7e6`; the
 /// `… f2f3`/`… g2g4` (win, bound 1) and `d8h4` (loss terminal) chain nodes
-/// are proven. Returns the DB path and its manifest digest.
-pub(crate) fn fixture_db(dir: &std::path::Path) -> (std::path::PathBuf, String) {
+/// are proven. Returns the DB path (`built_from` = "fixture"; the plan22
+/// fold digest is a fold-time recompute, not a fixture input).
+pub(crate) fn fixture_db(dir: &std::path::Path) -> std::path::PathBuf {
     let mut pos = Position::from_fen(TACTIC_FEN).unwrap();
     let mv = uci_to_move("d8h4", &pos).unwrap();
     pos.do_move(mv);
@@ -79,10 +80,7 @@ pub(crate) fn fixture_db(dir: &std::path::Path) -> (std::path::PathBuf, String) 
     }
     pt.finalize().unwrap();
 
-    let manifest_bytes = b"{\"entries\":[]}".to_vec();
-    let digest = crate::proofdb::digest_hex(&manifest_bytes);
-    std::fs::write(dir.join("manifest.json"), &manifest_bytes).unwrap();
     let db = dir.join("fixture.db");
-    write_db(&db, Position::STARTPOS_FEN, &digest, &rows, &pt, &[]).unwrap();
-    (db, digest)
+    write_db(&db, Position::STARTPOS_FEN, "fixture", &rows, &pt, &[]).unwrap();
+    db
 }

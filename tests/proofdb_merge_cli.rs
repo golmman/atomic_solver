@@ -1,9 +1,11 @@
 //! Binary-level tests for `proofdb_merge`'s censor-state contract (plan20
-//! D5/D6): the full rebuild preserves the DB's `censor` rows exactly, and
-//! `--import-censor` merges a legacy `work.json` under the per-field max
-//! rule (idempotent; never decreases a stored value). The example binary is
-//! driven through `cargo run --example` (the `proofdb_harvest_cli` harness
-//! style); the fixture is a one-shard manifest over a temp layer.
+//! D5/D6, plan22 fold world): the incremental fold leaves the DB's `censor`
+//! rows untouched in place, and `--import-censor` merges a legacy
+//! `work.json` under the per-field max rule (idempotent; never decreases a
+//! stored value). The example binary is driven through `cargo run
+//! --example` (the `proofdb_harvest_cli` harness style); the fixture is a
+//! one-shard manifest over a temp layer — the legacy metadata source (D2),
+//! which the merge backfills into the sidecar world.
 
 use std::process::Command;
 use std::sync::{Mutex, OnceLock};
@@ -138,11 +140,12 @@ fn seed(db: &std::path::Path, path: &str, work: u64, passes: u32) {
     .unwrap();
 }
 
-/// D5 (normative edge case, through the real binary): a bare re-merge over
-/// a DB carrying censor rows preserves them row-for-row — including a key
-/// with no DB row at all (never proven).
+/// D5 (normative edge case, through the real binary, plan22 fold world): a
+/// re-fold over a DB carrying censor rows preserves them row-for-row —
+/// including a key with no DB row at all (never proven); the fold itself
+/// reports no censor activity (the rows are untouched in place).
 #[test]
-fn merge_preserves_censor_rows_across_rebuild() {
+fn merge_preserves_censor_rows_across_fold() {
     let dir = std::env::temp_dir().join(format!("proofdb_merge_cli_p20_{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let db = dir.join("proofdb.db");
@@ -152,9 +155,16 @@ fn merge_preserves_censor_rows_across_rebuild() {
 
     let run = run_merge(&db, &[]);
     assert_eq!(run.code, Some(0), "stdout: {}", run.stdout);
+    // The fold skips the already-merged tag idempotently and reports no
+    // censor activity (the rows are untouched in place).
     assert!(
-        run.stdout.contains("censor: 2 censor rows preserved"),
+        run.stdout.contains("1 already merged, 0 orphans skipped"),
         "census line: {}",
+        run.stdout
+    );
+    assert!(
+        !run.stdout.contains("censor:"),
+        "no censor churn: {}",
         run.stdout
     );
     assert_eq!(
@@ -189,7 +199,7 @@ fn merge_import_censor_is_max_rule_and_idempotent() {
     assert_eq!(run.code, Some(0), "stdout: {}", run.stdout);
     assert!(
         run.stdout
-            .contains("censor: 0 censor rows preserved + 2 imported records -> 2 rows"),
+            .contains("censor: 2 imported records (max rule, in place)"),
         "census line: {}",
         run.stdout
     );
@@ -215,7 +225,8 @@ fn merge_import_censor_is_max_rule_and_idempotent() {
     let run3 = run_merge(&db2, &["--import-censor", legacy.to_str().unwrap()]);
     assert_eq!(run3.code, Some(0));
     assert!(
-        run3.stdout.contains("+ 2 imported records -> 2 rows"),
+        run3.stdout
+            .contains("censor: 2 imported records (max rule, in place)"),
         "census line: {}",
         run3.stdout
     );
@@ -228,4 +239,77 @@ fn merge_import_censor_is_max_rule_and_idempotent() {
     );
     std::fs::remove_dir_all(&dir).ok();
     std::fs::remove_dir_all(&dir2).ok();
+}
+
+// --- plan22 R8 (CLI surface): proofdb_verify exit codes + --backup ---
+
+/// A `proofdb_verify` run: the fixture DB copy verifies green (exit 0), a
+/// corrupted copy fails (exit 2), and `--backup` writes a readable SQLite
+/// copy (the D8 offsite-backup duty).
+#[test]
+fn verify_cli_exit_codes_and_backup() {
+    use std::path::Path;
+
+    let dir = std::env::temp_dir().join(format!("proofdb_verify_cli_{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let db = dir.join("proofdb.db");
+    assert!(run_merge(&db, &[]).code == Some(0));
+
+    let run_verify = |db: &Path, extra: &[&str]| {
+        let _guard = RUN_LOCK.lock().unwrap();
+        let mut args: Vec<String> = vec![
+            "run".into(),
+            "--release".into(),
+            "--quiet".into(),
+            "--example".into(),
+            "proofdb_verify".into(),
+            "--".into(),
+            "--db".into(),
+            db.to_str().unwrap().into(),
+        ];
+        args.extend(extra.iter().map(|s| (*s).to_string()));
+        let out = cargo().args(&args).output().expect("failed to run verify");
+        (
+            out.status.code(),
+            String::from_utf8_lossy(&out.stdout).to_string(),
+        )
+    };
+
+    // Green: exit 0, the census line.
+    let (code, out) = run_verify(&db, &[]);
+    assert_eq!(code, Some(0), "stdout: {out}");
+    assert!(
+        out.contains("verify: ok — nodes 5 (proven 2, open 3)"),
+        "stdout: {out}"
+    );
+
+    // The backup duty: a readable SQLite copy at the requested path.
+    let backup = dir.join("offsite.db");
+    let (code, out) = run_verify(&db, &["--backup", backup.to_str().unwrap()]);
+    assert_eq!(code, Some(0), "stdout: {out}");
+    let conn = rusqlite::Connection::open(&backup).unwrap();
+    let n: i64 = conn
+        .query_row("SELECT COUNT(*) FROM nodes", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(n, 5, "the backup carries the tree");
+
+    // Red: a corrupted copy (the OR node's child deleted) exits 2.
+    let bad = dir.join("bad.db");
+    std::fs::copy(&db, &bad).unwrap();
+    {
+        let conn = rusqlite::Connection::open(&bad).unwrap();
+        conn.execute_batch(
+            "DELETE FROM nodes WHERE move_uci='d8h4';
+             UPDATE meta SET value='4' WHERE key='node_count';",
+        )
+        .unwrap();
+    }
+    let (code, out) = run_verify(&bad, &[]);
+    assert_eq!(code, Some(2), "stdout: {out}");
+    assert!(out.contains("verify: FAILED"), "stdout: {out}");
+    assert!(
+        out.contains("without a proven-loss child"),
+        "defect line: {out}"
+    );
+    std::fs::remove_dir_all(&dir).ok();
 }

@@ -1,10 +1,10 @@
 # proofdb pipeline — operator and user manual
 
 How to run, consume, and extend the startpos proof-line database pipeline
-(shards → merger → DB → harvest loop) as shipped in this repository. The
-three tools live under `examples/` (`proofdb_merge`, `proofdb_harvest`,
-`proofdb_flip`); the DB schema and its semantics are the sole external
-contract and are normative in
+(sidecar shards → fold → standing DB → harvest loop) as shipped in this
+repository. The tools live under `examples/` (`proofdb_merge`,
+`proofdb_harvest`, `proofdb_flip`, `proofdb_verify`); the DB schema and its
+semantics are the sole external contract and are normative in
 [`docs/spec/global_proof_store.md`](spec/global_proof_store.md). This manual
 serves two readers:
 
@@ -28,6 +28,7 @@ serves two readers:
    - [7.1 `proofdb_merge`](#71-proofdb_merge--shards--sqlite-single-writer)
    - [7.2 `proofdb_harvest`](#72-proofdb_harvest--grow-the-shard-set)
    - [7.3 `proofdb_flip`](#73-proofdb_flip--implied-flip-analysis-read-only)
+   - [7.4 `proofdb_verify`](#74-proofdb_verify--whole-db-replay-validation-read-only)
 8. [Recipes](#8-recipes)
    - [8.1 Operator recipes](#81-operator-recipes)
    - [8.2 Consumer recipes (SQL)](#82-consumer-recipes-sql)
@@ -42,14 +43,15 @@ are **tools** — binaries that read and write that state. Both are catalogued
 in §2, with the full tool contracts in §7.
 
 ```
-  shards + manifest ──proofdb_merge──► proofdb.db
-          ▲                                │
-          │                                ├──proofdb_flip──► flips.json
-          └──── proofdb_harvest ◄──────────┘
-                     ▲ │
-                     └─┘  censor state lives in the DB (schema v2's
-                          censor table; harvest writes rows, merge
-                          preserves them across rebuilds)
+  shard pairs ──proofdb_merge (fold)──► proofdb.db ◄──proofdb_verify
+      ▲          (bin + sidecar; deletable after the fold)   │
+      │                            the DB is the single source of truth
+      │                                     ├──proofdb_flip──► flip.json
+      └──────── proofdb_harvest ◄───────────┘
+                  ▲ │
+                  └─┘  censor state lives in the DB (schema v2's
+                       censor table; the harvest writes rows, a
+                       fold leaves them untouched in place)
 ```
 
 ## 2. Artifacts and tools
@@ -64,52 +66,64 @@ fixture** documenting the implementation (tests and measurement batches
 use it via explicit flags); it is never read or written by the defaults,
 and production runs ignore it entirely.
 
-| Artifact    | Layer           | Default path                                  | gitignored |
-| ----------- | --------------- | --------------------------------------------- | ---------- |
-| shard set   | durable truth   | `data/proofdb/shards/*.bin` + `manifest.json` | yes        |
-| SQLite DB   | derived view + censor state | `data/proofdb/proofdb.db`         | yes        |
-| flip report | analysis output | `data/proofdb/flip.json`                      | yes        |
+| Artifact      | Layer                        | Default path                          | gitignored |
+| ------------- | ---------------------------- | ------------------------------------- | ---------- |
+| SQLite DB     | **single source of truth** + censor state | `data/proofdb/proofdb.db` | yes        |
+| shard pairs   | ephemeral transport (deletable after the fold) | `data/proofdb/shards/*.bin` + `*.meta.json` | yes |
+| flip report   | analysis output              | `data/proofdb/flip.json`              | yes        |
 
-Because `data/` is gitignored, the durable layer now lives **outside
-version control**: backing up `data/proofdb/shards/` is the operator's
-responsibility (the manifest digest, `built_from`, is the integrity stamp
-for any backed-up copy). Nothing else in this layout is irreplaceable:
-the DB is derived (and its censor state is scheduling state), the flip
-report is a throwaway.
+Because `data/` is gitignored, the DB lives **outside version control**:
+an offsite backup of `data/proofdb/proofdb.db` is the operator's
+responsibility (recipe R6's `VACUUM INTO` step; the fold digest,
+`built_from`, is the integrity stamp for any backed-up copy). Since the
+plan22 pivot the DB is **append-only truth**: it is never rebuilt from
+shards, so a deleted or corrupted DB can only be restored from a backup —
+a shard dir alone is no longer sufficient once folded shards have been
+deleted. The shard pairs and the flip report are regenerable/throwaway.
 
-- **Shard set (durable truth).** `*.bin` validated binary proof trees
-  (`proof_tree_dump.md` v1 format) plus `manifest.json`, one entry per shard
-  (path, fen, outcome, tag, `validate`). Append-only: only
-  `proofdb_harvest` adds to it, and `proofdb_merge` only reads it.
-- **SQLite DB (derived view + censor state).** `proofdb.db`, schema v2 per
-  the spec: the v1 `meta`/`shards`/`nodes` surfaces (rebuildable
-  deterministically and byte-identically from the shard set) plus the
-  additive `censor` table — the frontier's censor history (facts of
-  absence: censored draw jobs are not representable in the tree model).
-  Writer split: `proofdb_merge` is the sole writer of
-  `meta`/`shards`/`nodes`; `proofdb_harvest` writes `censor` rows only
-  (one committed transaction per censor) and `proofdb_merge` preserves the
-  table across its rebuilds. The two tools must not run concurrently
-  (operational discipline; SQLite's locking is the mechanical backstop).
+- **SQLite DB (source of truth + censor state).** `proofdb.db`, schema v2
+  per the spec: the `meta`/`shards`/`nodes` surfaces (grown by the
+  incremental fold — existing rows and their ids are never rewritten) plus
+  the `censor` table — the frontier's censor history (facts of absence:
+  censored draw jobs are not representable in the tree model). Writer
+  split: `proofdb_merge` is the sole writer of `meta`/`shards`/`nodes`;
+  `proofdb_harvest` writes `censor` rows only (one committed transaction
+  per censor) and a fold leaves the table untouched in place. The two
+  tools must not run concurrently (operational discipline; SQLite's
+  locking is the mechanical backstop).
+- **Shard pairs (ephemeral transport).** `<tag>.bin` validated binary
+  proof trees (`proof_tree_dump.md` v1 format) plus `<tag>.meta.json`
+  sidecars (path, fen, outcome, tag, sha256 — the self-describing pair).
+  Written by `proofdb_harvest` (bin first, sidecar second — the sidecar is
+  the commit marker), read by `proofdb_merge`, **deletable after their
+  fold** (recipe R6); every tool tolerates their absence once folded.
 - **Flip report (analysis output).** `proofdb_flip`'s JSON verdict. A
   throwaway report, not part of the pipeline's persisted state.
 
 ### 2.2 Tools
 
-- **`proofdb_merge`** — _shards + manifest → DB_, single writer. Replay-
-  validates every shard, grafts it at its manifest path, applies the depth
-  fixpoint, and writes the DB; any conflict or defect aborts without
-  writing. Deterministic for a given shard set.
-- **`proofdb_harvest`** — _DB + censor state → shards + manifest + censor
-  rows_. Selects jobs with the shallowest-first censor-frontier walk
+- **`proofdb_merge`** — _shard pairs → DB fold_, single writer. One
+  transaction per invocation: loads the standing tree from the `nodes`
+  rows (replay-validated on load), folds every unmerged shard pair
+  (replay-validated again), applies the depth fixpoint, and writes the
+  delta; any conflict or defect aborts without writing. Tags already in
+  the `shards` table are skipped idempotently after a sha256 cross-check.
+  Deterministic: the same standing DB + shard set folds to the same
+  content.
+- **`proofdb_harvest`** — _DB + censor state → shard pairs + censor rows_.
+  Selects jobs with the shallowest-first censor-frontier walk
   (`frontier-walk`, the single harvest policy since plan18) — solves each
   under a deterministic child-eval budget, exports and validates the
-  decisive ones as shards, and commits censored jobs into the DB's
-  `censor` table (one transaction per censor). It never merges and never
-  writes tree rows.
+  decisive ones as `<tag>.bin` + `<tag>.meta.json` pairs, and commits
+  censored jobs into the DB's `censor` table (one transaction per censor).
+  It never merges and never writes tree rows.
 - **`proofdb_flip`** — _DB → flip report_, read-only. Iterates implied
   outcomes to fixpoint over the stored tree and re-checks every flip with an
   independent verifier; writes only the report.
+- **`proofdb_verify`** — _DB → verdict_, read-only. Replay-validates the
+  whole stored tree read back from the DB alone (no shards needed) against
+  the spec's invariants — the standing DB's integrity instrument; `--backup`
+  writes a `VACUUM INTO` offsite copy (the recipe-R6 backup duty).
 
 Full CLI options, output grammars, and exit codes are in §7; censor-state
 pick-up semantics are in §4.
@@ -117,15 +131,16 @@ pick-up semantics are in §4.
 **Production vs development.** _Production_ runs use the bare defaults:
 every artifact inside `data/proofdb/`, the committed fixture ignored.
 _Development/validation_ runs (tests, measurement batches, fixture work)
-pin **explicit** `--manifest`/`--shard-dir`/`--db` flags against
-`docs/plans/proofdb/shards/` — as every plan measurement did. The two
-modes never mix by accident: defaults never touch the fixture, and
-explicit flags never touch `data/proofdb/`.
+pin **explicit** `--shard-dir`/`--db` flags against
+`docs/plans/proofdb/shards/` — as every plan measurement did (the merge's
+`--manifest` flag is its legacy migration source). The two modes never mix
+by accident: defaults never touch the fixture, and explicit flags never
+touch `data/proofdb/`.
 
 ## 3. Quickstart
 
 This walkthrough bootstraps a **production-shaped** working layer from
-nothing: no shards, no manifest, no DB. It uses only the bare
+nothing: no shards, no DB. It uses only the bare
 defaults — every artifact lands inside `data/proofdb/` (gitignored),
 nothing under `docs/plans/` is touched, and cleanup is a single
 `rm -rf data/proofdb`. Run it from the repo root. §3.1 prepares everything
@@ -140,28 +155,25 @@ consolidation removed the other policies; §7.2).
 ```bash
 cargo build --release --examples
 
-# The empty manifest is the bootstrap seed (these exact bytes; the
-# built_from digest is taken over them).
-mkdir -p data/proofdb/shards
-printf '{"entries":[]}' > data/proofdb/shards/manifest.json
-
 BIN=target/release/examples
 
-# 1. Bootstrap merge: no shards → a root-only DB.
+# 1. Bootstrap fold: an empty shard dir → a root-only DB (created on
+#    demand; a bare run needs nothing else).
 "$BIN/proofdb_merge"
 
 # 2. Smoke harvest: 2 jobs, tiny budget — both are expected to censor.
 "$BIN/proofdb_harvest" --budget-evals 200000 --max-jobs 2
 ```
 
-Expected bootstrap-merge output — a tree with just the open root:
+Expected bootstrap-fold output — a tree with just the open root:
 
 ```
-census: shards merged 0/0; shard tree nodes 0; overlay new 0; dedupes 0;
-        open-ancestor insertions 0; open nodes upgraded 0; merged nodes 1
-        (proven 0, open 1); skeleton re-validations 0
-node arithmetic: 1 = 1 root + 0 overlay + 0 ancestors; shard nodes 0 = 0 new + 0 deduped
-db: data/proofdb/proofdb.db (nodes 1), manifest built_from d801aa1fb7ddcc33
+census: folded 0 shards (0 already merged, 0 orphans skipped); shard tree nodes 0;
+        overlay new 0; dedupes 0; open-ancestor insertions 0; open nodes upgraded 0;
+        merged nodes 1 (proven 0, open 1); skeleton re-validations 0
+node arithmetic: this fold 0 shard nodes = 0 overlay-new + 0 deduped (+0 open ancestors);
+                 standing nodes 1
+db: data/proofdb/proofdb.db (nodes 1), fold digest e3b0c44298fc1c14
 ```
 
 Expected harvest stderr — the walk census reports empty censor state with the
@@ -169,7 +181,7 @@ root open (`root open`; the virtual-root rule, §7.2), and the DB line names
 the default path:
 
 ```
-harvest: db data/proofdb/proofdb.db (1 rows, built_from d801aa1fb7ddcc33) — policy frontier-walk
+harvest: db data/proofdb/proofdb.db (1 rows, fold digest e3b0c44298fc1c14) — policy frontier-walk
 frontier-walk: records 0 (lineage 0, ancestor 0, or_closed 0, out_of_scope 0, complete 0) — root open; base budget 200000; scope global
 ```
 
@@ -186,10 +198,10 @@ harvest: policy frontier-walk stop=max-jobs jobs 2 decisive 0 censored 2 evals 4
 deltas on the `child_evals` values — here 200015 over the 200000 budget —
 are host-dependent; the counts are deterministic per host, re-pinned by
 report20 on the reference host at 200021 and by report21 on the dev
-container at 200015). Censored jobs write no facts, so
-`data/proofdb/shards/manifest.json` is **unchanged**
-(`built_from d801aa1fb7ddcc33…`) and the DB's `censor` table (schema v2) now
-holds two censor rows — the root and `a2a3`, each at the 200k flat budget:
+container at 200015). Censored jobs write no facts, so the shard dir
+stays **empty** (no durable file touched) and the DB's `censor` table
+(schema v2) now holds two censor rows — the root and `a2a3`, each at the
+200k flat budget:
 
 ```sql
 SELECT path, work_done, passes_failed FROM censor;
@@ -202,12 +214,12 @@ two visits: both records are now at the budget, so the walk expands into
 their first not-yet-handled children (§7.2) — the censor-state pick-up (§4)
 carries the sweep forward.
 
-A _decisive_ harvest instead changes the manifest digest, so its new
-shards must be folded in before the next pass: run step 1
-(`proofdb_merge`) again after the harvest, or `proofdb_harvest` aborts on
-the stale `built_from` (§10). The smoke budget above deliberately
+A _decisive_ harvest instead leaves unmerged shard pairs behind, so they
+must be folded in before the next pass: run step 1 (`proofdb_merge`)
+again after the harvest, or `proofdb_harvest`/`proofdb_flip` refuse on
+the unmerged-shard gate (§10). The smoke budget above deliberately
 censors, so a follow-up batch runs against the same DB without an
-intermediate merge.
+intermediate fold.
 
 The layer is now ready for §3.2: the bootstrap merge produced the root-only
 DB, and the smoke harvest verified the bare defaults end-to-end without
@@ -216,11 +228,9 @@ writing any fact.
 ### 3.2 Production run — the walk batch cycle
 
 **Prerequisite — a bootstrapped layer.** §3.2 continues from exactly the
-state §3.1 leaves behind: the empty manifest + root-only DB at the default
-paths (on a fresh machine without even that state, recipe R0, §8.1,
-creates it). **Never re-create the empty manifest on an existing layer**
-— overwriting `manifest.json` discards the durable shard index (§2.1).
-Set `BIN=target/release/examples` as in §3.1.
+state §3.1 leaves behind: the root-only DB at the default path (on a fresh
+machine without even that state, recipe R0, §8.1, creates it). Set
+`BIN=target/release/examples` as in §3.1.
 
 **The batch cycle.** The walk is a live selection loop that never retires
 — on an undecided layer it always has work (the plan21 exception: a fully
@@ -231,17 +241,19 @@ deterministic choice:
 ```bash
 $BIN/proofdb_harvest --policy frontier-walk --budget-evals 10000000 \
     --max-total-evals 10000000000 --tt-mb 1024
-$BIN/proofdb_merge    # fold the batch's shards into the DB (the harvest never merges)
+$BIN/proofdb_merge    # fold the batch's shard pairs into the DB (the harvest never merges)
+$BIN/proofdb_verify --db data/proofdb/proofdb.db   # replay-validate the grown DB (expect: ok)
 $BIN/proofdb_flip     # soundness sanity over the grown DB (expect: flips 0 verified 0)
 ```
 
 You can gracefully stop the execution via `touch STOP` (see the
 `--stop-file` option). Crashes or ctrl-c lose at most the in-flight job's
-work and leave at most one unreferenced orphan shard (plan17; §7.2, §10).
+work and leave at most one orphan bin without a sidecar (§7.2, §10).
 
-Repeat the cycle. After a batch with decisive jobs the manifest digest
-changes — that is growth, not drift (§10) — and the bare merge before the
-next session is mandatory (the stale-`built_from` guard).
+Repeat the cycle. After a batch with decisive jobs the shard dir carries
+unmerged sidecars — that is growth, not drift (§10) — and the bare fold
+before the next session is mandatory (the unmerged-shard gate refuses
+both `proofdb_harvest` and `proofdb_flip` until the fold).
 
 **The reference boot.** A 2G-capped boot over a root-only layer (the
 plan16 boot-gate protocol, budget 4,000,000) runs `stop=budget jobs 549
@@ -255,11 +267,12 @@ replaces deepening_ — the sweep is breadth-first by `(ply, path)`, each
 candidate running to completion before the next at its ply. The boot grew
 the layer to **4,030 nodes** (1 root + 3,975 overlay + 54 open-ancestor
 insertions, 6 open rows) with `flips 0 verified 0`; a second boot in a
-fresh layer reproduced the manifest digest, the censor rows, all 49
-shards, and the merged DB byte-identically (the determinism gate,
-re-verified across the plan21 skip — which does not fire on a fresh
-layer: every decisive boot job is an odd-ply refutation win, so
-`or_closes 0` and the pre-plan21 HEAD build agrees job-for-job).
+fresh layer reproduced the censor rows, all 49 shards, and the merged DB
+byte-identically (the determinism gate, re-verified across the plan21
+skip — which does not fire on a fresh layer: every decisive boot job is
+an odd-ply refutation win, so `or_closes 0` and the pre-plan21 HEAD build
+agrees job-for-job; run pre-plan22, when the durable layer was still
+manifest-indexed).
 
 **The walk's budget model.** `--budget-evals` is the flat per-visit
 budget `B` (0 → the 4,000,000 base) and there is **no ladder**: a node
@@ -279,8 +292,8 @@ censor-state growth and the session-start census (which censor paths are
 already priced, which are fresh), not from one batch's shard count.
 
 **Cold start.** The walk boot itself is the cold start: recipe R0
-(empty manifest + bare merge) plus a capped walk session grows a layer
-from nothing — no artifact-copying, no fixture dependency. The committed
+(bare fold over the empty default shard dir) plus a capped walk session
+grows a layer from nothing — no artifact-copying, no fixture dependency. The committed
 shard set at `docs/plans/proofdb/shards/` keeps a development/validation
 role only (R1, tests).
 
@@ -312,12 +325,12 @@ Operational notes:
   wall clock in any decision. Given the same DB and censor state, the
   same command reproduces the same job sequence; the summary's `wall` is
   the only host-dependent number (§7.2).
-- Every censor commits one `censor`-table transaction (plan20), and the
-  manifest is atomically rewritten after every decisive job (plan17: tmp
-  + rename) — after every finished job the durable layer (shards +
-  manifest) is consistent, so an unexpected crash or ctrl-c loses at
-  most the in-flight job's work (§7.2, §10). The durable layer
-  `data/proofdb/shards/` is unversioned — back it up (§2.1).
+- Every censor commits one `censor`-table transaction (plan20), and every
+  decisive job leaves a durable bin + sidecar pair on disk (the sidecar
+  written last, atomically) — so an unexpected crash or ctrl-c loses at
+  most the in-flight job's work: at most one bin without its sidecar
+  (§7.2, §10). The DB `data/proofdb/proofdb.db` is unversioned and
+  append-only — keep an offsite backup current (§2.1, recipe R6).
 ## 4. Censor-state pick-up
 
 The frontier's **censor state** (schema v2's `censor` table, plan20) is the
@@ -328,10 +341,10 @@ retired; the JSON sidecar and its `proofdb_ledger_union` merge tool with it).
 
 **Pick-up semantics.** The censor state is part of the DB, so pick-up needs
 no setup: a merged DB carries its censor history, and a harvest session
-continues exactly where the last one stopped. A DB without a `censor` table
-(a schema-v1 file) aborts cleanly with an upgrade hint — re-run
-`proofdb_merge` (which writes schema v2) before harvesting. Two ways to
-start over:
+continues exactly where the last one stopped. A DB without a `censor`
+table (a schema-v1 file) aborts cleanly with an upgrade hint — the fold
+cannot upgrade it in place; rebuild the layer from a pre-plan20 backup or
+restart fresh before harvesting. Two ways to start over:
 
 1. **Fresh** (sound by construction): wipe the censor rows
    (`DELETE FROM censor;`) — every frontier path is re-censored at the
@@ -362,14 +375,15 @@ reached by a specific move sequence (UCI, space-separated along the
 same position reached by two different routes is **two different rows**:
 halfmove-clock-dependent repetition verdicts are part of what a path fixes,
 and facts are never transferred across paths (spec invariant 6). Row `id`s
-are assigned in lexicographic path order (spec invariant 7), so the root is
-`id = 0` and a prefix path always sorts before its extensions.
+are stable surrogate keys (spec invariant 7): never renumbered, appended by
+each fold; a fresh fold assigns them in lexicographic path order, so the
+root is `id = 0` — but identity is the path, never the id.
 
 **Partial AND/OR tree.** `outcome` is from the _side-to-move_ perspective:
 
 | `outcome` | role     | what the tree stores below it                                                                                              |
 | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `'win'`   | OR-node  | exactly one proving child (a `'loss'` child) — the refutation of the opponent's best try; the other replies are _not_ rows |
+| `'win'`   | OR-node  | at least one proven-loss child — the refutation of the opponent's best try; additional proven-loss children are annotations (merged alternatives), and non-proven replies are not rows |
 | `'loss'`  | AND-node | every legal, non-terminal reply as a child with `outcome = 'win'` (terminal replies are absent — terminality is derivable) |
 | `NULL`    | open     | undecided; may still have stored children (resolved replies, or an open ancestor chain over a grafted subtree)             |
 
@@ -405,20 +419,22 @@ hash, halfmove clock included). A consumer that replays paths can therefore
 trust every row's position — and conversely, a row whose replay fails is a
 defect, not a feature to work around.
 
-**The `meta` table.** `schema_version=1`, `root_fen`, `node_count`
-(rows in `nodes`), `built_from` (the SHA-256 of the manifest the DB was
-built from — identifies which shard set the DB reflects), `generator`
+**The `meta` table.** `schema_version=2`, `root_fen`, `node_count`
+(rows in `nodes`), `built_from` (the fold digest — the SHA-256 over the
+sorted `tag sha256` lines of the `shards` table; spec §2.2), `generator`
 (free-form producer identification). Consumers should surface `built_from`
 as a version stamp of the data they display.
 
 ## 6. Shard provenance — where a shard comes from
 
 A **shard** is one validated binary proof tree (`proof_tree_dump.md` v1
-format) rooted at a job position, plus its manifest entry. Shards are the
-durable truth; the DB is derived from them. This section explains how a
-shard comes to exist and how to inspect one — useful to an operator auditing
-the durable layer, and to a consumer who wants to know what `provenance`
-tags refer to.
+format) rooted at a job position, transported as a self-describing
+`<tag>.bin` + `<tag>.meta.json` sidecar pair. Shards are ephemeral
+transport; the DB is the source of truth — a folded shard pair is
+deletable (recipe R6). This section explains how a shard comes to exist
+and how to inspect one — useful to an operator auditing the transport
+layer, and to a consumer who wants to know what `provenance` tags refer
+to.
 
 **Production path (all inside `proofdb_harvest`):**
 
@@ -427,16 +443,18 @@ tags refer to.
 2. The job replays that path from the startpos, then runs a bounded
    solver session on the reached position (fresh TT per job, deterministic
    child-eval budget).
-3. **Decisive result** → the solver's proof-tree reconstruction is exported
-   as `*.bin`, replay-validated, and appended to the manifest; the census
-   `job:` line carries the `tag` and `shard_nodes`.
-   **Censored result** (draw from any cause, budget exhausted) → no shard,
-   no manifest entry, a `censor` row only.
+3. **Decisive result** → the solver's proof-tree reconstruction is
+   exported as `<tag>.bin`, replay-validated, and written to the shard dir
+   with its `<tag>.meta.json` sidecar (bin first, sidecar second — the
+   commit marker); the census `job:` line carries the `tag` and
+   `shard_nodes`. **Censored result** (draw from any cause, budget
+   exhausted) → no shard pair, a `censor` row only.
 4. After the batch, run `proofdb_merge` (§8.1, recipe R2): every shard is
-   replay-validated _again_ at merge time, grafted at its manifest path,
-   and only then becomes DB rows.
+   replay-validated _again_ at fold time, grafted at its sidecar path,
+   and only then becomes DB rows (recorded in the `shards` table).
 
-**Manifest entry anatomy** (one standing-set entry, verbatim):
+**Sidecar anatomy** (one standing-set sidecar, backfilled from the legacy
+manifest by recipe R1's fold, verbatim):
 
 ```json
 {
@@ -455,15 +473,17 @@ tags refer to.
     "a8a3"
   ],
   "outcome": "win",
-  "tag": "h_013861d97dce5d48",
-  "validate": "ok"
+  "sha256": "af09ff3dd6f98294c91918af1e235b96c11003f198d00660f5d024ecbba61bd4",
+  "tag": "h_013861d97dce5d48"
 }
 ```
 
 `moves` is the UCI path from the startpos to the shard root; `fen` is the
-replayed shard-root position (the merger cross-checks it against the
-replay); `outcome` is what the shard proves; `validate: "ok"` is the
-validator verdict a shard needs to enter any merge. Tag conventions:
+replayed shard-root position (the fold cross-checks it against the
+replay); `outcome` is what the shard proves; `sha256` is the bin digest —
+the corruption cross-check and the fold's idempotence key; a bin/sidecar
+mismatch is refused. (The fixture set's sidecars are backfilled from the
+legacy manifest by recipe R1's fold.) Tag conventions:
 `h_*` harvest facts, `p2_*` the plan2 batch, `lad_*` ladder lines,
 `sib_*` sibling refutations — provenance only, no semantic weight.
 
@@ -497,25 +517,33 @@ Every tool: `1` = usage error, `2` = defect abort where applicable, `0` =
 success. Options are shown with their defaults; "required" options have no
 default.
 
-### 7.1 `proofdb_merge` — shards → SQLite (single writer)
+### 7.1 `proofdb_merge` — the incremental fold (single writer)
 
-**Purpose.** Build (or rebuild) the derived DB from a manifest + shard dir.
-The only writer of the tree surfaces (`meta`/`shards`/`nodes`);
-deterministic and byte-identical for an identical shard set. Since plan20
-it also carries the DB's censor state across the rebuild: the `censor`
-rows of the existing DB (if any) are read before the file is replaced and
-re-inserted into the fresh one, never modified. Never merges anything
-else; never patches conflicts. All three paths default into
-`data/proofdb/` (plan14) — invoked bare it is a production merge; the
-committed fixture is consumed only via explicit flags (recipe R1).
+**Purpose.** Fold unmerged shard pairs into the standing DB — the
+single writer of the tree surfaces (`meta`/`shards`/`nodes`). One
+transaction per invocation: the standing tree is loaded from the `nodes`
+rows by a replay-validated DFS (a structurally broken DB aborts before
+any write), every unmerged shard is replay-validated and grafted, the
+depth fixpoint runs, per-graft skeletons are re-validated, and the delta
+is committed — new node rows with appended ids (never renumbered), UPDATEs
+for refined rows, one `shards` row per folded tag, `meta` refreshed
+(`node_count`, `built_from` = the fold digest, `generator`). Tags already
+in the `shards` table are skipped after cross-checking their stored
+`sha256` against the bin on disk. The `censor` table is untouched in
+place. Any conflict or defect rolls the whole invocation back — conflicts
+are never patched. All paths default into `data/proofdb/` (plan14) —
+invoked bare it is a production fold; the committed fixture is consumed
+only via explicit flags (recipe R1).
 
-**Prerequisites.** A manifest whose entries all say `validate: "ok"`, and
-the shard files they name, readable from `--shard-dir`. No DB is needed —
-`--db` is _overwritten_ (its censor rows are preserved, see above). A
-missing default manifest aborts cleanly naming
-`data/proofdb/shards/manifest.json` (bootstrap: create the empty manifest,
-§3); reading never creates anything, only the DB write creates
-`data/proofdb/` as needed.
+**Prerequisites.** A shard dir of self-describing pairs (§5.1 of the
+spec; a bin without a sidecar is an orphan — skipped with a census note;
+a sidecar without a bin refuses). A missing `--db` file is created fresh
+(a fresh fold assigns ids globally in lexicographic path order); an
+existing DB must be schema v2 (a v1 file aborts with the move-aside hint).
+`--manifest` is a **legacy** metadata source: read only when the file
+exists, used to backfill sidecars for unmerged tags that lack one; with
+no manifest on disk a fold is pure sidecar mode. Reading never creates
+anything; the DB write creates `data/proofdb/` as needed.
 
     usage: proofdb_merge [--manifest <index.json>] [--shard-dir <dir>]
                          [--db <out.db>] [--dump <nodes.txt>]
@@ -523,70 +551,73 @@ missing default manifest aborts cleanly naming
 
 | Option            | Default                             | Meaning                                            |
 | ----------------- | ----------------------------------- | -------------------------------------------------- |
-| `--manifest`      | `data/proofdb/shards/manifest.json` | manifest JSON (entries sorted by tag internally)   |
-| `--shard-dir`     | `data/proofdb/shards`               | directory holding the `*.bin` shard files          |
-| `--db`            | `data/proofdb/proofdb.db`           | output SQLite path (overwritten; censor rows preserved) |
-| `--dump`          | off                                 | canonical text dump of the merged tree             |
+| `--manifest`      | `data/proofdb/shards/manifest.json` | legacy manifest (migration/metadata source only; read when present, backfills sidecars — sidecar metadata wins) |
+| `--shard-dir`     | `data/proofdb/shards`               | directory holding the `<tag>.bin` + `<tag>.meta.json` pairs |
+| `--db`            | `data/proofdb/proofdb.db`           | the standing DB (created fresh if missing; never rebuilt) |
+| `--dump`          | off                                 | canonical text dump of the folded tree             |
 | `--sample-lines`  | `0`                                 | print `n` random root-to-leaf walks as spot-checks |
-| `--import-censor` | off                                 | merge a legacy pre-plan20 JSON work ledger into the `censor` table under the per-field max rule (idempotent, never decreases a stored value; the one-shot migration for pre-plan20 layers, §4) |
+| `--import-censor` | off                                 | merge a legacy pre-plan20 JSON work ledger into the `censor` table under the per-field max rule (idempotent, never decreases a stored value; in place inside the fold transaction, §4) |
 
-**Exit codes.** `0` merged and written; `1` usage error; `2`
-CONFLICT/DEFECT abort (non-`ok` manifest entry, unreadable/unparseable
-shard, replay validation defects, manifest/tree cross-check mismatch,
-hash-fidelity failure, proven-outcome conflict, depth-fixpoint error,
-skeleton re-validation failure, DB write failure). An abort writes nothing —
-conflicts are never patched.
+**Exit codes.** `0` folded and committed; `1` usage error; `2`
+CONFLICT/DEFECT abort (a pre-v2 DB file, unreadable/unparseable shard,
+replay validation defects, sidecar cross-check mismatch, hash-fidelity
+failure, standing-sha mismatch on a skipped tag, proven-outcome conflict,
+depth-fixpoint error, skeleton re-validation failure, DB write failure).
+An abort writes nothing — the transaction rolls back.
 
-**Output grammar (stdout, three lines + optional samples).**
+**Output grammar (stdout, three lines + optional lines).**
 
 ```text
-census: shards merged 262/262; shard tree nodes 56226; overlay new 55360; dedupes 866;
-        open-ancestor insertions 342; open nodes upgraded 268; merged nodes 55703
-        (proven 55628, open 75); skeleton re-validations 262
-node arithmetic: 55703 = 1 root + 55360 overlay + 342 ancestors;
-                 shard nodes 56226 = 55360 new + 866 deduped
-db: data/proofdb/proofdb.db (nodes 55703), manifest built_from e91ad57b44008fee
+census: folded 262 shards (0 already merged, 0 orphans skipped); shard tree nodes 56226;
+        overlay new 55360; dedupes 866; open-ancestor insertions 342; open nodes upgraded 268;
+        merged nodes 55703 (proven 55628, open 75); skeleton re-validations 262
+node arithmetic: this fold 56226 shard nodes = 55360 overlay-new + 866 deduped
+                 (+342 open ancestors); standing nodes 55703
+db: data/proofdb/proofdb.db (nodes 55703), fold digest 14fd07530996eb9e
 ```
 
-- `census:` — shard set coverage (merged/total), raw shard-tree nodes,
-  how many became new overlay rows, how many were deduped against already
-  stored facts, how many open ancestor rows were inserted to graft, how
-  many open rows a graft upgraded to proven, and the final merged counts
-  (proven = win+loss, open = `outcome IS NULL`), plus the per-graft
-  skeleton re-validation count (one per shard, 262/262 must be clean).
+- `census:` — this fold's coverage (folded/already-merged/orphan-skipped),
+  raw shard-tree nodes, how many became new overlay rows, how many were
+  deduped against already stored facts, how many open ancestor rows were
+  inserted to graft, how many open rows a graft upgraded to proven, and
+  the final merged counts (proven = win+loss, open = `outcome IS NULL`),
+  plus the per-graft skeleton re-validation count (one per folded shard,
+  262/262 must be clean).
 - `node arithmetic:` — the bookkeeping identity restated; if the two sides
-  of either equation disagree, the merge is defective.
-- `db:` — where the DB went, its node count, and the 16-hex prefix of
-  `meta.built_from` (the manifest digest; the full digest is in the DB).
-- `censor:` — printed only when censor state is carried: `censor: P censor
-  rows preserved + I imported records -> T rows` (with `--import-censor`)
-  or `censor: P censor rows preserved` (a rebuild over a DB with censor
-  rows). A merge over a DB without censor rows prints no censor line —
-  a fresh-layer bootstrap merge keeps its exact pre-plan20 stdout.
+  of either equation disagree, the fold is defective.
+- `db:` — the standing DB, its node count, and the 16-hex prefix of the
+  fold digest (`meta.built_from`; the full digest is in the DB).
+- `backfill: N sidecars written from manifest metadata` — printed only
+  when `--manifest`'s legacy entries were folded into backfilled sidecars
+  (recipe R1's migration step).
+- `censor: N imported records (max rule, in place)` — printed only with
+  `--import-censor`.
 - with `--sample-lines n` (printed _before_ the census): `n` lines like
   `sample 1: e2e4 h7h6 d1h5 e7e5 h5f7 (5 plies, end: loss bound 0 (exact))`
   — random root-to-leaf walks as spot-checks.
 
-**Worked invocation.** Recipe R1 (standing fixture shard set, executed
-2026-10-02 with explicit flags — the census above is verbatim); the
-production bootstrap merge is in §3.1.
+**Worked invocation.** Recipe R1 (standing fixture shard set with its
+legacy manifest; the census above is verbatim); the production bootstrap
+fold is in §3.1.
 
 ### 7.2 `proofdb_harvest` — grow the shard set
 
 **Purpose.** Select frontier jobs, solve them under deterministic
-child-eval budgets, and append validated shards + manifest entries for the
-decisive ones. Censored jobs (no decisive result, budget exhausted) record
-a fact of absence as a `censor`-table row only.
+child-eval budgets, and export validated shard pairs (bin + sidecar) for
+the decisive ones. Censored jobs (no decisive result, budget exhausted)
+record a fact of absence as a `censor`-table row only.
 
-**Prerequisites.** A merged schema-v2 DB whose `meta.built_from` equals
-the manifest's digest (stale pair → clean abort; a schema-v1 DB aborts
-with the upgrade hint, §4); a writable shard dir (the default
-`data/proofdb/shards/` is created on the first shard or manifest write).
-The DB is opened read-write for the censor commits (plan20 D3) — the only
-DB writes this tool ever makes. A missing default manifest aborts cleanly
-naming `data/proofdb/shards/manifest.json` (§3 bootstraps it).
+**Prerequisites.** A merged schema-v2 DB, and a clean unmerged-shard gate:
+every sidecar in the shard dir must already have a `shards`-table row (a
+sidecar without a row → exit-1 refusal naming the tag — run
+`proofdb_merge` first; a sidecar without a bin → refusal as a
+transport-layer defect; a bin without a sidecar is the interrupted job's
+orphan and is ignored). The session's collision sets are seeded from the
+DB's `shards` rows. The DB is opened read-write for the censor commits
+(plan20 D3) — the only DB writes this tool ever makes; the default shard
+dir `data/proofdb/shards/` is created on the first shard write.
 
-    usage: proofdb_harvest [--db <proofdb.db>] [--manifest <manifest.json>]
+    usage: proofdb_harvest [--db <proofdb.db>]
                            [--shard-dir <dir>] [--policy frontier-walk]
                            [--budget-evals <n>] [--max-total-evals <n>]
                            [--tt-mb <mb>] [--max-jobs <n>] [--max-runtime <s>]
@@ -596,8 +627,7 @@ naming `data/proofdb/shards/manifest.json` (§3 bootstraps it).
 | Option               | Default                             | Meaning                                                                             |
 | -------------------- | ----------------------------------- | ----------------------------------------------------------------------------------- |
 | `--db`               | `data/proofdb/proofdb.db`           | the merged DB to work against (read-only on the tree surfaces; censor-row writes only, plan20 D3) |
-| `--manifest`         | `data/proofdb/shards/manifest.json` | manifest to extend (rewritten atomically after every decisive job and at batch end) |
-| `--shard-dir`        | `data/proofdb/shards`               | where new shard files are written (created on first write)                          |
+| `--shard-dir`        | `data/proofdb/shards`               | where new shard pairs are written (created on first write)                          |
 | `--policy`           | `frontier-walk`                     | kept for command-line compatibility; only `frontier-walk` is accepted (plan18)      |
 | `--budget-evals`     | `0` → base `4,000,000`              | the flat per-visit child-eval budget `B` (no ladder)                                |
 | `--max-total-evals`  | `0` (unlimited)                     | session cap across jobs                                                             |
@@ -605,7 +635,7 @@ naming `data/proofdb/shards/manifest.json` (§3 bootstraps it).
 | `--max-jobs`         | `0` (unlimited)                     | stop after n jobs                                                                   |
 | `--max-runtime`      | `0` (unlimited)                     | stop after n seconds                                                                |
 | `--stop-file`        | `STOP`                              | batch stops (gracefully, after the in-flight job) when this file appears            |
-| `--moves`            | off (global session)                | scoped harvest: whitespace-separated UCI moves naming a startpos path — the session runs with its world rooted at that node (selection only: same censor state, DB, shards, manifest); the path is replay-validated before any state is loaded (nonsense or prefix-illegal → usage exit 1); `--moves ''` is rejected (the flag's absence already means global) |
+| `--moves`            | off (global session)                | scoped harvest: whitespace-separated UCI moves naming a startpos path — the session runs with its world rooted at that node (selection only: same censor state, DB, shard pairs); the path is replay-validated before any state is loaded (nonsense or prefix-illegal → usage exit 1); `--moves ''` is rejected (the flag's absence already means global) |
 | `--out-db` / `--dump`| off                                 | recorded in the summary only — **the caller runs `proofdb_merge` separately** (by design; this CLI never merges) |
 
 **Selection policy — `frontier-walk` (plan16; the only policy since the
@@ -626,10 +656,9 @@ is no precomputed job sequence. The mechanism, in operator terms:
   transaction per censor, plan20 D3).
 - **Expansion visit** (candidate with `work_done ≥ B`): enumerate the
   legal children in lex UCI order and search the first *unhandled* one at
-  `B`. *Handled* = a stored DB row (any outcome), a manifest/shard path,
-  an in-session shard path, or a censor record already at `≥ B` — so the
-  sweep walks *down* the tree breadth-first instead of deepening a censored
-  node.
+  `B`. *Handled* = a stored DB row (any outcome), a standing or in-session
+  shard path, or a censor record already at `≥ B` — so the sweep walks
+  *down* the tree breadth-first instead of deepening a censored node.
 - **Complete rule**: a candidate with `work_done ≥ B` and no unhandled
   child is complete-marked (a pick-only iteration, no evals); each
   candidate completes at most once, so the loop cannot stall. A censor
@@ -672,11 +701,12 @@ is no precomputed job sequence. The mechanism, in operator terms:
   as `out_of_scope`. Proven DB rows *above* the scope root are ignored
   (the operator chose the scope deliberately — the same holds for
   or-closedness above the scope root, plan21); a proven-stored or
-  or-closed scope root (a proven DB row or a manifest/shard path at the
-  scope key, or a white-to-move scope root with a proven `Loss` child row)
+  or-closed scope root (a proven DB row or a standing/in-session shard
+  path at the scope key, or a white-to-move scope root with a proven
+  `Loss` child row)
   ends the session `exhausted` with an explanatory stderr note — no work
   is done beneath proven or or-closed nodes. Everything else (budget, caps, stop file, censor
-  state, manifest, shards) keeps its tool-wide semantics, and the searches and
+  state, shard pairs) keeps its tool-wide semantics, and the searches and
   their results are identical wherever the walk starts (every job replays
   the full startpos path).
 - **No ladder**: a node censored at `B` is never re-searched deeper by
@@ -688,17 +718,18 @@ is no precomputed job sequence. The mechanism, in operator terms:
   or-closed scope (every white-to-move node covered by a proven winning
   child) legitimately exhausts.
 
-**Exit codes.** `0` batch completed (then the batch-end manifest line is
-printed); `1` usage error; `2` ABORT on any defect. The manifest is
-atomically rewritten (tmp + rename) immediately after every decisive
-job's shard write, so after every finished job the durable layer is
-consistent: every `*.bin` written so far is referenced by the on-disk
-manifest, and an unexpected crash or ctrl-c loses at most the in-flight
-job's work — at most one unreferenced orphan shard remains (from a job
-interrupted between the shard write and its manifest entry, or whose
-manifest write failed), deterministically overwritten by the retry. There
-is no signal handling: the stop conditions below stay the only graceful
-exits; this contract only narrows what an unclean exit costs. Stop
+**Exit codes.** `0` batch completed; `1` usage error (including the
+retired `--manifest` flag, which refuses with a pointer to
+`proofdb_merge`); `2` ABORT on any defect. The produce pipeline writes
+the `<tag>.bin` first, then its `<tag>.meta.json` sidecar (tmp + rename) —
+the sidecar is the commit marker, so after every finished job the
+transport layer is consistent: every written bin has its sidecar, and an
+unexpected crash or ctrl-c loses at most the in-flight job's work — at
+most one orphan bin without a sidecar remains (deterministically
+overwritten by the retry); a sidecar-write failure aborts the session
+with that bin as the one orphan. There is no signal handling: the stop
+conditions below stay the only graceful exits; this contract only narrows
+what an unclean exit costs. Stop
 reasons in the summary: `budget` (`--max-total-evals` cap reached),
 `max-jobs`, `max-runtime`, `stop-file`, `exhausted` (no candidate can
 yield a visit). All stop conditions are checked between jobs only — a
@@ -710,12 +741,13 @@ _stderr, session start_ (informational; the numbers are the censor-frontier
 state):
 
 ```text
-harvest: db data/proofdb/proofdb.db (4314 rows, built_from b90b62b86efb9d04) — policy frontier-walk
+harvest: db data/proofdb/proofdb.db (4314 rows, fold digest 14fd07530996eb9e) — policy frontier-walk
 frontier-walk: records 368 (lineage 0, ancestor 0, or_closed 0, out_of_scope 0, complete 0) — root open; base budget 4000000; scope global
 ```
 
-Since plan20 the `harvest:` echo no longer names a ledger path — the censor
-state lives in the DB named on the line. The census line reports: total
+Since plan20 the `harvest:` echo no longer names a ledger path, and since
+plan22 it stamps the DB with its **fold digest** (`meta.built_from`, §7.1)
+instead of a manifest digest. The census line reports: total
 censor records, the lineage/ancestor drops
 (records on or behind a proven DB row — not candidates), the plan21
 `or_closed` drops (records at-or-under an or-closed white-to-move parent —
@@ -753,7 +785,7 @@ emitted by `examples/proofdb/session/record.rs`; `pass`/`work_before`/
 | `wall_s`       | job wall time (seconds)                                                                                                              |
 | `outcome`      | `"win"` / `"loss"` (decisive, shard exported) or `"censored"` (no fact)                                                              |
 | `exit_reason`  | solver exit: `Complete` (decisive) or `BudgetExhausted` (censored)                                                                   |
-| `tag`          | shard tag if decisive (manifest tag; matches `provenance` in the DB)                                                                 |
+| `tag`          | shard tag if decisive (the sidecar tag; matches `provenance` in the DB)                                                              |
 | `shard_nodes`  | exported shard's node count if decisive                                                                                              |
 | `pass`         | visit rung: `passes_failed + 1` (the walk census)                                                                                    |
 | `work_before`  | censor `work_done` recorded before this visit (the walk census)                                                                      |
@@ -775,26 +807,19 @@ job: {"budget":4000000,"child_evals":11554,"class":"C3","exit_reason":"Complete"
 harvest: policy frontier-walk stop=budget jobs 549 decisive 49 censored 500 evals 2000051685 new_shards 49 or_closes 0 wall 414.3s
 ```
 
-_stdout, after the last job_ — the manifest line (printed only when the
-manifest actually changed, else `manifest: unchanged (…)`), then the
-summary line; `out-db:`/`dump:` echo lines follow when those options were
-given:
+_stdout, after the last job_ — the summary line; `out-db:`/`dump:` echo
+lines follow when those options were given:
 
 ```text
-manifest: unchanged (0 entries, digest d801aa1fb7ddcc33…)
 harvest: policy frontier-walk stop=max-jobs jobs 2 decisive 0 censored 2 evals 400015 new_shards 0 or_closes 0 wall 0.1s
 ```
 
-- `manifest:` — entries + full manifest digest after the rewrite
-  (byte-identical when no decisive job occurred; the per-job sync means
-  the rewrite at batch end is an idempotent no-op byte-wise — the line is
-  the batch-end confirmation, not the first write).
 - `harvest:` — the `stop=` reason, then `jobs N decisive D censored C
   evals E new_shards S or_closes O wall Ws`. `decisive` counts jobs that
-  exported a shard; `censored` counts facts of absence; `or_closes` counts
-  the plan21 dynamic or-closes (in-session closures of white-to-move
-  parents on a decisive `loss` child; the static census drops are the
-  `or_closed` census field, not this).
+  exported a shard pair; `censored` counts facts of absence; `or_closes`
+  counts the plan21 dynamic or-closes (in-session closures of
+  white-to-move parents on a decisive `loss` child; the static census
+  drops are the `or_closed` census field, not this).
 
 Under `frontier-walk`, `stop=exhausted` means no candidate can yield a
 visit (every candidate complete and the scope root proven-stored, or-closed,
@@ -807,9 +832,9 @@ _stderr, during jobs_ — `[bounded_search] chunk done: …` progress lines
 (one per budget chunk); informational, safe to ignore in scripts.
 
 **Worked invocation.** Initial run §3.1 (the smoke shape: two censored
-jobs at 200k evals, manifest unchanged, exit 0; production budgets in
-§3.2). The censor-state pick-up the smoke run seeds — the sweep continuing from
-the recorded censor history — is described in §4.
+jobs at 200k evals, no durable file touched, exit 0; production budgets in
+§3.2). The censor-state pick-up the smoke run seeds — the sweep continuing
+from the recorded censor history — is described in §4.
 
 ### 7.3 `proofdb_flip` — implied-flip analysis (read-only)
 
@@ -819,21 +844,22 @@ bound, iterated to fixpoint; every reported flip is then recomputed by an
 independent recursive verifier. Reads the DB; writes only `--out`
 (default `data/proofdb/flip.json`, created on demand).
 
-**Prerequisites.** A merged DB whose `built_from` matches the manifest
-digest (the stale-DB guard, §10). A missing default manifest aborts
-cleanly naming `data/proofdb/shards/manifest.json`.
+**Prerequisites.** A merged DB and a clean unmerged-shard gate (§7.2): a
+sidecar without a `shards`-table row → exit-1 refusal naming the tag —
+run `proofdb_merge` first; a sidecar without a bin refuses as a
+transport-layer defect; an orphan bin without a sidecar is ignored.
 
-    usage: proofdb_flip [--db <grown.db>] [--manifest <manifest.json>]
+    usage: proofdb_flip [--db <grown.db>] [--shard-dir <dir>]
                         [--out <flip_analysis.json>]
 
 | Option       | Default                             | Meaning                       |
 | ------------ | ----------------------------------- | ----------------------------- |
 | `--db`       | `data/proofdb/proofdb.db`           | the grown DB (read-only)      |
-| `--manifest` | `data/proofdb/shards/manifest.json` | manifest digest for the guard |
+| `--shard-dir`| `data/proofdb/shards`               | shard dir for the unmerged-shard gate |
 | `--out`      | `data/proofdb/flip.json`            | report JSON (overwritten)     |
 
 **Exit codes.** `0` normally (also with 0 flips), `1` on usage error, DB
-load failure (including the stale-DB `built_from` guard), or any unverified
+load failure (including the unmerged-shard gate), or any unverified
 flip.
 
 **Output grammar.** One stdout line plus the JSON file:
@@ -863,17 +889,60 @@ flip_analysis: open_rows 75 flips 0 verified 0 root Null (fixpoint 1 rounds)
 **Worked invocation.** Recipe R1 then R3 (0 flips over the standing set,
 exit 0); in a production cycle the flip check is recipe R2's step 3.
 
+### 7.4 `proofdb_verify` — whole-DB replay validation (read-only)
+
+**Purpose.** The standing DB's integrity instrument: replay-validate the
+whole stored tree read back from the DB alone (no shards needed) against
+the spec's invariants — path replay legality (the stored move parses and
+replays in the parent position, ply and move-code agreement), the AND/OR
+structure (proven AND: the full legal-reply child set, every child `win`;
+proven OR: ≥ 1 proven-loss child, bound = min loss-child bound + 1;
+terminal claims statically terminal with no children), depth
+monotonicity on the retreat, non-empty provenance, full reachability, and
+the meta census (`schema_version`, `root_fen`, `node_count`). Recorded
+limitation (accepted): a non-terminal `'exact'` minimality claim is
+trusted as a search fact — not re-derivable from the DB alone.
+
+    usage: proofdb_verify [--db <proofdb.db>] [--max-report <n>]
+                          [--backup <offsite.db>]
+
+| Option        | Default                   | Meaning                                        |
+| ------------- | ------------------------- | ---------------------------------------------- |
+| `--db`        | `data/proofdb/proofdb.db` | the standing DB (read-only)                    |
+| `--max-report`| `20`                      | cap on printed defect lines (all are counted)  |
+| `--backup`    | off                       | after a green verdict, write a `VACUUM INTO` offsite copy at the path (the recipe-R6 backup duty) |
+
+**Exit codes.** `0` `verify: ok` (the backup, when requested, is written
+only on a green verdict); `1` usage error or a DB-level failure (unreadable
+file, failed meta gate); `2` `verify: FAILED n` — defects found.
+
+**Output grammar.**
+
+```text
+verify: ok — nodes 336 (proven 334, open 2)
+backup: offsite.db written
+```
+
+or, on defects (exit 2):
+
+```text
+verify: FAILED 1 (nodes 4)
+defect: node 3 (g2g4): proven win without a proven-loss child
+```
+
+**Worked invocation.** Recipe R6's step 2 (`verify`) and step 3
+(`--backup`); the fixture-fold DB verifies green (§7.1's census).
+
 ## 8. Recipes
 
 ### 8.1 Operator recipes
 
-**R0 — first production start (bootstrap).** Create the empty manifest at
-the default location, then merge it (bare tools; everything lands inside
-`data/proofdb/`):
+**R0 — first production start (bootstrap).** A bare fold over an empty
+(default) shard dir creates the root-only DB (bare tools; everything lands
+inside `data/proofdb/`):
 
 ```bash
 mkdir -p data/proofdb/shards
-printf '{"entries":[]}' > data/proofdb/shards/manifest.json
 proofdb_merge   # root-only DB at data/proofdb/proofdb.db
 ```
 
@@ -897,44 +966,51 @@ development/validation role only (R1, tests); the plan10 legacy-ledger
 snapshot remains an optional R4 import for resuming censor history, never
 part of the boot path.
 
-**R1 — rebuild the fixture DB (development, explicit flags).** Merge the
-committed fixture shard set into a fresh DB, then compare the digest:
+**R1 — fold the fixture shard set (development, explicit flags; the
+standing-layer migration).** Fold the committed fixture shard set into a
+fresh DB — its legacy manifest is backfilled into sidecars — then verify
+and re-fold idempotently:
 
 ```bash
-proofdb_merge --manifest docs/plans/proofdb/shards/manifest.json \
-    --shard-dir docs/plans/proofdb/shards --db /tmp/fixture.db \
-    --dump nodes.txt
-sha256sum /tmp/fixture.db
+cp -r docs/plans/proofdb/shards /tmp/fixture-shards
+proofdb_merge --manifest /tmp/fixture-shards/manifest.json \
+    --shard-dir /tmp/fixture-shards --db /tmp/fixture.db --dump nodes.txt
+proofdb_verify --db /tmp/fixture.db        # expect: verify: ok — nodes 55703 …
+proofdb_merge --shard-dir /tmp/fixture-shards --db /tmp/fixture.db
+# expect: folded 0 shards (262 already merged …)
 ```
 
-A rebuild is _always_ allowed; it is also the response to a stale-DB abort
-(§10). Byte-identical output for an identical manifest is the standing
-regression test
-(`tests/proofdb.rs::standing_layer_rebuilds_byte_identical`). For the
-standing fixture shard set the census is the one in §7.1 and the digest is
-`406752cc93fb5fd8667615b4720fbd39c20a4df5b014dde97bf8311a22130fb6`
-(schema v2 since plan20; the pre-plan20 v1 digest was `0d929f4c…`).
-The production rebuild is the same merge with the bare defaults:
-`proofdb_merge` (R2 step 2); its digest is pinned per manifest, not
-universally.
+A fresh fold is id- and value-identical to the retired full rebuild (the
+deterministic-fold regression is
+`tests/proofdb_fold.rs::r1_fresh_fold_matches_the_rebuild_and_re_folds_idempotently`).
+For the standing fixture shard set the census is the one in §7.1 and the
+fold digest is
+`14fd07530996eb9eddaa2b5d3e112d51d57339a892f7f8d0bb166205180a04e2` (the
+pre-plan22 manifest-digest stamp was `406752cc…`; the pre-plan20 v1
+digest was `0d929f4c…`). Migrating a *standing* layer to the fold world is
+exactly this recipe with the production paths: fold (backfill), verify,
+then delete the folded shard pairs + manifest (R6).
 
-**R2 — grow the DB by one batch, then merge (production, bare defaults).**
+**R2 — grow the DB by one batch, then fold (production, bare defaults).**
 
 ```bash
 # 1. Harvest (a capped walk batch; stop conditions as needed).
 proofdb_harvest --policy frontier-walk --budget-evals 4000000 \
     --max-total-evals 10000000000
-# 2. Merge the grown set (the harvest never merges).
+# 2. Fold the grown set (the harvest never merges).
 proofdb_merge
-# 3. Flip sanity over the grown DB.
+# 3. Replay-validate the grown DB.
+proofdb_verify
+# 4. Flip sanity over the grown DB.
 proofdb_flip
 ```
 
-Note: after a _decisive_ batch the manifest digest changes, so the new
-DB's `built_from` — and therefore its byte content — differs from the old
-DB. Byte-identity is guaranteed per manifest, not across growth steps.
+Note: after a _decisive_ batch the shard dir carries unmerged sidecars —
+the fold's delta extends the DB (appended ids, refined rows, a new fold
+digest in `built_from`). Two different fold sequences over the same facts
+may differ in row ids only (spec invariant 7).
 
-**R3 — check for implied flips.** Recipe R2 step 3 (`proofdb_flip`, bare
+**R3 — check for implied flips.** Recipe R2 step 4 (`proofdb_flip`, bare
 defaults); expected on a sound tree: `flips 0 verified 0`. Any flip is a
 soundness signal — stop and investigate (§9), never re-merge to make it
 disappear.
@@ -960,11 +1036,47 @@ the max rule makes the order irrelevant. The former
 `proofdb_ledger_union` tool is retired; parallel-harvester censor merging
 is plain SQL against the table.)
 
-**R5 — retire an abandoned working layer.** The DB (tree surfaces and
-censor state alike) is derived/selection state: delete
-`data/proofdb/proofdb.db`, re-merge (bare `proofdb_merge`), and either
-start with empty censor state or re-import a legacy snapshot (R4).
-Nothing in the durable layer (`data/proofdb/shards/`) is touched.
+**R5 — start a fresh layer (retire the censor state).** The censor table
+is selection state, but the tree surfaces are the truth: **never delete
+the DB to "reset" it** — that discards proven facts (R6's backup is the
+only recovery). To restart the *scheduling* only, wipe the censor rows
+(`DELETE FROM censor;`, §4) or re-import a legacy snapshot (R4); the tree
+survives untouched.
+
+Operators with a pre-plan14 working layer (flat paths) migrate it first:
+
+```bash
+mkdir -p data/proofdb && mv data/proofdb.db data/proofdb/proofdb.db
+```
+
+Operators with a pre-plan20 layer (a `work.json` sidecar next to the DB)
+finish the migration with R4's import, then delete the sidecar. Operators
+with a pre-plan22 layer (manifest-indexed shards) migrate with R1's
+production-path variant: fold, verify, then delete the folded shard pairs
+and the manifest (R6).
+
+**R6 — shard deletion (operator recipe only; irreversible).** Folded
+shard pairs are deletable transport (§2.1). Deletion is manual —
+deliberately not one flag away — and must never precede the backup
+(append-only truth: a buggy fold can no longer be excised by deleting a
+shard and rebuilding):
+
+```bash
+# 1. Fold everything collected so far.
+proofdb_merge
+# 2. Replay-validate the whole DB.
+proofdb_verify --db data/proofdb/proofdb.db          # expect: verify: ok
+# 3. Write the offsite backup (the only recovery path afterwards).
+proofdb_verify --db data/proofdb/proofdb.db \
+    --backup /offsite/proofdb-$(date +%F).db
+# 4. Now (and only now) delete the folded pairs + any legacy manifest.
+rm data/proofdb/shards/*.bin data/proofdb/shards/*.meta.json \
+   data/proofdb/shards/manifest.json
+```
+
+After step 4 every gate tolerates the empty shard dir: a fold skips tags
+with `shards` rows, and the harvest/flip gates key on unmerged sidecars
+(absent here).
 
 Operators with a pre-plan14 working layer (flat paths) migrate it first:
 
@@ -1075,7 +1187,7 @@ AND→any child renders a principal line ending at a
 ```sql
 SELECT provenance FROM nodes WHERE id = :nid;         -- shard tags of a row
 SELECT tag, file, path, outcome, depth_bound, n_nodes
-FROM shards ORDER BY tag;                             -- the manifest as rows
+FROM shards ORDER BY tag;                             -- the provenance set as rows
 ```
 
 **DB census (the three numbers to display as a data version stamp).**
@@ -1089,72 +1201,71 @@ SELECT (SELECT COUNT(*) FROM nodes),
 
 ## 9. Soundness contract (operator terms)
 
-- Only shards whose manifest entry says `validate: "ok"` enter a merge, and
-  each is replay-validated again at merge time and once more as a
+- Only validator-clean shards enter a fold (sidecar-produced shards are
+  clean by construction; legacy manifest entries need `validate: "ok"`),
+  and each is replay-validated again at fold time and once more as a
   re-assembled skeleton after the depth fixpoint.
-- Proven-outcome conflicts between shards abort the merge (exit 2). They
+- Proven-outcome conflicts between shards abort the fold (exit 2). They
   are soundness bugs, never patched over.
-- The DB tree surfaces are a derived view: delete the DB and rebuild with
-  `proofdb_merge` anytime — same shard set, byte-identical result, censor
-  rows preserved. The rebuild is a standing regression test (`tests/proofdb.rs::
-standing_layer_rebuilds_byte_identical`) and recipe R1's `sha256sum`
-  step.
-- A DB must carry `meta.built_from` = the sha256 of the manifest it was
-  built from; `proofdb_harvest`/`proofdb_flip` refuse a DB whose digest
-  differs (stale DB or stale manifest — re-merge first).
+- The DB is the single source of truth, grown by the incremental fold —
+  never rebuilt from shards. Its integrity instrument is
+  `proofdb_verify`: the whole tree read back from the DB alone is
+  replay-validated against the spec's invariants (recipe R2 step 3, R6
+  step 2). The deterministic fold is a standing regression test
+  (`tests/proofdb_fold.rs` R1/R2). Keep an offsite backup current (R6
+  step 3) — after folded shards are deleted it is the only recovery.
+- `proofdb_harvest`/`proofdb_flip` refuse a stale layer via the
+  unmerged-shard gate: any sidecar whose tag has no `shards`-table row
+  means shards were collected since the last fold — run `proofdb_merge`
+  first (§10).
 - Censored (draw) results are facts of absence only: no shard, no tree
   row, a `censor` row. Non-terminal draws are not representable as facts
   in this tree model.
 - Writer split (plan20): `proofdb_merge` writes `meta`/`shards`/`nodes`
   only; `proofdb_harvest` writes `censor` rows only (one committed
   transaction per censor). Running both concurrently is an operator
-  error — never merge while a harvest session is running.
+  error — never fold while a harvest session is running.
 
 ## 10. Troubleshooting and known limitations
 
-**Stale DB (`built_from` mismatch).** `proofdb_harvest`/`proofdb_flip`
-abort with e.g.
+**Unmerged shards (the gate).** `proofdb_harvest`/`proofdb_flip` refuse
+with exit 1 and name the tag:
 
 ```text
-proofdb_flip: DB built_from deadbeef != manifest digest e91ad57b44008fee (stale DB or stale manifest — re-merge the standing shard set first)
+proofdb_flip: unmerged shard h_2fd82f9a8230a668 — run proofdb_merge first
 ```
 
-The DB was built from a different manifest than the one on disk (usually a
-harvest batch completed since the last merge). Fix: re-run the bare
-`proofdb_merge` (recipe R2 step 2; it rebuilds
-`data/proofdb/proofdb.db` from the on-disk default manifest).
+The shard dir carries sidecars collected since the last fold (usually a
+harvest batch completed since then). Fix: run the bare `proofdb_merge`
+(recipe R2 step 2; the fold commits the collected pairs into the standing
+DB). The gate also refuses a **sidecar without its bin** (a
+transport-layer defect — a sidecar is only written after its bin);
+a **bin without a sidecar** is the interrupted job's orphan and is
+ignored by every gate (the retry overwrites it determinically).
 
-**Missing default manifest.** A bare `proofdb_merge`, `proofdb_harvest`,
-or `proofdb_flip` with no `data/proofdb/shards/manifest.json` aborts
-cleanly, naming the missing path:
+**Schema-v1 DB.** A fold over a pre-plan20 DB file aborts with an
+upgrade hint (the fold never rewrites an existing file): move the old
+file aside, re-run the fold over the shard set (a fresh fold recreates
+schema v2), and migrate the old censor rows with `--import-censor` if
+wanted (R4).
 
-```text
-proofdb_flip: cannot read manifest data/proofdb/shards/manifest.json: No such file or directory (os error 2)
-```
+**Fold aborts with exit 2.** A CONFLICT/DEFECT abort (§7.1) leaves no
+partially written state — the transaction rolls back. Read the abort
+message: it names the shard/standing-DB defect. Never "fix" a
+proven-outcome conflict by editing a sidecar — that is a soundness bug in
+the pipeline and belongs in a bug report.
 
-Fix: bootstrap the working layer (recipe R0), or point `--manifest` at the
-fixture for a development run (§2). Reading never creates anything — only
-output writes create directories. The guard is
-length-safe on malformed DB values (a short or empty `built_from` aborts
-cleanly, regression-tested).
-
-**Merge aborts with exit 2.** A CONFLICT/DEFECT abort (§7.1) leaves no
-partially written DB. Read the abort message: it names the shard/manifest
-defect. Never "fix" a proven-outcome conflict by editing the manifest —
-that is a soundness bug in the pipeline and belongs in a bug report.
-
-**Orphan shards after a harvest abort.** The manifest is atomically
-rewritten after every decisive job, so a mid-session crash or ctrl-c
-(exit 2, or killed) leaves a consistent layer: everything collected up to
-the last finished job is referenced and a subsequent bare `proofdb_merge`
-folds it in. At most one orphan remains — the shard of the job that was
-in flight (interrupted between the shard write and its manifest entry, or
-whose manifest write failed; the rename keeps the previous complete
-manifest). The retry deterministically overwrites it; no manual cleanup
-is needed, but an unreferenced `*.bin` in the shard dir is a symptom
-worth noting in the operator log. A merge after any batch with decisive
-jobs is still required before the next harvest session (the stale-
-`built_from` guard above).
+**Orphan bins after a harvest abort.** The sidecar is the commit marker
+(written after its bin, atomically), so a mid-session crash or ctrl-c
+(exit 2, or killed) leaves a consistent transport layer: everything
+collected up to the last finished job is a complete pair and a subsequent
+bare `proofdb_merge` folds it in. At most one orphan remains — the bin of
+the job that was in flight (interrupted between the bin write and its
+sidecar write, or whose sidecar write failed). The retry deterministically
+overwrites it; no manual cleanup is needed, but a bin without a sidecar
+in the shard dir is a symptom worth noting in the operator log. A fold
+after any batch with decisive jobs is still required before the next
+harvest session (the unmerged-shard gate above).
 
 **Fresh vs carried censor state.** Empty censor rows (`DELETE FROM
 censor;`, §4) are sound but re-censor every frontier path at the base
@@ -1164,21 +1275,55 @@ history. The censor state never changes DB facts; getting it wrong costs
 work, not soundness. A schema-v1 DB (no `censor` table) aborts harvest
 with an upgrade hint — re-run the bare `proofdb_merge` first.
 
-**Digest drift after growth.** Recipe R1's pins (`406752cc…`,
-55,703 nodes) describe the _standing fixture_ shard set. After a decisive
-harvest batch the manifest digest changes and a fresh merge produces a
-different DB — that is growth, not drift. Compare DBs per manifest digest
-(`built_from`), never across manifests.
+**Fold-digest drift after growth.** Recipe R1's pins (fold digest
+`14fd0753…`, 55,703 nodes) describe the _standing fixture_ shard set.
+After a decisive harvest batch the fold digest changes — that is growth,
+not drift. The fold digest is a provenance-set stamp (spec §2.2), not a
+rebuildability stamp: the DB is never rebuilt, so there is no "rebuild
+and compare" anymore — the replacement checks are the deterministic-fold
+regression tests (same standing DB + same shard set ⇒ identical content,
+`tests/proofdb_fold.rs` R1/R2) and `proofdb_verify`.
+
+**A lost or corrupted DB after shard deletion.** With folded shards
+deleted, the DB is the only copy of its tree (append-only truth): restore
+from the offsite backup (recipe R6 step 3 is the mitigation's whole
+point) and re-fold whatever shards remain. Without a backup the facts are
+gone — this is why R6's ordering (fold → verify → backup → delete) is
+manual and mandatory.
 
 **Startpos-rooted only.** Subtree-scoped harvesting (`--root-fen`) is
 parked (initiative item 7); every job replays from the standard start
 position.
 
-**Merge is a separate step.** `proofdb_harvest --out-db/--dump` only
+**Fold is a separate step.** `proofdb_harvest --out-db/--dump` only
 record the intended targets in the summary; after each batch, run
 `proofdb_merge` yourself (recipe R2).
 
+**Stale restored backup.** A DB restored from an old backup is invisible
+to every gate if its shard dir was already emptied (no unmerged sidecars
+to compare against) — the gates check the dir↔`shards`-table delta, and
+an old DB + empty dir looks consistent. The mitigation is the backup
+duty itself: keep the offsite copy current (R6), and stamp checks against
+the fold digest when in doubt (§8.2's census query).
+
 ## 11. History
+
+plan22 (2026-10-16, the durable-layer pivot's step 2) made the **DB the
+single source of truth**: `proofdb_merge` became an incremental fold
+(one transaction per invocation; existing row ids preserved forever,
+new ones appended; a fresh fold assigns global lexicographic-path order,
+id-identical to the retired rebuild), shards became self-describing
+`<tag>.bin` + `<tag>.meta.json` sidecar pairs (the sidecar is the commit
+marker — a bin without one is the interrupted job's orphan) and are
+deletable after their fold, the manifest was retired to a legacy
+migration source (`--manifest` backfills sidecars; `proofdb_harvest
+--manifest` refuses), the byte-identical-rebuild contract was replaced by
+`proofdb_verify` (whole-DB replay validation from the DB alone) plus the
+`VACUUM INTO` offsite-backup duty (recipe R6's fold → verify → backup →
+delete), and the `built_from` manifest-digest staleness gate was replaced
+by the unmerged-shard detection (§10). `built_from` is now the fold
+digest over the `shards` table (spec §2.2). Fixture fold digest:
+`14fd0753…` (55,703 nodes; the pre-plan22 manifest stamp was `406752cc…`).
 
 plan20 (2026-10-15, the durable-layer pivot's step 1) moved the censor
 state into the DB: schema v2 adds the additive `censor` table (spec §2.1),

@@ -1,6 +1,6 @@
-//! Harvest job-mechanics unit tests (plan2): censored classification, tag
-//! determinism, manifest-entry shape, and the replay-prefix contract.
-//! Included by `harvest.rs`; also runs via `tests/proofdb.rs`.
+//! Harvest job-mechanics unit tests (plan2, plan22): censored
+//! classification, tag determinism, sidecar shape, and the replay-prefix
+//! contract. Included by `harvest.rs`; also runs via `tests/proofdb.rs`.
 
 use super::*;
 use atomic_solver::position::Position;
@@ -32,13 +32,13 @@ fn entry_carries_path_fen_outcome() {
         class: JobClass::OpenChild,
         budget: 1_000_000,
     };
-    let e = make_entry(&job, "FEN", Outcome::Loss);
+    let e = make_sidecar(&job, "FEN", Outcome::Loss);
     assert_eq!(e.tag, tag_for_path(&job.path));
     assert_eq!(e.file, format!("{}.bin", e.tag));
     assert_eq!(e.moves, job.path);
     assert_eq!(e.fen, "FEN");
     assert_eq!(e.outcome, Outcome::Loss);
-    assert_eq!(e.validate, "ok");
+    assert!(e.sha256.is_empty(), "the digest is filled in by the caller");
 }
 
 #[test]

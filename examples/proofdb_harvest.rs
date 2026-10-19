@@ -1,5 +1,6 @@
 //! `proofdb_harvest` — the harvest loop of the startpos proof-line database
-//! (proofdb initiative; plan2/plan16; plan18 policy consolidation).
+//! (proofdb initiative; plan2/plan16; plan18 policy consolidation; plan22
+//! sidecar production).
 //!
 //! The single coverage policy is the plan16 `frontier-walk` shallowest-first
 //! censor-frontier walk: a live selection loop over the censor state in the
@@ -12,15 +13,23 @@
 //! path-dependent), run `Search::search_depth_with_prefix` under the job's
 //! child-eval budget, and for a decisive outcome export a validator-clean
 //! proof subtree via the product's offline pipeline (TT snapshot →
-//! `reconstruct` → `validate_proof_tree`), writing the shard into the
-//! standing shard directory and recording its manifest entry. `Draw` from
-//! any cause is **censored** (no fact, no shard): the visit bumps the
-//! record and commits one `censor`-table transaction (plan20 D3 — the
-//! harvest's only DB writes; `nodes`/`shards`/`meta` stay
-//! `proofdb_merge`-only). The merger runs after the batch as a separate
-//! tool — this CLI never merges and never writes tree rows; `--out-db` /
-//! `--dump` are the caller's `proofdb_merge` output targets, recorded in
-//! the summary only.
+//! `reconstruct` → `validate_proof_tree`), writing the shard as a durable
+//! `<tag>.bin` + `<tag>.meta.json` sidecar pair (plan22 D1 — the sidecar is
+//! the commit marker). `Draw` from any cause is **censored** (no fact, no
+//! shard): the visit bumps the record and commits one `censor`-table
+//! transaction (plan20 D3 — the harvest's only DB writes; `nodes`/`shards`/
+//! `meta` stay `proofdb_merge`-only). The merger runs after the batch as a
+//! separate tool — this CLI never merges and never writes tree rows;
+//! `--out-db` / `--dump` are the caller's `proofdb_merge` output targets,
+//! recorded in the summary only.
+//!
+//! Unmerged-shard gate (plan22 D6, replacing the retired `built_from`
+//! manifest-digest staleness check): before any work, the shard dir is
+//! scanned — a sidecar whose tag is absent from the DB's `shards` table
+//! refuses the session (exit 1, run `proofdb_merge` first), as does a
+//! sidecar without its bin; a bin without a sidecar is the interrupted
+//! job's orphan and is ignored. Session collision sets are seeded from the
+//! DB's `shards` rows (the manifest is gone).
 //!
 //! Module map (all under `examples/proofdb/`): the job pipeline in
 //! `session.rs`, the DB-facing engine in `db.rs`, the `frontier-walk`
@@ -28,20 +37,22 @@
 //! (incl. the bump-only censor hook) in `ledger.rs`.
 //!
 //! Output: one `job: {…}` JSON line per job (fields include `policy`,
-//! `class`, and the walk census `pass`/`work_before`/`kind`), then
-//! `manifest:`/`harvest:` summary lines. On any defect the session aborts
-//! non-zero — nothing inconsistent enters the durable layer: the manifest is
-//! atomically rewritten after every decisive job (plan17), so a crash or
-//! ctrl-c mid-session leaves at most the in-flight job's shard unreferenced
-//! (deterministically overwritten by the retry), and every committed censor
-//! stays committed (one transaction per censor, plan20 D4).
+//! `class`, and the walk census `pass`/`work_before`/`kind`), then the
+//! `harvest:` summary line. On any defect the session aborts non-zero —
+//! nothing inconsistent enters the durable layer: every finished job's
+//! bin + sidecar pair is on disk (the sidecar written last, atomically), so
+//! a crash or ctrl-c mid-session leaves at most the in-flight job's bin
+//! unreferenced (deterministically overwritten by the retry), and every
+//! committed censor stays committed (one transaction per censor, plan20
+//! D4).
 
 mod proofdb;
 use proofdb::harvest_args::parse_args;
 
 use std::time::Instant;
 
-use proofdb::db::load_db_rows;
+use proofdb::db::{check_unmerged_shards, load_db_rows};
+use proofdb::schema::read_shard_rows;
 use proofdb::session::{Session, fail};
 use proofdb::walk::driver::{WalkOptions, run_walk_session};
 
@@ -51,8 +62,19 @@ fn main() {
     // spaces (the path-key join); empty = the flag's absence = global.
     let scope = args.moves.join(" ");
     let t_start = Instant::now();
-    let manifest = proofdb::read_manifest(&args.manifest).unwrap_or_else(|e| fail(&e));
-    let db = load_db_rows(&args.db, &manifest.sha256_hex).unwrap_or_else(|e| fail(&e));
+    // The rows connection (read-only, no CREATE): a missing DB is the
+    // stale/absent-layer abort, not a fresh layer.
+    let ro =
+        rusqlite::Connection::open_with_flags(&args.db, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+            .unwrap_or_else(|e| fail(&format!("cannot open DB {}: {e}", args.db.display())));
+    let shard_rows = read_shard_rows(&ro).unwrap_or_else(|e| fail(&e));
+    // The unmerged-shard gate (plan22 D6): any shard collected since the
+    // last fold refuses the session. Exit 1 (refusal class), naming the tag.
+    if let Err(e) = check_unmerged_shards(&args.shard_dir, &shard_rows) {
+        eprintln!("proofdb_harvest: {e}");
+        std::process::exit(1);
+    }
+    let db = load_db_rows(&args.db).unwrap_or_else(|e| fail(&e));
     // The censor-state connection (plan20 D3): read-write — the flag set
     // without SQLITE_OPEN_CREATE refuses to create a missing file, so an
     // absent DB is the stale/absent-layer abort, not a fresh layer.
@@ -62,10 +84,10 @@ fn main() {
     )
     .unwrap_or_else(|e| fail(&format!("cannot open DB {}: {e}", args.db.display())));
     eprintln!(
-        "harvest: db {} ({} rows, built_from {}) — policy {}{}",
+        "harvest: db {} ({} rows, fold digest {}) — policy {}{}",
         args.db.display(),
         db.rows.len(),
-        &manifest.sha256_hex[..16],
+        &db.built_from[..16.min(db.built_from.len())],
         proofdb::harvest_args::POLICY,
         if scope.is_empty() {
             String::new()
@@ -74,11 +96,12 @@ fn main() {
         },
     );
 
+    let seed_paths: std::collections::HashSet<String> =
+        shard_rows.iter().map(|r| r.path.clone()).collect();
     let mut session = Session::new(
         args.tt_mb,
         args.shard_dir.clone(),
-        args.manifest.clone(),
-        manifest.entries.clone(),
+        seed_paths,
         proofdb::harvest_args::POLICY,
     );
 
@@ -108,7 +131,6 @@ fn main() {
         t_start.elapsed().as_secs_f64(),
     );
 
-    session.rewrite_manifest(&args.manifest, &manifest.sha256_hex);
     println!("{summary_line}");
     if let Some(p) = &args.out_db {
         println!(

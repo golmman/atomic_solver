@@ -14,9 +14,14 @@ use atomic_solver::notation::uci_to_move;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::proof_tree::{ProofNode, ProofTree, validate_proof_tree};
 
+use proofdb::manifest::read_manifest;
 use proofdb::merge::PathTree;
-use proofdb::read_manifest;
 use proofdb::schema::{ShardRow, canonical_dump, write_db};
+
+// NOTE (plan22): the standing-layer pins moved to `tests/proofdb_fold.rs`
+// — the byte-identical rebuild contract and the stale-DB `built_from`
+// guard are retired with the manifest; their replacements are the
+// deterministic fold + `proofdb_verify` (R1/R2/R8).
 
 const ROOT_FEN: &str = Position::STARTPOS_FEN;
 /// After 1.f3 e6 2.g4: Qd8-h4 explodes the White king (win in 1).
@@ -116,7 +121,15 @@ fn end_to_end_fixture_pipeline() {
     assert!(validate_proof_tree(&skeleton).is_ok());
 
     let db_path = dir.join("proofdb.db");
-    write_db(&db_path, ROOT_FEN, &manifest.sha256_hex, &rows, &tree, &[]).unwrap();
+    write_db(
+        &db_path,
+        ROOT_FEN,
+        &proofdb::digest_hex(&std::fs::read(&manifest_path).unwrap()),
+        &rows,
+        &tree,
+        &[],
+    )
+    .unwrap();
     let conn = rusqlite::Connection::open(&db_path).unwrap();
     let schema_version: String = conn
         .query_row(
@@ -144,7 +157,11 @@ fn end_to_end_fixture_pipeline() {
     assert_eq!(prov, "fixture");
 
     // Determinism: rebuilding from the same shard set is byte-identical.
-    let dump1 = canonical_dump(ROOT_FEN, &manifest.sha256_hex, &tree);
+    let dump1 = canonical_dump(
+        ROOT_FEN,
+        &proofdb::digest_hex(&std::fs::read(&manifest_path).unwrap()),
+        &tree,
+    );
     let mut tree2 = PathTree::new();
     tree2.graft_path(&moves_from_path(TACTIC_PATH), "fixture");
     let bytes = std::fs::read(dir.join("fixture.bin")).unwrap();
@@ -154,7 +171,11 @@ fn end_to_end_fixture_pipeline() {
     tree2.finalize().unwrap();
     assert_eq!(
         dump1,
-        canonical_dump(ROOT_FEN, &manifest.sha256_hex, &tree2)
+        canonical_dump(
+            ROOT_FEN,
+            &proofdb::digest_hex(&std::fs::read(&manifest_path).unwrap()),
+            &tree2
+        )
     );
 
     std::fs::remove_dir_all(&dir).ok();
@@ -213,144 +234,9 @@ fn censor_file(dir: &std::path::Path, name: &str) -> Connection {
     conn
 }
 
-// --- plan12 D3: the derived-DB gate as a repeatable test ---
-
-/// The standing shard set (committed under `docs/plans/proofdb/shards/`)
-/// must rebuild the standing DB byte-identically from a clean checkout —
-/// the durable-layer gate (initiative constraint 3), pinned here against
-/// drift. Digest and node counts are the plan12-audit pinned values
-/// (report12 §1.1); a shard-set change is expected to turn this red.
-#[test]
-fn standing_layer_rebuilds_byte_identical() {
-    let crate_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let shards = crate_root.join("docs/plans/proofdb/shards");
-    let manifest_path = shards.join("manifest.json");
-    assert!(
-        manifest_path.is_file(),
-        "standing shard set not found at {} — this test runs inside the\n\
-         atomic_solver checkout (it pins the committed durable layer);\n\
-         see docs/proofdb_pipeline.md",
-        manifest_path.display()
-    );
-    let manifest = proofdb::read_manifest(&manifest_path).unwrap();
-    assert_eq!(manifest.entries.len(), 262, "standing manifest entry count");
-
-    // The proofdb_merge pipeline, faithfully: per shard — validate=='ok',
-    // parse + replay-validate, outcome cross-check, startpos path replay,
-    // graft + overlay; then finalize, per-graft skeleton re-validation, DB.
-    let mut tree = proofdb::merge::PathTree::new();
-    let mut rows = Vec::new();
-    let mut graft_roots = Vec::new();
-    for entry in &manifest.entries {
-        assert_eq!(entry.validate, "ok", "only 'ok' enters a merge");
-        let bytes = std::fs::read(shards.join(&entry.file))
-            .unwrap_or_else(|e| panic!("shard {}: {e}", entry.tag));
-        let shard = atomic_solver::proof_tree::ProofTree::from_bin(&mut bytes.as_slice())
-            .unwrap_or_else(|e| panic!("shard {}: {e}", entry.tag));
-        atomic_solver::proof_tree::validate_proof_tree(&shard)
-            .unwrap_or_else(|d| panic!("shard {}: {d:?}", entry.tag));
-        assert_eq!(
-            shard.nodes[0].outcome,
-            Some(entry.outcome),
-            "shard {}",
-            entry.tag
-        );
-        let mut pos = Position::from_fen(Position::STARTPOS_FEN).unwrap();
-        let moves: Vec<atomic_movegen::types::Move> = entry
-            .moves
-            .iter()
-            .map(|u| {
-                let mv = atomic_solver::notation::uci_to_move(u, &pos)
-                    .unwrap_or_else(|| panic!("shard {}: illegal {u}", entry.tag));
-                pos.do_move(mv);
-                mv
-            })
-            .collect();
-        let graft = tree.graft_path(&moves, &entry.tag);
-        tree.overlay_subtree(graft, &shard, &entry.tag)
-            .unwrap_or_else(|e| panic!("shard {}: {e}", entry.tag));
-        graft_roots.push((graft, entry.fen.clone()));
-        rows.push(proofdb::schema::ShardRow {
-            tag: entry.tag.clone(),
-            file: entry.file.clone(),
-            sha256: proofdb::digest_hex(&bytes),
-            root_fen: shard.root_fen,
-            path: entry.moves.join(" "),
-            outcome: entry.outcome,
-            depth_bound: shard.nodes[0].depth,
-            n_nodes: shard.nodes.len(),
-        });
-    }
-    tree.finalize().unwrap();
-    for (root_id, fen) in &graft_roots {
-        let skeleton = tree.reassemble_skeleton(*root_id, fen).unwrap();
-        assert!(
-            atomic_solver::proof_tree::validate_proof_tree(&skeleton).is_ok(),
-            "skeleton re-validation failed at graft {:?}",
-            tree.path_uci(*root_id)
-        );
-    }
-
-    let dir = std::env::temp_dir().join(format!("proofdb_rebuild_{}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
-    let db_path = dir.join("rebuilt.db");
-    proofdb::schema::write_db(
-        &db_path,
-        Position::STARTPOS_FEN,
-        &manifest.sha256_hex,
-        &rows,
-        &tree,
-        &[],
-    )
-    .unwrap();
-
-    // The pinned standing DB: byte-identical rebuild + node census. The
-    // plan20 schema-v2 fixture digest (the censor table is additive; the
-    // pre-plan20 pin was 0d929f4c…).
-    assert_eq!(
-        proofdb::digest_hex(&std::fs::read(&db_path).unwrap()),
-        "406752cc93fb5fd8667615b4720fbd39c20a4df5b014dde97bf8311a22130fb6",
-        "rebuilt DB digest (the standing data/proofdb.db)"
-    );
-    assert_eq!(tree.nodes.len(), 55_703, "merged node count");
-    assert_eq!(
-        tree.nodes.iter().filter(|n| n.outcome.is_some()).count(),
-        55_628,
-        "proven node count"
-    );
-    std::fs::remove_dir_all(&dir).ok();
-}
-
-// --- plan12 D1: the stale-DB guard is length-safe on a malformed DB ---
-
-/// A foreign/corrupted DB with a short (or non-ASCII) `built_from` must
-/// produce the clean stale-DB abort (an `Err` naming `built_from`), never a
-/// slice panic (the pre-plan12 behavior: exit 134, core dump).
-#[test]
-fn stale_db_guard_is_length_safe_on_malformed_built_from() {
-    let dir = std::env::temp_dir().join(format!("proofdb_g1_{}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
-    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
-    for bogus in ["deadbeef", "", "méé-méé-méé-méé-beyond-16-bytes"] {
-        let tampered = dir.join("tampered.db");
-        std::fs::copy(&db_path, &tampered).unwrap();
-        let conn = rusqlite::Connection::open(&tampered).unwrap();
-        conn.execute("UPDATE meta SET value=?1 WHERE key='built_from'", [bogus])
-            .unwrap();
-        let err = proofdb::db::load_db_rows(&tampered, &digest).unwrap_err();
-        assert!(
-            err.contains("built_from"),
-            "message names the meta row: {err}"
-        );
-        assert!(
-            err.contains("stale DB"),
-            "stale-DB abort, not a panic: {err}"
-        );
-        assert!(err.contains(bogus), "value printed in full: {err}");
-        std::fs::remove_file(&tampered).ok();
-    }
-    std::fs::remove_dir_all(&dir).ok();
-}
+// --- plan22: the fold replaces the full rebuild (the standing-layer pins
+// live in tests/proofdb_fold.rs — R1/R2; the byte-identical rebuild
+// contract and the stale-DB built_from guard are retired with it) ---
 
 // --- plan14: the CLI defaults are centralized under data/proofdb/ ---
 
@@ -412,6 +298,7 @@ fn walk_db(rows: &[(&str, usize, Option<Outcome>)]) -> proofdb::db::DbContent {
         .collect();
     proofdb::db::DbContent {
         root_fen: Position::STARTPOS_FEN.to_string(),
+        built_from: "0".repeat(64),
         rows,
     }
 }
@@ -439,16 +326,14 @@ fn walk_opts(max_jobs: usize, max_total_evals: u64) -> WalkOptions {
 #[test]
 fn walk_driver_root_expansion_and_ledger_growth() {
     let dir = walk_dir("walk_driver");
-    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
-    let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
-    let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
+    let db_path = proofdb::fixture::fixture_db(&dir);
+    let db = proofdb::db::load_db_rows(&db_path).unwrap();
 
     let run = |censor: &Connection| {
         let mut session = Session::new(
             4,
             dir.join("shards"),
-            dir.join("shards/manifest.json"),
-            manifest.entries.clone(),
+            std::collections::HashSet::new(),
             "frontier-walk",
         );
         let (mut frontier, mut census) = WalkFrontier::new(&Ledger::default(), &db, "");
@@ -543,8 +428,7 @@ fn walk_complete_rule_no_livelock_and_exhaustion() {
     let mut session = Session::new(
         4,
         dir.join("shards"),
-        dir.join("shards/manifest.json"),
-        Vec::new(),
+        std::collections::HashSet::new(),
         "frontier-walk",
     );
     let (mut frontier, census) = WalkFrontier::new(&ledger, &db, "");
@@ -586,8 +470,7 @@ fn walk_root_proven_exhausts() {
     let mut session = Session::new(
         4,
         dir.join("shards"),
-        dir.join("shards/manifest.json"),
-        Vec::new(),
+        std::collections::HashSet::new(),
         "frontier-walk",
     );
     let (mut frontier, mut census) = WalkFrontier::new(&ledger, &db, "");
@@ -613,36 +496,29 @@ fn walk_root_proven_exhausts() {
     std::fs::remove_dir_all(&dir).ok();
 }
 
-/// Plan16 task 5: the fresh-layer boot at a small budget on a temp layer —
-/// the R0 bootstrap merge (root-only DB) → capped `frontier-walk` batch →
-/// merge → the grown DB has more than the root. The walk does not
-/// self-retire (D6), so the batch is eval-capped; 20k budget, 10M cap
-/// (measured: the first decisive shard lands at ~4.4M evals).
+/// Plan16 task 5 (plan22 shape): the fresh-layer boot on a temp layer —
+/// the R0 bootstrap fold (a fresh schema → the root-only DB) → capped
+/// `frontier-walk` batch (durable bin + sidecar pairs) → fold → the grown
+/// DB has more than the root. The walk does not self-retire (D6), so the
+/// batch is eval-capped; 20k budget, 10M cap (measured: the first decisive
+/// shard lands at ~4.4M evals).
 #[test]
 fn walk_boot_from_empty_layer() {
+    use proofdb::merge::fold::fold;
+
     let dir = walk_dir("walk_boot");
-    // The R0 bootstrap shape: empty manifest + root-only DB.
-    let manifest_bytes = b"{\"entries\":[]}".to_vec();
-    let digest = proofdb::digest_hex(&manifest_bytes);
-    std::fs::write(dir.join("manifest.json"), &manifest_bytes).unwrap();
-    let mut pt = proofdb::merge::PathTree::new();
-    pt.finalize().unwrap();
-    proofdb::schema::write_db(
-        &dir.join("proofdb.db"),
-        Position::STARTPOS_FEN,
-        &digest,
-        &[],
-        &pt,
-        &[],
-    )
-    .unwrap();
-    let db = proofdb::db::load_db_rows(&dir.join("proofdb.db"), &digest).unwrap();
+    // The R0 bootstrap fold: a fresh (empty-file) DB folds the empty shard
+    // dir into the root-only standing layer.
+    std::fs::create_dir_all(dir.join("shards")).unwrap();
+    let mut conn = Connection::open(dir.join("proofdb.db")).unwrap();
+    fold(&mut conn, &dir.join("shards"), None, None).unwrap();
+    let db = proofdb::db::load_db_rows(&dir.join("proofdb.db")).unwrap();
+    assert_eq!(db.rows.len(), 1, "the root-only bootstrap DB");
 
     let mut session = Session::new(
         4,
         dir.join("shards"),
-        dir.join("shards/manifest.json"),
-        Vec::new(),
+        std::collections::HashSet::new(),
         "frontier-walk",
     );
     let censor_conn = Connection::open(dir.join("proofdb.db")).unwrap();
@@ -658,67 +534,47 @@ fn walk_boot_from_empty_layer() {
     assert_eq!(summary.stop_reason, "budget");
     assert!(summary.decisive >= 1, "boot yield: >= 1 decisive shard");
     assert_eq!(session.new_shards, summary.decisive);
-    // Plan17 D1: the per-job sync — the manifest on disk already references
-    // every shard the batch wrote, before the post-batch rewrite runs.
-    let pre_sync = read_manifest(&dir.join("shards/manifest.json")).unwrap();
-    assert_eq!(
-        pre_sync.entries.len(),
-        summary.decisive,
-        "manifest not current pre-rewrite"
-    );
-    assert!(
-        !dir.join("shards/manifest.json.tmp").exists(),
-        "tmp residue"
-    );
+    // Plan22 D1: every decisive job left a durable bin + sidecar pair on
+    // disk (the sidecar is the commit marker); no manifest exists, no tmp
+    // residue remains.
+    let pairs = sidecar_pairs(&dir.join("shards"));
+    assert_eq!(pairs, summary.decisive, "bin + sidecar pairs on disk");
+    assert!(!dir.join("shards/manifest.json").exists(), "no manifest");
+    let residue: Vec<_> = std::fs::read_dir(dir.join("shards"))
+        .unwrap()
+        .flatten()
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .filter(|n| n.ends_with(".tmp"))
+        .collect();
+    assert!(residue.is_empty(), "tmp residue: {residue:?}");
     // The D4 signature over a full session: the censor rows landed in the
     // boot DB (plan20 — the censor state lives in the DB).
     let ledger = Ledger::load_db(&Connection::open(dir.join("proofdb.db")).unwrap()).unwrap();
     assert_eq!(ledger.len(), summary.fresh_censored);
-    // The CLI's post-batch manifest rewrite (the batch never writes it).
-    session.rewrite_manifest(&dir.join("shards/manifest.json"), &digest);
 
-    // Merge the grown set (the harvest never merges) → DB > 1 node.
-    let manifest = read_manifest(&dir.join("shards/manifest.json")).unwrap();
-    assert_eq!(manifest.entries.len(), summary.decisive);
-    let mut tree = proofdb::merge::PathTree::new();
-    let mut rows = Vec::new();
-    for entry in &manifest.entries {
-        let bytes = std::fs::read(dir.join("shards").join(&entry.file)).unwrap();
-        let mut shard = atomic_solver::proof_tree::ProofTree::from_bin(&mut bytes.as_slice())
-            .unwrap_or_else(|e| panic!("shard {}: {e}", entry.tag));
-        atomic_solver::proof_tree::validate_proof_tree(&shard)
-            .unwrap_or_else(|d| panic!("shard {}: {d:?}", entry.tag));
-        assert_eq!(shard.nodes[0].outcome, Some(entry.outcome));
-        let graft = tree.graft_path(&moves_from_path(&entry.moves), &entry.tag);
-        tree.overlay_subtree(graft, &shard, &entry.tag).unwrap();
-        rows.push(proofdb::schema::ShardRow {
-            tag: entry.tag.clone(),
-            file: entry.file.clone(),
-            sha256: proofdb::digest_hex(&bytes),
-            root_fen: std::mem::take(&mut shard.root_fen),
-            path: entry.moves.join(" "),
-            outcome: entry.outcome,
-            depth_bound: shard.nodes[0].depth,
-            n_nodes: shard.nodes.len(),
-        });
-    }
-    tree.finalize().unwrap();
-    let grown = dir.join("grown.db");
-    proofdb::schema::write_db(
-        &grown,
-        Position::STARTPOS_FEN,
-        &manifest.sha256_hex,
-        &rows,
-        &tree,
-        &[],
-    )
-    .unwrap();
-    let conn = rusqlite::Connection::open(&grown).unwrap();
-    let node_count: i64 = conn
-        .query_row("SELECT COUNT(*) FROM nodes", [], |r| r.get(0))
-        .unwrap();
-    assert!(node_count > 1, "grown DB has more than the root");
+    // Fold the grown set (the harvest never merges) → DB > 1 node.
+    let out = fold(&mut conn, &dir.join("shards"), None, None).unwrap();
+    assert_eq!(out.report.folded, summary.decisive, "all shards folded");
+    assert_eq!(out.report.node_count, out.report.proven + out.report.open);
+    assert!(out.report.node_count > 1, "grown DB has more than the root");
     std::fs::remove_dir_all(&dir).ok();
+}
+
+/// Count the durable `<tag>.bin` + `<tag>.meta.json` pairs in `dir`
+/// (plan22 D1: a pair is the produced-shard shape; bins without sidecars
+/// are in-flight orphans).
+fn sidecar_pairs(dir: &std::path::Path) -> usize {
+    let mut bins = std::collections::HashSet::new();
+    let mut sides = std::collections::HashSet::new();
+    for e in std::fs::read_dir(dir).unwrap().flatten() {
+        let name = e.file_name().to_string_lossy().into_owned();
+        if let Some(t) = name.strip_suffix(".bin") {
+            bins.insert(t.to_string());
+        } else if let Some(t) = name.strip_suffix(".meta.json") {
+            sides.insert(t.to_string());
+        }
+    }
+    bins.intersection(&sides).count()
 }
 
 /// Plan16 D3's zero-eval no-progress guard: a ledger record on an on-path
@@ -736,8 +592,7 @@ fn walk_zero_eval_censor_guard_completes_the_node() {
     let mut session = Session::new(
         4,
         dir.join("shards"),
-        dir.join("shards/manifest.json"),
-        Vec::new(),
+        std::collections::HashSet::new(),
         "frontier-walk",
     );
     let (mut frontier, mut census) = WalkFrontier::new(&ledger, &db, "");
@@ -770,36 +625,35 @@ fn walk_zero_eval_censor_guard_completes_the_node() {
     std::fs::remove_dir_all(&dir).ok();
 }
 
-// --- plan17: the per-job crash-consistent manifest sync (D1–D4) ---
+// --- plan22: the session's durable layer (sidecar pairs) ---
 
-/// Plan17 task 3: censored jobs must not touch the manifest file — censors
-/// live in the ledger only, so the on-disk manifest bytes are unchanged by
-/// a censor-only session (and no `.tmp` residue appears).
+/// Plan22 R9 (the plan17 crash-window contracts, sidecar world): a
+/// censor-only session touches no durable file (the shard dir stays
+/// empty), and the produced-shard shape is the bin + sidecar pair with the
+/// sidecar's sha256 equal to its bin's digest (the fold's corruption
+/// cross-check and idempotence key). The interrupted-write abort itself is
+/// `fail()` — a process exit, untestable in-process; the bin-without-
+/// sidecar orphan window is covered in `tests/proofdb_fold.rs` (R5).
 #[test]
-fn session_censored_jobs_leave_manifest_bytes_untouched() {
-    let dir = walk_dir("p17_censored");
-    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
-    let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
-    let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
-    let manifest_path = dir.join("shards/manifest.json");
-    std::fs::create_dir_all(dir.join("shards")).unwrap();
-    // The current manifest content, serialized at the session's sync path.
-    let before = std::fs::read(dir.join("manifest.json")).unwrap();
-    std::fs::write(&manifest_path, &before).unwrap();
+fn session_censored_jobs_touch_no_durable_file_and_pairs_are_self_describing() {
+    use proofdb::sidecar::read_sidecar;
 
+    // (a) The censor-only session: tiny budget on the quiet fixture, every
+    // job censors — nothing durable is produced, the shard dir stays empty.
+    let dir = walk_dir("p22_censored");
+    let db_path = proofdb::fixture::fixture_db(&dir);
+    let db = proofdb::db::load_db_rows(&db_path).unwrap();
+    std::fs::create_dir_all(dir.join("shards")).unwrap();
     let mut session = Session::new(
         4,
         dir.join("shards"),
-        manifest_path.clone(),
-        manifest.entries.clone(),
+        std::collections::HashSet::new(),
         "frontier-walk",
     );
     let (mut frontier, mut census) = WalkFrontier::new(&Ledger::default(), &db, "");
     census.root = root_state(&db, &session, "");
     assert_eq!(census.root, RootState::Open);
     let mut led = Ledger::default();
-    // Tiny budget on the quiet fixture: every job censors (the walk driver
-    // test pins the same shape), so nothing durable is produced.
     let summary = run_walk_batch(
         &mut session,
         &db,
@@ -814,53 +668,45 @@ fn session_censored_jobs_leave_manifest_bytes_untouched() {
     assert_eq!(summary.decisive, 0);
     assert_eq!(summary.censored, 5);
     assert_eq!(session.new_shards, 0);
-    // The manifest file was never touched.
-    assert_eq!(std::fs::read(&manifest_path).unwrap(), before);
+    let durable: Vec<_> = std::fs::read_dir(dir.join("shards"))
+        .unwrap()
+        .flatten()
+        .collect();
     assert!(
-        !manifest_path.with_extension("json.tmp").exists(),
-        "tmp residue"
+        durable.is_empty(),
+        "censored jobs wrote nothing: {durable:?}"
     );
     std::fs::remove_dir_all(&dir).ok();
-}
 
-/// Plan17 task 3 / D4: the interrupted-write window. A session state where
-/// the shard `.bin` is already written but the manifest sync fails (the tmp
-/// path occupied by a directory — the root-proof failure injector of the
-/// writer tests) returns the error: the previous manifest stays intact and
-/// the written shard is exactly one unreferenced orphan, overwritten by the
-/// retry. (The process-exit abort itself is `fail()` — untestable
-/// in-process; the error path of the sync is what carries the contract.)
-#[test]
-fn session_manifest_write_failure_leaves_previous_manifest_and_one_orphan() {
-    use proofdb::session::Session;
-    let dir = walk_dir("p17_orphan");
-    let shard_dir = dir.join("shards");
-    std::fs::create_dir_all(&shard_dir).unwrap();
-    let manifest_path = shard_dir.join("manifest.json");
-    // The previous (consistent) manifest on disk.
-    let old = b"{\"entries\":[]}".to_vec();
-    std::fs::write(&manifest_path, &old).unwrap();
-    // The in-flight job's shard: written, not yet referenced.
-    let orphan = shard_dir.join("h_orphan.bin");
-    std::fs::write(&orphan, b"orphan-bytes").unwrap();
-    // The failure injector: a directory occupying the tmp path.
-    std::fs::create_dir(manifest_path.with_extension("json.tmp")).unwrap();
-
-    let session = Session::new(
-        4,
-        shard_dir.clone(),
-        manifest_path.clone(),
-        Vec::new(),
-        "frontier-walk",
+    // (b) The produced-shard shape: the session's sidecar carries the bin
+    // digest, and a read-back round-trip agrees (the self-describing pair).
+    let dir = walk_dir("p22_pair");
+    std::fs::create_dir_all(dir.join("shards")).unwrap();
+    let bin = dir.join("shards/h_pair.bin");
+    let bytes = fixture_bin();
+    std::fs::write(&bin, &bytes).unwrap();
+    let entry = proofdb::sidecar::SidecarEntry {
+        tag: "h_pair".to_string(),
+        file: "h_pair.bin".to_string(),
+        fen: TACTIC_FEN.to_string(),
+        moves: TACTIC_PATH.iter().map(|s| s.to_string()).collect(),
+        outcome: Outcome::Win,
+        sha256: proofdb::digest_hex(&bytes),
+    };
+    proofdb::sidecar::write_sidecar(&dir.join("shards"), &entry).unwrap();
+    let side = read_sidecar(&dir.join("shards/h_pair.meta.json")).unwrap();
+    assert_eq!(side.tag, "h_pair");
+    assert_eq!(side.file, "h_pair.bin");
+    assert_eq!(
+        side.sha256,
+        proofdb::digest_hex(&std::fs::read(&bin).unwrap())
     );
-    let err = session.sync_manifest().unwrap_err();
-    assert!(err.contains("cannot write manifest"), "unexpected: {err}");
-    // The previous manifest is intact; the shard is the one orphan; the
-    // failed tmp attempt changed nothing durable beyond it.
-    assert_eq!(std::fs::read(&manifest_path).unwrap(), old);
-    assert!(orphan.is_file());
-    let m = read_manifest(&manifest_path).unwrap();
-    assert_eq!(m.entries.len(), 0);
+    assert_eq!(side.moves, entry.moves);
+    assert_eq!(side.outcome, Outcome::Win);
+    assert!(
+        !dir.join("shards/h_pair.meta.json.tmp").exists(),
+        "tmp residue"
+    );
     std::fs::remove_dir_all(&dir).ok();
 }
 
@@ -879,8 +725,7 @@ fn walk_scope_virtual_root_and_expansion_stay_in_scope() {
     let mut session = Session::new(
         4,
         dir.join("shards"),
-        dir.join("shards/manifest.json"),
-        Vec::new(),
+        std::collections::HashSet::new(),
         "frontier-walk",
     );
     let ledger = Ledger::default();
@@ -923,8 +768,7 @@ fn walk_scope_proven_scope_root_exhausts() {
     let mut session = Session::new(
         4,
         dir.join("shards"),
-        dir.join("shards/manifest.json"),
-        Vec::new(),
+        std::collections::HashSet::new(),
         "frontier-walk",
     );
     let (mut frontier, census) = WalkFrontier::new(&ledger, &db, "a2a3");
@@ -956,9 +800,8 @@ fn walk_scope_proven_scope_root_exhausts() {
 #[test]
 fn walk_scope_session_pickup_and_preservation() {
     let dir = walk_dir("walk_scope_session");
-    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
-    let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
-    let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
+    let db_path = proofdb::fixture::fixture_db(&dir);
+    let db = proofdb::db::load_db_rows(&db_path).unwrap();
     // A shared ledger with an out-of-scope record (work ≥ B so it would be
     // an expansion candidate in a global session — but out of scope here).
     // A shared censor DB with an out-of-scope record (work ≥ B so it would
@@ -975,8 +818,7 @@ fn walk_scope_session_pickup_and_preservation() {
     let mut session = Session::new(
         4,
         dir.join("shards"),
-        dir.join("shards/manifest.json"),
-        manifest.entries.clone(),
+        std::collections::HashSet::new(),
         "frontier-walk",
     );
     let summary = run_walk_session(
@@ -1033,8 +875,7 @@ fn walk_or_closed_layer_visits_only_open_records() {
     let mut session = Session::new(
         4,
         dir.join("shards"),
-        dir.join("shards/manifest.json"),
-        Vec::new(),
+        std::collections::HashSet::new(),
         "frontier-walk",
     );
     let (mut frontier, census) = WalkFrontier::new(&ledger, &db, "a2a3");
@@ -1116,6 +957,7 @@ fn walk_in_session_or_close_after_decisive_loss() {
         .collect();
     let db = proofdb::db::DbContent {
         root_fen: Position::STARTPOS_FEN.to_string(),
+        built_from: "0".repeat(64),
         rows,
     };
     // The scope root itself: a record at the budget (an expansion candidate;
@@ -1126,8 +968,7 @@ fn walk_in_session_or_close_after_decisive_loss() {
         let mut session = Session::new(
             4,
             dir.join("shards"),
-            dir.join("shards/manifest.json"),
-            Vec::new(),
+            std::collections::HashSet::new(),
             "frontier-walk",
         );
         let (mut frontier, census) = WalkFrontier::new(&ledger, &db, scope);
@@ -1170,11 +1011,11 @@ fn walk_in_session_or_close_after_decisive_loss() {
 }
 
 /// The shard count the or-close driver test's session produced (the
-/// manifest on disk is the session's own record; the two runs share one
-/// shard dir, so the file count pins the decisive total).
+/// durable layer on disk is the session's own record; the two runs share
+/// one shard dir, so the bin + sidecar pair count pins the decisive
+/// total).
 fn session_new_shards(dir: &std::path::Path) -> usize {
-    let manifest = read_manifest(&dir.join("shards/manifest.json")).unwrap();
-    manifest.entries.len()
+    sidecar_pairs(&dir.join("shards"))
 }
 
 // --- plan20: censor state in the DB (schema v2; D5/D6) ---
@@ -1276,17 +1117,15 @@ fn rebuild_preserves_censor_rows_exactly() {
 #[test]
 fn censor_commits_are_visible_to_a_second_session() {
     let dir = walk_dir("p20_second_session");
-    let (db_path, digest) = proofdb::fixture::fixture_db(&dir);
-    let manifest = read_manifest(&dir.join("manifest.json")).unwrap();
-    let db = proofdb::db::load_db_rows(&db_path, &digest).unwrap();
+    let db_path = proofdb::fixture::fixture_db(&dir);
+    let db = proofdb::db::load_db_rows(&db_path).unwrap();
     let censor = censor_file(&dir, "censor.db");
 
     let run = || {
         let mut session = Session::new(
             4,
             dir.join("shards"),
-            dir.join("shards/manifest.json"),
-            manifest.entries.clone(),
+            std::collections::HashSet::new(),
             "frontier-walk",
         );
         run_walk_session(&mut session, &db, &censor, 1_000, &walk_opts(2, 0), "").unwrap()

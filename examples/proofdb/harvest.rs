@@ -24,7 +24,7 @@ use atomic_solver::notation::uci_to_move;
 use atomic_solver::position::Outcome;
 use atomic_solver::position::Position;
 
-use super::ShardEntry;
+use super::sidecar::SidecarEntry;
 
 /// Frontier class of a job (plan3 §2; plan18 removed the C2/D classes
 /// with the legacy and `descend` policies).
@@ -88,26 +88,25 @@ pub fn classify(outcome: Outcome) -> Option<Outcome> {
 /// Shard tag for a job path: `"h_"` + the first 16 hex chars of the SHA-256
 /// over the space-separated UCI path (deterministic; the root's empty path
 /// hashes to the well-known empty-string digest). Collisions are checked
-/// against the standing manifest by the caller.
+/// against the standing shard rows by the caller.
 #[must_use]
 pub fn tag_for_path(path: &[String]) -> String {
     let joined = path.join(" ");
     format!("h_{}", &super::digest_hex(joined.as_bytes())[..16])
 }
 
-/// Build the manifest entry for a validated shard at `job`. `validate` is
-/// always `"ok"` — the caller writes an entry only after a validator pass
-/// (pre-registered decision 2).
+/// Build the sidecar for a validated shard at `job` (plan22 D1). The
+/// `sha256` field is filled in by the caller after the bin is serialized.
 #[must_use]
-pub fn make_entry(job: &Job, fen: &str, outcome: Outcome) -> ShardEntry {
+pub fn make_sidecar(job: &Job, fen: &str, outcome: Outcome) -> SidecarEntry {
     let tag = tag_for_path(&job.path);
-    ShardEntry {
+    SidecarEntry {
         file: format!("{tag}.bin"),
         tag,
         fen: fen.to_string(),
         moves: job.path.clone(),
         outcome,
-        validate: "ok".to_string(),
+        sha256: String::new(),
     }
 }
 

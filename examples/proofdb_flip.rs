@@ -20,7 +20,8 @@
 //! Output: JSON at `--out` (default `data/proofdb/flip.json`, plan14;
 //! `flips` + `root` + counts); exit 1 on any unverified flip, 0 otherwise.
 //! This tool materializes nothing — flips stay derived (decision 10), the
-//! DB ships the raw tree only.
+//! DB ships the raw tree only. Since plan22 the retired built_from
+//! manifest-digest guard is the unmerged-shard gate (`--shard-dir`).
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -30,8 +31,9 @@ use atomic_solver::position::{Outcome, Position};
 
 mod proofdb;
 
-use proofdb::db::load_db_rows;
-use proofdb::{DEFAULT_DB, DEFAULT_FLIP_OUT, DEFAULT_MANIFEST, create_parent_dir, read_manifest};
+use proofdb::db::{check_unmerged_shards, load_db_rows};
+use proofdb::schema::read_shard_rows;
+use proofdb::{DEFAULT_DB, DEFAULT_FLIP_OUT, DEFAULT_SHARD_DIR, create_parent_dir};
 
 fn fail(msg: &str) -> ! {
     eprintln!("proofdb_flip: {msg}");
@@ -40,10 +42,10 @@ fn fail(msg: &str) -> ! {
 
 fn usage() -> ! {
     eprintln!(
-        "usage: proofdb_flip [--db <grown.db>] [--manifest <manifest.json>] \
+        "usage: proofdb_flip [--db <grown.db>] [--shard-dir <dir>] \
          [--out <flip_analysis.json>]  \
          (defaults: --db data/proofdb/proofdb.db \
-         --manifest data/proofdb/shards/manifest.json --out data/proofdb/flip.json)"
+         --shard-dir data/proofdb/shards --out data/proofdb/flip.json)"
     );
     std::process::exit(1);
 }
@@ -246,19 +248,27 @@ fn replay_fresh(path: &str) -> Result<Position, String> {
 
 fn main() {
     let mut db = PathBuf::from(DEFAULT_DB);
-    let mut manifest_path = PathBuf::from(DEFAULT_MANIFEST);
+    let mut shard_dir = PathBuf::from(DEFAULT_SHARD_DIR);
     let mut out = PathBuf::from(DEFAULT_FLIP_OUT);
     let mut it = std::env::args().skip(1);
     while let Some(a) = it.next() {
         match a.as_str() {
             "--db" => db = it.next().unwrap_or_else(|| usage()).into(),
-            "--manifest" => manifest_path = it.next().unwrap_or_else(|| usage()).into(),
+            "--shard-dir" => shard_dir = it.next().unwrap_or_else(|| usage()).into(),
             "--out" => out = it.next().unwrap_or_else(|| usage()).into(),
             _ => usage(),
         }
     }
-    let manifest = read_manifest(&manifest_path).unwrap_or_else(|e| fail(&e));
-    let content = load_db_rows(&db, &manifest.sha256_hex).unwrap_or_else(|e| fail(&e));
+    // The unmerged-shard gate (plan22 D6 — replaces the retired built_from
+    // manifest-digest check): an unmerged sidecar refuses the analysis.
+    let ro = rusqlite::Connection::open_with_flags(&db, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .unwrap_or_else(|e| fail(&format!("cannot open DB {}: {e}", db.display())));
+    let shard_rows = read_shard_rows(&ro).unwrap_or_else(|e| fail(&e));
+    if let Err(e) = check_unmerged_shards(&shard_dir, &shard_rows) {
+        fail(&e);
+    }
+    drop(ro);
+    let content = load_db_rows(&db).unwrap_or_else(|e| fail(&e));
     let mut an = Analysis {
         rows: &content.rows,
         by_path: content

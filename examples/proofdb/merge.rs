@@ -43,6 +43,8 @@ mod skeleton;
 #[cfg(test)]
 mod tests;
 
+pub mod fold;
+
 pub use depth::DepthStatus;
 
 /// A node of the merged path-keyed tree.

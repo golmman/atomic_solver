@@ -1,7 +1,8 @@
-//! The harvest session (plan2 D2): the retained `Search` plus the job
-//! pipeline (replay → budgeted prefix search → classify → shard export →
-//! manifest entry). Split from the `proofdb_harvest` CLI for the 10 KB
-//! file-size convention; the CLI drives this type from `main`.
+//! The harvest session (plan2 D2, plan22 sidecar production): the retained
+//! `Search` plus the job pipeline (replay → budgeted prefix search →
+//! classify → shard export → bin + sidecar write). Split from the
+//! `proofdb_harvest` CLI for the 10 KB file-size convention; the CLI drives
+//! this type from `main`.
 //!
 //! Session shape (campaign-worker precedent): one `Search` instance with a
 //! private TT retained across jobs; `first_outcome_only` is on (PV
@@ -10,33 +11,35 @@
 //! unaffected — every fact crosses the boundary only through reconstruction
 //! + replay validation.
 //!
-//! Crash consistency (plan17 D1/D4): after every decisive job's shard write
-//! the session atomically rewrites the on-disk manifest (tmp + rename), so
-//! an unexpected crash or ctrl-c loses at most the in-flight job's work —
-//! the on-disk manifest is always a prefix of the session's decisive
-//! sequence, and every `*.bin` written so far but the (at most one) orphan
-//! of an interrupted job is referenced by it. Censored jobs touch only the
-//! censor state (one committed `censor`-table transaction per censor,
-//! plan20 — already atomic).
+//! Crash consistency (plan22 D1, superseding plan17's manifest dance): the
+//! produce pipeline writes `<tag>.bin` first, then the sidecar
+//! `<tag>.meta.json` (atomic tmp + rename). The write order is the commit
+//! marker — a sidecar present ⇒ its bin is complete; a bin without a
+//! sidecar is the interrupted job's orphan (deterministically overwritten
+//! by the retry); a sidecar-write failure aborts the session with the bin
+//! as the one orphan. An unexpected crash or ctrl-c therefore loses at most
+//! the in-flight job's work. Censored jobs touch only the censor state (one
+//! committed `censor`-table transaction per censor, plan20 — already
+//! atomic).
 //!
-//! ~11 KB (justified per the file-size convention): the whole job pipeline
-//! (replay → budgeted search → classify → shard export → per-job durable
-//! manifest sync → census records) shares one `Session` state — splitting
-//! it would fragment the produce/sync ordering the crash-consistency
-//! contract rests on; tests live in `tests/proofdb.rs` (cargo does not run
-//! unit tests inside example targets) and `record.rs`.
+//! ~9 KB (justified per the file-size convention): the whole job pipeline
+//! (replay → budgeted search → classify → shard export → durable bin +
+//! sidecar write → census records) shares one `Session` state — splitting
+//! it would fragment the produce ordering the crash-consistency contract
+//! rests on; tests live in `tests/proofdb.rs` (cargo does not run unit
+//! tests inside example targets) and `record.rs`.
 
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Instant;
 
 use atomic_solver::position::Outcome;
 use atomic_solver::reconstruct::ReconstructConfig;
 use atomic_solver::search::dfpn::Search;
 
-use super::harvest::{Job, classify, make_entry, replay_job_path};
+use super::harvest::{Job, classify, make_sidecar, replay_job_path, tag_for_path};
 use super::shard_export::export_validated_shard;
-use super::{ShardEntry, write_manifest};
+use super::sidecar::{SidecarEntry, write_sidecar};
 
 mod record;
 pub use record::JobRecord;
@@ -48,33 +51,29 @@ pub fn fail(msg: &str) -> ! {
 }
 
 /// The harvest session: the retained `Search` plus the mutable state the
-/// job pipeline threads through (manifest entries, collision sets, counts).
+/// job pipeline threads through (collision sets, counts).
 pub struct Session {
     search: Search,
     export_cfg: ReconstructConfig,
     shard_dir: PathBuf,
-    /// The manifest path the per-job sync (plan17 D2) rewrites after every
-    /// decisive job; the same file the end-of-batch `rewrite_manifest`
-    /// covers.
-    manifest_path: PathBuf,
-    entries: Vec<ShardEntry>,
     known_tags: HashSet<String>,
     known_paths: HashSet<String>,
     /// The coverage policy name (census field).
     policy: &'static str,
-    /// Shard entries appended this session.
+    /// Shards produced this session.
     pub new_shards: usize,
 }
 
 impl Session {
     /// Assemble the session: fresh `Search` (safety-net wall timeout; the
-    /// child-eval budget is binding), export config, and the manifest state
-    /// the collision asserts work against.
+    /// child-eval budget is binding), export config, and the collision
+    /// sets seeded from the DB's `shards` rows (plan22 D6 — the standing
+    /// layer's tags/paths; the manifest is gone). `seed_paths` holds the
+    /// space-joined UCI paths of the standing shard rows.
     pub fn new(
         tt_mb: usize,
         shard_dir: PathBuf,
-        manifest_path: PathBuf,
-        seed_entries: Vec<ShardEntry>,
+        seed_paths: HashSet<String>,
         policy: &'static str,
     ) -> Self {
         let mut search = Search::new(tt_mb);
@@ -88,40 +87,49 @@ impl Session {
             fill_attempt_budget: 2_000_000,
             fill_total_budget: 100_000_000,
         };
-        let known_tags = seed_entries.iter().map(|e| e.tag.clone()).collect();
-        let known_paths = seed_entries.iter().map(|e| e.moves.join(" ")).collect();
+        let known_tags: HashSet<String> = seed_paths
+            .iter()
+            .map(|p| {
+                let path: Vec<String> = if p.is_empty() {
+                    Vec::new()
+                } else {
+                    p.split(' ').map(str::to_string).collect()
+                };
+                tag_for_path(&path)
+            })
+            .collect();
         Self {
             search,
             export_cfg,
             shard_dir,
-            manifest_path,
-            entries: seed_entries,
             known_tags,
-            known_paths,
+            known_paths: seed_paths,
             policy,
             new_shards: 0,
         }
     }
 
-    /// Does `path` already have a shard (decided during this session)?
+    /// Does `path` already have a shard (decided during this session or in
+    /// the standing layer)?
     pub fn has_path(&self, path: &str) -> bool {
         self.known_paths.contains(path)
     }
 
-    /// The decisive-outcome pipeline: export → validate → write shard →
-    /// entry. Aborts the session on any defect (decision 2: rejected, never
-    /// patched).
+    /// The decisive-outcome pipeline: export → validate → write bin →
+    /// write sidecar. Aborts the session on any defect (decision 2:
+    /// rejected, never patched); a sidecar-write failure leaves the bin as
+    /// the one orphan (plan22 D1's crash window).
     fn produce_shard(&mut self, job: &Job, sub_fen: &str, outcome: Outcome) -> (String, usize) {
         let tree = export_validated_shard(&self.search, sub_fen, &self.export_cfg)
             .unwrap_or_else(|e| fail(&format!("job {}: export rejected: {e}", job.path.join(" "))));
-        let entry = make_entry(job, sub_fen, outcome);
-        if !self.known_tags.insert(entry.tag.clone()) {
+        let side = make_sidecar(job, sub_fen, outcome);
+        if !self.known_tags.insert(side.tag.clone()) {
             fail(&format!(
                 "new shard tag {} collides with a known tag",
-                entry.tag
+                side.tag
             ));
         }
-        if !self.known_paths.insert(entry.moves.join(" ")) {
+        if !self.known_paths.insert(side.moves.join(" ")) {
             fail(&format!(
                 "job {} already has a shard (path collision)",
                 job.path.join(" ")
@@ -133,42 +141,31 @@ impl Session {
                 .unwrap_or_else(|e| fail(&format!("shard serialize: {e}")));
             buf
         };
-        let path = self.shard_dir.join(&entry.file);
+        // The sidecar's sha256 is the bin digest (the corruption cross-check
+        // and the fold's idempotence key) — set after serialization.
+        let side = SidecarEntry {
+            sha256: super::digest_hex(&bytes),
+            ..side
+        };
         // The default shard dir lives under data/proofdb/ — create it on the
         // first shard write (plan14 D3; reading never creates anything).
         std::fs::create_dir_all(&self.shard_dir)
             .unwrap_or_else(|e| fail(&format!("cannot create {}: {e}", self.shard_dir.display())));
-        std::fs::write(&path, &bytes)
-            .unwrap_or_else(|e| fail(&format!("cannot write {}: {e}", path.display())));
-        self.entries.push(entry.clone());
-        self.new_shards += 1;
-        // Plan17 D1/D4: the per-job durable manifest sync — from here on the
-        // on-disk manifest references every `*.bin` written so far. Silent
-        // (no stdout line; the batch-end `manifest:` line is unchanged). A
-        // write failure aborts the session like every other durable-layer
-        // defect: exit 2, the previous manifest intact, this job's shard the
-        // one orphan.
-        self.sync_manifest().unwrap_or_else(|e| {
+        let bin = self.shard_dir.join(&side.file);
+        std::fs::write(&bin, &bytes)
+            .unwrap_or_else(|e| fail(&format!("cannot write {}: {e}", bin.display())));
+        // D1: the sidecar is the commit marker — written only after the
+        // bin is complete, so an interruption here leaves a bin-only orphan.
+        write_sidecar(&self.shard_dir, &side).unwrap_or_else(|e| {
             fail(&format!(
-                "manifest sync after job {}: {e}",
-                job.path.join(" ")
+                "sidecar write after job {}: {e} (the bin {} is the one orphan; \
+                 the retry overwrites determinically)",
+                job.path.join(" "),
+                side.file
             ))
         });
-        (entry.tag, tree.nodes.len())
-    }
-
-    /// Atomically rewrite the on-disk manifest over the current entry set
-    /// (tmp + rename). Called at batch end by the CLI (the per-decisive-job
-    /// sync is [`Self::sync_manifest`]), and testable directly; the
-    /// end-of-batch rewrite goes through
-    /// [`Self::rewrite_manifest`], which keeps its CLI-facing signature and
-    /// stdout line.
-    ///
-    /// # Errors
-    /// Any I/O error, as a message (the caller aborts the session).
-    pub(crate) fn sync_manifest(&self) -> Result<String, String> {
-        super::create_parent_dir(&self.manifest_path)?;
-        write_manifest(&self.manifest_path, &self.entries)
+        self.new_shards += 1;
+        (side.tag, tree.nodes.len())
     }
 
     /// Run one job at its policy-resolved screen budget: replay the
@@ -233,24 +230,6 @@ impl Session {
             pass: None,
             work_before: None,
             kind: None,
-        }
-    }
-
-    /// Rewrite the manifest (sorted, deterministic) only when the batch grew
-    /// the shard set; an unchanged set keeps its bytes (and digest).
-    pub fn rewrite_manifest(&self, manifest_path: &Path, old_digest: &str) {
-        if self.new_shards > 0 {
-            // The default manifest lives under data/proofdb/shards/ — the
-            // shard writes above already created the directory, but keep the
-            // writer self-sufficient for explicit paths too.
-            super::create_parent_dir(manifest_path).unwrap_or_else(|e| fail(&e));
-            let digest = write_manifest(manifest_path, &self.entries).unwrap_or_else(|e| fail(&e));
-            println!("manifest: {} entries, digest {digest}", self.entries.len());
-        } else {
-            println!(
-                "manifest: unchanged ({} entries, digest {old_digest})",
-                self.entries.len()
-            );
         }
     }
 }

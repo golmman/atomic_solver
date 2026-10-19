@@ -1,22 +1,18 @@
-//! The DB content the harvest loop works against (plan2 D2, plan3 D1):
-//! read-only extraction of all nodes in path form, with the `built_from`
-//! digest guard (no silent divergence between DB and shards).
+//! The DB content the harvest loop works against (plan22 D6): read-only
+//! extraction of all nodes in path form, plus the unmerged-shard gate that
+//! replaces the retired `built_from` manifest-digest staleness check — any
+//! shard collected after the last fold is a sidecar without a `shards` row.
 
 use std::path::Path;
 
-use rusqlite::OpenFlags;
-
 use atomic_solver::position::Outcome;
 use atomic_solver::position::Position;
+use rusqlite::OpenFlags;
+
+use super::schema::ShardRow;
+use super::sidecar::scan_shard_dir;
 
 type Res<T> = Result<T, String>;
-
-/// Length-safe digest prefix for error messages. A DB-stored `built_from`
-/// is arbitrary content (foreign/corrupted DB) — rendering it must never
-/// panic; the message may print the value in full instead of truncating.
-fn short(s: &str) -> &str {
-    s.get(..16).unwrap_or(s)
-}
 
 /// One DB node in path form (the frontier-extraction input).
 #[derive(Debug)]
@@ -27,38 +23,31 @@ pub struct DbRow {
     pub depth_bound: Option<u32>,
 }
 
-/// The DB content the frontier extraction works against (extracted
-/// read-only).
+/// The DB content the frontier extraction works against.
 #[derive(Debug)]
 pub struct DbContent {
     pub root_fen: String,
+    /// The fold digest (`meta.built_from`, D5) — the harvest banner's
+    /// version stamp.
+    pub built_from: String,
     pub rows: Vec<DbRow>,
 }
 
 /// Load all DB nodes with their paths, outcomes, and depth bounds,
-/// read-only, aborting unless `meta.built_from` equals `manifest_sha256`
-/// and `root_fen` is the startpos.
+/// read-only, aborting unless `root_fen` is the startpos.
 ///
 /// # Errors
-/// Any SQLite/I/O error, a digest mismatch (stale DB), a non-startpos root,
-/// a broken parent chain, a ply inconsistency, or an unexpected outcome.
-pub fn load_db_rows(db_path: &Path, manifest_sha256: &str) -> Res<DbContent> {
+/// Any SQLite/I/O error, a non-startpos root, a broken parent chain, a ply
+/// inconsistency, or an unexpected outcome.
+pub fn load_db_rows(db_path: &Path) -> Res<DbContent> {
     let conn = rusqlite::Connection::open_with_flags(db_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("cannot open DB {}: {e}", db_path.display()))?;
     let meta = |key: &str| -> Res<String> {
         conn.query_row("SELECT value FROM meta WHERE key=?1", [key], |r| r.get(0))
             .map_err(|e| format!("meta row {key:?}: {e}"))
     };
-    let built_from: String = meta("built_from")?;
-    if built_from != manifest_sha256 {
-        return Err(format!(
-            "DB built_from {} != manifest digest {} (stale DB or stale manifest — \
-             re-merge the standing shard set first)",
-            short(&built_from),
-            short(manifest_sha256)
-        ));
-    }
-    let root_fen: String = meta("root_fen")?;
+    let built_from = meta("built_from")?;
+    let root_fen = meta("root_fen")?;
     if root_fen != Position::STARTPOS_FEN {
         return Err(format!("DB root_fen is not the startpos: {root_fen}"));
     }
@@ -132,5 +121,41 @@ pub fn load_db_rows(db_path: &Path, manifest_sha256: &str) -> Res<DbContent> {
             depth_bound,
         });
     }
-    Ok(DbContent { root_fen, rows })
+    Ok(DbContent {
+        root_fen,
+        built_from,
+        rows,
+    })
+}
+
+/// The unmerged-shard gate (plan22 D6 — replaces the `built_from` staleness
+/// gate): scan the shard dir and refuse on
+///
+/// (i) a **sidecar** whose tag is absent from the `shards` table — an
+/// unmerged shard; run `proofdb_merge` first;
+/// (ii) a **sidecar without a bin** — a durable-layer defect;
+///
+/// while a bin without a sidecar is the interrupted job's orphan, ignored
+/// (plan17's loss window: a crashed session must not wedge the next
+/// harvest; the retry overwrites determinically).
+///
+/// # Errors
+/// An unmerged shard or a defective sidecar pair, as a message naming the
+/// tag; or a shard-dir read failure.
+pub fn check_unmerged_shards(shard_dir: &Path, shard_rows: &[ShardRow]) -> Res<()> {
+    let scan = scan_shard_dir(shard_dir)?;
+    let table: std::collections::HashSet<&str> =
+        shard_rows.iter().map(|r| r.tag.as_str()).collect();
+    for tag in &scan.sidecar_tags {
+        if !scan.bin_tags.iter().any(|b| b == tag) {
+            return Err(format!(
+                "shard {tag}: sidecar without bin — durable-layer defect \
+                 (a sidecar is only written after its bin)"
+            ));
+        }
+        if !table.contains(tag.as_str()) {
+            return Err(format!("unmerged shard {tag} — run proofdb_merge first"));
+        }
+    }
+    Ok(())
 }

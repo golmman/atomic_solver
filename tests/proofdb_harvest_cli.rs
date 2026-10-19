@@ -1,19 +1,22 @@
 //! Binary-level tests for the `proofdb_harvest` scoped harvest (plan19):
-//! the `--moves` fail-fast validation (usage exit 1 before any manifest/
-//! DB state is touched), a scoped session's in-scope-only job paths and
-//! preserved out-of-scope censor records, the proven-scope exhausted note,
-//! and the absent-flag global shape (bit-identity at the CLI surface).
-//! Since plan20 the censor state lives in the DB's `censor` table, so every
-//! test works on its own copy of the fixture DB (the harvest writes censor
-//! rows there) and seeds censor state with plain SQL. The example binaries
-//! are driven through `cargo run --example` (the `test_benchmark_json`
-//! harness style — `CARGO_BIN_EXE_*` is not set for example targets);
-//! invocations are serialized by a lock because each one goes through
-//! cargo's build lock.
+//! the `--moves` fail-fast validation (usage exit 1 before any DB state is
+//! touched), a scoped session's in-scope-only job paths and preserved
+//! out-of-scope censor records, the proven-scope exhausted note, and the
+//! absent-flag global shape (bit-identity at the CLI surface). Since plan20
+//! the censor state lives in the DB's `censor` table, so every test works
+//! on its own copy of the fixture DB (the harvest writes censor rows
+//! there) and seeds censor state with plain SQL. Since plan22 the session
+//! runs on the sidecar world (the `--manifest` flag is retired), so the
+//! per-test shard dir carries the `clifix.bin` + `clifix.meta.json` pair.
+//! The example binaries are driven through `cargo run --example` (the
+//! `test_benchmark_json` harness style — `CARGO_BIN_EXE_*` is not set for
+//! example targets); invocations are serialized by a lock because each one
+//! goes through cargo's build lock.
 //!
 //! The fixture DB is built once per test process (lazily, shared) by a
-//! real `proofdb_merge` over a one-shard manifest: root (open) + the spine
-//! `f2f3` / `f2f3 e7e6` (open) + `f2f3 e7e6 g2g4` (win, bound 1) +
+//! real `proofdb_merge` over a one-shard manifest (the legacy metadata
+//! source, which the merge backfills into the sidecar): root (open) + the
+//! spine `f2f3` / `f2f3 e7e6` (open) + `f2f3 e7e6 g2g4` (win, bound 1) +
 //! `f2f3 e7e6 g2g4 d8h4` (loss terminal).
 
 use std::process::Command;
@@ -119,7 +122,8 @@ struct Run {
     stderr: String,
 }
 
-/// Run `proofdb_harvest` with explicit paths (no defaults touched).
+/// Run `proofdb_harvest` with explicit paths (no defaults touched; no
+/// `--manifest` — the flag is retired, plan22).
 fn run_harvest(tmp: &std::path::Path, extra: &[&str]) -> Run {
     let _guard = RUN_LOCK.lock().unwrap();
     let mut args: Vec<String> = vec![
@@ -131,8 +135,6 @@ fn run_harvest(tmp: &std::path::Path, extra: &[&str]) -> Run {
         "--".into(),
         "--db".into(),
         tmp.join("fixture.db").to_str().unwrap().into(),
-        "--manifest".into(),
-        tmp.join("shards/manifest.json").to_str().unwrap().into(),
         "--shard-dir".into(),
         tmp.join("shards").to_str().unwrap().into(),
         "--budget-evals".into(),
@@ -155,9 +157,17 @@ fn temp_dir(name: &str) -> std::path::PathBuf {
     let dir =
         std::env::temp_dir().join(format!("proofdb_harvest_cli_{name}_{}", std::process::id()));
     std::fs::create_dir_all(dir.join("shards")).unwrap();
-    std::fs::write(
-        dir.join("shards/manifest.json"),
-        std::fs::read(format!("{}/manifest.json", fixture())).unwrap(),
+    // The sidecar-world shard layer: the merge backfilled the fixture's
+    // sidecar (plan22 D2), so the pair is what the session sees — no
+    // manifest file exists here.
+    std::fs::copy(
+        format!("{}/clifix.bin", fixture()),
+        dir.join("shards/clifix.bin"),
+    )
+    .unwrap();
+    std::fs::copy(
+        format!("{}/clifix.meta.json", fixture()),
+        dir.join("shards/clifix.meta.json"),
     )
     .unwrap();
     // The session's own DB copy: the harvest commits censor rows to it
