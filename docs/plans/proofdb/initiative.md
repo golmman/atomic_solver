@@ -224,6 +224,29 @@ value.
 
 ## History
 
+- **2026-10-16 — plan23 drafted (docs-only plan session): item 19 scoped
+  against the real post-plan22 state.** Three probes reshaped the item.
+  (i) The standing layer is still pre-fold (`built_from 70a160a6…`, the
+  manifest-digest stamp; the old transport sits parked at
+  `data/proofdb/shards-bak/` — 405 bins + the legacy manifest, no
+  sidecars), and the migration recipe was validated end-to-end on a copy:
+  an in-place no-op fold (`folded 0 (405 already merged)`, sha
+  cross-checks pass) re-stamps `built_from` to the fold digest
+  `47b25861d0f56776…` with `nodes`/`censor`/`shards` byte-equal,
+  `verify: ok — nodes 43092 (proven 43028, open 64)`, `flips 0`. (ii)
+  New probe finding: a *missing* shard dir aborts merge/harvest/flip
+  (only an existing empty dir bootstraps) — the migration recipe and R6
+  must recreate the dir after deleting the transport. (iii) The handoff
+  package (`measurements/plan13/handoff/`) was re-cut today, post-plan22
+  but pre-migration: it ships the pre-fold DB with a v1-flavored spec
+  copy (`built_from` = manifest digest, "exactly one proving child") and
+  a HANDOFF.md calling `nodes` "deterministically rebuildable" — the
+  v2-reverted claim item 19 exists to retire; plan23 supersedes it with a
+  post-migration spec-v2 re-cut. Honest scoping recorded in the plan:
+  plan22's D10 patch already landed the v2 semantics, so the spec/manual
+  work is a coherence pass (numbering, audit-trail sentence, transitional
+  seams), not a from-scratch rewrite; no code changes planned. Plan:
+  `plan23.md`.
 - **2026-10-16 — item 18 executed and closed (plan22).** The DB became
   the single source of truth: `proofdb_merge` is the incremental fold
   (one transaction per invocation; replay-validated standing-tree load;
