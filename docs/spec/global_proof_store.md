@@ -62,7 +62,7 @@ CREATE TABLE censor (                -- schema v2, additive (see §2.1)
 (bits 0–5 `to_sq`, 6–11 `from_sq`, 12–13 move type, 14–15 promotion piece;
 `0xFFFF` is reserved as the null sentinel).
 
-### The censor table (schema v2, additive)
+### 2.1. The censor table (schema v2, additive)
 
 Schema v2 adds one table over v1: `censor`, the relocated harvest work
 ledger. One row per **known-open frontier node** the harvester has censored
@@ -85,16 +85,6 @@ The table is **harvest scheduling state**, not proof data:
 - `censor` rows are replay-independent scheduling hints; deleting them
   costs re-searched work, never soundness.
 
-### Meta rows
-
-| key | value |
-| --- | --- |
-| `schema_version` | `2` (v1 files carry `1`; v2 is additive — the `censor` table only) |
-| `root_fen` | the startpos FEN every path is relative to |
-| `node_count` | number of rows in `nodes` |
-| `built_from` | SHA-256 (hex) fold digest over the shard provenance set (§2.2) |
-| `generator` | free-form producer identification |
-
 ### 2.2. The fold digest (`built_from`)
 
 The database grows by an **incremental fold**: each fold validates a batch
@@ -106,6 +96,16 @@ set always digest identically) and never NULL, but it is **not** a
 rebuildability stamp: the DB is the source of truth (§6), not a derived
 view. A tag with the same bytes folding again is a no-op; the same tag with
 different bytes is a defect the fold refuses (it never patches).
+
+### Meta rows
+
+| key | value |
+| --- | --- |
+| `schema_version` | `2` (v1 files carry `1`; v2 is additive — the `censor` table only) |
+| `root_fen` | the startpos FEN every path is relative to |
+| `node_count` | number of rows in `nodes` |
+| `built_from` | SHA-256 (hex) fold digest over the shard provenance set (§2.2) |
+| `generator` | free-form producer identification |
 
 ## 3. Field semantics
 
@@ -188,12 +188,17 @@ a bin without a sidecar is an interrupted job's orphan (skippable, the
 retry overwrites determinically — tag = hash of path); a sidecar without a
 bin is a transport defect. Sidecars are **ephemeral transport**: once their
 content is folded into the DB (recorded in the `shards` table), the pairs
-are deletable.
+are deletable. After the transport is deleted, a `shards` row is the
+**permanent provenance record** for its tag — the only evidence that shard
+ever existed; the contract never requires a deleted shard to be
+reproducible from the DB or elsewhere (§6).
 
 ### 5.2. The legacy manifest (migration source)
 
-The retired **manifest** format remains readable as a migration/metadata
-source: a JSON object with an `entries` array; each entry requires the
+The retired **manifest** format is transitional: it remains readable solely
+as a migration source for layers that predate the sidecar contract (§5.1);
+layers operating under this contract never produce one. A manifest is
+a JSON object with an `entries` array; each entry requires the
 sidecar's fields plus `validate` (a shard enters a fold only on `'ok'`)
 and no `sha256` (the fold computes and backfills the sidecar's digest).
 Additional per-entry fields (tier, node counts, timings) are permitted and

@@ -52,9 +52,12 @@ fold, deletable shards, `proofdb_verify` replacing the byte-identical
 rebuild contract) → item 19 (spec v2 + manual rewrite + standing-layer
 migration). Item 18 shipped 2026-10-16 (plan22): the DB is the single
 source of truth, shards are sidecar transport deletable after their fold
-under the manual's fold → verify → backup → delete recipe, and item 19's
-standalone contract rewrite runs next (plan22 patched the spec/manual to
-leave nothing actively wrong).
+under the manual's fold → verify → backup → delete recipe. Item 19
+shipped 2026-10-20 (plan23): the standing layer was migrated in place
+(no-op fold re-stamping `built_from` to the fold digest, transport
+archived + deleted), the spec/manual coherence pass landed, and the
+external handoff was re-cut post-migration — the 2026-10-15 pivot
+program (17→18→19) is closed.
 
 ## Motivation (pre-pivot record)
 
@@ -201,7 +204,7 @@ value.
 | 16 | **Scoped harvest (`--moves` — the walk re-anchored at a startpos path)** | `proofdb_harvest --moves 'a2a4 b7b5 b1a3'`: the frontier-walk session runs with its world rooted at the node reached by replaying the given moves from the startpos — only that node and its descendants are searched/expanded. Re-anchor, not filter (the scope node is the walk's root: virtual-root bootstrap, drop rules evaluated scope-relative, census scoped + out-of-scope count); a proven-stored scope node ends the session `exhausted` with an explanatory note; tokens whitespace-separated and prefix-validated by startpos replay (nonsense/illegal → usage exit 1, fail-fast before any state load); absent flag = exact today behavior (bit-identity) | targeted growth without disturbing the global frontier: an operator can commit work to one line's subtree (deepen/resolve a chosen opening) while the shared ledger and DB stay untouched elsewhere — scoping is a selection-layer change only since every job already replays the full startpos path | S | **done (plan19, 2026-10-14)**: shipped; the frontier keys its order/complete/decided sets scope-relative (`rel_of`/`join_scope`; the scope root is relative `""`), proven rows above the scope invisible, `pick` returns absolute keys (job JSON unchanged); census line gains `out_of_scope O …; scope <path\|global>`; proven-scope stderr note; parser validated by startpos replay with the offending token named; CLI-level test target `tests/proofdb_harvest_cli.rs` (exit-1 unhappy paths touch no state, in-scope-only jobs, proven-scope exhausted, absent-flag global shape); global call sites re-pinned bit-identical; see `report19.md` |
 | 17 | **Censor state into the DB — one-artifact frontier (retire `work.json` and `proofdb_ledger_union`)** | a `censor` table in the DB (schema v2, additive: `path`/`work_done`/`passes_failed`, the exact ledger relocation — the ledger is censor-history only, verified by code read); the in-memory `Ledger` type and all walk selection code stay untouched, only the persistence backend swaps (JSON file → SQLite, per-bump committed transaction = today's per-censor atomic save); harvest gains a narrow writer carve-out (censor rows only — merge stays sole writer of `nodes`/`shards`/`meta`); merge preserves `censor` across its full rebuild; one-shot `proofdb_merge --import-censor` migrates a legacy ledger under the union max-rule | the frontier state lives in the one file the owner wants as truth; the first step of the 2026-10-15 durable-layer pivot (items 17→18→19); kills two artifacts (`work.json`, `proofdb_ledger_union`) and un-blocks item 6 (parallel censor merging becomes SQL) | S–M | **done (plan20, 2026-10-15)**: shipped as drafted (backend swap, D3 carve-out, D5 preservation, D6 import with the plan's per-field max rule); standing layer migrated — 3,615 censor records imported, `work.json` deleted, schema v2, flip clean; fixture rebuild digest re-pinned `406752cc…` (was `0d929f4c…`); see `report20.md` |
 | 18 | **DB as the source of truth: incremental merge fold, shards deletable post-merge, `proofdb_verify` audit** | `proofdb_merge` becomes an incremental fold: validate a shard, graft into the *standing* DB in one transaction keyed on the `shards`-table sha256 (idempotent, conflicts abort without writes); shards are reclassified from durable truth to ephemeral transport — deletable after merge; the byte-identical full-rebuild contract (constraint 3) is retired and replaced by `proofdb_verify` (replay-validate the whole DB tree read back from the DB itself — validation is path replay, it needs no shards) plus a documented `VACUUM INTO` offsite-backup duty; the `built_from` manifest-digest staleness gate is replaced by unmerged-shard detection (a `*.bin` present in the shard dir but absent from the DB `shards` table → harvest/flip refuse) | the scaling fix: removes the O(N²) per-decisive-job manifest rewrite and the millions-of-files durable layer the owner called out; crash consistency *simplifies* (one SQLite transaction per shard/batch replaces the atomic manifest dance); accepted losses, each deliberately replaced: byte-identical rebuild → verify + backup; post-deletion excision of a wrong proven fact → impossible, append-only truth (soundness bugs were never patched over anyway) | M | executed and closed 2026-10-16 (plan22); decisions settled in the plan: manifest retired to a legacy metadata/migration source (per-shard sidecars are the transport — shard-format v2 rejected to keep `proof_tree_dump.md` v1 closed), no DB→shardset export (portability = the DB file; audit = `proofdb_verify` from the DB alone) |
-| 19 | **Contract migration: spec v2, manual rewrite, standing-layer consolidation** | `docs/spec/global_proof_store.md` rewritten as the v2 contract (DB = truth; `censor` table semantics; per-shard provenance as the audit trail; deletion/backup policy) — standalone, no plans vocabulary; `docs/proofdb_pipeline.md` rewritten around the new artifact graph (R-recipes: backup replaces rebuild; no more re-merge-from-shards); AGENTS.md; migration of the standing layer (fold existing shards once, adopt the new contract) | the external agreement (`solve` handover, website) tracks the reality; closes the 2026-10-15 pivot | S–M | open — added 2026-10-15 (owner direction); runs after item 18 |
+| 19 | **Contract migration: spec v2, manual rewrite, standing-layer consolidation** | `docs/spec/global_proof_store.md` rewritten as the v2 contract (DB = truth; `censor` table semantics; per-shard provenance as the audit trail; deletion/backup policy) — standalone, no plans vocabulary; `docs/proofdb_pipeline.md` rewritten around the new artifact graph (R-recipes: backup replaces rebuild; no more re-merge-from-shards); AGENTS.md; migration of the standing layer (fold existing shards once, adopt the new contract) | the external agreement (`solve` handover, website) tracks the reality; closes the 2026-10-15 pivot | S–M | **done (plan23, 2026-10-20)**: standing layer migrated in place (no-op fold re-stamped `built_from 47b25861…`, rows byte-equal; verify ok; `VACUUM INTO` offsite backup; transport archived + deleted, empty production shard dir recreated); spec/manual coherence pass (§2 numbering, `shards` = permanent provenance record, transitional seams retired, history entry); external handoff re-cut post-migration (supersedes the pre-migration 10-16 re-cut); AGENTS.md verified accurate as-is; no code changes, gate green; see `report23.md` |
 | 20 | … | S | **done (plan21, 2026-10-16)**: shipped as drafted (D1–D9; D9's split grew to two peels — census/`RootState` into `walk/census.rs`, key algebra + drop/handled classification into `walk/keys.rs`); probes: standing layer 6,306 or-closed parents (12,612/43,092 nodes at-or-under one), current censor records drop 0 (frontier outside the or-closed subtrees — the drop bites as sessions create records there); committed fixture 23,885 or-closed parents over 50,258/55,703 nodes; see `report21.md` |
 
 ## Non-goals
@@ -224,6 +227,31 @@ value.
 
 ## History
 
+- **2026-10-20 — item 19 executed and closed (plan23); the
+  17→18→19 pivot program is complete.** The standing layer's parked
+  transport (`shards-bak/`, 405 manifest-era bins + legacy manifest)
+  was folded in place over the standing DB: a no-op fold (`folded 0
+  shards (405 already merged, 0 orphans skipped)`) that re-stamped
+  `built_from` to the fold digest `47b25861d0f56776…` with
+  `nodes`/`censor`/`shards` rows byte-equal before/after (43,092 nodes
+  = 43,028 proven + 64 open; 405 shards; 3,617 censor rows) — every
+  pre-registered output matched. Then `proofdb_verify --backup` (ok;
+  offsite copy `data/proofdb-backups/proofdb-47b25861-2026-10-20.db`),
+  flip sanity (0 flips), transport archived (`shards-bak-2026-10-20.tar.gz`)
+  and deleted, the empty production shard dir recreated (a missing dir
+  aborts every tool — now documented in the manual §10/R6), bare
+  post-checks green (digest unchanged). Docs: spec §2 subsection
+  numbering fixed, §5.1 gains the `shards`-row permanent-provenance
+  statement, §5.2 marked transitional; manual's sidecar-anatomy/
+  migration-recipe transitional phrasing retired, §11 history entry
+  added; `.gitignore` backup-duty prose moved to the DB file. The
+  external handoff package (`measurements/plan13/handoff/`) was re-cut
+  against the migrated DB under the v2 spec: sha256 `375a2b1f…`,
+  `built_from 47b25861…`, the provenance paragraph now says the DB is
+  append-only truth (the "deterministically rebuildable" claim retired);
+  the pre-migration 10-16 re-cut (`02fc7d60…`/`70a160a6…`) is explicitly
+  superseded. AGENTS.md verified accurate as-is. No code changes; gate
+  green (make test, fmt, clippy, doc). Report: `report23.md`.
 - **2026-10-16 — plan23 drafted (docs-only plan session): item 19 scoped
   against the real post-plan22 state.** Three probes reshaped the item.
   (i) The standing layer is still pre-fold (`built_from 70a160a6…`, the

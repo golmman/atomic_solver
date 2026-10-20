@@ -1,18 +1,21 @@
 # Handoff — the startpos proof-line database (SQLite, schema v2)
 
 **For:** the external exploratory-website project (read-only consumer).
-**Date:** 2026-10-16 · **From:** the producer of the database — the
+**Date:** 2026-10-20 · **From:** the producer of the database — the
 `atomic_solver` chess-solver project. This delivery is a **re-cut** of the
-2026-10-02 package: same contract shape, newer data snapshot, schema v2.
-Any copy of the 2026-10-02 delivery (schema v1, sha256 `0d929f4c…`) is
-superseded by this one and should be discarded.
+2026-10-16 package: same contract (schema v2), the same tree content, and
+a migration of the producer's standing layer to the v2 source-of-truth
+model (see Provenance). Any copy of the 2026-10-16 *pre-migration* re-cut
+(sha256 `02fc7d60…`, `built_from 70a160a6…` — the manifest-digest era) is
+superseded by this one and should be discarded; the same holds for the
+original 2026-10-02 v1 delivery (sha256 `0d929f4c…`).
 
 ## What is in this directory
 
 | file | content |
 | --- | --- |
 | `proofdb.db` | the proof-line database — one SQLite file, the only data artifact a consumer needs |
-| `global_proof_store.md` | **the normative contract**: schema v2, field semantics, invariants, example consumer queries (copy of the producer's current contract, lightly edited only to inline one reference to a producer-internal format document — the encoding itself is fully specified inline) |
+| `global_proof_store.md` | **the normative contract**: schema v2, field semantics, invariants, example consumer queries (copy of the producer's current contract, lightly edited only to inline two references to producer-internal format documents — the encoding itself is fully specified inline) |
 | `HANDOFF.md` | this file |
 
 ## The contract in one paragraph
@@ -35,21 +38,24 @@ copied spec — nothing else is guaranteed to a consumer.
 ## Version stamp (verify after receiving)
 
 ```text
-sha256(proofdb.db) = 02fc7d60bc588ef5a1589671c7dc8dcd899ae8f8afe11d23c208dfc0300210ae
+sha256(proofdb.db) = 375a2b1fc8a2959e3d60aa6737ba6b479988f23de3e953a3233fbae72b69f430
 meta.schema_version = 2
 meta.node_count     = 43092        (43028 proven: 21514 win + 21514 loss; 64 open)
-meta.built_from     = 70a160a65c9b08271de0865c09f2667779962741b4b8cf31f4695d347be79a58
+meta.built_from     = 47b25861d0f56776e04dc534cd8c781fdc45e180a54898e179264fbc6c3c5d72
 meta.root_fen       = rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 ```
 
-`built_from` identifies the source data set the DB was built from; future
-deliveries will carry a different `built_from` and node census — that is
-growth, not drift (the census may move in either direction; a delivery is
-not necessarily a node-count superset of a previous one). The `nodes`
-content is a derived view, deterministically rebuildable from the same
-source set; the *file's* sha256 is per-build provenance — a rebuild can
-change file bytes without changing a single row, so verify `built_from`
-and the census against a claim, not only file bytes.
+`built_from` identifies the source data set the DB was built from: it is
+the producer's SHA-256 **fold digest** over the shard provenance set
+recorded in the DB's `shards` table (spec §2.2). Future deliveries will
+carry a different `built_from` and node census — that is growth, not
+drift (the census may move in either direction; a delivery is not
+necessarily a node-count superset of a previous one). **The DB is the
+single source of truth, not a derived view**: it grows by incremental
+folds and is never rebuilt, so unlike a rebuildable artifact its tree
+rows are the durable facts themselves. A file's sha256 is per-delivery
+provenance — verify `built_from` and the census against a claim, and the
+delivered file by its sha.
 
 ## Read-only consumption statement
 
@@ -61,16 +67,21 @@ and the census against a claim, not only file bytes.
   semantics). A row's `outcome IS NULL` is genuinely undecided.
 - The spec's §4 invariants are the guarantee surface (replay-verifiable
   paths, proven decisive nodes, depth monotonicity, path-unique identity,
-  deterministic ids). §7 of the spec has ready-to-run example queries.
+  stable ids). §7 of the spec has ready-to-run example queries.
 
 ## Provenance
 
-Built by the producer's single-writer merger from its validated source
-set (405 shards, manifest digest = `built_from` above), with the
-harvest scheduling state preserved row-for-row. Independent checks at
-delivery time (2026-10-16): all §4 structural invariants verified by the
-producer's replay validator; an independent implied-value flip analysis
-reported 0 unverified flips over the 64 open rows.
+Built and maintained by the producer's single-writer incremental fold
+from its validated source set (405 proven shards, recorded in the DB's
+`shards` table with per-shard digests — that table is the permanent
+provenance record). The 2026-10-20 delivery re-stamps the standing layer
+onto the v2 source-of-truth model: an in-place fold whose `nodes`,
+`censor`, and `shards` rows are byte-identical to the previous delivery's
+— only `built_from` (fold digest instead of manifest digest) and the file
+bytes changed. Independent checks at delivery time (2026-10-20): all §4
+structural invariants verified by the producer's whole-DB replay
+validator; an independent implied-value flip analysis reported 0
+unverified flips over the 64 open rows.
 
 Questions about the data or the pipeline: contact the owner (the
 producer's operator manual is available on request).

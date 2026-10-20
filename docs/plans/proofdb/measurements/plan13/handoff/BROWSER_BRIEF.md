@@ -26,10 +26,13 @@ disproven atomic-chess lines, grown incrementally by a harvester pipeline
 | `HANDOFF.md` | version stamp + provenance + read-only consumption statement |
 
 Verify on receipt: `sha256(proofdb.db) =
-02fc7d60bc588ef5a1589671c7dc8dcd899ae8f8afe11d23c208dfc0300210ae`, and the
-meta census below (§5). This is the 2026-10-16 re-cut of the original
-2026-10-02 delivery; discard any copy of the earlier v1 file
-(sha256 `0d929f4c…`).
+375a2b1fc8a2959e3d60aa6737ba6b479988f23de3e953a3233fbae72b69f430`, and the
+meta census below (§5). This is the 2026-10-20 re-cut (the producer's
+standing-layer migration to the v2 source-of-truth model; tree content
+unchanged from the 2026-10-16 re-cut). Discard any copy of the
+pre-migration 2026-10-16 file (sha256 `02fc7d60…`, `built_from
+70a160a6…`) and of the original 2026-10-02 v1 delivery (sha256
+`0d929f4c…`).
 
 Optional background (not part of the contract, and not included in this
 package — ask the owner if you want it): the producer's operator manual,
@@ -41,7 +44,8 @@ consumer SQL recipes verified against this exact DB.
 Every row of `nodes` is a position reached by a specific UCI move sequence
 (the *path*) from the startpos; the same position via a different route is
 a different row. `outcome` is from the side-to-move perspective: `'win'`
-(OR-node: exactly one proving `'loss'` child is stored), `'loss'` (AND-node:
+(OR-node: at least one proven `'loss'` child is stored — the tree
+annotations may keep additional proven-loss lines), `'loss'` (AND-node:
 every legal non-terminal reply is stored as a `'win'` child), `NULL` (open /
 undecided). `depth_bound` proves "decisive within ≤ d plies"; `depth_status
 = 'exact'` asserts minimality. Terminality is derivable (`outcome NOT NULL
@@ -70,11 +74,11 @@ comma-separated shard tags (display as "evidence", no semantics implied).
 ## 5. Version stamp of the delivery (verify after receiving)
 
 ```text
-sha256(proofdb.db) = 02fc7d60bc588ef5a1589671c7dc8dcd899ae8f8afe11d23c208dfc0300210ae
+sha256(proofdb.db) = 375a2b1fc8a2959e3d60aa6737ba6b479988f23de3e953a3233fbae72b69f430
 schema_version = 2
 root_fen       = rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 node_count     = 43092  (21514 win + 21514 loss proven, 64 open; 20220 terminals)
-built_from     = 70a160a65c9b08271de0865c09f2667779962741b4b8cf31f4695d347be79a58
+built_from     = 47b25861d0f56776e04dc534cd8c781fdc45e180a54898e179264fbc6c3c5d72
 root children  = g1f3, g1h3, a2a3, a2a4, c2c3, e2e3, e2e4 — all open; root undecided
 max ply        = 22; exact-status rows = 20220; shards table = 405 tags
 censor table  = 3617 rows (producer scheduling state — never render it)
@@ -84,10 +88,12 @@ Future deliveries carry a different `built_from` and census — that is
 growth, not drift (a delivery is *not* necessarily a node-count superset
 of this one; treat the census as an opaque per-delivery fact — this
 delivery itself is smaller than the 2026-10-02 one). Surface `built_from`
-(+ node census) in the UI as the data version stamp. A file's sha256 is
-per-build provenance — rebuilding from the same source set can change the
-file bytes without changing a row — so treat a *claim* about the data as
-verified by `built_from` + census, and the *delivered file* by its sha.
+(+ node census) in the UI as the data version stamp. The DB is the
+producer's durable source of truth (an incrementally folded, append-only
+artifact, never rebuilt); a file's sha256 is per-delivery provenance —
+any growth fold changes the file bytes — so treat a *claim* about the
+data as verified by `built_from` + census, and the *delivered file* by
+its sha.
 
 ## 6. The one real design decision: the rules engine
 
@@ -138,9 +144,10 @@ Feature sketch, ascending:
    (proven win / proven loss / open / no-row-unknown).
 2. Node facts panel: outcome, depth_bound, depth_status (exact/bound),
    terminality, provenance.
-3. Principal-line rendering: from an OR-node follow its unique `'loss'`
-   proving child; from an AND-node any reply — a walk to a `depth_bound = 0`
-   terminal renders a complete proof line (20,220 terminal rows exist).
+3. Principal-line rendering: from an OR-node follow a proven `'loss'`
+   child (the minimum-depth one if several are stored); from an AND-node
+   any reply — a walk to a `depth_bound = 0` terminal renders a complete
+   proof line (20,220 terminal rows exist).
 4. Views: open frontier (`outcome IS NULL ORDER BY ply, id`), shallowest
    proven wins (min `depth_bound` among `'win'`), a search by UCI line,
    shard/provenance browser (`shards` table).
@@ -156,9 +163,10 @@ Feature sketch, ascending:
    a consumer; ignore it, never render anything from it).
 2. **Structural invariant checks** (run over the whole DB at load or in CI;
    all are cheap SQL/application checks against the spec §4):
-   - depth monotonicity: proven non-terminal OR-nodes have exactly one
-     `'loss'` child and `depth_bound = child.depth_bound + 1`; AND-nodes
-     have `depth_bound = max(child.depth_bound) + 1` over all children.
+   - depth monotonicity: proven non-terminal OR-nodes have at least one
+     `'loss'` child and `depth_bound = min(child.depth_bound) + 1` over
+     their `'loss'` children; AND-nodes have
+     `depth_bound = max(child.depth_bound) + 1` over all children.
    - terminal nodes (`depth_bound = 0`) have no children rows.
    - `depth_status` NULL iff `outcome` NULL; ids strictly increasing in
      ply-order along `parent_id` chains (invariant 7 prefix ordering).
@@ -189,7 +197,9 @@ Feature sketch, ascending:
 > contract, schema v2) and `HANDOFF.md` in full. Verify the `proofdb.db`
 > sha256 and meta census against §5 of the brief — this is the
 > 2026-10-16 schema-v2 re-cut; discard any earlier v1 copy. The `censor`
-> table is producer scheduling state: ignore it everywhere. Decide the
+> table is producer scheduling state: ignore it everywhere. This is the
+> 2026-10-20 re-cut; discard any pre-migration 2026-10-16 copy (`built_from
+> 70a160a6…`) and any 2026-10-02 v1 copy. Decide the
 > rules-engine option (§6: TS port vs Rust/WASM of `atomic-movegen` 2.3)
 > and record the decision + rationale in a short `DECISIONS.md` before
 > writing UI code. Then scaffold the static site: DB load + version-stamp

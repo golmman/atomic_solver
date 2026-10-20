@@ -1,7 +1,22 @@
-# plan13 measurements — the website handoff package (2026-10-02; re-cut 2026-10-16)
+# plan13 measurements — the website handoff package (2026-10-02; re-cut 2026-10-16, re-cut 2026-10-20)
 
 Executes `../../plan13.md` (item 5: website handoff + user manual).
 Docs + measurement artifacts only — no `src/`/`examples/`/`tests/` changes.
+
+**Re-cut 2026-10-20 (plan23):** the delivery DB was replaced with the
+post-migration production layer (sha256 `375a2b1f…`, `built_from
+47b25861…` — the fold digest, post-migration standing layer; tree
+census unchanged from the 10-16 re-cut: 43,092 nodes = 43,028 proven +
+64 open, 405 shards, 3,617 censor rows) and the package docs re-pinned
+(HANDOFF version stamp + the v2 provenance paragraph — the DB is
+append-only truth, no longer described as "deterministically
+rebuildable"; BROWSER_BRIEF stamps + the v2 invariant-2/4 phrasings;
+spec copy re-cut from the migrated repo spec with the same inline
+edits). The 2026-10-16 *pre-migration* re-cut (sha256 `02fc7d60…`,
+`built_from 70a160a6…`, the manifest-digest era) is superseded, as is
+the 2026-10-02 v1 delivery (sha256 `0d929f4c…`, 55,703 nodes).
+Everything below under "Provenance" and "Session runs" describes the
+original 2026-10-02 delivery unless marked otherwise.
 
 **Re-cut 2026-10-16:** the delivery DB was replaced with the current
 production layer (schema v2, sha256 `02fc7d60…`, 43,092 nodes, `built_from
@@ -22,10 +37,10 @@ rebuild guarantee end-to-end.
 
 | file | content |
 | --- | --- |
-| `handoff/proofdb.db` | the current production layer, sha256 `02fc7d60…`, 43,092 nodes (proven 43,028: 21,514 win + 21,514 loss / open 64), schema v2, `built_from 70a160a6…`, 3,617 censor rows |
-| `handoff/HANDOFF.md` | the consumer-facing one-pager: contract pointer, digest + census, read-only consumption statement, provenance — rewritten for the re-cut |
-| `handoff/BROWSER_BRIEF.md` | the consumer-facing project brief — census/stamps/gates updated for the re-cut, obsolete addendum removed |
-| `handoff/global_proof_store.md` | copy of the current `docs/spec/global_proof_store.md` (schema v2); lightly edited to inline the two `proof_tree_dump.md` references (standalone package) |
+| `handoff/proofdb.db` | the current production layer (post-migration), sha256 `375a2b1f…`, 43,092 nodes (proven 43,028: 21,514 win + 21,514 loss / open 64), schema v2, `built_from 47b25861…` (fold digest), 3,617 censor rows |
+| `handoff/HANDOFF.md` | the consumer-facing one-pager: contract pointer, digest + census, read-only consumption statement, provenance — rewritten for the 2026-10-20 re-cut |
+| `handoff/BROWSER_BRIEF.md` | the consumer-facing project brief — census/stamps/gates updated for the 2026-10-20 re-cut (incl. the v2 multi-proving-child semantics) |
+| `handoff/global_proof_store.md` | copy of the current `docs/spec/global_proof_store.md` (schema v2, post-plan23 coherence state); lightly edited to inline the two `proof_tree_dump.md` references (standalone package) |
 | `env.json` | environment + rev + input/output state (from the original delivery) |
 
 Re-cut input state: production manifest `70a160a6…` (405 entries) + shard

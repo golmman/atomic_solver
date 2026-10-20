@@ -96,7 +96,11 @@ deleted. The shard pairs and the flip report are regenerable/throwaway.
   sidecars (path, fen, outcome, tag, sha256 — the self-describing pair).
   Written by `proofdb_harvest` (bin first, sidecar second — the sidecar is
   the commit marker), read by `proofdb_merge`, **deletable after their
-  fold** (recipe R6); every tool tolerates their absence once folded.
+  fold** (recipe R6); every tool tolerates their absence once folded. The
+  shard *directory itself* must exist for every tool to run (a missing
+  dir is a hard abort — §10): an empty dir is both the bootstrap state
+  (R0) and the steady state of a layer whose folded pairs are deleted
+  (R6).
 - **Flip report (analysis output).** `proofdb_flip`'s JSON verdict. A
   throwaway report, not part of the pipeline's persisted state.
 
@@ -453,8 +457,7 @@ to.
    replay-validated _again_ at fold time, grafted at its sidecar path,
    and only then becomes DB rows (recorded in the `shards` table).
 
-**Sidecar anatomy** (one standing-set sidecar, backfilled from the legacy
-manifest by recipe R1's fold, verbatim):
+**Sidecar anatomy** (one standing-set sidecar, verbatim):
 
 ```json
 {
@@ -482,8 +485,10 @@ manifest by recipe R1's fold, verbatim):
 replayed shard-root position (the fold cross-checks it against the
 replay); `outcome` is what the shard proves; `sha256` is the bin digest —
 the corruption cross-check and the fold's idempotence key; a bin/sidecar
-mismatch is refused. (The fixture set's sidecars are backfilled from the
-legacy manifest by recipe R1's fold.) Tag conventions:
+mismatch is refused. (The committed fixture set's sidecar files were
+written by that set's one-time migration fold, which backfilled them from
+its legacy manifest; the harvest writes fresh sidecars directly.) Tag
+conventions:
 `h_*` harvest facts, `p2_*` the plan2 batch, `lad_*` ladder lines,
 `sib_*` sibling refutations — provenance only, no semantic weight.
 
@@ -987,9 +992,10 @@ For the standing fixture shard set the census is the one in §7.1 and the
 fold digest is
 `14fd07530996eb9eddaa2b5d3e112d51d57339a892f7f8d0bb166205180a04e2` (the
 pre-plan22 manifest-digest stamp was `406752cc…`; the pre-plan20 v1
-digest was `0d929f4c…`). Migrating a *standing* layer to the fold world is
-exactly this recipe with the production paths: fold (backfill), verify,
-then delete the folded shard pairs + manifest (R6).
+digest was `0d929f4c…`). The production standing layer's own migration to
+the fold world is complete (in-place fold, verify, backup, transport
+deletion — 2026-10-20; §11): today's operator runs start from R0/R2, and
+no standing migration recipe remains.
 
 **R2 — grow the DB by one batch, then fold (production, bare defaults).**
 
@@ -1076,7 +1082,14 @@ rm data/proofdb/shards/*.bin data/proofdb/shards/*.meta.json \
 
 After step 4 every gate tolerates the empty shard dir: a fold skips tags
 with `shards` rows, and the harvest/flip gates key on unmerged sidecars
-(absent here).
+(absent here). One hard rule survives deletion: the **directory itself
+must exist** — a missing shard dir aborts every tool (`cannot read shard
+dir`: merge exit 2, harvest/flip exit 1). If the dir was removed
+wholesale (e.g. `rm -rf`, the migration path), recreate it first:
+
+```bash
+mkdir -p data/proofdb/shards
+```
 
 Operators with a pre-plan14 working layer (flat paths) migrate it first:
 
@@ -1228,6 +1241,12 @@ SELECT (SELECT COUNT(*) FROM nodes),
 
 ## 10. Troubleshooting and known limitations
 
+**Missing shard dir.** A shard *directory* that does not exist (as
+opposed to an existing empty one) aborts every tool at startup:
+`cannot read shard dir …` — merge exit 2, harvest/flip exit 1. Fix:
+`mkdir -p data/proofdb/shards`. An empty dir is always valid (the
+bootstrap state, R0; the steady state after R6's deletion).
+
 **Unmerged shards (the gate).** `proofdb_harvest`/`proofdb_flip` refuse
 with exit 1 and name the tag:
 
@@ -1307,6 +1326,24 @@ duty itself: keep the offsite copy current (R6), and stamp checks against
 the fold digest when in doubt (§8.2's census query).
 
 ## 11. History
+
+plan23 (2026-10-20) completed the standing layer's migration to the fold
+world and retired the last transitional wording: the parked pre-plan22
+transport (`shards-bak/`, 405 manifest-era bins + legacy manifest) was
+folded in place over the standing DB — a no-op fold that re-stamped
+`built_from` to the fold digest `47b25861…` with `nodes`/`censor`/`shards`
+rows byte-equal before/after (43,092 nodes = 43,028 proven + 64 open) —
+then verify + `VACUUM INTO` offsite backup, transport archived
+to `data/proofdb-backups/` and deleted, the empty production shard dir
+recreated (a missing dir aborts every tool — §10), and bare post-checks
+green. The external handoff package (`measurements/plan13/handoff/`) was
+re-cut against the migrated DB under the v2 spec (superseding the
+pre-migration 10-16 re-cut); the spec's §2 subsection numbering, the
+`shards` table's permanent-provenance-record statement, and the §6
+sidecar-anatomy provenance phrasing were made coherent with the v2
+contract. The DB is now the standing layer in its final fold-world shape:
+no manifest, no backfill, no migration recipe left (R1 keeps the fixture
+role only).
 
 plan22 (2026-10-16, the durable-layer pivot's step 2) made the **DB the
 single source of truth**: `proofdb_merge` became an incremental fold
