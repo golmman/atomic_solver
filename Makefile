@@ -48,7 +48,8 @@ proofdb_init:
 proofdb_cycle_run:
 	-rm STOP
 	cargo build --release --examples
-	$(BIN)/proofdb_harvest --policy frontier-walk --budget-evals 100000000 --moves "g1f3 d7d6 f3g5 f7f6"
+#	$(BIN)/proofdb_harvest --policy frontier-walk --budget-evals 100000000 --moves "g1f3 d7d6 f3g5 f7f6"
+	$(BIN)/proofdb_harvest --policy frontier-walk --budget-evals 100000000 --moves "g1f3 d7d6 b1c3 c7c6 f3g5 f7f6"
 	$(BIN)/proofdb_merge
 	$(BIN)/proofdb_flip
 
@@ -58,10 +59,8 @@ proofdb_cycle_stop:
 proofdb_stats:
 	@printf "number of shards: "
 	@ls data/proofdb/shards/ | wc -l
-	@printf "size of ledger: "
-	@wc -c < data/proofdb/work.json
-	@printf "number of ledger paths: "
-	@jq ".records | length" < data/proofdb/work.json
+	@printf "size of proofdb.db: "
+	@wc -c < data/proofdb/proofdb.db
 
 proofdb_sync:
 	examples/proofdb/sync.sh

@@ -1066,3 +1066,9 @@ In positions where it is white to move, once one move is proven a decisive win w
 Background and Justification: We assume white is ultimately winning atomic chess. Our goal is to narrow the corridors. To be more efficient we only need to prove one winning move for white (attacking OR-node).
 
 Please draft a plan in the proofdb initiative.
+
+---
+
+We are currently working on the `proofdb` initiative.
+i don't want to have explicit handoff to the proofdb browser. Instead i simply want to copy the updated `proofdb.db` file over.
+Are there any changes on this side necessary for this to work?
