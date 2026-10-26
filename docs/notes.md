@@ -1114,3 +1114,7 @@ The search does not find the draw though, it calculates and then times out.
 Since the ultimate goal is proving a win for the attacker (white) this should be counted as a loss from the attacker side in my opinion.
 
 Challenge my ideas, maybe i am wrong?
+
+---
+
+What happens in a proofdb harvest when we encounter a forced draw like the position in `make quick_draw`?

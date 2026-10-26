@@ -287,7 +287,7 @@ If these commands start failing (`EPERM`/`EACCES` on event open), the host-side 
   `docs/theory/<slug>/` (slug = algorithm-name-year; see
   `docs/theory/README.md`) — never vendor PDFs inside `docs/plans/`;
   link to the theory library instead.
-- you can ignore `docs/notes.md`: the users ideas and unfiltered notes go there
+- ignore `docs/notes.md`: the users ideas and unfiltered notes go there, statements in this file may be false and misleading
 - Boy Scout principle: you should leave the codebase as clean or cleaner than you found it
 
 ## Conversational Guidelines
