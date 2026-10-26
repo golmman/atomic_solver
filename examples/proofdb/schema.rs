@@ -10,11 +10,13 @@
 //! artifact: folding the identical shard set into an identical standing DB
 //! must reproduce it byte-for-byte (ids are stable surrogate keys, D4).
 //!
-//! Schema v2 (plan20) is additive over v1: the `censor` table relocates the
-//! harvest work ledger (the frontier's censor history — facts of absence,
-//! not representable in the tree model) into the DB. Consumers of the v1
-//! surface (`nodes`/`shards`/`meta`) are unaffected; the `censor` table is
-//! selection state and ignorable by consumers.
+//! Schema v2 is additive over v1: the `censor` table relocates the harvest
+//! work ledger (the frontier's censor history — facts of absence, not
+//! representable in the tree model) into the DB, and the `drawn` table
+//! records paths whose bounded search proved a draw (selection state that
+//! prunes their subtrees; still no tree outcome). Consumers of the v1
+//! surface (`nodes`/`shards`/`meta`) are unaffected; both scheduling tables
+//! are ignorable by consumers.
 
 use std::path::Path;
 
@@ -107,6 +109,13 @@ pub struct CensorRow {
 const CENSOR_DDL: &str = "CREATE TABLE censor (path TEXT PRIMARY KEY, work_done INTEGER NOT NULL, \
      passes_failed INTEGER NOT NULL);";
 
+/// The proven-draw scheduling table: one row per path whose bounded search
+/// returned a `Complete` draw. This is selection state, not proof data —
+/// the tree model has no draw outcome yet — but it must survive sessions so
+/// the walk prunes the drawn subtree instead of re-searching it. Consumers
+/// ignore it exactly like `censor`.
+const DRAWN_DDL: &str = "CREATE TABLE IF NOT EXISTS drawn (path TEXT PRIMARY KEY);";
+
 /// Ensure the standing DB carries the fold's schema (plan22 D3): a fresh
 /// file gets the full schema-v2 DDL; an existing file must be schema v2
 /// (schema-version meta row = 2 *and* the censor table present — a v1 file
@@ -142,7 +151,7 @@ pub fn ensure_fold_schema(conn: &Connection) -> Res<()> {
              );
              CREATE INDEX idx_nodes_parent ON nodes(parent_id);
              ";
-        conn.execute_batch(&format!("{batch}{CENSOR_DDL}"))
+        conn.execute_batch(&format!("{batch}{CENSOR_DDL}{DRAWN_DDL}"))
             .map_err(|e| format!("cannot create schema: {e}"))?;
         let mut stmt = conn
             .prepare("INSERT INTO meta VALUES (?1, ?2)")
@@ -186,6 +195,12 @@ pub fn ensure_fold_schema(conn: &Connection) -> Res<()> {
                 .to_string(),
         );
     }
+    // Additive scheduling table (step 1 of the proven-draw handling): an
+    // existing v2 file gains an empty `drawn` table in place. This is the
+    // only schema mutation the fold performs on an existing file, and it
+    // adds no proof surface.
+    conn.execute_batch(DRAWN_DDL)
+        .map_err(|e| format!("cannot ensure drawn table: {e}"))?;
     Ok(())
 }
 
@@ -221,6 +236,51 @@ pub fn read_censor_rows(conn: &Connection) -> Res<Vec<CensorRow>> {
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())?;
     Ok(rows)
+}
+
+/// Read every `drawn` row (the proven-draw scheduling state), ordered by
+/// path. A missing table (a pre-step-1 v2 DB) reads as empty; the harvest's
+/// next proven draw creates it on demand.
+///
+/// # Errors
+/// Any SQLite error other than the missing table.
+pub fn read_drawn_rows(conn: &Connection) -> Res<Vec<String>> {
+    let present: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='drawn'",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("cannot inspect schema: {e}"))?;
+    if present == 0 {
+        return Ok(Vec::new());
+    }
+    let mut stmt = conn
+        .prepare("SELECT path FROM drawn ORDER BY path")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |r| r.get::<_, String>(0))
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
+}
+
+/// Insert (or replace) one `drawn` scheduling row. `CREATE TABLE IF NOT
+/// EXISTS` keeps a pre-step-1 v2 DB usable without a fold; the statement is
+/// idempotent and only runs on the (rare) proven-draw path.
+///
+/// # Errors
+/// Any SQLite error, as a message.
+pub fn insert_drawn_row(conn: &Connection, path: &str) -> Res<()> {
+    conn.execute_batch(DRAWN_DDL)
+        .map_err(|e| format!("cannot ensure drawn table: {e}"))?;
+    conn.execute(
+        "INSERT OR REPLACE INTO drawn (path) VALUES (?1)",
+        rusqlite::params![path],
+    )
+    .map_err(|e| format!("cannot commit drawn row {path:?}: {e}"))?;
+    Ok(())
 }
 
 /// Insert (or replace) one `censor` row. Each call is one committed
@@ -284,7 +344,7 @@ pub fn write_db(
          );
          CREATE INDEX idx_nodes_parent ON nodes(parent_id);
          ";
-    conn.execute_batch(&format!("{batch}{CENSOR_DDL}"))
+    conn.execute_batch(&format!("{batch}{CENSOR_DDL}{DRAWN_DDL}"))
         .map_err(|e| format!("cannot create schema: {e}"))?;
     let node_count = tree.row_order.len().to_string();
     let meta: [(&str, &str); 5] = [

@@ -90,6 +90,45 @@ fn censor_commits_are_durable_per_bump() {
 }
 
 #[test]
+fn proven_draw_is_durable_and_not_a_censor() {
+    let path = tmp_db("drawn");
+    let conn = censor_db(&path);
+    let mut l = Ledger::default();
+    on_proven_draw(&mut l, &conn, "a2a3 b1c2").unwrap();
+    assert!(l.is_drawn("a2a3 b1c2"));
+    assert!(!l.contains("a2a3 b1c2"), "no censor record is created");
+    assert_eq!(l.len(), 0, "drawn is not a censor record");
+
+    // A fresh session reloads the scheduling mark from the DB.
+    let l2 = Ledger::load_db(&Connection::open(&path).unwrap()).unwrap();
+    assert!(l2.is_drawn("a2a3 b1c2"));
+    assert!(!l2.contains("a2a3 b1c2"));
+    assert_eq!(
+        l2.drawn_iter().cloned().collect::<Vec<_>>(),
+        vec!["a2a3 b1c2"]
+    );
+
+    // A pre-step-1 DB without the drawn table still loads (empty drawn set);
+    // the first proven draw creates the table on demand.
+    let bare = Connection::open_in_memory().unwrap();
+    bare.execute_batch(
+        "CREATE TABLE censor (path TEXT PRIMARY KEY, work_done INTEGER NOT NULL, \
+         passes_failed INTEGER NOT NULL);",
+    )
+    .unwrap();
+    assert!(
+        Ledger::load_db(&bare)
+            .unwrap()
+            .drawn_iter()
+            .next()
+            .is_none()
+    );
+    let mut l3 = Ledger::default();
+    on_proven_draw(&mut l3, &bare, "").unwrap();
+    assert!(l3.is_drawn(""));
+}
+
+#[test]
 fn censor_commit_failure_aborts_with_consistent_db() {
     let path = tmp_db("commitfail");
     let conn = censor_db(&path);

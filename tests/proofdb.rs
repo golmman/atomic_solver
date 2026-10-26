@@ -577,14 +577,13 @@ fn sidecar_pairs(dir: &std::path::Path) -> usize {
     bins.intersection(&sides).count()
 }
 
-/// Plan16 D3's zero-eval no-progress guard: a ledger record on an on-path
-/// repetition (`g1f3 g8f6 f3g1 f6g8` returns to the startpos) censors at
-/// zero child-evals — a non-budget Draw that cannot advance the flat
-/// budget. The visit bumps the record (passes, +0 work), complete-marks
-/// the node, and the walk moves on to the virtual root instead of
-/// re-picking the stalled record forever.
+/// Step 1 of the proven-draw handling: an on-path repetition
+/// (`g1f3 g8f6 f3g1 f6g8` returns to the startpos) is a `Complete` Draw at
+/// zero child-evals. It is a proof at that path, not a fact of absence, so
+/// the visit records a `drawn` row and prunes the path — no censor bump and
+/// no re-pick. The walk moves on to the virtual root.
 #[test]
-fn walk_zero_eval_censor_guard_completes_the_node() {
+fn walk_zero_eval_complete_draw_is_proven_and_pruned() {
     let dir = walk_dir("walk_repetition");
     let db = walk_db(&[("", 0, None)]);
     let rep = "g1f3 g8f6 f3g1 f6g8";
@@ -611,16 +610,19 @@ fn walk_zero_eval_censor_guard_completes_the_node() {
         "",
     )
     .unwrap();
-    // Visit 1: the repetition record (0 evals, censored, complete-marked);
-    // visits 2–4: the virtual root search (C1) and two root expansions.
+    // Visit 1: the repetition record (0 evals, Complete Draw, drawn and
+    // pruned); visits 2–4: the virtual root search (C1) and two root
+    // expansions.
     assert_eq!(summary.jobs, 4);
     assert_eq!(summary.stop_reason, "max-jobs");
-    assert_eq!(summary.censored, 4);
-    assert_eq!(summary.completes, 1);
-    // The stalled record stays at its 4 evals (the bump added nothing) but
-    // keeps its pass count; the root record was created by the root censor.
+    assert_eq!(summary.censored, 3);
+    assert_eq!(summary.drawn, 1);
+    assert_eq!(summary.completes, 0, "a draw is not an exhaustion complete");
+    // The record is not bumped (no censor), keeps its history, and carries
+    // the durable drawn mark; the root record was created by the root censor.
     let e = led.get(rep).unwrap();
-    assert_eq!((e.work_done, e.passes_failed), (4, 2));
+    assert_eq!((e.work_done, e.passes_failed), (4, 1));
+    assert!(led.is_drawn(rep));
     assert!(led.contains(""));
     std::fs::remove_dir_all(&dir).ok();
 }

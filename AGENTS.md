@@ -100,12 +100,14 @@ A pure solver for atomic chess in Rust.
   durable `<tag>.bin` + `<tag>.meta.json` sidecar pairs (plan22: the sidecar
   is the commit marker — an unclean exit loses at most the in-flight job's
   bin; never merges; run `proofdb_merge` after each batch, whose
-  unmerged-shard gate refuses until then). Censor state lives in the DB's
-  `censor` table (schema v2, plan20): the harvest's only DB writes are
-  committed censor rows; the pre-plan20 `work.json` sidecar, the
-  `proofdb_ledger_union` tool, and the `--manifest`/`--ledger` flags are
-  retired. DB/shard-dir default wholly under `data/proofdb/`. Operator
-  manual: `docs/proofdb_pipeline.md`.
+  unmerged-shard gate refuses until then). Scheduling state lives in the
+  DB's `censor` and `drawn` tables (schema v2): the harvest's only DB
+  writes are committed censor rows and proven-draw marks (a `Complete`
+  Draw is a path-keyed `drawn` mark that prunes the subtree; it is not a
+  censor and still produces no shard/tree row). The pre-plan20 `work.json`
+  sidecar, the `proofdb_ledger_union` tool, and the
+  `--manifest`/`--ledger` flags are retired. DB/shard-dir default wholly
+  under `data/proofdb/`. Operator manual: `docs/proofdb_pipeline.md`.
 - `proofdb_merge` — the single-writer incremental fold (plan22): shard
   pairs → the standing SQLite DB, one transaction per invocation (schema
   v2; sole writer of `meta`/`shards`/`nodes`; row ids preserved and

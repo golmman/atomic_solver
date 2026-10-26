@@ -47,6 +47,9 @@ pub struct WalkCensus {
     /// Records at-or-under an in-scope or-closed white-to-move parent
     /// (plan21 D3 — a proven `Loss` child row already proves the parent).
     pub or_closed: usize,
+    /// Records at-or-under an in-scope proven-draw path (the step-1
+    /// `drawn` scheduling drop).
+    pub drawn: usize,
     /// Records outside the session scope (never candidates, never written;
     /// preserved in the shared ledger for later global sessions).
     pub out_of_scope: usize,
@@ -64,11 +67,12 @@ impl WalkCensus {
     pub fn describe(&self, base: u64) -> String {
         format!(
             "frontier-walk: records {} (lineage {}, ancestor {}, or_closed {}, \
-             out_of_scope {}, complete {}) — root {}; base budget {}; scope {}",
+             drawn {}, out_of_scope {}, complete {}) — root {}; base budget {}; scope {}",
             self.records,
             self.lineage,
             self.ancestor,
             self.or_closed,
+            self.drawn,
             self.out_of_scope,
             self.complete,
             self.root.as_str(),

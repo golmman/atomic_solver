@@ -303,8 +303,8 @@ fn scoped_session_jobs_and_census_stay_in_scope() {
     // state of the scope row (open).
     assert!(
         run.stderr.contains(
-            "records 1 (lineage 0, ancestor 0, or_closed 0, out_of_scope 1, complete 0) \
-             — root open; base budget 1000; scope f2f3 e7e6",
+            "records 1 (lineage 0, ancestor 0, or_closed 0, drawn 0, out_of_scope 1, \
+             complete 0) — root open; base budget 1000; scope f2f3 e7e6",
         ),
         "census: {}",
         run.stderr
@@ -371,7 +371,7 @@ fn absent_moves_flag_keeps_the_global_shape() {
     assert_eq!(run.code, Some(0), "stderr: {}", run.stderr);
     assert!(
         run.stderr
-            .contains("lineage 0, ancestor 0, or_closed 0, out_of_scope 0, complete 0) — root open; base budget 1000; scope global"),
+            .contains("lineage 0, ancestor 0, or_closed 0, drawn 0, out_of_scope 0, complete 0) — root open; base budget 1000; scope global"),
         "census: {}",
         run.stderr
     );
@@ -415,7 +415,7 @@ fn or_closed_parent_drops_records_and_exhausts() {
     assert_eq!(run.code, Some(0), "stderr: {}", run.stderr);
     assert!(
         run.stderr.contains(
-            "records 1 (lineage 0, ancestor 0, or_closed 1, out_of_scope 0, \
+            "records 1 (lineage 0, ancestor 0, or_closed 1, drawn 0, out_of_scope 0, \
              complete 0) — root open; base budget 1000; scope f2f3 e7e6",
         ),
         "census: {}",

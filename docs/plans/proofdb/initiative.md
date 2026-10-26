@@ -96,6 +96,12 @@ initiative's founding conversation). Key decisions:
 - **Draws are displayed as undecided** (`open`), except rule-terminal draws.
   A non-terminal draw claim cannot be finitely expanded in this tree model
   (repetition draws are path-dependent).
+- **Step 1 (proven-draw handling, 2026-10-26):** a `Complete` Draw is no
+  longer classified as censored. It commits a path-keyed `drawn` scheduling
+  row and prunes the path/subtree; the tree model is unchanged (still no
+  `draw` outcome, no shard). Budget-exhausted draws remain censored. A
+  first-class draw proof in the tree/spec is deferred to a future schema
+  decision.
 
 ## Goal
 
@@ -206,6 +212,7 @@ value.
 | 18 | **DB as the source of truth: incremental merge fold, shards deletable post-merge, `proofdb_verify` audit** | `proofdb_merge` becomes an incremental fold: validate a shard, graft into the *standing* DB in one transaction keyed on the `shards`-table sha256 (idempotent, conflicts abort without writes); shards are reclassified from durable truth to ephemeral transport — deletable after merge; the byte-identical full-rebuild contract (constraint 3) is retired and replaced by `proofdb_verify` (replay-validate the whole DB tree read back from the DB itself — validation is path replay, it needs no shards) plus a documented `VACUUM INTO` offsite-backup duty; the `built_from` manifest-digest staleness gate is replaced by unmerged-shard detection (a `*.bin` present in the shard dir but absent from the DB `shards` table → harvest/flip refuse) | the scaling fix: removes the O(N²) per-decisive-job manifest rewrite and the millions-of-files durable layer the owner called out; crash consistency *simplifies* (one SQLite transaction per shard/batch replaces the atomic manifest dance); accepted losses, each deliberately replaced: byte-identical rebuild → verify + backup; post-deletion excision of a wrong proven fact → impossible, append-only truth (soundness bugs were never patched over anyway) | M | executed and closed 2026-10-16 (plan22); decisions settled in the plan: manifest retired to a legacy metadata/migration source (per-shard sidecars are the transport — shard-format v2 rejected to keep `proof_tree_dump.md` v1 closed), no DB→shardset export (portability = the DB file; audit = `proofdb_verify` from the DB alone) |
 | 19 | **Contract migration: spec v2, manual rewrite, standing-layer consolidation** | `docs/spec/global_proof_store.md` rewritten as the v2 contract (DB = truth; `censor` table semantics; per-shard provenance as the audit trail; deletion/backup policy) — standalone, no plans vocabulary; `docs/proofdb_pipeline.md` rewritten around the new artifact graph (R-recipes: backup replaces rebuild; no more re-merge-from-shards); AGENTS.md; migration of the standing layer (fold existing shards once, adopt the new contract) | the external agreement (`solve` handover, website) tracks the reality; closes the 2026-10-15 pivot | S–M | **done (plan23, 2026-10-20)**: standing layer migrated in place (no-op fold re-stamped `built_from 47b25861…`, rows byte-equal; verify ok; `VACUUM INTO` offsite backup; transport archived + deleted, empty production shard dir recreated); spec/manual coherence pass (§2 numbering, `shards` = permanent provenance record, transitional seams retired, history entry); external handoff re-cut post-migration (supersedes the pre-migration 10-16 re-cut); AGENTS.md verified accurate as-is; no code changes, gate green; see `report23.md` |
 | 20 | … | S | **done (plan21, 2026-10-16)**: shipped as drafted (D1–D9; D9's split grew to two peels — census/`RootState` into `walk/census.rs`, key algebra + drop/handled classification into `walk/keys.rs`); probes: standing layer 6,306 or-closed parents (12,612/43,092 nodes at-or-under one), current censor records drop 0 (frontier outside the or-closed subtrees — the drop bites as sessions create records there); committed fixture 23,885 or-closed parents over 50,258/55,703 nodes; see `report21.md` |
+| 21 | **Proven-draw scheduling (step 1): Complete draws are not censors** | classify `Draw` + `ExitReason::Complete` as a proven draw; persist one path-keyed `drawn` row (schema v2 additive scheduling state, no tree outcome/shard); the walk drops that path and its subtree from candidacy, treats it as handled during expansion, and blocks a drawn scope root; budget-exhausted/other draws remain censors; job/summary/census grammar gains `draw`/`drawn`; spec/manual/AGENTS updated | stop discarding a cheap solver proof (the `make quick_draw` position solves in 263 evals, `Complete`) and stop re-searching/expanding proven-drawn subtrees; keeps the tree model unchanged (first-class draw facts remain a later schema-v3 decision) | S | **done (plan24, 2026-10-26)**: `JobVerdict::{Decisive,ProvenDraw,Censored}`; additive `drawn` table with on-demand creation and fold preservation; `on_proven_draw` writer; frontier subtree pruning + root-drawn note; census `drawn N`, summary `drawn R`; quick_draw regression + ledger/frontier/fold tests; gate green; see `report24.md` |
 
 ## Non-goals
 
@@ -226,6 +233,16 @@ value.
   is not a result.
 
 ## History
+
+- **2026-10-26 — item 21 executed (plan24, step 1 of proven-draw handling).**
+  A `Complete` Draw is now a proof, not a censor: the harvest commits one
+  path-keyed `drawn` scheduling row, exports no shard/tree node, and the
+  walk prunes the drawn subtree (and treats it as handled/root-blocked).
+  Budget-exhausted and other draws remain censored. The `make quick_draw`
+  position is the regression fixture (263 child-evals, `Complete`). Schema
+  v2 gains the additive `drawn` table; spec/manual/AGENTS updated. No
+  `draw` outcome in the tree model — first-class draw facts are deferred
+  to a future schema decision. Plan: `plan24.md`; report: `report24.md`.
 
 - **2026-10-20 — item 19 executed and closed (plan23); the
   17→18→19 pivot program is complete.** The standing layer's parked

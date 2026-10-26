@@ -109,6 +109,62 @@ fn walk_lineage_and_ancestor_drops() {
 }
 
 #[test]
+fn walk_drawn_path_prunes_its_subtree_and_is_handled() {
+    let db = crafted(&[("", 0, None), ("a2a4", 1, None)]);
+    let mut ledger = ledger_of(&[
+        ("", 0, 1),
+        ("a2a3", 100, 1),
+        ("a2a3 b1b2", 100, 1),
+        ("a2a4", 100, 1),
+    ]);
+    ledger.mark_drawn("a2a3");
+    let (mut f, census) = WalkFrontier::new(&ledger, &db, "");
+    assert_eq!(census.drawn, 2, "the drawn path and its descendant drop");
+    assert_eq!(census.records, 4);
+    // The drawn path itself and a descendant are both handled (no expansion
+    // target), while the unrelated sibling remains a candidate.
+    let rows = rows_map(&db);
+    let h = |k: &str| is_handled(k, &rows, &ledger, 1_000, |_| false);
+    assert!(h("a2a3"), "a proven-draw path is handled");
+    // A descendant is not itself a handled child; the drawn ancestor is
+    // pruned before expansion can ever ask about it.
+    assert!(!h("a2a3 b1b2"));
+    assert!(h("a2a4"), "a stored open DB row is handled");
+    // Root and the unrelated sibling are the only candidates.
+    assert_eq!(f.pick(&ledger).unwrap().0, "");
+    f.mark_complete("");
+    assert_eq!(f.pick(&ledger).unwrap().0, "a2a4");
+    f.mark_complete("a2a4");
+    assert!(f.pick(&ledger).is_none());
+}
+
+#[test]
+fn walk_drawn_root_is_blocked_and_mark_drawn_sweeps() {
+    let db = crafted(&[("", 0, None)]);
+    let mut ledger = ledger_of(&[("", 0, 1), ("a2a3", 100, 1), ("a2a3 b1b2", 100, 1)]);
+    ledger.mark_drawn("");
+    let (f, census) = WalkFrontier::new(&ledger, &db, "");
+    assert_eq!(census.drawn, 3);
+    assert!(
+        f.root_blocked(),
+        "a proven-draw root blocks the virtual root"
+    );
+    assert!(f.pick(&ledger).is_none());
+
+    // In-session marking prunes the path and subtree immediately.
+    let ledger = ledger_of(&[("", 0, 1), ("a2a3", 100, 1), ("a2a3 b1b2", 100, 1)]);
+    let (mut f, _) = WalkFrontier::new(&ledger, &db, "");
+    f.mark_drawn("a2a3");
+    assert_eq!(f.pick(&ledger).unwrap().0, "");
+    f.mark_complete("");
+    assert!(f.pick(&ledger).is_none());
+    assert_eq!(
+        f.completes, 1,
+        "a draw is not counted as an exhaustion complete"
+    );
+}
+
+#[test]
 fn walk_proven_root_row_drops_everything() {
     // A proven root row is an ancestor of every record (the empty prefix
     // counts): the whole ledger drops and the walk is exhausted (D2/D6).
@@ -188,8 +244,8 @@ fn walk_census_line_and_root_states() {
     assert_eq!(census.root, RootState::Open);
     assert_eq!(
         census.describe(4_000_000),
-        "frontier-walk: records 0 (lineage 0, ancestor 0, or_closed 0, out_of_scope 0, \
-         complete 0) — root open; base budget 4000000; scope global"
+        "frontier-walk: records 0 (lineage 0, ancestor 0, or_closed 0, drawn 0, \
+         out_of_scope 0, complete 0) — root open; base budget 4000000; scope global"
     );
     assert_eq!(f.completes, 0);
     // Proven root row → proven; a standing shard path at the root is
@@ -334,8 +390,8 @@ fn walk_scope_root_states_and_census_line() {
     census.root = root_state(&db_open, &session, "a2a3 b1b2");
     assert_eq!(
         census.describe(1_000),
-        "frontier-walk: records 2 (lineage 0, ancestor 0, or_closed 0, out_of_scope 1, \
-         complete 0) — root open; base budget 1000; scope a2a3 b1b2"
+        "frontier-walk: records 2 (lineage 0, ancestor 0, or_closed 0, drawn 0, \
+         out_of_scope 1, complete 0) — root open; base budget 1000; scope a2a3 b1b2"
     );
     std::fs::remove_dir_all(&dir).ok();
 }

@@ -1118,3 +1118,8 @@ Challenge my ideas, maybe i am wrong?
 ---
 
 What happens in a proofdb harvest when we encounter a forced draw like the position in `make quick_draw`?
+
+---
+
+Perform a thorough performance analysis.
+Write your findings to `docs/performance/performance_report1.md`.

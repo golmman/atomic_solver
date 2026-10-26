@@ -56,34 +56,47 @@ CREATE TABLE censor (                -- schema v2, additive (see §2.1)
   work_done INTEGER NOT NULL,        -- cumulative child-evals spent
   passes_failed INTEGER NOT NULL     -- censored (budget-exhausted) visits
 );
+CREATE TABLE drawn (                 -- schema v2, additive (see §2.1)
+  path TEXT PRIMARY KEY              -- a path whose bounded search proved a draw
+);
 ```
 
 `move_code` is the 16-bit move encoding of `docs/spec/proof_tree_dump.md`
 (bits 0–5 `to_sq`, 6–11 `from_sq`, 12–13 move type, 14–15 promotion piece;
 `0xFFFF` is reserved as the null sentinel).
 
-### 2.1. The censor table (schema v2, additive)
+### 2.1. Harvest scheduling state (schema v2, additive)
 
-Schema v2 adds one table over v1: `censor`, the relocated harvest work
-ledger. One row per **known-open frontier node** the harvester has censored
-(a bounded search ended without a decisive result — a *fact of absence*, not
-representable in the tree model, since a non-terminal draw is `open`).
-`work_done` is the cumulative child-evals spent at the node (all visits);
-`passes_failed` counts its censored visits. `path` uses the same
-space-separated-UCI convention as `nodes`-derived paths, with `''` for the
-root; it is selection-state identity, not a foreign key into `nodes` (most
-censor paths have no row).
+Schema v2 adds two scheduling tables over v1. Neither is proof data and
+neither changes any `nodes`/`shards`/`meta` surface.
 
-The table is **harvest scheduling state**, not proof data:
+**`censor`** is the relocated harvest work ledger. One row per
+**known-open frontier node** the harvester has censored (a bounded search
+ended without a decisive result — a *fact of absence*, not representable in
+the tree model). `work_done` is the cumulative child-evals spent at the node
+(all visits); `passes_failed` counts its censored visits. `path` uses the
+same space-separated-UCI convention as `nodes`-derived paths, with `''` for
+the root; it is selection-state identity, not a foreign key into `nodes`
+(most censor paths have no row).
 
-- The harvest loop is the only writer of `censor` rows (each censor commits
-  one `INSERT OR REPLACE` transaction); the merger never modifies them — a
-  fold leaves the table untouched in place.
-- Consumers may ignore the table entirely: every v1 surface (`meta`,
+**`drawn`** records paths whose bounded search returned a **proven draw**
+(a completed search that proved the draw, as opposed to budget exhaustion).
+The tree model still has no `draw` outcome, so this is a path-keyed
+scheduling mark: the harvest prunes that path and its subtree instead of
+re-searching it. A `drawn` row is not a censor row and carries no work
+counters.
+
+Both tables are **harvest scheduling state**, not proof data:
+
+- The harvest loop is the only writer of `censor` and `drawn` rows (each
+  censor commits one `INSERT OR REPLACE` transaction; each proven draw
+  commits one `drawn` row); the merger never modifies them — a fold leaves
+  both tables untouched in place.
+- Consumers may ignore both tables entirely: every v1 surface (`meta`,
   `shards`, `nodes`, and all invariants below) is unchanged in v2. No
-  invariant of §4 involves `censor`.
-- `censor` rows are replay-independent scheduling hints; deleting them
-  costs re-searched work, never soundness.
+  invariant of §4 involves `censor` or `drawn`.
+- `censor` and `drawn` rows are replay-independent scheduling hints;
+  deleting them costs re-searched work, never soundness.
 
 ### 2.2. The fold digest (`built_from`)
 
@@ -101,7 +114,7 @@ different bytes is a defect the fold refuses (it never patches).
 
 | key | value |
 | --- | --- |
-| `schema_version` | `2` (v1 files carry `1`; v2 is additive — the `censor` table only) |
+| `schema_version` | `2` (v1 files carry `1`; v2 is additive — the `censor` and `drawn` scheduling tables) |
 | `root_fen` | the startpos FEN every path is relative to |
 | `node_count` | number of rows in `nodes` |
 | `built_from` | SHA-256 (hex) fold digest over the shard provenance set (§2.2) |
@@ -114,7 +127,8 @@ different bytes is a defect the fold refuses (it never patches).
   lost. `NULL` (**open**) means no decisive proven result is recorded for this
   node. A non-terminal draw is represented as `open`; only rule-terminal
   draws could be decisive, and the proof-tree format does not emit draw nodes,
-  so no `draw` outcome occurs in v1.
+  so no `draw` outcome occurs in this schema. A proven draw is retained only
+  as `drawn` scheduling state (§2.1), never as a `nodes` row.
 - `depth_bound` (proven nodes only): the node's subtree proves *the decisive
   outcome within ≤ `depth_bound` plies from this node*.
 - `depth_status` (proven nodes only):
@@ -161,10 +175,10 @@ different bytes is a defect the fold refuses (it never patches).
    by increasing `move_code`). Re-running the same fold sequence over the
    same shard set yields identical `nodes` content; two different fold
    sequences over the same facts may differ in ids only.
-8. **The censor table is scheduling state.** The `censor` table (schema v2)
-   carries no proof facts and participates in no invariant above; only the
-   harvest writes it, and a fold leaves it untouched in place (see §2.1,
-   §6.1).
+8. **The scheduling tables are state, not proof.** The `censor` and `drawn`
+   tables (schema v2) carry no proof facts and participate in no invariant
+   above; only the harvest writes them, and a fold leaves them untouched in
+   place (see §2.1, §6.1).
 
 ## 5. Shard transport
 

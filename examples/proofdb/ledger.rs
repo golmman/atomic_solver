@@ -23,15 +23,23 @@
 //! moment the call returns, and a failed commit aborts the batch with the
 //! DB's last committed state consistent (the in-flight censor is lost,
 //! matching the plan17 loss window). Writer carve-out: the harvest writes
-//! **`censor` rows only**; `proofdb_merge` stays the sole writer of
-//! `nodes`/`shards`/`meta` and preserves `censor` across its rebuild (D5).
+//! **`censor`/`drawn` scheduling rows only**; `proofdb_merge` stays the sole
+//! writer of `nodes`/`shards`/`meta` and preserves `censor` across its
+//! rebuild (D5).
+//!
+//! Proven draws (step 1 of the draw-model work): a `Draw` with
+//! `ExitReason::Complete` is not a fact of absence. [`on_proven_draw`]
+//! records it in the path-keyed `drawn` table; the in-memory [`Ledger`]
+//! carries the same set so the frontier can drop the path and its subtree
+//! without re-searching it. This is scheduling state: the tree model still
+//! has no draw outcome.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use rusqlite::Connection;
 
-use super::schema::{CensorRow, insert_censor_row};
+use super::schema::{CensorRow, insert_censor_row, insert_drawn_row, read_drawn_rows};
 
 /// One known-open frontier record.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -47,6 +55,10 @@ pub struct LedgerEntry {
 #[derive(Debug, Default, Clone)]
 pub struct Ledger {
     entries: BTreeMap<String, LedgerEntry>,
+    /// Paths whose value is a proven draw (a `Complete` Draw job). These
+    /// are not censor records; they prune the path and its subtree from
+    /// candidacy across sessions.
+    drawn: BTreeSet<String>,
 }
 
 impl Ledger {
@@ -101,7 +113,8 @@ impl Ledger {
                 return Err("censor table has a duplicate path".to_string());
             }
         }
-        Ok(Self { entries })
+        let drawn: BTreeSet<String> = read_drawn_rows(conn)?.into_iter().collect();
+        Ok(Self { entries, drawn })
     }
 
     /// Parse a legacy JSON work ledger (`work.json`, the pre-plan20 sidecar
@@ -141,7 +154,10 @@ impl Ledger {
                 return Err(format!("ledger has a duplicate path {key:?}"));
             }
         }
-        Ok(Self { entries })
+        Ok(Self {
+            entries,
+            drawn: BTreeSet::new(),
+        })
     }
 
     /// Build a ledger from an already-keyed map (keys are space-joined UCI
@@ -149,7 +165,10 @@ impl Ledger {
     /// them; the `BTreeMap` keeps the iteration sorted).
     #[must_use]
     pub fn from_entries(entries: BTreeMap<String, LedgerEntry>) -> Self {
-        Self { entries }
+        Self {
+            entries,
+            drawn: BTreeSet::new(),
+        }
     }
 
     /// The record at `key`, if any.
@@ -164,6 +183,18 @@ impl Ledger {
         self.entries.contains_key(key)
     }
 
+    /// Is `key` a proven-draw scheduling record?
+    #[must_use]
+    pub fn is_drawn(&self, key: &str) -> bool {
+        self.drawn.contains(key)
+    }
+
+    /// Iterate the proven-draw paths in sorted order (the frontier's
+    /// scope-relative drop set).
+    pub fn drawn_iter(&self) -> impl Iterator<Item = &String> {
+        self.drawn.iter()
+    }
+
     /// Number of records (census).
     #[must_use]
     pub fn len(&self) -> usize {
@@ -172,12 +203,18 @@ impl Ledger {
 
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.entries.is_empty()
+        self.entries.is_empty() && self.drawn.is_empty()
     }
 
     /// Iterate `(key, entry)` in sorted path order (the gate walks this).
     pub fn iter(&self) -> impl Iterator<Item = (&String, &LedgerEntry)> {
         self.entries.iter()
+    }
+
+    /// Record `key` as a proven draw in memory (the DB commit is
+    /// [`on_proven_draw`]'s job).
+    pub fn mark_drawn(&mut self, key: &str) {
+        self.drawn.insert(key.to_string());
     }
 
     /// Remove the record at `key` (the lineage gate's decided-path drop).
@@ -214,6 +251,19 @@ impl Ledger {
         cur.work_done = cur.work_done.max(entry.work_done);
         cur.passes_failed = cur.passes_failed.max(entry.passes_failed);
     }
+}
+
+/// The proven-draw hook: record `key` in the DB's `drawn` scheduling table
+/// and in the in-memory ledger. No censor row is written — a proven draw is
+/// not a fact of absence. Idempotent (a path is proven once).
+///
+/// # Errors
+/// A `drawn` commit failure (the batch aborts; the DB's last committed
+/// state stays consistent).
+pub fn on_proven_draw(ledger: &mut Ledger, censor: &Connection, key: &str) -> Result<(), String> {
+    insert_drawn_row(censor, key)?;
+    ledger.mark_drawn(key);
+    Ok(())
 }
 
 /// The bump-only censor hook (plan8 D1, now the walk's hook): bump the

@@ -4,12 +4,49 @@
 
 use super::*;
 use atomic_solver::position::Position;
+use atomic_solver::search::dfpn::ExitReason;
 
 #[test]
-fn draw_is_censored_and_decisive_classifies() {
-    assert_eq!(classify(Outcome::Draw), None);
-    assert_eq!(classify(Outcome::Win), Some(Outcome::Win));
-    assert_eq!(classify(Outcome::Loss), Some(Outcome::Loss));
+fn draw_classification_distinguishes_proof_from_censor() {
+    // A completed draw is a proof (a `drawn` scheduling row); any other
+    // Draw is a fact of absence (a censor).
+    assert_eq!(
+        classify(Outcome::Draw, ExitReason::Complete),
+        JobVerdict::ProvenDraw
+    );
+    assert_eq!(
+        classify(Outcome::Draw, ExitReason::BudgetExhausted),
+        JobVerdict::Censored
+    );
+    assert_eq!(
+        classify(Outcome::Draw, ExitReason::Timeout),
+        JobVerdict::Censored
+    );
+    assert_eq!(
+        classify(Outcome::Win, ExitReason::Complete),
+        JobVerdict::Decisive(Outcome::Win)
+    );
+    assert_eq!(
+        classify(Outcome::Loss, ExitReason::BudgetExhausted),
+        JobVerdict::Decisive(Outcome::Loss)
+    );
+}
+
+#[test]
+fn quick_draw_is_a_complete_proof_not_a_censor() {
+    // The `make quick_draw` position: the solver proves the draw in a few
+    // hundred child-evals and exits Complete. That must classify as a
+    // proven draw, not as a censored budget exhaustion.
+    let mut pos = Position::from_fen("7k/5p1P/5P2/2p5/1NPB4/8/8/K7 w - - 0 1").unwrap();
+    let mut search = atomic_solver::search::dfpn::Search::new(4);
+    search.set_first_outcome_only(true);
+    let (outcome, _, _) = search.search_depth(&mut pos, u32::MAX);
+    assert_eq!(outcome, Outcome::Draw);
+    assert_eq!(search.exit_reason(), ExitReason::Complete);
+    assert_eq!(
+        classify(outcome, search.exit_reason()),
+        JobVerdict::ProvenDraw
+    );
 }
 
 #[test]

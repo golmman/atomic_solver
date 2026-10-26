@@ -124,7 +124,8 @@ pub(super) fn join_scope(scope: &str, rel: &str) -> String {
 }
 
 /// The handled rule (D3): a stored DB row (any outcome), a manifest ∪
-/// in-session shard path, or a ledger record with `work_done ≥ B`.
+/// in-session shard path, a proven-draw scheduling record, or a ledger
+/// record with `work_done ≥ B`.
 #[must_use]
 pub(super) fn is_handled(
     key: &str,
@@ -133,7 +134,10 @@ pub(super) fn is_handled(
     base: u64,
     has_shard: impl Fn(&str) -> bool,
 ) -> bool {
-    rows.contains_key(key) || has_shard(key) || ledger.get(key).is_some_and(|e| e.work_done >= base)
+    rows.contains_key(key)
+        || has_shard(key)
+        || ledger.is_drawn(key)
+        || ledger.get(key).is_some_and(|e| e.work_done >= base)
 }
 
 /// All DB-row paths keyed by outcome — the expansion handled-rule's row

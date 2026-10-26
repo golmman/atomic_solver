@@ -3,9 +3,10 @@
 //! sidecar production).
 //!
 //! The single coverage policy is the plan16 `frontier-walk` shallowest-first
-//! censor-frontier walk: a live selection loop over the censor state in the
-//! DB's `censor` table (schema v2; the relocated work ledger, plan20 — the
-//! pre-plan20 `--ledger <work.json>` sidecar is retired) with a flat
+//! censor-frontier walk: a live selection loop over the scheduling state in
+//! the DB's `censor` and `drawn` tables (schema v2; the relocated work
+//! ledger, plan20 — the pre-plan20 `--ledger <work.json>` sidecar is
+//! retired) with a flat
 //! `--budget-evals` budget, no ladder; search visits on underworked
 //! records, expansion into the first unhandled child otherwise, bump-only
 //! censors, in-session complete rule. Per job: replay the full
@@ -15,8 +16,10 @@
 //! proof subtree via the product's offline pipeline (TT snapshot →
 //! `reconstruct` → `validate_proof_tree`), writing the shard as a durable
 //! `<tag>.bin` + `<tag>.meta.json` sidecar pair (plan22 D1 — the sidecar is
-//! the commit marker). `Draw` from any cause is **censored** (no fact, no
-//! shard): the visit bumps the record and commits one `censor`-table
+//! the commit marker). A `Draw` with `ExitReason::Complete` is a **proven
+//! draw**: no shard/tree row (schema v2 has no draw outcome), one `drawn`
+//! scheduling row, and the subtree is pruned. Any other `Draw` is
+//! **censored**: the visit bumps the record and commits one `censor`-table
 //! transaction (plan20 D3 — the harvest's only DB writes; `nodes`/`shards`/
 //! `meta` stay `proofdb_merge`-only). The merger runs after the batch as a
 //! separate tool — this CLI never merges and never writes tree rows;
@@ -114,7 +117,7 @@ fn main() {
     let summary = run_walk_session(&mut session, &db, &censor, args.budget_evals, &opts, &scope)
         .unwrap_or_else(|e| fail(&e));
     let summary_line = format!(
-        "harvest: policy {} stop={} jobs {} decisive {} censored {} evals {} \
+        "harvest: policy {} stop={} jobs {} decisive {} censored {} drawn {} evals {} \
          new_shards {} or_closes {} wall {:.1}s",
         proofdb::harvest_args::POLICY,
         if summary.stop_reason.is_empty() {
@@ -125,6 +128,7 @@ fn main() {
         summary.jobs,
         summary.decisive,
         summary.censored,
+        summary.drawn,
         summary.evals,
         session.new_shards,
         summary.or_closes,

@@ -39,7 +39,11 @@
 //! **or-closed** white-to-move parent (`Drop::OrClosed`, plan21 D3): a
 //! proven `Loss` DB-row child already proves the parent — one winning move
 //! per OR node — so the parent and everything under it leaves candidacy
-//! (candidacy-only: censor rows are never deleted). The drop rules are
+//! (candidacy-only: censor rows are never deleted); (c) records at-or-under
+//! a proven-draw path (the step-1 `drawn` scheduling mark): a draw proves
+//! that no `Loss` child exists at its node, so no subtree work can be on
+//! the startpos proof, and the whole subtree leaves candidacy too. The drop
+//! rules are
 //! evaluated scope-relative; or-closedness above the scope root is ignored
 //! (the operator chose the scope deliberately). Selection: the minimum of
 //! `(ply, space-joined path)` — shallowest first,
@@ -68,7 +72,9 @@
 //! the standard shard pipeline and in-session decided — the ledger record
 //! is left in place (and-close precedent: the next session's lineage gate
 //! drops it once the merger made the path a proven row); censored → bump
-//! its own record and save atomically. An *expansion visit* (picked
+//! its own record and save atomically; a **proven draw** (`Complete` Draw)
+//! is not a censor: it commits one `drawn` row and sweeps the subtree from
+//! candidacy (no shard; no tree row). An *expansion visit* (picked
 //! candidate with `work_done ≥ B`) replays the path, enumerates the legal
 //! children in lex UCI order, and searches the **first unhandled child** at
 //! `B`. *Handled* = a stored DB row (any outcome) ∪ a manifest ∪ in-session
@@ -79,10 +85,10 @@
 //! marked **complete** — a pick-only iteration (no job, no evals), removed
 //! from in-session candidacy, ledger record retained; each candidate
 //! completes at most once, so the loop cannot stall. A censor that spends
-//! **zero child-evals** (a non-budget Draw — e.g. an on-path repetition)
-//! cannot advance the flat budget; the visit target is complete-marked with
-//! its (bumped) record retained, the same no-ladder territory rule applied
-//! to a degenerate censor. Intra-session propagation is limited to the
+//! **zero child-evals** cannot advance the flat budget; the visit target is
+//! complete-marked with its (bumped) record retained, the same no-ladder
+//! territory rule applied to a degenerate censor. (A zero-eval `Complete`
+//! Draw takes the proven-draw branch instead and is pruned as a draw.) Intra-session propagation is limited to the
 //! plan21 OR-node sibling skip: a decisive `Loss` at a child **or-closes**
 //! its in-scope white-to-move parent (one proving child suffices at an OR
 //! node; the child is at odd absolute ply exactly when its parent is
@@ -98,10 +104,11 @@
 //! **D4 — budget and ledger semantics.** Flat budget `B`, **no ladder**: a
 //! node censored at `B` is never re-searched deeper by this policy —
 //! expansion replaces deepening. Bump-only censor hook
-//! ([`super::ledger::on_censored`]), no child exposure (the
+//! ([`super::ledger::on_censored`]); proven draws use the parallel
+//! [`super::ledger::on_proven_draw`] hook. No child exposure (the
 //! decision-11 deviation verbatim — children are derived by movegen at
-//! expansion time). Every censor commits one `censor`-table transaction
-//! (crash-safe; plan20).
+//! expansion time). Every censor/draw commits one row transaction
+//! (crash-safe; plan20/step 1).
 //! Measurable signature: the session's ledger growth equals its fresh-node
 //! censor count. Accepted deviations from the earlier PNS conventions,
 //! recorded as
@@ -181,6 +188,11 @@ pub struct WalkFrontier {
     /// Proven DB-row paths *relative to the scope* (the D2 drop rules'
     /// input; static per session; rows above the scope root excluded).
     proven: HashSet<String>,
+    /// Proven-draw scheduling paths *relative to the scope*: the path and
+    /// its whole subtree are pruned from candidacy (no draw outcome exists
+    /// in the tree model; the proof is still a fact, so no work beneath it
+    /// can change the startpos proof).
+    drawn: HashSet<String>,
     /// In-scope or-closed white-to-move parents *relative to the scope*
     /// (plan21 D3, static: a proven `Loss` child row in the DB); rows above
     /// the scope root excluded, like `proven`.
@@ -233,6 +245,11 @@ impl WalkFrontier {
             }
             or_closed.insert(rel_of(scope, &parent_abs).to_string());
         }
+        let drawn: HashSet<String> = ledger
+            .drawn_iter()
+            .filter(|p| in_scope(scope, p))
+            .map(|p| rel_of(scope, p).to_string())
+            .collect();
         let mut order = BTreeSet::new();
         let mut census = WalkCensus {
             records: ledger.len(),
@@ -245,6 +262,10 @@ impl WalkFrontier {
                 continue;
             }
             let rel = rel_of(scope, key);
+            if under_closed(rel, &drawn) {
+                census.drawn += 1;
+                continue;
+            }
             match drop_reason(rel, &proven, &or_closed) {
                 Some(Drop::Lineage) => census.lineage += 1,
                 Some(Drop::Ancestor) => census.ancestor += 1,
@@ -259,6 +280,7 @@ impl WalkFrontier {
                 scope: scope.to_string(),
                 order,
                 proven,
+                drawn,
                 or_closed,
                 or_closed_dyn: HashSet::new(),
                 complete: HashSet::new(),
@@ -286,7 +308,13 @@ impl WalkFrontier {
     /// The scope root's relative key is always `""`.
     #[must_use]
     pub fn root_blocked(&self) -> bool {
-        self.complete.contains("")
+        self.complete.contains("") || self.root_drawn()
+    }
+
+    /// Is the scope root a proven draw (the step-1 `drawn` mark)?
+    #[must_use]
+    pub fn root_drawn(&self) -> bool {
+        self.drawn.contains("")
     }
 
     /// Is the scope root or-closed (plan21 D6)? Statically (an in-scope
@@ -320,6 +348,19 @@ impl WalkFrontier {
     pub fn mark_decided(&mut self, key: &str) {
         let rel = rel_of(&self.scope, key).to_string();
         self.decided.insert(rel.clone());
+        self.sweep_subtree(&rel);
+    }
+
+    /// Mark a proven draw (a `Complete` Draw visit): the path and its whole
+    /// subtree leave candidacy. No subtree beneath a proven draw can be on
+    /// the startpos proof (a `Loss` child would have made the node `Win`),
+    /// so there is no reason to search it. The ledger's `drawn` set makes
+    /// the mark durable for later sessions; this method only updates the
+    /// live frontier. Does not count as a `complete` (the proof, not
+    /// exhaustion, is the reason).
+    pub fn mark_drawn(&mut self, key: &str) {
+        let rel = rel_of(&self.scope, key).to_string();
+        self.drawn.insert(rel.clone());
         self.sweep_subtree(&rel);
     }
 
@@ -389,6 +430,7 @@ impl WalkFrontier {
         let rel = rel_of(&self.scope, key);
         if drop_reason(rel, &self.proven, &self.or_closed).is_some()
             || under_closed(rel, &self.or_closed_dyn)
+            || under_closed(rel, &self.drawn)
         {
             return;
         }

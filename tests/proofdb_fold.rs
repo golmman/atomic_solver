@@ -540,7 +540,7 @@ fn r6_unmerged_gate() {
 /// legacy work.json in place under the max rule, idempotently.
 #[test]
 fn r7_censor_rows_survive_the_fold_and_import_is_max_rule() {
-    use proofdb::schema::insert_censor_row;
+    use proofdb::schema::{insert_censor_row, insert_drawn_row, read_drawn_rows};
 
     let dir = shard_dir("r7");
     let tree = tactic_tree();
@@ -564,6 +564,8 @@ fn r7_censor_rows_survive_the_fold_and_import_is_max_rule() {
     for row in &seeded {
         insert_censor_row(&conn, row).unwrap();
     }
+    insert_drawn_row(&conn, "a2a3").unwrap();
+    insert_drawn_row(&conn, "b1c3 b8c6").unwrap();
 
     // A tree-changing fold (new shard at a fresh path) leaves the rows.
     write_shard_pair(
@@ -577,6 +579,11 @@ fn r7_censor_rows_survive_the_fold_and_import_is_max_rule() {
         read_censor_rows(&conn).unwrap(),
         seeded,
         "censor rows untouched"
+    );
+    assert_eq!(
+        read_drawn_rows(&conn).unwrap(),
+        vec!["a2a3".to_string(), "b1c3 b8c6".to_string()],
+        "drawn rows untouched"
     );
 
     // The legacy import (the same primitives --import-censor drives): max

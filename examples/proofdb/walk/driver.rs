@@ -25,7 +25,7 @@ use rusqlite::Connection;
 
 use super::super::db::DbContent;
 use super::super::harvest::{Job, JobClass, child_key, replay_job_path};
-use super::super::ledger::{Ledger, on_censored};
+use super::super::ledger::{Ledger, on_censored, on_proven_draw};
 use super::super::session::Session;
 use super::{BASE_EVALS, WalkFrontier, is_handled, path_of, ply_of, root_state};
 
@@ -57,6 +57,8 @@ pub struct WalkSummary {
     pub jobs: usize,
     pub decisive: usize,
     pub censored: usize,
+    /// Proven-draw jobs (`Complete` Draw): no shard, a `drawn` row only.
+    pub drawn: usize,
     /// Censors on nodes without a prior ledger record — the ledger-growth
     /// signature (D4).
     pub fresh_censored: usize,
@@ -118,30 +120,41 @@ fn visit(
         budget,
     };
     let mut rec = session.run_job_with_budget(&job, "frontier-walk", budget);
-    if rec.outcome == "censored" {
-        summary.censored += 1;
-        if !ledger.contains(key) {
-            summary.fresh_censored += 1;
+    match rec.outcome.as_str() {
+        "censored" => {
+            summary.censored += 1;
+            if !ledger.contains(key) {
+                summary.fresh_censored += 1;
+            }
+            on_censored(ledger, censor, key, rec.child_evals)?;
+            if rec.child_evals == 0 {
+                // A censor that spends nothing cannot advance the flat budget
+                // (a non-budget Draw — e.g. an on-path repetition); complete-
+                // mark so the walk moves on (record retained, D3).
+                frontier.mark_complete(key);
+            } else {
+                frontier.admit(key);
+            }
         }
-        on_censored(ledger, censor, key, rec.child_evals)?;
-        if rec.child_evals == 0 {
-            // A censor that spends nothing cannot advance the flat budget
-            // (a non-budget Draw — e.g. an on-path repetition); complete-
-            // mark so the walk moves on (record retained, D3).
-            frontier.mark_complete(key);
-        } else {
-            frontier.admit(key);
+        // A `Complete` Draw is a proof, not a censor: record it in the
+        // path-keyed scheduling state and prune the subtree immediately.
+        // No shard is exported (schema v2 has no draw outcome).
+        "draw" => {
+            summary.drawn += 1;
+            on_proven_draw(ledger, censor, key)?;
+            frontier.mark_drawn(key);
         }
-    } else {
-        summary.decisive += 1;
-        frontier.mark_decided(key);
-        // Plan21 D4: a decisive `Loss` at an odd-absolute-ply child
-        // (defender to move loses ⇒ the parent's white move wins) or-closes
-        // the in-scope white-to-move parent — one proving child suffices at
-        // an OR node. A decisive `Win` child refutes the parent's move and
-        // must not trigger; black-to-move parents never trigger (D2).
-        if rec.outcome == "loss" && frontier.or_close_parent(key) {
-            summary.or_closes += 1;
+        _ => {
+            summary.decisive += 1;
+            frontier.mark_decided(key);
+            // Plan21 D4: a decisive `Loss` at an odd-absolute-ply child
+            // (defender to move loses ⇒ the parent's white move wins) or-closes
+            // the in-scope white-to-move parent — one proving child suffices at
+            // an OR node. A decisive `Win` child refutes the parent's move and
+            // must not trigger; black-to-move parents never trigger (D2).
+            if rec.outcome == "loss" && frontier.or_close_parent(key) {
+                summary.or_closes += 1;
+            }
         }
     }
     rec.pass = Some(passes + 1);
@@ -213,6 +226,15 @@ pub fn run_walk_batch(
                     eprintln!(
                         "frontier-walk: scope root {scope:?} is or-closed by proven \
                          winning child — nothing to harvest"
+                    );
+                }
+                break; // exhausted (empty stop reason)
+            }
+            if frontier.root_drawn() {
+                if !scope.is_empty() {
+                    eprintln!(
+                        "frontier-walk: scope root {scope:?} is a proven draw — \
+                         nothing to harvest"
                     );
                 }
                 break; // exhausted (empty stop reason)

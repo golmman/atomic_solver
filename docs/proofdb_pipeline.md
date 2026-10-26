@@ -81,16 +81,17 @@ shards, so a deleted or corrupted DB can only be restored from a backup —
 a shard dir alone is no longer sufficient once folded shards have been
 deleted. The shard pairs and the flip report are regenerable/throwaway.
 
-- **SQLite DB (source of truth + censor state).** `proofdb.db`, schema v2
-  per the spec: the `meta`/`shards`/`nodes` surfaces (grown by the
+- **SQLite DB (source of truth + scheduling state).** `proofdb.db`, schema
+  v2 per the spec: the `meta`/`shards`/`nodes` surfaces (grown by the
   incremental fold — existing rows and their ids are never rewritten) plus
-  the `censor` table — the frontier's censor history (facts of absence:
-  censored draw jobs are not representable in the tree model). Writer
-  split: `proofdb_merge` is the sole writer of `meta`/`shards`/`nodes`;
-  `proofdb_harvest` writes `censor` rows only (one committed transaction
-  per censor) and a fold leaves the table untouched in place. The two
-  tools must not run concurrently (operational discipline; SQLite's
-  locking is the mechanical backstop).
+  two scheduling tables — `censor` (the frontier's censor history: facts of
+  absence) and `drawn` (paths whose bounded search proved a draw; the tree
+  model has no `draw` outcome, so this prunes the subtree without adding a
+  tree row). Writer split: `proofdb_merge` is the sole writer of
+  `meta`/`shards`/`nodes`; `proofdb_harvest` writes `censor`/`drawn` rows
+  only (one committed transaction per record) and a fold leaves both tables
+  untouched in place. The two tools must not run concurrently (operational
+  discipline; SQLite's locking is the mechanical backstop).
 - **Shard pairs (ephemeral transport).** `<tag>.bin` validated binary
   proof trees (`proof_tree_dump.md` v1 format) plus `<tag>.meta.json`
   sidecars (path, fen, outcome, tag, sha256 — the self-describing pair).
@@ -114,13 +115,14 @@ deleted. The shard pairs and the flip report are regenerable/throwaway.
   the `shards` table are skipped idempotently after a sha256 cross-check.
   Deterministic: the same standing DB + shard set folds to the same
   content.
-- **`proofdb_harvest`** — _DB + censor state → shard pairs + censor rows_.
+- **`proofdb_harvest`** — _DB + scheduling state → shard pairs + censor/drawn rows_.
   Selects jobs with the shallowest-first censor-frontier walk
   (`frontier-walk`, the single harvest policy since plan18) — solves each
   under a deterministic child-eval budget, exports and validates the
-  decisive ones as `<tag>.bin` + `<tag>.meta.json` pairs, and commits
-  censored jobs into the DB's `censor` table (one transaction per censor).
-  It never merges and never writes tree rows.
+  decisive ones as `<tag>.bin` + `<tag>.meta.json` pairs, commits censored
+  jobs into the DB's `censor` table (one transaction per censor), and marks
+  completed draws in the `drawn` table (one row per proven draw) so the
+  walk prunes that subtree. It never merges and never writes tree rows.
 - **`proofdb_flip`** — _DB → flip report_, read-only. Iterates implied
   outcomes to fixpoint over the stored tree and re-checks every flip with an
   independent verifier; writes only the report.
@@ -186,7 +188,7 @@ the default path:
 
 ```
 harvest: db data/proofdb/proofdb.db (1 rows, fold digest e3b0c44298fc1c14) — policy frontier-walk
-frontier-walk: records 0 (lineage 0, ancestor 0, or_closed 0, out_of_scope 0, complete 0) — root open; base budget 200000; scope global
+frontier-walk: records 0 (lineage 0, ancestor 0, or_closed 0, drawn 0, out_of_scope 0, complete 0) — root open; base budget 200000; scope global
 ```
 
 then two `job: {…}` lines (stdout): the virtual-root **search visit**
@@ -195,7 +197,7 @@ first unhandled child `a2a3` (class `C3`, `kind: "expand"`), both
 `"outcome": "censored"`, `"pass": 1`, `"work_before": 0`, and
 
 ```
-harvest: policy frontier-walk stop=max-jobs jobs 2 decisive 0 censored 2 evals 400015 new_shards 0 or_closes 0 wall 0.1s
+harvest: policy frontier-walk stop=max-jobs jobs 2 decisive 0 censored 2 drawn 0 evals 400015 new_shards 0 or_closes 0 wall 0.1s
 ```
 
 (exit 0; `wall`, the `wall_s` fields, and the small chunk-overshoot
@@ -261,7 +263,7 @@ both `proofdb_harvest` and `proofdb_flip` until the fold).
 
 **The reference boot.** A 2G-capped boot over a root-only layer (the
 plan16 boot-gate protocol, budget 4,000,000) runs `stop=budget jobs 549
-decisive 49 censored 500 evals 2000051685 or_closes 0 wall 414.3s` — 49
+decisive 49 censored 500 drawn 0 evals 2000051685 or_closes 0 wall 414.3s` — 49
 decisive shards, no flags beyond the policy and the cap (re-pinned by
 report21 on the dev container; the plan16 gate's 553 jobs / 53 shards /
 6,706 nodes predate both the plan20 chunk-accounting change and the plan21
@@ -335,25 +337,27 @@ Operational notes:
   most the in-flight job's work: at most one bin without its sidecar
   (§7.2, §10). The DB `data/proofdb/proofdb.db` is unversioned and
   append-only — keep an offsite backup current (§2.1, recipe R6).
-## 4. Censor-state pick-up
+## 4. Scheduling-state pick-up
 
-The frontier's **censor state** (schema v2's `censor` table, plan20) is the
-walk's pick-up memory: one row per known-open frontier path with its censor
-history (`work_done`, `passes_failed`). Since plan20 it lives in the DB —
-there is no separate `work.json` anymore (the pre-plan20 `--ledger` flag is
-retired; the JSON sidecar and its `proofdb_ledger_union` merge tool with it).
+The frontier's **scheduling state** is the DB's `censor` table (one row per
+known-open frontier path with its censor history: `work_done`,
+`passes_failed`) plus the `drawn` table (one row per path whose bounded
+search proved a draw). Since plan20 it lives in the DB — there is no
+separate `work.json` anymore (the pre-plan20 `--ledger` flag is retired; the
+JSON sidecar and its `proofdb_ledger_union` merge tool with it).
 
-**Pick-up semantics.** The censor state is part of the DB, so pick-up needs
-no setup: a merged DB carries its censor history, and a harvest session
-continues exactly where the last one stopped. A DB without a `censor`
-table (a schema-v1 file) aborts cleanly with an upgrade hint — the fold
-cannot upgrade it in place; rebuild the layer from a pre-plan20 backup or
-restart fresh before harvesting. Two ways to start over:
+**Pick-up semantics.** The scheduling state is part of the DB, so pick-up
+needs no setup: a merged DB carries its censor history and proven-draw
+marks, and a harvest session continues exactly where the last one stopped.
+A DB without a `censor` table (a schema-v1 file) aborts cleanly with an
+upgrade hint — the fold cannot upgrade it in place; rebuild the layer from
+a pre-plan20 backup or restart fresh before harvesting. Two ways to start
+over:
 
 1. **Fresh** (sound by construction): wipe the censor rows
-   (`DELETE FROM censor;`) — every frontier path is re-censored at the
-   budget before the walk resumes; lower yield on the first revisit, no
-   other effect.
+   (`DELETE FROM censor;`; delete `drawn` too for a full re-exploration) —
+   every frontier path is re-censored at the budget before the walk
+   resumes; lower yield on the first revisit, no other effect.
 2. **Import a legacy ledger** (`proofdb_merge --import-censor <work.json>`,
    §7.1): merges a pre-plan20 JSON ledger into the table under the
    per-field max rule (`work_done`/`passes_failed` each keep the max) —
@@ -363,9 +367,8 @@ restart fresh before harvesting. Two ways to start over:
    `docs/plans/proofdb/measurements/plan10/ledger_union.json`) migrate this
    way in one command.
 
-The censor state is deliberately **not** proof data (spec §2.1): it is
-scheduling state inside the DB, its loss costs re-searched work, never
-soundness.
+The scheduling state is deliberately **not** proof data (spec §2.1): it is
+state inside the DB, its loss costs re-searched work, never soundness.
 
 ## 5. Data model primer (consumer)
 
@@ -401,7 +404,9 @@ Two consequences a consumer must not get wrong:
 - **Open is open.** `outcome IS NULL` covers both "searched and no decisive
   result within some bounded budget" and "not yet searched" — the DB does
   not distinguish the two (spec invariant 5). A non-terminal draw is also
-  represented as `NULL`; no `draw` outcome exists in v1.
+  represented as `NULL`; no `draw` outcome exists in the tree schema. A
+  proven draw lives only in the `drawn` scheduling table (§4), which the
+  walk prunes.
 
 **Depth vocabulary: bound by default, exactness an annotation.** A proven
 node's `depth_bound` proves _the decisive outcome within ≤ depth_bound
@@ -451,8 +456,10 @@ to.
    exported as `<tag>.bin`, replay-validated, and written to the shard dir
    with its `<tag>.meta.json` sidecar (bin first, sidecar second — the
    commit marker); the census `job:` line carries the `tag` and
-   `shard_nodes`. **Censored result** (draw from any cause, budget
-   exhausted) → no shard pair, a `censor` row only.
+   `shard_nodes`. **Proven draw** (`Complete` Draw) → no shard pair, no tree
+   row, a `drawn` scheduling row (the walk prunes the subtree).
+   **Censored result** (any other draw, budget exhausted) → no shard pair,
+   a `censor` row only.
 4. After the batch, run `proofdb_merge` (§8.1, recipe R2): every shard is
    replay-validated _again_ at fold time, grafted at its sidecar path,
    and only then becomes DB rows (recorded in the `shards` table).
@@ -656,19 +663,22 @@ is no precomputed job sequence. The mechanism, in operator terms:
   Selection is the shallowest candidate first, `(ply, path)`-lexicographic.
 - **Search visit** (candidate with `work_done < B`): replay the path,
   search at the flat budget `B` (retained TT, so a revisit is never a
-  byte-identical repeat); decisive → shard pipeline; censored → bump the
-  record's `work_done`/`passes_failed` and commit the censor row (one
-  transaction per censor, plan20 D3).
+  byte-identical repeat); decisive → shard pipeline; `Complete` draw →
+  commit a `drawn` row and prune the subtree (no shard, no tree row); any
+  other draw → bump the record's `work_done`/`passes_failed` and commit the
+  censor row (one transaction per censor, plan20 D3).
 - **Expansion visit** (candidate with `work_done ≥ B`): enumerate the
   legal children in lex UCI order and search the first *unhandled* one at
   `B`. *Handled* = a stored DB row (any outcome), a standing or in-session
-  shard path, or a censor record already at `≥ B` — so the sweep walks
-  *down* the tree breadth-first instead of deepening a censored node.
+  shard path, a proven-draw mark, or a censor record already at `≥ B` — so
+  the sweep walks *down* the tree breadth-first instead of deepening a
+  censored node.
 - **Complete rule**: a candidate with `work_done ≥ B` and no unhandled
   child is complete-marked (a pick-only iteration, no evals); each
   candidate completes at most once, so the loop cannot stall. A censor
-  that spends zero child-evals (a non-budget draw, e.g. an on-path
-  repetition) is also complete-marked.
+  that spends zero child-evals is also complete-marked; a zero-eval
+  `Complete` draw instead takes the proven-draw branch and is pruned as a
+  draw.
 - **Root rule**: when the candidate set is empty, the scope root (see the
   next bullet) becomes a virtual candidate (this is how a root-only layer
   bootstraps, §3.2) — unless the scope root is proven-stored, or-closed, or
@@ -747,7 +757,7 @@ state):
 
 ```text
 harvest: db data/proofdb/proofdb.db (4314 rows, fold digest 14fd07530996eb9e) — policy frontier-walk
-frontier-walk: records 368 (lineage 0, ancestor 0, or_closed 0, out_of_scope 0, complete 0) — root open; base budget 4000000; scope global
+frontier-walk: records 368 (lineage 0, ancestor 0, or_closed 0, drawn 0, out_of_scope 0, complete 0) — root open; base budget 4000000; scope global
 ```
 
 Since plan20 the `harvest:` echo no longer names a ledger path, and since
@@ -788,8 +798,8 @@ emitted by `examples/proofdb/session/record.rs`; `pass`/`work_before`/
 | `budget`       | child-eval budget granted for this visit                                                                                             |
 | `child_evals`  | child-evals actually spent                                                                                                           |
 | `wall_s`       | job wall time (seconds)                                                                                                              |
-| `outcome`      | `"win"` / `"loss"` (decisive, shard exported) or `"censored"` (no fact)                                                              |
-| `exit_reason`  | solver exit: `Complete` (decisive) or `BudgetExhausted` (censored)                                                                   |
+| `outcome`      | `"win"` / `"loss"` (decisive, shard exported), `"draw"` (proven draw, `drawn` row, no shard) or `"censored"` (fact of absence)     |
+| `exit_reason`  | solver exit: `Complete` (decisive or proven draw) or `BudgetExhausted` (censored)                                                   |
 | `tag`          | shard tag if decisive (the sidecar tag; matches `provenance` in the DB)                                                              |
 | `shard_nodes`  | exported shard's node count if decisive                                                                                              |
 | `pass`         | visit rung: `passes_failed + 1` (the walk census)                                                                                    |
@@ -809,22 +819,23 @@ visit, shown in the current grammar; `wall_s` varies by host):
 
 ```text
 job: {"budget":4000000,"child_evals":11554,"class":"C3","exit_reason":"Complete","kind":"expand","outcome":"win","pass":1,"path":"c2c3 g7g5","policy":"frontier-walk","shard_nodes":334,"tag":"h_2fd82f9a8230a668","tier":"frontier-walk","wall_s":0.0017,"work_before":0}
-harvest: policy frontier-walk stop=budget jobs 549 decisive 49 censored 500 evals 2000051685 new_shards 49 or_closes 0 wall 414.3s
+harvest: policy frontier-walk stop=budget jobs 549 decisive 49 censored 500 drawn 0 evals 2000051685 new_shards 49 or_closes 0 wall 414.3s
 ```
 
 _stdout, after the last job_ — the summary line; `out-db:`/`dump:` echo
 lines follow when those options were given:
 
 ```text
-harvest: policy frontier-walk stop=max-jobs jobs 2 decisive 0 censored 2 evals 400015 new_shards 0 or_closes 0 wall 0.1s
+harvest: policy frontier-walk stop=max-jobs jobs 2 decisive 0 censored 2 drawn 0 evals 400015 new_shards 0 or_closes 0 wall 0.1s
 ```
 
 - `harvest:` — the `stop=` reason, then `jobs N decisive D censored C
-  evals E new_shards S or_closes O wall Ws`. `decisive` counts jobs that
-  exported a shard pair; `censored` counts facts of absence; `or_closes`
-  counts the plan21 dynamic or-closes (in-session closures of
-  white-to-move parents on a decisive `loss` child; the static census
-  drops are the `or_closed` census field, not this).
+  drawn R evals E new_shards S or_closes O wall Ws`. `decisive` counts jobs
+  that exported a shard pair; `censored` counts facts of absence; `drawn`
+  counts proven draws (`Complete` Draw jobs, no shard/tree row, a `drawn`
+  scheduling row); `or_closes` counts the plan21 dynamic or-closes
+  (in-session closures of white-to-move parents on a decisive `loss` child;
+  the static census drops are the `or_closed` census field, not this).
 
 Under `frontier-walk`, `stop=exhausted` means no candidate can yield a
 visit (every candidate complete and the scope root proven-stored, or-closed,
@@ -1107,8 +1118,8 @@ All queries below run read-only and are verified against the standing DB
 (node counts in comments are its census: 55,703 nodes = 55,628 proven +
 75 open). Everything a website needs is a `WITH RECURSIVE` walk away over
 `meta`/`nodes` (plus `shards` and the `idx_nodes_parent` index); schema
-v2's additive `censor` table (spec §2.1) is harvest scheduling state and
-can be ignored entirely.
+v2's additive `censor` and `drawn` tables (spec §2.1) are harvest
+scheduling state and can be ignored entirely.
 
 **Path resolution — find the row for a UCI line.** There is no path column;
 walk the line from the root:
@@ -1231,12 +1242,13 @@ SELECT (SELECT COUNT(*) FROM nodes),
   unmerged-shard gate: any sidecar whose tag has no `shards`-table row
   means shards were collected since the last fold — run `proofdb_merge`
   first (§10).
-- Censored (draw) results are facts of absence only: no shard, no tree
-  row, a `censor` row. Non-terminal draws are not representable as facts
-  in this tree model.
+- Censored results are facts of absence only: no shard, no tree row, a
+  `censor` row. Proven draws are still not representable as *tree facts*
+  (schema v2 has no `draw` outcome), but they are no longer censored: a
+  `drawn` scheduling row records the path and the walk prunes its subtree.
 - Writer split (plan20): `proofdb_merge` writes `meta`/`shards`/`nodes`
-  only; `proofdb_harvest` writes `censor` rows only (one committed
-  transaction per censor). Running both concurrently is an operator
+  only; `proofdb_harvest` writes `censor`/`drawn` rows only (one committed
+  transaction per record). Running both concurrently is an operator
   error — never fold while a harvest session is running.
 
 ## 10. Troubleshooting and known limitations

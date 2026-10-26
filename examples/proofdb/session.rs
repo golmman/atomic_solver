@@ -20,7 +20,7 @@
 //! as the one orphan. An unexpected crash or ctrl-c therefore loses at most
 //! the in-flight job's work. Censored jobs touch only the censor state (one
 //! committed `censor`-table transaction per censor, plan20 — already
-//! atomic).
+//! atomic); a proven draw touches only the `drawn` scheduling table.
 //!
 //! ~9 KB (justified per the file-size convention): the whole job pipeline
 //! (replay → budgeted search → classify → shard export → durable bin +
@@ -37,7 +37,7 @@ use atomic_solver::position::Outcome;
 use atomic_solver::reconstruct::ReconstructConfig;
 use atomic_solver::search::dfpn::Search;
 
-use super::harvest::{Job, classify, make_sidecar, replay_job_path, tag_for_path};
+use super::harvest::{Job, JobVerdict, classify, make_sidecar, replay_job_path, tag_for_path};
 use super::shard_export::export_validated_shard;
 use super::sidecar::{SidecarEntry, write_sidecar};
 
@@ -188,25 +188,34 @@ impl Session {
                 .search_depth_with_prefix(&mut pos, u32::MAX, &prefix);
         let wall_s = t0.elapsed().as_secs_f64();
         let child_evals = self.search.child_evaluations();
-        let exit_reason = self.search.exit_reason().to_string();
+        let exit = self.search.exit_reason();
+        let exit_reason = exit.to_string();
         let path_str = job.path.join(" ");
-        let Some(decisive) = classify(outcome) else {
-            return JobRecord {
-                path: path_str,
-                policy: self.policy,
-                class: job.class.as_str(),
-                tier,
-                budget,
-                child_evals,
-                wall_s,
-                outcome: "censored".to_string(),
-                exit_reason,
-                tag: None,
-                shard_nodes: None,
-                pass: None,
-                work_before: None,
-                kind: None,
-            };
+        let decisive = match classify(outcome, exit) {
+            JobVerdict::Decisive(decisive) => decisive,
+            verdict => {
+                let outcome = match verdict {
+                    JobVerdict::ProvenDraw => "draw",
+                    JobVerdict::Censored => "censored",
+                    JobVerdict::Decisive(_) => unreachable!("handled above"),
+                };
+                return JobRecord {
+                    path: path_str,
+                    policy: self.policy,
+                    class: job.class.as_str(),
+                    tier,
+                    budget,
+                    child_evals,
+                    wall_s,
+                    outcome: outcome.to_string(),
+                    exit_reason,
+                    tag: None,
+                    shard_nodes: None,
+                    pass: None,
+                    work_before: None,
+                    kind: None,
+                };
+            }
         };
         let (tag, shard_nodes) = self.produce_shard(job, &sub_fen, decisive);
         eprintln!(

@@ -13,8 +13,12 @@
 //!
 //! Search-side context lives in the CLI (`proofdb_harvest`): path replay +
 //! `search_depth_with_prefix`, deterministic child-eval budgets, TT
-//! retention across jobs. `Draw` from any cause maps to **censored**
-//! ([`classify`]) — no fact, no DB write.
+//! retention across jobs. [`classify`] separates a **proven** draw
+//! (`Outcome::Draw` with `ExitReason::Complete`) from a censored draw
+//! (budget exhaustion or any other non-complete exit): the former is a
+//! path-keyed scheduling fact (a `drawn` row; no shard, no tree node), the
+//! latter stays a fact of absence (a `censor` row). Only decisive outcomes
+//! produce shards.
 //!
 //! Tests run in `tests/proofdb.rs` (which includes this module verbatim;
 //! cargo does not run unit tests inside example targets) and in
@@ -23,6 +27,7 @@
 use atomic_solver::notation::uci_to_move;
 use atomic_solver::position::Outcome;
 use atomic_solver::position::Position;
+use atomic_solver::search::dfpn::ExitReason;
 
 use super::sidecar::SidecarEntry;
 
@@ -74,14 +79,31 @@ pub struct Job {
     pub budget: u64,
 }
 
-/// Classify a search outcome per pre-registered decision 1: `Draw` from any
-/// cause (budget exhaustion included) is **censored** — no fact, no DB
-/// write; only decisive outcomes produce a shard.
+/// The three-way job verdict: a decisive proof (shard), a proven draw
+/// (path-keyed scheduling mark; the tree model still has no draw outcome),
+/// or a censor (fact of absence).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum JobVerdict {
+    /// `Win`/`Loss`: export a shard as before.
+    Decisive(Outcome),
+    /// `Draw` with `ExitReason::Complete`: the solver proved the draw. No
+    /// shard or tree node exists for it (schema v2 has no draw outcome),
+    /// but it is recorded as a `drawn` scheduling row so the walk prunes the
+    /// subtree instead of re-searching it.
+    ProvenDraw,
+    /// `Draw` from budget exhaustion or any other non-complete exit.
+    Censored,
+}
+
+/// Classify a search outcome + exit reason. Only a `Draw` that completed
+/// proves a draw; every other draw is censored (pre-registered decision 1's
+/// soundness rule, now without discarding a completed proof).
 #[must_use]
-pub fn classify(outcome: Outcome) -> Option<Outcome> {
+pub fn classify(outcome: Outcome, exit_reason: ExitReason) -> JobVerdict {
     match outcome {
-        Outcome::Draw => None,
-        decisive => Some(decisive),
+        Outcome::Draw if exit_reason == ExitReason::Complete => JobVerdict::ProvenDraw,
+        Outcome::Draw => JobVerdict::Censored,
+        decisive => JobVerdict::Decisive(decisive),
     }
 }
 
