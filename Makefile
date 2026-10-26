@@ -27,7 +27,7 @@ quick_loss:
 	cargo run --release -- --fen "rnb1kbnr/pppp1ppp/4p3/8/7q/NP6/P1PPPPPP/R1BQKBNR w KQkq - 1 3" --timeout 10
 
 quick_draw:
-	cargo run --release -- --fen "7k/r4p1P/5P2/8/P7/8/5B2/K7 w - - 0 1" --timeout 10
+	cargo run --release -- --fen "7k/5p1P/5P2/2p5/1NPB4/8/8/K7 w - - 0 1" --timeout 10
 
 quick_win:
 	cargo run --release -- --fen "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R4RK w - - 1 23" --timeout 10
