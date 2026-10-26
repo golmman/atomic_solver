@@ -1,5 +1,4 @@
 pub mod config;
-pub mod facts;
 pub mod notation;
 pub mod position;
 pub mod proof_event;

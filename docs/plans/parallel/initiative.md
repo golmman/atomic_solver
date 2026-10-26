@@ -326,6 +326,11 @@ lever on the roadmap. Trigger 1 (a consumer accepting nondeterministic
 runs) is deferred to the design note: whether an opt-in nondeterministic
 mode ships at all is a plan1 output, not a precondition.
 
+**2026-10-26:** the rejected plan10/plan11 carrier code (`src/facts/`, the
+`search::dfpn` import/export hooks, and the `--facts-out` / `--facts-in`
+flags) was removed by `cleanup` plan6; the plan10/plan11 reports and
+measurements remain the historical record.
+
 ## Motivation
 
 The solver is sequential and single-threaded end to end. All other lever
