@@ -1072,3 +1072,45 @@ Please draft a plan in the proofdb initiative.
 We are currently working on the `proofdb` initiative.
 i don't want to have explicit handoff to the proofdb browser. Instead i simply want to copy the updated `proofdb.db` file over.
 Are there any changes on this side necessary for this to work?
+
+---
+
+Please explain the following observed bahaviour in simple language.
+
+I run a proofdb harvest.
+I expected that every censored search adds to the `censor` table of the proofdb, so this should grow the value of `wc -c < data/proofdb/proofdb.db` each time.
+But it doesn't. Where am i wrong?
+
+---
+
+* "Censored work produces no DB content at all" - so when is exactly is the `censor` data updated then?
+* "Draw from any cause is censored" - why did we decide like this?
+
+---
+
+1. this brings me back to my first question. I ran `frontier-walk` with a budget of `100000000` only:
+so all censors are stored with `work_done` greater than or equal to `100000000`.
+Per policy rule we don't visit censored nodes again when this budget was invested in the past. So every new run should produce a new `censor` row in the db, which should increase the `proofdb.db` file size. But it apparently doesn't. Where is my error?
+
+2. Would it be reasonable to store them as losses from the attacker perspective?
+
+---
+
+1. understood, thanks
+2. how are we storing forced draws then?
+
+---
+
+I think i found a major flaw in the search that needs fixing.
+
+The postions searched via `make quick_draw` is a forced draw like so:
+* white moves any piece
+* black moves a6a4
+* white again moves any piece
+* black has no moves: stalemate = draw
+
+The search does not find the draw though, it calculates and then times out.
+
+Since the ultimate goal is proving a win for the attacker (white) this should be counted as a loss from the attacker side in my opinion.
+
+Challenge my ideas, maybe i am wrong?

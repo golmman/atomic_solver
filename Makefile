@@ -1,6 +1,6 @@
 .PHONY: macos_cleanup
 .PHONY: test test-full test-lite
-.PHONY: stress quick_check quick_check2 quick_check3
+.PHONY: stress quick_loss quick_draw quick_win quick_win2
 .PHONY: proofdb_init proofdb_cycle_run proofdb_cycle_stop proofdb_stats proofdb_sync
 
 BIN := target/release/examples
@@ -23,15 +23,17 @@ test-lite:  ## debug build, quick logic check
 
 # Cli Shortcuts
 
-quick_check:
+quick_loss:
+	cargo run --release -- --fen "rnb1kbnr/pppp1ppp/4p3/8/7q/NP6/P1PPPPPP/R1BQKBNR w KQkq - 1 3" --timeout 10
+
+quick_draw:
+	cargo run --release -- --fen "7k/r4p1P/5P2/8/P7/8/5B2/K7 w - - 0 1" --timeout 10
+
+quick_win:
 	cargo run --release -- --fen "4r1k1/3p4/2pB2p1/p5Pp/5p1P/2N1PP2/P1PP4/1R4RK w - - 1 23" --timeout 10
 
-quick_check2:
+quick_win2:
 	cargo run --release -- --fen "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22" --timeout 10
-
-quick_check3:
-	cargo run --release -- --fen "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22" --timeout 10 --tt-dump-path proof_tree.bin.tt
-	cargo run --release --example reconstruct_pt -- --snapshot proof_tree.bin.tt --out proof_tree.bin
 
 stress:
 	cargo run --release -- --fen "4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21" --timeout 60
