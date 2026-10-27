@@ -16,9 +16,11 @@ A pure solver for atomic chess in Rust.
   job). Refinement rounds are deterministically work-capped (`set_refine_cap_factor` /
   `--refine-cap`, default 0.25, `0` disables); searches can instead be bounded by cumulative
   child evals (`set_child_eval_budget`: budget-exhausted → `Draw` +
-  `ExitReason::BudgetExhausted`, never `Timeout`). Hot-path terminal classification, pooled
-  movegen slots (`children.rs`), and the per-run repetition-draw cache (`repetition_cache.rs`)
-  are documented in their own module docs.
+  `ExitReason::BudgetExhausted`, never `Timeout`). The restart schedule
+  (`RestartSchedule::SHIPPED`: base 500_000 child evals, geometric ×2, no cutoff) is a
+  pacing/diversification device only; the hard child-eval budget is enforced per node. Hot-path
+  terminal classification, pooled movegen slots (`children.rs`), and the per-run
+  repetition-draw cache (`repetition_cache.rs`) are documented in their own module docs.
 - `src/search/preflight/` — detector-gated bounded pre-phase (plan13, architecture R): on
   ≤3-men, pawnless, no-castling roots it decides the value via a region-closure AND/OR fixpoint
   plus a mandatory replay verifier; a claim returns the exact-DTM principal-line PV, anything

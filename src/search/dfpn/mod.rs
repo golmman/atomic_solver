@@ -3,13 +3,23 @@
 //! This module is intentionally larger than 10 KB because the search loop,
 //! public entry points, and move ordering all live in a single `Search`
 //! implementation for performance and to avoid extra cross-module coupling.
+//!
+//! Pacing uses a deterministic restart schedule (`RestartSchedule::SHIPPED`:
+//! base 500_000 child evals, geometric ×2, no cutoff) — a diversification
+//! device, not a budget. The hard child-eval budget is enforced per node
+//! (`child_eval_budget_exceeded` at the frame-loop head), independent of pacing.
 
 mod children;
 mod core;
+mod fraction;
 mod history;
 mod pv;
 mod repetition_cache;
+mod restart_schedule;
 mod selection;
+
+use fraction::fraction_from_f64;
+pub use restart_schedule::{Growth, RestartSchedule};
 
 #[cfg(test)]
 mod tests;
@@ -112,45 +122,18 @@ enum RoundTermination {
     /// A decisive outcome was found.
     Decisive,
     /// The bounded tree at `max_depth` was fully explored with no decisive
-    /// line (`work_done < call_max_work` on the final chunk).
+    /// line (the final slice was not fully spent and no resource limit fired).
     Exhausted,
     /// The per-round work cap (`round_work_cap`) stopped the round before
-    /// exhaustion (`call_max_work == 0` reached via the round cap).
+    /// exhaustion (`call_slice == 0` reached via the round cap).
     CapCut,
     /// Wall time, the stop flag, the memory flag, or the global child-eval
-    /// budget stopped the round before exhaustion.
+    /// budget stopped the round before exhaustion. The budget is enforced per
+    /// node; the restart slice only paces the search. Attribution is derived
+    /// at loop exit: a resource limit that fires while the final slice is
+    /// under-spent is `ResourceCut`, unless the round cap is the strictly
+    /// smaller remaining constraint (then `CapCut`; ties stay `ResourceCut`).
     ResourceCut,
-}
-
-/// Convert a positive f64 into an exact reduced `num/den` fraction.
-///
-/// This is used both for `1.0 + epsilon` and for geometric chunk-growth
-/// factors, so the helper is not specific to epsilon.
-fn fraction_from_f64(v: f64) -> (u64, u64) {
-    let bits = v.to_bits();
-    let exponent = ((bits >> 52) & 0x7ff) as i32;
-    let mantissa = bits & 0x000f_ffff_ffff_ffff;
-    let mut num = (1u64 << 52) | mantissa;
-    let mut den = 1u64;
-
-    let exp = exponent - 1075; // 1023 (bias) + 52 (fraction bits)
-    if exp >= 0 {
-        num <<= exp as u32;
-    } else {
-        den = 1u64 << (-exp) as u32;
-    }
-
-    let g = gcd(num, den);
-    (num / g, den / g)
-}
-
-fn gcd(mut a: u64, mut b: u64) -> u64 {
-    while b != 0 {
-        let t = a % b;
-        a = b;
-        b = t;
-    }
-    a
 }
 
 pub struct Search {
@@ -180,10 +163,9 @@ pub struct Search {
     max_ply: usize,
     max_depth_reached: u32,
     prefix_path: Option<Vec<u64>>,
-    linear_chunks: bool,
-    chunk_increment: u64,
-    chunk_multiplier_num: u64,
-    chunk_multiplier_den: u64,
+    restart_schedule: RestartSchedule,
+    /// Restart boundaries crossed in the current run (reset by `begin_run`).
+    restarts: u64,
     stop_flag: Option<Arc<AtomicBool>>,
     memory_limited: Option<Arc<AtomicBool>>,
     /// Next `self.nodes` value at which `time_exceeded` re-reads the wall
@@ -256,10 +238,8 @@ impl Search {
             max_ply: DEFAULT_MAX_PV_PLIES,
             max_depth_reached: 0,
             prefix_path: None,
-            linear_chunks: false,
-            chunk_increment: 500_000,
-            chunk_multiplier_num: 2,
-            chunk_multiplier_den: 1,
+            restart_schedule: RestartSchedule::SHIPPED,
+            restarts: 0,
             stop_flag: None,
             memory_limited: None,
             clock_sample_at: std::cell::Cell::new(0),
@@ -310,11 +290,16 @@ impl Search {
     /// Bound the search by cumulative child evaluations instead of wall time.
     /// `u64::MAX` (the default) means unbounded.
     ///
-    /// The budget is enforced at the same boundaries as the time budget: the
-    /// work-chunk loop stops once the budget is spent, and each `dfpn` call is
-    /// capped at the remaining budget so the existing `max_work` checks cut the
-    /// recursion. A budget-exhausted search returns `Outcome::Draw`, stores
-    /// only unsolved transposition entries, and reports
+    /// The budget is enforced per node: every `dfpn` frame loop head checks
+    /// [`Search::child_eval_budget_exceeded`], and the `bounded_search` loop
+    /// condition checks it between slices. The restart schedule is pacing
+    /// only and never enforces the budget. The budget can be crossed by at
+    /// most the remainder of one `evaluate_all_children` sweep (fewer than
+    /// 256 child evaluations): unwinding ancestors re-check at their loop
+    /// heads and a freshly entered child re-checks before its first sweep.
+    ///
+    /// A budget-exhausted search returns `Outcome::Draw`, stores only
+    /// unsolved transposition entries, and reports
     /// [`ExitReason::BudgetExhausted`] from [`Search::exit_reason`]; it is
     /// never reported by [`Search::time_exceeded`], which stays exclusively
     /// about wall time.
@@ -423,23 +408,25 @@ impl Search {
         self.max_ply = max_ply.max(1);
     }
 
-    pub fn set_linear_chunks(&mut self, linear: bool) {
-        self.linear_chunks = linear;
+    /// Replace the deterministic restart schedule used by the work-chunk
+    /// loop. See [`RestartSchedule`]; this is a pacing/diversification policy,
+    /// not a budget.
+    pub fn set_restart_schedule(&mut self, schedule: RestartSchedule) {
+        self.restart_schedule = schedule;
     }
 
-    /// Set the geometric chunk-growth factor from a floating-point value and
-    /// return the exact reduced fraction that is used internally.
-    ///
-    /// `factor` must be at least `1.0`.
-    pub fn set_chunk_multiplier_from_factor(&mut self, factor: f64) -> (u64, u64) {
-        assert!(
-            factor >= 1.0,
-            "chunk growth factor must be >= 1.0, got {factor}"
-        );
-        let (num, den) = fraction_from_f64(factor);
-        self.chunk_multiplier_num = num;
-        self.chunk_multiplier_den = den;
-        (num, den)
+    /// The current restart schedule (seeded with [`RestartSchedule::SHIPPED`]).
+    #[must_use]
+    pub fn restart_schedule(&self) -> RestartSchedule {
+        self.restart_schedule
+    }
+
+    /// Number of restart boundaries crossed in the current run. Zero for a run
+    /// that finished in its first slice (for example
+    /// [`RestartSchedule::NEVER`]).
+    #[must_use]
+    pub fn restarts(&self) -> u64 {
+        self.restarts
     }
 
     pub fn set_epsilon(&mut self, epsilon: f64) {
@@ -573,27 +560,28 @@ impl Search {
         // `child_eval_budget_exceeded()`, or (pathologically, via chunk
         // overflow) `chunk == 0` — all resource cuts.
         let mut termination = RoundTermination::ResourceCut;
-        let mut chunk = 500_000u64;
+        let mut chunk = self.restart_schedule.first_slice();
         let mut last_child_evals_before;
         let round_evals_start = self.child_evals;
 
         while !self.time_exceeded() && !self.child_eval_budget_exceeded() && chunk > 0 {
             self.reset_search_state();
             last_child_evals_before = self.child_evals;
-            // Cap the call's work at the remaining child-eval budget (and at
-            // the remaining per-round refinement cap) so the existing
-            // `max_work` checks inside `dfpn` also enforce both budgets. A
-            // budget- or cap-cut result is therefore indistinguishable from an
-            // ordinary work-chunk cutoff: unsolved TT stores, no outcome.
+            // Pacing only: the restart slice is capped by the remaining
+            // per-round refinement cap. The global child-eval budget is NOT
+            // shrunk into this slice — it is enforced per node inside `dfpn`
+            // (`child_eval_budget_exceeded`), which keeps the unbudgeted path
+            // bit-identical to the historical `call_max_work == chunk`.
             let remaining_budget = self.child_eval_budget.saturating_sub(self.child_evals);
             let round_remaining =
                 round_work_cap.saturating_sub(self.child_evals - round_evals_start);
-            let call_max_work = chunk.min(remaining_budget).min(round_remaining);
-            if call_max_work == 0 {
-                // Global budget or round cap exhausted without a decisive
-                // line; further chunks cannot change the outcome. Attribute
-                // the cut to whichever constraint is smaller; on a tie the
-                // global budget was spent too, so report the resource cut.
+            let call_slice = chunk.min(round_remaining);
+            if call_slice == 0 {
+                // Round cap (or a pathological zero chunk) exhausted without
+                // a decisive line; further chunks cannot change the outcome.
+                // Attribute the cut to the strictly smaller remaining
+                // constraint; on a tie the budget was spent too, so report
+                // the resource cut.
                 termination = if round_remaining < remaining_budget {
                     RoundTermination::CapCut
                 } else {
@@ -601,18 +589,19 @@ impl Search {
                 };
                 break;
             }
-            outcome = self.dfpn(pos, INF, INF, max_depth, call_max_work, true);
+            outcome = self.dfpn(pos, INF, INF, max_depth, call_slice, true);
             if outcome != Outcome::Draw {
                 termination = RoundTermination::Decisive;
                 break;
             }
 
             let work_done = self.child_evals - last_child_evals_before;
-            if work_done < call_max_work {
-                // The search did not use its full work budget. That is natural
-                // exhaustion of the bounded tree — unless a resource limit
-                // also fired during the final chunk, in which case the cut
-                // must never be claimed as exhaustion.
+            if work_done < call_slice || call_slice == u64::MAX {
+                // The search did not use its full slice (or the slice was
+                // unbounded). That is natural exhaustion of the bounded tree
+                // — unless a resource limit also fired during the final
+                // slice, in which case the cut must never be claimed as
+                // exhaustion.
                 termination = if self.time_exceeded() || self.child_eval_budget_exceeded() {
                     RoundTermination::ResourceCut
                 } else {
@@ -621,12 +610,11 @@ impl Search {
                 break;
             }
 
-            chunk = if self.linear_chunks {
-                chunk.saturating_add(self.chunk_increment)
-            } else {
-                ((u128::from(chunk) * u128::from(self.chunk_multiplier_num))
-                    / u128::from(self.chunk_multiplier_den)) as u64
-            };
+            let next_chunk = self.restart_schedule.next(chunk, self.child_evals);
+            if next_chunk > 0 {
+                self.restarts += 1;
+            }
+            chunk = next_chunk;
             self.log_chunk(work_done, chunk, "bounded_search");
         }
 
@@ -841,6 +829,7 @@ impl Search {
         self.first_outcome_evals = 0;
         self.refinement_rounds = 0;
         self.refinement_evals = 0;
+        self.restarts = 0;
         self.pv_status = PvStatus::None;
         self.last_round_cap_cut = false;
         self.start = Instant::now();

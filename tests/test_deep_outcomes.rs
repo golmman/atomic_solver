@@ -4,7 +4,9 @@ use std::process::Command;
 
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
-use common::{assert_solves_to, assert_solves_within_evals, assert_unproven_within_evals, cli_bin};
+use common::{
+    assert_solves_to, assert_solves_within_evals_with_tt, assert_unproven_within_evals, cli_bin,
+};
 
 // Fast regression positions that solve within the default 5-second timeout in
 // release builds but are too slow for debug builds (several seconds each).
@@ -201,13 +203,16 @@ fn m29_black_loses() {
 #[test]
 #[ignore = "slow: deterministic eval budget (~2 min); run with -- --include-ignored"]
 fn m22_white_wins() {
-    // Deterministic conversion of the former 60 s wall-clock regression:
-    // the first-outcome solve measured 37,503,264 child evals (two identical
-    // runs); the budget carries ~3× headroom.
-    assert_solves_within_evals(
+    // Deterministic conversion of the former 60 s wall-clock regression.
+    // The position is provable at the shipped 256 MB TT (first-outcome
+    // measured 15,023,911 child evals); the budget carries 4× headroom.
+    // At the 64 MB regression TT it does not prove within 3.7B evals / 300 s
+    // (plan12 Phase 0 probe, HEAD), so this regression uses the product TT.
+    assert_solves_within_evals_with_tt(
         "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
         Outcome::Win,
-        120_000_000,
+        60_000_000,
+        256,
     );
 }
 

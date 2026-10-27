@@ -1,0 +1,116 @@
+{
+  "dec31_fo_tt128": {
+    "chunks": 1,
+    "evals": 510426,
+    "nodes": 22286,
+    "outcome": "loss",
+    "pre_exit": "reason=Complete outcome=loss nodes=22286",
+    "pv_len": 22,
+    "pv_status": "first-outcome",
+    "wall_s": 0.04
+  },
+  "dec31_fo_tt256": {
+    "chunks": 1,
+    "evals": 510426,
+    "nodes": 22286,
+    "outcome": "loss",
+    "pre_exit": "reason=Complete outcome=loss nodes=22286",
+    "pv_len": 22,
+    "pv_status": "first-outcome",
+    "wall_s": 0.065
+  },
+  "m22_fo_tt128": {
+    "chunks": 5,
+    "evals": 19111111,
+    "nodes": 1168063,
+    "outcome": "win",
+    "pre_exit": "reason=Complete outcome=win nodes=1168063",
+    "pv_len": 301,
+    "pv_status": "first-outcome",
+    "wall_s": 1.852
+  },
+  "m22_fo_tt256": {
+    "chunks": 4,
+    "evals": 15023911,
+    "nodes": 890584,
+    "outcome": "win",
+    "pre_exit": "reason=Complete outcome=win nodes=890584",
+    "pv_len": 75,
+    "pv_status": "first-outcome",
+    "wall_s": 1.525
+  },
+  "m23_white_fo_tt128": {
+    "chunks": 4,
+    "evals": 9553618,
+    "nodes": 555725,
+    "outcome": "win",
+    "pre_exit": "reason=Complete outcome=win nodes=555725",
+    "pv_len": 65,
+    "pv_status": "first-outcome",
+    "wall_s": 0.904
+  },
+  "m23_white_fo_tt256": {
+    "chunks": 4,
+    "evals": 11621376,
+    "nodes": 899510,
+    "outcome": "win",
+    "pre_exit": "reason=Complete outcome=win nodes=899510",
+    "pv_len": 27,
+    "pv_status": "first-outcome",
+    "wall_s": 1.193
+  },
+  "quick_tt128": {
+    "cases": 59,
+    "evals": 40042745,
+    "ok": 59,
+    "wall_s": 43.719,
+    "wrong": 0
+  },
+  "quick_tt256": {
+    "cases": 59,
+    "evals": 42109768,
+    "ok": 59,
+    "wall_s": 60.133,
+    "wrong": 0
+  },
+  "stress_default_tt128": {
+    "chunks": 43,
+    "evals": 431483928,
+    "nodes": 29723650,
+    "outcome": "win",
+    "pre_exit": "reason=Complete outcome=win nodes=29723650",
+    "pv_len": 81,
+    "pv_status": "cap-cut",
+    "wall_s": 38.612
+  },
+  "stress_default_tt256": {
+    "chunks": 50,
+    "evals": 502873436,
+    "nodes": 41234966,
+    "outcome": "win",
+    "pre_exit": "reason=Complete outcome=win nodes=41234966",
+    "pv_len": 19,
+    "pv_status": "cap-cut",
+    "wall_s": 49.285
+  },
+  "stress_fo_tt128": {
+    "chunks": 9,
+    "evals": 305404068,
+    "nodes": 17420378,
+    "outcome": "win",
+    "pre_exit": "reason=Complete outcome=win nodes=17420378",
+    "pv_len": 669,
+    "pv_status": "first-outcome",
+    "wall_s": 27.648
+  },
+  "stress_fo_tt256": {
+    "chunks": 9,
+    "evals": 287872755,
+    "nodes": 16083674,
+    "outcome": "win",
+    "pre_exit": "reason=Complete outcome=win nodes=16083674",
+    "pv_len": 147,
+    "pv_status": "first-outcome",
+    "wall_s": 27.905
+  }
+}

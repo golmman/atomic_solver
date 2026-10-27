@@ -41,11 +41,17 @@ fn m19_white_unproven_in_60s() {
 /// is not asserted as unproven here. When a move-order improvement makes m20 or
 /// m21 decisive, this test will fail; the position should then be moved to the
 /// regression suite.
+///
+/// `m21_white` crossed that line: at a 64 MB TT it is now decisive in ~52 s
+/// (596,102,838 child evals, `Win` 200 plies, `pv_status: cap-cut`; measured
+/// during plan12 Phase 0 against HEAD). It is therefore excluded from the
+/// unproven assertion; the remaining positions still time out.
 #[test]
 #[ignore = "slow: 60 s budget per position; run with -- --include-ignored"]
 fn move_order_hard_positions_unproven_in_60s() {
     for case in load_move_order_suite() {
-        if case.name.starts_with("m20_") || case.name.starts_with("m21_") {
+        let hardest = case.name.starts_with("m20_") || case.name.starts_with("m21_");
+        if hardest && case.name != "m21_white" {
             assert_unproven_in_60s(&case.fen);
         }
     }

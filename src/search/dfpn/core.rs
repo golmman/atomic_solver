@@ -43,7 +43,7 @@ impl Search {
         th_pn: u64,
         th_dn: u64,
         max_depth: u32,
-        max_work: u64,
+        restart_slice: u64,
         is_or_node: bool,
     ) -> Outcome {
         if self.time_exceeded() {
@@ -204,11 +204,20 @@ impl Search {
             if self.time_exceeded() {
                 break;
             }
+            // Hard budget: enforced per node, independently of the pacing
+            // slice. Unwinding ancestors re-check here, and a freshly entered
+            // child checks before its first sweep, so the budget is crossed by
+            // at most one `evaluate_all_children` remainder.
+            if self.child_eval_budget_exceeded() {
+                break;
+            }
 
-            // Work-bounded search: stop this chunk once it has consumed its node
-            // budget.  The result is stored as an unsolved entry so the next chunk
-            // can resume from the same bounds.
-            if max_work != u64::MAX && self.child_evals - child_evals_start >= max_work {
+            // Restart pacing: stop this slice once it has consumed its node
+            // allowance. The recursion unwinds to the root and re-enters with
+            // INF/INF thresholds; only TT entries survive the boundary (frame
+            // thresholds and child tables are rebuilt — this is a restart, not
+            // a resumption).
+            if restart_slice != u64::MAX && self.child_evals - child_evals_start >= restart_slice {
                 break;
             }
 
@@ -221,10 +230,12 @@ impl Search {
                 let old_pn = children[idx].pn;
                 let old_dn = children[idx].dn;
                 children[idx] = self.evaluate_child(pos, mv, max_depth, is_or_node);
-                // In a work-bounded call, if the child came back with exactly the
+                // In a sliced call, if the child came back with exactly the
                 // same (pn, dn) bounds re-expanding it cannot make progress. Mark
                 // it explored so the search moves on to other children.
-                if max_work != u64::MAX && children[idx].pn == old_pn && children[idx].dn == old_dn
+                if restart_slice != u64::MAX
+                    && children[idx].pn == old_pn
+                    && children[idx].dn == old_dn
                 {
                     children[idx].explored = true;
                 }
@@ -265,10 +276,10 @@ impl Search {
             let (second_pn, second_dn) = selection.second_child;
 
             let work_spent = self.child_evals - child_evals_start;
-            if max_work != u64::MAX && work_spent >= max_work {
+            if restart_slice != u64::MAX && work_spent >= restart_slice {
                 break;
             }
-            let child_max_work = max_work.saturating_sub(work_spent);
+            let child_slice = restart_slice.saturating_sub(work_spent);
 
             let (np, nd) = if is_or_node {
                 let new_th_pn = std::cmp::min(th_pn, self.epsilon_ceil(second_pn));
@@ -297,7 +308,7 @@ impl Search {
                     np,
                     nd,
                     max_depth.saturating_sub(1),
-                    child_max_work,
+                    child_slice,
                     !is_or_node,
                 );
             });

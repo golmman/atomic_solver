@@ -1,7 +1,7 @@
 //! Cross-module DF-PN unit tests.
 
 use super::repetition_cache::RepetitionCache;
-use super::{PvStatus, RoundTermination};
+use super::{ExitReason, PvStatus, RestartSchedule, RoundTermination};
 use crate::position::{Outcome, Position};
 use crate::search::dfpn::Search;
 use atomic_movegen::types::{Move, Square};
@@ -454,6 +454,20 @@ fn bounded_search_reports_resource_cut_on_budget() {
 }
 
 #[test]
+fn bounded_search_reports_resource_cut_when_budget_and_cap_tie() {
+    // Budget == cap: both constraints are spent at the same time. Today's
+    // tie rule reports the resource cut (the budget was spent too).
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    search.set_child_eval_budget(5);
+    search.begin_run();
+    let (outcome, _pv, termination) = search.bounded_search(&mut pos, u32::MAX, 5);
+    assert_eq!(outcome, Outcome::Draw);
+    assert_eq!(termination, RoundTermination::ResourceCut);
+}
+
+#[test]
 fn bounded_search_reports_cap_cut_on_round_cap() {
     // A per-round cap smaller than the root's branching factor exhausts the
     // round cap but not the global budget: the `call_max_work == 0` break
@@ -551,6 +565,52 @@ fn drawn_position_reports_none_status() {
     assert_eq!(outcome, Outcome::Draw);
     assert!(pv.is_empty());
     assert_eq!(search.pv_status(), PvStatus::None);
+}
+
+#[test]
+fn budget_overshoot_is_bounded() {
+    // The per-node budget check is crossed by at most the remainder of one
+    // `evaluate_all_children` sweep (< 256 child evals).
+    const FEN: &str = "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22";
+    for budget in [1_000u64, 10_000, 100_000, 1_000_000] {
+        let mut pos = Position::from_fen(FEN).unwrap();
+        let mut search = Search::new(64);
+        search.set_timeout(60);
+        search.set_child_eval_budget(budget);
+        let (outcome, _pv, _nodes) = search.search_depth(&mut pos, u32::MAX);
+        assert_eq!(outcome, Outcome::Draw, "budget {budget}");
+        assert_eq!(search.exit_reason(), ExitReason::BudgetExhausted);
+        assert!(
+            search.child_evaluations() <= budget + 256,
+            "budget {budget} overshot to {}",
+            search.child_evaluations()
+        );
+    }
+}
+
+#[test]
+fn never_restarts() {
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    search.set_restart_schedule(RestartSchedule::NEVER);
+    let (outcome, _pv, _nodes) = search.search_depth(&mut pos, u32::MAX);
+    assert_eq!(outcome, Outcome::Win);
+    assert_eq!(search.restarts(), 0);
+}
+
+#[test]
+fn shipped_schedule_restarts_past_the_first_slice() {
+    // dec31 needs 510,426 child evals: just past the shipped 500,000 slice,
+    // so exactly one restart boundary is crossed.
+    let mut pos =
+        Position::from_fen("r1bq1k2/ppN3p1/2p1p2P/6P1/1b1P1p2/8/PP3P2/R2K1B1R b - - 0 15").unwrap();
+    let mut search = Search::new(64);
+    search.set_timeout(5);
+    assert_eq!(search.restart_schedule(), RestartSchedule::SHIPPED);
+    let (outcome, _pv, _nodes) = search.search_depth(&mut pos, u32::MAX);
+    assert_eq!(outcome, Outcome::Loss);
+    assert!(search.restarts() >= 1);
 }
 
 #[test]

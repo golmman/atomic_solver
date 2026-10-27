@@ -207,11 +207,18 @@ pub fn assert_unproven_within_evals(fen: &str, budget: u64) {
 /// Assert that `fen` solves to `expected` within `budget` cumulative child
 /// evaluations (deterministic replacement for the wall-clock regression
 /// budget). Uses first-outcome mode, so the budget bounds the work to the
-/// first decisive line.
+/// first decisive line. Uses a 64 MB TT, the low-memory regression budget.
 pub fn assert_solves_within_evals(fen: &str, expected: Outcome, budget: u64) {
+    assert_solves_within_evals_with_tt(fen, expected, budget, 64);
+}
+
+/// [`assert_solves_within_evals`] at an explicit TT size. Use `tt_mb` when a
+/// position is only provable at the shipped product TT size rather than the
+/// 64 MB regression budget.
+pub fn assert_solves_within_evals_with_tt(fen: &str, expected: Outcome, budget: u64, tt_mb: usize) {
     let mut pos =
         Position::from_fen(fen).unwrap_or_else(|e| panic!("failed to parse FEN '{fen}': {e}"));
-    let mut search = Search::new(64);
+    let mut search = Search::new(tt_mb);
     search.set_timeout(3600);
     search.set_first_outcome_only(true);
     search.set_child_eval_budget(budget);

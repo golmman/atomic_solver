@@ -1,10 +1,15 @@
-//! Benchmark `max_work` chunk growth with a configurable factor on one position.
+//! Benchmark the restart schedule on one position.
 //!
 //! This file is larger than 10 KiB because it contains argument parsing, timing,
 //! and formatted output for a standalone diagnostic example.
+//!
+//! The example hardcodes `Search::new(64)` (a 64 MB TT). The restart schedule
+//! is a measured, TT-capacity-dependent hyperparameter — its sign flips between
+//! TT sizes — so these numbers are specific to that budget and are not a
+//! cross-size performance guarantee.
 
 use atomic_solver::position::{Outcome, Position};
-use atomic_solver::search::dfpn::Search;
+use atomic_solver::search::dfpn::{RestartSchedule, Search};
 use std::time::{Duration, Instant};
 
 struct Run {
@@ -29,6 +34,8 @@ fn main() {
     let mut runs = 5usize;
     let mut factors: Vec<f64> = Vec::new();
     let mut linear = false;
+    let mut none = false;
+    let mut cap: Option<u64> = None;
 
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut i = 0;
@@ -64,56 +71,78 @@ fn main() {
                 factors.push(v);
                 i += 2;
             }
+            "--cap" => {
+                cap = Some(
+                    args.get(i + 1)
+                        .expect("--cap requires a value")
+                        .parse()
+                        .expect("--cap needs a child-eval count"),
+                );
+                i += 2;
+            }
             "--linear" => {
                 linear = true;
+                i += 1;
+            }
+            "--none" => {
+                none = true;
                 i += 1;
             }
             other => panic!("unknown option {other}"),
         }
     }
 
-    if factors.is_empty() {
+    if factors.is_empty() && !linear && !none {
         factors.push(2.0);
     }
 
     println!("fen={fen}");
     println!("timeout={timeout}s runs={runs}");
+    if let Some(c) = cap {
+        println!("restart cutoff={c} child evals");
+    }
     println!();
 
     let mut results: Vec<(String, ChunkResult)> = Vec::new();
 
+    if none {
+        let schedule = RestartSchedule::NEVER;
+        let (label, r) = bench_mode("none", &fen, timeout, runs, schedule);
+        results.push((label, r));
+    }
+
     if linear {
-        let (label, r) = bench_mode(&fen, timeout, runs, None);
+        let schedule = RestartSchedule::linear(500_000, 500_000).with_cutoff(cap);
+        let (label, r) = bench_mode("linear", &fen, timeout, runs, schedule);
         results.push((label, r));
     }
 
     for factor in factors {
-        let (label, r) = bench_mode(&fen, timeout, runs, Some(factor));
+        let schedule = RestartSchedule::geometric(500_000, factor).with_cutoff(cap);
+        let label = format!("factor {factor}");
+        let (label, r) = bench_mode(&label, &fen, timeout, runs, schedule);
         results.push((label, r));
     }
 
     print_results_table(&results);
 }
 
-fn bench_mode(fen: &str, timeout: u64, runs: usize, factor: Option<f64>) -> (String, ChunkResult) {
-    let (_, warmup_frac) = run_once(fen, timeout, factor);
+fn bench_mode(
+    label: &str,
+    fen: &str,
+    timeout: u64,
+    runs: usize,
+    schedule: RestartSchedule,
+) -> (String, ChunkResult) {
+    run_once(fen, timeout, schedule);
 
     let mut times = Vec::with_capacity(runs);
     let mut first: Option<Run> = None;
 
-    let label = if let Some(f) = factor {
-        if let Some((num, den)) = warmup_frac {
-            format!("factor {num}/{den}")
-        } else {
-            format!("factor {f}")
-        }
-    } else {
-        "linear".to_string()
-    };
     println!("benchmarking {label} chunks ...");
 
     for _ in 0..runs {
-        let (run, _) = run_once(fen, timeout, factor);
+        let run = run_once(fen, timeout, schedule);
         times.push(run.elapsed);
         if first.is_none() {
             first = Some(run);
@@ -134,34 +163,26 @@ fn bench_mode(fen: &str, timeout: u64, runs: usize, factor: Option<f64>) -> (Str
         min,
         max,
     };
-    (label, result)
+    (label.to_string(), result)
 }
 
-fn run_once(fen: &str, timeout: u64, factor: Option<f64>) -> (Run, Option<(u64, u64)>) {
+fn run_once(fen: &str, timeout: u64, schedule: RestartSchedule) -> Run {
     let mut pos = Position::from_fen(fen).expect("valid FEN");
     let mut search = Search::new(64);
     search.set_timeout(timeout);
     search.set_epsilon(0.125);
-
-    let fraction = match factor {
-        None => {
-            search.set_linear_chunks(true);
-            None
-        }
-        Some(f) => Some(search.set_chunk_multiplier_from_factor(f)),
-    };
+    search.set_restart_schedule(schedule);
 
     let start = Instant::now();
     let (outcome, _pv, _nodes) = search.search_depth(&mut pos, u32::MAX);
     let elapsed = start.elapsed();
 
-    let run = Run {
+    Run {
         elapsed,
         outcome,
         nodes: search.nodes(),
         child_evals: search.child_evaluations(),
-    };
-    (run, fraction)
+    }
 }
 
 fn print_results_table(results: &[(String, ChunkResult)]) {
