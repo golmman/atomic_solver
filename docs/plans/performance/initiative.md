@@ -29,10 +29,10 @@ maintainability, testability, consistency.
 | 2 | TT pre-probe before make/unmake | 13–38% of child evals already find a usable TT entry; estimated 3–8% throughput | — | open (throughput; may move to `lean`) |
 | 3 | Incremental repetition-context hash | Bit-identical, ~2–3% throughput | — | open (throughput; may move to `lean`) |
 | 4 | Path Bloom negative filter | ~1–3%, optional second-order | — | open |
-| 5 | Lazy/zero-init TT allocation | ~6 ms and ~220 MB RSS on short solves | — | open |
+| 5 | Lazy/zero-init TT allocation | ~6 ms and ~220 MB RSS on short solves (report §4/§6.1); plan-session probe on the current container: **~100 ms / ~230 MB** per process, easy KQ 106 → 2.8 ms / 8 MB with a lazy prototype at a measured **+1–5% deep-run wall** cost | `plan2.md` | **drafted 2026-10-28 (plan session)**, awaiting execution |
 | 6 | Faster repetition-cache hasher | <1% | — | deferred |
 | 7 | Unstable move sort | ~1%, search-visible tie order; full gate required | — | not recommended on current evidence |
-| 8 | Huge pages / `MADV_HUGEPAGE` | not demonstrated | — | deferred |
+| 8 | Huge pages / `MADV_HUGEPAGE` | not demonstrated; a plan2 plan-session `/tmp` probe measured **no effect** on the current container (THP `madvise`-only, no collapse on a 224 MiB region) for both the eager and the lazy allocation | — | deferred (negative evidence recorded in `plan2.md`) |
 | 9 | `atomic-movegen` hot paths | ~50% of CPU; upstream | — | upstream (`movegen` initiative) |
 | 10 | Parallel/portfolio | m20 is an algorithmic/cost issue | — | handled by `parallel` |
 
@@ -58,6 +58,7 @@ maintainability, testability, consistency.
 | item | plan | report | status |
 |---|---|---|---|
 | #1 preflight cost gate / cheap-search probe | `plan1.md` | `report1.md` | done — GO |
+| #5 lazy/zero-init TT allocation | `plan2.md` | `report2.md` | drafted 2026-10-28 (awaiting execution) |
 
 ## Cross-references
 
