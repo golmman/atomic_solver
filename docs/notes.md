@@ -1142,6 +1142,7 @@ Can we clean this up?
 ---
 
 Please investigate the following error i got from a recent proofdb harvest:
+
 ```
 bounded_search] chunk done: work_done=500004 next_chunk=1000000 elapsed=0.138s max_depth=30 nodes=20173 nps=146506
 [bounded_search] chunk done: work_done=1000018 next_chunk=2000000 elapsed=0.417s max_depth=32 nodes=58760 nps=140794
@@ -1160,4 +1161,19 @@ On the machine where the failed proofdb harvest originated i ran a `proofdb_merg
 `proofdb_flip: FLIP VERIFICATION FAILED: flip "g1f3 d7d6 b1c3 c7c6 f3g5 f7f6 c3b5 f6f5": reply a2a3 has no DB row`.
 How do we recover from there?
 
+---
 
+Write docs/plans/proofdb/plan26.md for item 24 — flip  
+analysis OR-witness semantics. Measured evidence: open ply-8 row  
+'g1f3 d7d6 b1c3 c7c6 f3g5 f7f6 c3b5 f6f5' has one proven loss child  
+b5c7 (bound 22) and sibling a2a3 censored at 100 M with no row (schema  
+§2.1: censors are not rows), so proofdb_flip dies with 'reply a2a3 has no  
+DB row'; plan21's or-close has since made those siblings permanent  
+non-candidates. Scope: D1 OR-witness verification for stm_win flips  
+(full coverage only for stm_loss), D2 coverage + bound-mode  
+('or-witness' upper bound vs 'and-complete' exact) in stdout/JSON,  
+D3 manual §7.3 + module header + AGENTS.md (supersedes plan8 §4.5's  
+AND-completeness gate wording; also fix the false 'flips = contradictions'  
+line), D4 fixture reds (wrong OR bound; loss flip with a missing reply),  
+D5 file-split decision; read-only, examples/docs only; end with  
+report26.md + the initiative.md item 24 row.
