@@ -3,9 +3,19 @@
 ## Status
 
 **Active as-needed** (Boy-Scout maintenance, not a standing backlog).
-Plans 1–5 are done (`report1.md`–`report5.md`); a new plan is opened when
+Plans 1–6 are done (`report1.md`–`report6.md`); a new plan is opened when
 a pass leaves named follow-ups or a convention lands that needs
 enforcement.
+
+**plan7 drafted 2026-10-27** (`plan7.md`), next free number. It executes the
+housekeeping follow-up carried in the `conversion/report12.md` closure
+block: (A) the missing deterministic restart-schedule tests (non-zero
+`cutoff` firing mid-run, `Growth::Linear` end-to-end), (B) recording the
+`m21_white` / `m22_white_wins` re-baseline decisions plus the missing
+`AGENTS.md` size justifications, and (C) splitting
+`src/search/dfpn/mod.rs` (40.8 KB / 986 lines, not justified) into
+`mod.rs` + `config.rs` + `run.rs` by move-only code motion. The
+`dfpn/mod.rs` size watch in the index row is this plan's closure item.
 
 ## Goal
 
@@ -47,6 +57,12 @@ one-off structural repairs.
 
 (Addressed by plan4: pedantic-lint triage, `selection.rs` test split —
 see `report4.md`.)
+
+## In flight
+
+- **plan7** — housekeeping pass: `dfpn/mod.rs` split (move-only), restart
+  cutoff/`Growth::Linear` end-to-end tests, slow-test decisions
+  (`plan7.md`, drafted 2026-10-27; report pending).
 
 ## Cross-references
 

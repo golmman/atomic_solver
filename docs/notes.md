@@ -1083,14 +1083,14 @@ But it doesn't. Where am i wrong?
 
 ---
 
-* "Censored work produces no DB content at all" - so when is exactly is the `censor` data updated then?
-* "Draw from any cause is censored" - why did we decide like this?
+- "Censored work produces no DB content at all" - so when is exactly is the `censor` data updated then?
+- "Draw from any cause is censored" - why did we decide like this?
 
 ---
 
 1. this brings me back to my first question. I ran `frontier-walk` with a budget of `100000000` only:
-so all censors are stored with `work_done` greater than or equal to `100000000`.
-Per policy rule we don't visit censored nodes again when this budget was invested in the past. So every new run should produce a new `censor` row in the db, which should increase the `proofdb.db` file size. But it apparently doesn't. Where is my error?
+   so all censors are stored with `work_done` greater than or equal to `100000000`.
+   Per policy rule we don't visit censored nodes again when this budget was invested in the past. So every new run should produce a new `censor` row in the db, which should increase the `proofdb.db` file size. But it apparently doesn't. Where is my error?
 
 2. Would it be reasonable to store them as losses from the attacker perspective?
 
@@ -1104,10 +1104,11 @@ Per policy rule we don't visit censored nodes again when this budget was investe
 I think i found a major flaw in the search that needs fixing.
 
 The postions searched via `make quick_draw` is a forced draw like so:
-* white moves any piece
-* black moves a6a4
-* white again moves any piece
-* black has no moves: stalemate = draw
+
+- white moves any piece
+- black moves a6a4
+- white again moves any piece
+- black has no moves: stalemate = draw
 
 The search does not find the draw though, it calculates and then times out.
 
@@ -1128,3 +1129,6 @@ Write your findings to `docs/performance/performance_report1.md`.
 
 nn inference with gpu?
 
+---
+
+Housekeeping/cleanup pass — revisit the dfpn/mod.rs size watch and the two re-baselined slow tests; reason: the search module remains the largest single-session maintenance risk, and the re-baselined tests could use a small deterministic cutoff test for RestartSchedule/Growth::Linear.
