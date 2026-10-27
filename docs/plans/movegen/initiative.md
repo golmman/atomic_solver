@@ -23,6 +23,11 @@ directory; do not treat it as a solver initiative backlog.
   test plus fixtures; the shared castling-rights helper makes `do_move` and
   `hash_after` drift-proof. Consumed by lean plan12 (−12–14% wall,
   bit-identical).
+- **report_update_2.3.1.md** (2026-10-27) — consumer-side notes for the
+  performance-only patch: table-driven pawn generation, early-exit attack
+  probes, and node-hoisted trivial-legality classification. Public API and
+  move order unchanged; adopted after a green fast gate, targeted move-order
+  / trajectory goldens, and bit-identical solved-case benchmark results.
 
 ## Consumer-side impact
 

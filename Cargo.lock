@@ -4,9 +4,9 @@ version = 4
 
 [[package]]
 name = "atomic-movegen"
-version = "2.3.0"
+version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cc6f55ee7d24fae017a94418d76bb64004da8b3bc5306152898af0e57445a88"
+checksum = "f7d2e30397cea8dd9273d811947eb5ce1144c9e91f738c674de9c018ff11264e"
 
 [[package]]
 name = "atomic_solver"
