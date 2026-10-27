@@ -35,6 +35,10 @@ one-off structural repairs.
   setters removed, `dfpn` public re-exports de-published, vestigial
   `_max_pv_len` params dropped, plan/era-named test files renamed to
   behavior names (`report5.md`).
+- **plan6** — removal of the rejected cross-racer solved-facts carrier
+  (`src/facts/`, the `search::dfpn` hooks, the `--facts-out` / `--facts-in`
+  CLI surface, its tests, and its documentation; behaviour-free) —
+  `report6.md`.
 
 ## Open follow-ups (carried from report2/report3)
 

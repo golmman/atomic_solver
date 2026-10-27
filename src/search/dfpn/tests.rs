@@ -554,11 +554,11 @@ fn drawn_position_reports_none_status() {
 }
 
 #[test]
-fn evaluate_child_resolves_imported_shaped_solved_entry() {
-    // plan10: an imported solved fact is stored with exactly the parameters
-    // below (solved class, no move hint, work 0, remaining_depth u32::MAX).
-    // The child evaluation must resolve it like a self-proven entry and never
-    // feed the unsolved-bounds reuse branch.
+fn evaluate_child_resolves_solved_entry_without_move_hint() {
+    // A solved TT entry with `Move::NONE`, `work = 0`, and
+    // `remaining_depth = u32::MAX` must be resolved by `evaluate_child`
+    // with its proven depth preserved (rather than feeding the
+    // unsolved-bounds reuse branch). This is a TT reuse invariant.
     let mut search = Search::new(1);
     let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
     let mv = Move::make_move(Square::G1, Square::H1);
@@ -580,144 +580,5 @@ fn evaluate_child_resolves_imported_shaped_solved_entry() {
     );
     let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
     assert_eq!(info.outcome, Some(Outcome::Loss));
-    assert_eq!(info.depth, 9, "imported proven depth preserved");
-}
-
-#[test]
-fn fact_import_drain_tallies_and_is_inert_without_importer() {
-    use crate::search::dfpn::{FactImportCounters, FactImporter};
-    use crate::search::tt::TranspositionTable;
-
-    struct CountingImporter {
-        records: Vec<(u64, Outcome)>,
-    }
-    impl FactImporter for CountingImporter {
-        fn import(&mut self, tt: &mut TranspositionTable) -> FactImportCounters {
-            let mut counters = FactImportCounters::default();
-            for &(key, outcome) in &self.records {
-                if let Some(entry) = tt.probe(key)
-                    && entry.outcome.is_some()
-                {
-                    counters.skipped += 1;
-                    continue;
-                }
-                let (pn, dn) = outcome.to_pn_dn();
-                tt.store(
-                    key,
-                    Move::NONE,
-                    u8::MAX,
-                    0,
-                    Some(outcome),
-                    pn,
-                    dn,
-                    3,
-                    u32::MAX,
-                );
-                counters.accepted += 1;
-            }
-            counters
-        }
-    }
-
-    // A no-op importer leaves the search's result untouched.
-    let fen = "r7/1Rp4k/4P2B/6p1/3P2P1/p6p/P6K/8 b - - 0 35";
-    let mut pos = Position::from_fen(fen).unwrap();
-    let mut plain = Search::new(4);
-    plain.set_preflight_enabled(false);
-    plain.set_first_outcome_only(true);
-    let plain_result = (plain.solve(&mut pos), plain.child_evaluations());
-
-    let mut pos = Position::from_fen(fen).unwrap();
-    let mut search = Search::new(4);
-    search.set_preflight_enabled(false);
-    search.set_first_outcome_only(true);
-    search.set_fact_importer(Some(Box::new(CountingImporter {
-        records: Vec::new(),
-    })));
-    let wired_result = (search.solve(&mut pos), search.child_evaluations());
-    assert_eq!(plain_result, wired_result, "empty import drain is inert");
-    assert_eq!(search.fact_import_totals(), FactImportCounters::default());
-
-    // Idempotence: a fact at a key whose TT entry is already solved is
-    // skipped and tallied, never re-stored.
-    let mut pos = Position::from_fen(fen).unwrap();
-    let mut search = Search::new(4);
-    search.set_preflight_enabled(false);
-    search.set_first_outcome_only(true);
-    let pos_probe = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
-    let fresh_key = pos_probe.hash();
-    let (pn, dn) = Outcome::Win.to_pn_dn();
-    search.tt_mut().store(
-        fresh_key,
-        Move::NONE,
-        u8::MAX,
-        7,
-        Some(Outcome::Win),
-        pn,
-        dn,
-        4,
-        u32::MAX,
-    );
-    search.set_fact_importer(Some(Box::new(CountingImporter {
-        records: vec![(fresh_key, Outcome::Win), (fresh_key ^ 1, Outcome::Loss)],
-    })));
-    let _ = search.solve(&mut pos);
-    let totals = search.fact_import_totals();
-    assert_eq!(
-        (totals.accepted, totals.skipped),
-        (1, 1),
-        "solved key skipped, fresh key accepted"
-    );
-}
-
-#[test]
-fn imported_root_fact_resolves_the_root_from_the_tt() {
-    // plan10 mechanism probe: a peer-proven root fact imported before the
-    // first work chunk resolves the root without any search work. The PV is
-    // empty (imported facts carry no move hint); the outcome stays decisive.
-    use crate::search::dfpn::{FactImportCounters, FactImporter};
-    use crate::search::tt::TranspositionTable;
-
-    struct RootFactImporter {
-        root_key: u64,
-        armed: bool,
-    }
-    impl FactImporter for RootFactImporter {
-        fn import(&mut self, tt: &mut TranspositionTable) -> FactImportCounters {
-            let mut c = FactImportCounters::default();
-            if self.armed && tt.probe(self.root_key).is_none_or(|e| e.outcome.is_none()) {
-                let (pn, dn) = Outcome::Win.to_pn_dn();
-                tt.store(
-                    self.root_key,
-                    Move::NONE,
-                    u8::MAX,
-                    0,
-                    Some(Outcome::Win),
-                    pn,
-                    dn,
-                    5,
-                    u32::MAX,
-                );
-                self.armed = false;
-                c.accepted += 1;
-            }
-            c
-        }
-    }
-
-    let fen = "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1";
-    let mut pos = Position::from_fen(fen).unwrap();
-    let root_key = pos.hash();
-    let mut search = Search::new(1);
-    search.set_preflight_enabled(false);
-    search.set_first_outcome_only(true);
-    search.set_fact_importer(Some(Box::new(RootFactImporter {
-        root_key,
-        armed: true,
-    })));
-    let (outcome, pv, _nodes) = search.solve(&mut pos);
-    assert_eq!(outcome, Outcome::Win);
-    assert!(pv.is_empty(), "imported facts carry no move hint");
-    assert_eq!(search.child_evaluations(), 0, "no search work was spent");
-    assert_eq!(search.fact_import_totals().accepted, 1);
+    assert_eq!(info.depth, 9, "proven depth preserved");
 }
