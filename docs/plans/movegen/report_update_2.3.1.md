@@ -40,13 +40,54 @@ goldens.
   `child_evals`, `nodes`, `outcome`, and `pv_len` (8 cases; the two
   wall-clock-censored cases, `m19` and `startpos`, are expected to differ
   because more work fits in the fixed timeout).
-- The same benchmark's censored cases show a small throughput gain:
-  `m19` 29.72M → 30.67M child evals in 3 s (+3.2%), `startpos`
-  27.89M → 28.61M (+2.6%). This is a solver-level sanity check, not a
-  controlled upstream micro-benchmark.
+
+## Performance confirmation
+
+Measured 2026-10-27 on the container host (aarch64, release builds,
+rustc 1.99.1). Both solver binaries were built from identical source with
+only `Cargo.lock` toggled between 2.3.0 and 2.3.1. Runs were pinned with
+`taskset -c 0` and alternated between versions; the table reports medians.
+
+### Raw movegen: depth-6 perft
+
+The crate's own `perft` example was built from the two crates.io sources.
+Node counts were identical to the upstream expected values.
+
+| Position | Nodes | 2.3.0 | 2.3.1 | Time change | Speedup |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| startpos | 118,926,425 | 0.4417 s | 0.3900 s | −11.7% | +13.3% |
+| perft #3 | 146,715,064 | 0.7480 s | 0.6819 s | −8.8% | +9.7% |
+| perft #10 | 38,665,634 | 0.2250 s | 0.2203 s | −2.1% | +2.1% |
+| perft #14 | 245,931,633 | 1.0393 s | 0.9565 s | −8.0% | +8.7% |
+| perft #13 | 2,160,817,389 | 8.3785 s | 7.5352 s | −10.1% | +11.2% |
+
+This directly confirms the upstream claim that the patch speeds up move
+generation. The gain varies by position (pawns present, capture density,
+legal-vs-pseudo-legal workload); the two long positions are around
+9–11%.
+
+### Solver: fixed child-eval budget
+
+Fixed work makes wall-time comparison meaningful. Each run used
+`--budget 50000000 --timeout 60 --outcome-only`, so every run exhausted the
+same deterministic budget: `m19` 50,000,011 evals and startpos 50,000,001
+evals, with identical output in both versions.
+
+| Case | Metric | 2.3.0 | 2.3.1 | Change |
+| --- | --- | ---: | ---: | ---: |
+| m19 | wall median | 5.1292 s | 4.9080 s | −4.31% |
+| m19 | CPU median | 4.9945 s | 4.7885 s | −4.12% |
+| startpos | wall median | 5.3465 s | 5.2653 s | −1.52% |
+| startpos | CPU median | 5.2179 s | 5.1412 s | −1.47% |
+
+The solver-level gain is smaller than the raw movegen gain because move
+generation is only part of search time. The earlier timeout-based check
+(`--timeout 3`) was not a reliable estimate: it compared different amounts
+of work reached before the wall-clock cut. The fixed-budget experiment
+above is the controlled measurement.
 
 ## Verdict
 
 Upgrade adopted. The patch is source-compatible, preserves move order and
-search results on all solved benchmark cases, and moves a little more work
-through the same wall-clock budget.
+all measured search results, confirms a real movegen speedup, and yields a
+small but repeatable solver-level speedup under fixed work.
