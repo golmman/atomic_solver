@@ -1136,5 +1136,5 @@ Housekeeping/cleanup pass — revisit the dfpn/mod.rs size watch and the two re-
 ---
 
 Please investigate:
-There is an unexpected high amount of data in `docs/plans/parallel/measurements/plan10/logs/`.
+There is an unexpected high amount of data in `docs/plans/parallel/measurements/plan10/logs/` compared to other measurements.
 Can we clean this up?

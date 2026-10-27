@@ -54,6 +54,7 @@ proofdb_cycle_run:
 	$(BIN)/proofdb_harvest --policy frontier-walk --budget-evals 100000000 --moves "g1f3 d7d6 b1c3 c7c6 f3g5 f7f6"
 	$(BIN)/proofdb_merge
 	$(BIN)/proofdb_flip
+	-rm STOP
 
 proofdb_cycle_stop:
 	touch STOP
