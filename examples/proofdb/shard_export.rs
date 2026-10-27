@@ -41,14 +41,26 @@ pub fn export_validated_shard(
     let (_header, solved, _unsolved) =
         read_tt_snapshot(&mut Cursor::new(&snap)).map_err(|e| format!("snapshot read: {e}"))?;
     let out = reconstruct(sub_fen, &solved, config);
+    // The rejection line carries the walk census and the fill accounting
+    // (plan25 D5): the fatal abort is the operator's only diagnostic, so it
+    // must be complete after the fact (the session is not re-run).
+    let census = format!(
+        "({}, fill_evals={})",
+        out.stats.holes_line(),
+        out.fill_evals
+    );
+    let error = out.error.clone();
     if out.root_outcome.is_none() {
-        return Err(out
-            .error
-            .unwrap_or_else(|| "reconstruction did not resolve the root".to_string()));
+        return Err(format!(
+            "{} {census}",
+            error.unwrap_or_else(|| "reconstruction did not resolve the root".to_string())
+        ));
     }
     let tree = out.tree.ok_or_else(|| {
-        out.error
-            .unwrap_or_else(|| "reconstruction produced no tree".to_string())
+        format!(
+            "{} {census}",
+            error.unwrap_or_else(|| "reconstruction produced no tree".to_string())
+        )
     })?;
     if let Err(defects) = validate_proof_tree(&tree) {
         return Err(format!(

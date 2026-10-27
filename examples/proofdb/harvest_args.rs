@@ -4,12 +4,23 @@
 //! the example target root for the 10 KB file-size convention; `main`
 //! remains there.
 //!
+//! Since plan25 the export's fill budgets are operator knobs
+//! (`--fill-attempt-budget` / `--fill-total-budget`, defaults equal to the
+//! previously hardcoded values so a default invocation is behaviorally
+//! identical): a budget-censored export fill is a named abort an operator can
+//! escalate without a rebuild.
+//!
 //! Generated state defaults wholly under `data/proofdb/` (plan14): DB and
 //! shard dir — a production harvest needs no path flags. The censor state
 //! lives in the DB's `censor` table (schema v2); the pre-plan20
 //! `--ledger <work.json>` flag is retired with the JSON sidecar, and the
 //! manifest is retired with plan22's per-shard sidecars (both flags refuse
 //! with a migration pointer).
+//!
+//! Slightly above the 10 KiB guideline: the whole flag surface, its usage
+//! text, the `--moves` replay validation, and their unit tests are one
+//! contract (a new flag must be parsed, documented, and defaulted in the same
+//! place), so splitting it would separate the parse from its pin.
 
 use std::path::PathBuf;
 
@@ -23,12 +34,25 @@ use super::{DEFAULT_DB, DEFAULT_SHARD_DIR};
 /// command lines keep working; it accepts only this name.
 pub const POLICY: &str = "frontier-walk";
 
+/// Default per-attempt child-eval budget for one export fill search (plan25
+/// D4: today's hardcoded value; a `BudgetExhausted` export abort is the
+/// signal to escalate this).
+pub const DEFAULT_FILL_ATTEMPT_BUDGET: u64 = 2_000_000;
+
+/// Default child-eval budget summed over all fills of one export (plan25 D4:
+/// today's hardcoded value). `0` = unbounded.
+pub const DEFAULT_FILL_TOTAL_BUDGET: u64 = 100_000_000;
+
 pub struct Args {
     pub db: PathBuf,
     pub shard_dir: PathBuf,
     pub budget_evals: u64,
     pub max_total_evals: u64,
     pub tt_mb: usize,
+    /// Per-attempt child-eval budget of one export fill search.
+    pub fill_attempt_budget: u64,
+    /// Child-eval budget summed over all fills of one export; `0` = unbounded.
+    pub fill_total_budget: u64,
     pub max_jobs: usize,
     pub max_runtime: u64,
     pub stop_file: PathBuf,
@@ -44,13 +68,17 @@ fn usage() -> ! {
         "usage: proofdb_harvest [--db <proofdb.db>] \
          [--shard-dir <dir>] [--policy frontier-walk] \
          [--budget-evals <n>] [--max-total-evals <n>] [--tt-mb <mb>] \
+         [--fill-attempt-budget <n>] [--fill-total-budget <n>] \
          [--max-jobs <n>] [--max-runtime <s>] [--stop-file <path>] \
          [--moves '<uci path>'] \
          [--out-db <grown.db>] [--dump <nodes.txt>]  \
          (defaults: --db data/proofdb/proofdb.db \
          --shard-dir data/proofdb/shards; \
          policy: frontier-walk — the only harvest policy; --budget-evals 0 \
-         selects the standing base 4000000; --moves scopes the session to \
+         selects the standing base 4000000; --fill-attempt-budget 2000000 and \
+         --fill-total-budget 100000000 are the export fill budgets (a \
+         BudgetExhausted export abort is the signal to escalate the attempt \
+         budget); --moves scopes the session to \
          the subtree of the startpos path it names; censor state lives in \
          the DB's censor table — the pre-plan20 --ledger flag and the \
          plan22-retired --manifest flag are both gone)"
@@ -59,12 +87,21 @@ fn usage() -> ! {
 }
 
 pub fn parse_args() -> Args {
+    parse_from(std::env::args().skip(1))
+}
+
+/// Parse an explicit argument sequence (the flag surface of [`parse_args`]).
+/// Split out so the defaults and the flag parsing are unit-testable without a
+/// process environment.
+pub fn parse_from<I: Iterator<Item = String>>(args: I) -> Args {
     let mut a = Args {
         db: PathBuf::from(DEFAULT_DB),
         shard_dir: PathBuf::from(DEFAULT_SHARD_DIR),
         budget_evals: 0,
         max_total_evals: 0,
         tt_mb: 128,
+        fill_attempt_budget: DEFAULT_FILL_ATTEMPT_BUDGET,
+        fill_total_budget: DEFAULT_FILL_TOTAL_BUDGET,
         max_jobs: 0,
         max_runtime: 0,
         stop_file: PathBuf::from("STOP"),
@@ -72,7 +109,7 @@ pub fn parse_args() -> Args {
         dump: None,
         moves: Vec::new(),
     };
-    let mut it = std::env::args().skip(1);
+    let mut it = args;
     while let Some(arg) = it.next() {
         let mut next = || it.next().unwrap_or_else(|| usage());
         match arg.as_str() {
@@ -106,6 +143,12 @@ pub fn parse_args() -> Args {
             "--budget-evals" => a.budget_evals = next().parse().unwrap_or_else(|_| usage()),
             "--max-total-evals" => a.max_total_evals = next().parse().unwrap_or_else(|_| usage()),
             "--tt-mb" => a.tt_mb = next().parse().unwrap_or_else(|_| usage()),
+            "--fill-attempt-budget" => {
+                a.fill_attempt_budget = next().parse().unwrap_or_else(|_| usage());
+            }
+            "--fill-total-budget" => {
+                a.fill_total_budget = next().parse().unwrap_or_else(|_| usage());
+            }
             "--max-jobs" => a.max_jobs = next().parse().unwrap_or_else(|_| usage()),
             "--max-runtime" => a.max_runtime = next().parse().unwrap_or_else(|_| usage()),
             "--stop-file" => a.stop_file = PathBuf::from(next()),
@@ -163,7 +206,35 @@ pub(crate) fn parse_moves(raw: Option<&str>) -> Result<Vec<String>, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_moves;
+    use super::{
+        Args, DEFAULT_FILL_ATTEMPT_BUDGET, DEFAULT_FILL_TOTAL_BUDGET, parse_from, parse_moves,
+    };
+
+    /// Parse the flags as strings (the `Args` surface a CLI invocation sees).
+    fn args_of(raw: &[&str]) -> Args {
+        parse_from(raw.iter().map(|s| (*s).to_string()))
+    }
+
+    #[test]
+    fn export_fill_budgets_default_to_the_plan25_values() {
+        let a = args_of(&[]);
+        assert_eq!(DEFAULT_FILL_ATTEMPT_BUDGET, 2_000_000);
+        assert_eq!(DEFAULT_FILL_TOTAL_BUDGET, 100_000_000);
+        assert_eq!(a.fill_attempt_budget, DEFAULT_FILL_ATTEMPT_BUDGET);
+        assert_eq!(a.fill_total_budget, DEFAULT_FILL_TOTAL_BUDGET);
+    }
+
+    #[test]
+    fn export_fill_budget_flags_parse() {
+        let a = args_of(&[
+            "--fill-attempt-budget",
+            "20000000",
+            "--fill-total-budget",
+            "0",
+        ]);
+        assert_eq!(a.fill_attempt_budget, 20_000_000);
+        assert_eq!(a.fill_total_budget, 0);
+    }
 
     #[test]
     fn moves_good_path_and_whitespace_normalization() {

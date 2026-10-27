@@ -56,7 +56,7 @@ use std::time::Instant;
 
 use proofdb::db::{check_unmerged_shards, load_db_rows};
 use proofdb::schema::read_shard_rows;
-use proofdb::session::{Session, fail};
+use proofdb::session::{ExportBudgets, Session, fail};
 use proofdb::walk::driver::{WalkOptions, run_walk_session};
 
 fn main() {
@@ -101,11 +101,16 @@ fn main() {
 
     let seed_paths: std::collections::HashSet<String> =
         shard_rows.iter().map(|r| r.path.clone()).collect();
-    let mut session = Session::new(
+    let budgets = ExportBudgets {
+        attempt: args.fill_attempt_budget,
+        total: args.fill_total_budget,
+    };
+    let mut session = Session::new_with_export_budgets(
         args.tt_mb,
         args.shard_dir.clone(),
         seed_paths,
         proofdb::harvest_args::POLICY,
+        budgets,
     );
 
     let opts = WalkOptions {

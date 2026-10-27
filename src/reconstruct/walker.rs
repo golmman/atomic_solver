@@ -20,7 +20,7 @@ use crate::notation::{move_to_uci, moves_to_uci_path};
 use crate::position::{Outcome, Position};
 use crate::proof_event::{NodeProven, ProofEvent};
 use crate::proof_tree::ProofTreeWorkerHandle;
-use crate::search::dfpn::Search;
+use crate::search::dfpn::{ExitReason, Search};
 use crate::tt_snapshot::SolvedRecord;
 
 use super::{
@@ -31,6 +31,12 @@ use super::{
 /// Fill searches are child-eval-budgeted only; give them no meaningful wall
 /// clock so reconstruction stays deterministic.
 const FILL_TIMEOUT_SECS: u64 = 100 * 365 * 24 * 60 * 60;
+
+/// The next bound of the fill's iterative-doubling search: the doubling search
+/// may not skip a bound between the current one and the cap.
+pub(super) fn next_fill_bound(bound: u32, cap: u32) -> u32 {
+    bound.saturating_mul(2).min(cap)
+}
 
 pub(super) fn run(
     root_fen: &str,
@@ -263,22 +269,24 @@ impl Walker<'_> {
     /// Fill a hole at the current node with an iterative-doubling bounded
     /// local solve that preserves the walk's repetition history. Returns the
     /// proven outcome and its advisory depth (win depth for a Win, the
-    /// successful bound for a Loss).
+    /// successful bound for a Loss — the tree recomputes depths in
+    /// `finalize`, so the advisory value is informational).
+    ///
+    /// The bound starts at the parent's proven depth and the config cap then
+    /// governs **root** holes only: a non-root hole's proven depth is strictly
+    /// below its parent's (bottom-up `Win = min(child)+1`, `Loss =
+    /// max(child)+1`), so the parent-derived bound is sufficient by
+    /// construction and a cap below it could only produce false failures.
     fn fill_hole(
         &mut self,
         expected: Option<Outcome>,
         parent_depth: Option<u32>,
     ) -> Result<(Outcome, u32), String> {
-        let mut bound = parent_depth.unwrap_or(self.config.fill_base).max(1);
+        let start = parent_depth.unwrap_or(self.config.fill_base).max(1);
+        let cap = self.config.fill_depth_cap.max(start);
+        let parent = parent_depth.map_or_else(|| "none".to_string(), |d| d.to_string());
+        let mut bound = start;
         loop {
-            if bound > self.config.fill_depth_cap {
-                self.stats.unfillable += 1;
-                return Err(format!(
-                    "unfillable hole at {}: fill depth cap {} exhausted",
-                    moves_to_uci_path(&self.path),
-                    self.config.fill_depth_cap
-                ));
-            }
             if self.config.fill_total_budget > 0 && self.fill_evals >= self.config.fill_total_budget
             {
                 return Err("BudgetExhausted: fill total budget exhausted".to_string());
@@ -295,7 +303,37 @@ impl Walker<'_> {
             // `search_depth_with_prefix` resets `child_evals` per attempt.
             self.fill_evals += self.fill.child_evaluations();
             match outcome {
-                Outcome::Draw => bound = bound.saturating_mul(2),
+                // A resource cut is not a depth result: only a genuine
+                // "no decisive line within this bound" escalates the bound.
+                Outcome::Draw => match self.fill.exit_reason() {
+                    ExitReason::Complete => {
+                        if bound >= cap {
+                            self.stats.unfillable += 1;
+                            return Err(format!(
+                                "unfillable hole at {}: no decisive line within bound {bound} \
+                                 (cap {cap}, parent depth {parent})",
+                                moves_to_uci_path(&self.path)
+                            ));
+                        }
+                        bound = next_fill_bound(bound, cap);
+                    }
+                    ExitReason::BudgetExhausted => {
+                        return Err(format!(
+                            "BudgetExhausted: fill at {} censored at bound {bound} (attempt \
+                             budget {} evals, parent depth {parent})",
+                            moves_to_uci_path(&self.path),
+                            self.config.fill_attempt_budget
+                        ));
+                    }
+                    reason => {
+                        return Err(format!(
+                            "fill at {} aborted by {reason} at bound {bound} (attempt budget \
+                             {} evals, parent depth {parent})",
+                            moves_to_uci_path(&self.path),
+                            self.config.fill_attempt_budget
+                        ));
+                    }
+                },
                 outcome => {
                     if let Some(expected) = expected
                         && outcome != expected

@@ -1152,3 +1152,12 @@ bounded_search] chunk done: work_done=500004 next_chunk=1000000 elapsed=0.138s m
 proofdb_harvest: ABORT: job g1f3 d7d6 b1c3 c7c6 f3g5 f7f6 g2g4 f6g5 f2f4: export rejected: unfillable hole at root.e7e5.a2a3: fill depth cap 32 exhausted
 make: *** [Makefile:51: proofdb_cycle_run] Error 2
 ```
+
+---
+
+Last session we finished with `docs/plans/proofdb/report25.md`.
+On the machine where the failed proofdb harvest originated i ran a `proofdb_merge` and then `proofdb_flip`, which gives me this error:
+`proofdb_flip: FLIP VERIFICATION FAILED: flip "g1f3 d7d6 b1c3 c7c6 f3g5 f7f6 c3b5 f6f5": reply a2a3 has no DB row`.
+How do we recover from there?
+
+

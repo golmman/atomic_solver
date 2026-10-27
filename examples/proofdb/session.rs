@@ -22,7 +22,7 @@
 //! committed `censor`-table transaction per censor, plan20 — already
 //! atomic); a proven draw touches only the `drawn` scheduling table.
 //!
-//! ~9 KB (justified per the file-size convention): the whole job pipeline
+//! Justified per the file-size convention (~12 KB): the whole job pipeline
 //! (replay → budgeted search → classify → shard export → durable bin +
 //! sidecar write → census records) shares one `Session` state — splitting
 //! it would fragment the produce ordering the crash-consistency contract
@@ -48,6 +48,46 @@ pub use record::JobRecord;
 pub fn fail(msg: &str) -> ! {
     eprintln!("proofdb_harvest: ABORT: {msg}");
     std::process::exit(2);
+}
+
+/// The export pipeline's fill budgets (plan25 D4): operator knobs because a
+/// budget-censored export fill aborts the session, and the escalation must not
+/// need a rebuild. The defaults are the values previously hardcoded in
+/// [`Session::new`], so a default invocation is behaviorally identical.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ExportBudgets {
+    /// Per-attempt child-eval budget of one fill search.
+    pub attempt: u64,
+    /// Child-eval budget summed over all fills of one export; `0` = unbounded.
+    pub total: u64,
+}
+
+impl Default for ExportBudgets {
+    fn default() -> Self {
+        Self {
+            attempt: super::harvest_args::DEFAULT_FILL_ATTEMPT_BUDGET,
+            total: super::harvest_args::DEFAULT_FILL_TOTAL_BUDGET,
+        }
+    }
+}
+
+impl ExportBudgets {
+    /// The reconstruction config these budgets drive at a given TT size. The
+    /// fill base and the depth cap stay fixed: since plan25 the cap bounds
+    /// **root** holes only (a non-root hole is bounded by its parent's proven
+    /// depth), and a root hole fails earlier with "snapshot does not prove a
+    /// decisive root".
+    #[must_use]
+    pub fn config(&self, tt_mb: usize) -> ReconstructConfig {
+        ReconstructConfig {
+            tt_mb,
+            pt_size_mb: 256,
+            fill_base: 8,
+            fill_depth_cap: 32,
+            fill_attempt_budget: self.attempt,
+            fill_total_budget: self.total,
+        }
+    }
 }
 
 /// The harvest session: the retained `Search` plus the mutable state the
@@ -76,17 +116,28 @@ impl Session {
         seed_paths: HashSet<String>,
         policy: &'static str,
     ) -> Self {
+        Self::new_with_export_budgets(
+            tt_mb,
+            shard_dir,
+            seed_paths,
+            policy,
+            ExportBudgets::default(),
+        )
+    }
+
+    /// [`Session::new`] with explicit export fill budgets (the plan25 knobs);
+    /// the default path is bit-identical to the pre-plan25 hardcoded values.
+    pub fn new_with_export_budgets(
+        tt_mb: usize,
+        shard_dir: PathBuf,
+        seed_paths: HashSet<String>,
+        policy: &'static str,
+        budgets: ExportBudgets,
+    ) -> Self {
         let mut search = Search::new(tt_mb);
         search.set_timeout(3600);
         search.set_first_outcome_only(true);
-        let export_cfg = ReconstructConfig {
-            tt_mb,
-            pt_size_mb: 256,
-            fill_base: 8,
-            fill_depth_cap: 32,
-            fill_attempt_budget: 2_000_000,
-            fill_total_budget: 100_000_000,
-        };
+        let export_cfg = budgets.config(tt_mb);
         let known_tags: HashSet<String> = seed_paths
             .iter()
             .map(|p| {

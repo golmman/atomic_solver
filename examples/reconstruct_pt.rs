@@ -33,6 +33,9 @@ struct Options {
     tt_size: Option<usize>,
     pt_size: usize,
     fill_base: u32,
+    /// `--fill-depth-cap`: the depth ceiling for **root** holes only. A
+    /// non-root hole is bounded by its parent's proven depth and is never
+    /// capped below it.
     fill_depth_cap: u32,
     fill_attempt_budget: u64,
     fill_total_budget: u64,

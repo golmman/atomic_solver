@@ -45,7 +45,9 @@ A pure solver for atomic chess in Rust.
   step: search → TT snapshot (`--tt-dump-path`) → `src/reconstruct` /
   `examples/reconstruct_pt` (worker + finalize + validator) → dump; the search CLI never
   builds trees. `Search::set_memory_limited` / `ExitReason::MemoryLimit` are a
-  reconstruct-side contract only (`src/reconstruct/walker.rs`). The offline proof-tree
+  reconstruct-side contract only (`src/reconstruct/walker.rs`). The walk's hole filling
+  bounds a non-root hole by its parent's proven depth, which therefore dominates
+  `fill_depth_cap` (the cap governs parentless root holes only). The offline proof-tree
   pipeline is consumed by the proofdb tooling (`examples/proofdb*`, all in `examples/`):
   the SQLite DB is the single source of truth, grown by the incremental fold
   (`proofdb_merge`); shards are self-describing `<tag>.bin` + `<tag>.meta.json`
@@ -105,7 +107,11 @@ A pure solver for atomic chess in Rust.
   Draw is a path-keyed `drawn` mark that prunes the subtree; it is not a
   censor and still produces no shard/tree row). The pre-plan20 `work.json`
   sidecar, the `proofdb_ledger_union` tool, and the
-  `--manifest`/`--ledger` flags are retired. DB/shard-dir default wholly
+  `--manifest`/`--ledger` flags are retired. The export's fill budgets are
+  operator knobs (`--fill-attempt-budget`, default 2,000,000;
+  `--fill-total-budget`, default 100,000,000 — the pre-plan25 hardcoded
+  values) and a rejected export abort (exit 2) names its class and carries
+  the walk census. DB/shard-dir default wholly
   under `data/proofdb/`. Operator manual: `docs/proofdb_pipeline.md`.
 - `proofdb_merge` — the single-writer incremental fold (plan22): shard
   pairs → the standing SQLite DB, one transaction per invocation (schema

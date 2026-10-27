@@ -16,7 +16,7 @@ use crate::zobrist::rule50_key;
 
 use super::{
     HoleClass, ReconstructConfig, ReconstructStats, build_solved_map, classify_node, clock_scan,
-    reconstruct, seed_search, tree_signature,
+    reconstruct, seed_search, tree_signature, walker::next_fill_bound,
 };
 
 /// The two-rook mate (win in 3 plies) used across the reconstruction tests.
@@ -188,6 +188,86 @@ fn fill_recovers_a_dropped_root_record() {
     );
     assert_eq!(output.stats.absent, 1);
     assert!(output.tree.is_some());
+}
+
+/// The root's solved record, its `best_move`, and the snapshot with that
+/// child's record dropped — the deep-hole fixture (a hole directly below a
+/// deep parent). The returned root record's depth is set to `depth`.
+fn snapshot_with_child_hole(fen: &str, depth: u32) -> (Vec<SolvedRecord>, u64) {
+    let solved = solved_snapshot(fen);
+    let mut pos = Position::from_fen(fen).unwrap();
+    let root_key = pos.hash();
+    let root = *solved
+        .iter()
+        .find(|r| r.key == root_key)
+        .expect("the root record exists");
+    assert_eq!(root.outcome, Outcome::Win);
+    pos.do_move(root.best_move);
+    let child_key = pos.hash();
+    // The child's exact record must be gone, so the walk sees a hole there
+    // (the clock-scan cannot resurrect it: `rule50_key(0)` is the identity and
+    // the clock-0 variant is exactly the dropped key).
+    let holes: Vec<SolvedRecord> = solved
+        .into_iter()
+        .filter(|r| r.key != child_key)
+        .map(|r| {
+            if r.key == root_key {
+                record(root_key, r.outcome, depth, r.best_move)
+            } else {
+                r
+            }
+        })
+        .collect();
+    (holes, root_key)
+}
+
+/// D1: a non-root hole's bound is its parent's proven depth, which dominates
+/// the configured `fill_depth_cap` — the hole is filled, not rejected.
+/// Fake depths are safe: the walk uses them as bounds only (`finalize`
+/// recomputes the tree's depths).
+#[test]
+fn deep_parent_bound_is_not_capped_by_the_fill_depth_cap() {
+    let config = ReconstructConfig::default();
+    let deep = config.fill_depth_cap + 1;
+    let (holes, root_key) = snapshot_with_child_hole(MATE3_FEN, deep);
+    assert!(holes.iter().any(|r| r.key == root_key && r.depth == deep));
+
+    let output = reconstruct(MATE3_FEN, &holes, &config);
+    assert!(output.error.is_none(), "fill failed: {:?}", output.error);
+    assert_eq!(output.root_outcome, Some(Outcome::Win));
+    assert_eq!(output.stats.filled, 1, "the child hole was filled");
+    assert_eq!(output.stats.unfillable, 0);
+    assert!(output.tree.is_some());
+}
+
+/// D3: a fill attempt cut by its child-eval budget is reported as a budget
+/// abort, not as depth exhaustion, and does not count as `unfillable`.
+#[test]
+fn censored_fill_attempt_reports_budget_exhaustion() {
+    let config = ReconstructConfig {
+        fill_attempt_budget: 1,
+        ..ReconstructConfig::default()
+    };
+    let output = reconstruct(MATE3_FEN, &[], &config);
+
+    let error = output.error.expect("a censored fill must abort the walk");
+    assert!(error.starts_with("BudgetExhausted:"), "unexpected: {error}");
+    assert!(error.contains("censored at bound"), "unexpected: {error}");
+    assert_eq!(output.stats.unfillable, 0);
+    assert_eq!(output.stats.filled, 0);
+    assert!(output.tree.is_none());
+}
+
+/// D2: the doubling search may not skip a bound between the current one and
+/// the cap (the clamp is not observable through a cheap `Complete`-draw
+/// fixture, so the helper is the seam).
+#[test]
+fn fill_bound_doubling_clamps_at_the_cap() {
+    assert_eq!(next_fill_bound(8, 20), 16);
+    assert_eq!(next_fill_bound(16, 20), 20);
+    assert_eq!(next_fill_bound(20, 20), 20);
+    assert_eq!(next_fill_bound(1, 1), 1);
+    assert_eq!(next_fill_bound(u32::MAX, u32::MAX), u32::MAX);
 }
 
 #[test]

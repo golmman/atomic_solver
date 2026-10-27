@@ -158,9 +158,14 @@ pub struct ReconstructConfig {
     pub tt_mb: usize,
     /// Proof-tree worker memory budget in megabytes (as `--pt-size`).
     pub pt_size_mb: usize,
-    /// Fill bound for the root hole (no parent depth available).
+    /// Fill bound for a hole with no parent depth available (the root hole).
     pub fill_base: u32,
-    /// Fill bound ceiling; a hole still Draw at this bound is unfillable.
+    /// Fill bound ceiling for **root** holes. A non-root hole is bounded by
+    /// its parent's proven depth and is never capped below it (a child's
+    /// proven depth is strictly less than its parent's, so the parent-derived
+    /// bound is sufficient by construction); the cap governs the doubling
+    /// search of parentless holes only. A hole still Draw at its bound is
+    /// unfillable.
     pub fill_depth_cap: u32,
     /// Per-attempt child-eval budget for one fill search.
     pub fill_attempt_budget: u64,

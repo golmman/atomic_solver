@@ -271,6 +271,71 @@ fn cli_defaults_are_centralized_under_data_proofdb() {
     }
 }
 
+// --- plan25: the export fill budgets are operator knobs ---
+
+/// The harvest's export budgets reach `ReconstructConfig` (plan25 D4/A5):
+/// the defaults are the previously hardcoded values (2 M / 100 M), the fill
+/// base and the depth cap stay fixed, and an explicit budget pair overrides
+/// exactly the two fill budgets (the cap now governs root holes only, so it is
+/// not an operator knob).
+#[test]
+fn export_budgets_reach_the_reconstruct_config() {
+    use atomic_solver::reconstruct::ReconstructConfig;
+
+    let default = proofdb::session::ExportBudgets::default();
+    assert_eq!(default.attempt, 2_000_000);
+    assert_eq!(default.total, 100_000_000);
+    let cfg = default.config(128);
+    assert_eq!(cfg.tt_mb, 128);
+    assert_eq!(cfg.fill_base, 8);
+    assert_eq!(cfg.fill_depth_cap, 32);
+    assert_eq!(cfg.fill_attempt_budget, 2_000_000);
+    assert_eq!(cfg.fill_total_budget, 100_000_000);
+
+    let explicit = proofdb::session::ExportBudgets {
+        attempt: 20_000_000,
+        total: 0,
+    };
+    let cfg = explicit.config(64);
+    assert_eq!(cfg.fill_attempt_budget, 20_000_000);
+    assert_eq!(cfg.fill_total_budget, 0);
+    assert_eq!(
+        cfg.fill_depth_cap,
+        ReconstructConfig::default().fill_depth_cap
+    );
+}
+
+/// A rejected export's message carries the walk census and the fill
+/// accounting (plan25 D5/A6): the abort line is the operator's only
+/// diagnostic, so `holes: …` and `fill_evals=N` must be in it. Fixture: an
+/// empty search TT (the root is a hole) with a one-eval attempt budget, so
+/// the fill is censored and the export is rejected.
+#[test]
+fn export_rejection_carries_the_walk_census() {
+    use atomic_solver::reconstruct::ReconstructConfig;
+    use atomic_solver::search::dfpn::Search;
+    use proofdb::shard_export::export_validated_shard;
+
+    let fen = "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1";
+    let search = Search::new(16);
+    let config = ReconstructConfig {
+        tt_mb: 16,
+        fill_attempt_budget: 1,
+        ..ReconstructConfig::default()
+    };
+    let err = export_validated_shard(&search, fen, &config)
+        .expect_err("an unsolved snapshot must be rejected");
+    assert!(
+        err.contains("BudgetExhausted: fill at root censored at bound 8"),
+        "unexpected: {err}"
+    );
+    assert!(err.contains("(holes: hit=0"), "census missing: {err}");
+    assert!(
+        err.contains("fill_evals="),
+        "fill accounting missing: {err}"
+    );
+}
+
 // --- plan16 D1: the frontier-walk shallowest-first ledger walk (walk.rs) ---
 
 use proofdb::walk::census::RootState;

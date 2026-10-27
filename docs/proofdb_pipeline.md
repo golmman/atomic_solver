@@ -634,7 +634,9 @@ dir `data/proofdb/shards/` is created on the first shard write.
     usage: proofdb_harvest [--db <proofdb.db>]
                            [--shard-dir <dir>] [--policy frontier-walk]
                            [--budget-evals <n>] [--max-total-evals <n>]
-                           [--tt-mb <mb>] [--max-jobs <n>] [--max-runtime <s>]
+                           [--tt-mb <mb>]
+                           [--fill-attempt-budget <n>] [--fill-total-budget <n>]
+                           [--max-jobs <n>] [--max-runtime <s>]
                            [--stop-file <path>] [--moves '<uci path>']
                            [--out-db <grown.db>] [--dump <nodes.txt>]
 
@@ -645,7 +647,9 @@ dir `data/proofdb/shards/` is created on the first shard write.
 | `--policy`           | `frontier-walk`                     | kept for command-line compatibility; only `frontier-walk` is accepted (plan18)      |
 | `--budget-evals`     | `0` → base `4,000,000`              | the flat per-visit child-eval budget `B` (no ladder)                                |
 | `--max-total-evals`  | `0` (unlimited)                     | session cap across jobs                                                             |
-| `--tt-mb`            | `128`                               | per-session transposition table (MB)                                                |
+| `--tt-mb`            | `128`                               | per-session transposition table (MB) — also the eviction lever for a repeated export abort (§10) |
+| `--fill-attempt-budget` | `2000000`                        | per-attempt child-eval budget of one export fill search (§10, recovery ladder)      |
+| `--fill-total-budget`| `100000000`                         | child-eval budget summed over all fills of one export; `0` = unbounded              |
 | `--max-jobs`         | `0` (unlimited)                     | stop after n jobs                                                                   |
 | `--max-runtime`      | `0` (unlimited)                     | stop after n seconds                                                                |
 | `--stop-file`        | `STOP`                              | batch stops (gracefully, after the in-flight job) when this file appears            |
@@ -1300,6 +1304,114 @@ in the shard dir is a symptom worth noting in the operator log. A fold
 after any batch with decisive jobs is still required before the next
 harvest session (the unmerged-shard gate above).
 
+**A rejected export aborts the session (`ABORT: job … export rejected: …`).**
+A decisive job whose proof subtree cannot be rebuilt from the retained
+session TT kills the session with exit 2 (`rejected, never patched` — a
+shard is only written after reconstruction *and* replay validation agree,
+§9). The rejection is rare, but it is fatal by design; this section is the
+whole operator story. The message names the failing node, its **abort
+class**, and the walk census of the failed export:
+
+```text
+proofdb_harvest: ABORT: job g1f3 d7d6 b1c3 c7c6 f3g5 f7f6 g2g4 f6g5 f2f4:
+  export rejected: BudgetExhausted: fill at root.e7e5.a2a3 censored at bound 46
+  (attempt budget 2000000 evals, parent depth 46) (holes: hit=1188 … filled=0
+  unfillable=0 anomalies=0, fill_evals=2011003)
+```
+
+The walk fills the holes of a proof path — nodes the original search proved
+but whose TT record did not survive into the export (`--tt-mb` retention,
+cross-job eviction, a clock-scan Draw miss, …). A hole below a deep parent
+is bounded by that parent's proven depth (a child's proven depth is always
+smaller), so a deep parent can no longer be rejected by the fixed depth
+cap: only a *parentless* root hole is depth-capped, and a root hole is an
+earlier failure anyway (`snapshot does not prove a decisive root`).
+
+_The two abort classes._
+
+- **Budget class** — `BudgetExhausted: fill at <path> censored at bound B
+  (attempt budget A evals, parent depth P)` or `BudgetExhausted: fill total
+  budget exhausted`. The local solve was **cut** by its child-eval budget,
+  not by depth: nothing is known about the hole's true difficulty. Retrying
+  with more budget is meaningful. (`attempt budget` is per fill attempt;
+  the `fill_evals=` census figure is the whole export's spend.)
+- **Depth/contradiction class** — `unfillable hole at <path>: no decisive
+  line within bound B (cap C, parent depth P)` or one of the walk's
+  `anomaly:` / `repetition-context` / `snapshot does not prove a decisive
+  root` messages / `replay validation found N defects`. The bounded local
+  solve ran to *completion* and produced no decisive result where the
+  parent's proof requires one — a contradiction, or a structural defect in
+  the reconstruction. More budget cannot fix it; a larger `--tt-mb` (fewer
+  evicted records, so fewer/simpler holes) or a re-scoped session can.
+
+_The recovery ladder_ (each rung is a manual operator action; the harvest
+never retries, never auto-quarantines, and writes no recovery state — it
+aborts deterministically, plan25 D7):
+
+1. **Fold, then retry.** Every finished job's pair is on disk and the
+   session's censors are committed, so `proofdb_merge` first (the batch
+   made progress, and the unmerged-shard gate would refuse the retry
+   anyway), then re-run the batch unchanged. A retry is *not* a
+   byte-identical repeat: the retained TT differs, so a different job
+   order/snapshot can fill the hole cheaply. **A decisive-but-unexported
+   job leaves no record**, so the same path is re-selected next session —
+   that is why this abort must be diagnosed and recovered, not ignored.
+2. **Raise `--tt-mb`.** The typical cause is TT eviction inside the session
+   (the hole's record was proven under an earlier job and evicted). A bigger
+   retained table keeps more of the proven interior, so more holes hit
+   exactly and fewer need filling at all.
+3. **Escalate `--fill-attempt-budget` only on a budget-class abort**, and
+   only after rung 2. Measured caveat: raising the attempt budget can cost
+   *up to ~9×* more child-evals for the same holes (restart-chunk pacing:
+   a 20 M attempt budget spent 60 M evals on holes a 2 M budget resolved
+   with 6.7 M), so it is the escalation of last resort, not a free knob.
+   `--fill-total-budget` (default 100 M) remains the guard that keeps an
+   export from costing more than the search it exports.
+4. **Quarantine the path (censor-row)** — a manual, soundness-neutral
+   scheduling edit that makes the walk skip the path for one session:
+
+   ```sql
+   INSERT OR REPLACE INTO censor(path, work_done, passes_failed)
+   VALUES ('g1f3 d7d6 b1c3 c7c6 f3g5 f7f6 g2g4 f6g5 f2f4', 100000000, 0);
+   ```
+
+   `work_done` = the session budget you are about to run (`B`), so the
+   record counts as worked and its subtree is expanded instead of
+   re-searched; `passes_failed = 0`. `censor`/`drawn` rows are
+   replay-independent scheduling hints (spec §2.1) — deleting or writing
+   them costs re-searched work, never soundness. This is the one
+   sanctioned operator-side write to scheduling state (the tool itself
+   remains its only automatic writer, and `nodes`/`shards`/`meta` stay
+   `proofdb_merge`-only; never touch those). Remove the row
+   (`DELETE FROM censor WHERE path = …`) once the real cause is fixed.
+5. **Re-scope with `--moves '<uci path>'`** — run the rest of the territory
+   under a different anchor (§7.2 scoped harvest), leaving the offending
+   path out of the session's world.
+
+_The three-strike quarantine rule_ (pre-registered; this is the decision
+rule, not a suggestion):
+
+1. **Strike 1 — a path aborts.** Fold, then retry (rung 1); if it is a
+   budget-class abort, rung 3 applies after rung 2.
+2. **Strike 2 — the same path aborts a second time.** Quarantine it
+   (rung 4) and retry the session with a larger `--tt-mb` (rung 2). Do not
+   raise the attempt budget a second time for the same path.
+3. **Strike 3 — a third distinct path aborts the same way.** **Stop the
+   campaign.** Do not retry further and do not quarantine a third path:
+   write a report (the three paths, their classes, messages, and censuses,
+   plus the session configuration) and treat it as a design finding. The
+   skip-and-censor successor is parked as backlog item 23 and is drafted
+   only when this rule fires.
+
+A quarantined path stays quarantined until its cause is understood; the
+quarantine row is a scheduling hint, so deleting it later costs only
+re-searched work.
+
+Never edit a shard, a sidecar, or the DB to "fix" an export abort — a
+rejected export writes nothing, and a proven fact is append-only truth
+(§9). Never raise `--fill-attempt-budget` to hide a depth/contradiction
+abort: it will cost more and fail the same way.
+
 **Fresh vs carried censor state.** Empty censor rows (`DELETE FROM
 censor;`, §4) are sound but re-censor every frontier path at the base
 budget on first revisit — lower first-batch yield. Importing a legacy
@@ -1340,6 +1452,20 @@ duty itself: keep the offsite copy current (R6), and stamp checks against
 the fold digest when in doubt (§8.2's census query).
 
 ## 11. History
+
+plan25 (2026-10-27) made deep-hole exports recoverable without changing the
+"a rejected export aborts the session" rule: a hole's fill bound is seeded
+from its parent's proven depth and now dominates the fixed depth cap (the
+cap governs parentless root holes only), the doubling search clamps at the
+cap instead of overshooting it, and a budget-censored fill attempt is
+reported as a budget abort instead of masquerading as depth exhaustion. The
+harvest gained the export fill budget knobs `--fill-attempt-budget` (default
+2,000,000) and `--fill-total-budget` (default 100,000,000) — the values it
+previously hardcoded — and a rejected export's abort line carries the walk
+census (`holes: …`, `fill_evals=N`). §10 documents the two abort classes,
+the recovery ladder, and the three-strike quarantine rule. The incident it
+fixes: a production session aborted on a mate-in-1 hole under a depth-46
+parent with `fill depth cap 32 exhausted` and **zero** fill evals.
 
 plan23 (2026-10-20) completed the standing layer's migration to the fold
 world and retired the last transitional wording: the parked pre-plan22
