@@ -1,0 +1,36 @@
+210:    pub fn new(tt_mb: usize) -> Self {
+261:    pub fn set_preflight_enabled(&mut self, enabled: bool) {
+270:    pub fn preflight_report(&self) -> Option<PreflightReport> {
+274:    pub fn set_first_outcome_only(&mut self, value: bool) {
+278:    pub fn set_scorer(&mut self, scorer: StaticAtomicScorer) {
+282:    pub fn scorer(&self) -> &StaticAtomicScorer {
+286:    pub fn set_timeout(&mut self, seconds: u64) {
+306:    pub fn set_child_eval_budget(&mut self, budget: u64) {
+324:    pub fn set_refine_cap_factor(&mut self, factor: f64) {
+352:    pub fn first_outcome_evaluations(&self) -> u64 {
+359:    pub fn refinement_rounds(&self) -> u32 {
+366:    pub fn refinement_evaluations(&self) -> u64 {
+377:    pub fn pv_status(&self) -> PvStatus {
+385:    pub fn last_refine_round_cap_cut(&self) -> bool {
+403:    pub fn child_eval_budget_exceeded(&self) -> bool {
+407:    pub fn set_max_ply(&mut self, max_ply: usize) {
+414:    pub fn set_restart_schedule(&mut self, schedule: RestartSchedule) {
+420:    pub fn restart_schedule(&self) -> RestartSchedule {
+428:    pub fn restarts(&self) -> u64 {
+432:    pub fn set_epsilon(&mut self, epsilon: f64) {
+450:    pub fn set_salt(&mut self, salt: u64) {
+454:    pub fn set_stop_flag(&mut self, stop_flag: Option<Arc<AtomicBool>>) {
+461:    pub fn set_memory_limited(&mut self, memory_limited: Option<Arc<AtomicBool>>) {
+465:    pub fn set_proof_event_sender(&mut self, sender: Option<std::sync::mpsc::Sender<ProofEvent>>) {
+476:    pub fn tt(&self) -> &TranspositionTable {
+486:    pub fn tt_mut(&mut self) -> &mut TranspositionTable {
+494:    pub fn tt_stats(&self) -> (usize, usize, usize, usize, u32) {
+502:    pub fn tt_best_child_counts(&self) -> Vec<(u8, usize)> {
+524:    pub fn exit_reason(&self) -> ExitReason {
+628:    pub fn search_depth(
+657:    pub fn search_depth_with_prefix(
+691:    pub fn solve(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
+703:    pub fn solve_with_progress<F>(
+904:    pub fn nodes(&self) -> u64 {
+910:    pub fn child_evaluations(&self) -> u64 {
+968:    pub fn time_exceeded(&self) -> bool {

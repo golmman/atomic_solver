@@ -297,6 +297,8 @@ If these commands start failing (`EPERM`/`EACCES` on event open), the host-side 
 - `src/search/ordering.rs` — the complete `StaticAtomicScorer` heuristics and their co-tuned constants; tests are split out (`ordering/tests.rs`).
 - `src/search/dfpn/children.rs` — `ChildPrecompute` pooled frame movegen slots, existence-query terminal classification, TT reuse, and proof-event emission share one `Position` move/undo sequence; slot invariants live next to the owning type.
 - `src/search/dfpn/selection.rs` — OR/AND selection and best/second-unsolved search over the `ChildInfo` table; tests are split out (`selection/tests.rs`).
+- `src/search/dfpn/{mod,config,run}.rs` — the `Search` state definition and exit/PV types (`mod.rs`), the configuration surface (`config.rs`), and the run driver plus solve entry points (`run.rs`); split by change reason, not for performance (`lto = true`, `codegen-units = 1` make module placement codegen-neutral).
+- `src/search/dfpn/tests.rs` — one fixture set and one `Search`-construction idiom serve the schedule/budget/ordering/repetition unit tests; splitting it would duplicate the harness.
 - `src/main.rs` — self-contained CLI: argument parsing, help text, search setup, and pre-exit hook in one place.
 
 ## Tuning workflow

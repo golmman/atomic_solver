@@ -45,7 +45,12 @@ fn m19_white_unproven_in_60s() {
 /// `m21_white` crossed that line: at a 64 MB TT it is now decisive in ~52 s
 /// (596,102,838 child evals, `Win` 200 plies, `pv_status: cap-cut`; measured
 /// during plan12 Phase 0 against HEAD). It is therefore excluded from the
-/// unproven assertion; the remaining positions still time out.
+/// unproven assertion; the remaining positions still time out. This exclusion
+/// is a deliberate decision, not a pending TODO: do not promote `m21_white` to
+/// a positive regression unless the slow tier's budget is deliberately raised
+/// (it would add ~3.5% to the already ~25-minute full tier, while the
+/// restart-sensitive class it guards is covered by `dec31`, `m23_white`, and
+/// `m22_white_wins`).
 #[test]
 #[ignore = "slow: 60 s budget per position; run with -- --include-ignored"]
 fn move_order_hard_positions_unproven_in_60s() {

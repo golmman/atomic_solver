@@ -1,0 +1,36 @@
+src/search/dfpn/mod.rs:213:    pub fn new(tt_mb: usize) -> Self {
+src/search/dfpn/mod.rs:279:    pub fn nodes(&self) -> u64 {
+src/search/dfpn/mod.rs:285:    pub fn child_evaluations(&self) -> u64 {
+src/search/dfpn/mod.rs:343:    pub fn time_exceeded(&self) -> bool {
+src/search/dfpn/config.rs:12:    pub fn set_preflight_enabled(&mut self, enabled: bool) {
+src/search/dfpn/config.rs:21:    pub fn preflight_report(&self) -> Option<PreflightReport> {
+src/search/dfpn/config.rs:25:    pub fn set_first_outcome_only(&mut self, value: bool) {
+src/search/dfpn/config.rs:29:    pub fn set_scorer(&mut self, scorer: StaticAtomicScorer) {
+src/search/dfpn/config.rs:33:    pub fn scorer(&self) -> &StaticAtomicScorer {
+src/search/dfpn/config.rs:37:    pub fn set_timeout(&mut self, seconds: u64) {
+src/search/dfpn/config.rs:57:    pub fn set_child_eval_budget(&mut self, budget: u64) {
+src/search/dfpn/config.rs:75:    pub fn set_refine_cap_factor(&mut self, factor: f64) {
+src/search/dfpn/config.rs:103:    pub fn first_outcome_evaluations(&self) -> u64 {
+src/search/dfpn/config.rs:110:    pub fn refinement_rounds(&self) -> u32 {
+src/search/dfpn/config.rs:117:    pub fn refinement_evaluations(&self) -> u64 {
+src/search/dfpn/config.rs:128:    pub fn pv_status(&self) -> PvStatus {
+src/search/dfpn/config.rs:136:    pub fn last_refine_round_cap_cut(&self) -> bool {
+src/search/dfpn/config.rs:144:    pub fn child_eval_budget_exceeded(&self) -> bool {
+src/search/dfpn/config.rs:148:    pub fn set_max_ply(&mut self, max_ply: usize) {
+src/search/dfpn/config.rs:155:    pub fn set_restart_schedule(&mut self, schedule: RestartSchedule) {
+src/search/dfpn/config.rs:161:    pub fn restart_schedule(&self) -> RestartSchedule {
+src/search/dfpn/config.rs:171:    pub fn restarts(&self) -> u64 {
+src/search/dfpn/config.rs:175:    pub fn set_epsilon(&mut self, epsilon: f64) {
+src/search/dfpn/config.rs:193:    pub fn set_salt(&mut self, salt: u64) {
+src/search/dfpn/config.rs:197:    pub fn set_stop_flag(&mut self, stop_flag: Option<Arc<AtomicBool>>) {
+src/search/dfpn/config.rs:204:    pub fn set_memory_limited(&mut self, memory_limited: Option<Arc<AtomicBool>>) {
+src/search/dfpn/config.rs:208:    pub fn set_proof_event_sender(&mut self, sender: Option<std::sync::mpsc::Sender<ProofEvent>>) {
+src/search/dfpn/config.rs:219:    pub fn tt(&self) -> &TranspositionTable {
+src/search/dfpn/config.rs:229:    pub fn tt_mut(&mut self) -> &mut TranspositionTable {
+src/search/dfpn/config.rs:237:    pub fn tt_stats(&self) -> (usize, usize, usize, usize, u32) {
+src/search/dfpn/config.rs:245:    pub fn tt_best_child_counts(&self) -> Vec<(u8, usize)> {
+src/search/dfpn/config.rs:252:    pub fn exit_reason(&self) -> ExitReason {
+src/search/dfpn/run.rs:106:    pub fn search_depth(
+src/search/dfpn/run.rs:135:    pub fn search_depth_with_prefix(
+src/search/dfpn/run.rs:169:    pub fn solve(&mut self, pos: &mut Position) -> (Outcome, Vec<Move>, u64) {
+src/search/dfpn/run.rs:181:    pub fn solve_with_progress<F>(

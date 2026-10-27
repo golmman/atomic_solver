@@ -614,6 +614,44 @@ fn shipped_schedule_restarts_past_the_first_slice() {
 }
 
 #[test]
+fn linear_schedule_restarts_end_to_end() {
+    // m22 first-outcome at tt 256 under a linear schedule (slices
+    // 500k, 1M, 1.5M, ...). Cumulative spend at the first boundaries is
+    // 0.5, 1.5, 3.0, 5.0, 7.5, 10.5, 14.0, 18.0 M; a cold m22 solve needs
+    // ~19.4 M under RestartSchedule::NEVER, so at least 7 boundaries are
+    // necessarily crossed before a slice can be large enough.
+    const FEN: &str = "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22";
+    let mut pos = Position::from_fen(FEN).unwrap();
+    let mut search = Search::new(256);
+    search.set_timeout(60);
+    search.set_restart_schedule(RestartSchedule::linear(500_000, 500_000));
+    let (outcome, _pv, _nodes) = search.search_depth(&mut pos, u32::MAX);
+    assert_eq!(outcome, Outcome::Win);
+    assert!(
+        search.restarts() >= 7,
+        "linear growth stalled: {} restarts",
+        search.restarts()
+    );
+    assert_eq!(search.child_evaluations(), 17_411_547);
+}
+
+#[test]
+fn cutoff_fires_mid_run_and_solves() {
+    // SHIPPED boundaries on m22 are at spent 0.5, 1.5, 3.5, 7.5 M. With a
+    // 2 M cutoff the third boundary (spent 3.5 M) returns u64::MAX, so exactly
+    // three boundaries are ever counted and the final unbounded slice solves.
+    const FEN: &str = "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22";
+    let mut pos = Position::from_fen(FEN).unwrap();
+    let mut search = Search::new(256);
+    search.set_timeout(60);
+    search.set_restart_schedule(RestartSchedule::SHIPPED.with_cutoff(Some(2_000_000)));
+    let (outcome, _pv, _nodes) = search.search_depth(&mut pos, u32::MAX);
+    assert_eq!(outcome, Outcome::Win);
+    assert_eq!(search.restarts(), 3);
+    assert_eq!(search.child_evaluations(), 16_967_609);
+}
+
+#[test]
 fn evaluate_child_resolves_solved_entry_without_move_hint() {
     // A solved TT entry with `Move::NONE`, `work = 0`, and
     // `remaining_depth = u32::MAX` must be resolved by `evaluate_child`

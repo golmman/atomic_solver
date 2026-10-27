@@ -1132,3 +1132,9 @@ nn inference with gpu?
 ---
 
 Housekeeping/cleanup pass — revisit the dfpn/mod.rs size watch and the two re-baselined slow tests; reason: the search module remains the largest single-session maintenance risk, and the re-baselined tests could use a small deterministic cutoff test for RestartSchedule/Growth::Linear.
+
+---
+
+Please investigate:
+There is an unexpected high amount of data in `docs/plans/parallel/measurements/plan10/logs/`.
+Can we clean this up?

@@ -1,0 +1,12 @@
+{
+  "commit": "e212735",
+  "quick_tt256": {"before": 42109768, "after": 42109768, "cases": 59, "wrong": 0},
+  "quick_tt128": {"before": 40042745, "after": 40042745, "cases": 59, "wrong": 0},
+  "dec31_fo": {"before": 510426, "after": 510426, "outcome": "loss"},
+  "m22_fo": {"before": 15023911, "after": 15023911, "outcome": "win"},
+  "m23_white_fo": {"before": 11621376, "after": 11621376, "outcome": "win"},
+  "stress_fo": {"before": 287872755, "after": 287872755, "outcome": "win"},
+  "m22_default": {"before": 18779890, "after": 18779890, "golden": "tests/fixtures/m22_default_stdout_golden.txt", "match": true},
+  "trajectory_golden": "pass (m22_default_mode_trajectory_matches_golden)",
+  "notes": "Totals from benchmark stdout tables; individual anchors from stderr 'evals:' lines. Before = HEAD (e212735), after = working tree after Phase C split."
+}

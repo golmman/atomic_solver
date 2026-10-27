@@ -166,6 +166,35 @@ mod tests {
     }
 
     #[test]
+    fn cutoff_fires_at_the_boundary_it_is_crossed() {
+        let s = RestartSchedule::SHIPPED.with_cutoff(Some(1_000_000));
+        assert_eq!(s.first_slice(), 500_000); // non-zero cutoff keeps the base
+        assert_eq!(s.next(500_000, 500_000), 1_000_000); // not yet fired
+        assert_eq!(s.next(1_000_000, 999_999), 2_000_000); // still not fired (spent < cutoff)
+        assert_eq!(s.next(1_000_000, 1_000_000), u64::MAX); // fires at spent == cutoff
+        assert_eq!(s.next(2_000_000, 5_000_000), u64::MAX); // stays fired
+    }
+
+    #[test]
+    fn first_slice_ignores_nonzero_cutoff() {
+        for cutoff in [1u64, 500_000, u64::MAX - 1] {
+            assert_eq!(
+                RestartSchedule::SHIPPED
+                    .with_cutoff(Some(cutoff))
+                    .first_slice(),
+                RestartSchedule::SHIPPED.first_slice(),
+                "cutoff {cutoff} must not shrink the first slice"
+            );
+        }
+        // Only a zero cutoff fires before the first slice; that is what
+        // RestartSchedule::NEVER relies on.
+        assert_eq!(
+            RestartSchedule::SHIPPED.with_cutoff(Some(0)).first_slice(),
+            u64::MAX
+        );
+    }
+
+    #[test]
     fn never_restarts_keeps_the_first_slice_unbounded() {
         assert_eq!(RestartSchedule::NEVER.next(1, 10), u64::MAX);
         assert_eq!(RestartSchedule::SHIPPED.first_slice(), 500_000);

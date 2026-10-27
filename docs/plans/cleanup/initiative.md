@@ -7,15 +7,15 @@ Plans 1–6 are done (`report1.md`–`report6.md`); a new plan is opened when
 a pass leaves named follow-ups or a convention lands that needs
 enforcement.
 
-**plan7 drafted 2026-10-27** (`plan7.md`), next free number. It executes the
-housekeeping follow-up carried in the `conversion/report12.md` closure
-block: (A) the missing deterministic restart-schedule tests (non-zero
-`cutoff` firing mid-run, `Growth::Linear` end-to-end), (B) recording the
-`m21_white` / `m22_white_wins` re-baseline decisions plus the missing
-`AGENTS.md` size justifications, and (C) splitting
-`src/search/dfpn/mod.rs` (40.8 KB / 986 lines, not justified) into
-`mod.rs` + `config.rs` + `run.rs` by move-only code motion. The
-`dfpn/mod.rs` size watch in the index row is this plan's closure item.
+**plan7 done 2026-10-27** (`report7.md`). It closed the housekeeping
+follow-up carried in the `conversion/report12.md` closure block: (A) the
+missing deterministic restart-schedule tests (non-zero `cutoff` firing
+mid-run, `Growth::Linear` end-to-end), (B) recording the `m21_white` /
+`m22_white_wins` re-baseline decisions plus the missing `AGENTS.md` size
+justifications, and (C) splitting `src/search/dfpn/mod.rs` (40.8 KB /
+986 lines, not justified) into `mod.rs` + `config.rs` + `run.rs` by
+move-only code motion. The `dfpn/mod.rs` size watch in the index row is
+now resolved.
 
 ## Goal
 
@@ -49,6 +49,12 @@ one-off structural repairs.
   (`src/facts/`, the `search::dfpn` hooks, the `--facts-out` / `--facts-in`
   CLI surface, its tests, and its documentation; behaviour-free) —
   `report6.md`.
+- **plan7** — housekeeping pass: `dfpn/mod.rs` split move-only into
+  `mod.rs` (14.2 KB) + `config.rs` (10.5 KB) + `run.rs` (17.1 KB),
+  restart-cutoff and linear-schedule end-to-end tests added, slow-test
+  decisions recorded, `AGENTS.md` size justifications updated
+  (`report7.md`). Verdict D1/D2/D3 pass; eval-identical and wall-neutral
+  under an interleaved HEAD-vs-after control.
 
 ## Open follow-ups (carried from report2/report3)
 
@@ -60,9 +66,7 @@ see `report4.md`.)
 
 ## In flight
 
-- **plan7** — housekeeping pass: `dfpn/mod.rs` split (move-only), restart
-  cutoff/`Growth::Linear` end-to-end tests, slow-test decisions
-  (`plan7.md`, drafted 2026-10-27; report pending).
+(none)
 
 ## Cross-references
 
