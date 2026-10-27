@@ -24,7 +24,10 @@ A pure solver for atomic chess in Rust.
 - `src/search/preflight/` — detector-gated bounded pre-phase (plan13, architecture R): on
   ≤3-men, pawnless, no-castling roots it decides the value via a region-closure AND/OR fixpoint
   plus a mandatory replay verifier; a claim returns the exact-DTM principal-line PV, anything
-  else defers and the search runs bit-identically. Its soundness contract — no TT interaction,
+  else defers and the search runs bit-identically. A cheap bounded DF-PN probe on its own
+  scratch TT screens detected non-terminal roots first (`dfpn/cheap_probe.rs`): a decisive
+  outcome within its cap skips the closure (`probe-solved` deferral, ordinary search produces
+  the product result); draws always fall through to the pre-phase. Its soundness contract — no TT interaction,
   no wall clock, no `ProofEvent`s (the documented R2 gap), budget accounting, and the
   `REGION_BUDGET`-bounded closure memory (the one bounded exception to the search CLI's
   "RAM = TT only") — is normative in the module header.

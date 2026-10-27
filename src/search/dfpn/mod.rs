@@ -11,6 +11,7 @@
 //! device, not a budget. The hard child-eval budget is enforced per node
 //! (`child_eval_budget_exceeded` at the frame-loop head), independent of pacing.
 
+mod cheap_probe;
 mod children;
 mod config;
 mod core;

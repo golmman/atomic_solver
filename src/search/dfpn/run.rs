@@ -110,7 +110,10 @@ impl Search {
     ) -> (Outcome, Vec<Move>, u64) {
         self.begin_run();
         // Pre-phase (plan13): the certificate bound is the fixed `max_depth`.
-        if let Some((outcome, pv)) = self.preflight_phase(pos, Some(max_depth)) {
+        // The cheap screening probe (performance plan1) is deliberately not
+        // run here: `search_depth` is the certificate-bound entry point used
+        // by the offline tooling, whose behavior stays exactly as before.
+        if let Some((outcome, pv)) = self.preflight_phase(pos, Some(max_depth), 0) {
             self.pv_status = if outcome == Outcome::Draw {
                 PvStatus::None
             } else {
@@ -156,9 +159,13 @@ impl Search {
     /// Solve a position, returning the decisive outcome and the shortest PV
     /// found within the configured timeout.
     ///
-    /// Before the DF-PN loop, the detector-gated bounded pre-phase (plan13)
-    /// may decide the root directly; a claim returns the outcome plus the
-    /// certificate's principal-line PV (see [`PvStatus::PreflightProof`] and
+    /// Before the DF-PN loop, a cheap bounded DF-PN probe screens detected
+    /// roots (performance plan1): a decisive outcome within the probe's cap
+    /// skips the pre-phase closure (reported as the `probe-solved` deferral)
+    /// and the ordinary search below produces the product result. Otherwise
+    /// the detector-gated bounded pre-phase (plan13) may decide the root
+    /// directly; a claim returns the outcome plus the certificate's
+    /// principal-line PV (see [`PvStatus::PreflightProof`] and
     /// `Search::preflight_report`). On any deferral the ordinary search below
     /// runs bit-identically to a pre-phase-disabled run.
     ///
@@ -188,12 +195,17 @@ impl Search {
     {
         self.begin_run();
 
-        // 0. Detector-gated bounded pre-phase (plan13): decides small-space
-        //    regions (occupied <= 3 men, no pawns/castling) via a
-        //    region-closure fixpoint with replay-verified certificates, and
-        //    defers everywhere else, bit-identically. Claims consume no TT
-        //    entries and return directly (no refinement rounds run).
-        if let Some((outcome, pv)) = self.preflight_phase(pos, None) {
+        // 0a. Cheap screening probe (performance plan1): a throwaway bounded
+        //     DF-PN search on a scratch TT. A decisive outcome within the cap
+        //     means the pre-phase closure below would only re-derive what the
+        //     ordinary search proves in a few hundred evals, so the closure is
+        //     skipped. Draws (resource cuts or proven draws) always fall
+        //     through to the pre-phase: the probe never claims anything.
+        let gate = self.cheap_probe_gate(pos);
+        self.child_evals += gate.evals;
+        if gate.decided {
+            self.preflight_report = Some(PreflightReport::deferred("probe-solved", gate.evals, 0));
+        } else if let Some((outcome, pv)) = self.preflight_phase(pos, None, gate.evals) {
             self.pv_status = if outcome == Outcome::Draw {
                 PvStatus::None
             } else {
@@ -321,9 +333,14 @@ impl Search {
     /// Run the detector-gated bounded pre-phase (plan13) before the DF-PN
     /// loop and record its report.
     ///
-    /// The hook is a no-op (report `disabled`/`detector`, zero evals) unless
-    /// the pre-phase is enabled and the detector predicate holds. Child
-    /// evaluations consumed by the pre-phase are added to the run's
+    /// The hook is a no-op (report `disabled`/`detector`, zero evals plus the
+    /// `prior_evals` a preceding stage already spent) unless the pre-phase is
+    /// enabled and the detector predicate holds. `prior_evals` is the cheap
+    /// screening probe's cost (performance plan1): it is folded into every
+    /// report so `PreflightReport::evals` stays the run's whole pre-phase
+    /// work.
+    ///
+    /// Child evaluations consumed by the pre-phase are added to the run's
     /// `child_evals` counter and count against `child_eval_budget` (R4); on
     /// budget exhaustion the pre-phase defers and the ordinary search
     /// immediately reports `ExitReason::BudgetExhausted`, so the documented
@@ -333,18 +350,24 @@ impl Search {
         &mut self,
         pos: &mut Position,
         bound: Option<u32>,
+        prior_evals: u64,
     ) -> Option<(Outcome, Vec<Move>)> {
+        // `prior_evals` is the work a preceding stage (the cheap screening
+        // probe) already spent on this root; every report carries the total
+        // pre-phase cost of the run, so `report.evals` stays the run's whole
+        // pre-phase work.
         let mut claimed: Option<(Outcome, Vec<Move>)> = None;
         let report = if !self.preflight_enabled {
-            PreflightReport::deferred("disabled", 0, 0)
+            PreflightReport::deferred("disabled", prior_evals, 0)
         } else if !preflight::detector_applies(pos.board()) {
-            PreflightReport::deferred("detector", 0, 0)
+            PreflightReport::deferred("detector", prior_evals, 0)
         } else {
             let budget = self.child_eval_budget.saturating_sub(self.child_evals);
             let stop = self.stop_flag.as_deref();
             match preflight::run(pos, bound, budget, stop) {
                 PreflightExit::Claimed(claim) => {
                     self.child_evals += claim.evals;
+                    let evals = claim.evals + prior_evals;
                     // Defense in depth on top of the replay verifier: the
                     // principal-line PV itself must replay legally from the
                     // root to a terminal with the claimed outcome at exactly
@@ -353,14 +376,9 @@ impl Search {
                         || self.validate_pv(&claim.pv, pos, claim.outcome, Some(claim.rank));
                     if pv_ok {
                         claimed = Some((claim.outcome, claim.pv));
-                        PreflightReport::decided(
-                            claim.outcome,
-                            claim.evals,
-                            claim.region,
-                            claim.rank,
-                        )
+                        PreflightReport::decided(claim.outcome, evals, claim.region, claim.rank)
                     } else {
-                        PreflightReport::deferred("cert-fail", claim.evals, claim.region)
+                        PreflightReport::deferred("cert-fail", evals, claim.region)
                     }
                 }
                 PreflightExit::Deferred {
@@ -369,7 +387,7 @@ impl Search {
                     region,
                 } => {
                     self.child_evals += evals;
-                    PreflightReport::deferred(reason, evals, region)
+                    PreflightReport::deferred(reason, evals + prior_evals, region)
                 }
             }
         };

@@ -25,7 +25,7 @@ maintainability, testability, consistency.
 
 | # | Item | Report evidence | Plan | Status |
 |---|------|-----------------|------|--------|
-| 1 | Preflight cost gate / cheap-search probe | Easy 3-man KQ wins are ~60–75× slower with preflight (`~0.75 s / 5.8M evals` vs `~0.01 s / 229–337 evals`); draw-class preflight is a large win | `plan1.md` | **drafted** |
+| 1 | Preflight cost gate / cheap-search probe | Easy 3-man KQ wins are ~60–75× slower with preflight (`~0.75 s / 5.8M evals` vs `~0.01 s / 229–337 evals`); draw-class preflight is a large win | `plan1.md` → `report1.md` | **done (GO, closed 2026-10-27)**: bounded DF-PN probe (2,000-eval cap, scratch TT) before the pre-phase; easy wins 0.75–0.80 s → 0.010–0.011 s (evals 5.83M → 2–586), draws/hard wins +2,000–2,019 evals (≤ 0.087%) and ≤ +2.5% wall, TT isolation + quick suite 59/59 eval-identical |
 | 2 | TT pre-probe before make/unmake | 13–38% of child evals already find a usable TT entry; estimated 3–8% throughput | — | open (throughput; may move to `lean`) |
 | 3 | Incremental repetition-context hash | Bit-identical, ~2–3% throughput | — | open (throughput; may move to `lean`) |
 | 4 | Path Bloom negative filter | ~1–3%, optional second-order | — | open |
@@ -52,6 +52,12 @@ maintainability, testability, consistency.
   `child_evals` (deterministic) and wall/RSS.
 - **No new CLI knob unless the plan says so.** The existing
   `--no-preflight` remains the operator escape hatch.
+
+## Item ↔ plan mapping
+
+| item | plan | report | status |
+|---|---|---|---|
+| #1 preflight cost gate / cheap-search probe | `plan1.md` | `report1.md` | done — GO |
 
 ## Cross-references
 

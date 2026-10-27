@@ -43,6 +43,10 @@ fn preflight_claims_terminal_checkmate_root() {
     assert_eq!(report.rank, 0);
     assert_eq!(report.region, 1, "terminal root closes immediately");
     assert_eq!(
+        report.evals, 0,
+        "terminal roots skip the cheap probe (region 1 needs no screen)"
+    );
+    assert_eq!(
         search.child_evaluations(),
         report.evals,
         "pre-phase evals are the run's evals when the claim returns directly"
@@ -92,6 +96,47 @@ fn preflight_win_claim_on_extinct_opponent_root() {
     assert_eq!(report.region, 1);
 }
 
+/// An easy non-terminal 3-man root: the cheap screening probe (performance
+/// plan1) finds the win in a few hundred child evals, so the closure is
+/// skipped and the ordinary search produces the product result.
+const EASY_KQ_FEN: &str = "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1";
+
+#[test]
+fn cheap_probe_skips_the_closure_on_easy_three_man_roots() {
+    let mut pos = Position::from_fen(EASY_KQ_FEN).unwrap();
+    let mut search = Search::new(1);
+    let (outcome, pv, _nodes) = search.solve(&mut pos);
+
+    assert_eq!(outcome, Outcome::Win);
+    assert!(!pv.is_empty());
+    // The gate is a screen, not a claim source: the outcome and PV status
+    // come from the ordinary search.
+    assert_ne!(search.pv_status(), PvStatus::PreflightProof);
+
+    let report = search.preflight_report().expect("hook ran");
+    assert!(
+        !report.decided,
+        "a probe-solved root is not a pre-phase claim"
+    );
+    assert_eq!(report.reason, "probe-solved");
+    assert_eq!(report.region, 0, "no closure ran");
+    assert!(report.evals > 0, "the probe's work is reported");
+    assert!(
+        search.child_evaluations() > report.evals,
+        "probe ({}) + ordinary search ({})",
+        report.evals,
+        search.child_evaluations()
+    );
+    // No TT interaction of any kind (plan13 hard constraint): the probe's
+    // scratch table is dropped inside the gate; the production TT here is
+    // non-empty only because the ordinary search ran after the deferral.
+    let (_buckets, live, solved, _unsolved, _gen) = search.tt_stats();
+    assert!(
+        live > 0 && solved > 0,
+        "the ordinary search owns the production TT"
+    );
+}
+
 #[test]
 fn preflight_disabled_flag_runs_ordinary_search() {
     let mut pos = Position::from_fen(MATED_ROOT_FEN).unwrap();
@@ -106,6 +151,33 @@ fn preflight_disabled_flag_runs_ordinary_search() {
     assert_eq!(report.evals, 0);
     assert_eq!(report.region, 0);
     assert_eq!(search.pv_status(), PvStatus::ProvenShortest);
+}
+
+#[test]
+fn preflight_disabled_flag_disables_the_cheap_probe_too() {
+    // `--no-preflight` is the operator escape hatch for the whole pre-phase:
+    // the cheap screening probe (performance plan1) must not run either.
+    let mut enabled_pos = Position::from_fen(EASY_KQ_FEN).unwrap();
+    let mut enabled = Search::new(1);
+    let _ = enabled.solve(&mut enabled_pos);
+    let enabled_evals = enabled.child_evaluations();
+    assert_eq!(enabled.preflight_report().unwrap().reason, "probe-solved");
+
+    let mut pos = Position::from_fen(EASY_KQ_FEN).unwrap();
+    let mut search = Search::new(1);
+    search.set_preflight_enabled(false);
+    let (outcome, _pv, _nodes) = search.solve(&mut pos);
+
+    assert_eq!(outcome, Outcome::Win, "the search finds the same outcome");
+    let report = search.preflight_report().unwrap();
+    assert_eq!(report.reason, "disabled");
+    assert_eq!(report.evals, 0, "no probe evals on the disabled path");
+    assert!(
+        search.child_evaluations() < enabled_evals,
+        "the disabled run does no probe work ({} vs {} evals)",
+        search.child_evaluations(),
+        enabled_evals
+    );
 }
 
 #[test]
@@ -210,6 +282,14 @@ fn region_analyze_proves_a_full_closure_draw() {
     assert!(report.decided);
     assert_eq!(report.outcome, Some(Outcome::Draw));
     assert!(report.region > 100_000, "the full component must close");
+    // The probe ran first and deferred (a Draw return is never `decided`),
+    // so its evals are part of the run's pre-phase cost.
+    assert!(report.evals > 0);
+    assert_eq!(
+        search.child_evaluations(),
+        report.evals,
+        "probe evals are folded into the pre-phase report"
+    );
 }
 
 #[test]

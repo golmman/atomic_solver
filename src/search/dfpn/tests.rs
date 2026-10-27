@@ -680,3 +680,84 @@ fn evaluate_child_resolves_solved_entry_without_move_hint() {
     assert_eq!(info.outcome, Some(Outcome::Loss));
     assert_eq!(info.depth, 9, "proven depth preserved");
 }
+
+// ---------- cheap screening probe (performance plan1) ----------
+
+/// An easy non-terminal 3-man root: the ordinary DF-PN search finds a win in
+/// a few hundred child evals (189 measured); the pre-phase closure would cost
+/// ~5.8M.
+const EASY_KQ_FEN: &str = "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1";
+/// A 3-man draw: the probe burns its cap and defers to the pre-phase.
+const KR_DRAW_FEN: &str = "4k3/8/8/8/8/8/8/4KR2 w - - 0 1";
+
+#[test]
+fn cheap_probe_gate_reports_decisive_on_easy_root() {
+    let pos = Position::from_fen(EASY_KQ_FEN).unwrap();
+    let mut search = Search::new(1);
+    // The gate expects a started run (its deadlines/stop flags come from
+    // `begin_run`); `solve` always calls it that way.
+    search.begin_run();
+    let gate = search.cheap_probe_gate(&pos);
+
+    assert!(gate.ran, "the detector fires on a 3-man non-terminal root");
+    assert!(gate.decided, "the easy KQ win is inside the probe cap");
+    assert!(
+        gate.evals > 0
+            && gate.evals <= crate::search::dfpn::cheap_probe::CHEAP_PROBE_EVAL_CAP + 255,
+        "probe evals {} stay within the cap plus one sweep overshoot",
+        gate.evals
+    );
+}
+
+#[test]
+fn cheap_probe_gate_defers_on_draw_and_leaves_production_tt_untouched() {
+    let pos = Position::from_fen(KR_DRAW_FEN).unwrap();
+    let mut search = Search::new(1);
+    search.begin_run();
+    let before = search.tt_stats();
+    let gate = search.cheap_probe_gate(&pos);
+
+    assert!(gate.ran);
+    assert!(!gate.decided, "a Draw return defers to the pre-phase");
+    assert!(
+        gate.evals > 0
+            && gate.evals <= crate::search::dfpn::cheap_probe::CHEAP_PROBE_EVAL_CAP + 255,
+        "the deferred probe is bounded by the cap plus one sweep overshoot, got {}",
+        gate.evals
+    );
+    assert_eq!(
+        search.tt_stats(),
+        before,
+        "the probe runs on its own scratch TT: the production table is untouched"
+    );
+    assert_eq!(search.child_evaluations(), 0, "the gate accounts nothing");
+}
+
+#[test]
+fn cheap_probe_gate_is_skipped_when_conditions_do_not_hold() {
+    // Terminal root: the pre-phase's region-1 claim needs no probe.
+    let mated = Position::from_fen("7K/8/8/8/8/8/1Q6/k7 b - - 0 1").unwrap();
+    let search = Search::new(1);
+    let gate = search.cheap_probe_gate(&mated);
+    assert!(!gate.ran, "terminal roots must not be probed");
+    assert_eq!(gate.evals, 0);
+
+    // Detector miss (4 men).
+    let four_men = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+    assert!(!search.cheap_probe_gate(&four_men).ran);
+
+    // Pre-phase disabled (`--no-preflight` disables the gate too).
+    let mut disabled = Search::new(1);
+    disabled.set_preflight_enabled(false);
+    let easy = Position::from_fen(EASY_KQ_FEN).unwrap();
+    assert!(!disabled.cheap_probe_gate(&easy).ran);
+
+    // No remaining child-eval budget (the gate is called before any work,
+    // so a zero budget must not be spent on a probe).
+    let mut spent = Search::new(1);
+    spent.set_child_eval_budget(0);
+    assert!(
+        !spent.cheap_probe_gate(&easy).ran,
+        "a zero budget cannot fund a probe"
+    );
+}

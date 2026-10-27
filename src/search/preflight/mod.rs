@@ -28,6 +28,14 @@
 //!    rank-decreasing principal-line PV (exact rank length); anything else
 //!    defers and the ordinary search runs bit-identically.
 //!
+//! Before step 1, a cheap bounded DF-PN probe screens detected roots
+//! (`crate::search::dfpn::cheap_probe`): when it finds a decisive outcome
+//! within its child-eval cap the closure is skipped and the ordinary search
+//! runs instead. That probe uses its *own* scratch transposition table, which
+//! is dropped before the pre-phase starts, so the no-TT contract below is
+//! untouched; only the probe's child evals are carried over into the
+//! pre-phase's reported cost.
+//!
 //! # Soundness contract
 //!
 //! - **No TT interaction of any kind** (no stores, no probes, no bound
@@ -79,7 +87,9 @@ pub const REGION_BUDGET: usize = 1_000_000;
 /// Why the pre-phase did not claim, or (for decided reports) `""`.
 ///
 /// Deferral reasons: `disabled` (`--no-preflight`), `detector` (predicate
-/// false), `eval-budget`, `region-budget`, `stop`, `rank-guard` (rule50
+/// false), `probe-solved` (the cheap screening probe already found a decisive
+/// outcome, so the closure was skipped and the ordinary search runs),
+/// `eval-budget`, `region-budget`, `stop`, `rank-guard` (rule50
 /// guard, D3), `bound` (rank exceeds the `search_depth` bound), `cert-fail`
 /// (strategy extraction or replay verification failed — defense in depth),
 /// `internal` (an invariant violation; always defer).
@@ -93,8 +103,10 @@ pub struct PreflightReport {
     /// `""` for decided reports, otherwise one of the deferral reasons
     /// documented on [`PreflightReason`].
     pub reason: PreflightReason,
-    /// Child evaluations consumed by the pre-phase (closure BFS, strategy
-    /// verification, and PV extraction).
+    /// Total pre-phase work for the run: the cheap screening probe's child
+    /// evals plus the pre-phase's own (closure BFS, strategy verification,
+    /// and PV extraction). Zero for reports of runs in which neither stage
+    /// spent work (`disabled`, `detector`).
     pub evals: u64,
     /// Positions in the closure (0 when the detector did not fire).
     pub region: usize,

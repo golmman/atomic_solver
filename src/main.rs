@@ -33,6 +33,9 @@
 //!                              (plan13): the region-closure fixpoint that
 //!                              decides small-space positions (occupied <= 3
 //!                              men, no pawns/castling) before the DF-PN loop.
+//!                              This also disables the cheap bounded DF-PN
+//!                              probe that screens such roots before the
+//!                              closure.
 //!                              On such positions the pre-phase allocates a
 //!                              transient closure of up to 1,000,000 packed
 //!                              positions (~85 MB worst case) — the
@@ -68,9 +71,15 @@
 //!   `pv_status` qualifies the PV length, not its validity. Without
 //!   `--outcome-only` the pre-phase hook prints one
 //!   `preflight: decided|deferred ...` line before the outcome, and the
-//!   pre-exit hook prints a `pre_exit:` summary line. On stderr the total
+//!   pre-exit hook prints a `pre_exit:` summary line. A root the cheap
+//!   screening probe already solved prints
+//!   `preflight: deferred reason=probe-solved evals=<n>`; its outcome then
+//!   comes from the ordinary search and its `pv_status` is that search's
+//!   (`first-outcome` / `proven-shortest` / ...), never `preflight-proof`.
+//!   On stderr the total
 //!   child-evaluation count is reported as one final `evals: <n>` line (in
-//!   both modes); it includes any pre-phase evals.
+//!   both modes); it includes any pre-phase evals (pre-probe evals
+//!   included).
 //!
 //! Examples:
 //!   `atomic_solver` --help
@@ -122,7 +131,8 @@ fn print_help(program: &str) {
     println!("  --no-preflight             Disable the bounded pre-phase that");
     println!("                             decides small-space positions (occupied");
     println!("                             <= 3 men, no pawns/castling) before the");
-    println!("                             DF-PN loop");
+    println!("                             DF-PN loop, and the cheap probe that");
+    println!("                             screens such roots first");
     println!("  --tt-dump-path <FILE>      Write a binary TT snapshot after the search");
     println!("                             (transfer artifact for offline proof");
     println!("                             reconstruction via reconstruct_pt; optional)");

@@ -1,0 +1,262 @@
+{
+  "binary": "target/release/atomic_solver",
+  "cases": {
+    "control_4men": {
+      "budget_exhausted": false,
+      "class": "detector-miss",
+      "evals": 30,
+      "fen": "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1",
+      "mode": "probe",
+      "outcome": "win",
+      "preflight": null,
+      "pv_len": 3,
+      "pv_status": "first-outcome",
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0021,
+      "wall_s": [
+        0.0021
+      ]
+    },
+    "draw_adjacency": {
+      "budget_exhausted": false,
+      "class": "draw",
+      "evals": 2000,
+      "fen": "8/8/8/8/8/1K6/1Q6/k7 b - - 0 1",
+      "mode": "probe",
+      "outcome": "draw",
+      "preflight": null,
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0036,
+      "wall_s": [
+        0.0036
+      ]
+    },
+    "draw_cyclic_rook": {
+      "budget_exhausted": false,
+      "class": "draw",
+      "evals": 2019,
+      "fen": "8/8/8/8/2k5/8/8/4KR2 w - - 0 1",
+      "mode": "probe",
+      "outcome": "draw",
+      "preflight": null,
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0025,
+      "wall_s": [
+        0.0025
+      ]
+    },
+    "draw_kb": {
+      "budget_exhausted": false,
+      "class": "draw",
+      "evals": 2003,
+      "fen": "4k3/8/8/8/8/8/8/4KB2 w - - 0 1",
+      "mode": "probe",
+      "outcome": "draw",
+      "preflight": null,
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0025,
+      "wall_s": [
+        0.0025
+      ]
+    },
+    "draw_kn": {
+      "budget_exhausted": false,
+      "class": "draw",
+      "evals": 2006,
+      "fen": "4k3/8/8/8/8/8/8/4KN2 w - - 0 1",
+      "mode": "probe",
+      "outcome": "draw",
+      "preflight": null,
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.003,
+      "wall_s": [
+        0.003
+      ]
+    },
+    "draw_kr": {
+      "budget_exhausted": false,
+      "class": "draw",
+      "evals": 2000,
+      "fen": "4k3/8/8/8/8/8/8/4KR2 w - - 0 1",
+      "mode": "probe",
+      "outcome": "draw",
+      "preflight": null,
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0024,
+      "wall_s": [
+        0.0024
+      ]
+    },
+    "easy_qa1": {
+      "budget_exhausted": false,
+      "class": "easy-win",
+      "evals": 293,
+      "fen": "4k3/8/8/8/8/8/8/Q3K3 w - - 0 1",
+      "mode": "probe",
+      "outcome": "win",
+      "preflight": null,
+      "pv_len": 3,
+      "pv_status": "first-outcome",
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0022,
+      "wall_s": [
+        0.0022
+      ]
+    },
+    "easy_qd1": {
+      "budget_exhausted": false,
+      "class": "easy-win",
+      "evals": 193,
+      "fen": "4k3/8/8/8/8/8/8/3QK3 w - - 0 1",
+      "mode": "probe",
+      "outcome": "win",
+      "preflight": null,
+      "pv_len": 3,
+      "pv_status": "first-outcome",
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0023,
+      "wall_s": [
+        0.0023
+      ]
+    },
+    "easy_qd8": {
+      "budget_exhausted": false,
+      "class": "easy-win",
+      "evals": 1,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "mode": "probe",
+      "outcome": "win",
+      "preflight": null,
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0025,
+      "wall_s": [
+        0.0025
+      ]
+    },
+    "easy_qf1": {
+      "budget_exhausted": false,
+      "class": "easy-win",
+      "evals": 189,
+      "fen": "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1",
+      "mode": "probe",
+      "outcome": "win",
+      "preflight": null,
+      "pv_len": 3,
+      "pv_status": "first-outcome",
+      "rss_max_kb": 17380,
+      "timeout": false,
+      "wall_median_s": 0.0032,
+      "wall_s": [
+        0.0032
+      ]
+    },
+    "hard_ladder_root": {
+      "budget_exhausted": false,
+      "class": "hard-win",
+      "evals": 2002,
+      "fen": "8/2K5/k7/8/8/8/8/4Q3 w - - 0 1",
+      "mode": "probe",
+      "outcome": "draw",
+      "preflight": null,
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0028,
+      "wall_s": [
+        0.0028
+      ]
+    },
+    "hard_ladder_step3": {
+      "budget_exhausted": false,
+      "class": "hard-win",
+      "evals": 2003,
+      "fen": "8/5K2/8/3k4/8/8/8/4Q3 w - - 6 4",
+      "mode": "probe",
+      "outcome": "draw",
+      "preflight": null,
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0026,
+      "wall_s": [
+        0.0026
+      ]
+    },
+    "term_extinct": {
+      "budget_exhausted": false,
+      "class": "terminal",
+      "evals": 0,
+      "fen": "8/8/8/8/8/8/8/4k3 b - - 0 1",
+      "mode": "probe",
+      "outcome": "win",
+      "preflight": null,
+      "pv_len": 0,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0024,
+      "wall_s": [
+        0.0024
+      ]
+    },
+    "term_mate": {
+      "budget_exhausted": false,
+      "class": "terminal",
+      "evals": 0,
+      "fen": "7K/8/8/8/8/8/1Q6/k7 b - - 0 1",
+      "mode": "probe",
+      "outcome": "loss",
+      "preflight": null,
+      "pv_len": 0,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0024,
+      "wall_s": [
+        0.0024
+      ]
+    },
+    "term_stalemate": {
+      "budget_exhausted": false,
+      "class": "terminal",
+      "evals": 0,
+      "fen": "7k/8/8/8/8/8/2q5/K7 w - - 0 1",
+      "mode": "probe",
+      "outcome": "draw",
+      "preflight": null,
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 17520,
+      "timeout": false,
+      "wall_median_s": 0.0018,
+      "wall_s": [
+        0.0018
+      ]
+    }
+  },
+  "mode": "probe",
+  "runs": 1
+}

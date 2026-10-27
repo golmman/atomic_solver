@@ -171,11 +171,12 @@ fn cli_prints_pv_status_proven_shortest_for_mate_in_one() {
     );
 }
 
-/// The mate-in-1 fixture is 3 men: the pre-phase claims it, so the default
-/// CLI path reports the `preflight-proof` PV status and the claim is the
-/// exact-rank line (1 ply).
+/// The mate-in-1 fixture is 3 men and easy: the cheap screening probe solves
+/// it within its child-eval cap, so the pre-phase closure is skipped
+/// (`deferred reason=probe-solved`) and the ordinary search produces the
+/// product result — its `proven-shortest` status, never `preflight-proof`.
 #[test]
-fn cli_prints_pv_status_preflight_proof_for_mate_in_one() {
+fn cli_easy_three_man_root_is_probe_solved() {
     let output = Command::new(cli_bin())
         .args([
             "--fen",
@@ -195,12 +196,29 @@ fn cli_prints_pv_status_preflight_proof_for_mate_in_one() {
         "expected the mating move:\n{stdout}"
     );
     assert!(
-        stdout.contains("pv_status: preflight-proof"),
-        "expected a preflight-proof pv_status line:\n{stdout}"
+        stdout.contains("pv_status: proven-shortest"),
+        "the ordinary search owns a probe-solved root's status:\n{stdout}"
     );
     assert!(
         !stdout.contains("preflight:"),
         "--outcome-only suppresses the preflight line\n{stdout}"
+    );
+
+    // Without `--outcome-only` the same run prints the screening deferral.
+    let output = Command::new(cli_bin())
+        .args(["--fen", "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1", "--timeout", "1"])
+        .stdin(Stdio::null())
+        .output()
+        .expect("failed to run CLI binary");
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "CLI failed: {stdout}");
+    assert!(
+        stdout.contains("preflight: deferred reason=probe-solved evals="),
+        "expected the probe-solved deferral line:\n{stdout}"
+    );
+    assert!(
+        !stdout.contains("preflight-proof"),
+        "a screened root never claims a pre-phase proof:\n{stdout}"
     );
 }
 
