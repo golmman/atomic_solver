@@ -13,7 +13,10 @@
 //!                              Defaults to [`Position::STARTPOS_FEN`].
 //!   --tt-size <MB>             Transposition-table size in megabytes.
 //!                              Defaults to 256. Sized honestly: the table
-//!                              never allocates more than requested.
+//!                              never allocates more than requested, and the
+//!                              label is a reservation bound — its pages are
+//!                              populated on first use, so RSS is bounded by
+//!                              (not equal to) the label.
 //!   --epsilon <VALUE>          DF-PN+ threshold parameter in the range [0.0, 1.0].
 //!                              Defaults to 0.125.
 //!   --timeout <SECONDS>        Search time limit in seconds.
@@ -114,7 +117,9 @@ fn print_help(program: &str) {
     println!("                             (default: standard atomic start position)");
     println!("  --tt-size <MB>             Transposition-table size in megabytes");
     println!("                             (default: 256; never allocates more");
-    println!("                             than requested)");
+    println!("                             than requested, and pages are populated");
+    println!("                             on first use; RSS is bounded by, not");
+    println!("                             equal to, the label)");
     println!("  --epsilon <VALUE>          DF-PN+ threshold parameter in [0.0, 1.0]");
     println!("                             (default: 0.125)");
     println!("  --timeout <SECONDS>        Search time limit in seconds");

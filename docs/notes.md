@@ -1138,3 +1138,17 @@ Housekeeping/cleanup pass — revisit the dfpn/mod.rs size watch and the two re-
 Please investigate:
 There is an unexpected high amount of data in `docs/plans/parallel/measurements/plan10/logs/` compared to other measurements.
 Can we clean this up?
+
+---
+
+Please investigate the following error i got from a recent proofdb harvest:
+```
+bounded_search] chunk done: work_done=500004 next_chunk=1000000 elapsed=0.138s max_depth=30 nodes=20173 nps=146506
+[bounded_search] chunk done: work_done=1000018 next_chunk=2000000 elapsed=0.417s max_depth=32 nodes=58760 nps=140794
+[bounded_search] chunk done: work_done=2000019 next_chunk=4000000 elapsed=0.978s max_depth=31 nodes=139137 nps=142195
+[bounded_search] chunk done: work_done=4000010 next_chunk=8000000 elapsed=2.081s max_depth=37 nodes=296709 nps=142607
+[bounded_search] chunk done: work_done=8000018 next_chunk=16000000 elapsed=4.310s max_depth=41 nodes=609194 nps=141334
+[bounded_search] chunk done: work_done=16000005 next_chunk=32000000 elapsed=8.863s max_depth=43 nodes=1234229 nps=139259
+proofdb_harvest: ABORT: job g1f3 d7d6 b1c3 c7c6 f3g5 f7f6 g2g4 f6g5 f2f4: export rejected: unfillable hole at root.e7e5.a2a3: fill depth cap 32 exhausted
+make: *** [Makefile:51: proofdb_cycle_run] Error 2
+```

@@ -1,0 +1,157 @@
+{
+  "binary": "/tmp/plan2_base/target/release/atomic_solver",
+  "cases": {
+    "mate1_tt1": {
+      "args": [
+        "--tt-size",
+        "1",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 2,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "minflt_median": 1267,
+      "outcome": "win",
+      "preflight": "deferred reason=probe-solved evals=1",
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 16560,
+      "rss_median_kb": 16560,
+      "timeout": false,
+      "tt_size_mb": 1,
+      "wall_median_s": 0.0032,
+      "wall_min_s": 0.0025,
+      "wall_s": [
+        0.0035,
+        0.0027,
+        0.0025,
+        0.0032,
+        0.0033
+      ]
+    },
+    "mate1_tt16": {
+      "args": [
+        "--tt-size",
+        "16",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 2,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "minflt_median": 4627,
+      "outcome": "win",
+      "preflight": "deferred reason=probe-solved evals=1",
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 20684,
+      "rss_median_kb": 20428,
+      "timeout": false,
+      "tt_size_mb": 16,
+      "wall_median_s": 0.0095,
+      "wall_min_s": 0.0087,
+      "wall_s": [
+        0.0087,
+        0.0107,
+        0.0095,
+        0.0092,
+        0.0099
+      ]
+    },
+    "mate1_tt256": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 2,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "minflt_median": 58388,
+      "outcome": "win",
+      "preflight": "deferred reason=probe-solved evals=1",
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 235216,
+      "rss_median_kb": 234952,
+      "timeout": false,
+      "tt_size_mb": 256,
+      "wall_median_s": 0.1012,
+      "wall_min_s": 0.0984,
+      "wall_s": [
+        0.1002,
+        0.1041,
+        0.1012,
+        0.1041,
+        0.0984
+      ]
+    },
+    "mate1_tt512": {
+      "args": [
+        "--tt-size",
+        "512",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 2,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "minflt_median": 115732,
+      "outcome": "win",
+      "preflight": "deferred reason=probe-solved evals=1",
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 464848,
+      "rss_median_kb": 464580,
+      "timeout": false,
+      "tt_size_mb": 512,
+      "wall_median_s": 0.1938,
+      "wall_min_s": 0.1922,
+      "wall_s": [
+        0.1931,
+        0.1941,
+        0.1946,
+        0.1938,
+        0.1922
+      ]
+    },
+    "mate1_tt64": {
+      "args": [
+        "--tt-size",
+        "64",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 2,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "minflt_median": 15378,
+      "outcome": "win",
+      "preflight": "deferred reason=probe-solved evals=1",
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 63424,
+      "rss_median_kb": 63376,
+      "timeout": false,
+      "tt_size_mb": 64,
+      "wall_median_s": 0.0277,
+      "wall_min_s": 0.0273,
+      "wall_s": [
+        0.0294,
+        0.0277,
+        0.0284,
+        0.0273,
+        0.0277
+      ]
+    }
+  },
+  "mode": "sweep",
+  "runs": 5
+}

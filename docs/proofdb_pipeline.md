@@ -320,11 +320,13 @@ The knobs that matter, most-used first:
   to stop a run before its eval budget is spent.
 - **`--tt-mb`** — per-job transposition table (default 128 MB; since
   lean plan15 size labels are exact upper bounds — the allocation
-  never exceeds the label — so 128 MB now means ≤ 112 MiB). The
-  canonical cycle uses 1024. Every job runs with a fresh TT, so this
-  bounds peak RAM per job; TT size measurably affects large budgets (a
-  multi-billion-eval visit can censor at 128 MB that survives at 1 GB),
-  so give deep sweeps headroom.
+  never exceeds the label — so 128 MB now means ≤ 112 MiB). The label
+  is a *reservation* bound: table pages are populated on first use, so
+  a job's TT contribution to RSS is bounded by the label rather than
+  equal to it. The canonical cycle uses 1024. Every job runs with a
+  fresh TT, so this bounds peak RAM per job; TT size measurably affects
+  large budgets (a multi-billion-eval visit can censor at 128 MB that
+  survives at 1 GB), so give deep sweeps headroom.
 Operational notes:
 
 - Jobs are deterministic: fresh TT per job, fixed child-eval budgets, no

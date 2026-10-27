@@ -1,0 +1,157 @@
+{
+  "binary": "target/release/atomic_solver",
+  "cases": {
+    "mate1_tt1": {
+      "args": [
+        "--tt-size",
+        "1",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 2,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "minflt_median": 151,
+      "outcome": "win",
+      "preflight": "deferred reason=probe-solved evals=1",
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 16048,
+      "rss_median_kb": 16048,
+      "timeout": false,
+      "tt_size_mb": 1,
+      "wall_median_s": 0.001,
+      "wall_min_s": 0.001,
+      "wall_s": [
+        0.0013,
+        0.001,
+        0.001,
+        0.001,
+        0.001
+      ]
+    },
+    "mate1_tt16": {
+      "args": [
+        "--tt-size",
+        "16",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 2,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "minflt_median": 152,
+      "outcome": "win",
+      "preflight": "deferred reason=probe-solved evals=1",
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 16048,
+      "rss_median_kb": 16048,
+      "timeout": false,
+      "tt_size_mb": 16,
+      "wall_median_s": 0.0009,
+      "wall_min_s": 0.0009,
+      "wall_s": [
+        0.0009,
+        0.0009,
+        0.0009,
+        0.001,
+        0.001
+      ]
+    },
+    "mate1_tt256": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 2,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "minflt_median": 151,
+      "outcome": "win",
+      "preflight": "deferred reason=probe-solved evals=1",
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 16048,
+      "rss_median_kb": 16048,
+      "timeout": false,
+      "tt_size_mb": 256,
+      "wall_median_s": 0.001,
+      "wall_min_s": 0.0009,
+      "wall_s": [
+        0.001,
+        0.0009,
+        0.001,
+        0.0012,
+        0.0011
+      ]
+    },
+    "mate1_tt512": {
+      "args": [
+        "--tt-size",
+        "512",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 2,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "minflt_median": 151,
+      "outcome": "win",
+      "preflight": "deferred reason=probe-solved evals=1",
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 16048,
+      "rss_median_kb": 16048,
+      "timeout": false,
+      "tt_size_mb": 512,
+      "wall_median_s": 0.0009,
+      "wall_min_s": 0.0009,
+      "wall_s": [
+        0.0009,
+        0.0009,
+        0.001,
+        0.0009,
+        0.0145
+      ]
+    },
+    "mate1_tt64": {
+      "args": [
+        "--tt-size",
+        "64",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 2,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "minflt_median": 151,
+      "outcome": "win",
+      "preflight": "deferred reason=probe-solved evals=1",
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 16048,
+      "rss_median_kb": 16048,
+      "timeout": false,
+      "tt_size_mb": 64,
+      "wall_median_s": 0.001,
+      "wall_min_s": 0.0008,
+      "wall_s": [
+        0.0012,
+        0.001,
+        0.0076,
+        0.0008,
+        0.0008
+      ]
+    }
+  },
+  "mode": "sweep",
+  "runs": 5
+}

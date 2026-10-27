@@ -1,0 +1,268 @@
+{
+  "binary": "/tmp/plan2_base/target/release/atomic_solver",
+  "cases": {
+    "dec10": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "10"
+      ],
+      "budget_exhausted": false,
+      "class": "deep",
+      "evals": 3901847,
+      "fen": "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+      "minflt_median": 57551,
+      "outcome": "win",
+      "preflight": "deferred reason=detector evals=0",
+      "pv_len": 36,
+      "pv_status": "first-outcome",
+      "rss_max_kb": 232392,
+      "rss_median_kb": 231888,
+      "timeout": false,
+      "wall_median_s": 0.6322,
+      "wall_min_s": 0.6252,
+      "wall_s": [
+        0.6252,
+        0.6322,
+        0.6291,
+        0.6349,
+        0.6325
+      ]
+    },
+    "draw_cyc": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "draw",
+      "evals": 5219771,
+      "fen": "8/8/8/8/2k5/8/8/4KR2 w - - 0 1",
+      "minflt_median": 66206,
+      "outcome": "draw",
+      "preflight": "decided outcome=draw evals=5219771 region=451192 rank=0",
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 263268,
+      "rss_median_kb": 262956,
+      "timeout": false,
+      "wall_median_s": 0.8224,
+      "wall_min_s": 0.8174,
+      "wall_s": [
+        0.8174,
+        0.8229,
+        0.8226,
+        0.8224,
+        0.8198
+      ]
+    },
+    "draw_kr": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "draw",
+      "evals": 5219752,
+      "fen": "4k3/8/8/8/8/8/8/4KR2 w - - 0 1",
+      "minflt_median": 66271,
+      "outcome": "draw",
+      "preflight": "decided outcome=draw evals=5219752 region=451192 rank=0",
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 263800,
+      "rss_median_kb": 263520,
+      "timeout": false,
+      "wall_median_s": 0.828,
+      "wall_min_s": 0.8259,
+      "wall_s": [
+        0.8262,
+        0.8409,
+        0.828,
+        0.8259,
+        0.829
+      ]
+    },
+    "easy_kq": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 378,
+      "fen": "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1",
+      "minflt_median": 58396,
+      "outcome": "win",
+      "preflight": "deferred reason=probe-solved evals=189",
+      "pv_len": 3,
+      "pv_status": "first-outcome",
+      "rss_max_kb": 235728,
+      "rss_median_kb": 235664,
+      "timeout": false,
+      "wall_median_s": 0.1006,
+      "wall_min_s": 0.0999,
+      "wall_s": [
+        0.1064,
+        0.1,
+        0.0999,
+        0.1031,
+        0.1006
+      ]
+    },
+    "ladder_root": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "hard-win",
+      "evals": 5868692,
+      "fen": "8/2K5/k7/8/8/8/8/4Q3 w - - 0 1",
+      "minflt_median": 67321,
+      "outcome": "win",
+      "preflight": "decided outcome=win evals=5868692 region=420532 rank=15",
+      "pv_len": 15,
+      "pv_status": "preflight-proof",
+      "rss_max_kb": 267032,
+      "rss_median_kb": 266996,
+      "timeout": false,
+      "wall_median_s": 0.9963,
+      "wall_min_s": 0.9926,
+      "wall_s": [
+        1.005,
+        0.9985,
+        0.9963,
+        0.9926,
+        0.9963
+      ]
+    },
+    "m22": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "10"
+      ],
+      "budget_exhausted": false,
+      "class": "deep",
+      "evals": 15023911,
+      "fen": "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+      "minflt_median": 57564,
+      "outcome": "win",
+      "preflight": "deferred reason=detector evals=0",
+      "pv_len": 75,
+      "pv_status": "first-outcome",
+      "rss_max_kb": 232660,
+      "rss_median_kb": 232308,
+      "timeout": false,
+      "wall_median_s": 2.1137,
+      "wall_min_s": 2.1018,
+      "wall_s": [
+        2.1018,
+        2.1368,
+        2.1137,
+        2.1389,
+        2.1066
+      ]
+    },
+    "m22_b": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--budget",
+        "10000000"
+      ],
+      "budget_exhausted": false,
+      "class": "deep-budget",
+      "evals": 10000032,
+      "fen": "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+      "minflt_median": 57544,
+      "outcome": "draw",
+      "preflight": "deferred reason=detector evals=0",
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 232908,
+      "rss_median_kb": 232392,
+      "timeout": false,
+      "wall_median_s": 1.4354,
+      "wall_min_s": 1.4311,
+      "wall_s": [
+        1.4311,
+        1.4354,
+        1.4393,
+        1.4312,
+        1.4687
+      ]
+    },
+    "mate1": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 2,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "minflt_median": 58388,
+      "outcome": "win",
+      "preflight": "deferred reason=probe-solved evals=1",
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 235720,
+      "rss_median_kb": 235208,
+      "timeout": false,
+      "wall_median_s": 0.101,
+      "wall_min_s": 0.0978,
+      "wall_s": [
+        0.1039,
+        0.0992,
+        0.103,
+        0.0978,
+        0.101
+      ]
+    },
+    "stress_b": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--budget",
+        "10000000"
+      ],
+      "budget_exhausted": false,
+      "class": "deep-budget",
+      "evals": 10000015,
+      "fen": "4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21",
+      "minflt_median": 57486,
+      "outcome": "draw",
+      "preflight": "deferred reason=detector evals=0",
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 232144,
+      "rss_median_kb": 231900,
+      "timeout": false,
+      "wall_median_s": 1.3659,
+      "wall_min_s": 1.3619,
+      "wall_s": [
+        1.3725,
+        1.3659,
+        1.3782,
+        1.3619,
+        1.3622
+      ]
+    }
+  },
+  "mode": "corpus",
+  "runs": 5
+}

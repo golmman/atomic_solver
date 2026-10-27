@@ -33,6 +33,10 @@ A pure solver for atomic chess in Rust.
   "RAM = TT only") — is normative in the module header.
 - `src/search/tt/` — transposition table with path-independent base entries;
   repetition-dependent results are not cached (first-player-loss GHI shortcut).
+  Buckets are zero-initialized lazily (`alloc.rs`, `alloc_zeroed`), so the size
+  label is a reservation bound and RSS is bounded by it; non-live slots have
+  unspecified field values (`valid` is the only liveness signal), which every
+  read path filters on.
 - `src/search/ordering.rs` — the `MoveScorer` trait and `StaticAtomicScorer`.
 - `src/proof_tree/` — `Move`/hash-based proof tree plus a background worker consuming
   `ProofEvent`s under a memory budget; `finalize()` copies canonical subtrees onto unexpanded
@@ -53,7 +57,8 @@ A pure solver for atomic chess in Rust.
   `src/notation.rs` — UCI move helpers, including `moves_to_uci_path`.
 - `src/main.rs` — the CLI (`--fen`, `--tt-size`, `--epsilon`, `--timeout`, `--first-outcome`,
   `--refine-cap`, `--outcome-only`, `--tt-dump-path`, `--no-preflight`, `-h`; unknown options
-  exit with an error). Resource-bounded: RAM = TT only; it never builds proof trees and prints
+  exit with an error). Resource-bounded: RAM = TT only (the TT label is a reservation bound —
+  pages are populated on first use); it never builds proof trees and prints
   no proof-tree lines. The full option, output (`pre_exit:` / `preflight:` / `pv_status:`
   lines), and offline-proof contracts are in the module header.
 - `examples/` — example binaries (below); `tests/` — integration/regression tests.

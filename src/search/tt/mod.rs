@@ -1,5 +1,6 @@
 //! Transposition table for solver results.
 
+mod alloc;
 mod entry;
 mod table;
 

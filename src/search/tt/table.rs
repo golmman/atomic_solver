@@ -19,11 +19,26 @@
 //! under either rounding. The default label is 256 MB (`--tt-size`), which
 //! maps to 2²⁰ buckets / 2²² entries / 224 MiB — byte-identical to the old
 //! (round-up) 128 MB default, so the bump changed labels only, not capacity.
+//!
+//! Allocation is lazy (performance plan2, backlog item #5): the bucket array
+//! comes from [`super::alloc::zeroed_buckets`], so the label is a *reservation*
+//! bound and the pages of the region become resident on first touch rather
+//! than at construction. RSS is therefore bounded by the label, not equal to
+//! it; `clear()` still writes [`TtEntry::default`] (it only matters on
+//! generation wrap).
+//!
+//! Liveness contract: **an unoccupied slot's field values are unspecified**.
+//! A freshly allocated slot reads `valid == false`, and every read path here
+//! (`probe`, `entries`, `stats`, `best_child_counts`) filters on `valid`
+//! (plus the current generation where it scans); nothing else may look at the
+//! other fields of a non-live slot. This is what makes the zeroed allocation
+//! a representation-only change (see `alloc.rs` for the full invariant).
 
 use crate::position::Outcome;
 use crate::zobrist::INF;
 use atomic_movegen::types::Move;
 
+use super::alloc::zeroed_buckets;
 use super::entry::TtEntry;
 
 pub struct TranspositionTable {
@@ -47,7 +62,7 @@ impl TranspositionTable {
     pub(crate) fn with_capacity(buckets: usize) -> Self {
         let buckets = buckets.next_power_of_two().max(1);
         Self {
-            table: vec![[TtEntry::default(); 4]; buckets],
+            table: zeroed_buckets(buckets),
             mask: buckets - 1,
             current_generation: 1,
             salt: 0,
@@ -75,7 +90,7 @@ impl TranspositionTable {
             raw.next_power_of_two() >> 1
         };
         Self {
-            table: vec![[TtEntry::default(); 4]; buckets],
+            table: zeroed_buckets(buckets),
             mask: buckets - 1,
             current_generation: 1,
             salt: 0,
