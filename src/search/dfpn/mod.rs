@@ -59,6 +59,11 @@ const MIN_REFINE_ROUND_EVALS: u64 = 1_000_000;
 /// cached `Instant`. See [`Search::time_exceeded`] for the contract.
 const CLOCK_SAMPLE_INTERVAL: u64 = 4096;
 
+/// Path-presence Bloom filter slots (512 B at `u16` per slot). A zero slot is
+/// a sound negative for `path_contains`; a nonzero slot falls back to the
+/// linear scan, so a false positive costs a scan, never a wrong result.
+const PATH_BLOOM_SLOTS: usize = 256;
+
 /// Reason the search stopped, recorded for the pre-exit hook.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ExitReason {
@@ -142,7 +147,24 @@ enum RoundTermination {
 
 pub struct Search {
     tt: TranspositionTable,
+    /// Repetition keys on the current search path (root to parent). Mutating
+    /// this vector directly would desynchronize the incremental bookkeeping
+    /// (`path_context_hash`, `path_bloom`): every mutation must go through
+    /// [`Search::path_push`] / [`Search::path_pop`] (or
+    /// [`Search::reset_search_state`]).
     path_stack: Vec<u64>,
+    /// Order-independent context hash of `path_stack`
+    /// (`RepetitionCache::context_hash`), maintained incrementally by
+    /// `path_push`/`path_pop` so the repetition-cache key costs O(1) per node.
+    path_context_hash: u64,
+    /// Path-presence Bloom filter indexed by the low 8 bits of the repetition
+    /// key. Counts, not bits, so duplicate keys (which the no-duplicate path
+    /// invariant does not currently produce) stay correct.
+    path_bloom: [u16; PATH_BLOOM_SLOTS],
+    /// Test-only census counter: `path_contains` calls decided by a zero Bloom
+    /// slot without the linear scan. Reset per run in `begin_run`.
+    #[cfg(test)]
+    path_bloom_negatives: std::cell::Cell<u64>,
     nodes: u64,
     child_evals: u64,
     start: Instant,
@@ -226,6 +248,10 @@ impl Search {
         Self {
             tt: TranspositionTable::with_mb(tt_mb),
             path_stack: Vec::new(),
+            path_context_hash: 0,
+            path_bloom: [0; PATH_BLOOM_SLOTS],
+            #[cfg(test)]
+            path_bloom_negatives: std::cell::Cell::new(0),
             nodes: 0,
             child_evals: 0,
             start: Instant::now(),
@@ -307,12 +333,24 @@ impl Search {
         self.preprobe_skips
     }
 
+    /// Reset the path bookkeeping to the prefix path (the only path reset).
+    ///
+    /// This is the single place that seeds `path_stack`, `path_context_hash`
+    /// and `path_bloom` together; a reset that touched only one of them would
+    /// make the Bloom filter report false negatives (missed repetitions).
     fn reset_search_state(&mut self) {
         self.path_stack.clear();
+        self.path_bloom.fill(0);
+        self.path_context_hash = 0;
         self.move_stack.clear();
         self.max_depth_reached = 0;
         if let Some(keys) = &self.prefix_path {
             self.path_stack = keys.clone();
+            for &key in &self.path_stack {
+                let slot = Self::path_bloom_slot(key);
+                self.path_bloom[slot] += 1;
+            }
+            self.path_context_hash = RepetitionCache::context_hash(&self.path_stack);
         }
     }
 
@@ -330,17 +368,79 @@ impl Search {
         );
     }
 
+    /// Bloom slot for one repetition key: the low 8 bits of the key.
+    ///
+    /// Distribution is a performance property, not a correctness one: a
+    /// collision only costs a fallback linear scan.
+    #[inline]
+    fn path_bloom_slot(key: u64) -> usize {
+        (key as usize) & (PATH_BLOOM_SLOTS - 1)
+    }
+
+    /// Whether `key` is on the current search path.
+    ///
+    /// Semantics are exactly `path_stack.contains(&key)`: a zero Bloom slot is
+    /// a sound negative (the key cannot be present), while a nonzero slot
+    /// falls back to the linear scan, so collisions only cost a scan.
+    #[inline]
     pub(super) fn path_contains(&self, key: u64) -> bool {
+        if self.path_bloom[Self::path_bloom_slot(key)] == 0 {
+            #[cfg(test)]
+            self.path_bloom_negatives
+                .set(self.path_bloom_negatives.get() + 1);
+            return false;
+        }
         self.path_stack.contains(&key)
     }
 
+    /// Push one repetition key onto the path, updating the Bloom counts and
+    /// the incremental context hash.
+    #[inline]
     pub(super) fn path_push(&mut self, key: u64) {
+        let slot = Self::path_bloom_slot(key);
+        debug_assert!(self.path_bloom[slot] < u16::MAX, "path deeper than u16");
+        self.path_bloom[slot] += 1;
+        self.path_context_hash = self
+            .path_context_hash
+            .wrapping_add(repetition_cache::mix_key(key));
         self.path_stack.push(key);
         self.max_depth_reached = self.max_depth_reached.max(self.path_stack.len() as u32);
     }
 
+    /// Pop the last repetition key, undoing exactly what `path_push` added.
+    #[inline]
     pub(super) fn path_pop(&mut self) {
-        self.path_stack.pop();
+        if let Some(key) = self.path_stack.pop() {
+            let slot = Self::path_bloom_slot(key);
+            debug_assert!(self.path_bloom[slot] > 0, "Bloom counter underflow");
+            self.path_bloom[slot] -= 1;
+            self.path_context_hash = self
+                .path_context_hash
+                .wrapping_sub(repetition_cache::mix_key(key));
+        }
+    }
+
+    /// Test-only invariant check for the incremental path bookkeeping.
+    ///
+    /// Verifies that the context hash equals the reference fold and that the
+    /// Bloom counts match the multiset of path keys exactly (which also
+    /// implies that every zero-slot key is absent). Never called on the hot
+    /// path.
+    #[cfg(test)]
+    fn assert_path_bookkeeping_consistent(&self) {
+        assert_eq!(
+            self.path_context_hash,
+            RepetitionCache::context_hash(&self.path_stack),
+            "incremental context hash diverged from the fold"
+        );
+        let mut expected = [0u16; PATH_BLOOM_SLOTS];
+        for &key in &self.path_stack {
+            expected[Self::path_bloom_slot(key)] += 1;
+        }
+        assert_eq!(
+            self.path_bloom, expected,
+            "Bloom counts diverged from the path multiset"
+        );
     }
 
     /// Whether the wall-clock deadline, stop flag, or memory flag has fired.

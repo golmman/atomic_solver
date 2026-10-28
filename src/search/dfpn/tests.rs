@@ -100,14 +100,14 @@ fn tt_resolved_rejects_win_when_best_move_repeats() {
     let entry = search.tt.probe(key).copied().unwrap();
 
     // With the child on the path, the cached win is invalid.
-    search.path_stack.push(child_rep_key);
+    search.path_push(child_rep_key);
     assert!(
         search.best_move_repeats_path(&mut pos.clone(), win_move),
         "the one-ply guard should reject a win whose best move repeats a board on the path"
     );
 
     // Without the child on the path, the cached win is valid.
-    search.path_stack.clear();
+    search.reset_search_state();
     assert!(
         !search.best_move_repeats_path(&mut pos.clone(), win_move),
         "cached win should be accepted when the child is not on the path"
@@ -760,4 +760,110 @@ fn cheap_probe_gate_is_skipped_when_conditions_do_not_hold() {
         !spent.cheap_probe_gate(&easy).ran,
         "a zero budget cannot fund a probe"
     );
+}
+
+// --- Repetition-path bookkeeping (performance plan4) -----------------------
+
+#[test]
+fn incremental_context_hash_matches_fold() {
+    // Push/pop a deterministic key sequence and compare the incrementally
+    // maintained field against the reference fold after every operation.
+    let mut search = Search::new(1);
+    let mut state = 0x2545_f491_4f6c_dd1d_u64;
+    for i in 0..64 {
+        state = state
+            .wrapping_mul(6_364_136_223_846_793_005)
+            .wrapping_add(1_442_695_040_888_963_407);
+        search.path_push(state);
+        search.assert_path_bookkeeping_consistent();
+        if i % 3 == 2 {
+            search.path_pop();
+            search.assert_path_bookkeeping_consistent();
+        }
+    }
+    while !search.path_stack.is_empty() {
+        search.path_pop();
+        search.assert_path_bookkeeping_consistent();
+    }
+    assert_eq!(search.path_context_hash, 0);
+}
+
+#[test]
+fn context_hash_replays_prefix_path() {
+    let keys = [0xdead_beef, 0x1234_5678, 0x0f0f_0f0f, 42];
+    let mut search = Search::new(1);
+    search.prefix_path = Some(keys.to_vec());
+    search.reset_search_state();
+
+    assert_eq!(search.path_stack, keys);
+    assert_eq!(
+        search.path_context_hash,
+        RepetitionCache::context_hash(&keys),
+        "the reset seed must equal the reference fold of the prefix path"
+    );
+    for &key in &keys {
+        assert!(search.path_contains(key), "prefix key must be on the path");
+    }
+    search.assert_path_bookkeeping_consistent();
+}
+
+#[test]
+fn path_bloom_has_no_false_negatives() {
+    let slots = super::PATH_BLOOM_SLOTS as u64;
+
+    // Two keys in the same slot: collision means a fallback scan, never a
+    // missed key.
+    let mut search = Search::new(1);
+    search.path_push(0);
+    assert!(search.path_contains(0));
+    assert!(
+        !search.path_contains(slots),
+        "an absent colliding key must still be reported absent"
+    );
+    search.path_push(slots);
+    assert!(search.path_contains(slots), "a pushed key must be found");
+    search.path_pop();
+    assert!(
+        !search.path_contains(slots),
+        "a popped key must be absent even while its slot stays nonzero"
+    );
+    search.assert_path_bookkeeping_consistent();
+
+    // A key whose slot is zero is decided without the linear scan and bumps
+    // the test-only negative counter.
+    let mut search = Search::new(1);
+    search.path_push(0);
+    let before = search.path_bloom_negatives.get();
+    assert!(
+        !search.path_contains(1),
+        "an absent key in a zero Bloom slot must be absent"
+    );
+    assert_eq!(
+        search.path_bloom_negatives.get(),
+        before + 1,
+        "the zero-slot negative must be counted"
+    );
+    assert!(
+        search.path_bloom_negatives.get() > 0,
+        "the Bloom-negative counter must fire on this fixture"
+    );
+}
+
+#[test]
+fn path_bloom_insert_remove_returns_to_zero() {
+    let mut search = Search::new(1);
+    let keys = [1_u64, 300, 70_000, 0xdead_beef, 0];
+    for &key in &keys {
+        search.path_push(key);
+    }
+    for _ in 0..keys.len() {
+        search.path_pop();
+    }
+    assert!(search.path_stack.is_empty());
+    assert_eq!(search.path_context_hash, 0);
+    assert!(
+        search.path_bloom.iter().all(|&count| count == 0),
+        "inserting and removing every key must restore all Bloom slots"
+    );
+    search.assert_path_bookkeeping_consistent();
 }

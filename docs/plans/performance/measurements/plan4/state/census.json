@@ -1,0 +1,37 @@
+{
+  "cases": {
+    "dec10": {
+      "bloom_negatives": 4050002,
+      "lookups": 4505816
+    },
+    "dec13": {
+      "bloom_negatives": 5151716,
+      "lookups": 5323159
+    },
+    "easy_kq": {
+      "bloom_negatives": 220,
+      "lookups": 222
+    },
+    "m20_b": {
+      "bloom_negatives": 31027400,
+      "lookups": 31605550
+    },
+    "m22_b": {
+      "bloom_negatives": 10361362,
+      "lookups": 10627632
+    },
+    "mate1": {
+      "bloom_negatives": 2,
+      "lookups": 2
+    },
+    "rem12": {
+      "bloom_negatives": 66602110,
+      "lookups": 69818582
+    },
+    "stress_b": {
+      "bloom_negatives": 10335657,
+      "lookups": 10553057
+    }
+  },
+  "note": "instrumented /tmp census copy of the final tree; counters only, no search decision changed"
+}

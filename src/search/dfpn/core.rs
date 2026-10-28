@@ -13,7 +13,6 @@ use crate::position::{Outcome, Position};
 
 use super::Search;
 use super::children::{ChildPrecompute, ChildSelection};
-use super::repetition_cache::RepetitionCache;
 use super::selection::select_from_children;
 use crate::search::tt::TtEntry;
 use crate::zobrist::INF;
@@ -142,10 +141,12 @@ impl Search {
         //
         // The context is the order-independent hash of the repetition keys
         // strictly above this node — exactly `path_stack` before this frame's
-        // `path_push` below. `context_hash` is reused by the store site at
-        // frame exit: the symmetric push/pop of this and every descendant
-        // frame restores the stack to the same contents there.
-        let context_hash = RepetitionCache::context_hash(&self.path_stack);
+        // `path_push` below. `path_context_hash` is maintained incrementally
+        // by `path_push`/`path_pop`, so this is an O(1) read; the local is
+        // reused by the store site at frame exit (the symmetric push/pop of
+        // this and every descendant frame restores the stack, and hence the
+        // field, to the same value there).
+        let context_hash = self.path_context_hash;
         if let Some(cached_depth) = self.repetition_cache.probe(tt_key, context_hash) {
             // Soundness contract: a hit behaves exactly like a freshly proven
             // repetition-dependent draw — returned as `Draw` and routed
@@ -437,7 +438,7 @@ impl Search {
         pos.do_move(best_move);
         let rep = pos.repetition_key();
         pos.undo_move(best_move);
-        self.path_stack.contains(&rep)
+        self.path_contains(rep)
     }
 
     pub(super) fn epsilon_ceil(&self, x: u64) -> u64 {

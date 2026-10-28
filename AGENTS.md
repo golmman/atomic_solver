@@ -23,7 +23,10 @@ A pure solver for atomic chess in Rust.
   pre-pass that issues the TT prefetches, so a live current-generation entry decides it without
   make/unmake; the load-bearing non-terminal *outcome-less* store invariant), pooled movegen slots
   (`children.rs`), and the per-run repetition-draw cache (`repetition_cache.rs`) are documented
-  in their own module docs.
+  in their own module docs. The repetition path is a two-field invariant: `path_stack` may be
+  mutated only through `path_push`/`path_pop`, which keep the O(1) repetition-cache context hash
+  and the 256-slot `u16` path Bloom filter's counts in sync; `reset_search_state` is the only
+  reset and seeds both from `prefix_path`.
 - `src/search/preflight/` — detector-gated bounded pre-phase (plan13, architecture R): on
   ≤3-men, pawnless, no-castling roots it decides the value via a region-closure AND/OR fixpoint
   plus a mandatory replay verifier; a claim returns the exact-DTM principal-line PV, anything

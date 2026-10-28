@@ -1,0 +1,32 @@
+{
+  "cases": {
+    "dec10": {
+      "after_cpu_median_s": 0.6273,
+      "after_minflt_median": 102337,
+      "after_rss_max_kb": 182756,
+      "after_wall_median_s": 0.6314,
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "10"
+      ],
+      "base_cpu_median_s": 0.656,
+      "base_minflt_median": 102335,
+      "base_rss_max_kb": 182784,
+      "base_wall_median_s": 0.6598,
+      "cpu_ratio": 0.9563,
+      "evals": 3901847,
+      "fen": "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+      "order": "counterbalanced per repetition",
+      "paired_wall_ratio_quartiles": [
+        0.9436,
+        0.9568,
+        0.9685
+      ],
+      "reps": 41,
+      "stdout": "outcome: win length: 36\npv: c7c6 e1e2 c6h6 h1g2 h6h2 g2g1 h2g2 g1f1 g2f2 f1e1 d8d7 c1a1 c2c1q a1c1 f2d2 e1f1 d2e2 f1g1 e2h2 g1f1 h2g2 f1e1 g2f2 e1d1 f2e2 d1c1 e2d2 c1b1 d2c2 b1a1 c2c1 a1a2 c1a1 a2b2 a1c1 b2a2\npv_status: first-outcome\n",
+      "wall_ratio": 0.9569
+    }
+  }
+}

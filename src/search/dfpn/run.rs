@@ -323,6 +323,7 @@ impl Search {
         #[cfg(test)]
         {
             self.preprobe_skips = 0;
+            self.path_bloom_negatives.set(0);
         }
         self.pv_status = PvStatus::None;
         self.last_round_cap_cut = false;

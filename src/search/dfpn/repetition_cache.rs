@@ -23,6 +23,12 @@
 //!    reuse returns precisely the value the search would recompute.
 //! 4. Entries are cleared once per run in `Search::begin_run` and are never
 //!    serialized into TT snapshots, proof events, or any other artifact.
+//!
+//! The context hash is maintained **incrementally** on the search path:
+//! `Search::path_push`/`path_pop` add/subtract the mixed key so the hot probe
+//! site pays O(1) instead of folding the whole path. [`RepetitionCache::
+//! context_hash`] remains the reference fold, used to seed the field from a
+//! prefix path and to check the invariant in tests.
 
 use std::collections::HashMap;
 
@@ -82,6 +88,11 @@ impl RepetitionCache {
     }
 
     /// Order-independent context hash of an ancestor repetition-key set.
+    ///
+    /// This is the reference fold: [`Search::path_push`]/[`Search::path_pop`]
+    /// maintain the same value incrementally on the hot path, and
+    /// [`Search::reset_search_state`] re-seeds from it when a prefix path is
+    /// installed.
     pub(super) fn context_hash(keys: &[u64]) -> u64 {
         keys.iter().fold(0, |acc, &k| acc.wrapping_add(mix_key(k)))
     }

@@ -709,7 +709,7 @@ mod tests {
         pos.do_move(mv);
         let child_rep_key = pos.repetition_key();
         pos.undo_move(mv);
-        search.path_stack.push(child_rep_key);
+        search.path_push(child_rep_key);
 
         let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
 
@@ -737,7 +737,7 @@ mod tests {
         pos.do_move(mv);
         let child_rep_key = pos.repetition_key();
         pos.undo_move(mv);
-        search.path_stack.push(child_rep_key);
+        search.path_push(child_rep_key);
 
         let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
 
@@ -1156,7 +1156,7 @@ mod tests {
             1,
             u32::MAX,
         );
-        search.path_stack.push(child_rep_key);
+        search.path_push(child_rep_key);
 
         let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
         assert_eq!(
@@ -1191,7 +1191,7 @@ mod tests {
             1,
             u32::MAX,
         );
-        search.path_stack.push(child_rep_key);
+        search.path_push(child_rep_key);
 
         let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
         assert_eq!(info.outcome, Some(Outcome::Draw), "rule50 draw");
@@ -1284,7 +1284,7 @@ mod tests {
         // The guard fires: neutral bounds, played path, no pre-probe skip.
         let mut search = Search::new(1);
         seed(&mut search);
-        search.path_stack.push(grandchild_rep_key);
+        search.path_push(grandchild_rep_key);
         let guarded = search.evaluate_child(&mut pos, mv, u32::MAX, true);
         assert_eq!(guarded.outcome, None, "the guarded entry must not resolve");
         assert_eq!((guarded.pn, guarded.dn), (1, 1));

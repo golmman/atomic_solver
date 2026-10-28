@@ -1,0 +1,267 @@
+{
+  "binary": "target/release/atomic_solver",
+  "cases": {
+    "dec10": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "10"
+      ],
+      "budget_exhausted": false,
+      "class": "deep",
+      "evals": 3901847,
+      "fen": "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+      "minflt_median": 102336,
+      "outcome": "win",
+      "pv_len": 36,
+      "pv_status": "first-outcome",
+      "rss_max_kb": 181920,
+      "rss_median_kb": 181820,
+      "stdout": [
+        "outcome: win length: 36",
+        "pv: c7c6 e1e2 c6h6 h1g2 h6h2 g2g1 h2g2 g1f1 g2f2 f1e1 d8d7 c1a1 c2c1q a1c1 f2d2 e1f1 d2e2 f1g1 e2h2 g1f1 h2g2 f1e1 g2f2 e1d1 f2e2 d1c1 e2d2 c1b1 d2c2 b1a1 c2c1 a1a2 c1a1 a2b2 a1c1 b2a2",
+        "pv_status: first-outcome"
+      ],
+      "timeout": false,
+      "wall_median_s": 0.6337,
+      "wall_min_s": 0.6284,
+      "wall_s": [
+        0.6284,
+        0.6444,
+        0.6377,
+        0.6337,
+        0.6332
+      ]
+    },
+    "dec13": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "10"
+      ],
+      "budget_exhausted": false,
+      "class": "deep",
+      "evals": 5030497,
+      "fen": "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+      "minflt_median": 113028,
+      "outcome": "win",
+      "pv_len": 31,
+      "pv_status": "first-outcome",
+      "rss_max_kb": 224524,
+      "rss_median_kb": 224208,
+      "stdout": [
+        "outcome: win length: 31",
+        "pv: g4f5 d8f6 d1f3 a6c7 f1h3 f6f4 h1f1 b4e7 f3f4 e7f6 h3e6 f8e8 f1f8 e8d7 f8d8 d7e7 c1g5 e7f7 d8f8 f7e6 f8f6 e6e7 f6e6 e7f8 e6e8 f8f7 e8e7 f7f8 g5h6 f8g8 e7h7",
+        "pv_status: first-outcome"
+      ],
+      "timeout": false,
+      "wall_median_s": 0.8964,
+      "wall_min_s": 0.8788,
+      "wall_s": [
+        0.9056,
+        0.8964,
+        0.9003,
+        0.8891,
+        0.8788
+      ]
+    },
+    "easy_kq": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 378,
+      "fen": "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1",
+      "minflt_median": 538,
+      "outcome": "win",
+      "pv_len": 3,
+      "pv_status": "first-outcome",
+      "rss_max_kb": 15820,
+      "rss_median_kb": 15820,
+      "stdout": [
+        "outcome: win length: 3",
+        "pv: f1f7 e8d8 f7d7",
+        "pv_status: first-outcome"
+      ],
+      "timeout": false,
+      "wall_median_s": 0.0017,
+      "wall_min_s": 0.0017,
+      "wall_s": [
+        0.0017,
+        0.0017,
+        0.0017,
+        0.0017,
+        0.0017
+      ]
+    },
+    "m20_b": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--budget",
+        "30000000"
+      ],
+      "budget_exhausted": false,
+      "class": "deep-budget",
+      "evals": 30000025,
+      "fen": "4r2k/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R5RK w - - 4 20",
+      "minflt_median": 114772,
+      "outcome": "draw",
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 232200,
+      "rss_median_kb": 231852,
+      "stdout": [
+        "outcome: draw length: 0",
+        "budget exhausted"
+      ],
+      "timeout": false,
+      "wall_median_s": 4.0074,
+      "wall_min_s": 3.9842,
+      "wall_s": [
+        4.0035,
+        4.0314,
+        4.0195,
+        3.9842,
+        4.0074
+      ]
+    },
+    "m22_b": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--budget",
+        "10000000"
+      ],
+      "budget_exhausted": false,
+      "class": "deep-budget",
+      "evals": 10000032,
+      "fen": "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+      "minflt_median": 114841,
+      "outcome": "draw",
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 232236,
+      "rss_median_kb": 231840,
+      "stdout": [
+        "outcome: draw length: 0",
+        "budget exhausted"
+      ],
+      "timeout": false,
+      "wall_median_s": 1.4866,
+      "wall_min_s": 1.4681,
+      "wall_s": [
+        1.4681,
+        1.4866,
+        1.4997,
+        1.4975,
+        1.478
+      ]
+    },
+    "mate1": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "2"
+      ],
+      "budget_exhausted": false,
+      "class": "short",
+      "evals": 2,
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "minflt_median": 156,
+      "outcome": "win",
+      "pv_len": 1,
+      "pv_status": "proven-shortest",
+      "rss_max_kb": 15820,
+      "rss_median_kb": 15820,
+      "stdout": [
+        "outcome: win length: 1",
+        "pv: d8e8",
+        "pv_status: proven-shortest"
+      ],
+      "timeout": false,
+      "wall_median_s": 0.0011,
+      "wall_min_s": 0.0008,
+      "wall_s": [
+        0.0014,
+        0.0012,
+        0.0011,
+        0.0009,
+        0.0008
+      ]
+    },
+    "rem12": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "60"
+      ],
+      "budget_exhausted": false,
+      "class": "deep-long",
+      "evals": 66604453,
+      "fen": "rnbqkbnr/8/6pp/pppppp1B/3PPP2/N5PN/PPP4P/R1BQ1RK1 w kq - 0 10",
+      "minflt_median": 114877,
+      "outcome": "win",
+      "pv_len": 45,
+      "pv_status": "first-outcome",
+      "rss_max_kb": 232368,
+      "rss_median_kb": 231828,
+      "stdout": [
+        "outcome: win length: 45",
+        "pv: f4e5 c5d4 e4f5 f8c5 a3b5 d8b6 c1e3 g8f6 h5g6 b6f6 f1f5 h6h5 d1e2 c8e6 e2b5 b8c6 f5d5 f6c6 b5e5 c6e6 a1d1 e6e5 d1d8 e8e7 d8d7 e7e8 d7e7 e8d8 e3b6 d8c8 e7c7 c8d8 c7d7 d8e8 d7e7 e8f8 e7e8 f8f7 h3g5 f7f6 e8e6 f6g7 b6d4 g7f8 e6e8",
+        "pv_status: first-outcome"
+      ],
+      "timeout": false,
+      "wall_median_s": 10.0878,
+      "wall_min_s": 10.0757,
+      "wall_s": [
+        10.151,
+        10.0757,
+        10.0878,
+        10.078,
+        10.1355
+      ]
+    },
+    "stress_b": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--budget",
+        "10000000"
+      ],
+      "budget_exhausted": false,
+      "class": "deep-budget",
+      "evals": 10000015,
+      "fen": "4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21",
+      "minflt_median": 114743,
+      "outcome": "draw",
+      "pv_len": 0,
+      "pv_status": null,
+      "rss_max_kb": 231672,
+      "rss_median_kb": 231388,
+      "stdout": [
+        "outcome: draw length: 0",
+        "budget exhausted"
+      ],
+      "timeout": false,
+      "wall_median_s": 1.4237,
+      "wall_min_s": 1.4086,
+      "wall_s": [
+        1.4086,
+        1.4177,
+        1.4378,
+        1.4237,
+        1.4328
+      ]
+    }
+  },
+  "runs": 5
+}

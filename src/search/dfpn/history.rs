@@ -317,7 +317,7 @@ mod tests {
     #[test]
     fn update_killers_shifts_previous_killer_to_second_slot() {
         let mut search = Search::new(1);
-        search.path_stack.push(0); // depth 1
+        search.path_push(0); // depth 1
 
         let a = Move::make_move(Square::E2, Square::E4);
         let b = Move::make_move(Square::D2, Square::D4);
@@ -357,7 +357,7 @@ mod tests {
     #[test]
     fn killer_moves_get_sort_bonus() {
         let mut search = Search::new(1);
-        search.path_stack.push(0); // depth 1
+        search.path_push(0); // depth 1
 
         let e2e4 = Move::make_move(Square::E2, Square::E4);
         search.update_killers(e2e4);
@@ -373,7 +373,7 @@ mod tests {
     #[test]
     fn killer_bonus_helper_matches_method() {
         let mut search = Search::new(1);
-        search.path_stack.push(0);
+        search.path_push(0);
         let e2e4 = Move::make_move(Square::E2, Square::E4);
         search.update_killers(e2e4);
 

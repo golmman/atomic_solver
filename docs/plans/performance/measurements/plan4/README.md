@@ -43,3 +43,28 @@ committed (per AGENTS.md's measurement layout).
   §7.1 measured the item-3 effect on m20, and the plan-session probe used it as
   the deepest path-stack case. Its baseline is ~3.9 s CPU on the current host;
   keep the rep count modest (the A/B driver defaults to 21).
+
+## state/ — the execution session (2026-10-28)
+
+Host and methodology: [`state/env.json`](state/env.json). The execution host was
+x86_64 (the plan-session probe ran on aarch64); ratios, not absolutes, are the
+contract.
+
+| file | content |
+|---|---|
+| `state/baseline.json`, `state/after.json` | single-arm corpus (5 runs/case): pristine-`HEAD` baseline vs final tree — median wall, `child_evals`, RSS, minor faults, outcome/PV/`pv_status`, stdout |
+| `state/ab_final.json` | authoritative counterbalanced A/B, 11–31 reps/case; per-run `child_evals`/stdout identity is a hard driver abort |
+| `state/ab_dec10_repeat.json` | `dec10` confirmation at 41 reps (0.9569 wall / 0.9563 CPU) |
+| `state/census.json` | Bloom-negative census from a throwaway instrumented `/tmp` copy: `path_contains` calls, zero-slot negatives, rate per cell |
+| `state/quick_after.json` | `benchmark --suite quick --first-outcome --timeout 3 --json`: 59/59 eval-identical to `measurements/plan2/state/quick_after.json`, 42,109,768 child evals |
+
+`driver.py` is plan3's corpus driver adapted to this plan's corpus (`m20_b`
+added, `m22` removed). The authoritative A/B is
+`plan_session/ab_path_bookkeeping.py`; single-arm ratios are not accepted for
+bars 3/4.
+
+Not committed: raw solver transcripts, perf data, and the `/tmp` baseline and
+census build trees. The census is reproduced by compiling the test-only
+Bloom-negative counter unconditionally in a `/tmp` copy, adding a
+`path_lookups` counter, and printing both at `bounded_search` exit (counters
+only, no search decision changed).
