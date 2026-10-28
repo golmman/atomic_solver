@@ -1177,3 +1177,10 @@ AND-completeness gate wording; also fix the false 'flips = contradictions'
 line), D4 fixture reds (wrong OR bound; loss flip with a missing reply),  
 D5 file-split decision; read-only, examples/docs only; end with  
 report26.md + the initiative.md item 24 row.
+
+---
+
+unused features
+verbose code
+duplications
+unecessary abstractions

@@ -26,7 +26,7 @@ maintainability, testability, consistency.
 | # | Item | Report evidence | Plan | Status |
 |---|------|-----------------|------|--------|
 | 1 | Preflight cost gate / cheap-search probe | Easy 3-man KQ wins are ~60–75× slower with preflight (`~0.75 s / 5.8M evals` vs `~0.01 s / 229–337 evals`); draw-class preflight is a large win | `plan1.md` → `report1.md` | **done (GO, closed 2026-10-27)**: bounded DF-PN probe (2,000-eval cap, scratch TT) before the pre-phase; easy wins 0.75–0.80 s → 0.010–0.011 s (evals 5.83M → 2–586), draws/hard wins +2,000–2,019 evals (≤ 0.087%) and ≤ +2.5% wall, TT isolation + quick suite 59/59 eval-identical |
-| 2 | TT pre-probe before make/unmake | 13–38% of child evals already find a usable TT entry; estimated 3–8% throughput | — | open (throughput; may move to `lean`) |
+| 2 | TT pre-probe before make/unmake | 13–38% of child evals already find a usable TT entry; estimated 3–8% throughput. Plan-session probe 2026-10-28: keys computed without playing the move decide **7.9–38.1%** of child evals (skip rate tracks transposition density, not tree size); a `/tmp` prototype measured bit-identical child evals with median wall **0.954–0.978** on every deep cell (dec10 1.048×, m22 1.039×, m22_b 1.025×, stress_b 1.027×, dec13 1.024×, rem12 1.022×), golden un-regoldened, quick suite 59/59; mechanism = 12.2% of CPU in make/unmake inside `evaluate_child` × skip rate | `plan3.md` | **plan3 drafted 2026-10-28, awaiting execution** (throughput; may move to `lean` — plan3 states the ownership note) |
 | 3 | Incremental repetition-context hash | Bit-identical, ~2–3% throughput | — | open (throughput; may move to `lean`) |
 | 4 | Path Bloom negative filter | ~1–3%, optional second-order | — | open |
 | 5 | Lazy/zero-init TT allocation | ~6 ms and ~220 MB RSS on short solves (report §4/§6.1); plan-session probe on the current container: **~100 ms / ~230 MB** per process, easy KQ 106 → 2.8 ms / 8 MB with a lazy prototype at a measured **+1–5% deep-run wall** cost | `plan2.md` → `report2.md` | **done (ADOPT, 2026-10-27)**: `alloc_zeroed` bucket array (`search/tt/alloc.rs`), label = reservation bound; mate-in-1 104.6 → 1.2 ms / 229 → 16 MB (87×), easy KQ 1.7 ms / 16 MB, `--tt-size` sweep flat 1–512 MB; closure class −8.5…−11.1% wall; deep +2.7–3.6% (`max` 1.036 ≤ 1.06, D-f not triggered); dec10 RSS 227 → 178 MB; all cells child-eval identical, golden unregoldened, quick 59/59, miri clean. One bar-3 miss recorded (ladder root −8.5%: fixed 86 ms of a 1.01 s solve) |
@@ -59,6 +59,7 @@ maintainability, testability, consistency.
 |---|---|---|---|
 | #1 preflight cost gate / cheap-search probe | `plan1.md` | `report1.md` | done — GO |
 | #5 lazy/zero-init TT allocation | `plan2.md` | `report2.md` | done — ADOPT (bar 3 partial, documented) |
+| #2 TT pre-probe before make/unmake | `plan3.md` | `report3.md` | drafted 2026-10-28 — awaiting execution |
 
 ## Cross-references
 
