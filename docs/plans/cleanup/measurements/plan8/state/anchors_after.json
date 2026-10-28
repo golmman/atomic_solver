@@ -1,0 +1,19 @@
+{
+  "quick_suite": {
+    "cases": 59,
+    "total_child_evals": 42109768,
+    "wrong": 0,
+    "timeouts": 0,
+    "expected_total_child_evals": 42109768
+  },
+  "dec31_fo": {
+    "child_evals": 510426,
+    "outcome": "loss",
+    "length": 22
+  },
+  "m22_fo": {
+    "child_evals": 15023911,
+    "outcome": "win",
+    "length": 75
+  }
+}

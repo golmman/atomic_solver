@@ -1,0 +1,4 @@
+  396 src/cli.rs
+  308 src/main.rs
+   18 src/lib.rs
+  722 total

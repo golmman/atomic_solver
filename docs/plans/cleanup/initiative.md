@@ -17,6 +17,19 @@ justifications, and (C) splitting `src/search/dfpn/mod.rs` (40.8 KB /
 move-only code motion. The `dfpn/mod.rs` size watch in the index row is
 now resolved.
 
+**plan8 done 2026-10-28** (`report8.md`). CLI-entry verbosity: `parse_args`
+rebuilt on a `value` / `number<T>` helper pair, the test module's 16
+repeated prologues collapsed into one `options()` helper, `print_help`'s
+49 `println!`s replaced by one `const HELP` (byte-identical `--help`, now
+pinned by `tests/fixtures/cli_help_golden.txt`), the module header's
+duplicated option list reduced to a pointer, `PreExitHook` deleted
+(inline `pre_exit:`), and the `STARTPOS_FEN` duplicate re-justified and
+pinned by a drift guard. 848 → 704 lines in the CLI layer. The plan's
+size figures (cli ≤ 370, total ≤ 660) were drafting mis-estimates — the
+shortfall is blank-line separators between tests, not code
+(`report8.md` §5); bars D2/D3/D4 all pass, D1's size sub-bar is the one
+miss.
+
 ## Goal
 
 Tighten the codebase without changing any game-theoretic result: dead
@@ -55,24 +68,29 @@ one-off structural repairs.
   decisions recorded, `AGENTS.md` size justifications updated
   (`report7.md`). Verdict D1/D2/D3 pass; eval-identical and wall-neutral
   under an interleaved HEAD-vs-after control.
+- **plan8** — CLI-entry verbosity, behaviour-free: `parse_args` helper
+  pair + one test helper, one `const HELP` (byte-identical `--help`,
+  golden-pinned), module-header option list → pointer, `PreExitHook`
+  removed, `STARTPOS_FEN` drift guard added; 848 → 704 lines
+  (`report8.md`).
 
 ## Open follow-ups (carried from report2/report3)
 
 - The `M19_FEN` / `STARTPOS_FEN` cross-file duplicates could be shared
-  if they drift again. Assigned to **plan8** (a lib-test drift guard pins
-  the two `STARTPOS_FEN` constants) and **plan11** (single-sources
-  `M19_FEN` in `examples/benchmark.rs`).
+  if they drift again. The `STARTPOS_FEN` half is **done** (plan8:
+  `startpos_matches_position_starpos`, `report8.md`); the `M19_FEN` half
+  stays with **plan11** (single-sources `M19_FEN` in
+  `examples/benchmark.rs`).
 
 (Addressed by plan4: pedantic-lint triage, `selection.rs` test split —
 see `report4.md`.)
 
 ## In flight
 
-Plans 8–11 were drafted by the 2026-10-28 owner-requested code-size /
-readability review (one plan per session, independent, any order):
+Plans 9–11 were drafted by the 2026-10-28 owner-requested code-size /
+readability review (one plan per session, independent, any order);
+plan8 is done.
 
-- **plan8** — CLI layer verbosity: option-parsing helpers, single-sourced
-  help, `PreExitHook` removed (`src/cli.rs` + `src/main.rs`; cosmetic).
 - **plan9** — `dfpn/children.rs`: `ChildInfo` constructors, one
   unsolved-bounds ladder, test module split out (hot path; identity+
   wall bars).

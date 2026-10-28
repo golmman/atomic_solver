@@ -1,66 +1,16 @@
 //! Command-line solver for atomic chess.
 //!
 //! This file is larger than 10 KiB because it contains the argument parsing,
-//! help text, search setup, and pre-exit hook in one place so the binary is
+//! help text, search setup, and result printing in one place so the binary is
 //! self-contained.
 //!
 //! Usage:
 //!   `atomic_solver` [OPTIONS]
 //!
-//! Options:
-//!   -h, --help                 Show this help message and exit.
-//!   --fen <FEN>                Position to solve in Forsyth-Edwards Notation.
-//!                              Defaults to [`Position::STARTPOS_FEN`].
-//!   --tt-size <MB>             Transposition-table size in megabytes.
-//!                              Defaults to 256. Sized honestly: the table
-//!                              never allocates more than requested, and the
-//!                              label is a reservation bound — its pages are
-//!                              populated on first use, so RSS is bounded by
-//!                              (not equal to) the label.
-//!   --epsilon <VALUE>          DF-PN+ threshold parameter in the range [0.0, 1.0].
-//!                              Defaults to 0.125.
-//!   --timeout <SECONDS>        Search time limit in seconds.
-//!                              Defaults to 5.
-//!   --first-outcome             Stop after the first decisive outcome and skip
-//!                              the iterative PV refinement.
-//!   --refine-cap <FACTOR>      Per-refinement-round work-cap factor relative
-//!                              to the first-outcome phase's child-eval count.
-//!                              Each refinement round is capped at
-//!                              max(1,000,000, FACTOR * first-outcome evals);
-//!                              a round that hits the cap without a shorter
-//!                              decisive line is abandoned. `0` disables
-//!                              capping. Defaults to 0.25.
-//!   --outcome-only             Print only the outcome/PV: no stdin reader and
-//!                              no pre-exit summary.
-//!   --no-preflight             Disable the detector-gated bounded pre-phase
-//!                              (plan13): the region-closure fixpoint that
-//!                              decides small-space positions (occupied <= 3
-//!                              men, no pawns/castling) before the DF-PN loop.
-//!                              This also disables the cheap bounded DF-PN
-//!                              probe that screens such roots before the
-//!                              closure.
-//!                              On such positions the pre-phase allocates a
-//!                              transient closure of up to 1,000,000 packed
-//!                              positions (~85 MB worst case) — the
-//!                              documented bounded exception to "RAM = TT
-//!                              only". Defers (and prints so) everywhere
-//!                              else; decisive claims are replay-verified
-//!                              cycle-free certificates and never touch the
-//!                              transposition table.
-//!   --tt-dump-path <FILE>      Write a compact binary snapshot of the
-//!                              transposition table after the search finishes.
-//!                              Optional; the snapshot is the transfer
-//!                              artifact for offline proof reconstruction via
-//!                              `reconstruct_pt --snapshot` (the search CLI
-//!                              itself never builds proof trees).
-//!   --salt <U64>               TT bucket-index salt. `0` (default) keeps the
-//!                              shipped indexing bit-for-bit; `s > 0` remaps
-//!                              which keys share a bucket without changing
-//!                              search semantics (noise-channel knob for the
-//!                              salt-seeded statistical gate).
-//!   --budget <EVALS>           Cap the whole search at this many child
-//!                              evaluations. A run that hits the cap returns
-//!                              `Draw` and prints `budget exhausted`.
+//! The user-facing option text is `print_help()` (`--help`); the defaults
+//! live in `CliOptions::default()` (`src/cli.rs`), and the per-option
+//! contract for flags with non-obvious resource behaviour is stated next to
+//! the field that implements it. The output contract below is normative.
 //!
 //! Output:
 //!   Each newly discovered decisive line is logged as
@@ -105,56 +55,59 @@ use std::sync::atomic::{AtomicBool, Ordering};
 mod cli;
 use cli::{CliOptions, ParseResult, parse_args};
 
+/// The `--help` text; `{program}` is replaced with the invoked name.
+const HELP: &str = r#"atomic chess solver
+
+Usage:
+  {program} [OPTIONS]
+
+Options:
+  -h, --help                 Show this help message and exit
+  --fen <FEN>                Position in Forsyth-Edwards Notation
+                             (default: standard atomic start position)
+  --tt-size <MB>             Transposition-table size in megabytes
+                             (default: 256; never allocates more
+                             than requested, and pages are populated
+                             on first use; RSS is bounded by, not
+                             equal to, the label)
+  --epsilon <VALUE>          DF-PN+ threshold parameter in [0.0, 1.0]
+                             (default: 0.125)
+  --timeout <SECONDS>        Search time limit in seconds
+                             (default: 5)
+  --first-outcome            Stop after the first decisive outcome
+                             and skip iterative PV refinement
+  --refine-cap <FACTOR>      Per-refinement-round work-cap factor vs.
+                             the first-outcome eval count; a round that
+                             hits the cap without a shorter decisive
+                             line is abandoned. 0 disables capping
+                             (default: 0.25)
+  --outcome-only             Print only the outcome/PV;
+                             no stdin reader and no pre-exit summary
+  --no-preflight             Disable the bounded pre-phase that
+                             decides small-space positions (occupied
+                             <= 3 men, no pawns/castling) before the
+                             DF-PN loop, and the cheap probe that
+                             screens such roots first
+  --tt-dump-path <FILE>      Write a binary TT snapshot after the search
+                             (transfer artifact for offline proof
+                             reconstruction via reconstruct_pt; optional)
+  --salt <U64>               TT bucket-index salt; 0 (default) keeps
+                             shipped indexing, s > 0 remaps bucket
+                             sharing without changing semantics
+  --budget <EVALS>           Cap the search at this many child
+                             evaluations; hitting the cap returns
+                             draw and prints 'budget exhausted'
+  --config <FILE>            Path to a TOML file overriding scorer
+                             parameters; defaults to built-in values
+
+Examples:
+  {program} --help
+  {program} --fen "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1"
+  {program} --epsilon 0.5 --first-outcome
+  {program} --timeout 10"#;
+
 fn print_help(program: &str) {
-    println!("atomic chess solver");
-    println!();
-    println!("Usage:");
-    println!("  {program} [OPTIONS]");
-    println!();
-    println!("Options:");
-    println!("  -h, --help                 Show this help message and exit");
-    println!("  --fen <FEN>                Position in Forsyth-Edwards Notation");
-    println!("                             (default: standard atomic start position)");
-    println!("  --tt-size <MB>             Transposition-table size in megabytes");
-    println!("                             (default: 256; never allocates more");
-    println!("                             than requested, and pages are populated");
-    println!("                             on first use; RSS is bounded by, not");
-    println!("                             equal to, the label)");
-    println!("  --epsilon <VALUE>          DF-PN+ threshold parameter in [0.0, 1.0]");
-    println!("                             (default: 0.125)");
-    println!("  --timeout <SECONDS>        Search time limit in seconds");
-    println!("                             (default: 5)");
-    println!("  --first-outcome            Stop after the first decisive outcome");
-    println!("                             and skip iterative PV refinement");
-    println!("  --refine-cap <FACTOR>      Per-refinement-round work-cap factor vs.");
-    println!("                             the first-outcome eval count; a round that");
-    println!("                             hits the cap without a shorter decisive");
-    println!("                             line is abandoned. 0 disables capping");
-    println!("                             (default: 0.25)");
-    println!("  --outcome-only             Print only the outcome/PV;");
-    println!("                             no stdin reader and no pre-exit summary");
-    println!("  --no-preflight             Disable the bounded pre-phase that");
-    println!("                             decides small-space positions (occupied");
-    println!("                             <= 3 men, no pawns/castling) before the");
-    println!("                             DF-PN loop, and the cheap probe that");
-    println!("                             screens such roots first");
-    println!("  --tt-dump-path <FILE>      Write a binary TT snapshot after the search");
-    println!("                             (transfer artifact for offline proof");
-    println!("                             reconstruction via reconstruct_pt; optional)");
-    println!("  --salt <U64>               TT bucket-index salt; 0 (default) keeps");
-    println!("                             shipped indexing, s > 0 remaps bucket");
-    println!("                             sharing without changing semantics");
-    println!("  --budget <EVALS>           Cap the search at this many child");
-    println!("                             evaluations; hitting the cap returns");
-    println!("                             draw and prints 'budget exhausted'");
-    println!("  --config <FILE>            Path to a TOML file overriding scorer");
-    println!("                             parameters; defaults to built-in values");
-    println!();
-    println!("Examples:");
-    println!("  {program} --help");
-    println!("  {program} --fen \"4k3/8/8/8/8/8/8/4KRR1 w - - 0 1\"");
-    println!("  {program} --epsilon 0.5 --first-outcome");
-    println!("  {program} --timeout 10");
+    println!("{}", HELP.replace("{program}", program));
 }
 
 fn pv_str(pv: &[Move]) -> String {
@@ -183,8 +136,6 @@ fn print_preflight_line(report: &PreflightReport) {
         );
     }
 }
-
-type PreExitHook = Box<dyn FnOnce(ExitReason, Outcome, u64, &[Move]) + Send>;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -249,9 +200,7 @@ fn main() {
 
     let stop_flag = Arc::new(AtomicBool::new(false));
 
-    let hook: Option<PreExitHook> = if outcome_only {
-        None
-    } else {
+    if !outcome_only {
         let flag = Arc::clone(&stop_flag);
         std::thread::spawn(move || {
             let stdin = std::io::stdin();
@@ -266,11 +215,7 @@ fn main() {
                 }
             }
         });
-
-        Some(Box::new(|reason, outcome, nodes, _pv: &[Move]| {
-            println!("pre_exit: reason={reason} outcome={outcome} nodes={nodes}");
-        }))
-    };
+    }
 
     search.set_stop_flag(if outcome_only {
         None
@@ -278,7 +223,7 @@ fn main() {
         Some(Arc::clone(&stop_flag))
     });
 
-    let (outcome, pv, cut_short) = {
+    let (outcome, cut_short) = {
         let (outcome, pv, _nodes) = search.solve_with_progress(&mut pos, |o, line| {
             eprintln!("outcome: {} length: {}", o.as_str(), line.len());
         });
@@ -306,7 +251,7 @@ fn main() {
         }
 
         let budget_exhausted = matches!(search.exit_reason(), ExitReason::BudgetExhausted);
-        (outcome, pv, search.time_exceeded() || budget_exhausted)
+        (outcome, search.time_exceeded() || budget_exhausted)
     };
     let search_exit_reason = search.exit_reason();
     let search_nodes = search.nodes();
@@ -339,11 +284,14 @@ fn main() {
     }
 
     if cut_short {
-        match search.exit_reason() {
-            ExitReason::Quit => println!("quit"),
-            ExitReason::BudgetExhausted => println!("budget exhausted"),
-            _ => println!("timeout"),
-        }
+        println!(
+            "{}",
+            match search.exit_reason() {
+                ExitReason::Quit => "quit",
+                ExitReason::BudgetExhausted => "budget exhausted",
+                _ => "timeout",
+            }
+        );
     }
 
     // Total child evaluations (including any pre-phase evals) on stderr, in
@@ -354,7 +302,7 @@ fn main() {
 
     drop(search);
 
-    if let Some(hook) = hook {
-        hook(search_exit_reason, outcome, search_nodes, &pv);
+    if !outcome_only {
+        println!("pre_exit: reason={search_exit_reason} outcome={outcome} nodes={search_nodes}");
     }
 }

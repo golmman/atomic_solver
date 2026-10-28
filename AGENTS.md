@@ -67,8 +67,9 @@ A pure solver for atomic chess in Rust.
   `--refine-cap`, `--outcome-only`, `--tt-dump-path`, `--no-preflight`, `-h`; unknown options
   exit with an error). Resource-bounded: RAM = TT only (the TT label is a reservation bound —
   pages are populated on first use); it never builds proof trees and prints
-  no proof-tree lines. The full option, output (`pre_exit:` / `preflight:` / `pv_status:`
-  lines), and offline-proof contracts are in the module header.
+  no proof-tree lines. The output (`pre_exit:` / `preflight:` / `pv_status:` lines) and
+  offline-proof contracts are in the module header; the user-facing option text is
+  `print_help()` and the option defaults live in `src/cli.rs`'s `CliOptions`.
 - `examples/` — example binaries (below); `tests/` — integration/regression tests.
 
 ## Dependency direction
@@ -319,7 +320,7 @@ If these commands start failing (`EPERM`/`EACCES` on event open), the host-side 
 - `src/search/dfpn/selection.rs` — OR/AND selection and best/second-unsolved search over the `ChildInfo` table; tests are split out (`selection/tests.rs`).
 - `src/search/dfpn/{mod,config,run}.rs` — the `Search` state definition and exit/PV types (`mod.rs`), the configuration surface (`config.rs`), and the run driver plus solve entry points (`run.rs`); split by change reason, not for performance (`lto = true`, `codegen-units = 1` make module placement codegen-neutral).
 - `src/search/dfpn/tests.rs` — one fixture set and one `Search`-construction idiom serve the schedule/budget/ordering/repetition unit tests; splitting it would duplicate the harness.
-- `src/main.rs` — self-contained CLI: argument parsing, help text, search setup, and pre-exit hook in one place.
+- `src/main.rs` — self-contained CLI: argument parsing, help text, search setup, and result printing in one place.
 
 ## Tuning workflow
 

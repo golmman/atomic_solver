@@ -1,0 +1,49 @@
+atomic chess solver
+
+Usage:
+  atomic_solver [OPTIONS]
+
+Options:
+  -h, --help                 Show this help message and exit
+  --fen <FEN>                Position in Forsyth-Edwards Notation
+                             (default: standard atomic start position)
+  --tt-size <MB>             Transposition-table size in megabytes
+                             (default: 256; never allocates more
+                             than requested, and pages are populated
+                             on first use; RSS is bounded by, not
+                             equal to, the label)
+  --epsilon <VALUE>          DF-PN+ threshold parameter in [0.0, 1.0]
+                             (default: 0.125)
+  --timeout <SECONDS>        Search time limit in seconds
+                             (default: 5)
+  --first-outcome            Stop after the first decisive outcome
+                             and skip iterative PV refinement
+  --refine-cap <FACTOR>      Per-refinement-round work-cap factor vs.
+                             the first-outcome eval count; a round that
+                             hits the cap without a shorter decisive
+                             line is abandoned. 0 disables capping
+                             (default: 0.25)
+  --outcome-only             Print only the outcome/PV;
+                             no stdin reader and no pre-exit summary
+  --no-preflight             Disable the bounded pre-phase that
+                             decides small-space positions (occupied
+                             <= 3 men, no pawns/castling) before the
+                             DF-PN loop, and the cheap probe that
+                             screens such roots first
+  --tt-dump-path <FILE>      Write a binary TT snapshot after the search
+                             (transfer artifact for offline proof
+                             reconstruction via reconstruct_pt; optional)
+  --salt <U64>               TT bucket-index salt; 0 (default) keeps
+                             shipped indexing, s > 0 remaps bucket
+                             sharing without changing semantics
+  --budget <EVALS>           Cap the search at this many child
+                             evaluations; hitting the cap returns
+                             draw and prints 'budget exhausted'
+  --config <FILE>            Path to a TOML file overriding scorer
+                             parameters; defaults to built-in values
+
+Examples:
+  atomic_solver --help
+  atomic_solver --fen "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1"
+  atomic_solver --epsilon 0.5 --first-outcome
+  atomic_solver --timeout 10

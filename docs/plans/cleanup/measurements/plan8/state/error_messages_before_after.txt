@@ -1,0 +1,24 @@
+== before
+--tt-size x        -> error: invalid --tt-size value: invalid digit found in string
+--epsilon x        -> error: invalid epsilon value: invalid float literal
+--timeout x        -> error: invalid timeout value: invalid digit found in string
+--salt x           -> error: invalid --salt value: invalid digit found in string
+--budget x         -> error: invalid --budget value: invalid digit found in string
+--refine-cap x     -> error: invalid --refine-cap value: invalid float literal
+--tt-size 0        -> error: --tt-size must be positive, got 0
+--epsilon 2        -> error: epsilon must be in [0.0, 1.0], got 2
+--timeout 0        -> error: timeout must be positive, got 0
+--refine-cap -1    -> error: --refine-cap must be non-negative, got -1
+--budget 0         -> error: --budget must be positive, got 0
+== after
+--tt-size x        -> error: invalid --tt-size value: invalid digit found in string
+--epsilon x        -> error: invalid --epsilon value: invalid float literal
+--timeout x        -> error: invalid --timeout value: invalid digit found in string
+--salt x           -> error: invalid --salt value: invalid digit found in string
+--budget x         -> error: invalid --budget value: invalid digit found in string
+--refine-cap x     -> error: invalid --refine-cap value: invalid float literal
+--tt-size 0        -> error: --tt-size must be positive, got 0
+--epsilon 2        -> error: epsilon must be in [0.0, 1.0], got 2
+--timeout 0        -> error: timeout must be positive, got 0
+--refine-cap -1    -> error: --refine-cap must be non-negative, got -1
+--budget 0         -> error: --budget must be positive, got 0

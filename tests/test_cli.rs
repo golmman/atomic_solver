@@ -32,6 +32,24 @@ fn cli_help_lists_options_and_exits_cleanly() {
     );
 }
 
+/// The rendered `--help` text is pinned byte-for-byte: it is the single
+/// user-facing option text (the module header and `CliOptions` point at it),
+/// so an option that exists but is undocumented — or a stale line — fails
+/// here. The invoked path is normalized to `atomic_solver` so the golden is
+/// host-agnostic.
+#[test]
+fn cli_help_matches_golden() {
+    let bin = cli_bin();
+    let output = Command::new(&bin)
+        .arg("--help")
+        .output()
+        .expect("failed to run CLI binary");
+
+    assert!(output.status.success(), "--help should exit cleanly");
+    let stdout = String::from_utf8_lossy(&output.stdout).replace(&bin, "atomic_solver");
+    assert_eq!(stdout, include_str!("fixtures/cli_help_golden.txt"));
+}
+
 #[test]
 fn cli_outcome_only_does_not_print_pre_exit_summary() {
     let output = Command::new(cli_bin())
