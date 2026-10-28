@@ -30,6 +30,20 @@ shortfall is blank-line separators between tests, not code
 (`report8.md` §5); bars D2/D3/D4 all pass, D1's size sub-bar is the one
 miss.
 
+**plan9 done 2026-10-28** (`report9.md`). `dfpn/children.rs` readability
+pass (hot path, identity bars): `impl ChildInfo` with `solved` /
+`unsolved` / `unevaluated` constructors replaced all 11 inline literals,
+the two duplicated unsolved-bounds ladders collapsed into one
+`ChildInfo::unsolved_bounds` helper (both call sites keep
+`entry.as_ref()`), and the 666-line test module moved verbatim to
+`src/search/dfpn/children/tests.rs` (21 test names unchanged). Census:
+`ChildInfo {` 15 → 5, `repetition_seen: false` 10 → 2,
+`.pn_dn_for(..).0/.1` 3 → 0, ladder bodies 2 → 1; production file
+1,334 lines / 57.8 KB → 624 / 29.2 KB. Quick suite both TT sizes,
+dec31/m22/m23 FO, and the m22 default golden are exact (no
+re-baselining); interleaved wall medians 0.960–1.009×. All gates green
+including `make test-full`.
+
 ## Goal
 
 Tighten the codebase without changing any game-theoretic result: dead
@@ -73,6 +87,9 @@ one-off structural repairs.
   golden-pinned), module-header option list → pointer, `PreExitHook`
   removed, `STARTPOS_FEN` drift guard added; 848 → 704 lines
   (`report8.md`).
+- **plan9** — `dfpn/children.rs` constructors + one unsolved-bounds
+  ladder + move-only test split into `children/tests.rs`; identity and
+  wall bars green (`report9.md`).
 
 ## Open follow-ups (carried from report2/report3)
 
@@ -89,11 +106,8 @@ see `report4.md`.)
 
 Plans 9–11 were drafted by the 2026-10-28 owner-requested code-size /
 readability review (one plan per session, independent, any order);
-plan8 is done.
+plans 8 and 9 are done.
 
-- **plan9** — `dfpn/children.rs`: `ChildInfo` constructors, one
-  unsolved-bounds ladder, test module split out (hot path; identity+
-  wall bars).
 - **plan10** — `proof_tree` layer: one proven-depth rule (and no `Vec`),
   dead `dump_to_bin` protocol removed, `Position::default` removed,
   `ProofEvent::Clear` decision.

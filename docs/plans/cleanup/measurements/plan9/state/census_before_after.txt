@@ -1,0 +1,6 @@
+census                                      before  after
+ChildInfo { occurrences (incl. struct+fn)       15      5
+repetition_seen: false                          10      2
+.pn_dn_for(..).0 / .1 pairs                      3      0
+unsolved-bounds ladder bodies                    2      1
+#[test] in children module (HEAD file vs split) 21     21

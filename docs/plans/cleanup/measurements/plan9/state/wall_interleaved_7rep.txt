@@ -1,0 +1,5 @@
+7 interleaved reps, HEAD-vs-after alternating; medians in seconds.
+cell    head    after   ratio
+dec01  0.9216  0.9289  1.0080
+dec05  0.0163  0.0156  0.9596
+m22    2.1037  2.1228  1.0091
