@@ -1,0 +1,43 @@
+{
+  "arm": "incremental_only",
+  "cases": {
+    "dec10": {
+      "after_cpu": 0.6216,
+      "after_wall": 0.6247,
+      "base_cpu": 0.6294,
+      "base_wall": 0.6324,
+      "cpu_ratio": 0.9876,
+      "evals": 3901847,
+      "reps": 31,
+      "wall_ratio": 0.9878
+    },
+    "m20_b": {
+      "after_cpu": 3.9201,
+      "base_cpu": 3.9111,
+      "cpu_ratio": 1.0023,
+      "evals": 30000025,
+      "note": "wall not recorded in this probe run",
+      "reps": 15
+    },
+    "m22_b": {
+      "after_cpu": 1.4362,
+      "after_wall": 1.4434,
+      "base_cpu": 1.4276,
+      "base_wall": 1.4348,
+      "cpu_ratio": 1.006,
+      "evals": 10000032,
+      "reps": 31,
+      "wall_ratio": 1.006
+    },
+    "stress_b": {
+      "after_cpu": 1.3723,
+      "after_wall": 1.3795,
+      "base_cpu": 1.3717,
+      "base_wall": 1.3783,
+      "cpu_ratio": 1.0004,
+      "evals": 10000015,
+      "reps": 31,
+      "wall_ratio": 1.0009
+    }
+  }
+}
