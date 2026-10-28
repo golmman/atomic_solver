@@ -1,0 +1,173 @@
+{
+  "binary": "/tmp/plan3_census_final/target/release/atomic_solver",
+  "cases": {
+    "dec10": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "10"
+      ],
+      "class": "deep",
+      "fen": "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+      "runs": [
+        {
+          "evals": 3901847,
+          "guard": 15,
+          "rep": 43726,
+          "rule50": 0,
+          "skip_rate": 0.3811,
+          "solved": 51600,
+          "unsolved": 1435215
+        }
+      ]
+    },
+    "dec13": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "10"
+      ],
+      "class": "deep",
+      "fen": "r1bq1k1r/ppN4p/n1p1p3/3p1n1P/1b1P2P1/2P5/PP6/RNBQKB1R w KQ - 1 14",
+      "runs": [
+        {
+          "evals": 5030497,
+          "guard": 0,
+          "rep": 1124,
+          "rule50": 0,
+          "skip_rate": 0.0844,
+          "solved": 75328,
+          "unsolved": 349008
+        }
+      ]
+    },
+    "easy_kq": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "2"
+      ],
+      "class": "short",
+      "fen": "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1",
+      "runs": [
+        {
+          "evals": 378,
+          "guard": 0,
+          "rep": 2,
+          "rule50": 0,
+          "skip_rate": 0.1587,
+          "solved": 4,
+          "unsolved": 56
+        }
+      ]
+    },
+    "m22": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "10"
+      ],
+      "class": "deep",
+      "fen": "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+      "runs": [
+        {
+          "evals": 15023911,
+          "guard": 8,
+          "rep": 14100,
+          "rule50": 0,
+          "skip_rate": 0.1614,
+          "solved": 115879,
+          "unsolved": 2308917
+        }
+      ]
+    },
+    "m22_b": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--budget",
+        "10000000"
+      ],
+      "class": "deep-budget",
+      "fen": "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+      "runs": [
+        {
+          "evals": 10000032,
+          "guard": 6,
+          "rep": 4463,
+          "rule50": 0,
+          "skip_rate": 0.1356,
+          "solved": 62331,
+          "unsolved": 1294098
+        }
+      ]
+    },
+    "mate1": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "2"
+      ],
+      "class": "short",
+      "fen": "3Qk3/8/8/8/8/8/8/4K3 w - - 0 1",
+      "runs": [
+        {
+          "evals": 2,
+          "guard": 0,
+          "rep": 0,
+          "rule50": 0,
+          "skip_rate": 0.0,
+          "solved": 0,
+          "unsolved": 0
+        }
+      ]
+    },
+    "rem12": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--timeout",
+        "60"
+      ],
+      "class": "deep-long",
+      "fen": "rnbqkbnr/8/6pp/pppppp1B/3PPP2/N5PN/PPP4P/R1BQ1RK1 w kq - 0 10",
+      "runs": [
+        {
+          "evals": 66604453,
+          "guard": 0,
+          "rep": 16746,
+          "rule50": 0,
+          "skip_rate": 0.0793,
+          "solved": 685161,
+          "unsolved": 4598868
+        }
+      ]
+    },
+    "stress_b": {
+      "args": [
+        "--tt-size",
+        "256",
+        "--budget",
+        "10000000"
+      ],
+      "class": "deep-budget",
+      "fen": "4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21",
+      "runs": [
+        {
+          "evals": 10000015,
+          "guard": 0,
+          "rep": 3236,
+          "rule50": 0,
+          "skip_rate": 0.1431,
+          "solved": 28951,
+          "unsolved": 1402274
+        }
+      ]
+    }
+  }
+}

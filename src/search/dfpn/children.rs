@@ -3,9 +3,24 @@
 //! This file is larger than 20 KB because `ChildPrecompute` (the pooled
 //! frame movegen slots consumed by each `dfpn` entry), `ChildInfo`
 //! construction, terminal detection with its cost-ordered fast paths, TT
-//! reuse, proof-tree event emission, and the slot-allocator invariants all
-//! share the same `Position` move/undo sequence; splitting them would
-//! scatter the staleness invariants that make the slot reuse safe.
+//! reuse, the TT pre-probe, proof-tree event emission, and the slot-allocator
+//! invariants all share the same `Position` move/undo sequence; splitting them
+//! would scatter the staleness invariants that make the slot reuse safe.
+//!
+//! # TT pre-probe (performance plan3)
+//!
+//! `evaluate_all_children` computes every child's `(tt_key, repetition_key,
+//! rule50)` triple up front with the non-mutating [`Position::keys_after`] (in
+//! the same pass that issues the TT prefetches), and `evaluate_child_keyed`
+//! consults the TT *before* the child move is played: a live outcome-less
+//! entry, or a solved entry with no best-move hint, decides the child, so the
+//! make/unmake, the terminal existence query and a second probe are skipped
+//! entirely. Everything else falls back to the shipped make/unmake path, which
+//! reuses the entry the pre-probe already read (exactly one probe per child);
+//! hinted solved entries reuse it there before the terminal classification.
+//! The equivalence argument and its load-bearing outcome-less non-terminal
+//! guarantee are documented at the `evaluate_child_keyed` ladder and at
+//! `evaluate_child_played`.
 
 #![allow(clippy::similar_names)]
 
@@ -16,6 +31,7 @@ use crate::position::{Outcome, Position};
 use crate::proof_event::{NodeProven, ProofEvent};
 
 use super::Search;
+use crate::search::tt::TtEntry;
 use crate::zobrist::INF;
 
 /// Movegen slot for one active `dfpn` frame: the legal-move list and node
@@ -54,7 +70,9 @@ use crate::zobrist::INF;
 /// depth cannot alias an in-flight call. Any change that makes child
 /// evaluation recursive must revisit this. (Since lean plan12 the
 /// TT-prefetch pre-pass in `evaluate_all_children` uses the non-mutating
-/// `Position::hash_after` and holds no `StateInfo` at all.)
+/// `Position::keys_after` and holds no `StateInfo` at all; performance plan3
+/// made that same pre-pass supply the pre-probe keys through
+/// `Search::keys_scratch`.)
 pub(super) struct ChildPrecompute {
     pub moves: MoveList,
     pub state: StateInfo,
@@ -119,17 +137,35 @@ impl Search {
         children: &mut Vec<ChildInfo>,
     ) {
         children.clear();
-        // TT prefetch pre-pass (lean plan11): issue every child's bucket load
-        // before the first probe so the misses overlap instead of serializing.
-        // Pure performance: the keys come from the non-mutating
-        // `Position::hash_after` (lean plan12, upstream `Board::hash_after`),
-        // and the prefetch has no observable effect.
-        for i in 0..moves.len() {
-            self.tt.prefetch(pos.hash_after(moves[i]));
+        // Keys pre-pass (lean plan11's TT prefetch, extended by performance
+        // plan3): one non-mutating `Position::keys_after` per child both issues
+        // the child's bucket prefetch — every load before the first probe, so
+        // the misses overlap instead of serializing — and supplies the
+        // pre-probe keys, at the same cost as the throwaway `hash_after`
+        // version it replaces. `keys_scratch` only grows and its
+        // `0..moves.len()` prefix is written before it is read; entries past
+        // the prefix are stale-but-never-read.
+        let child_count = moves.len();
+        if self.keys_scratch.len() < child_count {
+            self.keys_scratch.resize(child_count, (0, 0, 0));
         }
-        for i in 0..moves.len() {
+        for i in 0..child_count {
+            let keys = pos.keys_after(moves[i]);
+            self.tt.prefetch(keys.0);
+            self.keys_scratch[i] = keys;
+        }
+        for i in 0..child_count {
             let mv = moves[i];
-            let info = self.evaluate_child(pos, mv, max_depth, is_or_node);
+            let (child_key, child_rep_key, rule50_after) = self.keys_scratch[i];
+            let info = self.evaluate_child_keyed(
+                pos,
+                mv,
+                max_depth,
+                is_or_node,
+                child_key,
+                child_rep_key,
+                rule50_after,
+            );
             let decisive = info.outcome == Some(Outcome::Loss);
             children.push(info);
             if decisive {
@@ -149,6 +185,11 @@ impl Search {
         }
     }
 
+    /// Evaluate one child whose keys the caller does not have at hand (the
+    /// best-child re-evaluation in `core.rs` and the unit tests).
+    ///
+    /// `evaluate_all_children` skips this wrapper: its keys pre-pass already
+    /// computed the triple and calls [`Search::evaluate_child_keyed`] directly.
     pub(super) fn evaluate_child(
         &mut self,
         pos: &mut Position,
@@ -156,12 +197,262 @@ impl Search {
         max_depth: u32,
         is_or_node: bool,
     ) -> ChildInfo {
+        let (child_key, child_rep_key, rule50_after) = pos.keys_after(mv);
+        self.evaluate_child_keyed(
+            pos,
+            mv,
+            max_depth,
+            is_or_node,
+            child_key,
+            child_rep_key,
+            rule50_after,
+        )
+    }
+
+    /// Keyed form of [`Search::evaluate_child`]: the child's
+    /// `(tt_key, repetition_key, rule50)` come from the caller, so the TT
+    /// pre-probe runs **before** the child move is ever played.
+    ///
+    /// # The pre-probe ladder (performance plan3)
+    ///
+    /// The branches run in the shipped order with the make/unmake hoisted out
+    /// of the way; each one reads the same inputs a played child would:
+    ///
+    /// 1. a path repetition (with rule50 not expired) is a `Draw` with
+    ///    `repetition_seen = true`. This stays *before* the TT probe: the
+    ///    shipped code classifies a path repetition as a Draw regardless of
+    ///    what the table holds (first-player-loss GHI shortcut);
+    /// 2. a live current-generation entry decides the child from the entry
+    ///    alone when it is outcome-less (reused bounds under the shipped
+    ///    degeneracy rule) or solved with no best-move hint. A hinted solved
+    ///    entry falls through: the one-ply guard needs the child board, so it
+    ///    is evaluated on the played path (which also reuses the entry before
+    ///    the terminal classification there);
+    /// 3. everything else falls through to
+    ///    [`Search::evaluate_child_played`], which reuses the entry this probe
+    ///    already read: one TT probe per child, never two (nothing between the
+    ///    pre-probe and the played path can modify the table).
+    ///
+    /// # Why steps 1-2 may skip the terminal classification
+    ///
+    /// They skip the two commoner-extinction checks, the `occupied == 2` check
+    /// and the legal-move existence query. Two different guarantees cover the
+    /// two entry shapes:
+    ///
+    /// - **Outcome-less entries.** Every store site that writes
+    ///   `outcome == None` is on a path that already established the node is
+    ///   non-terminal (the depth-0 leaf store and the GHI-draw-suppressed store
+    ///   in `core.rs`; the snapshot import preserves the same shape). Such a
+    ///   child has legal moves, `rule50 < 100` and `occupied > 2`, so the
+    ///   extinction checks, the `occupied == 2` check and the existence query
+    ///   are redundant.
+    /// - **Solved entries.** The stored outcome was computed for this exact
+    ///   key; terminality is position-static, so replaying the terminal
+    ///   classification cannot yield a different result. (The terminal store in
+    ///   `core.rs` writes exactly such an authoritative outcome; it is why this
+    ///   invariant is stated for *outcome-less* entries only.) A hinted solved
+    ///   entry is necessarily non-terminal because terminal stores write
+    ///   `Move::NONE` as the hint, which is also why its played-path shortcut
+    ///   may return before the existence query.
+    ///
+    /// Step 2 stays gated on `!rule50_expired` because the shipped order puts
+    /// the rule50 branch before any TT use; that is an ordering constraint, not
+    /// a claim that a rule50-expired entry cannot exist. Store sites any future
+    /// change must revisit: `core.rs`'s terminal store, its depth-0 leaf store,
+    /// its GHI-draw-suppressed outcome-less (`(1, 1)`) store, and the snapshot
+    /// import in `src/reconstruct`.
+    ///
+    /// Were a future outcome-less store site to violate the non-terminal
+    /// guarantee, the fast path could return reused bounds for a terminal
+    /// child; for solved entries the failure mode is a `child_evals` drift
+    /// caught by the trajectory tests, not a wrong answer.
+    #[allow(clippy::too_many_arguments)]
+    pub(super) fn evaluate_child_keyed(
+        &mut self,
+        pos: &mut Position,
+        mv: Move,
+        max_depth: u32,
+        is_or_node: bool,
+        child_key: u64,
+        child_rep_key: u64,
+        rule50_after: u16,
+    ) -> ChildInfo {
         self.child_evals += 1;
+        let child_is_or = !is_or_node;
+        // The repetition key ignores rule50, while the shipped code's
+        // `outcome()` ran before the repetition check: a rule50-expired child
+        // (checkmate still outranks rule50 and needs movegen) is always
+        // reported as a rule50 terminal with `repetition_seen = false` and no
+        // TT probe. `rule50_after` is the raw clock, not the clamped key.
+        let rule50_expired = rule50_after >= 100;
+
+        let info = if !rule50_expired && self.path_contains(child_rep_key) {
+            // Step 1: path repetition (see the ladder docs above).
+            ChildInfo {
+                mv,
+                pn: Outcome::Draw.pn_dn_for(child_is_or).0,
+                dn: Outcome::Draw.pn_dn_for(child_is_or).1,
+                outcome: Some(Outcome::Draw),
+                depth: 0,
+                repetition_seen: true,
+                explored: false,
+            }
+        } else if rule50_expired {
+            // A rule50 terminal needs the child's existence query, so it takes
+            // the played path, whose rule50 branch returns before any TT use
+            // (as shipped) — hence `entry: None`.
+            self.evaluate_child_played(pos, mv, max_depth, child_is_or, true, child_key, None)
+        } else {
+            // Step 2: the single pre-probe for this child. The copied entry
+            // (`TtEntry` is `Copy`) feeds both the solved-result reuse and the
+            // reuse on the played path.
+            let entry: Option<TtEntry> = self.tt.probe(child_key).copied();
+            let child_max_depth = max_depth.saturating_sub(1);
+            // Step 2a: a solved entry *without* a best move. It needs no
+            // one-ply guard, so it is fully decidable from the key alone.
+            //
+            // A solved entry *with* a best move is deliberately NOT decided
+            // here, even though the entry is at hand: the shipped one-ply
+            // guard asks whether playing that move from the **child** lands on
+            // a path entry, and that grandchild repetition key needs the child
+            // board — upstream offers only one-ply `hash_after`, so the second
+            // ply is reachable only by playing the move. Applying
+            // `repetition_key_after` to the parent instead is *not* the same
+            // key (it hashes an illegal move from the wrong base) and was
+            // measured to fire the guard spuriously, diverging from the shipped
+            // trajectory within a few thousand child evaluations. Those
+            // children therefore take the played path, which runs the shipped
+            // guard verbatim.
+            let resolved_without_hint = entry
+                .as_ref()
+                .filter(|e| e.best_move == Move::NONE)
+                .and_then(|e| Self::resolved_from_entry(e, child_max_depth));
+
+            if let Some(resolved) = resolved_without_hint {
+                #[cfg(test)]
+                {
+                    self.preprobe_skips += 1;
+                }
+                let (pn, dn) = resolved.outcome.pn_dn_for(child_is_or);
+                ChildInfo {
+                    mv,
+                    pn,
+                    dn,
+                    outcome: Some(resolved.outcome),
+                    depth: resolved.depth,
+                    repetition_seen: false,
+                    explored: false,
+                }
+            } else if entry.as_ref().is_some_and(|e| e.outcome.is_none()) {
+                // #12a TT non-terminal skip, now decided *before* the move is
+                // played: a live entry with `outcome == None` was only ever
+                // stored by a non-terminal store site (`core.rs`'s depth-0
+                // leaf store and GHI-draw-suppressed store; the terminal store
+                // writes `Some`), so the position had legal moves,
+                // `rule50 < 100` and `occupied > 2` — the child is non-terminal
+                // by the invariant restated at the ladder docs, and the
+                // existence query plus `occupied == 2` recheck can be skipped.
+                // Deliberately *not* keyed off `remaining_depth` shape; the
+                // degeneracy guard below already excludes suppressed
+                // (`remaining_depth == u32::MAX`) entries.
+                #[cfg(test)]
+                {
+                    self.preprobe_skips += 1;
+                }
+                // Only reuse bounds when they are non-degenerate: a previous
+                // work-bounded search may have stored a candidate terminal-like
+                // bound (pn == 0 or dn == 0) without an outcome, and
+                // propagating such values can trick the parent search into
+                // treating an unproven node as solved. Fall back to neutral
+                // (1, 1).
+                let (pn, dn) = match entry.as_ref() {
+                    Some(e)
+                        if e.pn > 0
+                            && e.dn > 0
+                            && e.remaining_depth != u32::MAX
+                            && e.remaining_depth <= child_max_depth =>
+                    {
+                        (e.pn, e.dn)
+                    }
+                    _ => (1, 1),
+                };
+                ChildInfo {
+                    mv,
+                    pn,
+                    dn,
+                    outcome: None,
+                    depth: 0,
+                    repetition_seen: false,
+                    explored: false,
+                }
+            } else {
+                // Everything else needs the played child: a solved entry with a
+                // best move (step 2a's guard note), a guarded or depth-guard
+                // miss, and the no-entry case. The played path runs the shipped
+                // classification verbatim, with the pre-probe's entry reused
+                // instead of a second probe.
+                self.evaluate_child_played(
+                    pos,
+                    mv,
+                    max_depth,
+                    child_is_or,
+                    false,
+                    child_key,
+                    entry.as_ref(),
+                )
+            }
+        };
+
+        // Proof-event stream, byte-identical to the played path's: the shipped
+        // emission used `pos.hash()` after the make, which is `child_key` by
+        // the `keys_after` contract. Draw children emit nothing.
+        if let Some(outcome) = info.outcome
+            && outcome != Outcome::Draw
+            && let Some(sender) = &self.proof_event_sender
+        {
+            let mut path = self.move_stack.clone();
+            path.push(mv);
+            let _ = sender.send(ProofEvent::NodeProven(NodeProven::new(
+                path, child_key, outcome, info.depth,
+            )));
+        }
+
+        info
+    }
+
+    /// The make/unmake path of child evaluation: the shipped branch structure,
+    /// entered only when the pre-probe ladder could not decide the child.
+    ///
+    /// `entry` is the entry the ladder already read for `child_key` — never
+    /// re-probed here. `rule50_expired` reports the caller's rule50 check, in
+    /// which case `entry` is `None` because the rule50 branch precedes any TT
+    /// use.
+    ///
+    /// Hinted solved entries reach this path because the pre-probe cannot
+    /// evaluate the one-ply best-move guard without the child board. Once the
+    /// child is made, an authoritative live entry is returned *before* the
+    /// terminal classification (the entry's outcome was computed for this
+    /// exact key); only the guard can suppress it, and a guard hit falls
+    /// through to the shipped path. The out-of-line fallback call itself cost
+    /// ~1.5% wall on the transposition-dense cell, so the function is
+    /// `inline(always)` into the ladder (measured in performance plan3).
+    #[inline(always)]
+    #[allow(clippy::too_many_arguments)]
+    fn evaluate_child_played(
+        &mut self,
+        pos: &mut Position,
+        mv: Move,
+        max_depth: u32,
+        child_is_or: bool,
+        rule50_expired: bool,
+        child_key: u64,
+        entry: Option<&TtEntry>,
+    ) -> ChildInfo {
         // Per-frame pooled make/unmake scratch (see the `ChildPrecompute`
         // "Eval-scratch slots" docs): skips the fresh `StateInfo::new()`
         // zeroing and the 64-byte undo-stack push/pop on every evaluated
         // child. Distinct from the frame slot's `state` and from the local
-        // existence-check states below; `evaluate_child` never recurses.
+        // existence-check states below; child evaluation never recurses.
         let scratch_depth = self.path_stack.len();
         if self.eval_state_pool.len() <= scratch_depth {
             self.eval_state_pool
@@ -169,21 +460,45 @@ impl Search {
         }
         let mut scratch = std::mem::take(&mut self.eval_state_pool[scratch_depth]);
         pos.do_move_with_scratch(mv, &mut scratch);
-        let child_key = pos.hash();
-        let child_rep_key = pos.repetition_key();
-        let child_is_or = !is_or_node;
+        // The pre-probe keys must describe exactly this position; a divergence
+        // would silently change which children the fast path decides.
+        debug_assert_eq!(child_key, pos.hash(), "pre-probe key drift");
+
+        // A live solved entry is authoritative for this exact key: every store
+        // site only writes an outcome it computed for the position, so the
+        // terminal classification below is redundant for it. The pre-probe
+        // already takes this shortcut for hintless entries; hinted solved
+        // entries reach this path, where the shipped one-ply guard needs the
+        // child board. Evaluate the guard after the make and, when it does not
+        // fire, return the entry before the existence query. If it does fire,
+        // fall through to the shipped path unchanged (which degenerates the
+        // entry to neutral bounds).
+        if let Some(e) = entry
+            && let Some(resolved) = Self::resolved_from_entry(e, max_depth.saturating_sub(1))
+            && (e.best_move == Move::NONE || !self.best_move_repeats_path(pos, e.best_move))
+        {
+            let (pn, dn) = resolved.outcome.pn_dn_for(child_is_or);
+            let info = ChildInfo {
+                mv,
+                pn,
+                dn,
+                outcome: Some(resolved.outcome),
+                depth: resolved.depth,
+                repetition_seen: false,
+                explored: false,
+            };
+            pos.undo_move_with_scratch(mv, &scratch);
+            self.eval_state_pool[scratch_depth] = scratch;
+            return info;
+        }
 
         // Terminal-check fast path, reordered for cost (result-equivalent):
         // the commoner-extinction branches strictly precede the moves-empty
         // branch in `outcome_from_state`, so they can be evaluated without
-        // movegen. The repetition check keeps its place before any TT use
-        // (first-player-loss GHI shortcut) but only fires when the halfmove
-        // clock has *not* expired: the repetition key ignores rule50, while
-        // the old code's `outcome()` ran before the repetition check, so a
-        // rule50-expired child was always reported as a rule50 terminal
-        // (checkmate still outranks rule50 and needs movegen) with
-        // `repetition_seen = false` and no TT probe.
-        let rule50_expired = pos.board().rule50() >= 100;
+        // movegen. The repetition branch is not repeated here: the ladder
+        // already returned for path repetitions (same key, same path stack),
+        // and the repeated position is non-terminal, so neither extinction
+        // branch can fire for it.
         let info = if pos.commoners(pos.side_to_move()).is_empty() {
             ChildInfo {
                 mv,
@@ -202,16 +517,6 @@ impl Search {
                 outcome: Some(Outcome::Win),
                 depth: 0,
                 repetition_seen: false,
-                explored: false,
-            }
-        } else if !rule50_expired && self.path_contains(child_rep_key) {
-            ChildInfo {
-                mv,
-                pn: Outcome::Draw.pn_dn_for(child_is_or).0,
-                dn: Outcome::Draw.pn_dn_for(child_is_or).1,
-                outcome: Some(Outcome::Draw),
-                depth: 0,
-                repetition_seen: true,
                 explored: false,
             }
         } else if rule50_expired {
@@ -243,17 +548,13 @@ impl Search {
             }
         } else {
             let child_max_depth = max_depth.saturating_sub(1);
-            // Single TT probe for this child: the copied entry (TtEntry is
-            // Copy) feeds both the solved-result reuse (depth checks + one-ply
-            // guard) and the unsolved-bounds reuse below. Solved results are
-            // position-static (terminality is deterministic per hash), so a
-            // TT-resolved hit is identical to the terminal path that used to
-            // run before the probe.
-            let entry = self.tt.probe(child_key).copied();
-            let mut resolved = entry
-                .as_ref()
-                .and_then(|e| Self::resolved_from_entry(e, child_max_depth));
-            if let Some(e) = entry.as_ref()
+            // The shipped solved-result reuse, guard included: the one-ply
+            // best-move guard plays `best_move` from the *child* and undoes it
+            // (`best_move_repeats_path`). Solved results are position-static
+            // (terminality is deterministic per key), so a TT-resolved hit is
+            // identical to the terminal path that used to run before the probe.
+            let mut resolved = entry.and_then(|e| Self::resolved_from_entry(e, child_max_depth));
+            if let Some(e) = entry
                 && resolved.is_some()
                 && e.best_move != Move::NONE
                 && self.best_move_repeats_path(pos, e.best_move)
@@ -274,18 +575,18 @@ impl Search {
                 }
             } else {
                 // #12a TT non-terminal skip: a live entry with `outcome ==
-                // None` was only ever stored after the node passed the
-                // entry-level `outcome_from_state` full-movegen check
-                // (`core.rs` terminal store, depth-0 leaf store, and
-                // GHI-draw-suppressed stores alike), which means the position
-                // had legal moves, `rule50 < 100`, and `occupied > 2`. The
+                // None` was only ever stored by a non-terminal store site
+                // (`core.rs` depth-0 leaf and GHI-draw-suppressed stores; the
+                // terminal store writes `Some`), which means the position had
+                // legal moves, `rule50 < 100`, and `occupied > 2`. The
                 // extinction and rule50 branches above already returned, so
                 // the existence query + `occupied == 2` recheck can be
-                // skipped: the child is non-terminal by the invariant.
-                // Deliberately *not* keyed off `remaining_depth` shape; the
-                // degeneracy guard in the bounds reuse below already excludes
-                // suppressed (`remaining_depth == u32::MAX`) entries.
-                let terminal_outcome = if entry.as_ref().is_some_and(|e| e.outcome.is_none()) {
+                // skipped: the child is non-terminal by the invariant
+                // (restated at the ladder docs). Unreachable from the
+                // pre-probe ladder — it decides every live outcome-less entry
+                // before the make — but kept verbatim so this path stays the
+                // shipped code.
+                let terminal_outcome = if entry.is_some_and(|e| e.outcome.is_none()) {
                     None
                 } else {
                     // Still undecided: the terminal check is now an early-exit
@@ -358,20 +659,6 @@ impl Search {
                 }
             }
         };
-
-        if let Some(outcome) = info.outcome
-            && outcome != Outcome::Draw
-            && let Some(sender) = &self.proof_event_sender
-        {
-            let mut path = self.move_stack.clone();
-            path.push(mv);
-            let _ = sender.send(ProofEvent::NodeProven(NodeProven::new(
-                path,
-                pos.hash(),
-                outcome,
-                info.depth,
-            )));
-        }
 
         pos.undo_move_with_scratch(mv, &scratch);
         self.eval_state_pool[scratch_depth] = scratch;
@@ -722,5 +1009,326 @@ mod tests {
             pool_bytes < 1_000_000,
             "pooled movegen storage must stay well under the old per-child budget, got {pool_bytes} bytes"
         );
+    }
+
+    // ---- performance plan3: the TT pre-probe ladder ------------------------
+
+    /// Fixture for the pre-probe tests: a quiet, non-terminal child whose move
+    /// is a plain rook step.
+    const PREPROBE_FEN: &str = "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1";
+
+    fn preprobe_fixture() -> (Position, Move) {
+        let pos = Position::from_fen(PREPROBE_FEN).unwrap();
+        let mv = Move::make_move(Square::G1, Square::H1);
+        (pos, mv)
+    }
+
+    /// `ChildInfo` has no `PartialEq`; compare the production fields one by
+    /// one so a divergence names its field.
+    fn assert_same_child_info(fast: &ChildInfo, played: &ChildInfo, ctx: &str) {
+        assert_eq!(fast.mv, played.mv, "{ctx}: mv");
+        assert_eq!(fast.pn, played.pn, "{ctx}: pn");
+        assert_eq!(fast.dn, played.dn, "{ctx}: dn");
+        assert_eq!(fast.outcome, played.outcome, "{ctx}: outcome");
+        assert_eq!(fast.depth, played.depth, "{ctx}: depth");
+        assert_eq!(
+            fast.repetition_seen, played.repetition_seen,
+            "{ctx}: repetition_seen"
+        );
+        assert_eq!(fast.explored, played.explored, "{ctx}: explored");
+    }
+
+    #[test]
+    fn preprobe_resolves_live_unsolved_entry_without_make() {
+        // A live `outcome == None` entry decides the child from the keys alone
+        // (no make/unmake, no existence query). The reused bounds and the
+        // neutral consequence of a degenerate entry must both match the
+        // make/unmake path for the identical entry.
+        let (mut pos, mv) = preprobe_fixture();
+        let fen_before = pos.fen();
+        let (child_key, _, _) = pos.keys_after(mv);
+
+        let mut search = Search::new(1);
+        // `max_depth = 11` ⇒ `child_max_depth = 10`, so `remaining_depth = 10`
+        // is usable and the bounds are non-degenerate.
+        search
+            .tt
+            .store(child_key, Move::NONE, u8::MAX, 1, None, 5, 5, 0, 10);
+
+        let fast = search.evaluate_child(&mut pos, mv, 11, true);
+        assert_eq!(
+            search.preprobe_skips(),
+            1,
+            "the pre-probe must decide a live unsolved child"
+        );
+        assert_eq!((fast.pn, fast.dn), (5, 5), "stored bounds are reused");
+        assert_eq!(fast.outcome, None);
+        assert_eq!(fast.depth, 0);
+        assert!(!fast.repetition_seen && !fast.explored);
+        assert_eq!(pos.fen(), fen_before, "the child move is not played");
+
+        let entry = *search.tt.probe(child_key).expect("entry stays live");
+        let played =
+            search.evaluate_child_played(&mut pos, mv, 11, true, false, child_key, Some(&entry));
+        assert_same_child_info(&fast, &played, "live unsolved reuse");
+        assert_eq!((played.pn, played.dn), (5, 5), "played path reuses too");
+        assert_eq!(pos.fen(), fen_before);
+    }
+
+    #[test]
+    fn preprobe_resolves_solved_entry_and_emits_the_same_proof_event() {
+        // Identical solved payloads through the two decision paths must emit
+        // the identical `NodeProven` event: the pre-probe (`best_move == NONE`,
+        // decided before the make) and the shipped guarded branch (a
+        // `best_move` hint whose one-ply guard does not fire, decided on the
+        // played child — the pre-probe cannot evaluate that guard without the
+        // child board, so it deliberately falls back).
+        let (pos, mv) = preprobe_fixture();
+        let (child_key, _, _) = pos.keys_after(mv);
+        let hint = {
+            let mut child = pos.clone();
+            child.do_move(mv);
+            child.legal_moves_vec()[0]
+        };
+        assert_ne!(hint, Move::NONE);
+
+        let mut streams = Vec::new();
+        let mut skips = Vec::new();
+        for best_move in [Move::NONE, hint] {
+            let mut search = Search::new(1);
+            search.tt.store(
+                child_key,
+                best_move,
+                u8::MAX,
+                0,
+                Some(Outcome::Loss),
+                INF,
+                0,
+                1,
+                u32::MAX,
+            );
+            let (tx, rx) = std::sync::mpsc::channel();
+            search.set_proof_event_sender(Some(tx));
+            let mut child_pos = Position::from_fen(PREPROBE_FEN).unwrap();
+            let info = search.evaluate_child(&mut child_pos, mv, u32::MAX, true);
+            assert_eq!(info.outcome, Some(Outcome::Loss));
+            assert_eq!(info.depth, 1, "the entry's proven depth is preserved");
+            skips.push(search.preprobe_skips());
+            drop(search);
+            streams.push(rx.iter().collect::<Vec<ProofEvent>>());
+        }
+
+        assert_eq!(skips, vec![1, 0], "only the hintless entry is a skip");
+        assert_eq!(streams[0].len(), 1, "one proven child ⇒ one event");
+        assert_eq!(
+            format!("{:?}", streams[0]),
+            format!("{:?}", streams[1]),
+            "the pre-probe emits the make path's event"
+        );
+        match &streams[0][0] {
+            ProofEvent::NodeProven(event) => {
+                assert_eq!(event.path, vec![mv]);
+                assert_eq!(event.hash, child_key, "event hash is the child key");
+                assert_eq!(event.outcome, Outcome::Loss);
+                assert_eq!(event.depth, 1);
+            }
+            ProofEvent::Clear => panic!("the search never clears proof events"),
+        }
+    }
+
+    #[test]
+    fn preprobe_falls_back_on_path_repetition() {
+        // A path repetition is a Draw no matter what the table holds (the
+        // shipped order puts the repetition branch before the TT); the ladder
+        // must keep that, and the repetition branch is not a pre-probe skip.
+        let mut search = Search::new(1);
+        let mut pos = Position::from_fen("4k3/8/8/4K3/8/8/8/4R3 w - - 0 1").unwrap();
+        let mv = Move::make_move(Square::E5, Square::D5);
+        let (child_key, child_rep_key, _) = pos.keys_after(mv);
+        search.tt.store(
+            child_key,
+            Move::NONE,
+            u8::MAX,
+            0,
+            Some(Outcome::Win),
+            0,
+            INF,
+            1,
+            u32::MAX,
+        );
+        search.path_stack.push(child_rep_key);
+
+        let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+        assert_eq!(
+            info.outcome,
+            Some(Outcome::Draw),
+            "the repetition branch outranks the live solved entry"
+        );
+        assert!(info.repetition_seen);
+        assert_eq!(info.depth, 0);
+        assert_eq!(search.preprobe_skips(), 0);
+    }
+
+    #[test]
+    fn preprobe_falls_back_when_rule50_expired() {
+        // A rule50-expired child is concluded by the shipped rule50 branch
+        // (existence query), never by the pre-probe: its key's rule50 component
+        // is clamped, so a live entry for it cannot exist. Per the shipped
+        // order, a repetition of the same board must not fire either.
+        let mut search = Search::new(1);
+        let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 100 1").unwrap();
+        let mv = Move::make_move(Square::G1, Square::H1);
+        let (child_key, child_rep_key, rule50_after) = pos.keys_after(mv);
+        assert!(rule50_after >= 100, "fixture must expire the clock");
+        search.tt.store(
+            child_key,
+            Move::NONE,
+            u8::MAX,
+            0,
+            Some(Outcome::Win),
+            0,
+            INF,
+            1,
+            u32::MAX,
+        );
+        search.path_stack.push(child_rep_key);
+
+        let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+        assert_eq!(info.outcome, Some(Outcome::Draw), "rule50 draw");
+        assert_eq!(info.depth, 0);
+        assert!(
+            !info.repetition_seen,
+            "rule50 outranks the repetition check"
+        );
+        assert_eq!(search.preprobe_skips(), 0);
+    }
+
+    #[test]
+    fn preprobe_degenerate_bounds_fall_back_to_neutral() {
+        // `pn == 0` bounds and suppressed (`remaining_depth == u32::MAX`)
+        // entries must both reuse neutral (1, 1), exactly like the played path.
+        for (pn, dn, remaining_depth) in [(0u64, 5u64, 10u32), (5, 5, u32::MAX)] {
+            let (mut pos, mv) = preprobe_fixture();
+            let (child_key, _, _) = pos.keys_after(mv);
+            let mut search = Search::new(1);
+            search.tt.store(
+                child_key,
+                Move::NONE,
+                u8::MAX,
+                1,
+                None,
+                pn,
+                dn,
+                0,
+                remaining_depth,
+            );
+
+            let fast = search.evaluate_child(&mut pos, mv, 11, true);
+            assert_eq!(
+                search.preprobe_skips(),
+                1,
+                "a live unsolved entry is decided by the pre-probe"
+            );
+            assert_eq!((fast.pn, fast.dn), (1, 1), "degenerate bounds ⇒ neutral");
+            assert_eq!(fast.outcome, None);
+
+            let entry = *search.tt.probe(child_key).expect("entry stays live");
+            let played = search.evaluate_child_played(
+                &mut pos,
+                mv,
+                11,
+                true,
+                false,
+                child_key,
+                Some(&entry),
+            );
+            assert_same_child_info(&fast, &played, "degenerate entry");
+        }
+    }
+
+    #[test]
+    fn preprobe_best_move_guard_matches_make_path() {
+        // A solved entry whose `best_move` would repeat the path must not be
+        // reused. Its one-ply guard needs the *child* board (the entry's move
+        // is played from the child), which no key-level computation provides,
+        // so such children always take the played path — there the shipped
+        // guard fires and the child degenerates to neutral bounds, while the
+        // same entry without the path push resolves normally.
+        let (mut pos, mv) = preprobe_fixture();
+        let (child_key, _, _) = pos.keys_after(mv);
+        let hint = {
+            let mut child = pos.clone();
+            child.do_move(mv);
+            child.legal_moves_vec()[0]
+        };
+        let grandchild_rep_key = {
+            let mut child = pos.clone();
+            child.do_move(mv);
+            child.do_move(hint);
+            child.repetition_key()
+        };
+        let seed = |search: &mut Search| {
+            search.tt.store(
+                child_key,
+                hint,
+                u8::MAX,
+                0,
+                Some(Outcome::Loss),
+                INF,
+                0,
+                1,
+                u32::MAX,
+            );
+        };
+
+        // The guard fires: neutral bounds, played path, no pre-probe skip.
+        let mut search = Search::new(1);
+        seed(&mut search);
+        search.path_stack.push(grandchild_rep_key);
+        let guarded = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+        assert_eq!(guarded.outcome, None, "the guarded entry must not resolve");
+        assert_eq!((guarded.pn, guarded.dn), (1, 1));
+        assert_eq!(
+            search.preprobe_skips(),
+            0,
+            "a hinted solved entry takes the played path"
+        );
+        let entry = *search.tt.probe(child_key).expect("entry stays live");
+        let played = search.evaluate_child_played(
+            &mut pos,
+            mv,
+            u32::MAX,
+            true,
+            false,
+            child_key,
+            Some(&entry),
+        );
+        assert_same_child_info(&guarded, &played, "guarded entry");
+
+        // The guard does not fire: the same entry resolves, still on the
+        // played path (the pre-probe never takes a hinted entry).
+        let mut search = Search::new(1);
+        seed(&mut search);
+        let resolved = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+        assert_eq!(resolved.outcome, Some(Outcome::Loss));
+        assert_eq!(resolved.depth, 1);
+        assert_eq!(search.preprobe_skips(), 0);
+    }
+
+    #[test]
+    fn preprobe_skip_counter_resets_per_run() {
+        // The test-only census counter is per-run state, like the repetition
+        // cache: `begin_run` clears it so a second run's count is its own.
+        let (mut pos, mv) = preprobe_fixture();
+        let (child_key, _, _) = pos.keys_after(mv);
+        let mut search = Search::new(1);
+        search
+            .tt
+            .store(child_key, Move::NONE, u8::MAX, 1, None, 5, 5, 0, 10);
+        let _ = search.evaluate_child(&mut pos, mv, 11, true);
+        assert_eq!(search.preprobe_skips(), 1);
+
+        search.begin_run();
+        assert_eq!(search.preprobe_skips(), 0, "a new run starts from zero");
     }
 }

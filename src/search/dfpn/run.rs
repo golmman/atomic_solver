@@ -320,6 +320,10 @@ impl Search {
         self.refinement_rounds = 0;
         self.refinement_evals = 0;
         self.restarts = 0;
+        #[cfg(test)]
+        {
+            self.preprobe_skips = 0;
+        }
         self.pv_status = PvStatus::None;
         self.last_round_cap_cut = false;
         self.start = Instant::now();

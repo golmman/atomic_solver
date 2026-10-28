@@ -283,6 +283,31 @@ impl Position {
         self.board.hash_after(m) ^ zobrist::rule50_key(self.board.rule50_after(m))
     }
 
+    /// Repetition key ([`Position::repetition_key`]) of the position after `m`,
+    /// without playing it.
+    ///
+    /// Equal to `{ do_move(m); repetition_key() }`: upstream `Board::hash_after`
+    /// is the board-only hash after `m`, i.e. exactly the repetition key.
+    #[must_use]
+    pub(crate) fn repetition_key_after(&self, m: Move) -> u64 {
+        self.board.hash_after(m)
+    }
+
+    /// `(tt_key, repetition_key, rule50)` of the position after `m`, without
+    /// playing it. Equal to `{ do_move(m); (hash(), repetition_key(),
+    /// board().rule50()) }`.
+    ///
+    /// `rule50` is the raw (un-clamped) halfmove clock, because the child
+    /// evaluation's rule50 branch needs the `>= 100` comparison, while
+    /// [`rule50_key`](crate::zobrist::rule50_key) clamps at 100 — hence the
+    /// clamped key and the raw value travel together.
+    #[must_use]
+    pub(crate) fn keys_after(&self, m: Move) -> (u64, u64, u16) {
+        let board_only = self.repetition_key_after(m);
+        let rule50 = self.board.rule50_after(m);
+        (board_only ^ zobrist::rule50_key(rule50), board_only, rule50)
+    }
+
     /// Board-only key for repetition detection, ignoring the halfmove clock.
     #[must_use]
     pub fn repetition_key(&self) -> u64 {
@@ -451,6 +476,56 @@ mod tests {
                 );
                 // The position itself is untouched by hash_after: the loop
                 // reuses `pos` across all moves.
+                assert_eq!(pos.fen(), fen);
+            }
+        }
+    }
+
+    #[test]
+    fn keys_after_equals_do_move_triple_for_every_legal_move() {
+        // plan3: `keys_after` supplies the pre-probe's TT key, repetition key
+        // and raw rule50 without playing the move. It must equal the played
+        // round-trip triple `(hash, repetition_key, board().rule50)` for every
+        // legal move of the same fixture set as the `hash_after` test.
+        let fens = [
+            Position::STARTPOS_FEN,
+            "4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22",
+            "4r2k/3p4/2pB2p1/p4p1p/7P/2N1PPP1/P1PP4/1R4RK w - - 0 21",
+            // Transposition-dense deep cell (maximum pre-probe skip rate).
+            "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41",
+            "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3",
+            "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1",
+            "r3k2r/8/8/8/8/8/8/R3K2R b KQkq - 0 1",
+            "2r5/1P6/8/8/8/8/8/2K1k3 w - - 0 1",
+            // Halfmove clock at the clamp boundary (and past it, where the
+            // raw value is >= 100 but the key clamps) and one below.
+            "4k3/8/8/8/8/8/8/4K2R w K - 99 1",
+            "4k3/8/8/8/8/8/8/4K2R w K - 100 1",
+            "4k3/8/8/8/8/8/8/4K2R w K - 130 1",
+        ];
+        for fen in fens {
+            let pos = Position::from_fen(fen).unwrap();
+            let moves = pos.legal_moves_vec();
+            assert!(!moves.is_empty(), "fixture must have legal moves: {fen}");
+            for mv in moves {
+                let mut played = pos.clone();
+                played.do_move(mv);
+                let expected = (
+                    played.hash(),
+                    played.repetition_key(),
+                    played.board().rule50(),
+                );
+                assert_eq!(
+                    pos.keys_after(mv),
+                    expected,
+                    "keys_after mismatch: {fen}, move {mv:?}"
+                );
+                assert_eq!(
+                    pos.repetition_key_after(mv),
+                    expected.1,
+                    "repetition_key_after mismatch: {fen}, move {mv:?}"
+                );
+                // The position itself is untouched: the loop reuses `pos`.
                 assert_eq!(pos.fen(), fen);
             }
         }

@@ -193,6 +193,14 @@ pub struct Search {
     eval_state_pool: Vec<StateInfo>,
     /// Reusable `(move, score)` scratch for `sort_moves`.
     sort_scratch: Vec<(Move, i32)>,
+    /// Per-child key scratch for `evaluate_all_children`'s keys pre-pass
+    /// (plan3): `(tt_key, repetition_key, rule50)` of the position after each
+    /// child move, computed without playing it. See `Search::evaluate_child`.
+    keys_scratch: Vec<(u64, u64, u16)>,
+    /// Test-only census counter (plan3): child evaluations decided by the
+    /// pre-probe ladder without a make/unmake. Reset per run in `begin_run`.
+    #[cfg(test)]
+    preprobe_skips: u64,
     /// Per-search cache of repetition-dependent draw proofs (plan9), outside
     /// the TT: keyed by (full position hash, order-independent ancestor
     /// repetition-key context hash); stores only `Outcome::Draw` payloads
@@ -254,6 +262,9 @@ impl Search {
             precompute_pool: Vec::new(),
             eval_state_pool: Vec::new(),
             sort_scratch: Vec::new(),
+            keys_scratch: Vec::new(),
+            #[cfg(test)]
+            preprobe_skips: 0,
             repetition_cache: RepetitionCache::new(),
             preflight_enabled: true,
             preflight_report: None,
@@ -285,6 +296,15 @@ impl Search {
     #[must_use]
     pub fn child_evaluations(&self) -> u64 {
         self.child_evals
+    }
+
+    /// Test-only census counter (plan3): child evaluations whose result came
+    /// from the pre-probe ladder (a live TT entry) without playing the child
+    /// move. Mechanism evidence for the pre-probe; not part of the output
+    /// contract and not present in release builds.
+    #[cfg(test)]
+    pub(super) fn preprobe_skips(&self) -> u64 {
+        self.preprobe_skips
     }
 
     fn reset_search_state(&mut self) {

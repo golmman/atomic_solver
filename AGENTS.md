@@ -19,8 +19,11 @@ A pure solver for atomic chess in Rust.
   `ExitReason::BudgetExhausted`, never `Timeout`). The restart schedule
   (`RestartSchedule::SHIPPED`: base 500_000 child evals, geometric ×2, no cutoff) is a
   pacing/diversification device only; the hard child-eval budget is enforced per node. Hot-path
-  terminal classification, pooled movegen slots (`children.rs`), and the per-run
-  repetition-draw cache (`repetition_cache.rs`) are documented in their own module docs.
+  terminal classification with the TT pre-probe (a child's keys come from the same non-mutating
+  pre-pass that issues the TT prefetches, so a live current-generation entry decides it without
+  make/unmake; the load-bearing non-terminal *outcome-less* store invariant), pooled movegen slots
+  (`children.rs`), and the per-run repetition-draw cache (`repetition_cache.rs`) are documented
+  in their own module docs.
 - `src/search/preflight/` — detector-gated bounded pre-phase (plan13, architecture R): on
   ≤3-men, pawnless, no-castling roots it decides the value via a region-closure AND/OR fixpoint
   plus a mandatory replay verifier; a claim returns the exact-DTM principal-line PV, anything
@@ -309,7 +312,7 @@ If these commands start failing (`EPERM`/`EACCES` on event open), the host-side 
 - `src/search/preflight/mod.rs` and `region.rs` — the pre-phase's soundness contract (mod.rs header) plus the region closure, packed-key codec, exact-rank fixpoint, and strategy/PV extraction share one indexing scheme; tests are split out (`preflight/tests.rs`, `verifier.rs` test module).
 - `src/proof_tree/worker.rs` — the full worker state machine (threaded handle, event loop, path traversal, dummy-node reconciliation, canonical finalization, memory accounting); splitting would fragment shared fields.
 - `src/search/ordering.rs` — the complete `StaticAtomicScorer` heuristics and their co-tuned constants; tests are split out (`ordering/tests.rs`).
-- `src/search/dfpn/children.rs` — `ChildPrecompute` pooled frame movegen slots, existence-query terminal classification, TT reuse, and proof-event emission share one `Position` move/undo sequence; slot invariants live next to the owning type.
+- `src/search/dfpn/children.rs` — `ChildPrecompute` pooled frame movegen slots, existence-query terminal classification, the TT pre-probe (keys computed without playing the move; live-entry children decided before the make, one probe per child on the fallback path), TT reuse, and proof-event emission share one `Position` move/undo sequence; slot invariants live next to the owning type.
 - `src/search/dfpn/selection.rs` — OR/AND selection and best/second-unsolved search over the `ChildInfo` table; tests are split out (`selection/tests.rs`).
 - `src/search/dfpn/{mod,config,run}.rs` — the `Search` state definition and exit/PV types (`mod.rs`), the configuration surface (`config.rs`), and the run driver plus solve entry points (`run.rs`); split by change reason, not for performance (`lto = true`, `codegen-units = 1` make module placement codegen-neutral).
 - `src/search/dfpn/tests.rs` — one fixture set and one `Search`-construction idiom serve the schedule/budget/ordering/repetition unit tests; splitting it would duplicate the harness.

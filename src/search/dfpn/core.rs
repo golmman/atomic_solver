@@ -79,6 +79,11 @@ impl Search {
 
         if let Some(outcome) = pos.outcome_from_state(state, moves) {
             let (pn, dn) = outcome.pn_dn_for(is_or_node);
+            // Store site (the terminal exception): this writes an outcome for
+            // a terminal position, which the TT pre-probe may reuse as an
+            // authoritative solved entry. Every *outcome-less* store below is
+            // non-terminal-only, which is the invariant the pre-probe's bounds
+            // reuse relies on. See `Search::evaluate_child_keyed`.
             self.tt.store(
                 tt_key,
                 Move::NONE,
@@ -98,7 +103,9 @@ impl Search {
         if max_depth == 0 {
             // A non-terminal leaf is an unsolved frontier, not a proven draw.
             // Store cheap (1, 1) bounds so the next deeper probe can grow past
-            // the horizon without re-expanding the entire subtree.
+            // the horizon without re-expanding the entire subtree. Like every
+            // store in this function it is non-terminal-only — the TT
+            // pre-probe's invariant (`children.rs`).
             self.tt
                 .store(tt_key, Move::NONE, u8::MAX, 0, None, 1, 1, 0, 0);
             self.precompute_pool[slot_depth] = slot;
@@ -329,6 +336,9 @@ impl Search {
         // First-player-loss shortcut: do not cache a Draw that only holds
         // because of a repetition in the current path. Store it as an unsolved
         // (1, 1) entry so the next search re-expands it and sees the local Draw.
+        // This frame is non-terminal (the terminal branch returned at entry),
+        // so the suppressed store keeps the TT pre-probe's non-terminal
+        // invariant (`children.rs`).
         let suppress_draw =
             outcome_to_store == Some(Outcome::Draw) && outcome_to_store_repetition_seen;
         if suppress_draw {
