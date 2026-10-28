@@ -359,6 +359,7 @@ fn walk_db(rows: &[(&str, usize, Option<Outcome>)]) -> proofdb::db::DbContent {
             ply,
             outcome: o,
             depth_bound: o.map(|_| 1),
+            depth_status: None,
         })
         .collect();
     proofdb::db::DbContent {
@@ -1020,6 +1021,7 @@ fn walk_in_session_or_close_after_decisive_loss() {
             ply: 5,
             outcome: None,
             depth_bound: None,
+            depth_status: None,
         })
         .collect();
     let db = proofdb::db::DbContent {

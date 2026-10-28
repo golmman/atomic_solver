@@ -28,6 +28,7 @@ fn crafted(rows: &[(&str, usize, Option<Outcome>)]) -> DbContent {
             ply,
             outcome: o,
             depth_bound: o.map(|_| 1),
+            depth_status: None,
         })
         .collect();
     DbContent {

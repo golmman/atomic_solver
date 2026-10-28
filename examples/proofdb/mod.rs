@@ -18,6 +18,7 @@
 use atomic_solver::position::Outcome;
 
 pub mod db;
+pub mod flip;
 pub mod harvest;
 pub mod harvest_args;
 pub mod ledger;

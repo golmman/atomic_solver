@@ -123,9 +123,13 @@ deleted. The shard pairs and the flip report are regenerable/throwaway.
   jobs into the DB's `censor` table (one transaction per censor), and marks
   completed draws in the `drawn` table (one row per proven draw) so the
   walk prunes that subtree. It never merges and never writes tree rows.
-- **`proofdb_flip`** — _DB → flip report_, read-only. Iterates implied
-  outcomes to fixpoint over the stored tree and re-checks every flip with an
-  independent verifier; writes only the report.
+- **`proofdb_flip`** — _DB → flip report_, read-only. Derives the decisive
+  outcomes the stored facts already imply — an OR-witness (one resolved loss
+  reply) suffices for a side-to-move-win claim, and-complete coverage is
+  required only for a side-to-move-loss claim — converges the claims on
+  values *and* metadata, and re-checks every one with an independent
+  verifier; the report carries each claim's `coverage` and `bound_mode`.
+  Writes only the report.
 - **`proofdb_verify`** — _DB → verdict_, read-only. Replay-validates the
   whole stored tree read back from the DB alone (no shards needed) against
   the spec's invariants — the standing DB's integrity instrument; `--backup`
@@ -249,7 +253,7 @@ $BIN/proofdb_harvest --policy frontier-walk --budget-evals 10000000 \
     --max-total-evals 10000000000 --tt-mb 1024
 $BIN/proofdb_merge    # fold the batch's shard pairs into the DB (the harvest never merges)
 $BIN/proofdb_verify --db data/proofdb/proofdb.db   # replay-validate the grown DB (expect: ok)
-$BIN/proofdb_flip     # soundness sanity over the grown DB (expect: flips 0 verified 0)
+$BIN/proofdb_flip     # derived claims over the grown DB (expect: flips >= 0, verified == flips)
 ```
 
 You can gracefully stop the execution via `touch STOP` (see the
@@ -860,11 +864,34 @@ from the recorded censor history — is described in §4.
 
 ### 7.3 `proofdb_flip` — implied-flip analysis (read-only)
 
-**Purpose.** Sanity check over a grown DB: for every open row whose legal
-replies are all resolved (stored or implied), compute the implied outcome +
-bound, iterated to fixpoint; every reported flip is then recomputed by an
-independent recursive verifier. Reads the DB; writes only `--out`
-(default `data/proofdb/flip.json`, created on demand).
+**Purpose.** Derive what a grown DB's stored facts already imply, and say
+how strongly. A **flip** is an *open* row whose replies already determine a
+decisive outcome — a **derived claim**, never a contradiction (a proven row
+is never flipped, so no stored outcome is contradicted). The two claim
+polarities are asymmetric:
+
+- **side-to-move-win** — one **OR-witness** suffices: a single resolved loss
+  reply proves the row's mover wins (`bound = 1 + min` over the loss
+  witnesses). Unresolved siblings do not block the *outcome*; they can only
+  hide a shorter win, so the bound is an **upper bound**
+  (`coverage = or-witness`, `bound_mode = upper`). Unresolved means an
+  absent row — a censored sibling is scheduling state, never a tree row — or
+  an open row with no claim yet.
+- **side-to-move-loss** — **AND-complete coverage** is required: every
+  reply resolved and none a loss (`bound = 1 + max`, the defender's longest
+  resistance); `coverage = and-complete` always.
+
+The claims are iterated to a **fixpoint converged on values *and* metadata**
+(each pass recomputes every open row from the previous pass's state, so a
+bound tightens as new witnesses resolve — a derive-once claim could not be
+reproduced), and every reported claim is then recomputed by an independent
+recursive verifier (fresh replay + movegen + coverage + bound arithmetic +
+metadata comparison). Reads the DB; writes only `--out` (default
+`data/proofdb/flip.json`, created on demand).
+
+Because harvest or-close never re-searches the censored siblings of a proven
+loss child, an `or-witness` claim is the **normal steady state** of a grown
+layer, not a transient gap: `flips > 0` is expected (§8.1 R3).
 
 **Prerequisites.** A merged DB and a clean unmerged-shard gate (§7.2): a
 sidecar without a `shards`-table row → exit-1 refusal naming the tag —
@@ -880,26 +907,40 @@ transport-layer defect; an orphan bin without a sidecar is ignored.
 | `--shard-dir`| `data/proofdb/shards`               | shard dir for the unmerged-shard gate |
 | `--out`      | `data/proofdb/flip.json`            | report JSON (overwritten)     |
 
-**Exit codes.** `0` normally (also with 0 flips), `1` on usage error, DB
-load failure (including the unmerged-shard gate), or any unverified
-flip.
+**Exit codes.** `0` normally (including with flips), `1` on usage error,
+DB load failure (including the unmerged-shard gate), or any verification
+defect (a named `FLIP VERIFICATION FAILED: …` line — a bound or metadata
+mismatch, a loss claim whose coverage is incomplete, a win claim without a
+loss witness).
 
 **Output grammar.** One stdout line plus the JSON file:
 
 ```text
-flip_analysis: open_rows 75 flips 0 verified 0 root Null (fixpoint 1 rounds)
+flip_analysis: open_rows 75 flips 0 verified 0 root Null (fixpoint 1 rounds; or-witness 0, and-complete 0, exact 0)
 ```
 
-- `open_rows` — undecided rows in the DB; `flips` — rows whose implied
-  outcome contradicts their stored outcome (0 in a sound DB); `verified` —
-  flips confirmed by the independent verifier; `root Null`/`root <bound>` —
-  the implied startpos verdict so far (`Null` = undecided, i.e. no handover
-  trigger); `fixpoint N rounds` — iterations until stable.
+- `open_rows` — undecided rows in the DB.
+- `flips` — open rows whose stored facts already imply a decisive outcome
+  (derived claims, the normal steady state of a grown layer).
+- `verified` — flips recomputed and confirmed by the independent verifier
+  (value *and* metadata). The health check is `verified == flips` plus an
+  explanation for every claim — not "0 flips".
+- `root Null`/`root <bound>` — the implied startpos verdict so far (`Null` =
+  undecided, i.e. no handover trigger). An `or-witness` root claim is a sound
+  startpos *outcome*; only its bound is an upper bound.
+- `fixpoint R rounds` — passes until the claim map (values + metadata)
+  stopped changing.
+- `or-witness O, and-complete A, exact E` — coverage counts (`O + A = F`,
+  the flip count) and how many of the `and-complete` bounds are proven
+  minimal (`E ≤ A`).
 - `--out` JSON shape (standing set, verbatim):
 
 ```json
 {
   "flips": [],
+  "flips_and_complete": 0,
+  "flips_exact": 0,
+  "flips_or_witness": 0,
   "flips_total": 0,
   "flips_verified_independently": 0,
   "open_rows": 75,
@@ -908,7 +949,28 @@ flip_analysis: open_rows 75 flips 0 verified 0 root Null (fixpoint 1 rounds)
 }
 ```
 
-**Worked invocation.** Recipe R1 then R3 (0 flips over the standing set,
+Each `flips[]` entry is `{"path", "ply", "implied", "side_to_move",
+"bound", "fixpoint_round", "coverage", "bound_mode", "loss_witnesses",
+"unresolved_replies"}`:
+
+- `coverage` — `or-witness` (one loss witness proves the win; siblings may
+  be unresolved) or `and-complete` (every reply resolved).
+- `bound_mode` — `upper` (an unresolved sibling may hide a shorter win, or a
+  contributing child bound is only a `bound`) or `exact` (and-complete *and*
+  every contributing child bound is proven minimal: proven children with
+  `depth_status = 'exact'`, implied children whose own claim is `exact`).
+  Contributors are the min-achieving loss witnesses for a win claim and all
+  replies for a loss claim. `or-witness` is always `upper`.
+- `loss_witnesses` — resolved replies that are losses for their own side to
+  move.
+- `unresolved_replies` — replies with no resolved status.
+
+**Coverage qualifies the bound, never the outcome**: an `or-witness` claim's
+outcome is sound (that is exactly what harvest or-close relies on); only its
+bound is an upper bound. The per-flip `coverage`/`bound_mode` pair is what
+keeps an operator from over-reading a bare `bound`.
+
+**Worked invocation.** Recipe R1 then R3 over the fixture set (0 flips there,
 exit 0); in a production cycle the flip check is recipe R2's step 3.
 
 ### 7.4 `proofdb_verify` — whole-DB replay validation (read-only)
@@ -1033,10 +1095,14 @@ the fold's delta extends the DB (appended ids, refined rows, a new fold
 digest in `built_from`). Two different fold sequences over the same facts
 may differ in row ids only (spec invariant 7).
 
-**R3 — check for implied flips.** Recipe R2 step 4 (`proofdb_flip`, bare
-defaults); expected on a sound tree: `flips 0 verified 0`. Any flip is a
-soundness signal — stop and investigate (§9), never re-merge to make it
-disappear.
+**R3 — read the implied claims.** Recipe R2 step 4 (`proofdb_flip`, bare
+defaults). A flip is a **derived claim**, not a soundness signal: a grown
+layer legitimately carries `or-witness` claims (or-close never re-searches a
+censored sibling of a proven loss child, so the missing row is permanent),
+and `flips 0` is the exception, not the expectation. The defect signals are
+`verified < flips`, a named `FLIP VERIFICATION FAILED: …` line, or a claim
+you cannot explain from the layer's history (§9) — never re-merge to make a
+flip disappear.
 
 **R4 — import a legacy work ledger (one-shot migration).** Pre-plan20
 layers (or committed snapshots) migrate their censor history into the DB:
@@ -1452,6 +1518,22 @@ duty itself: keep the offsite copy current (R6), and stamp checks against
 the fold digest when in doubt (§8.2's census query).
 
 ## 11. History
+
+plan26 (2026-10-27) fixed `proofdb_flip`'s verification semantics: an
+**or-witness** (one resolved loss reply) now verifies a side-to-move-win
+claim, and-complete coverage is demanded only for a side-to-move-loss claim
+— superseding the earlier requirement that every claim's replies be
+resolved. The claim fixpoint is now converged on values *and* metadata
+(each pass recomputes every open row from the previous pass, so a bound
+tightens as witnesses resolve and a recomputed claim always reproduces),
+the report carries `coverage` (`or-witness`/`and-complete`) and `bound_mode`
+(`upper`/`exact`, exact only when every contributing child bound is proven
+minimal) per flip plus the counts in the stdout line, and §7.3/R3/§2.2 now
+read a flip as a **derived claim** rather than a contradiction. The incident
+it fixes: a production layer's open ply-8 row with one proven loss child and
+a 100 M-censored sibling aborted the analysis with `reply a2a3 has no DB
+row`; after harvest or-close such a sibling is a permanent non-candidate, so
+the analysis has to verify the claim it actually made.
 
 plan25 (2026-10-27) made deep-hole exports recoverable without changing the
 "a rejected export aborts the session" rule: a hole's fill bound is seeded

@@ -9,6 +9,7 @@ use atomic_solver::position::Outcome;
 use atomic_solver::position::Position;
 use rusqlite::OpenFlags;
 
+use super::merge::DepthStatus;
 use super::schema::ShardRow;
 use super::sidecar::scan_shard_dir;
 
@@ -21,6 +22,9 @@ pub struct DbRow {
     pub ply: usize,
     pub outcome: Option<Outcome>,
     pub depth_bound: Option<u32>,
+    /// The proven depth claim's minimality annotation (spec §3); only the
+    /// flip analysis reads it (`bound_mode`), the walk ignores it.
+    pub depth_status: Option<DepthStatus>,
 }
 
 /// The DB content the frontier extraction works against.
@@ -53,7 +57,8 @@ pub fn load_db_rows(db_path: &Path) -> Res<DbContent> {
     }
     let mut stmt = conn
         .prepare(
-            "SELECT id, parent_id, ply, move_uci, outcome, depth_bound
+            "SELECT id, parent_id, ply, move_uci, outcome, depth_bound,
+                    depth_status
              FROM nodes ORDER BY id",
         )
         .map_err(|e| e.to_string())?;
@@ -66,6 +71,7 @@ pub fn load_db_rows(db_path: &Path) -> Res<DbContent> {
                 r.get::<_, Option<String>>(3)?,
                 r.get::<_, Option<String>>(4)?,
                 r.get::<_, Option<i64>>(5)?,
+                r.get::<_, Option<String>>(6)?,
             ))
         })
         .map_err(|e| e.to_string())?
@@ -76,7 +82,7 @@ pub fn load_db_rows(db_path: &Path) -> Res<DbContent> {
     let by_id: std::collections::HashMap<i64, (Option<i64>, i64, Option<String>)> =
         raw.iter().map(|r| (r.0, (r.1, r.2, r.3.clone()))).collect();
     let mut rows = Vec::with_capacity(raw.len());
-    for (_, parent, ply, mv_uci, outcome, bound) in &raw {
+    for (id, parent, ply, mv_uci, outcome, bound, status) in &raw {
         let mut chain: Vec<String> = Vec::new();
         let mut cur = Some((*parent, *ply, mv_uci.clone()));
         while let Some((p, pl, mv)) = cur {
@@ -114,11 +120,18 @@ pub fn load_db_rows(db_path: &Path) -> Res<DbContent> {
             Some(b) if *b >= 0 => Some(u32::try_from(*b).expect("positive i64 fits u32")),
             Some(b) => return Err(format!("negative depth_bound {b}")),
         };
+        let depth_status = match status.as_deref() {
+            None => None,
+            Some("exact") => Some(DepthStatus::Exact),
+            Some("bound") => Some(DepthStatus::Bound),
+            Some(v) => return Err(format!("nodes row {id}: unknown depth_status {v:?}")),
+        };
         rows.push(DbRow {
             ply: *ply as usize,
             path: chain,
             outcome,
             depth_bound,
+            depth_status,
         });
     }
     Ok(DbContent {
