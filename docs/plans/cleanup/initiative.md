@@ -59,14 +59,34 @@ one-off structural repairs.
 ## Open follow-ups (carried from report2/report3)
 
 - The `M19_FEN` / `STARTPOS_FEN` cross-file duplicates could be shared
-  if they drift again.
+  if they drift again. Assigned to **plan8** (a lib-test drift guard pins
+  the two `STARTPOS_FEN` constants) and **plan11** (single-sources
+  `M19_FEN` in `examples/benchmark.rs`).
 
 (Addressed by plan4: pedantic-lint triage, `selection.rs` test split —
 see `report4.md`.)
 
 ## In flight
 
-(none)
+Plans 8–11 were drafted by the 2026-10-28 owner-requested code-size /
+readability review (one plan per session, independent, any order):
+
+- **plan8** — CLI layer verbosity: option-parsing helpers, single-sourced
+  help, `PreExitHook` removed (`src/cli.rs` + `src/main.rs`; cosmetic).
+- **plan9** — `dfpn/children.rs`: `ChildInfo` constructors, one
+  unsolved-bounds ladder, test module split out (hot path; identity+
+  wall bars).
+- **plan10** — `proof_tree` layer: one proven-depth rule (and no `Vec`),
+  dead `dump_to_bin` protocol removed, `Position::default` removed,
+  `ProofEvent::Clear` decision.
+- **plan11** — tooling DRY (validate field list, `config.toml` drift
+test, fixture parsers, proofdb fixture) + owner-gated retirement of
+  `reconstruct_pt --experiment`.
+
+The review's non-action findings (kept as decisions, not tasks) are
+recorded in `plan11.md` §Decision F (keep `RestartSchedule`
+configurability + `chunk_growth`) and `plan10.md` §D2 (keep the
+`ProofEvent` enum even if it stays single-variant).
 
 ## Cross-references
 

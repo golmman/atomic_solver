@@ -1180,7 +1180,13 @@ report26.md + the initiative.md item 24 row.
 
 ---
 
-unused features
-verbose code
-duplications
-unecessary abstractions
+Investigate and search for
+* unused features
+* verbose code
+* duplications
+* unecessary abstractions
+* etc.
+
+The goal is to reduce code size, increase readability, and maintain the performance.
+
+Draft one or multiple plans for improvements.
