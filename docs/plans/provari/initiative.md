@@ -2,9 +2,12 @@
 
 ## Status
 
-**Active (opened 2026-10-29).** The first plan is
-[`plan1.md`](plan1.md): a reproducible head-to-head baseline and target
-corpus. No product code is changed by plan1.
+**Active (opened 2026-10-29).** Plan 1
+([`plan1.md`](plan1.md), [`report1.md`](report1.md)) established the
+reproducible baseline and target corpus. Plan 2
+([`plan2.md`](plan2.md)) is the next step: OR-node move-class starting proof
+numbers behind a default-off flag. Plan 2 executes the first half of backlog
+item 3; quiet-move grouping is deferred to plan 3.
 
 This initiative owns the **search-performance** side of the external
 comparison with [`aiorla/provari`](https://github.com/aiorla/provari). The
@@ -135,9 +138,10 @@ says so.
 
 | # | Item | Mechanism | Why / target | Metric | Status |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Head-to-head baseline and target corpus | Reproducible driver for provari (pinned commit, bundled model and hand control) vs `atomic_solver --first-outcome`; core FEN plus a fixed sample of `bench/high200.jsonl`; parsed results and provenance | Establish the target and stop ad hoc comparisons; identify the shared-win set | wall, nodes/child evals, coverage | **planned — `plan1.md`** |
-| 2 | Win-only front-end skeleton | Opt-in attacker-only DF-PN/win prover that proves a win and otherwise falls back; no new heuristics yet | Isolate provari's attacker-only proof semantics from our general outcome/PV machinery; provide the home for later levers | correctness (fallback identity), evals, wall | open (gated by #1) |
-| 3 | Move-class starting numbers + quiet grouping | Checks by surviving evasions; double threat 1, threat 4, quiet 9, hanging 15; one delayed plain-move group | Provari's two largest non-eval levers; measured 2.3× and 1.4× in provari ablations | evals, first-win length | open |
+| 1 | Head-to-head baseline and target corpus | Reproducible driver for provari (pinned commit, bundled model and hand control) vs `atomic_solver --first-outcome`; core FEN plus a fixed sample of `bench/high200.jsonl`; parsed results and provenance | Establish the target and stop ad hoc comparisons; identify the shared-win set | wall, nodes/child evals, coverage | **complete — `report1.md`** |
+| 2 | Win-only front-end skeleton | Opt-in attacker-only DF-PN/win prover that proves a win and otherwise falls back; no new heuristics yet | Isolate provari's attacker-only proof semantics from our general outcome/PV machinery; provide the home for later levers | correctness (fallback identity), evals, wall | open (deferred; re-rank after plan2) |
+| 3a | Move-class starting numbers (OR nodes) | Checks by (legal) evasions capped at 8; double threat 1, threat 4, weak threat 8, quiet 9, hanging 15; default-off flag | Provari's largest non-eval lever; test class signal before adding quiet grouping | deterministic child evals, wall, first-win length | **planned — `plan2.md`** |
+| 3b | Quiet-move grouping | One delayed plain-move child, opened only if needed | Provari's second non-eval lever; measured 1.4× in provari ablation | deterministic child evals, wall | open (gated by plan2) |
 | 4 | Static atomic tactical closure | Immediate exploding capture, exposed king, no-safe-evasion check, double threat, mate-in-one, cannot-win material | Avoid whole expansions on forced tactics; the complement to #3 | evals, expansion census | open |
 | 5 | Evaluation-scaled proof numbers (EF-PN) | Hand evaluation first; optional learned provability model only if licensing and evidence justify it | Provari's hand guide is 1.8×; the bundled model another ~1.5× and a shorter first line | evals, first-win length | open |
 | 6 | Rule50-free key + proof length/limit | Key boards without the clock; store proof length and highest holding clock; replay/verify conservatively | Recover move-order transpositions without breaking rule50/repetition soundness | TT hit rate, evals | open (soundness-sensitive) |
@@ -176,3 +180,12 @@ conventions.
 - **2026-10-29** — initiative opened after a read-only provari review and
   ablation on the motivating FEN. `plan1.md` drafted for the baseline and
   corpus; no product code changed.
+- **2026-10-29** — `plan1.md` executed (`report1.md`): provari ~0.39 s median
+  on the core FEN vs our 10 s timeout; `sample20` coverage 4/20 vs 1/20, with
+  one shared win at ~65× wall. Report recommends the move-class spike next.
+- **2026-10-29** — `plan2.md` drafted for OR-node move-class starting proof
+  numbers (backlog item 3a), default-off. Item 3 is split: plan2 is the
+  starting numbers, plan3 is quiet grouping. A plan-session rank-initialization
+  probe regressed the core case, so plan2 implements class rules and measures
+  with a deterministic child-eval budget rather than reusing the rank spike.
+  No product code changed by the plan session.
