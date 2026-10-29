@@ -86,10 +86,13 @@ and public Atomic Syzygy tablebases.
 
 This initiative takes the first lever because it is the cheapest and most
 directly serves the top quality attribute (correctness). The DF-PN ideas are
-search-semantics changes and belong to `dfpn`/`research` with the pinned
-measurement gate; the tablebase fact belongs to `egtb`, where the measured
+search-semantics changes and belong to the search-performance side; as of
+2026-10-29 they have a dedicated active home,
+[`../provari/initiative.md`](../provari/initiative.md), with the pinned
+measurement gate. The tablebase fact belongs to `egtb`, where the measured
 ≤6-men coverage (0.009% decisive, 0.0002% stress) keeps the faster-solves goal
-closed and leaves an oracle opportunity.
+closed and leaves an oracle opportunity. `interop` stays validation and
+interchange only.
 
 Plan1 is intentionally narrow: **root-`Win` trees only**, JSONL export, an
 external `provari check`, and triage. The compact/root-`Loss` work is
