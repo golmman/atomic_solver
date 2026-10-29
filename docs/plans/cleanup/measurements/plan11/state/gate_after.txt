@@ -1,0 +1,13 @@
+== fast gate AFTER (make test, plan11 applied)
+totals: passed=745 failed=0 ignored=41
+raw timing:
+real	1m48.595s
+user	5m1.640s
+sys	0m16.222s
+
+per-target (proofdb family):
+tests/proofdb.rs passed=78 failed=0 ignored=0
+tests/proofdb_flip.rs passed=60 failed=0 ignored=0
+tests/proofdb_fold.rs passed=67 failed=0 ignored=0
+tests/proofdb_harvest_cli.rs passed=65 failed=0 ignored=0
+tests/proofdb_merge_cli.rs passed=61 failed=0 ignored=0

@@ -34,8 +34,8 @@ use rusqlite::Connection;
 use atomic_movegen::types::Move;
 
 use atomic_solver::notation::uci_to_move;
-use atomic_solver::position::{Outcome, Position};
-use atomic_solver::proof_tree::{ProofNode, ProofTree, validate_proof_tree};
+use atomic_solver::position::Position;
+use atomic_solver::proof_tree::{ProofTree, validate_proof_tree};
 
 use proofdb::db::check_unmerged_shards;
 use proofdb::manifest::read_manifest;
@@ -47,7 +47,7 @@ use proofdb::verify::{Verdict, verify_db};
 
 const ROOT_FEN: &str = Position::STARTPOS_FEN;
 /// After 1.f3 e6 2.g4: Qd8-h4 explodes the White king (win in 1).
-const TACTIC_FEN: &str = "rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq g3 0 2";
+const TACTIC_FEN: &str = proofdb::fixture::TACTIC_FEN;
 const TACTIC_PATH: &[&str] = &["f2f3", "e7e6", "g2g4"];
 /// After 1.f3 e5 2.g4: the same Qd8-h4 win over a different black reply —
 /// a second, disjoint graft into the `f2f3`/`g2g4` ancestor chain.
@@ -56,44 +56,9 @@ const TACTIC2_PATH: &[&str] = &["f2f3", "e7e5", "g2g4"];
 
 // --- shared helpers ---
 
-/// A win-in-1 fixture tree (root + terminal child) at `fen`; the mating
-/// move `d8h4` is legal in both tactic positions.
-fn tactic_tree_at(fen: &str) -> ProofTree {
-    let mut pos = Position::from_fen(fen).unwrap();
-    let mv = uci_to_move("d8h4", &pos).expect("d8h4 is legal and wins");
-    pos.do_move(mv);
-    let child = ProofNode {
-        parent: Some(std::num::NonZeroU32::new(1).expect("nonzero")),
-        first_child: None,
-        next_sibling: None,
-        mv,
-        hash: 0,
-        outcome: Some(Outcome::Loss),
-        depth: 0,
-    };
-    let root = ProofNode {
-        parent: None,
-        first_child: Some(std::num::NonZeroU32::new(1).expect("nonzero")),
-        next_sibling: None,
-        mv: Move::NONE,
-        hash: 0,
-        outcome: Some(Outcome::Win),
-        depth: 1,
-    };
-    let tree = ProofTree {
-        root_fen: fen.to_string(),
-        nodes: vec![root, child],
-    };
-    assert!(
-        validate_proof_tree(&tree).is_ok(),
-        "fixture must be a valid proof"
-    );
-    tree
-}
-
 /// The win-in-1 fixture tree (root + terminal child) at `TACTIC_FEN`.
 fn tactic_tree() -> ProofTree {
-    tactic_tree_at(TACTIC_FEN)
+    proofdb::fixture::win_in_1_tree(TACTIC_FEN)
 }
 
 fn moves_from_path(ucis: &[&str]) -> Vec<Move> {
@@ -341,7 +306,7 @@ fn r3_delta_fold_preserves_ids_and_appends() {
         &dir.join("shards"),
         "h_b2",
         TACTIC2_PATH,
-        &tactic_tree_at(TACTIC2_FEN),
+        &proofdb::fixture::win_in_1_tree(TACTIC2_FEN),
     );
     let db = dir.join("shards").parent().unwrap().join("fold.db");
     let mut conn = Connection::open(&db).unwrap();
@@ -572,7 +537,7 @@ fn r7_censor_rows_survive_the_fold_and_import_is_max_rule() {
         &dir.join("shards"),
         "h_k2",
         TACTIC2_PATH,
-        &tactic_tree_at(TACTIC2_FEN),
+        &proofdb::fixture::win_in_1_tree(TACTIC2_FEN),
     );
     fold::fold(&mut conn, &dir.join("shards"), None, None).unwrap();
     assert_eq!(
@@ -720,7 +685,7 @@ fn shard_rows_seed_distinct_tag_and_path_sets() {
         &dir.join("shards"),
         "h_s2",
         TACTIC2_PATH,
-        &tactic_tree_at(TACTIC2_FEN),
+        &proofdb::fixture::win_in_1_tree(TACTIC2_FEN),
     );
     let db = dir.join("shards").parent().unwrap().join("fold.db");
     let mut conn = Connection::open(&db).unwrap();

@@ -1,30 +1,23 @@
 //! Reconstruct a proof tree from the root FEN plus a TT snapshot.
 //!
-//! This file is larger than the 10 KiB guideline because it contains the CLI
-//! argument parsing, the single-snapshot reconstruction path, the isomorphism
-//! oracle reporting, and the go/no-go experiment harness (dual build + oracle
-//! per suite case) in one example binary; splitting a runnable example into
-//! modules would hide the experiment's data flow.
+//! This file is larger than the 10 KiB guideline because the CLI argument
+//! parsing, the single-snapshot reconstruction path, and the isomorphism
+//! oracle reporting share one data flow; splitting a runnable example into
+//! modules would hide that flow without removing it.
 //!
 //! Usage:
 //!     cargo run --release --example `reconstruct_pt` -- --snapshot proof.bin.tt
 //!     cargo run --release --example `reconstruct_pt` -- --snapshot s.tt \
 //!         --oracle `proof_tree.bin` --out recon.bin
-//!     cargo run --release --example `reconstruct_pt` -- --experiment --json
-
-mod common;
 
 use atomic_solver::notation::{bits_to_move, moves_to_uci_path};
-use atomic_solver::position::{Outcome, Position};
-use atomic_solver::proof_tree::{ProofTree, ProofTreeWorkerHandle, validate_proof_tree};
+use atomic_solver::position::Outcome;
+use atomic_solver::proof_tree::{ProofTree, validate_proof_tree};
 use atomic_solver::reconstruct::{ReconstructConfig, reconstruct, tree_signature};
-use atomic_solver::search::dfpn::Search;
-use atomic_solver::tt_snapshot::{read_tt_snapshot, write_tt_snapshot};
+use atomic_solver::tt_snapshot::read_tt_snapshot;
 use serde::Serialize;
 use std::collections::HashSet;
-use std::io::{BufReader, BufWriter, Cursor};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::io::{BufReader, BufWriter};
 
 struct Options {
     snapshot: Option<String>,
@@ -41,7 +34,6 @@ struct Options {
     fill_total_budget: u64,
     oracle: Option<String>,
     json: bool,
-    experiment: bool,
     timeout: u64,
 }
 
@@ -59,7 +51,6 @@ fn parse_args() -> Options {
         fill_total_budget: 0,
         oracle: None,
         json: false,
-        experiment: false,
         timeout: 5,
     };
     let mut i = 0;
@@ -116,10 +107,6 @@ fn parse_args() -> Options {
             }
             "--json" => {
                 o.json = true;
-                i += 1;
-            }
-            "--experiment" => {
-                o.experiment = true;
                 i += 1;
             }
             other => panic!("unknown option '{other}' (see the module docs)"),
@@ -198,26 +185,18 @@ fn hole_row(stats: &atomic_solver::reconstruct::ReconstructStats) -> HoleRow {
     }
 }
 
-fn aggregate(mut acc: HoleRow, row: HoleRow) -> HoleRow {
-    acc.hit += row.hit;
-    acc.terminal += row.terminal;
-    acc.clock_hit += row.clock_hit;
-    acc.clock_miss_draw += row.clock_miss_draw;
-    acc.repetition += row.repetition;
-    acc.absent += row.absent;
-    acc.filled += row.filled;
-    acc.unfillable += row.unfillable;
-    acc.anomalies += row.anomalies;
-    acc
+/// Run the replay-based validator on a finished tree and return the
+/// `validate:` status string ("ok" or "FAILED n").
+fn validate_status(tree: &ProofTree) -> String {
+    match validate_proof_tree(tree) {
+        Ok(()) => "ok".to_string(),
+        Err(defects) => format!("FAILED {}", defects.len()),
+    }
 }
 
 fn main() {
     let opts = parse_args();
-    if opts.experiment {
-        run_experiment(&opts);
-    } else {
-        run_single(&opts);
-    }
+    run_single(&opts);
 }
 
 fn config_from(opts: &Options, tt_mb: usize) -> ReconstructConfig {
@@ -235,7 +214,7 @@ fn run_single(opts: &Options) {
     let snapshot_path = opts
         .snapshot
         .as_ref()
-        .unwrap_or_else(|| panic!("--snapshot is required (or use --experiment)"));
+        .unwrap_or_else(|| panic!("--snapshot is required"));
     let file = std::fs::File::open(snapshot_path)
         .unwrap_or_else(|e| panic!("cannot open snapshot {snapshot_path}: {e}"));
     let (header, solved, _unsolved) =
@@ -352,311 +331,6 @@ fn run_single(opts: &Options) {
         // The per-defect `pt_validate: FAILED ...` lines went to stderr from
         // the worker's finalize pass inside `reconstruct`.
         eprintln!("reconstruction failed proof-tree validation");
-        std::process::exit(1);
-    }
-}
-
-// ------------------------------ experiment --------------------------------
-
-#[derive(Serialize)]
-struct CaseRow {
-    name: String,
-    status: String,
-    outcome: Option<Outcome>,
-    child_evals_c: u64,
-    fill_evals_f: u64,
-    fill_ratio: Option<f64>,
-    recon_nodes: Option<u64>,
-    holes: Option<HoleRow>,
-    a_only_paths: Option<usize>,
-    b_only_paths: Option<usize>,
-    /// Live-tree finalize validation status ("ok" / "FAILED n"); absent for
-    /// skipped cases.
-    validate: Option<String>,
-    error: Option<String>,
-}
-
-#[derive(Serialize)]
-struct Summary {
-    cases: usize,
-    live_ok: usize,
-    skipped: usize,
-    recon_ok: usize,
-    oracle_isomorphic: usize,
-    coverage_failures: usize,
-    validate_failures: usize,
-    holes: HoleRow,
-    total_child_evals_c: u64,
-    total_fill_evals_f: u64,
-    median_fill_ratio: Option<f64>,
-    max_fill_ratio: Option<f64>,
-    verdict: String,
-}
-
-struct LiveBuild {
-    outcome: Outcome,
-    child_evals: u64,
-    snapshot: Vec<u8>,
-    tree: Option<ProofTree>,
-    memory_limited: bool,
-    /// Defect count from the worker's finalize validation pass (0 = clean).
-    validation_errors: usize,
-}
-
-fn live_build(fen: &str, tt_mb: usize, timeout: u64, pt_size: usize) -> LiveBuild {
-    let memory_flag = Arc::new(AtomicBool::new(false));
-    let (handle, join) =
-        ProofTreeWorkerHandle::spawn(fen.to_string(), pt_size, Arc::clone(&memory_flag));
-    let mut pos = Position::from_fen(fen).expect("valid suite FEN");
-    let mut search = Search::new(tt_mb);
-    search.set_timeout(timeout);
-    search.set_memory_limited(Some(Arc::clone(&memory_flag)));
-    search.set_proof_event_sender(Some(handle.event_sender()));
-    let (outcome, _pv, _nodes) = search.solve(&mut pos);
-    let child_evals = search.child_evaluations();
-    let mut snapshot = Vec::new();
-    write_tt_snapshot(
-        search.tt(),
-        fen,
-        tt_mb.min(u32::MAX as usize) as u32,
-        &mut snapshot,
-    )
-    .expect("snapshot write cannot fail into a Vec");
-    let mut tree = None;
-    let mut validation_errors = 0;
-    if outcome != Outcome::Draw && !memory_flag.load(Ordering::Acquire) {
-        handle.finalize();
-        validation_errors = handle.stats().validation_errors;
-        tree = Some(handle.tree());
-    }
-    drop(search);
-    drop(handle);
-    let _ = join.join();
-    LiveBuild {
-        outcome,
-        child_evals,
-        snapshot,
-        tree,
-        memory_limited: memory_flag.load(Ordering::Acquire),
-        validation_errors,
-    }
-}
-
-/// Run the replay-based validator on a finished tree and return the
-/// `validate:` status string ("ok" or "FAILED n").
-fn validate_status(tree: &ProofTree) -> String {
-    match validate_proof_tree(tree) {
-        Ok(()) => "ok".to_string(),
-        Err(defects) => format!("FAILED {}", defects.len()),
-    }
-}
-
-fn run_experiment(opts: &Options) {
-    let tt_mb = opts.tt_size.unwrap_or(128);
-    let config = config_from(opts, tt_mb);
-    let cases = common::load_decisive_suite();
-    if !opts.json {
-        println!(
-            "experiment: suite=decisive cases={} tt_size={tt_mb} pt_size={} timeout={}s fill_base={} fill_depth_cap={} fill_attempt_budget={}",
-            cases.len(),
-            opts.pt_size,
-            opts.timeout,
-            opts.fill_base,
-            opts.fill_depth_cap,
-            opts.fill_attempt_budget
-        );
-    }
-
-    let mut rows = Vec::new();
-    for case in &cases {
-        if opts.json {
-            eprintln!("experiment: {} ...", case.name);
-        }
-        let live = live_build(&case.fen, tt_mb, opts.timeout, opts.pt_size);
-        let status = if live.tree.is_none() {
-            if live.memory_limited {
-                "skipped_memory"
-            } else {
-                "skipped_live_draw"
-            }
-        } else {
-            "live_ok"
-        };
-        let mut row = CaseRow {
-            name: case.name.clone(),
-            status: status.to_string(),
-            outcome: Some(live.outcome),
-            child_evals_c: live.child_evals,
-            fill_evals_f: 0,
-            fill_ratio: None,
-            recon_nodes: None,
-            holes: None,
-            a_only_paths: None,
-            b_only_paths: None,
-            validate: None,
-            error: None,
-        };
-        if status == "live_ok" {
-            row.validate = Some(if live.validation_errors == 0 {
-                "ok".to_string()
-            } else {
-                format!("FAILED {}", live.validation_errors)
-            });
-            let (header, solved, _unsolved) =
-                read_tt_snapshot(&mut Cursor::new(&live.snapshot)).expect("fresh snapshot parses");
-            let output = reconstruct(&header.root_fen, &solved, &config);
-            row.fill_evals_f = output.fill_evals;
-            row.holes = Some(hole_row(&output.stats));
-            row.recon_nodes = Some(output.stats.total());
-            if let (Some(t2), Some(t1)) = (&output.tree, &live.tree) {
-                let (iso, a_only, b_only) = oracle_report(t1, t2);
-                row.a_only_paths = Some(a_only.len());
-                row.b_only_paths = Some(b_only.len());
-                if iso {
-                    row.status = "ok".to_string();
-                } else {
-                    row.status = "oracle_differing".to_string();
-                    row.error = Some(format!(
-                        "a only-in-events: {}; b only-in-recon: {}; first a: {}; first b: {}",
-                        a_only.len(),
-                        b_only.len(),
-                        a_only.first().cloned().unwrap_or_default(),
-                        b_only.first().cloned().unwrap_or_default()
-                    ));
-                }
-            } else {
-                row.status = "recon_failed".to_string();
-                row.error = output.error.clone();
-            }
-            if row.status == "ok" && row.child_evals_c > 0 {
-                row.fill_ratio = Some(row.fill_evals_f as f64 / row.child_evals_c as f64);
-            }
-        }
-        rows.push(row);
-    }
-
-    let ratios: Vec<f64> = rows.iter().filter_map(|r| r.fill_ratio).collect();
-    let mut sorted = ratios.clone();
-    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    let median = if sorted.is_empty() {
-        None
-    } else {
-        Some(sorted[sorted.len() / 2])
-    };
-    let max = ratios.iter().copied().fold(None, |acc: Option<f64>, r| {
-        Some(acc.map_or(r, |m: f64| m.max(r)))
-    });
-    let holes = rows
-        .iter()
-        .filter_map(|r| r.holes)
-        .fold(HoleRow::default(), aggregate);
-    let coverage_failures = rows
-        .iter()
-        .filter(|r| matches!(r.status.as_str(), "recon_failed" | "oracle_differing"))
-        .count();
-    let oracle_isomorphic = rows.iter().filter(|r| r.status == "ok").count();
-    let live_ok = rows
-        .iter()
-        .filter(|r| r.status != "skipped_live_draw" && r.status != "skipped_memory")
-        .count();
-    let skipped = rows.len() - live_ok;
-    let validate_failures = rows
-        .iter()
-        .filter(|r| r.validate.as_deref().is_some_and(|v| v != "ok"))
-        .count();
-
-    let verdict = if coverage_failures > 0 {
-        "NO-GO (coverage): reconstruction failed where the live worker succeeded"
-    } else if median.is_some_and(|m| m > 0.50) {
-        "NO-GO (amplification): median fill ratio exceeds 50%"
-    } else if median.is_some_and(|m| m <= 0.10) {
-        "GO: zero coverage failures, all oracles isomorphic, median fill ratio <= 10%"
-    } else {
-        "WATCH: no coverage failures, median fill ratio between 10% and 50%"
-    };
-    let summary = Summary {
-        cases: rows.len(),
-        live_ok,
-        skipped,
-        recon_ok: oracle_isomorphic,
-        oracle_isomorphic,
-        coverage_failures,
-        validate_failures,
-        holes,
-        total_child_evals_c: rows.iter().map(|r| r.child_evals_c).sum(),
-        total_fill_evals_f: rows.iter().map(|r| r.fill_evals_f).sum(),
-        median_fill_ratio: median,
-        max_fill_ratio: max,
-        verdict: verdict.to_string(),
-    };
-
-    if opts.json {
-        #[derive(Serialize)]
-        struct ExperimentJson {
-            summary: Summary,
-            cases: Vec<CaseRow>,
-        }
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&ExperimentJson {
-                summary,
-                cases: rows
-            })
-            .unwrap()
-        );
-    } else {
-        println!("| name | status | outcome | C | F | F/C | recon_nodes | validate | holes |");
-        println!("|------|--------|---------|---:|---:|----:|----:|------|-------|");
-        for r in &rows {
-            println!(
-                "| {} | {} | {} | {} | {} | {} | {} | {} | {} |",
-                r.name,
-                r.status,
-                r.outcome.map_or("-", |o| o.as_str()),
-                r.child_evals_c,
-                r.fill_evals_f,
-                r.fill_ratio.map_or("-".to_string(), |v| format!("{v:.3}")),
-                r.recon_nodes.map_or("-".to_string(), |v| v.to_string()),
-                r.validate.as_deref().unwrap_or("-"),
-                r.holes.map_or_else(|| "-".to_string(), |h| format!(
-                        "hit={} term={} clock_hit={} miss_draw={} rep={} absent={} filled={} unfill={} anom={}",
-                        h.hit, h.terminal, h.clock_hit, h.clock_miss_draw, h.repetition,
-                        h.absent, h.filled, h.unfillable, h.anomalies
-                    )),
-            );
-        }
-        println!();
-        println!(
-            "live_ok={live_ok} skipped={skipped} recon_ok={recon_ok} coverage_failures={coverage_failures} validate_failures={validate_failures}",
-            recon_ok = summary.recon_ok,
-        );
-        println!(
-            "holes: hit={} terminal={} clock_hit={} clock_miss_draw={} repetition={} absent={} filled={} unfillable={} anomalies={}",
-            holes.hit,
-            holes.terminal,
-            holes.clock_hit,
-            holes.clock_miss_draw,
-            holes.repetition,
-            holes.absent,
-            holes.filled,
-            holes.unfillable,
-            holes.anomalies
-        );
-        println!(
-            "total C={} total F={} median F/C={} max F/C={}",
-            summary.total_child_evals_c,
-            summary.total_fill_evals_f,
-            median.map_or("-".to_string(), |v| format!("{v:.4}")),
-            max.map_or("-".to_string(), |v| format!("{v:.4}")),
-        );
-        println!("verdict: {verdict}");
-    }
-    if validate_failures > 0 {
-        eprintln!("experiment: {validate_failures} live-tree validation failure(s)");
-        std::process::exit(1);
-    }
-    if coverage_failures > 0 {
-        eprintln!("experiment: {coverage_failures} coverage failure(s)");
         std::process::exit(1);
     }
 }

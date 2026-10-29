@@ -1,0 +1,42 @@
+== params.rs field-name census
+grep -c 'score_' src/search/ordering/params.rs: HEAD=65 now=53
+retyped ("field", value) literal lines in params.rs: HEAD=30 now=3
+  (check 1's 27 entries generated from the field names; checks 2-5 keep their 3 literals)
+
+== win-in-1 proofdb fixture FEN (rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b ...)
+HEAD:
+HEAD:examples/proofdb/fixture.rs:1
+HEAD:examples/proofdb/merge/tests.rs:1
+HEAD:tests/proofdb.rs:1
+HEAD:tests/proofdb_fold.rs:1
+HEAD:tests/proofdb_harvest_cli.rs:1
+HEAD:tests/proofdb_merge_cli.rs:1
+now:
+examples/proofdb/merge/tests.rs:1
+examples/proofdb/fixture.rs:1
+
+== M19 FEN literal (4r1k1/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R4R1K w - - 2 19)
+HEAD:
+HEAD:examples/benchmark.rs:1
+HEAD:examples/common.rs:1
+HEAD:tests/stress.rs:1
+now:
+examples/common.rs:1
+tests/stress.rs:1
+
+== --experiment
+HEAD:
+HEAD:AGENTS.md:132:- `reconstruct_pt` — rebuild a proof tree offline from a FEN + TT snapshot (`--snapshot`); reports `validate: ok|FAILED n`, exits non-zero on defects; `--oracle` and `--experiment` run the dual-build oracle.
+HEAD:examples/reconstruct_pt.rs:13://!     cargo run --release --example `reconstruct_pt` -- --experiment --json
+HEAD:examples/reconstruct_pt.rs:121:            "--experiment" => {
+HEAD:examples/reconstruct_pt.rs:238:        .unwrap_or_else(|| panic!("--snapshot is required (or use --experiment)"));
+now:  (none expected)
+  <no matches>
+
+== dumped experiment symbols (HEAD had all, now none)
+run_experiment  HEAD=2   now=0
+live_build      HEAD=2   now=0
+LiveBuild       HEAD=3   now=0
+CaseRow         HEAD=3   now=0
+Summary         HEAD=3   now=0
+aggregate       HEAD=2   now=0

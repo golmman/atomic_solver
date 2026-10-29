@@ -19,17 +19,13 @@
 //! spine `f2f3` / `f2f3 e7e6` (open) + `f2f3 e7e6 g2g4` (win, bound 1) +
 //! `f2f3 e7e6 g2g4 d8h4` (loss terminal).
 
+#[path = "../examples/proofdb/mod.rs"]
+mod proofdb;
+
 use std::process::Command;
 use std::sync::{Mutex, OnceLock};
 
-use atomic_movegen::types::Move;
-
-use atomic_solver::notation::uci_to_move;
-use atomic_solver::position::{Outcome, Position};
-use atomic_solver::proof_tree::{ProofNode, ProofTree};
-
-/// After 1.f3 e6 2.g4: Qd8-h4 explodes the White king (win in 1).
-const TACTIC_FEN: &str = "rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq g3 0 2";
+use proofdb::fixture::{TACTIC_FEN, win_in_1_tree};
 
 static RUN_LOCK: Mutex<()> = Mutex::new(());
 static FIXTURE: OnceLock<String> = OnceLock::new();
@@ -43,33 +39,10 @@ fn cargo() -> Command {
 /// Run `proofdb_merge` over the fixture manifest + shard → fixture DB.
 fn build_fixture(dir: &std::path::Path) {
     // The win-in-1 shard (root + terminal child), rooted at TACTIC_FEN.
-    let mut pos = Position::from_fen(TACTIC_FEN).unwrap();
-    let mv = uci_to_move("d8h4", &pos).unwrap();
-    pos.do_move(mv);
-    let child = ProofNode {
-        parent: Some(std::num::NonZeroU32::new(1).unwrap()),
-        first_child: None,
-        next_sibling: None,
-        mv,
-        hash: 0,
-        outcome: Some(Outcome::Loss),
-        depth: 0,
-    };
-    let root = ProofNode {
-        parent: None,
-        first_child: Some(std::num::NonZeroU32::new(1).unwrap()),
-        next_sibling: None,
-        mv: Move::NONE,
-        hash: 0,
-        outcome: Some(Outcome::Win),
-        depth: 1,
-    };
-    let tree = ProofTree {
-        root_fen: TACTIC_FEN.to_string(),
-        nodes: vec![root, child],
-    };
     let mut bytes = Vec::new();
-    tree.to_bin(&mut bytes).expect("fixture serializes");
+    win_in_1_tree(TACTIC_FEN)
+        .to_bin(&mut bytes)
+        .expect("fixture serializes");
     std::fs::write(dir.join("clifix.bin"), bytes).unwrap();
     std::fs::write(
         dir.join("manifest.json"),

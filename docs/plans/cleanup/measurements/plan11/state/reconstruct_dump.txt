@@ -1,0 +1,8 @@
+stdout of the reconstruct_pt run (surviving --snapshot path):
+outcome: win
+nodes: 4
+holes: hit=3 terminal=1 clock_hit=0 clock_miss_draw=0 repetition=0 absent=0 filled=0 unfillable=0 anomalies=0
+fill_evals: 0 duplicate_keys: 0
+dump: /tmp/dump2.bin
+validate: ok
+ab94c69f361127ef816c9ce2b8f2b0b0e0a9d7a223b92cb9716482c17f0c9f0b  /tmp/dump2.bin

@@ -60,6 +60,24 @@ contract (P2 collapse stays recorded as not-taken). `worker.rs`
 the proof-tree binary dump is byte-identical (`ab94c69f…`), the three
 search anchors are child-eval identical, gates green.
 
+**plan11 done 2026-10-29** (`report11.md`). Tooling DRY + one retirement:
+`ScorerParams::validate`'s check 1 generates its 27 field names from a
+local `macro_rules!` instead of retyping them (the `pieces.` message
+spelling preserved); the benchmark fixture parser is one file
+(`tests/common/fixture_parse.rs`) included by path from both
+`tests/common/mod.rs` and `examples/common.rs` (normalized duplication
+45 → 2 lines); `M19_FEN` is single-sourced in `examples/common.rs`; the
+proofdb win-in-1 tree fixture lives once in `examples/proofdb/fixture.rs`
+and all four test harnesses use it (FEN copies 6 → 2); and the owner-gated
+retirement was taken — `reconstruct_pt --experiment` plus `LiveBuild`,
+`run_experiment`, `CaseRow`, `Summary`, `aggregate` are deleted
+(662 → 336 lines), `--snapshot`/`--oracle` and `HoleRow` kept. Phase B
+**pivoted on measurement**: `config.toml` was not a stale copy of the
+defaults but the only copy of the external optimizer's tuned set, so the
+stale part was its header claim; the header now says so and the file is
+pinned by validity, not by value (owner decision, `report11.md` §3).
+Anchors child-eval exact, dump sha256 identical, gates green.
+
 ## Goal
 
 Tighten the codebase without changing any game-theoretic result: dead
@@ -113,23 +131,19 @@ one-off structural repairs.
 ## Open follow-ups (carried from report2/report3)
 
 - The `M19_FEN` / `STARTPOS_FEN` cross-file duplicates could be shared
-  if they drift again. The `STARTPOS_FEN` half is **done** (plan8:
-  `startpos_matches_position_starpos`, `report8.md`); the `M19_FEN` half
-  stays with **plan11** (single-sources `M19_FEN` in
-  `examples/benchmark.rs`).
+  if they drift again. Both halves are **done**: `STARTPOS_FEN` by plan8
+  (`startpos_matches_position_starpos`, `report8.md`), `M19_FEN` by plan11
+  (single-sourced in `examples/common.rs`; `tests/stress.rs` keeps one
+  literal with a pointer, `report11.md` §4).
 
 (Addressed by plan4: pedantic-lint triage, `selection.rs` test split —
 see `report4.md`.)
 
 ## In flight
 
-Plans 9–11 were drafted by the 2026-10-28 owner-requested code-size /
-readability review (one plan per session, independent, any order);
-plans 8, 9 and 10 are done.
-
-- **plan11** — tooling DRY (validate field list, `config.toml` drift
-test, fixture parsers, proofdb fixture) + owner-gated retirement of
-  `reconstruct_pt --experiment`.
+Nothing. The 8–11 set drafted by the 2026-10-28 owner-requested code-size /
+readability review (one plan per session, independent, any order) is fully
+executed: plans 8, 9, 10 and 11 are done.
 
 The review's non-action findings (kept as decisions, not tasks) are
 recorded in `plan11.md` §Decision F (keep `RestartSchedule`

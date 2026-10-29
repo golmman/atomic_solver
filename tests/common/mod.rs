@@ -11,11 +11,12 @@ use atomic_solver::notation::move_to_uci;
 use atomic_solver::position::{Outcome, Position};
 use atomic_solver::search::dfpn::Search;
 
-/// Fixture containing the move-order benchmark positions (m20 to m29).
-pub const MOVE_ORDER_FIXTURE: &str = include_str!("../fixtures/move_order_positions.txt");
+mod fixture_parse;
 
-/// Fixture containing the decisive benchmark positions (dec01 to dec46).
-pub const DECISIVE_FIXTURE: &str = include_str!("../fixtures/decisive_positions.txt");
+// Each test binary embeds only a subset of these items; the unused ones are
+// the same per-binary compilation artifact the `dead_code` allow covers.
+#[allow(unused_imports)]
+pub use fixture_parse::*;
 
 /// Fixture containing decisive positions that are not solved in the default 5-second budget.
 pub const DECISIVE_REMAINING_FIXTURE: &str = include_str!("../fixtures/decisive_remaining.txt");
@@ -23,64 +24,14 @@ pub const DECISIVE_REMAINING_FIXTURE: &str = include_str!("../fixtures/decisive_
 /// Fixture for the always-on smoke suite of the fast tier.
 pub const SMOKE_FIXTURE: &str = include_str!("../fixtures/smoke_positions.txt");
 
-/// A single move-order benchmark entry.
-#[derive(Debug, Clone)]
-pub struct MoveOrderCase {
-    pub name: String,
-    pub fen: String,
-    pub expected: Option<Outcome>,
-    pub note: Option<String>,
-}
-
-/// Load the move-order benchmark suite from the embedded fixture.
-pub fn load_move_order_suite() -> Vec<MoveOrderCase> {
-    parse_move_order_fixture(MOVE_ORDER_FIXTURE)
-}
-
-/// Load the decisive benchmark suite from the embedded fixture.
-pub fn load_decisive_suite() -> Vec<MoveOrderCase> {
-    parse_move_order_fixture(DECISIVE_FIXTURE)
-}
-
 /// Load the remaining decisive positions that are too hard for the default budget.
 pub fn load_decisive_remaining_suite() -> Vec<MoveOrderCase> {
-    parse_move_order_fixture(DECISIVE_REMAINING_FIXTURE)
+    fixture_parse::parse_move_order_fixture(DECISIVE_REMAINING_FIXTURE)
 }
 
 /// Load the smoke suite from the embedded fixture.
 pub fn load_smoke_suite() -> Vec<MoveOrderCase> {
-    parse_move_order_fixture(SMOKE_FIXTURE)
-}
-
-fn parse_move_order_fixture(s: &str) -> Vec<MoveOrderCase> {
-    s.lines()
-        .map(str::trim)
-        .filter(|line| !line.is_empty() && !line.starts_with('#'))
-        .map(|line| {
-            let mut parts = line.splitn(4, ';');
-            let name = parts.next().unwrap_or("").trim().to_string();
-            let fen = parts.next().unwrap_or("").trim().to_string();
-            let expected = parts.next().and_then(|p| {
-                let p = p.trim();
-                if p.is_empty() {
-                    None
-                } else {
-                    p.parse::<Outcome>().ok()
-                }
-            });
-            let note = parts
-                .next()
-                .map(str::trim)
-                .filter(|n| !n.is_empty())
-                .map(String::from);
-            MoveOrderCase {
-                name,
-                fen,
-                expected,
-                note,
-            }
-        })
-        .collect()
+    fixture_parse::parse_move_order_fixture(SMOKE_FIXTURE)
 }
 
 /// Solve `fen` with `secs` timeout and assert that any decisive outcome matches

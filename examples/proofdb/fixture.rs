@@ -13,19 +13,16 @@ use atomic_solver::proof_tree::{ProofNode, ProofTree, validate_proof_tree};
 pub(crate) const TACTIC_FEN: &str =
     "rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq g3 0 2";
 
-/// Build a fixture DB: root (open) + two grafts reaching the same win-in-1
-/// subtree via two different legal move orders (`f2f3 e7e6 g2g4` and
-/// `g2g4 e7e6 f2f3`), so every row replays and the path-tree dedupe is
-/// exercised. Open: root, `f2f3`, `g2g4`, `f2f3 e7e6`, `g2g4 e7e6`; the
-/// `… f2f3`/`… g2g4` (win, bound 1) and `d8h4` (loss terminal) chain nodes
-/// are proven. Returns the DB path (`built_from` = "fixture"; the plan22
-/// fold digest is a fold-time recompute, not a fixture input).
-pub(crate) fn fixture_db(dir: &std::path::Path) -> std::path::PathBuf {
-    let mut pos = Position::from_fen(TACTIC_FEN).unwrap();
-    let mv = uci_to_move("d8h4", &pos).unwrap();
+/// Build the win-in-1 fixture tree at `fen`: the root (win, bound 1) plus the
+/// terminal `d8h4` loss child. The move must be legal and winning at `fen`
+/// (true for every tactic position in these fixtures). This is the single
+/// source for the tree the proofdb test harnesses graft into their shards.
+pub(crate) fn win_in_1_tree(fen: &str) -> ProofTree {
+    let mut pos = Position::from_fen(fen).unwrap();
+    let mv = uci_to_move("d8h4", &pos).expect("d8h4 is legal and wins");
     pos.do_move(mv);
     let child = ProofNode {
-        parent: Some(std::num::NonZeroU32::new(1).unwrap()),
+        parent: Some(std::num::NonZeroU32::new(1).expect("nonzero")),
         first_child: None,
         next_sibling: None,
         mv,
@@ -35,7 +32,7 @@ pub(crate) fn fixture_db(dir: &std::path::Path) -> std::path::PathBuf {
     };
     let root = ProofNode {
         parent: None,
-        first_child: Some(std::num::NonZeroU32::new(1).unwrap()),
+        first_child: Some(std::num::NonZeroU32::new(1).expect("nonzero")),
         next_sibling: None,
         mv: Move::NONE,
         hash: 0,
@@ -43,11 +40,25 @@ pub(crate) fn fixture_db(dir: &std::path::Path) -> std::path::PathBuf {
         depth: 1,
     };
     let tree = ProofTree {
-        root_fen: TACTIC_FEN.to_string(),
+        root_fen: fen.to_string(),
         nodes: vec![root, child],
     };
-    assert!(validate_proof_tree(&tree).is_ok());
+    assert!(
+        validate_proof_tree(&tree).is_ok(),
+        "fixture must be a valid proof"
+    );
+    tree
+}
 
+/// Build a fixture DB: root (open) + two grafts reaching the same win-in-1
+/// subtree via two different legal move orders (`f2f3 e7e6 g2g4` and
+/// `g2g4 e7e6 f2f3`), so every row replays and the path-tree dedupe is
+/// exercised. Open: root, `f2f3`, `g2g4`, `f2f3 e7e6`, `g2g4 e7e6`; the
+/// `… f2f3`/`… g2g4` (win, bound 1) and `d8h4` (loss terminal) chain nodes
+/// are proven. Returns the DB path (`built_from` = "fixture"; the plan22
+/// fold digest is a fold-time recompute, not a fixture input).
+pub(crate) fn fixture_db(dir: &std::path::Path) -> std::path::PathBuf {
+    let tree = win_in_1_tree(TACTIC_FEN);
     let mut pt = PathTree::new();
     let grafts: Vec<Vec<String>> = vec![
         vec!["f2f3".into(), "e7e6".into(), "g2g4".into()],

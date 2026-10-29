@@ -1,0 +1,24 @@
+Three search anchors (cleanup plan8 §Phase 0), re-measured after plan11.
+No search code is touched by this plan; exact match is the leak tripwire.
+
+quick @ 256
+  cmd: ./target/release/examples/benchmark --suite quick --first-outcome --timeout 3 --runs 1 --tt-size 256 --json
+  expected: 59 cases, total child_evals 42,109,768, 0 wrong, 0 timeouts
+  now:      59 cases, total child_evals 42,109,768, 0 wrong, 0 timeouts  -> EXACT
+
+dec31 FO
+  cmd: ./target/release/atomic_solver --fen 'r1bq1k2/ppN3p1/2p1p2P/6P1/1b1P1p2/8/PP3P2/R2K1B1R b - - 0 15' --timeout 20 --first-outcome
+  expected: evals: 510426, outcome: loss length: 22
+  now:      evals: 510426, outcome: loss length: 22  -> EXACT
+
+m22 FO
+  cmd: ./target/release/atomic_solver --fen '4r2k/3p4/2pB2p1/p6p/5pPP/2N1PP2/P1PP4/1R4RK w - - 0 22' --timeout 60 --first-outcome
+  expected: evals: 15023911, outcome: win length: 75
+  now:      evals: 15023911, outcome: win length: 75  -> EXACT
+
+proof-tree dump identity (reconstruct_pt surviving path, plan10 reference)
+  cmd: ./target/release/atomic_solver --fen '4k3/8/8/8/8/8/8/4KRR1 w - - 0 1' --timeout 5 --tt-dump-path /tmp/mate3.tt
+       ./target/release/examples/reconstruct_pt --snapshot /tmp/mate3.tt --out /tmp/dump.bin && sha256sum /tmp/dump.bin
+  reference (cleanup report10): ab94c69f361127ef816c9ce2b8f2b0b0e0a9d7a223b92cb9716482c17f0c9f0b (70 bytes)
+  now:                          (line below)
+ab94c69f361127ef816c9ce2b8f2b0b0e0a9d7a223b92cb9716482c17f0c9f0b  /tmp/dump.bin

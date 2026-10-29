@@ -1,0 +1,12 @@
+src/search/ordering/params.rs                 now:    376 lines /   12359 bytes
+examples/common.rs                            now:     53 lines /    1826 bytes
+tests/common/mod.rs                           now:    294 lines /   11376 bytes
+examples/reconstruct_pt.rs                    now:    336 lines /   11511 bytes
+examples/proofdb/fixture.rs                   now:     97 lines /    3689 bytes
+tests/proofdb.rs                              now:   1250 lines /   47454 bytes
+tests/proofdb_fold.rs                         now:    701 lines /   29036 bytes
+tests/proofdb_merge_cli.rs                    now:    288 lines /   10254 bytes
+tests/proofdb_harvest_cli.rs                  now:    417 lines /   15556 bytes
+src/config.rs                                 now:    129 lines /    4141 bytes
+config.toml                                   now:     39 lines /    1117 bytes
+tests/common/fixture_parse.rs                 now:     70 lines /    2541 bytes (new file)

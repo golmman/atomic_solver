@@ -159,6 +159,20 @@ impl Default for ScorerParams {
     }
 }
 
+/// `field_values!(self => a, b)` expands to `[(stringify!(a), self.a), …]`, so
+/// a validation message names a field through the macro instead of a retyped
+/// literal. The `pieces:` rule spells the piece-table names `pieces.<field>`
+/// (the wording the error messages and `docs/spec/optimizer_interface.md`
+/// use). Call sites keep the fields in struct declaration order.
+macro_rules! field_values {
+    ($this:expr => $($field:ident),* $(,)?) => {
+        [$((stringify!($field), $this.$field)),*]
+    };
+    (pieces: $this:expr => $($field:ident),* $(,)?) => {
+        [$((concat!("pieces.", stringify!($field)), $this.$field)),*]
+    };
+}
+
 impl ScorerParams {
     /// Look up a piece value, returning 0 for unknown/no piece types.
     #[must_use]
@@ -183,36 +197,20 @@ impl ScorerParams {
     /// overlap in configurable ways, so the validation only guards against
     /// accidental overflow and obviously malformed values.
     pub fn validate(&self) -> Result<(), ScorerParamsError> {
-        // 1. Non-negativity for all score-related fields.
-        let non_negative = [
-            ("score_winning_capture", self.score_winning_capture),
-            ("score_promotion", self.score_promotion),
-            ("score_capture", self.score_capture),
-            ("capture_net_scale", self.capture_net_scale),
-            ("score_threat_last", self.score_threat_last),
-            ("score_threat", self.score_threat),
-            ("score_kamikaze_last", self.score_kamikaze_last),
-            ("score_kamikaze", self.score_kamikaze),
-            ("score_approach", self.score_approach),
-            ("score_approach_step", self.score_approach_step),
-            ("score_center", self.score_center),
-            ("score_center_step", self.score_center_step),
-            ("score_pawn_storm", self.score_pawn_storm),
-            ("score_pawn_storm_step", self.score_pawn_storm_step),
-            ("score_rook_center", self.score_rook_center),
-            ("score_rook_open_file", self.score_rook_open_file),
-            ("score_rook_open_file_step", self.score_rook_open_file_step),
-            ("score_rook_back_rank", self.score_rook_back_rank),
-            ("and_pawn_storm_scale", self.and_pawn_storm_scale),
-            ("and_rook_attack_scale", self.and_rook_attack_scale),
-            ("and_approach_scale", self.and_approach_scale),
-            ("pieces.pawn", self.pieces.pawn),
-            ("pieces.knight", self.pieces.knight),
-            ("pieces.bishop", self.pieces.bishop),
-            ("pieces.rook", self.pieces.rook),
-            ("pieces.queen", self.pieces.queen),
-            ("pieces.commoner", self.pieces.commoner),
-        ];
+        // 1. Non-negativity for all score-related fields (keep in struct order).
+        let non_negative = field_values!(self =>
+            score_winning_capture, score_promotion, score_capture, capture_net_scale,
+            score_threat_last, score_threat, score_kamikaze_last, score_kamikaze,
+            score_approach, score_approach_step, score_center, score_center_step,
+            score_pawn_storm, score_pawn_storm_step, score_rook_center,
+            score_rook_open_file, score_rook_open_file_step, score_rook_back_rank,
+            and_pawn_storm_scale, and_rook_attack_scale, and_approach_scale,
+        )
+        .into_iter()
+        .chain(
+            field_values!(pieces: self.pieces => pawn, knight, bishop, rook, queen,
+                commoner),
+        );
         for (field, value) in non_negative {
             if value < 0 {
                 return Err(ScorerParamsError::Negative { field, value });

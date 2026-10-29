@@ -2,6 +2,10 @@
 //! budget. They are marked `#[ignore]` (slow tier) and run via
 //! `cargo test --release -- --include-ignored`; they serve as a guard against
 //! hangs or false decisive results.
+//!
+//! The m19 FEN below is a literal because this test cannot include
+//! `examples/common.rs`; its canonical source is `common::M19_FEN` there
+//! (keep the two in sync).
 
 mod common;
 

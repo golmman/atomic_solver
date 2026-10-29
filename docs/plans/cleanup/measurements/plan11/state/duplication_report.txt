@@ -1,0 +1,61 @@
+== normalized duplicate-block census (dup_census.py, blocks >= 2 lines)
+
+--- BEFORE (HEAD e28a08d)
+HEAD: examples/common.rs (91 lines) vs tests/common/mod.rs (304 lines)
+matched blocks (>=2 lines): 4, duplicated lines: 45
+  a[14:23] == b[19:28] (9 lines)
+    | /// A single move-order benchmark entry.
+    | #[derive(Debug, Clone)]
+    | pub struct MoveOrderCase {
+    | pub name: String,
+    | pub fen: String,
+    | pub expected: Option<Outcome>,
+    | pub note: Option<String>,
+    | }
+    | /// Load the move-order benchmark suite from the embedded fixture.
+  a[24:27] == b[28:31] (3 lines)
+    | pub fn load_move_order_suite() -> Vec<MoveOrderCase> {
+    | parse_move_order_fixture(MOVE_ORDER_FIXTURE)
+    | }
+  a[36:38] == b[32:34] (2 lines)
+    | pub fn load_decisive_suite() -> Vec<MoveOrderCase> {
+    | parse_move_order_fixture(DECISIVE_FIXTURE)
+  a[38:69] == b[42:73] (31 lines)
+    | }
+    | fn parse_move_order_fixture(s: &str) -> Vec<MoveOrderCase> {
+    | s.lines()
+    | .map(str::trim)
+    | .filter(|line| !line.is_empty() && !line.starts_with('#'))
+    | .map(|line| {
+    | let mut parts = line.splitn(4, ';');
+    | let name = parts.next().unwrap_or("").trim().to_string();
+    | let fen = parts.next().unwrap_or("").trim().to_string();
+    | let expected = parts.next().and_then(|p| {
+    | let p = p.trim();
+    | if p.is_empty() {
+    | None
+    | } else {
+    | p.parse::<Outcome>().ok()
+    | }
+    | });
+    | let note = parts
+    | .next()
+    | .map(str::trim)
+    | .filter(|n| !n.is_empty())
+    | .map(String::from);
+    | MoveOrderCase {
+    | name,
+    | fen,
+    | expected,
+    | note,
+    | }
+    | })
+    | .collect()
+    | }
+
+--- AFTER (working tree)
+WORKTREE: examples/common.rs (45 lines) vs tests/common/mod.rs (259 lines)
+matched blocks (>=2 lines): 1, duplicated lines: 2
+  a[13:15] == b[14:16] (2 lines)
+    | #[allow(unused_imports)]
+    | pub use fixture_parse::*;

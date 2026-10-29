@@ -89,6 +89,16 @@ commoner = 20_000
         path
     }
 
+    /// The committed `config.toml` is the optimizer's tuned set, *not* the
+    /// compiled defaults, so it is pinned by validity rather than by value: the
+    /// optimizer contract admits only parameter sets that pass `validate`, and
+    /// `tests/test_benchmark_json.rs` loads this exact file.
+    #[test]
+    fn repo_config_toml_loads_and_validates() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("config.toml");
+        load_scorer_config(&path).expect("config.toml must load and validate");
+    }
+
     #[test]
     fn missing_config_file_returns_io_error() {
         let result = load_scorer_config("/nonexistent/config.toml");

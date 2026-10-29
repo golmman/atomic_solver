@@ -351,7 +351,7 @@ fn default_suite() -> Vec<Case> {
         },
         Case {
             name: "m19".to_string(),
-            fen: "4r1k1/3p4/p1pB2p1/5p1p/7P/2N1PPP1/P1PP4/R4R1K w - - 2 19".to_string(),
+            fen: common::M19_FEN.to_string(),
             expected: None,
             note: None,
         },

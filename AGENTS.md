@@ -129,7 +129,7 @@ A pure solver for atomic chess in Rust.
   `--manifest` is a legacy migration source that backfills sidecars) +
   canonical dump; idempotent by tag skip (sha256 cross-checked), conflicts
   abort without writes. Shard-dir/DB default under `data/proofdb/`.
-- `reconstruct_pt` — rebuild a proof tree offline from a FEN + TT snapshot (`--snapshot`); reports `validate: ok|FAILED n`, exits non-zero on defects; `--oracle` and `--experiment` run the dual-build oracle.
+- `reconstruct_pt` — rebuild a proof tree offline from a FEN + TT snapshot (`--snapshot`); reports `validate: ok|FAILED n`, exits non-zero on defects; `--oracle` cross-checks the rebuilt tree against a reference dump.
 - `replay` — replay a UCI line from a FEN, then solve the resulting position.
 - `solve_depth_limited` — fixed-`max_depth` search without the iterative-deepening bootstrap.
 - `static_move_scores` — sorted `StaticAtomicScorer` values (`--name <case>`).

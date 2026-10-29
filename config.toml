@@ -1,7 +1,11 @@
-# Default move-ordering parameters for the atomic-chess solver.
+# Move-ordering parameters: the external optimizer's current tuned set
+# (see docs/spec/optimizer_interface.md). Copy and edit it, or pass it with
+# `--config <FILE>` / `SCORER_CONFIG`, to run the solver with tuned weights.
 #
-# These values match the compiled-in defaults. Copy this file and pass it with
-# `--config <FILE>` to experiment with different weights without recompiling.
+# This file is deliberately NOT the compiled-in default: the built-in weights
+# live in `ScorerParams::default()` (src/search/ordering/params.rs) and are
+# used unless a config file is named. Keep that one authoritative for
+# defaults, this one for tuned candidates.
 
 [scorer]
 and_approach_scale = 11

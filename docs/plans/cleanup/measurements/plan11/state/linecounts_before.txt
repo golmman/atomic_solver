@@ -1,0 +1,11 @@
+src/search/ordering/params.rs                 HEAD:   378 lines /   12587 bytes
+examples/common.rs                            HEAD:   103 lines /    3431 bytes
+tests/common/mod.rs                           HEAD:   343 lines /   12953 bytes
+examples/reconstruct_pt.rs                    HEAD:   662 lines /   22999 bytes
+examples/proofdb/fixture.rs                   HEAD:    86 lines /    3193 bytes
+tests/proofdb.rs                              HEAD:  1277 lines /   48334 bytes
+tests/proofdb_fold.rs                         HEAD:   736 lines /   30059 bytes
+tests/proofdb_merge_cli.rs                    HEAD:   315 lines /   11172 bytes
+tests/proofdb_harvest_cli.rs                  HEAD:   444 lines /   16474 bytes
+src/config.rs                                 HEAD:   119 lines /    3606 bytes
+config.toml                                   HEAD:    35 lines /     847 bytes
