@@ -2,20 +2,23 @@
 
 ## Status
 
-**Dormant** (set 2026-09-17), maintained **agile** while open: plans are
-single-lever and sized to one session; the backlog is re-ranked after every
-report. **The backlog is empty** — every item is closed: #1 done (plan9),
-#2 closed permanently (plan10/plan11), #3 closed as subsumed by
-`--refine-cap 0` (2026-09-17, History), #4 closed no-go (the `conversion`
-plan5 mining round), #5 closed no-go (plan12), #6 done (plan13). The last
-live lever (threshold-cut-frame pricing) was handed to `conversion` backlog
-#6 at dormancy. **Reopen triggers**: (a) a new *measured* search-semantics
-diagnostic for the deep, repetition-dominated class that has no home in
-`lean` (wall time), `conversion` (the deep-conversion class: reuse
+**Active** (reopened 2026-10-29 from dormant; plan14 drafted), maintained
+**agile** while open: plans are single-lever and sized to one session; the
+backlog is re-ranked after every report. Closed items: #1 done (plan9), #2
+closed permanently (plan10/plan11), #3 closed as subsumed by `--refine-cap 0`
+(2026-09-17, History), #4 closed no-go (the `conversion` plan5 mining round),
+#5 closed no-go (plan12), #6 done (plan13). **Open: #7 context-keyed
+threshold-cut reuse** (plan14 Phase 0 drafted 2026-10-29; plan-session probes
+measured a 0.656× stress / 1.042× m22 salt-0 first-order surface for the
+bounded GHI-safe cut-context table, with the previous naive TT-cutoff and
+high-water variants rejected). **Reopen triggers**: (a) a new *measured*
+search-semantics diagnostic for the deep, repetition-dominated class that has
+no home in `lean` (wall time), `conversion` (the deep-conversion class: reuse
 envelope, line guidance, parallelism, threshold-cut pricing), or `egtb`
 (tablebase); (b) a soundness regression traced to DF-PN+ search semantics
 (e.g. `test_repetition`). On reopen, re-rank the backlog and open the next
-plan, **plan14**. Plans 1–9 are done
+plan; the next plan number is **plan15** (plan14 is drafted, not yet
+executed). Plans 1–9 are done
 (`report1.md`–`report9.md`) and predate this file; plan10 was executed as a
 Phase 0 no-go with no code changes (`report10.md`); plan11 closed backlog #2
 permanently (`report11.md`). This `initiative.md` was created on 2026-09-11
@@ -408,6 +411,27 @@ changes *when* refinement stops, not how lines are labeled.
   diagnostic-first Phase 0, no solved-fact folding into threshold
   arithmetic. Reopen triggers recorded in Status; the next plan number
   remains **plan14**. Remaining class levers: the threshold-cut-frame pricing observation (lean plan9 diagnostic — a threshold-dynamics change, the same territory as the plan10/11 bound-folding hazard); EWS/MOPNS reading and parallelism live in `conversion`.
+
+- **2026-10-29** — **reopened; backlog #7 opened; plan14 drafted**
+  (`plan14.md`): the brainstorm's three surviving families (child `pn`/`dn`,
+  threshold-cut context, GHI-safe transposition context) were audited against
+  the code and closed record, then probed read-only in an isolated HEAD copy.
+  The surviving intersection is a per-run, fixed-size, direct-mapped
+  **cut-context table** keyed by `(full position hash, exact ancestor-context
+  hash)`, storing the thresholds and unsolved bounds of a prior threshold cut;
+  a re-entry under dominated thresholds returns Draw exactly like a cut frame.
+  Salt-0 probes at capacity-matched main TT + a 2²²-slot context table measured
+  stress **0.656×**, m22 **1.042×**, dec10 0.587×, dec06 0.912×, m23 0.828×,
+  dec13 1.008×, dec02 1.041× (bounds-fallback full-table variant); rejected
+  in the same probes: plain TT cutoff (stress +5.4% / m22 +7.8%), unrestricted
+  cut-context skip (stress 1.27× / m22 1.09×), high-water threshold resume
+  (stress 2.94×), exact-context restriction of existing unsolved bounds
+  (both hard cases censored), AND-only cut contexts (dec02 +10.5%, dec06
+  +15.4%), and repetition-only gating (m22 censored). plan14 is Phase 0 only
+  (temporary spike + current-HEAD matrix + soundness/termination); plan15 is
+  the productionization/gate rollout and exists only on a GO. The plan-session
+  baseline re-check also found the archived plan12 corpus numbers stale at
+  HEAD (e.g. dec01 censored), so plan15 must re-baseline before gate v1.0.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
