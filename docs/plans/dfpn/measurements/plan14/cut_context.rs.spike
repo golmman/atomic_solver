@@ -1,0 +1,277 @@
+//! TEMPORARY plan14 Phase 0 spike: cut-context table (bounded threshold-cut
+//! reuse). Not part of the production tree; reverted after the Phase 0
+//! matrix. Archived source under `docs/plans/dfpn/measurements/plan14/`.
+//!
+//! A per-run, fixed-size, direct-mapped table keyed by
+//! `(full position hash, exact ancestor-context hash)`. It records the
+//! thresholds and unsolved bounds of a previous *threshold cut*; on a
+//! re-entry under the same context with dominated thresholds the frame
+//! returns `Draw` exactly like the cut frame did.
+//!
+//! Soundness contract (see plan14): only unsolved bounds and cut thresholds
+//! are stored, never an `Outcome`; every hit returns `Draw`; exact context
+//! match is required; the reuse condition `th_pn <= cut_pn && th_dn <=
+//! cut_dn` is the monotone direction. The table is per-run, never
+//! serialized, and never consulted by preflight/reconstruct.
+//!
+//! Env gating (temporary): `DFPN_CUTCTX=1` enables, `DFPN_CUTCTX_SLOTS=<b>`
+//! sets the log2 slot count (default 22), `DFPN_CUTCTX_STATS=1` prints the
+//! counters on drop.
+
+use crate::zobrist::{INF, mix};
+
+const U32_MAX: u64 = u32::MAX as u64;
+
+/// One 32-byte slot. `cut_pn == 0` (an impossible threshold) marks a dead
+/// slot, so the entry stays exactly 32 bytes.
+#[derive(Clone, Copy, Default)]
+struct Slot {
+    key: u64,
+    context: u64,
+    cut_pn: u32,
+    cut_dn: u32,
+    pn: u32,
+    dn: u32,
+}
+
+/// Encode a `u64` bound/threshold as `u32`, saturating at `u32::MAX`
+/// ("infinite / at least").
+fn encode(x: u64) -> u32 {
+    x.min(U32_MAX) as u32
+}
+
+/// Decode back: `u32::MAX` is `INF` (the saturated marker).
+fn decode(x: u32) -> u64 {
+    if x == u32::MAX { INF } else { u64::from(x) }
+}
+
+#[derive(Default)]
+struct Counters {
+    probes: u64,
+    hits: u64,
+    threshold_rejects: u64,
+    tt_solved_skips: u64,
+    stores: u64,
+    overwrites: u64,
+    fallback_stores: u64,
+    saturated_cut: u64,
+    saturated_bounds: u64,
+}
+
+pub(super) struct CutContextTable {
+    slots: Vec<Slot>,
+    mask: usize,
+    stats: bool,
+    c: Counters,
+}
+
+impl CutContextTable {
+    /// Build from the temporary env variables; `None` when disabled.
+    pub(super) fn from_env() -> Option<Self> {
+        if std::env::var("DFPN_CUTCTX").ok().as_deref() != Some("1") {
+            return None;
+        }
+        let bits: usize = std::env::var("DFPN_CUTCTX_SLOTS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(22);
+        let stats = std::env::var("DFPN_CUTCTX_STATS").ok().as_deref() == Some("1");
+        Some(Self::with_bits(bits, stats))
+    }
+
+    /// Test constructor (no env gate, no drop statistics).
+    #[cfg(test)]
+    pub(super) fn with_bits_for_test(bits: usize) -> Self {
+        Self::with_bits(bits, false)
+    }
+
+    fn with_bits(bits: usize, stats: bool) -> Self {
+        assert!(
+            (10..=26).contains(&bits),
+            "cut-context slot bits out of range"
+        );
+        let slots = 1usize << bits;
+        Self {
+            slots: vec![Slot::default(); slots],
+            mask: slots - 1,
+            stats,
+            c: Counters::default(),
+        }
+    }
+
+    #[inline]
+    fn index(&self, key: u64, context: u64) -> usize {
+        // Plan14 index: `mix(key ^ context.rotate_left(17)) & (slots - 1)`.
+        (mix(key ^ context.rotate_left(17)) as usize) & self.mask
+    }
+
+    /// Probe for a matching context entry whose cut thresholds dominate the
+    /// current thresholds. Returns the stored unsolved `(pn, dn)` on a hit.
+    pub(super) fn probe(
+        &mut self,
+        key: u64,
+        context: u64,
+        th_pn: u64,
+        th_dn: u64,
+    ) -> Option<(u64, u64)> {
+        self.c.probes += 1;
+        let idx = self.index(key, context);
+        let slot = &self.slots[idx];
+        if slot.cut_pn == 0 || slot.key != key || slot.context != context {
+            return None;
+        }
+        if th_pn <= decode(slot.cut_pn) && th_dn <= decode(slot.cut_dn) {
+            self.c.hits += 1;
+            Some((decode(slot.pn), decode(slot.dn)))
+        } else {
+            self.c.threshold_rejects += 1;
+            None
+        }
+    }
+
+    /// Record a threshold cut.
+    pub(super) fn store(
+        &mut self,
+        key: u64,
+        context: u64,
+        cut_pn: u64,
+        cut_dn: u64,
+        pn: u64,
+        dn: u64,
+    ) {
+        if cut_pn != INF && cut_pn > U32_MAX {
+            self.c.saturated_cut += 1;
+        }
+        if cut_dn != INF && cut_dn > U32_MAX {
+            self.c.saturated_cut += 1;
+        }
+        if pn != INF && pn > U32_MAX {
+            self.c.saturated_bounds += 1;
+        }
+        if dn != INF && dn > U32_MAX {
+            self.c.saturated_bounds += 1;
+        }
+        let idx = self.index(key, context);
+        let slot = &self.slots[idx];
+        if slot.cut_pn != 0 && (slot.key != key || slot.context != context) {
+            self.c.overwrites += 1;
+        }
+        self.c.stores += 1;
+        self.slots[idx] = Slot {
+            key,
+            context,
+            cut_pn: encode(cut_pn),
+            cut_dn: encode(cut_dn),
+            pn: encode(pn),
+            dn: encode(dn),
+        };
+    }
+
+    /// Probe hits since the last clear (test instrumentation).
+    #[cfg(test)]
+    pub(super) fn hits(&self) -> u64 {
+        self.c.hits
+    }
+
+    /// Count a hit whose TT-absent fallback store was written.
+    pub(super) fn note_fallback_store(&mut self) {
+        self.c.fallback_stores += 1;
+    }
+
+    /// Count a probe skipped because a live TT entry already stores a solved
+    /// outcome (the solved value always wins).
+    pub(super) fn note_tt_solved_skip(&mut self) {
+        self.c.tt_solved_skips += 1;
+    }
+
+    /// Drop every entry. Called once per run from `Search::begin_run`.
+    pub(super) fn clear(&mut self) {
+        self.slots.fill(Slot::default());
+    }
+}
+
+impl Drop for CutContextTable {
+    fn drop(&mut self) {
+        if self.stats {
+            eprintln!(
+                "cutctx: slots={} probes={} hits={} threshold_rejects={} tt_solved_skips={} stores={} overwrites={} fallback_stores={} saturated_cut={} saturated_bounds={}",
+                self.slots.len(),
+                self.c.probes,
+                self.c.hits,
+                self.c.threshold_rejects,
+                self.c.tt_solved_skips,
+                self.c.stores,
+                self.c.overwrites,
+                self.c.fallback_stores,
+                self.c.saturated_cut,
+                self.c.saturated_bounds,
+            );
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn slot_is_32_bytes() {
+        assert_eq!(std::mem::size_of::<Slot>(), 32);
+    }
+
+    #[test]
+    fn round_trip_and_threshold_domination() {
+        let mut t = CutContextTable::with_bits(10, false);
+        assert_eq!(t.probe(1, 2, 1, 1), None);
+        t.store(1, 2, 10, 20, 3, 4);
+        assert_eq!(t.probe(1, 2, 10, 20), Some((3, 4)));
+        // Weaker thresholds reuse the cut.
+        assert_eq!(t.probe(1, 2, 5, 7), Some((3, 4)));
+        assert_eq!(t.probe(1, 2, 1, 1), Some((3, 4)));
+        // A stronger threshold must not reuse it.
+        assert_eq!(t.probe(1, 2, 11, 20), None);
+        assert_eq!(t.probe(1, 2, 10, 21), None);
+        // Exact context match required.
+        assert_eq!(t.probe(1, 3, 1, 1), None);
+        assert_eq!(t.probe(9, 2, 1, 1), None);
+    }
+
+    #[test]
+    fn inf_round_trips_and_saturates_exactly() {
+        let mut t = CutContextTable::with_bits(10, false);
+        t.store(1, 0, INF, 5, INF, 1);
+        assert_eq!(t.probe(1, 0, INF, 5), Some((INF, 1)));
+        assert_eq!(t.probe(1, 0, 7, 5), Some((INF, 1)));
+    }
+
+    #[test]
+    fn clear_drops_entries() {
+        let mut t = CutContextTable::with_bits(10, false);
+        t.store(1, 2, 3, 4, 5, 6);
+        assert!(t.probe(1, 2, 1, 1).is_some());
+        t.clear();
+        assert!(t.probe(1, 2, 1, 1).is_none());
+    }
+
+    #[test]
+    fn collision_overwrites_are_lost_entries_only() {
+        let mut t = CutContextTable::with_bits(10, false);
+        // Find two keys mapping to the same slot.
+        let mut by_index = std::collections::HashMap::new();
+        let mut pair = None;
+        for key in 0..10_000u64 {
+            let idx = t.index(key, 0);
+            if let Some(&other) = by_index.get(&idx) {
+                pair = Some((other, key));
+                break;
+            }
+            by_index.insert(idx, key);
+        }
+        let (a, b) = pair.expect("pigeonhole");
+        t.store(a, 0, 10, 10, 1, 2);
+        t.store(b, 0, 10, 10, 3, 4);
+        assert_eq!(t.probe(a, 0, 1, 1), None);
+        assert_eq!(t.probe(b, 0, 1, 1), Some((3, 4)));
+        assert_eq!(t.c.overwrites, 1);
+    }
+}

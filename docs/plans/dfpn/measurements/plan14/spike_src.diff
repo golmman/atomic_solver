@@ -1,0 +1,205 @@
+diff --git a/src/search/dfpn/config.rs b/src/search/dfpn/config.rs
+index 5364ac8..c2c299f 100644
+--- a/src/search/dfpn/config.rs
++++ b/src/search/dfpn/config.rs
+@@ -13,6 +13,22 @@ impl Search {
+         self.preflight_enabled = enabled;
+     }
+ 
++    /// TEMPORARY plan14 Phase 0 spike: install a cut-context table of
++    /// `2^bits` slots (test/measurement helper independent of the env gate).
++    #[cfg(test)]
++    pub(crate) fn set_cut_context_bits_for_test(&mut self, bits: usize) {
++        self.cut_context = Some(super::cut_context::CutContextTable::with_bits_for_test(
++            bits,
++        ));
++    }
++
++    /// TEMPORARY plan14 Phase 0 spike: cut-context probe hits of the last
++    /// run (0 without a table).
++    #[cfg(test)]
++    pub(crate) fn cut_context_hits_for_test(&self) -> u64 {
++        self.cut_context.as_ref().map_or(0, |c| c.hits())
++    }
++
+     /// Report of the pre-phase hook of the last
+     /// [`Search::solve`]/[`Search::solve_with_progress`]/[`Search::search_depth`]
+     /// call: whether it decided the root (and as what) or deferred (and why).
+diff --git a/src/search/dfpn/core.rs b/src/search/dfpn/core.rs
+index 0617fb9..029e43a 100644
+--- a/src/search/dfpn/core.rs
++++ b/src/search/dfpn/core.rs
+@@ -131,6 +131,30 @@ impl Search {
+             return resolved.outcome;
+         }
+ 
++        // TEMPORARY plan14 Phase 0 spike: bounded cut-context probe. A
++        // matching entry records a previous threshold cut at (at least) the
++        // current thresholds under the exact same ancestor context, so this
++        // frame returns `Draw` exactly like that cut would have (no child
++        // evals, no `NodeProven`, no solved store). A live solved TT entry
++        // always wins; a hit restores the stored unsolved bounds only when
++        // the TT has no entry to keep.
++        let context_hash = self.path_context_hash;
++        if let Some(cutctx) = self.cut_context.as_mut()
++            && restart_slice != u64::MAX
++        {
++            if tt_entry.as_ref().is_some_and(|e| e.outcome.is_some()) {
++                cutctx.note_tt_solved_skip();
++            } else if let Some((pn, dn)) = cutctx.probe(tt_key, context_hash, th_pn, th_dn) {
++                if tt_entry.is_none() {
++                    self.tt
++                        .store(tt_key, Move::NONE, u8::MAX, 0, None, pn, dn, 0, max_depth);
++                    cutctx.note_fallback_store();
++                }
++                self.precompute_pool[slot_depth] = slot;
++                return Outcome::Draw;
++            }
++        }
++
+         // Per-search repetition cache (plan9): a position whose proven value
+         // depends on the ancestor repetition set is uncacheable in the TT
+         // (first-player-loss shortcut), so its whole draw chain is re-walked
+@@ -146,7 +170,6 @@ impl Search {
+         // reused by the store site at frame exit (the symmetric push/pop of
+         // this and every descendant frame restores the stack, and hence the
+         // field, to the same value there).
+-        let context_hash = self.path_context_hash;
+         if let Some(cached_depth) = self.repetition_cache.probe(tt_key, context_hash) {
+             // Soundness contract: a hit behaves exactly like a freshly proven
+             // repetition-dependent draw — returned as `Draw` and routed
+@@ -205,6 +228,9 @@ impl Search {
+         let mut pn = INF;
+         let mut dn = INF;
+         let mut depth = 0;
++        // Whether the loop exits via the existing threshold-cut branch (the
++        // only shape that may store a cut context).
++        let mut threshold_cut = false;
+ 
+         let mut selection: Option<ChildSelection> = None;
+ 
+@@ -274,6 +300,7 @@ impl Search {
+             }
+ 
+             if (th_pn != INF && pn >= th_pn) || (th_dn != INF && dn >= th_dn) {
++                threshold_cut = true;
+                 break;
+             }
+ 
+@@ -387,6 +414,16 @@ impl Search {
+             store_remaining_depth,
+         );
+ 
++        // TEMPORARY plan14 Phase 0 spike: record this threshold cut's
++        // thresholds and unsolved bounds under the frame-entry context.
++        if threshold_cut
++            && outcome_to_store.is_none()
++            && restart_slice != u64::MAX
++            && let Some(cutctx) = self.cut_context.as_mut()
++        {
++            cutctx.store(tt_key, context_hash, th_pn, th_dn, store_pn, store_dn);
++        }
++
+         if let Some(outcome) = outcome_to_store
+             && outcome != Outcome::Draw
+             && store_best_move != Move::NONE
+diff --git a/src/search/dfpn/mod.rs b/src/search/dfpn/mod.rs
+index a094b70..73e22ef 100644
+--- a/src/search/dfpn/mod.rs
++++ b/src/search/dfpn/mod.rs
+@@ -15,6 +15,7 @@ mod cheap_probe;
+ mod children;
+ mod config;
+ mod core;
++mod cut_context;
+ mod fraction;
+ mod history;
+ mod pv;
+@@ -230,6 +231,9 @@ pub struct Search {
+     /// never per work chunk, never per refinement round — and never
+     /// serialized into TT snapshots or proof artifacts.
+     repetition_cache: RepetitionCache,
++    /// TEMPORARY plan14 Phase 0 spike: bounded cut-context table. `None` when
++    /// `DFPN_CUTCTX` is unset (the production path).
++    cut_context: Option<cut_context::CutContextTable>,
+     /// Whether the detector-gated bounded pre-phase (plan13) may run before
+     /// the DF-PN loop. Default `true`; disabled by the `--no-preflight` CLI
+     /// flag.
+@@ -292,6 +296,7 @@ impl Search {
+             #[cfg(test)]
+             preprobe_skips: 0,
+             repetition_cache: RepetitionCache::new(),
++            cut_context: cut_context::CutContextTable::from_env(),
+             preflight_enabled: true,
+             preflight_report: None,
+         }
+diff --git a/src/search/dfpn/run.rs b/src/search/dfpn/run.rs
+index c8472c4..e129c2b 100644
+--- a/src/search/dfpn/run.rs
++++ b/src/search/dfpn/run.rs
+@@ -314,6 +314,10 @@ impl Search {
+         // (position, ancestor set) pairs recorded during the run itself, so it
+         // must be dropped regardless of prefix presence.
+         self.repetition_cache.clear();
++        // Plan14 spike: the cut-context table is per-run too.
++        if let Some(cutctx) = self.cut_context.as_mut() {
++            cutctx.clear();
++        }
+         self.nodes = 0;
+         self.child_evals = 0;
+         self.first_outcome_evals = 0;
+diff --git a/src/search/dfpn/tests.rs b/src/search/dfpn/tests.rs
+index c7c1c9e..b4a60a3 100644
+--- a/src/search/dfpn/tests.rs
++++ b/src/search/dfpn/tests.rs
+@@ -588,6 +588,50 @@ fn budget_overshoot_is_bounded() {
+     }
+ }
+ 
++#[test]
++fn cut_context_never_schedule_is_bit_identical_and_terminates() {
++    // Plan14 termination guard: with an unbounded slice (`RestartSchedule::
++    // NEVER`, `restart_slice == u64::MAX`) the cut-context mechanism is
++    // disabled, so the run must be bit-identical to feature-off and must
++    // terminate on its own.
++    const FEN: &str = "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1";
++
++    let run = |bits: Option<usize>| {
++        let mut pos = Position::from_fen(FEN).unwrap();
++        let mut search = Search::new(64);
++        search.set_timeout(60);
++        search.set_restart_schedule(RestartSchedule::NEVER);
++        if let Some(bits) = bits {
++            search.set_cut_context_bits_for_test(bits);
++        }
++        let (outcome, pv, _nodes) = search.search_depth(&mut pos, 3);
++        (outcome, pv.len(), search.child_evaluations())
++    };
++
++    let off = run(None);
++    let on = run(Some(12));
++    assert_eq!(on, off, "NEVER + cut-context must be bit-identical to off");
++}
++
++#[test]
++fn cut_context_liveness_on_a_quick_threshold_cut_case() {
++    // Plan14 liveness: dec02 is a 138k-eval loss proof whose threshold cuts
++    // repeat under identical contexts, so the table must produce hits and the
++    // decisive outcome must be unchanged.
++    const FEN: &str = "8/1k1p4/1P2p3/p2P1P2/P7/6p1/6K1/8 b - - 0 27";
++
++    let mut pos = Position::from_fen(FEN).unwrap();
++    let mut search = Search::new(64);
++    search.set_timeout(60);
++    search.set_cut_context_bits_for_test(20);
++    let (outcome, _pv, _nodes) = search.search_depth(&mut pos, u32::MAX);
++    assert_eq!(outcome, Outcome::Loss);
++    assert!(
++        search.cut_context_hits_for_test() > 0,
++        "the cut-context table must be consulted"
++    );
++}
++
+ #[test]
+ fn never_restarts() {
+     let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();

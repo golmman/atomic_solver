@@ -2,23 +2,28 @@
 
 ## Status
 
-**Active** (reopened 2026-10-29 from dormant; plan14 drafted), maintained
-**agile** while open: plans are single-lever and sized to one session; the
-backlog is re-ranked after every report. Closed items: #1 done (plan9), #2
-closed permanently (plan10/plan11), #3 closed as subsumed by `--refine-cap 0`
-(2026-09-17, History), #4 closed no-go (the `conversion` plan5 mining round),
-#5 closed no-go (plan12), #6 done (plan13). **Open: #7 context-keyed
-threshold-cut reuse** (plan14 Phase 0 drafted 2026-10-29; plan-session probes
-measured a 0.656× stress / 1.042× m22 salt-0 first-order surface for the
-bounded GHI-safe cut-context table, with the previous naive TT-cutoff and
-high-water variants rejected). **Reopen triggers**: (a) a new *measured*
+**Dormant** (since 2026-10-29: plan14 Phase 0 closed the last open item as a
+measured NO-GO; no open backlog items), maintained **agile** while open:
+plans are single-lever and sized to one session; the backlog is re-ranked
+after every report. Closed items: #1 done (plan9), #2 closed permanently
+(plan10/plan11), #3 closed as subsumed by `--refine-cap 0` (2026-09-17,
+History), #4 closed no-go (the `conversion` plan5 mining round), #5 closed
+no-go (plan12), #6 done (plan13), **#7 closed NO-GO (plan14 Phase 0,
+2026-10-29)**: the bounded GHI-safe cut-context table reproduced the
+plan-session salt-0 surface exactly at the candidate shape (stress 0.656×,
+m22 1.042×, dec10 0.587×, m23 0.828×, dec06 0.912×, dec13 1.008×,
+dec02 1.041×), but regressed the designated hard control `m20_white` 3.02×,
+produced a quick-suite censored loss (`dec44` loss → 5 s draw), and was
+trajectory-unstable across table sizes (`m22` 10.2× at 128 MB/2²², 5.24× at
+256 MB/2²¹); no product changes, spike reverted
+(`report14.md`). **Reopen triggers**: (a) a new *measured*
 search-semantics diagnostic for the deep, repetition-dominated class that has
 no home in `lean` (wall time), `conversion` (the deep-conversion class: reuse
 envelope, line guidance, parallelism, threshold-cut pricing), or `egtb`
 (tablebase); (b) a soundness regression traced to DF-PN+ search semantics
 (e.g. `test_repetition`). On reopen, re-rank the backlog and open the next
-plan; the next plan number is **plan15** (plan14 is drafted, not yet
-executed). Plans 1–9 are done
+plan; the next plan number is **plan15** (plan14 executed 2026-10-29,
+NO-GO). Plans 1–9 are done
 (`report1.md`–`report9.md`) and predate this file; plan10 was executed as a
 Phase 0 no-go with no code changes (`report10.md`); plan11 closed backlog #2
 permanently (`report11.md`). This `initiative.md` was created on 2026-09-11
@@ -128,6 +133,7 @@ bounded fixpoint pre-phase; region-closure draw proofs as by-product) —
 **opened as backlog #6**; archived oracle `measurements/plan12/plan12_t1.rs`; ladder baselines reproduce bit-for-bit |
 | 4 | Bounded cross-path verification (research_ghi §9 "Option A") | When a cached solved result's path does not match the current prefix, run a bounded fresh `dfpn` call at `max_depth = entry.depth` under the current path and accept only on agreement | strengthens the one-ply guard toward full cross-path soundness; enables safer reuse in cyclic regions | correctness first, nodes second | L | **closed — evidence-based no-go** (`research_ghi_journal.md`, 2026-09-13, mining round for `conversion` #5d): the journal GHI mechanism is the soundest reuse shape measured — node-entry return, verification-bounded volume, (1, 1) base re-init structurally exclude the plan10 hazard — but those same safety properties cap the win at plan11 arm A (−8.8% stress FO / −2.6% default, the unverified strict superset) and make draw-side reuse cost ≥ the ~1.1-eval re-proofs it saves (`research_repetition_cache.md` §2; plan9 already intercepts ~97% per `conversion/report1.md`). The paper's simulation is unavailable as machinery (our TT stores no proof trees) and its soundness is assumed there, not proven; the paper's framework extends to repetition-as-draw only vacuously for decisive facts and offers nothing for draw-proof reuse. The dependency "do not attempt before #1's spike lands" resolves to: `conversion` #1 closed no-go, its monotonicity lemma adopted by the contract as the value claim. Contract retained as (a) soundness-argument template, (b) design constraint for the parallel spike (`conversion` #4 / `lean` #2), where cross-worker contexts make the journal mechanism load-bearing |
 | 6 | Bounded pre-phase for small decisive regions (horizon/threshold pricing) | plan12's measured asymmetry: a region fixpoint decides ~420k positions with certificates in ~6 s while bounded DF-PN collapses **zero** frames in 300 s (91.3% unsolved frontier churn; lean9: 99.7–99.9% of AND-frame evals in threshold-cut frames). A detector-gated pre-phase (occupied ≤ 3 men, no pawns) decides the **root** via a non-DF-PN architecture — PN bounded prover, layered certificate fixpoint, or region-closure fixpoint (Phase 0 bake-off) — with mandatory replay-verified cycle-free certificates and no TT interaction (plan10/11 hazard excluded by construction) | ladder root >756M nodes/unproven → ≤ 20M child evals and ≤ 60 s, certified (plan12's criterion); byte-identical everywhere the detector does not fire | nodes; plus a `PvStatus` variant and a `preflight:` CLI line | M–L | **done (plan13, `report13.md`, 2026-09-16)**: Phase 0 bake-off selected architecture R (region-closure fixpoint; P and L measured no-gos — path-tree memory / unsound-to-store facts, see `report13_phase0.md`). Session B implemented `src/search/preflight/` (exact packed keys, closure + exact-rank fixpoint, D3 rank guard `halfmove + rank ≤ 99`, standalone replay verifier, A5 principal-line PV, no TT interaction, no `ProofEvent` emission per R2, R4 budget accounting) with the `--no-preflight` flag and the `preflight:` CLI line; `PvStatus::PreflightProof` added (D1). Ladder root certified Win at 5,866,690 child evals / 0.76 s (exact DTM 15; all four positions 15/13/11/9) — plan12's criterion met at 0.29× evals. Draw claims (D2) proven by full closure, incl. the cyclic rook (factual fix: it is 3 men and gates; claimed Draw, `test_repetition` green) and an adjacency-immunity KQvK draw (table-confirmed). Battery: quick drift 59/59 byte-identical, m22/stress byte-identical, G-B oracle 240 samples / 0 contradictions, `make test-full` 387/0 |
+| 7 | Context-keyed threshold-cut reuse (GHI-safe) | Per-run direct-mapped side table keyed by `(full position hash, exact ancestor-context hash)` storing a threshold cut's thresholds + unsolved bounds; re-entry under dominated thresholds returns Draw like a cut frame (never a solved outcome) | deep repetition/shuffle work | M | **closed — measured NO-GO (plan14 Phase 0, 2026-10-29)**: candidate shape reproduced the probe surface exactly (stress 0.656×, m22 1.042×, dec10 0.587×, m23 0.828×, dec06 0.912×, dec13 1.008×, dec02 1.041×) but `m20_white` regressed 3.02×, `dec44` became a 5 s censored loss in the quick suite, and the effect was basin-like across TT/slot sizes (m22 10.2× at 128 MB/2²², 5.24× at 256 MB/2²¹); saturation of finite thresholds into `INF` measured and shown to be over-permissive; spike reverted, `src/` byte-identical, anchors exact (`report14.md`, `measurements/plan14/`) |
 
 Cross-references: AND-side move-ordering signals lived in `lean` backlog #5
 — **closed no-go by the lean plan9 spike** (`lean/report9.md`, 2026-09-15):
@@ -435,3 +441,33 @@ changes *when* refinement stops, not how lines are labeled.
 
 Per repo convention, every plan ends with the task of writing its
 `report<N>.md` in this directory.
+
+- **2026-10-29** — **backlog #7 opened; plan14 executed — closed NO-GO**
+  (`plan14.md`, `report14.md`, `measurements/plan14/`). Phase 0 implemented the
+  plan's bounded GHI-safe cut-context table as a temporary env-gated spike
+  (`DFPN_CUTCTX`, 32 B slots, direct-mapped, exact ancestor-context match,
+  threshold-cut-only stores, Draw-only hits, TT-absent bounds fallback,
+  `RestartSchedule::NEVER` guard) and re-baselined current HEAD (plan12 corpus
+  numbers stale; dec01 censored at 120 s). At the candidate shape
+  (2²⁰ main buckets / 2²² slots) the 8-case salt-0 matrix reproduced the
+  plan-session probe numbers **exactly** (stress 188,937,258 = 0.656×,
+  m22 15,647,876 = 1.042×, m23 9,626,650 = 0.828×, dec10 2,292,227 = 0.587×,
+  dec06 1,374,808 = 0.912×, dec13 5,072,982 = 1.008×, dec02 143,794 =
+  1.041×), and the soundness surface was clean (Draw-only hits, exact context,
+  monotone thresholds; `test_repetition` 3/3 green with the feature on; a
+  `RestartSchedule::NEVER` search bit-identical to feature-off; liveness
+  hits > 0; quick-suite and matrix runs deterministic; `make test`/fmt/clippy
+  green). But the gate failed: `m20_white` burned **3.02×** baseline evals
+  (715,390,942 → 2,161,196,327), the quick suite had an outcome flip
+  (`dec44` loss → 5 s draw, 102,615 → 48.6 M evals at the cut) plus `dec15`
+  1.92×, and the mechanism was trajectory-unstable across sizes (`m22` 10.2×
+  at 128 MB/2²², 5.24× at 256 MB/2²¹, 0.856× at 128 MB/2²¹). The measured
+  saturation direction was over-permissive: finite DF-PN thresholds above
+  u32::MAX encode to `INF` (667 cut events in the bad m22 arm); a
+  deflating variant removed that path but not the collapse. The skip is
+  self-sustaining across restart slices because the table is per-run, so a
+  live context keeps returning Draw after a restart. Spike reverted
+  (`git diff --exit-code -- src/` clean; post-revert baselines exact except
+  the wall-clock-censored dec01). No `plan15.md`; backlog #7 closed as
+  measured out, the initiative returns to dormant. Next plan number remains
+  **plan15** for any future reopening.

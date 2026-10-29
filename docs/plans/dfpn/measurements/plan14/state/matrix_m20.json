@@ -1,0 +1,65 @@
+[
+  {
+    "case": "m20",
+    "tt_mb": 256,
+    "cutctx_slots_bits": null,
+    "timeout_s": 300,
+    "outcome": "win",
+    "pv_len": 295,
+    "child_evals": 715390942,
+    "censored": false,
+    "exit_code": 0,
+    "wall_s": 62.33,
+    "cutctx": null
+  },
+  {
+    "case": "m20",
+    "tt_mb": 256,
+    "cutctx_slots_bits": 22,
+    "timeout_s": 300,
+    "outcome": "win",
+    "pv_len": 295,
+    "child_evals": 715390942,
+    "censored": false,
+    "exit_code": 0,
+    "wall_s": 62.44,
+    "cutctx": null
+  },
+  {
+    "case": "m20",
+    "tt_mb": 256,
+    "cutctx_slots_bits": null,
+    "timeout_s": 300,
+    "outcome": "win",
+    "pv_len": 295,
+    "child_evals": 715390942,
+    "censored": false,
+    "exit_code": 0,
+    "wall_s": 62.81,
+    "cutctx": null
+  },
+  {
+    "case": "m20",
+    "tt_mb": 256,
+    "cutctx_slots_bits": 22,
+    "timeout_s": 300,
+    "outcome": "win",
+    "pv_len": 399,
+    "child_evals": 2161196327,
+    "censored": false,
+    "exit_code": 0,
+    "wall_s": 238.69,
+    "cutctx": {
+      "slots": 4194304,
+      "probes": 515087525,
+      "hits": 407041810,
+      "threshold_rejects": 18738746,
+      "tt_solved_skips": 386,
+      "stores": 72417843,
+      "overwrites": 58036685,
+      "fallback_stores": 858763,
+      "saturated_cut": 0,
+      "saturated_bounds": 0
+    }
+  }
+]
