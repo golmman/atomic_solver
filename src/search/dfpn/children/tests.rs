@@ -645,3 +645,154 @@ fn preprobe_skip_counter_resets_per_run() {
     search.begin_run();
     assert_eq!(search.preprobe_skips(), 0, "a new run starts from zero");
 }
+
+// ---------- move-class starting proof numbers (provari plan2) ----------
+
+/// A quiet white knight move to a square the black rook on e7 attacks:
+/// non-terminal, no target, so the classifier would call it `HangingQuiet`.
+const MOVE_CLASS_HANGING_FEN: &str = "4k3/4r3/8/8/8/8/8/K5N1 w - - 0 1";
+
+#[test]
+fn move_class_default_off_keeps_neutral_bounds() {
+    let mut search = Search::new(1);
+    assert!(!search.move_class_pn, "the heuristic must default off");
+    let mut pos = Position::from_fen(MOVE_CLASS_HANGING_FEN).unwrap();
+    let mv = Move::make_move(Square::G1, Square::E2);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    assert_eq!(info.outcome, None);
+    assert_eq!((info.pn, info.dn), (1, 1), "default off is inert");
+}
+
+#[test]
+fn move_class_initializes_or_child_bounds() {
+    let mut search = Search::new(1);
+    search.set_move_class_pn(true);
+    let mut pos = Position::from_fen(MOVE_CLASS_HANGING_FEN).unwrap();
+    let mv = Move::make_move(Square::G1, Square::E2);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    assert_eq!(info.outcome, None);
+    assert_eq!((info.pn, info.dn), (15, 1));
+}
+
+#[test]
+fn move_class_leaves_and_children_neutral() {
+    let mut search = Search::new(1);
+    search.set_move_class_pn(true);
+    let mut pos = Position::from_fen(MOVE_CLASS_HANGING_FEN).unwrap();
+    let mv = Move::make_move(Square::G1, Square::E2);
+    // Parent is AND (`is_or_node = false`): the child is OR and keeps (1, 1).
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, false);
+    assert_eq!(info.outcome, None);
+    assert_eq!((info.pn, info.dn), (1, 1));
+}
+
+#[test]
+fn move_class_does_not_overwrite_tt_bounds() {
+    let mut search = Search::new(1);
+    search.set_move_class_pn(true);
+    let mut pos = Position::from_fen(MOVE_CLASS_HANGING_FEN).unwrap();
+    let mv = Move::make_move(Square::G1, Square::E2);
+    let (child_key, _, _) = pos.keys_after(mv);
+    // A live outcome-less entry with non-neutral bounds, within the depth
+    // guard. The pre-probe ladder reuses these bounds before classification.
+    search
+        .tt
+        .store(child_key, Move::NONE, u8::MAX, 0, None, 5, 7, 0, 0);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    assert_eq!(info.outcome, None);
+    assert_eq!((info.pn, info.dn), (5, 7), "learned bounds must win");
+}
+
+#[test]
+fn move_class_does_not_touch_solved_children() {
+    let mut search = Search::new(1);
+    search.set_move_class_pn(true);
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+    let mv = Move::make_move(Square::E1, Square::E8);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    assert_eq!(info.outcome, Some(Outcome::Loss), "terminal capture");
+    assert_eq!((info.pn, info.dn), (0, INF));
+}
+
+#[test]
+fn move_class_check_child_uses_capped_evasions() {
+    let mut search = Search::new(1);
+    search.set_move_class_pn(true);
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4K2R w - - 0 1").unwrap();
+    let mv = Move::make_move(Square::H1, Square::H8);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    assert_eq!(info.outcome, None);
+    assert_eq!((info.pn, info.dn), (3, 1), "Kd7/Ke7/Kf7");
+}
+
+/// With the flag on, a small position's child table must differ only in the
+/// started `pn` values: every bound stays positive and finite, and AND
+/// children keep the neutral `(1, 1)`.
+#[test]
+fn move_class_table_bounds_stay_positive_and_finite() {
+    let mut search = Search::new(1);
+    search.set_move_class_pn(true);
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/K5N1 w - - 0 1").unwrap();
+    let mut moves = MoveList::new();
+    let mut state = StateInfo::new();
+    pos.legal_moves_with_state(&mut moves, &mut state);
+    search.sort_moves(&pos, &state, &mut moves, Move::NONE, true);
+    let mut children = Vec::new();
+    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children);
+    assert!(!children.is_empty());
+    for child in &children {
+        if child.outcome.is_none() {
+            assert!(
+                child.pn >= 1 && child.pn <= 15,
+                "pn={} out of range",
+                child.pn
+            );
+            assert_eq!(child.dn, 1);
+        }
+    }
+}
+
+/// The flag-off `evaluate_all_children` table is the shipped table: a fresh
+/// search and one with the flag explicitly disabled produce identical rows,
+/// and every unsolved row carries the neutral `(1, 1)`. This is the
+/// regression pin for "default off leaves the child table unchanged".
+#[test]
+fn move_class_off_table_matches_shipped() {
+    let mut default_search = Search::new(1);
+    let mut disabled_search = Search::new(1);
+    disabled_search.set_move_class_pn(false);
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/K5N1 w - - 0 1").unwrap();
+    let mut moves = MoveList::new();
+    let mut state = StateInfo::new();
+    pos.legal_moves_with_state(&mut moves, &mut state);
+    let sort = |search: &mut Search| {
+        let mut sorted = MoveList::new();
+        for i in 0..moves.len() {
+            sorted.push(moves[i]);
+        }
+        search.sort_moves(&pos, &state, &mut sorted, Move::NONE, true);
+        sorted
+    };
+    let default_moves = sort(&mut default_search);
+    let disabled_moves = sort(&mut disabled_search);
+    assert_eq!(default_moves.len(), disabled_moves.len());
+    let mut a = Vec::new();
+    let mut b = Vec::new();
+    default_search.evaluate_all_children(&mut pos, &default_moves, u32::MAX, true, &mut a);
+    disabled_search.evaluate_all_children(&mut pos, &disabled_moves, u32::MAX, true, &mut b);
+    assert_eq!(a.len(), b.len());
+    for (x, y) in a.iter().zip(&b) {
+        assert_eq!(x.mv, y.mv);
+        assert_eq!(
+            (x.pn, x.dn, x.outcome, x.depth),
+            (y.pn, y.dn, y.outcome, y.depth)
+        );
+        if x.outcome.is_none() {
+            assert_eq!(
+                (x.pn, x.dn),
+                (1, 1),
+                "flag-off unsolved bounds stay neutral"
+            );
+        }
+    }
+}

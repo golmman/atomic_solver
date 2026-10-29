@@ -30,6 +30,16 @@ impl Search {
         self.scorer = scorer;
     }
 
+    /// Enable or disable provari-style move-class starting proof numbers for
+    /// OR-node children (see the `move_class` module). Disabled by default;
+    /// the `--move-class-pn` CLI flag maps here. This changes only the initial
+    /// estimate of a newly seen non-terminal child: terminal/solved children,
+    /// learned or TT-reused bounds, proof events, and budget accounting are
+    /// untouched.
+    pub fn set_move_class_pn(&mut self, enabled: bool) {
+        self.move_class_pn = enabled;
+    }
+
     pub fn scorer(&self) -> &StaticAtomicScorer {
         &self.scorer
     }

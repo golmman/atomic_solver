@@ -39,6 +39,12 @@ Options:
   --budget <EVALS>           Cap the search at this many child
                              evaluations; hitting the cap returns
                              draw and prints 'budget exhausted'
+  --move-class-pn            Give newly seen OR-node children
+                             provari-style move-class starting proof
+                             numbers (checks by evasions, double
+                             threat 1, threat 4, weak threat 8,
+                             quiet 9, hanging 15). Experimental
+                             heuristic; off by default
   --config <FILE>            Path to a TOML file overriding scorer
                              parameters; defaults to built-in values
 

@@ -97,6 +97,12 @@ Options:
   --budget <EVALS>           Cap the search at this many child
                              evaluations; hitting the cap returns
                              draw and prints 'budget exhausted'
+  --move-class-pn            Give newly seen OR-node children
+                             provari-style move-class starting proof
+                             numbers (checks by evasions, double
+                             threat 1, threat 4, weak threat 8,
+                             quiet 9, hanging 15). Experimental
+                             heuristic; off by default
   --config <FILE>            Path to a TOML file overriding scorer
                              parameters; defaults to built-in values
 
@@ -166,6 +172,7 @@ fn main() {
         no_preflight,
         salt,
         budget,
+        move_class_pn,
     } = opts;
 
     let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
@@ -193,6 +200,7 @@ fn main() {
     search.set_first_outcome_only(first_outcome);
     search.set_refine_cap_factor(refine_cap);
     search.set_preflight_enabled(!no_preflight);
+    search.set_move_class_pn(move_class_pn);
     search.set_salt(salt);
     if let Some(budget) = budget {
         search.set_child_eval_budget(budget);

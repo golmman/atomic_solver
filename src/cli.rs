@@ -50,6 +50,11 @@ pub struct CliOptions {
     /// unbounded; a run that exhausts the budget returns `Draw` and reports
     /// `budget exhausted`.
     pub budget: Option<u64>,
+    /// Assign provari-style move-class starting proof numbers to newly seen
+    /// OR-node children (checks by evasions, double threat 1, threat 4, weak
+    /// threat 8, quiet 9, hanging 15). Default `false`; an experimental
+    /// search-shaping heuristic, not a correctness switch.
+    pub move_class_pn: bool,
 }
 
 impl Default for CliOptions {
@@ -75,6 +80,7 @@ impl Default for CliOptions {
             no_preflight: false,
             salt: 0,
             budget: None,
+            move_class_pn: false,
         }
     }
 }
@@ -182,6 +188,10 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 }
                 opts.budget = Some(v);
             }
+            "--move-class-pn" => {
+                opts.move_class_pn = true;
+                i += 1;
+            }
             arg => {
                 return Err(format!(
                     "error: unknown option '{arg}'\nRun with --help for usage."
@@ -236,6 +246,7 @@ mod tests {
         assert!(!o.no_preflight);
         assert_eq!(o.salt, 0);
         assert!(o.budget.is_none());
+        assert!(!o.move_class_pn);
     }
 
     #[test]
@@ -332,6 +343,12 @@ mod tests {
     fn budget_is_parsed() {
         let o = options(&["--budget", "1000000000"]);
         assert_eq!(o.budget, Some(1_000_000_000));
+    }
+
+    #[test]
+    fn move_class_pn_is_parsed_and_default_off() {
+        assert!(!options(&[]).move_class_pn);
+        assert!(options(&["--move-class-pn"]).move_class_pn);
     }
 
     #[test]

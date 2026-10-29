@@ -17,6 +17,7 @@ mod config;
 mod core;
 mod fraction;
 mod history;
+mod move_class;
 mod pv;
 mod repetition_cache;
 mod restart_schedule;
@@ -234,6 +235,12 @@ pub struct Search {
     /// the DF-PN loop. Default `true`; disabled by the `--no-preflight` CLI
     /// flag.
     preflight_enabled: bool,
+    /// Whether OR-node moves are given provari-style starting proof numbers
+    /// (`move_class`): the initial estimate for a newly seen non-terminal
+    /// child follows the move's class (check/double threat/threat/weak
+    /// threat/hanging/quiet). Default `false`; the flag is an experimental
+    /// heuristic, not a correctness switch.
+    move_class_pn: bool,
     /// Report of the last run's pre-phase hook, `None` when the hook has not
     /// run in the current run.
     preflight_report: Option<PreflightReport>,
@@ -292,6 +299,7 @@ impl Search {
             #[cfg(test)]
             preprobe_skips: 0,
             repetition_cache: RepetitionCache::new(),
+            move_class_pn: false,
             preflight_enabled: true,
             preflight_report: None,
         }

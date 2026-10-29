@@ -30,6 +30,10 @@ fn cli_help_lists_options_and_exits_cleanly() {
         stdout.contains("--tt-dump-path"),
         "help should mention --tt-dump-path"
     );
+    assert!(
+        stdout.contains("--move-class-pn"),
+        "help should mention --move-class-pn"
+    );
 }
 
 /// The rendered `--help` text is pinned byte-for-byte: it is the single

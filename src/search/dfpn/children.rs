@@ -31,6 +31,7 @@ use crate::position::{Outcome, Position};
 use crate::proof_event::{NodeProven, ProofEvent};
 
 use super::Search;
+use super::move_class;
 use crate::search::tt::TtEntry;
 use crate::zobrist::INF;
 
@@ -609,7 +610,19 @@ impl Search {
                     // terminal check says non-terminal, like the old code where
                     // the outcome check preceded the TT probe.
                     let (pn, dn) = ChildInfo::unsolved_bounds(entry, child_max_depth);
-                    ChildInfo::unsolved(mv, pn, dn)
+                    // Move-class starting proof numbers (provari plan2,
+                    // default off): only for a fresh OR-node child (neutral
+                    // `(1, 1)` bounds) whose parent is OR (`!child_is_or`).
+                    // Solved/repetition/rule50/TT-resolved children returned
+                    // above, so this can never override an outcome or a
+                    // learned bound. A starting value is a positive, finite
+                    // bound in `[1, 15]`; `dn` stays at the neutral 1.
+                    if self.move_class_pn && !child_is_or && pn == 1 && dn == 1 {
+                        let start = move_class::starting_proof_number(pos, mv);
+                        ChildInfo::unsolved(mv, start, 1)
+                    } else {
+                        ChildInfo::unsolved(mv, pn, dn)
+                    }
                 }
             }
         };
