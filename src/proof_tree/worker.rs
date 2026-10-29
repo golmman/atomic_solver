@@ -15,7 +15,6 @@
 //! canonical proven tree.
 
 use std::collections::{HashMap, HashSet};
-use std::io;
 use std::num::NonZeroU32;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -36,10 +35,6 @@ enum ProofTreeWorkerMessage {
     GetStats(Sender<ProofResponse>),
     GetTree(Sender<ProofResponse>),
     Finalize,
-    DumpToBin {
-        path: String,
-        tx: Sender<io::Result<()>>,
-    },
 }
 
 /// Replies from the proof-tree worker.
@@ -125,17 +120,18 @@ impl ProofTreeWorkerHandle {
             .send(ProofTreeWorkerMessage::Finalize)
             .expect("worker thread alive");
     }
+}
 
-    /// Serialize the finalized proof tree to a compact binary dump file.
-    pub fn dump_to_bin<P: AsRef<std::path::Path>>(&self, path: P) -> io::Result<()> {
-        let (tx, rx) = channel();
-        self.query_tx
-            .send(ProofTreeWorkerMessage::DumpToBin {
-                path: path.as_ref().to_string_lossy().into_owned(),
-                tx,
-            })
-            .expect("worker thread alive");
-        rx.recv().expect("worker response")
+/// The proven depth implied by an expanded node's children.
+///
+/// A Win node is proven as soon as one child is proven (min depth + 1); a
+/// Loss node needs every reply proven (max depth + 1). Draws and unrealized
+/// nodes carry no proven depth.
+fn proven_depth(outcome: Option<Outcome>, child_depths: impl Iterator<Item = u32>) -> u32 {
+    match outcome {
+        Some(Outcome::Win) => child_depths.min().unwrap_or(0).saturating_add(1),
+        Some(Outcome::Loss) => child_depths.max().unwrap_or(0).saturating_add(1),
+        _ => 0,
     }
 }
 
@@ -190,10 +186,8 @@ impl ProofTreeWorker {
 
     /// Handle a single proof-tree event.
     fn handle_event(&mut self, event: ProofEvent) {
-        match event {
-            ProofEvent::Clear => self.clear(),
-            ProofEvent::NodeProven(np) => self.process_event(np),
-        }
+        let ProofEvent::NodeProven(np) = event;
+        self.process_event(np);
     }
 
     /// Handle a single query message, sending a reply if one is produced.
@@ -212,19 +206,7 @@ impl ProofTreeWorker {
             ProofTreeWorkerMessage::Finalize => {
                 self.finalize_tree(event_rx);
             }
-            ProofTreeWorkerMessage::DumpToBin { path, tx } => {
-                let result =
-                    std::fs::File::create(&path).and_then(|mut file| self.tree.to_bin(&mut file));
-                let _ = tx.send(result);
-            }
         }
-    }
-
-    fn clear(&mut self) {
-        self.tree = ProofTree::new(self.tree.root_fen.clone(), 0, None, 0);
-        self.child_index.clear();
-        self.expanded_by_hash.clear();
-        self.validation_errors = 0;
     }
 
     fn process_event(&mut self, event: NodeProven) {
@@ -414,29 +396,12 @@ impl ProofTreeWorker {
     fn implied_depth(&self, id: usize) -> u32 {
         let node = &self.tree.nodes[id];
         if node.depth == 0 {
-            0
-        } else {
-            let child_depths: Vec<u32> = self
-                .tree
-                .children(id)
-                .map(|c| self.tree.nodes[c].depth)
-                .collect();
-            match node.outcome {
-                Some(Outcome::Win) => child_depths
-                    .iter()
-                    .min()
-                    .copied()
-                    .unwrap_or(0)
-                    .saturating_add(1),
-                Some(Outcome::Loss) => child_depths
-                    .iter()
-                    .max()
-                    .copied()
-                    .unwrap_or(0)
-                    .saturating_add(1),
-                _ => 0,
-            }
+            return 0;
         }
+        proven_depth(
+            node.outcome,
+            self.tree.children(id).map(|c| self.tree.nodes[c].depth),
+        )
     }
 
     /// Finalize the proof tree after search has stopped.
@@ -486,9 +451,7 @@ impl ProofTreeWorker {
             match action {
                 Action::Enter(raw_id, parent_new_id, edge_mv) => {
                     let node = &old_tree.nodes[raw_id];
-                    if node.outcome.is_none() {
-                        continue;
-                    }
+                    // Unrealized dummy ancestors are skipped during the rebuild.
                     let Some(outcome) = node.outcome else {
                         continue;
                     };
@@ -551,25 +514,10 @@ impl ProofTreeWorker {
             if new_tree.nodes[i].first_child.is_none() {
                 new_tree.nodes[i].depth = 0;
             } else {
-                let child_depths: Vec<u32> = new_tree
-                    .children(i)
-                    .map(|c| new_tree.nodes[c].depth)
-                    .collect();
-                new_tree.nodes[i].depth = match new_tree.nodes[i].outcome {
-                    Some(Outcome::Win) => child_depths
-                        .iter()
-                        .min()
-                        .copied()
-                        .unwrap_or(0)
-                        .saturating_add(1),
-                    Some(Outcome::Loss) => child_depths
-                        .iter()
-                        .max()
-                        .copied()
-                        .unwrap_or(0)
-                        .saturating_add(1),
-                    _ => 0,
-                };
+                new_tree.nodes[i].depth = proven_depth(
+                    new_tree.nodes[i].outcome,
+                    new_tree.children(i).map(|c| new_tree.nodes[c].depth),
+                );
             }
         }
 

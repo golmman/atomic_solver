@@ -1,0 +1,23 @@
+# plan10 post-change greps (after)
+
+## dump_to_bin | DumpToBin
+(none)
+
+## ProofEvent::Clear
+(none)
+
+## ProofEvent variants
+16:pub enum ProofEvent {
+17-    NodeProven(NodeProven),
+18-}
+19-
+
+## Position::default
+(none)
+
+## new_without_default allow
+95-    // No `Default`: `new()` parses a FEN and is the named constructor for the
+96-    // start position; an unused `Default` impl is noise.
+97:    #[allow(clippy::new_without_default)]
+98-    pub fn new() -> Self {
+99-        Self::from_fen(Self::STARTPOS_FEN).unwrap()

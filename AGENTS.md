@@ -8,7 +8,7 @@ A pure solver for atomic chess in Rust.
 
 - `src/lib.rs` re-exports `notation`, `position`, `proof_event`, `proof_tree`, `search`, `reconstruct`, `tt_snapshot`, and `zobrist`.
 - `src/position.rs` wraps `atomic_movegen::board::Board` and tracks the `Outcome` (Win/Loss/Draw from the side-to-move perspective), undo state, and Zobrist hashing.
-- `src/proof_event.rs` defines the neutral `ProofEvent` protocol (`Clear`,
+- `src/proof_event.rs` defines the neutral `ProofEvent` protocol (one variant,
   `NodeProven`) that decouples the solver from the proof-tree implementation.
 - `src/search/dfpn/` — sequential DF-PN+ solver: iterative bounded refinement, history/killer
   heuristics, 5 s default timeout; emits `ProofEvent`s for every proven/disproven node (the

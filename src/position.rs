@@ -92,6 +92,9 @@ impl Position {
     pub const STARTPOS_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     #[must_use]
+    // No `Default`: `new()` parses a FEN and is the named constructor for the
+    // start position; an unused `Default` impl is noise.
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self::from_fen(Self::STARTPOS_FEN).unwrap()
     }
@@ -317,12 +320,6 @@ impl Position {
     #[must_use]
     pub fn fen(&self) -> String {
         self.board.fen()
-    }
-}
-
-impl Default for Position {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

@@ -44,6 +44,22 @@ dec31/m22/m23 FO, and the m22 default golden are exact (no
 re-baselining); interleaved wall medians 0.960–1.009×. All gates green
 including `make test-full`.
 
+**plan10 done 2026-10-29** (`report10.md`). Offline proof-tree layer:
+the proven-depth rule now lives once in a private `fn proven_depth`
+(Win ⇒ min+1, Loss ⇒ max+1) used by both canonical-twin selection and the
+finalize recompute, dropping the per-node `Vec<u32>`; the dead
+`ProofTreeWorkerHandle::dump_to_bin` / `DumpToBin` protocol (no caller —
+consumers use `handle.tree()` + `to_bin`) is deleted; the vestigial
+`impl Default for Position` is deleted (documented
+`clippy::new_without_default` allow instead); and the `ProofEvent::Clear`
+decision was taken as **P1**: the variant, the worker's `clear()`, its
+handler arm and its one unit test are gone, so `ProofEvent` has one
+variant and the enum survives as the `search`↔`proof_tree` decoupling
+contract (P2 collapse stays recorded as not-taken). `worker.rs`
+663 → 611 lines, `-clear`/`-dump` protocol plumbing net −129 diff lines;
+the proof-tree binary dump is byte-identical (`ab94c69f…`), the three
+search anchors are child-eval identical, gates green.
+
 ## Goal
 
 Tighten the codebase without changing any game-theoretic result: dead
@@ -90,6 +106,9 @@ one-off structural repairs.
 - **plan9** — `dfpn/children.rs` constructors + one unsolved-bounds
   ladder + move-only test split into `children/tests.rs`; identity and
   wall bars green (`report9.md`).
+- **plan10** — one `proven_depth` rule (no `Vec`), dead `dump_to_bin`
+  protocol removed, `Position::default` removed, `ProofEvent::Clear`
+  deleted (P1); dump byte-identical, anchors exact (`report10.md`).
 
 ## Open follow-ups (carried from report2/report3)
 
@@ -106,11 +125,8 @@ see `report4.md`.)
 
 Plans 9–11 were drafted by the 2026-10-28 owner-requested code-size /
 readability review (one plan per session, independent, any order);
-plans 8 and 9 are done.
+plans 8, 9 and 10 are done.
 
-- **plan10** — `proof_tree` layer: one proven-depth rule (and no `Vec`),
-  dead `dump_to_bin` protocol removed, `Position::default` removed,
-  `ProofEvent::Clear` decision.
 - **plan11** — tooling DRY (validate field list, `config.toml` drift
 test, fixture parsers, proofdb fixture) + owner-gated retirement of
   `reconstruct_pt --experiment`.

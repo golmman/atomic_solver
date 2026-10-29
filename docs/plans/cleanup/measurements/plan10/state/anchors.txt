@@ -1,0 +1,21 @@
+# plan10 anchors — before (f2f9ad1) vs after (phases A-D applied)
+
+## quick @ tt 256, --first-outcome --timeout 3 --runs 1
+before: solved 59  total_child_evals 42,109,768  wrong 0  timeouts 0
+after : solved 59  total_child_evals 42,109,768  wrong 0  timeouts 0
+per-case child_evals/outcome diffs: none
+
+## dec31 FO (r1bq1k2/ppN3p1/... b - - 0 15, --timeout 20 --first-outcome)
+before: evals 510,426  outcome loss length 22  pre_exit Complete nodes 22,286
+after : evals 510,426  outcome loss length 22  pre_exit Complete nodes 22,286
+
+## m22 FO (4r2k/3p4/2pB2p1/... w - - 0 22, --timeout 60 --first-outcome)
+before: evals 15,023,911  outcome win length 75  pre_exit Complete nodes 890,584
+after : evals 15,023,911  outcome win length 75  pre_exit Complete nodes 890,584
+
+## proof-tree dump identity (Bar D2)
+mate-in-3 '4k3/8/8/8/8/8/8/4KRR1 w - - 0 1', snapshot solved=3 unsolved=18,
+reconstruct_pt -> dump
+before: ab94c69f361127ef816c9ce2b8f2b0b0e0a9d7a223b92cb9716482c17f0c9f0b (70 bytes, 4 nodes)
+after : ab94c69f361127ef816c9ce2b8f2b0b0e0a9d7a223b92cb9716482c17f0c9f0b (70 bytes, 4 nodes)
+cmp: byte-identical; validate: ok both sides

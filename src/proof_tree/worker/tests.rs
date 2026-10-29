@@ -12,13 +12,40 @@ use std::time::Duration;
 
 use atomic_movegen::types::{Move, Square};
 
-use super::{ProofResponse, ProofTreeWorker, ProofTreeWorkerHandle, ProofTreeWorkerMessage};
+use super::{
+    ProofResponse, ProofTreeWorker, ProofTreeWorkerHandle, ProofTreeWorkerMessage, proven_depth,
+};
 use crate::position::Outcome;
 use crate::proof_event::{NodeProven, ProofEvent};
 use crate::proof_tree::ProofTree;
 
 fn child_by_move(tree: &ProofTree, parent: usize, mv: Move) -> Option<usize> {
     tree.children(parent).find(|&c| tree.nodes[c].mv == mv)
+}
+
+#[test]
+fn proven_depth_table() {
+    let depths = || [1u32, 3, 2].into_iter();
+    assert_eq!(
+        proven_depth(Some(Outcome::Win), depths()),
+        2,
+        "a Win is proven by its shallowest proven child"
+    );
+    assert_eq!(
+        proven_depth(Some(Outcome::Loss), depths()),
+        4,
+        "a Loss needs every reply, so the deepest proven child"
+    );
+    assert_eq!(
+        proven_depth(Some(Outcome::Draw), depths()),
+        0,
+        "draws carry no proven depth"
+    );
+    assert_eq!(
+        proven_depth(None, depths()),
+        0,
+        "unrealized nodes carry no proven depth"
+    );
 }
 
 #[test]
@@ -346,39 +373,6 @@ fn worker_handles_out_of_order_events_directly() {
     assert_eq!(stats.win_nodes, 2);
     assert_eq!(stats.loss_nodes, 1);
     assert_eq!(stats.root_depth, 2);
-}
-
-#[test]
-fn worker_clears_tree_directly() {
-    let mut worker = ProofTreeWorker::new(
-        "fen".to_string(),
-        usize::MAX,
-        Arc::new(AtomicBool::new(false)),
-    );
-
-    worker.handle_event(ProofEvent::NodeProven(NodeProven::new(
-        vec![],
-        0,
-        Outcome::Win,
-        2,
-    )));
-    worker.handle_event(ProofEvent::NodeProven(NodeProven::new(
-        vec![Move::make_move(Square::E2, Square::E4)],
-        0,
-        Outcome::Loss,
-        1,
-    )));
-    worker.handle_event(ProofEvent::Clear);
-
-    let (tx, rx) = channel();
-    worker.handle_query(ProofTreeWorkerMessage::GetStats(tx), None);
-    let stats = match rx.recv().unwrap() {
-        ProofResponse::Stats(s) => s,
-        _ => panic!("expected Stats response"),
-    };
-    assert_eq!(stats.nodes, 1);
-    assert_eq!(stats.win_nodes, 0);
-    assert_eq!(stats.loss_nodes, 0);
 }
 
 #[test]

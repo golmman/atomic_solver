@@ -1,0 +1,10 @@
+# plan10 post-change line counts
+  611 src/proof_tree/worker.rs
+  800 src/proof_tree/worker/tests.rs
+  570 src/position.rs
+   41 src/proof_event.rs
+  647 src/search/dfpn/children/tests.rs
+ 2669 total
+23531 src/proof_tree/worker.rs
+ 1057 src/proof_event.rs
+24588 total

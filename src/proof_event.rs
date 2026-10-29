@@ -1,10 +1,12 @@
 //! Neutral search-to-worker event protocol.
 //!
 //! `ProofEvent` decouples the solver from the proof-tree implementation.
-//! The `search` module emits events and never emits [`ProofEvent::Clear`] —
-//! the solver never clears proof events; finalizing the proof tree is the
-//! proof-tree layer's responsibility. `Clear` exists for workers and tests
-//! that need to reset their tree state.
+//! It has one variant today; it stays an enum so that new event kinds (e.g.
+//! an explicit invalidation) can be added without touching `search`'s
+//! signature — see `AGENTS.md` §Dependency direction.
+//!
+//! The solver only ever reports proven nodes, so the stream is monotone: the
+//! consumer never sees a reset request.
 
 use atomic_movegen::types::Move;
 
@@ -12,7 +14,6 @@ use crate::position::Outcome;
 
 #[derive(Debug, Clone)]
 pub enum ProofEvent {
-    Clear,
     NodeProven(NodeProven),
 }
 

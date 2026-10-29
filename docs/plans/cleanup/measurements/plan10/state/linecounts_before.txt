@@ -1,0 +1,10 @@
+# plan10 Phase 0 line counts (before)
+  663 src/proof_tree/worker.rs
+  806 src/proof_tree/worker/tests.rs
+  573 src/position.rs
+   40 src/proof_event.rs
+  649 src/search/dfpn/children/tests.rs
+ 2731 total
+25213 src/proof_tree/worker.rs
+ 1010 src/proof_event.rs
+26223 total

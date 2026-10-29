@@ -455,15 +455,13 @@ fn preprobe_resolves_solved_entry_and_emits_the_same_proof_event() {
         format!("{:?}", streams[1]),
         "the pre-probe emits the make path's event"
     );
-    match &streams[0][0] {
-        ProofEvent::NodeProven(event) => {
-            assert_eq!(event.path, vec![mv]);
-            assert_eq!(event.hash, child_key, "event hash is the child key");
-            assert_eq!(event.outcome, Outcome::Loss);
-            assert_eq!(event.depth, 1);
-        }
-        ProofEvent::Clear => panic!("the search never clears proof events"),
-    }
+    // `ProofEvent` has exactly one variant, so "the search never emits a
+    // reset" is enforced by the type system rather than by a match arm.
+    let ProofEvent::NodeProven(event) = &streams[0][0];
+    assert_eq!(event.path, vec![mv]);
+    assert_eq!(event.hash, child_key, "event hash is the child key");
+    assert_eq!(event.outcome, Outcome::Loss);
+    assert_eq!(event.depth, 1);
 }
 
 #[test]

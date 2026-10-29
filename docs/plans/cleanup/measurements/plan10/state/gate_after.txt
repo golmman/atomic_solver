@@ -1,0 +1,8 @@
+# fast gate after (cargo test --release, all phases A-D)
+passed 628  failed 0  ignored 41
+wall: real 0m40-1m44s (two runs; cold-ish target dir on the second)
+# census: +1 test (proof_tree::worker::tests::proven_depth_table, new)
+#         -1 test (proof_tree::worker::tests::worker_clears_tree_directly, subject removed by P1)
+
+# full gate after (make test-full, --include-ignored, release)
+passed 669  failed 0  ignored 0

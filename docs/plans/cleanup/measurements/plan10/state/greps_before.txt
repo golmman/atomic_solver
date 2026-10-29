@@ -1,0 +1,23 @@
+# plan10 Phase 0 greps (before)
+
+## dump_to_bin | DumpToBin
+src/proof_tree/worker.rs:39:    DumpToBin {
+src/proof_tree/worker.rs:130:    pub fn dump_to_bin<P: AsRef<std::path::Path>>(&self, path: P) -> io::Result<()> {
+src/proof_tree/worker.rs:133:            .send(ProofTreeWorkerMessage::DumpToBin {
+src/proof_tree/worker.rs:215:            ProofTreeWorkerMessage::DumpToBin { path, tx } => {
+
+## ProofEvent::Clear
+src/proof_tree/worker.rs:194:            ProofEvent::Clear => self.clear(),
+src/proof_tree/worker/tests.rs:371:    worker.handle_event(ProofEvent::Clear);
+src/proof_event.rs:4://! The `search` module emits events and never emits [`ProofEvent::Clear`] —
+src/search/dfpn/children/tests.rs:465:        ProofEvent::Clear => panic!("the search never clears proof events"),
+
+## Position::default
+(none)
+
+## Position::new
+src/notation.rs:169:        let pos = Position::new();
+src/notation.rs:177:        let pos = Position::new();
+examples/move_order_debug.rs:85:        Position::new()
+examples/twin_stats.rs:37:        Position::new()
+examples/list_legal.rs:36:        Position::new()
