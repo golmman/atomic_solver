@@ -2,7 +2,15 @@
 
 ## Status
 
-**Active (opened 2026-10-29).** The first plan is
+**CLOSED 2026-10-30 — consolidated into [`winprover`](../winprover/initiative.md).**
+The differential checker oracle is `winprover` item 2 (ranked second, because it
+gates trust in the new proof shapes); backlog items 2–5 are `winprover`'s
+horizon item 8. `plan1.md` was drafted here and never executed: it is not
+renumbered, and `winprover` item 2's plan is a fresh draft that may reuse it
+after re-verifying the JSONL contract against the current dump format. The text
+below is the closing record; do not open new plans here.
+
+**Historical status (opened 2026-10-29).** The first plan is
 [`plan1.md`](plan1.md): a differential proof-checking oracle against
 [`aiorla/provari`](https://github.com/aiorla/provari), using provari as an
 external executable and never as linked code. Next plan number if the

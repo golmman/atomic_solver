@@ -2,7 +2,14 @@
 
 ## Status
 
-**Active (opened 2026-10-29).** Plan 1
+**CLOSED 2026-10-30 — consolidated into [`winprover`](../winprover/initiative.md).**
+The search-performance backlog lives on as `winprover` items 3–6 (win-only
+front-end, sibling simulation, rule50-free key, head-to-head), with the
+measured-out levers recorded in that initiative's table. All plans, reports and
+`measurements/` artifacts stay here unchanged and are referenced by path +
+digest. The text below is the closing record; do not open new plans here.
+
+**Historical status (opened 2026-10-29).** Plan 1
 ([`plan1.md`](plan1.md), [`report1.md`](report1.md)) established the
 reproducible baseline and target corpus. Plan 2
 ([`plan2.md`](plan2.md), [`report2.md`](report2.md)) implemented OR-node

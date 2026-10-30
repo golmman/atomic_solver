@@ -2,7 +2,19 @@
 
 ## Status
 
-**Active** — opened 2026-10-09 (owner proposal: monorepo / workspace split).
+**CLOSED 2026-10-30 — consolidated into [`winprover`](../winprover/initiative.md) item 7 (optional).**
+The split is packaging, not an engine: it is never a precondition for a search
+lever, and `winprover`'s front-end is built as a module first. **`plan1.md` is
+stale and must not be executed as written** — it moves
+`examples/proofdb_ledger_union.rs` (retired by `proofdb` plan 20) and a module
+tree (`pns/`, `descend`, `and_close`) removed by `proofdb` plan 18, sizes
+`examples/proofdb/` at ~6,800 lines (now 3,534), and misses `examples/campaign/`
+and `examples/proofdb/sync.sh` (called by `make proofdb_sync`). Re-draft from
+the current tree if item 7 is ever claimed; the D1–D3 decision record below
+stays the reference. Item 2 (further carve-outs) stays rejected. The text below
+is the closing record; do not open new plans here.
+
+**Historical status: Active** — opened 2026-10-09 (owner proposal: monorepo / workspace split).
 
 ## Goal
 
