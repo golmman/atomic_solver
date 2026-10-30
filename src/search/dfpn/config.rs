@@ -40,6 +40,17 @@ impl Search {
         self.move_class_pn = enabled;
     }
 
+    /// Enable or disable OR-node quiet-move grouping (see the `quiet_group`
+    /// module): plain moves are hidden behind one delayed group child and are
+    /// evaluated only when DF-PN selects it. Disabled by default; the
+    /// `--quiet-grouping` CLI flag maps here. Hidden members are not billed as
+    /// child evaluations; opening evaluates them through the shipped child
+    /// path (so the budget can be crossed by at most one group opening, bounded
+    /// by the legal move count, like one `evaluate_all_children` sweep).
+    pub fn set_quiet_grouping(&mut self, enabled: bool) {
+        self.quiet_grouping = enabled;
+    }
+
     pub fn scorer(&self) -> &StaticAtomicScorer {
         &self.scorer
     }

@@ -11,6 +11,7 @@ fn child(outcome: Option<Outcome>, depth: u32, from: Square, to: Square) -> Chil
         depth,
         repetition_seen: false,
         explored: false,
+        group: false,
     }
 }
 
@@ -167,6 +168,7 @@ fn best_and_second_unsolved_orders_by_or_pn() {
             depth: 0,
             repetition_seen: false,
             explored: false,
+            group: false,
         },
         ChildInfo {
             mv: Move::make_move(Square::B1, Square::B2),
@@ -176,6 +178,7 @@ fn best_and_second_unsolved_orders_by_or_pn() {
             depth: 0,
             repetition_seen: false,
             explored: false,
+            group: false,
         },
         ChildInfo {
             mv: Move::make_move(Square::C1, Square::C2),
@@ -185,6 +188,7 @@ fn best_and_second_unsolved_orders_by_or_pn() {
             depth: 0,
             repetition_seen: false,
             explored: false,
+            group: false,
         },
     ];
     let (best, second) = best_and_second_unsolved(&children, true);
@@ -204,9 +208,44 @@ fn solved_children_are_skipped_by_best_and_second() {
             depth: 0,
             repetition_seen: false,
             explored: false,
+            group: false,
         },
     ];
     let (best, second) = best_and_second_unsolved(&children, true);
     assert_eq!(best, Some(1));
     assert_eq!(second, None);
+}
+
+// ---------- quiet-move groups (provari plan3) ----------
+
+#[test]
+fn pending_group_blocks_loss_and_draw_conclusions() {
+    // All non-group children are solved Wins (which would be a parent Loss at
+    // an OR node) or a mix with a Draw, but the pending group is unsolved, so
+    // neither Loss nor Draw may be concluded through it.
+    let loss_children = vec![
+        child(Some(Outcome::Win), 1, Square::A1, Square::A2),
+        ChildInfo::group(9, 4),
+    ];
+    assert!(is_solved_by_children(&loss_children, true).is_none());
+
+    let draw_children = vec![
+        child(Some(Outcome::Win), 1, Square::A1, Square::A2),
+        child(Some(Outcome::Draw), 2, Square::B1, Square::B2),
+        ChildInfo::group(9, 4),
+    ];
+    assert!(is_solved_by_children(&draw_children, true).is_none());
+}
+
+#[test]
+fn group_does_not_block_a_win_from_another_child() {
+    let children = vec![
+        ChildInfo::group(9, 4),
+        child(Some(Outcome::Loss), 3, Square::A1, Square::A2),
+    ];
+    let (outcome, depth, mv, all_solved, _idx) = is_solved_by_children(&children, true).unwrap();
+    assert_eq!(outcome, Outcome::Win);
+    assert_eq!(depth, 4);
+    assert_eq!(mv, Move::make_move(Square::A1, Square::A2));
+    assert!(!all_solved, "the group is still pending");
 }

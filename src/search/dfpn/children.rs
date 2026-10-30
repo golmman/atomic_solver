@@ -32,6 +32,7 @@ use crate::proof_event::{NodeProven, ProofEvent};
 
 use super::Search;
 use super::move_class;
+use super::quiet_group;
 use crate::search::tt::TtEntry;
 use crate::zobrist::INF;
 
@@ -102,6 +103,11 @@ pub struct ChildInfo {
     pub depth: u32,
     pub repetition_seen: bool,
     pub explored: bool,
+    /// The delayed plain-move group (provari plan3). A group is a disjunction
+    /// of hidden moves at an OR node: `mv == Move::NONE`, never solved
+    /// (`outcome == None`), and replaced by its evaluated members when opened
+    /// (see [`Search::open_quiet_group`]). At most one per frame.
+    pub group: bool,
 }
 
 impl ChildInfo {
@@ -124,6 +130,7 @@ impl ChildInfo {
             depth,
             repetition_seen,
             explored: false,
+            group: false,
         }
     }
 
@@ -137,6 +144,23 @@ impl ChildInfo {
             depth: 0,
             repetition_seen: false,
             explored: false,
+            group: false,
+        }
+    }
+
+    /// The delayed plain-move group (provari plan3): one unsolved child that
+    /// stands for every hidden plain move at an OR node. It is never moved
+    /// into and never solved; `pn`/`dn` are starting estimates, not proofs.
+    pub(super) fn group(pn: u64, dn: u64) -> Self {
+        Self {
+            mv: Move::NONE,
+            pn,
+            dn,
+            outcome: None,
+            depth: 0,
+            repetition_seen: false,
+            explored: false,
+            group: true,
         }
     }
 
@@ -152,6 +176,7 @@ impl ChildInfo {
             depth: 0,
             repetition_seen: false,
             explored: false,
+            group: false,
         }
     }
 
@@ -214,6 +239,12 @@ impl Search {
         children: &mut Vec<ChildInfo>,
     ) {
         children.clear();
+        // Grouped OR-node path (provari plan3, default off). Kept out of the
+        // shipped loop so the flag-off path stays byte-identical.
+        if self.quiet_grouping && is_or_node {
+            self.evaluate_all_children_grouped(pos, moves, max_depth, is_or_node, children);
+            return;
+        }
         // Keys pre-pass (lean plan11's TT prefetch, extended by performance
         // plan3): one non-mutating `Position::keys_after` per child both issues
         // the child's bucket prefetch — every load before the first probe, so
@@ -249,6 +280,112 @@ impl Search {
                 for j in (i + 1)..moves.len() {
                     children.push(ChildInfo::unevaluated(moves[j]));
                 }
+                break;
+            }
+        }
+    }
+
+    /// Grouped OR-node child evaluation (provari plan3): plain moves are
+    /// hidden behind one delayed group and are not keyed, prefetched, probed,
+    /// evaluated, billed, or reported as proof events. Non-plain moves run the
+    /// shipped key pre-pass and evaluation, including the early decisive Loss
+    /// cut (which suppresses the group: the parent is already won).
+    fn evaluate_all_children_grouped(
+        &mut self,
+        pos: &mut Position,
+        moves: &MoveList,
+        max_depth: u32,
+        is_or_node: bool,
+        children: &mut Vec<ChildInfo>,
+    ) {
+        let child_count = moves.len();
+        if self.plain_scratch.len() < child_count {
+            self.plain_scratch.resize(child_count, false);
+        }
+        let mut hidden_count = 0u64;
+        for i in 0..child_count {
+            let plain = quiet_group::is_plain(pos, moves[i]);
+            self.plain_scratch[i] = plain;
+            if plain {
+                hidden_count += 1;
+            }
+        }
+
+        if self.keys_scratch.len() < child_count {
+            self.keys_scratch.resize(child_count, (0, 0, 0));
+        }
+        for i in 0..child_count {
+            if self.plain_scratch[i] {
+                continue;
+            }
+            let keys = pos.keys_after(moves[i]);
+            self.tt.prefetch(keys.0);
+            self.keys_scratch[i] = keys;
+        }
+
+        for i in 0..child_count {
+            if self.plain_scratch[i] {
+                continue;
+            }
+            let mv = moves[i];
+            let (child_key, child_rep_key, rule50_after) = self.keys_scratch[i];
+            let info = self.evaluate_child_keyed(
+                pos,
+                mv,
+                max_depth,
+                is_or_node,
+                child_key,
+                child_rep_key,
+                rule50_after,
+            );
+            let decisive = info.outcome == Some(Outcome::Loss);
+            children.push(info);
+            if decisive {
+                for j in (i + 1)..child_count {
+                    if !self.plain_scratch[j] {
+                        children.push(ChildInfo::unevaluated(moves[j]));
+                    }
+                }
+                return;
+            }
+        }
+
+        if hidden_count > 0 {
+            children.push(ChildInfo::group(
+                quiet_group::GROUP_PN,
+                hidden_count.clamp(1, INF),
+            ));
+        }
+    }
+
+    /// Open the selected quiet-move group: remove it, evaluate exactly the
+    /// hidden plain members through the shipped [`Search::evaluate_child`]
+    /// (so `child_evals`, the budget, TT reuse, and proof events keep their
+    /// meaning), and append them in move-list order. An OR-node member that
+    /// proves a child `Loss` ends the opening early: the parent is already
+    /// won. The group is never recreated in this frame.
+    pub(super) fn open_quiet_group(
+        &mut self,
+        pos: &mut Position,
+        moves: &MoveList,
+        max_depth: u32,
+        is_or_node: bool,
+        children: &mut Vec<ChildInfo>,
+        idx: usize,
+    ) {
+        debug_assert!(children[idx].group, "only a group child may be opened");
+        debug_assert!(is_or_node, "groups exist only at OR nodes");
+        children.remove(idx);
+
+        for i in 0..moves.len() {
+            let mv = moves[i];
+            if !quiet_group::is_plain(pos, mv) {
+                continue;
+            }
+            let info = self.evaluate_child(pos, mv, max_depth, is_or_node);
+            let decisive = info.outcome == Some(Outcome::Loss);
+            children.push(info);
+            if decisive {
                 break;
             }
         }

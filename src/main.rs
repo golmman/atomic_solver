@@ -103,6 +103,10 @@ Options:
                              threat 1, threat 4, weak threat 8,
                              quiet 9, hanging 15). Experimental
                              heuristic; off by default
+  --quiet-grouping           Hide OR-node plain moves behind one
+                             delayed group child, opened only if the
+                             search selects it. Experimental
+                             heuristic; off by default
   --config <FILE>            Path to a TOML file overriding scorer
                              parameters; defaults to built-in values
 
@@ -173,6 +177,7 @@ fn main() {
         salt,
         budget,
         move_class_pn,
+        quiet_grouping,
     } = opts;
 
     let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
@@ -201,6 +206,7 @@ fn main() {
     search.set_refine_cap_factor(refine_cap);
     search.set_preflight_enabled(!no_preflight);
     search.set_move_class_pn(move_class_pn);
+    search.set_quiet_grouping(quiet_grouping);
     search.set_salt(salt);
     if let Some(budget) = budget {
         search.set_child_eval_budget(budget);

@@ -45,6 +45,10 @@ Options:
                              threat 1, threat 4, weak threat 8,
                              quiet 9, hanging 15). Experimental
                              heuristic; off by default
+  --quiet-grouping           Hide OR-node plain moves behind one
+                             delayed group child, opened only if the
+                             search selects it. Experimental
+                             heuristic; off by default
   --config <FILE>            Path to a TOML file overriding scorer
                              parameters; defaults to built-in values
 

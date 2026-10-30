@@ -12,7 +12,7 @@ use atomic_movegen::types::Move;
 use crate::position::{Outcome, Position};
 
 use super::Search;
-use super::children::{ChildPrecompute, ChildSelection};
+use super::children::{ChildInfo, ChildPrecompute, ChildSelection};
 use super::selection::select_from_children;
 use crate::search::tt::TtEntry;
 use crate::zobrist::INF;
@@ -20,6 +20,23 @@ use crate::zobrist::INF;
 pub(super) struct Resolved {
     pub outcome: Outcome,
     pub depth: u32,
+}
+
+/// TT `best_child` index for a stored `best_move`.
+///
+/// A `Move::NONE` store (a terminal, or a still-closed quiet-move group
+/// selected by the frame) maps to `u8::MAX` ("none"). Without this guard a
+/// group child's `mv == Move::NONE` would be stored as a bogus best-child
+/// hint. A later probe validates hints by move, so `u8::MAX` is the only
+/// correct encoding for "no child".
+fn store_best_child_index(children: &[ChildInfo], store_best_move: Move) -> u8 {
+    if store_best_move == Move::NONE {
+        return u8::MAX;
+    }
+    children
+        .iter()
+        .position(|c| c.mv == store_best_move)
+        .map_or(u8::MAX, |i| i as u8)
 }
 
 impl Search {
@@ -255,11 +272,34 @@ impl Search {
                 previous_best_move,
                 previous_best_child,
             ));
+            let (sel_best_move, sel_pn, sel_dn, sel_depth, group_idx) = {
+                let selection = selection.as_ref().unwrap();
+                (
+                    selection.best_move,
+                    selection.pn,
+                    selection.dn,
+                    selection.depth,
+                    selection
+                        .best_child_index
+                        .filter(|&idx| children[idx].group),
+                )
+            };
+            best_move = sel_best_move;
+            pn = sel_pn;
+            dn = sel_dn;
+            depth = sel_depth;
+
+            // A selected quiet-move group is opened, never descended into:
+            // `mv == Move::NONE` is the ordinary sentinel and the members are
+            // evaluated through `evaluate_child` first. Reset the cached
+            // selection so the next iteration does not try to re-evaluate the
+            // removed group entry.
+            if let Some(idx) = group_idx {
+                self.open_quiet_group(pos, moves, max_depth, is_or_node, &mut children, idx);
+                selection = None;
+                continue;
+            }
             let selection = selection.as_ref().unwrap();
-            best_move = selection.best_move;
-            pn = selection.pn;
-            dn = selection.dn;
-            depth = selection.depth;
 
             if let Some(solved) = selection.solved_outcome {
                 // Win: one winning child is enough. Loss and Draw require all
@@ -328,10 +368,7 @@ impl Search {
         } else {
             best_move
         };
-        let store_best_child = children
-            .iter()
-            .position(|c| c.mv == store_best_move)
-            .map_or(u8::MAX, |i| i as u8);
+        let store_best_child = store_best_child_index(&children, store_best_move);
         let work = self.child_evals - child_evals_start;
 
         // First-player-loss shortcut: do not cache a Draw that only holds
@@ -504,5 +541,38 @@ mod tests {
     fn set_epsilon_rejects_greater_than_one() {
         let mut search = Search::new(64);
         search.set_epsilon(1.1);
+    }
+}
+
+#[cfg(test)]
+mod store_tests {
+    use super::super::children::ChildInfo;
+    use super::store_best_child_index;
+    use atomic_movegen::types::{Move, Square};
+
+    #[test]
+    fn none_store_never_maps_to_a_group_index() {
+        let children = vec![
+            ChildInfo::group(9, 3),
+            ChildInfo {
+                mv: Move::make_move(Square::A1, Square::A2),
+                pn: 1,
+                dn: 1,
+                outcome: None,
+                depth: 0,
+                repetition_seen: false,
+                explored: false,
+                group: false,
+            },
+        ];
+        assert_eq!(store_best_child_index(&children, Move::NONE), u8::MAX);
+        assert_eq!(
+            store_best_child_index(&children, Move::make_move(Square::A1, Square::A2)),
+            1
+        );
+        assert_eq!(
+            store_best_child_index(&children, Move::make_move(Square::B1, Square::B2)),
+            u8::MAX
+        );
     }
 }

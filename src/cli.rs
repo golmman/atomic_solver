@@ -55,6 +55,10 @@ pub struct CliOptions {
     /// threat 8, quiet 9, hanging 15). Default `false`; an experimental
     /// search-shaping heuristic, not a correctness switch.
     pub move_class_pn: bool,
+    /// Hide OR-node plain moves behind one delayed quiet-move group, opened
+    /// only when the search selects it. Default `false`; an experimental
+    /// search-shaping heuristic, not a correctness switch.
+    pub quiet_grouping: bool,
 }
 
 impl Default for CliOptions {
@@ -81,6 +85,7 @@ impl Default for CliOptions {
             salt: 0,
             budget: None,
             move_class_pn: false,
+            quiet_grouping: false,
         }
     }
 }
@@ -192,6 +197,10 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 opts.move_class_pn = true;
                 i += 1;
             }
+            "--quiet-grouping" => {
+                opts.quiet_grouping = true;
+                i += 1;
+            }
             arg => {
                 return Err(format!(
                     "error: unknown option '{arg}'\nRun with --help for usage."
@@ -247,6 +256,7 @@ mod tests {
         assert_eq!(o.salt, 0);
         assert!(o.budget.is_none());
         assert!(!o.move_class_pn);
+        assert!(!o.quiet_grouping);
     }
 
     #[test]
@@ -349,6 +359,12 @@ mod tests {
     fn move_class_pn_is_parsed_and_default_off() {
         assert!(!options(&[]).move_class_pn);
         assert!(options(&["--move-class-pn"]).move_class_pn);
+    }
+
+    #[test]
+    fn quiet_grouping_is_parsed_and_default_off() {
+        assert!(!options(&[]).quiet_grouping);
+        assert!(options(&["--quiet-grouping"]).quiet_grouping);
     }
 
     #[test]

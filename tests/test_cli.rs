@@ -34,6 +34,10 @@ fn cli_help_lists_options_and_exits_cleanly() {
         stdout.contains("--move-class-pn"),
         "help should mention --move-class-pn"
     );
+    assert!(
+        stdout.contains("--quiet-grouping"),
+        "help should mention --quiet-grouping"
+    );
 }
 
 /// The rendered `--help` text is pinned byte-for-byte: it is the single

@@ -366,6 +366,7 @@ fn assert_same_child_info(fast: &ChildInfo, played: &ChildInfo, ctx: &str) {
         "{ctx}: repetition_seen"
     );
     assert_eq!(fast.explored, played.explored, "{ctx}: explored");
+    assert_eq!(fast.group, played.group, "{ctx}: group");
 }
 
 #[test]
@@ -795,4 +796,209 @@ fn move_class_off_table_matches_shipped() {
             );
         }
     }
+}
+
+// ---------- quiet-move grouping (provari plan3) ----------
+
+#[test]
+fn group_child_representation_and_defaults() {
+    let mut search = Search::new(1);
+    assert!(!search.quiet_grouping, "the heuristic must default off");
+    let group = ChildInfo::group(9, 4);
+    assert!(group.group);
+    assert_eq!(group.mv, Move::NONE);
+    assert_eq!(group.outcome, None);
+    assert_eq!((group.pn, group.dn), (9, 4));
+    assert_eq!(group.depth, 0);
+    assert!(!group.repetition_seen && !group.explored);
+    search.set_quiet_grouping(true);
+    assert!(search.quiet_grouping);
+}
+
+/// Sorted legal moves for `fen` under a fresh `Search`'s current ordering.
+fn sorted_moves_for(search: &mut Search, pos: &mut Position) -> MoveList {
+    let mut moves = MoveList::new();
+    let mut state = StateInfo::new();
+    pos.legal_moves_with_state(&mut moves, &mut state);
+    search.sort_moves(pos, &state, &mut moves, Move::NONE, true);
+    moves
+}
+
+#[test]
+fn quiet_grouping_hides_plain_children_without_billing_them() {
+    const FEN: &str = "3rk3/8/8/6N1/8/8/8/K7 w - - 0 1";
+
+    let mut off_search = Search::new(1);
+    let mut pos = Position::from_fen(FEN).unwrap();
+    let off_moves = sorted_moves_for(&mut off_search, &mut pos);
+    let mut off_children = Vec::new();
+    off_search.evaluate_all_children(&mut pos, &off_moves, u32::MAX, true, &mut off_children);
+
+    let mut on_search = Search::new(1);
+    on_search.set_quiet_grouping(true);
+    let mut pos = Position::from_fen(FEN).unwrap();
+    let on_moves = sorted_moves_for(&mut on_search, &mut pos);
+    let mut on_children = Vec::new();
+    on_search.evaluate_all_children(&mut pos, &on_moves, u32::MAX, true, &mut on_children);
+
+    assert_eq!(off_moves.len(), on_moves.len());
+    let plain: Vec<Move> = (0..on_moves.len())
+        .filter(|&i| super::quiet_group::is_plain(&pos, on_moves[i]))
+        .map(|i| on_moves[i])
+        .collect();
+    assert!(!plain.is_empty(), "fixture needs hidden plain moves");
+    assert!(
+        plain.len() < on_moves.len(),
+        "fixture needs non-plain moves too"
+    );
+    let non_plain_count = on_moves.len() - plain.len();
+
+    assert!(
+        !on_children.iter().any(|c| c.outcome == Some(Outcome::Loss)),
+        "fixture must not hit the early decisive cut"
+    );
+    assert_eq!(
+        off_search.child_evaluations(),
+        off_moves.len() as u64,
+        "flag off bills every child"
+    );
+    assert_eq!(
+        on_search.child_evaluations(),
+        non_plain_count as u64,
+        "hidden plain moves must not be billed"
+    );
+
+    let on_rows: Vec<&ChildInfo> = on_children.iter().filter(|c| !c.group).collect();
+    assert_eq!(on_rows.len(), non_plain_count);
+    for mv in &plain {
+        assert!(
+            !on_rows.iter().any(|c| c.mv == *mv),
+            "hidden move {mv:?} must be absent before opening"
+        );
+    }
+    for (off, on) in off_children
+        .iter()
+        .filter(|c| !plain.contains(&c.mv))
+        .zip(&on_rows)
+    {
+        assert_same_child_info(on, off, "grouped non-plain row");
+    }
+
+    let group = on_children.last().expect("group appended last");
+    assert!(group.group);
+    assert_eq!(group.mv, Move::NONE);
+    assert_eq!(group.outcome, None);
+    assert_eq!(group.pn, super::quiet_group::GROUP_PN);
+    assert_eq!(group.dn, plain.len() as u64);
+}
+
+#[test]
+fn quiet_grouping_sweep_suppresses_the_group_on_a_decisive_loss() {
+    let mut search = Search::new(1);
+    search.set_quiet_grouping(true);
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
+    let moves = sorted_moves_for(&mut search, &mut pos);
+    let mut children = Vec::new();
+    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children);
+
+    assert_eq!(children[0].outcome, Some(Outcome::Loss));
+    assert!(
+        children.iter().all(|c| !c.group),
+        "a won parent appends no group"
+    );
+    for c in &children[1..] {
+        assert_eq!((c.pn, c.dn, c.outcome), (INF, 0, None));
+    }
+}
+
+#[test]
+fn open_quiet_group_replaces_the_group_with_each_hidden_member_once() {
+    const FEN: &str = "3rk3/8/8/6N1/8/8/8/K7 w - - 0 1";
+
+    let mut off_search = Search::new(1);
+    let mut off_pos = Position::from_fen(FEN).unwrap();
+    let off_moves = sorted_moves_for(&mut off_search, &mut off_pos);
+    let mut off_children = Vec::new();
+    off_search.evaluate_all_children(&mut off_pos, &off_moves, u32::MAX, true, &mut off_children);
+
+    let mut search = Search::new(1);
+    search.set_quiet_grouping(true);
+    let mut pos = Position::from_fen(FEN).unwrap();
+    let moves = sorted_moves_for(&mut search, &mut pos);
+    let mut children = Vec::new();
+    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children);
+    let group_idx = children.iter().position(|c| c.group).expect("group exists");
+    let hidden: Vec<Move> = (0..moves.len())
+        .filter(|&i| super::quiet_group::is_plain(&pos, moves[i]))
+        .map(|i| moves[i])
+        .collect();
+    let prefix_len = group_idx;
+    let evals_before = search.child_evaluations();
+
+    search.open_quiet_group(&mut pos, &moves, u32::MAX, true, &mut children, group_idx);
+
+    assert!(children.iter().all(|c| !c.group), "group is removed");
+    assert_eq!(
+        search.child_evaluations(),
+        evals_before + hidden.len() as u64,
+        "each hidden member is billed exactly once"
+    );
+    for mv in &hidden {
+        assert_eq!(
+            children.iter().filter(|c| c.mv == *mv).count(),
+            1,
+            "hidden move {mv:?} appears exactly once"
+        );
+    }
+    let off_rows = off_children
+        .iter()
+        .filter(|c| !super::quiet_group::is_plain(&off_pos, c.mv));
+    for (on, off) in children[..prefix_len].iter().zip(off_rows) {
+        assert_same_child_info(on, off, "non-plain prefix untouched");
+    }
+}
+
+#[test]
+fn open_quiet_group_stops_at_an_early_tt_loss() {
+    const FEN: &str = "3rk3/8/8/6N1/8/8/8/K7 w - - 0 1";
+    const MAX_DEPTH: u32 = 10;
+
+    let mut search = Search::new(1);
+    search.set_quiet_grouping(true);
+    let mut pos = Position::from_fen(FEN).unwrap();
+    let moves = sorted_moves_for(&mut search, &mut pos);
+    let mut children = Vec::new();
+    search.evaluate_all_children(&mut pos, &moves, MAX_DEPTH, true, &mut children);
+    let group_idx = children.iter().position(|c| c.group).expect("group exists");
+    let prefix_len = group_idx;
+    let hidden: Vec<Move> = (0..moves.len())
+        .filter(|&i| super::quiet_group::is_plain(&pos, moves[i]))
+        .map(|i| moves[i])
+        .collect();
+    assert!(hidden.len() >= 2, "fixture needs multiple hidden moves");
+
+    // Make the first hidden member resolve as a solved Loss from the TT.
+    let first_key = pos.keys_after(hidden[0]).0;
+    search.tt.store(
+        first_key,
+        Move::NONE,
+        u8::MAX,
+        0,
+        Some(Outcome::Loss),
+        0,
+        INF,
+        1,
+        9,
+    );
+    let evals_before = search.child_evaluations();
+
+    search.open_quiet_group(&mut pos, &moves, MAX_DEPTH, true, &mut children, group_idx);
+
+    assert_eq!(
+        search.child_evaluations(),
+        evals_before + 1,
+        "the opening stops at the decisive member"
+    );
+    assert_eq!(children.len(), prefix_len + 1);
+    assert_eq!(children.last().unwrap().outcome, Some(Outcome::Loss));
 }

@@ -19,6 +19,7 @@ mod fraction;
 mod history;
 mod move_class;
 mod pv;
+mod quiet_group;
 mod repetition_cache;
 mod restart_schedule;
 mod run;
@@ -220,6 +221,10 @@ pub struct Search {
     /// (plan3): `(tt_key, repetition_key, rule50)` of the position after each
     /// child move, computed without playing it. See `Search::evaluate_child`.
     keys_scratch: Vec<(u64, u64, u16)>,
+    /// Per-child scratch for the quiet-grouping plainness partition (provari
+    /// plan3): `plain_scratch[i]` classifies `moves[i]` for the current
+    /// `evaluate_all_children` sweep. Only the written prefix is read.
+    plain_scratch: Vec<bool>,
     /// Test-only census counter (plan3): child evaluations decided by the
     /// pre-probe ladder without a make/unmake. Reset per run in `begin_run`.
     #[cfg(test)]
@@ -241,6 +246,10 @@ pub struct Search {
     /// threat/hanging/quiet). Default `false`; the flag is an experimental
     /// heuristic, not a correctness switch.
     move_class_pn: bool,
+    /// Whether OR-node plain moves are hidden behind one delayed group child
+    /// (`quiet_group`), opened only when DF-PN selects it. Default `false`;
+    /// an experimental heuristic, not a correctness switch.
+    quiet_grouping: bool,
     /// Report of the last run's pre-phase hook, `None` when the hook has not
     /// run in the current run.
     preflight_report: Option<PreflightReport>,
@@ -296,10 +305,12 @@ impl Search {
             eval_state_pool: Vec::new(),
             sort_scratch: Vec::new(),
             keys_scratch: Vec::new(),
+            plain_scratch: Vec::new(),
             #[cfg(test)]
             preprobe_skips: 0,
             repetition_cache: RepetitionCache::new(),
             move_class_pn: false,
+            quiet_grouping: false,
             preflight_enabled: true,
             preflight_report: None,
         }
