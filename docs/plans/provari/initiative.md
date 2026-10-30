@@ -12,10 +12,15 @@ wall, and 3.41×/3.18× on the single plan1 shared win, with every decisive
 run proof-tree validated. It executed the first half of backlog item 3; plan 3
 ([`plan3.md`](plan3.md), [`report3.md`](report3.md)) executed the second half
 (quiet-move grouping, default-off `--quiet-grouping`). Item 3 is complete.
-Item 4 (static atomic tactical closure) is split: `plan4.md` executes 4a
-(immediate exploding-capture closure), with 4b (`exposed` defender,
-no-safe-evasion checks, parry-less double threats) and cannot-win material as
-later candidates.
+Item 4 (static atomic tactical closure) is split: plan 4
+([`plan4.md`](plan4.md), [`report4.md`](report4.md)) executed 4a (the
+default-off `--static-tactics` immediate exploding-capture closure) as a
+**negative/neutral** lever — 1.49× fewer evals on the shared win but 1.18–1.24×
+*more* work on the core FEN and +4–6 % on the censored `sample20` rows, with all
+8 unique decisive proofs validated and coverage unchanged — so the flag stays
+default-off and 4b (`exposed` defender, no-safe-evasion checks, parry-less
+double threats) is the next candidate, planned with a kill criterion.
+Cannot-win material remains a later candidate.
 
 This initiative owns the **search-performance** side of the external
 comparison with [`aiorla/provari`](https://github.com/aiorla/provari). The
@@ -150,7 +155,7 @@ says so.
 | 2 | Win-only front-end skeleton | Opt-in attacker-only DF-PN/win prover that proves a win and otherwise falls back; no new heuristics yet | Isolate provari's attacker-only proof semantics from our general outcome/PV machinery; provide the home for later levers | correctness (fallback identity), evals, wall | open (deferred; re-rank after plan2) |
 | 3a | Move-class starting numbers (OR nodes) | Checks by (legal) evasions capped at 8; double threat 1, threat 4, weak threat 8, quiet 9, hanging 15; default-off flag | Provari's largest non-eval lever; test class signal before adding quiet grouping | deterministic child evals, wall, first-win length | **complete — `report2.md`**: 8.74×/7.58× core, 3.41×/3.18× shared win; coverage unchanged; kept opt-in |
 | 3b | Quiet-move grouping | One delayed plain-move child, opened only if needed | Provari's second non-eval lever; measured 1.4× in provari ablation | deterministic child evals, wall | **complete — `report3.md`**: 2.60×/1.97× core, 2.27×/1.85× shared win; `both` 1.80×/1.47× over `mc` on core; coverage unchanged; kept opt-in |
-| 4 | Static atomic tactical closure | Immediate exploding capture, exposed king, no-safe-evasion check, double threat, mate-in-one, cannot-win material | Avoid whole expansions on forced tactics; the complement to #3 | evals, expansion census | **split — `plan4` (4a: immediate exploding-capture closure)**; 4b (`exposed`/no-safe-evasion/double-threat) and cannot-win material deferred |
+| 4 | Static atomic tactical closure | Immediate exploding capture, exposed king, no-safe-evasion check, double threat, mate-in-one, cannot-win material | Avoid whole expansions on forced tactics; the complement to #3 | evals, expansion census | **4a complete — `report4.md`**: default-off `--static-tactics`; sound (8/8 proofs valid, coverage unchanged) but 1.24×/1.20× *worse* on the core FEN (1.49×/1.50× better on the shared win), not additive with the best stack ⇒ kept opt-in, not adopted; 4b (`exposed`/no-safe-evasion/double-threat) next with a kill criterion |
 | 5 | Evaluation-scaled proof numbers (EF-PN) | Hand evaluation first; optional learned provability model only if licensing and evidence justify it | Provari's hand guide is 1.8×; the bundled model another ~1.5× and a shorter first line | evals, first-win length | open |
 | 6 | Rule50-free key + proof length/limit | Key boards without the clock; store proof length and highest holding clock; replay/verify conservatively | Recover move-order transpositions without breaking rule50/repetition soundness | TT hit rate, evals | open (soundness-sensitive) |
 | 7 | Head-to-head convergence | Tune the adopted stack on the target corpus; require shared-win wall < provari and coverage ≥ provari | The initiative's success condition; no new mechanism, only measured tuning and final evidence | wall ratio, coverage | open |
@@ -236,3 +241,26 @@ conventions.
   cannot-win material for later plans. A read-only re-read of the provari
   clone in `/tmp` confirmed the target shape; no product code changed by the
   plan session.
+
+- **2026-10-30** — `plan4.md` executed (`report4.md`): the default-off
+  `--static-tactics` flag claims a legal capture beside the enemy commoner as a
+  static `Win` in one move at `dfpn` node entry (after the terminal/depth/
+  repetition/TT/repetition-cache fast paths, before move ordering; no child
+  evals billed). Two deliberate deviations from the plan sketch: the enemy
+  commoners are **intersected** rather than unioned (a union is unsound with two
+  commoners), and the hook is side-effect-free (feeding the claimed move into
+  history/killer ordering blew the core case past its 600 M-eval budget).
+  Core FEN: 437.2 M → 542.7 M child evals (**1.24× worse**) and 43.98 s →
+  52.59 s median (1.20× worse); with the plan2+plan3 stack 27.9 M → 32.9 M
+  (1.18× worse), 4.15 s → 4.63 s (1.12× worse). Shared `1eb80b92f92c`:
+  43.3 M → 29.1 M evals (1.49× better), 4.34 s → 2.89 s (1.50× better); with
+  the best stack flat in wall (0.738 s → 0.743 s) at 1.08× more evals.
+  `sample20` coverage unchanged (1/20 for all four configs, 19/20 censored),
+  with the flag costing +4.0 % (`static` vs `off`) and +5.7 % (`best+static` vs
+  `best`) evals on the censored rows. All 8 unique decisive proofs replayed
+  (`validate: ok`, `root_outcome: win`). `make test`, `make test-full`, the
+  repetition gate, and the quick-suite drift check (59/59 `ok`) are green.
+  Decision: keep the flag default-off, close 4a as negative/neutral; next is
+  4b (`exposed` two-ply closure) with a kill criterion, or a re-rank toward
+  item 5 (EF-PN), which prices subtrees inside DF-PN instead of
+  short-circuiting frames.

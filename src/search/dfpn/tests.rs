@@ -4,6 +4,7 @@ use super::repetition_cache::RepetitionCache;
 use super::{ExitReason, PvStatus, RestartSchedule, RoundTermination};
 use crate::position::{Outcome, Position};
 use crate::search::dfpn::Search;
+use crate::zobrist::INF;
 use atomic_movegen::types::{Move, Square};
 
 #[test]
@@ -866,4 +867,194 @@ fn path_bloom_insert_remove_returns_to_zero() {
         "inserting and removing every key must restore all Bloom slots"
     );
     search.assert_path_bookkeeping_consistent();
+}
+
+// ---------- static immediate-explosion closure (provari plan4) ----------
+
+/// A one-move exploding capture for the side to move: Rd1xd8 explodes the
+/// black commoner on e8 (d8 is beside it and not beside our commoner on e1).
+const STATIC_WIN_FEN: &str = "3rk3/8/8/8/8/8/8/3RK3 w - - 0 1";
+
+fn static_win_move() -> Move {
+    Move::make_move(Square::D1, Square::D8)
+}
+
+fn dfpn_from(fen: &str, static_tactics: bool, max_depth: u32) -> (Search, Position, Outcome) {
+    let mut search = Search::new(1);
+    search.set_static_tactics(static_tactics);
+    search.begin_run();
+    let mut pos = Position::from_fen(fen).unwrap();
+    let outcome = search.dfpn(&mut pos, INF, INF, max_depth, u64::MAX, true);
+    (search, pos, outcome)
+}
+
+#[test]
+fn static_tactics_claims_a_beside_commoner_capture_without_evals() {
+    let (search, pos, outcome) = dfpn_from(STATIC_WIN_FEN, true, u32::MAX);
+
+    assert_eq!(outcome, Outcome::Win);
+    assert_eq!(search.nodes(), 1, "the claim must not expand the node");
+    assert_eq!(
+        search.child_evaluations(),
+        0,
+        "the static scan is internal work: no child evaluation is billed"
+    );
+
+    let entry = search.tt.probe(pos.hash()).copied().expect("stored entry");
+    assert_eq!(entry.outcome, Some(Outcome::Win));
+    assert_eq!(entry.depth, 1);
+    assert_eq!(
+        entry.best_move,
+        static_win_move(),
+        "hint is the winning move"
+    );
+    assert_eq!(entry.best_child, u8::MAX, "no child index for a free claim");
+    assert_eq!(entry.remaining_depth, u32::MAX);
+    assert_eq!(entry.work, 0, "the proof was free");
+}
+
+#[test]
+fn static_tactics_emits_a_node_proven_win_at_depth_one() {
+    let mut search = Search::new(1);
+    search.set_static_tactics(true);
+    search.begin_run();
+    let (tx, rx) = std::sync::mpsc::channel();
+    search.set_proof_event_sender(Some(tx));
+
+    let mut pos = Position::from_fen(STATIC_WIN_FEN).unwrap();
+    let key = pos.hash();
+    assert_eq!(
+        search.dfpn(&mut pos, INF, INF, u32::MAX, u64::MAX, true),
+        Outcome::Win
+    );
+    drop(search);
+
+    let events: Vec<crate::proof_event::ProofEvent> = rx.iter().collect();
+    assert_eq!(events.len(), 1, "exactly one proven node");
+    let crate::proof_event::ProofEvent::NodeProven(event) = &events[0];
+    assert_eq!(event.path, Vec::<Move>::new(), "the root path is empty");
+    assert_eq!(event.hash, key);
+    assert_eq!(event.outcome, Outcome::Win);
+    assert_eq!(event.depth, 1);
+}
+
+#[test]
+fn static_tactics_flag_off_keeps_the_shipped_search() {
+    let (search, pos, outcome) = dfpn_from(STATIC_WIN_FEN, false, u32::MAX);
+
+    assert_eq!(outcome, Outcome::Win, "the ordinary search finds it too");
+    assert!(
+        search.child_evaluations() > 0,
+        "the flag-off search bills the child evaluations the static claim spares"
+    );
+    // The ordinary search's own entry is the same value, but with a real
+    // best-child hint or a deeper proof — never the free static claim.
+    let entry = search.tt.probe(pos.hash()).copied().expect("stored entry");
+    assert_eq!(entry.outcome, Some(Outcome::Win));
+}
+
+#[test]
+fn static_tactics_is_inert_when_no_explosion_exists() {
+    // A two-rook mate with no beside-commoner capture anywhere: the flag may
+    // not change the outcome, the nodes, or the billed evaluations.
+    const FEN: &str = "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1";
+    let mut off_search = Search::new(1);
+    off_search.set_timeout(10);
+    let mut on_search = Search::new(1);
+    on_search.set_timeout(10);
+    on_search.set_static_tactics(true);
+    let mut off_pos = Position::from_fen(FEN).unwrap();
+    let mut on_pos = Position::from_fen(FEN).unwrap();
+
+    let (off_outcome, _, off_nodes) = off_search.search_depth(&mut off_pos, u32::MAX);
+    let (on_outcome, _, on_nodes) = on_search.search_depth(&mut on_pos, u32::MAX);
+
+    assert_eq!(
+        on_outcome, off_outcome,
+        "the lever may not change an outcome"
+    );
+    assert_eq!(on_nodes, off_nodes, "no claim ⇒ identical trajectory");
+    assert_eq!(
+        on_search.child_evaluations(),
+        off_search.child_evaluations()
+    );
+}
+
+/// Full-depth cross-check on a deep draw that *does* contain beside-commoner
+/// captures below the root: the closure may only reduce work, never change
+/// the proven value.
+#[test]
+#[ignore = "slow: ~20 s; full-depth draw cross-check on the static closure"]
+fn static_tactics_agrees_on_a_deep_draw() {
+    const FEN: &str = "r3k3/8/8/8/8/8/8/R3K3 w - - 0 1";
+    let mut results = Vec::new();
+    for static_tactics in [false, true] {
+        let mut search = Search::new(1);
+        search.set_static_tactics(static_tactics);
+        search.set_timeout(120);
+        let mut pos = Position::from_fen(FEN).unwrap();
+        let (outcome, _, _) = search.search_depth(&mut pos, u32::MAX);
+        results.push((outcome, search.child_evaluations()));
+    }
+    assert_eq!(results[0].0, results[1].0, "outcomes must agree");
+    assert!(
+        results[1].1 <= results[0].1,
+        "the closure may only reduce billed evaluations: {} vs {}",
+        results[1].1,
+        results[0].1
+    );
+}
+
+#[test]
+fn static_tactics_keeps_the_depth_horizon() {
+    let (search, pos, outcome) = dfpn_from(STATIC_WIN_FEN, true, 0);
+
+    assert_eq!(outcome, Outcome::Draw, "a depth-0 leaf stays a Draw");
+    assert_eq!(search.nodes(), 1);
+    let entry = search.tt.probe(pos.hash()).copied().expect("leaf entry");
+    assert_eq!(entry.outcome, None, "the leaf stores unsolved bounds");
+    assert_eq!((entry.pn, entry.dn), (1, 1));
+    assert_eq!(entry.remaining_depth, 0);
+}
+
+#[test]
+fn static_tactics_keeps_the_local_repetition_draw() {
+    let mut search = Search::new(1);
+    search.set_static_tactics(true);
+    search.begin_run();
+    let mut pos = Position::from_fen(STATIC_WIN_FEN).unwrap();
+    search.path_push(pos.repetition_key());
+
+    assert_eq!(
+        search.dfpn(&mut pos, INF, INF, u32::MAX, u64::MAX, true),
+        Outcome::Draw,
+        "a repeated position stays a Draw even with a static win available"
+    );
+    assert_eq!(search.child_evaluations(), 0);
+}
+
+#[test]
+fn static_tactics_yields_to_a_solved_tt_entry() {
+    let mut search = Search::new(1);
+    search.set_static_tactics(true);
+    search.begin_run();
+    let mut pos = Position::from_fen(STATIC_WIN_FEN).unwrap();
+    // A solved non-Win entry for this exact root must be preferred: the
+    // static claim only preempts *expansion*, never an existing proof.
+    search.tt.store(
+        pos.hash(),
+        Move::NONE,
+        u8::MAX,
+        0,
+        Some(Outcome::Draw),
+        INF,
+        0,
+        3,
+        u32::MAX,
+    );
+    assert_eq!(
+        search.dfpn(&mut pos, INF, INF, u32::MAX, u64::MAX, true),
+        Outcome::Draw
+    );
+    assert_eq!(search.child_evaluations(), 0);
 }

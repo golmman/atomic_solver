@@ -38,6 +38,10 @@ fn cli_help_lists_options_and_exits_cleanly() {
         stdout.contains("--quiet-grouping"),
         "help should mention --quiet-grouping"
     );
+    assert!(
+        stdout.contains("--static-tactics"),
+        "help should mention --static-tactics"
+    );
 }
 
 /// The rendered `--help` text is pinned byte-for-byte: it is the single

@@ -49,6 +49,10 @@ Options:
                              delayed group child, opened only if the
                              search selects it. Experimental
                              heuristic; off by default
+  --static-tactics           Claim a legal capture beside the enemy
+                             commoner as a static one-move win at node
+                             entry (sound, no child evaluations
+                             billed). Experimental; off by default
   --config <FILE>            Path to a TOML file overriding scorer
                              parameters; defaults to built-in values
 

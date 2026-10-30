@@ -51,6 +51,18 @@ impl Search {
         self.quiet_grouping = enabled;
     }
 
+    /// Enable or disable the static immediate-explosion closure (see the
+    /// `static_tactics` module): a legal capture beside the enemy commoner is
+    /// claimed as a `Win` in one move at node entry, after the terminal,
+    /// depth, repetition, TT and repetition-cache fast paths and before move
+    /// ordering. Disabled by default; the `--static-tactics` CLI flag maps
+    /// here. A claim bills no child evaluations (the scan is internal work)
+    /// and stores an ordinary solved TT entry with the winning move as its
+    /// hint.
+    pub fn set_static_tactics(&mut self, enabled: bool) {
+        self.static_tactics = enabled;
+    }
+
     pub fn scorer(&self) -> &StaticAtomicScorer {
         &self.scorer
     }

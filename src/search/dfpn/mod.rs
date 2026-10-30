@@ -24,6 +24,7 @@ mod repetition_cache;
 mod restart_schedule;
 mod run;
 mod selection;
+mod static_tactics;
 
 use fraction::fraction_from_f64;
 pub use restart_schedule::{Growth, RestartSchedule};
@@ -250,6 +251,11 @@ pub struct Search {
     /// (`quiet_group`), opened only when DF-PN selects it. Default `false`;
     /// an experimental heuristic, not a correctness switch.
     quiet_grouping: bool,
+    /// Whether a legal capture beside the enemy commoner is claimed as a
+    /// static `Win` in one move at node entry (`static_tactics`). Default
+    /// `false`; a sound static verdict, but an experimental and default-off
+    /// speed lever.
+    static_tactics: bool,
     /// Report of the last run's pre-phase hook, `None` when the hook has not
     /// run in the current run.
     preflight_report: Option<PreflightReport>,
@@ -311,6 +317,7 @@ impl Search {
             repetition_cache: RepetitionCache::new(),
             move_class_pn: false,
             quiet_grouping: false,
+            static_tactics: false,
             preflight_enabled: true,
             preflight_report: None,
         }

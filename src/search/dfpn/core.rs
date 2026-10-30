@@ -14,6 +14,7 @@ use crate::position::{Outcome, Position};
 use super::Search;
 use super::children::{ChildInfo, ChildPrecompute, ChildSelection};
 use super::selection::select_from_children;
+use super::static_tactics;
 use crate::search::tt::TtEntry;
 use crate::zobrist::INF;
 
@@ -173,6 +174,36 @@ impl Search {
             self.emit_proof_node(pos, Outcome::Draw, cached_depth);
             self.precompute_pool[slot_depth] = slot;
             return Outcome::Draw;
+        }
+
+        // Static immediate-explosion closure (provari plan4): a legal capture
+        // beside the enemy commoner is a one-move win. Placed after the
+        // terminal, depth-horizon, repetition, TT solved and repetition-cache
+        // fast paths (those keep their exact shipped semantics) and before
+        // move ordering — the frame's legal move list is already generated, so
+        // the scan needs no extra movegen and the ordering hint is irrelevant
+        // to a solved node. Sound for OR and AND nodes alike: the claim is a
+        // property of this position's legal moves, from the side-to-move
+        // perspective.
+        if self.static_tactics
+            && let Some(mv) = static_tactics::immediate_exploding_capture(pos.board(), moves)
+        {
+            let outcome = Outcome::Win;
+            let (pn, dn) = outcome.pn_dn_for(is_or_node);
+            // `work = 0`: the proof was free (no child evaluation), like a
+            // terminal store. This frame is non-terminal (the terminal branch
+            // returned at entry), so the TT pre-probe's non-terminal-only
+            // store invariant (`children.rs`) is preserved.
+            self.tt
+                .store(tt_key, mv, u8::MAX, 0, Some(outcome), pn, dn, 1, u32::MAX);
+            // No side effects beyond the TT entry and the proof event: the
+            // claim must not perturb history/killer learning (a measured
+            // probe that fed the claimed move into history/killer ordering
+            // made the core case exhaust a 600M-eval budget instead of
+            // finishing at 542.7M).
+            self.emit_proof_node(pos, outcome, 1);
+            self.precompute_pool[slot_depth] = slot;
+            return outcome;
         }
 
         // Ordering hint: replicate the old `probe_best_move` rule exactly —

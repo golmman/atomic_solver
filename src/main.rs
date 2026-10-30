@@ -107,6 +107,10 @@ Options:
                              delayed group child, opened only if the
                              search selects it. Experimental
                              heuristic; off by default
+  --static-tactics           Claim a legal capture beside the enemy
+                             commoner as a static one-move win at node
+                             entry (sound, no child evaluations
+                             billed). Experimental; off by default
   --config <FILE>            Path to a TOML file overriding scorer
                              parameters; defaults to built-in values
 
@@ -178,6 +182,7 @@ fn main() {
         budget,
         move_class_pn,
         quiet_grouping,
+        static_tactics,
     } = opts;
 
     let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
@@ -207,6 +212,7 @@ fn main() {
     search.set_preflight_enabled(!no_preflight);
     search.set_move_class_pn(move_class_pn);
     search.set_quiet_grouping(quiet_grouping);
+    search.set_static_tactics(static_tactics);
     search.set_salt(salt);
     if let Some(budget) = budget {
         search.set_child_eval_budget(budget);

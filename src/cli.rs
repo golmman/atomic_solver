@@ -59,6 +59,10 @@ pub struct CliOptions {
     /// only when the search selects it. Default `false`; an experimental
     /// search-shaping heuristic, not a correctness switch.
     pub quiet_grouping: bool,
+    /// Claim a legal capture beside the enemy commoner as a static `Win` in
+    /// one move at node entry. Default `false`; a sound static verdict, but an
+    /// experimental and default-off speed lever.
+    pub static_tactics: bool,
 }
 
 impl Default for CliOptions {
@@ -86,6 +90,7 @@ impl Default for CliOptions {
             budget: None,
             move_class_pn: false,
             quiet_grouping: false,
+            static_tactics: false,
         }
     }
 }
@@ -201,6 +206,10 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 opts.quiet_grouping = true;
                 i += 1;
             }
+            "--static-tactics" => {
+                opts.static_tactics = true;
+                i += 1;
+            }
             arg => {
                 return Err(format!(
                     "error: unknown option '{arg}'\nRun with --help for usage."
@@ -257,6 +266,7 @@ mod tests {
         assert!(o.budget.is_none());
         assert!(!o.move_class_pn);
         assert!(!o.quiet_grouping);
+        assert!(!o.static_tactics);
     }
 
     #[test]
@@ -365,6 +375,15 @@ mod tests {
     fn quiet_grouping_is_parsed_and_default_off() {
         assert!(!options(&[]).quiet_grouping);
         assert!(options(&["--quiet-grouping"]).quiet_grouping);
+    }
+
+    #[test]
+    fn static_tactics_is_parsed_and_default_off() {
+        assert!(!options(&[]).static_tactics);
+        assert!(options(&["--static-tactics"]).static_tactics);
+        // Independent of the other two experimental levers.
+        let all = options(&["--static-tactics", "--move-class-pn", "--quiet-grouping"]);
+        assert!(all.static_tactics && all.move_class_pn && all.quiet_grouping);
     }
 
     #[test]
