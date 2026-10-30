@@ -48,3 +48,10 @@ can we tie this together into one unified `winprover` initiave?
 What i would do:
 move items form `provari` and `interop` over, retire them, add an optional item for the workspace split. Also mark the `workspace` initiative as stale.
 
+---
+
+For the winprover initiative i want a `bench.md` which documents the performance progress compared to provari.
+Pick some benchmark postions then document the baseline: provari as 1.0 and this project as a factor of the provari wall time.
+
+each executed plan needs to document the new factor.
+the ulimate goal is to our factor lower than 1 at some point.
