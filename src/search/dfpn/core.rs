@@ -13,6 +13,7 @@ use crate::position::{Outcome, Position};
 
 use super::Search;
 use super::children::{ChildInfo, ChildPrecompute, ChildSelection};
+use super::eval_guide;
 use super::selection::select_from_children;
 use super::static_tactics;
 use crate::search::tt::TtEntry;
@@ -227,6 +228,27 @@ impl Search {
             .filter(|e| e.best_child != u8::MAX)
             .map(|e| e.best_child);
 
+        // Hand-evaluation scale for fresh children (provari plan5, default
+        // off). The scale belongs to *this* frame, so it is computed once per
+        // frame visit and threaded explicitly into the child evaluation — no
+        // `Search` field, no hidden frame state (the same style as
+        // `is_or_node`). `or_side` is the root side to move: an OR frame (even
+        // ply) has that side to move, an AND frame its opponent.
+        let scale = if self.eval_pn.is_enabled() {
+            let or_side = if is_or_node {
+                pos.side_to_move()
+            } else {
+                pos.side_to_move().flip()
+            };
+            eval_guide::ChildScale::for_parent(
+                is_or_node,
+                eval_guide::step(pos.board(), or_side),
+                self.eval_pn,
+            )
+        } else {
+            None
+        };
+
         self.path_push(rep_key);
 
         // Per-frame pooled storage: the children table is borrowed from
@@ -278,14 +300,14 @@ impl Search {
             }
 
             if children.is_empty() {
-                self.evaluate_all_children(pos, moves, max_depth, is_or_node, &mut children);
+                self.evaluate_all_children(pos, moves, max_depth, is_or_node, &mut children, scale);
             } else if let Some(prev) = selection
                 && let Some(idx) = prev.best_child_index
             {
                 let mv = children[idx].mv;
                 let old_pn = children[idx].pn;
                 let old_dn = children[idx].dn;
-                children[idx] = self.evaluate_child(pos, mv, max_depth, is_or_node);
+                children[idx] = self.evaluate_child(pos, mv, max_depth, is_or_node, scale);
                 // In a sliced call, if the child came back with exactly the
                 // same (pn, dn) bounds re-expanding it cannot make progress. Mark
                 // it explored so the search moves on to other children.
@@ -326,7 +348,7 @@ impl Search {
             // selection so the next iteration does not try to re-evaluate the
             // removed group entry.
             if let Some(idx) = group_idx {
-                self.open_quiet_group(pos, moves, max_depth, is_or_node, &mut children, idx);
+                self.open_quiet_group(pos, moves, max_depth, is_or_node, &mut children, idx, scale);
                 selection = None;
                 continue;
             }

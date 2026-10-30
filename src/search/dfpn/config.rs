@@ -63,6 +63,16 @@ impl Search {
         self.static_tactics = enabled;
     }
 
+    /// Select which node kinds scale fresh children's starting proof numbers
+    /// by the parent's hand evaluation (EF-PN, see the `eval_guide` module):
+    /// [`EvalPnMode::Off`] (the default), [`EvalPnMode::Both`] node kinds, or
+    /// the attacking [`EvalPnMode::Or`] branch only. The `--eval-pn` CLI flag
+    /// maps here. The evaluation only rewrites *fresh* bounds: solved,
+    /// repetition, rule50, and TT-reused children keep their values.
+    pub fn set_eval_pn(&mut self, mode: EvalPnMode) {
+        self.eval_pn = mode;
+    }
+
     pub fn scorer(&self) -> &StaticAtomicScorer {
         &self.scorer
     }

@@ -18,13 +18,22 @@ default-off `--static-tactics` immediate exploding-capture closure) as a
 **negative/neutral** lever — 1.49× fewer evals on the shared win but 1.18–1.24×
 *more* work on the core FEN and +4–6 % on the censored `sample20` rows, with all
 8 unique decisive proofs validated and coverage unchanged — so the flag stays
-default-off. Plan 5 ([`plan5.md`](plan5.md)) is drafted for item 5
-(**evaluation-scaled proof numbers, EF-PN**, hand guide only, default-off
-`--eval-pn <off|both|or>`): report 4's diagnosis (node-entry closures throw away
-DF-PN's ordering feedback) re-ranks the remaining levers, so EF-PN prices
-subtrees inside the search instead of short-circuiting frames, and 4b
+default-off. Plan 5 ([`plan5.md`](plan5.md), [`report5.md`](report5.md))
+executed item 5 (**evaluation-scaled proof numbers, EF-PN**, hand guide only,
+`--eval-pn <off|both|or>`): the pre-registered arms split — `both` (provari's
+formula at both node kinds) is **REJECT** (core 0.440× but shared 1.483×,
+failing the 1.10× per-case floor despite a 0.807× geometric mean), while the
+attacking-branch-only `or` arm is **GO** (core 27.86 M → 17.22 M child evals,
+shared 5.57 M → 3.23 M; geomean 0.599×; coverage unchanged; all 7 decisive
+proofs replay-validated). The `or` arm
+joins the opt-in stack as `--move-class-pn --quiet-grouping --eval-pn or`
+(default stays `off`; item 7 decides defaults). Item 4b
 defender-side closures (`exposed`, no-safe-evasion checks, parry-less double
-threats) stay open but unranked. Cannot-win material remains a later candidate.
+threats) stay open but unranked: report 4's diagnosis (node-entry closures
+throw away DF-PN's ordering feedback) was confirmed — pricing subtrees inside
+the search works, short-circuiting frames does not. The next ranked lever is a
+new sibling-simulation item (item 8, to be opened with a plan-session census),
+with item 6 behind it; cannot-win material remains a later candidate.
 
 This initiative owns the **search-performance** side of the external
 comparison with [`aiorla/provari`](https://github.com/aiorla/provari). The
@@ -160,9 +169,10 @@ says so.
 | 3a | Move-class starting numbers (OR nodes) | Checks by (legal) evasions capped at 8; double threat 1, threat 4, weak threat 8, quiet 9, hanging 15; default-off flag | Provari's largest non-eval lever; test class signal before adding quiet grouping | deterministic child evals, wall, first-win length | **complete — `report2.md`**: 8.74×/7.58× core, 3.41×/3.18× shared win; coverage unchanged; kept opt-in |
 | 3b | Quiet-move grouping | One delayed plain-move child, opened only if needed | Provari's second non-eval lever; measured 1.4× in provari ablation | deterministic child evals, wall | **complete — `report3.md`**: 2.60×/1.97× core, 2.27×/1.85× shared win; `both` 1.80×/1.47× over `mc` on core; coverage unchanged; kept opt-in |
 | 4 | Static atomic tactical closure | Immediate exploding capture, exposed king, no-safe-evasion check, double threat, mate-in-one, cannot-win material | Avoid whole expansions on forced tactics; the complement to #3 | evals, expansion census | **4a complete — `report4.md`**: default-off `--static-tactics`; sound (8/8 proofs valid, coverage unchanged) but 1.24×/1.20× *worse* on the core FEN (1.49×/1.50× better on the shared win), not additive with the best stack ⇒ kept opt-in, not adopted; 4b (`exposed`/no-safe-evasion/double-threat) open but **unranked** (plan5 ranking note: closures are not additive with the stack, EF-PN prices subtrees instead) |
-| 5 | Evaluation-scaled proof numbers (EF-PN) | Hand evaluation first; optional learned provability model only if licensing and evidence justify it | Provari's hand guide is 1.8×; the bundled model another ~1.5× and a shorter first line | evals, first-win length | **`plan5.md` drafted (2026-10-30)** — hand guide only, two pre-registered arms (`both` = provari's formula at both node kinds, `or` = attacking branch only), per-case verdict floors and a tax probe; open |
+| 5 | Evaluation-scaled proof numbers (EF-PN) | Hand evaluation first; optional learned provability model only if licensing and evidence justify it | Provari's hand guide is 1.8×; the bundled model another ~1.5× and a shorter first line | evals, first-win length | **complete — `report5.md` (2026-10-30)**: hand guide only, two pre-registered arms — `both` REJECT (core 0.440× but shared 1.483×, so the per-case floor vetoes; geomean 0.807×; the defending-branch scaling is the harmful half) and `or` **GO** (core 0.618×, shared 0.580×, geomean 0.599×; censored-row aggregate 0.920×; coverage unchanged). `or` joins the opt-in stack; default stays `off`. Tax ≈ 9 % throughput; `eval` alone 2.69× better than `off` but 5.83× worse than the stack |
 | 6 | Rule50-free key + proof length/limit | Key boards without the clock; store proof length and highest holding clock; replay/verify conservatively | Recover move-order transpositions without breaking rule50/repetition soundness | TT hit rate, evals | open (soundness-sensitive) |
-| 7 | Head-to-head convergence | Tune the adopted stack on the target corpus; require shared-win wall < provari and coverage ≥ provari | The initiative's success condition; no new mechanism, only measured tuning and final evidence | wall ratio, coverage | open |
+| 7 | Head-to-head convergence | Tune the adopted stack on the target corpus; require shared-win wall < provari and coverage ≥ provari | The initiative's success condition; no new mechanism, only measured tuning and final evidence | wall ratio, coverage | open (deferred until the algorithmic levers are exhausted) |
+| 8 | Sibling proof replay / simulation | Replay a proven defence or threat on sibling positions (provari's `SIMULATION = 16`-position replay) | The last unported provari search lever; the remaining measured gap is node count on shared wins (3.23 M child evals / 0.46 s vs provari 72.5 k nodes / 0.09 s) | evals, nodes, wall, proof replay soundness | **ranked next** — open a plan session with a read-only census of sibling situations first; item 6 sits behind it |
 
 Cross-references: `interop` owns the independent checker and proof
 interchange; `dfpn` remains the general DF-PN semantics initiative and is
@@ -268,6 +278,30 @@ conventions.
   4b (`exposed` two-ply closure) with a kill criterion, or a re-rank toward
   item 5 (EF-PN), which prices subtrees inside DF-PN instead of
   short-circuiting frames.
+- **2026-10-30** — `plan5.md` executed (`report5.md`): the default-off
+  `--eval-pn <off|both|or>` flag threads the parent's hand evaluation step
+  (`evaluation`/`step` in the new `src/search/dfpn/eval_guide.rs`, provari's
+  linear branch) into the fresh-child tail of `evaluate_child_played` and the
+  quiet-group child, composing with plan2's class numbers. A review of the
+  implemented evaluation found a pawn-direction defect in the `checkers` term
+  (the scoring side's colour was used instead of the reverse/enemy direction,
+  so pawn checkers never counted); it was fixed with a pinning unit test
+  before the reported run, and all arms were re-measured. Core FEN, `best`
+  stack: 27,861,992 → 17,217,064 child evals (0.618×, 1.62× fewer) and
+  3.85 s → 2.66 s with `or`; 12,245,869 (0.440×) and 1.89 s with `both`.
+  Shared `1eb80b92f92c`: 5,568,743 → 3,231,686 (0.580×, 1.72× fewer) and
+  0.708 s → 0.458 s with `or`; `both` regresses to 8,258,553 (1.483×) and
+  1.176 s. Geometric means: `or` 0.599× (GO), `both` 0.807× but REJECT on the
+  1.10× per-case floor. `sample20` coverage unchanged (1/20 wins,
+  19/20 censored) with censored-row aggregate 0.956× (`both`) and 0.920×
+  (`or`); estimated evaluation throughput tax ≈ 9 % (2.3–13.3 % on `or`).
+  All 7 unique decisive proofs replay-validated (`validate: ok`,
+  `root_outcome: win`); `verify_ppv` valid on the shared PVs, inconclusive on
+  the informational core PVs. `make test`, `make test-full`, the repetition
+  gate, and the quick-suite drift check (59/59 `ok`) are green. Decision:
+  default stays `off`; the `or` arm joins the opt-in stack, `both` is recorded
+  as measured out for the stack. Next ranked lever: a new sibling-simulation
+  item (plan-session census first), with item 6 behind it.
 - **2026-10-30** — `plan5.md` drafted for item 5 (EF-PN, hand guide only),
   taking the re-rank report 4 pointed at: the static-tactics line is not
   extended (4b stays open but unranked). The plan session rebuilt the pinned

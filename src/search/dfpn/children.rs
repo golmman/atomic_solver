@@ -31,6 +31,7 @@ use crate::position::{Outcome, Position};
 use crate::proof_event::{NodeProven, ProofEvent};
 
 use super::Search;
+use super::eval_guide::ChildScale;
 use super::move_class;
 use super::quiet_group;
 use crate::search::tt::TtEntry;
@@ -237,12 +238,13 @@ impl Search {
         max_depth: u32,
         is_or_node: bool,
         children: &mut Vec<ChildInfo>,
+        scale: Option<ChildScale>,
     ) {
         children.clear();
         // Grouped OR-node path (provari plan3, default off). Kept out of the
         // shipped loop so the flag-off path stays byte-identical.
         if self.quiet_grouping && is_or_node {
-            self.evaluate_all_children_grouped(pos, moves, max_depth, is_or_node, children);
+            self.evaluate_all_children_grouped(pos, moves, max_depth, is_or_node, children, scale);
             return;
         }
         // Keys pre-pass (lean plan11's TT prefetch, extended by performance
@@ -273,6 +275,7 @@ impl Search {
                 child_key,
                 child_rep_key,
                 rule50_after,
+                scale,
             );
             let decisive = info.outcome == Some(Outcome::Loss);
             children.push(info);
@@ -297,6 +300,7 @@ impl Search {
         max_depth: u32,
         is_or_node: bool,
         children: &mut Vec<ChildInfo>,
+        scale: Option<ChildScale>,
     ) {
         let child_count = moves.len();
         if self.plain_scratch.len() < child_count {
@@ -337,6 +341,7 @@ impl Search {
                 child_key,
                 child_rep_key,
                 rule50_after,
+                scale,
             );
             let decisive = info.outcome == Some(Outcome::Loss);
             children.push(info);
@@ -351,10 +356,15 @@ impl Search {
         }
 
         if hidden_count > 0 {
-            children.push(ChildInfo::group(
-                quiet_group::GROUP_PN,
-                hidden_count.clamp(1, INF),
-            ));
+            // The group is a fresh OR-node child, so the parent's scale applies
+            // to its starting numbers exactly as to a fresh member (provari
+            // scales its group child the same way).
+            let hidden = hidden_count.clamp(1, INF);
+            let (pn, dn) = match scale {
+                Some(scale) => scale.apply(quiet_group::GROUP_PN, hidden),
+                None => (quiet_group::GROUP_PN, hidden),
+            };
+            children.push(ChildInfo::group(pn, dn));
         }
     }
 
@@ -364,6 +374,7 @@ impl Search {
     /// meaning), and append them in move-list order. An OR-node member that
     /// proves a child `Loss` ends the opening early: the parent is already
     /// won. The group is never recreated in this frame.
+    #[allow(clippy::too_many_arguments)]
     pub(super) fn open_quiet_group(
         &mut self,
         pos: &mut Position,
@@ -372,6 +383,7 @@ impl Search {
         is_or_node: bool,
         children: &mut Vec<ChildInfo>,
         idx: usize,
+        scale: Option<ChildScale>,
     ) {
         debug_assert!(children[idx].group, "only a group child may be opened");
         debug_assert!(is_or_node, "groups exist only at OR nodes");
@@ -382,7 +394,7 @@ impl Search {
             if !quiet_group::is_plain(pos, mv) {
                 continue;
             }
-            let info = self.evaluate_child(pos, mv, max_depth, is_or_node);
+            let info = self.evaluate_child(pos, mv, max_depth, is_or_node, scale);
             let decisive = info.outcome == Some(Outcome::Loss);
             children.push(info);
             if decisive {
@@ -402,6 +414,7 @@ impl Search {
         mv: Move,
         max_depth: u32,
         is_or_node: bool,
+        scale: Option<ChildScale>,
     ) -> ChildInfo {
         let (child_key, child_rep_key, rule50_after) = pos.keys_after(mv);
         self.evaluate_child_keyed(
@@ -412,6 +425,7 @@ impl Search {
             child_key,
             child_rep_key,
             rule50_after,
+            scale,
         )
     }
 
@@ -482,6 +496,7 @@ impl Search {
         child_key: u64,
         child_rep_key: u64,
         rule50_after: u16,
+        scale: Option<ChildScale>,
     ) -> ChildInfo {
         self.child_evals += 1;
         let child_is_or = !is_or_node;
@@ -499,7 +514,16 @@ impl Search {
             // A rule50 terminal needs the child's existence query, so it takes
             // the played path, whose rule50 branch returns before any TT use
             // (as shipped) — hence `entry: None`.
-            self.evaluate_child_played(pos, mv, max_depth, child_is_or, true, child_key, None)
+            self.evaluate_child_played(
+                pos,
+                mv,
+                max_depth,
+                child_is_or,
+                true,
+                child_key,
+                None,
+                scale,
+            )
         } else {
             // Step 2: the single pre-probe for this child. The copied entry
             // (`TtEntry` is `Copy`) feeds both the solved-result reuse and the
@@ -567,6 +591,7 @@ impl Search {
                     false,
                     child_key,
                     entry.as_ref(),
+                    scale,
                 )
             }
         };
@@ -615,6 +640,7 @@ impl Search {
         rule50_expired: bool,
         child_key: u64,
         entry: Option<&TtEntry>,
+        scale: Option<ChildScale>,
     ) -> ChildInfo {
         // Per-frame pooled make/unmake scratch (see the `ChildPrecompute`
         // "Eval-scratch slots" docs): skips the fresh `StateInfo::new()`
@@ -747,19 +773,31 @@ impl Search {
                     // terminal check says non-terminal, like the old code where
                     // the outcome check preceded the TT probe.
                     let (pn, dn) = ChildInfo::unsolved_bounds(entry, child_max_depth);
+                    // Freshness is decided exactly as plan2 defined it for
+                    // move-class numbers: the bounds are still the neutral
+                    // `(1, 1)`. Solved, repetition, rule50 and TT-reused
+                    // children returned above, so neither heuristic can
+                    // override an outcome or a learned bound.
+                    let fresh = pn == 1 && dn == 1;
                     // Move-class starting proof numbers (provari plan2,
-                    // default off): only for a fresh OR-node child (neutral
-                    // `(1, 1)` bounds) whose parent is OR (`!child_is_or`).
-                    // Solved/repetition/rule50/TT-resolved children returned
-                    // above, so this can never override an outcome or a
-                    // learned bound. A starting value is a positive, finite
-                    // bound in `[1, 15]`; `dn` stays at the neutral 1.
-                    if self.move_class_pn && !child_is_or && pn == 1 && dn == 1 {
-                        let start = move_class::starting_proof_number(pos, mv);
-                        ChildInfo::unsolved(mv, start, 1)
+                    // default off): only for a fresh OR-node child whose
+                    // parent is OR (`!child_is_or`). A starting value is a
+                    // positive, finite bound in `[1, 15]`; `dn` stays 1.
+                    let (pn, dn) = if fresh && self.move_class_pn && !child_is_or {
+                        (move_class::starting_proof_number(pos, mv), 1)
                     } else {
-                        ChildInfo::unsolved(mv, pn, dn)
-                    }
+                        (pn, dn)
+                    };
+                    // EF-PN scaling (provari plan5, default off): the parent's
+                    // hand evaluation scales a *fresh* child, composing with
+                    // the plan2 class number on the OR branch and applying to
+                    // the neutral `(1, 1)` on the AND branch.
+                    let (pn, dn) = if fresh && let Some(scale) = scale {
+                        scale.apply(pn, dn)
+                    } else {
+                        (pn, dn)
+                    };
+                    ChildInfo::unsolved(mv, pn, dn)
                 }
             }
         };

@@ -2,7 +2,8 @@
 //!
 //! This module is intentionally decoupled from the solver so that the same
 //! parsing logic can be compiled into both the library (for unit tests) and the
-//! binary. It only depends on `std`.
+//! binary. It depends only on `std` plus the solver's option enums (so that
+//! `CliOptions` carries the same types the `Search` configuration accepts).
 //!
 //! This file is larger than 10 KiB because it doubles as the parser's test
 //! suite (one test per option and error path).
@@ -11,6 +12,8 @@
 //! is compiled in two crate roots (`#[cfg(test)] mod cli;` in the library and
 //! `mod cli;` in the binary), and no single path resolves in both. The
 //! equality is pinned by the `startpos_matches_position_starpos` test.
+
+use atomic_solver::search::dfpn::EvalPnMode;
 
 /// Parsed command-line options for the solver.
 #[derive(Debug, Clone, PartialEq)]
@@ -63,6 +66,10 @@ pub struct CliOptions {
     /// one move at node entry. Default `false`; a sound static verdict, but an
     /// experimental and default-off speed lever.
     pub static_tactics: bool,
+    /// Which node kinds scale fresh children's starting proof numbers by the
+    /// parent's hand evaluation (EF-PN). Default [`EvalPnMode::Off`]; an
+    /// experimental search-shaping heuristic, not a correctness switch.
+    pub eval_pn: EvalPnMode,
 }
 
 impl Default for CliOptions {
@@ -91,6 +98,7 @@ impl Default for CliOptions {
             move_class_pn: false,
             quiet_grouping: false,
             static_tactics: false,
+            eval_pn: EvalPnMode::Off,
         }
     }
 }
@@ -210,6 +218,19 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 opts.static_tactics = true;
                 i += 1;
             }
+            "--eval-pn" => {
+                let v = value(args, &mut i, "--eval-pn")?;
+                opts.eval_pn = match v {
+                    "off" => EvalPnMode::Off,
+                    "both" => EvalPnMode::Both,
+                    "or" => EvalPnMode::Or,
+                    other => {
+                        return Err(format!(
+                            "error: --eval-pn must be one of off, both, or, got '{other}'"
+                        ));
+                    }
+                };
+            }
             arg => {
                 return Err(format!(
                     "error: unknown option '{arg}'\nRun with --help for usage."
@@ -224,6 +245,7 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use atomic_solver::search::dfpn::EvalPnMode;
 
     fn args(list: &[&str]) -> Vec<String> {
         list.iter().map(std::string::ToString::to_string).collect()
@@ -267,6 +289,7 @@ mod tests {
         assert!(!o.move_class_pn);
         assert!(!o.quiet_grouping);
         assert!(!o.static_tactics);
+        assert_eq!(o.eval_pn, EvalPnMode::Off);
     }
 
     #[test]
@@ -387,6 +410,16 @@ mod tests {
     }
 
     #[test]
+    fn eval_pn_is_parsed_and_default_off() {
+        assert_eq!(options(&[]).eval_pn, EvalPnMode::Off);
+        assert_eq!(options(&["--eval-pn", "off"]).eval_pn, EvalPnMode::Off);
+        assert_eq!(options(&["--eval-pn", "both"]).eval_pn, EvalPnMode::Both);
+        assert_eq!(options(&["--eval-pn", "or"]).eval_pn, EvalPnMode::Or);
+        let err = parse_args(&args(&["atomic_solver", "--eval-pn", "on"])).unwrap_err();
+        assert!(err.contains("must be one of off, both, or"), "got: {err}");
+    }
+
+    #[test]
     fn budget_rejects_non_positive_and_non_numeric() {
         assert!(parse_args(&args(&["atomic_solver", "--budget", "0"])).is_err());
         assert!(parse_args(&args(&["atomic_solver", "--budget", "-5"])).is_err());
@@ -405,6 +438,7 @@ mod tests {
             "--refine-cap",
             "--salt",
             "--budget",
+            "--eval-pn",
         ] {
             assert!(parse_args(&args(&["atomic_solver", opt])).is_err(), "{opt}");
         }

@@ -1,7 +1,7 @@
 //! Cross-module DF-PN unit tests.
 
 use super::repetition_cache::RepetitionCache;
-use super::{ExitReason, PvStatus, RestartSchedule, RoundTermination};
+use super::{EvalPnMode, ExitReason, PvStatus, RestartSchedule, RoundTermination};
 use crate::position::{Outcome, Position};
 use crate::search::dfpn::Search;
 use crate::zobrist::INF;
@@ -557,6 +557,34 @@ fn first_outcome_only_reports_first_outcome_status() {
 }
 
 #[test]
+fn eval_pn_off_keeps_the_shipped_trajectory() {
+    // The default and an explicit `--eval-pn off` run the same code path: the
+    // scale is `None` and no evaluation is computed, so the outcome, nodes
+    // and billed child evaluations are identical.
+    const FEN: &str = "4k3/8/8/8/8/8/8/4KRR1 w - - 0 1";
+    let mut default_search = Search::new(1);
+    default_search.set_timeout(10);
+    default_search.set_preflight_enabled(false);
+    let mut off_search = Search::new(1);
+    off_search.set_timeout(10);
+    off_search.set_preflight_enabled(false);
+    off_search.set_eval_pn(EvalPnMode::Off);
+
+    let mut default_pos = Position::from_fen(FEN).unwrap();
+    let mut off_pos = Position::from_fen(FEN).unwrap();
+    let (default_outcome, _, default_nodes) =
+        default_search.search_depth(&mut default_pos, u32::MAX);
+    let (off_outcome, _, off_nodes) = off_search.search_depth(&mut off_pos, u32::MAX);
+
+    assert_eq!(off_outcome, default_outcome);
+    assert_eq!(off_nodes, default_nodes);
+    assert_eq!(
+        off_search.child_evaluations(),
+        default_search.child_evaluations()
+    );
+}
+
+#[test]
 fn drawn_position_reports_none_status() {
     // Bare kings are a terminal Draw (occupied == 2): no PV to qualify.
     let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4K3 w - - 0 1").unwrap();
@@ -677,7 +705,7 @@ fn evaluate_child_resolves_solved_entry_without_move_hint() {
         9,
         u32::MAX,
     );
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(info.outcome, Some(Outcome::Loss));
     assert_eq!(info.depth, 9, "proven depth preserved");
 }
@@ -980,29 +1008,43 @@ fn static_tactics_is_inert_when_no_explosion_exists() {
     );
 }
 
-/// Full-depth cross-check on a deep draw that *does* contain beside-commoner
-/// captures below the root: the closure may only reduce work, never change
-/// the proven value.
+/// Cross-check on a deep draw that *does* contain beside-commoner captures
+/// below the root: the closure must never change the proven value, and when a
+/// run completes it may only reduce work.
+///
+/// The full-depth solve of this fixture is far larger than any wall budget
+/// (it spends > 4 B child evals without finishing), so both runs are
+/// normally resource-cut. Comparing billed evals across two censored runs is
+/// meaningless — the cut point is wall-clock dependent — so the work
+/// inequality is asserted only when neither run was resource-cut. The outcome
+/// assertion (both `Draw`, never a claim) always holds. (The original
+/// version of this test compared censored evals unconditionally; on a slower
+/// host both arms hit the 120 s deadline and the closure's slightly longer
+/// censored trajectory failed the inequality spuriously.)
 #[test]
-#[ignore = "slow: ~20 s; full-depth draw cross-check on the static closure"]
+#[ignore = "slow: ~4 min (wall-censored); full-depth draw cross-check on the static closure"]
 fn static_tactics_agrees_on_a_deep_draw() {
     const FEN: &str = "r3k3/8/8/8/8/8/8/R3K3 w - - 0 1";
     let mut results = Vec::new();
+    let mut complete = true;
     for static_tactics in [false, true] {
         let mut search = Search::new(1);
         search.set_static_tactics(static_tactics);
         search.set_timeout(120);
         let mut pos = Position::from_fen(FEN).unwrap();
         let (outcome, _, _) = search.search_depth(&mut pos, u32::MAX);
+        complete &= search.exit_reason() == ExitReason::Complete;
         results.push((outcome, search.child_evaluations()));
     }
     assert_eq!(results[0].0, results[1].0, "outcomes must agree");
-    assert!(
-        results[1].1 <= results[0].1,
-        "the closure may only reduce billed evaluations: {} vs {}",
-        results[1].1,
-        results[0].1
-    );
+    if complete {
+        assert!(
+            results[1].1 <= results[0].1,
+            "the closure may only reduce billed evaluations: {} vs {}",
+            results[1].1,
+            results[0].1
+        );
+    }
 }
 
 #[test]

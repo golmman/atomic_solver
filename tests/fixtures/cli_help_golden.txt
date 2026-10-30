@@ -53,6 +53,11 @@ Options:
                              commoner as a static one-move win at node
                              entry (sound, no child evaluations
                              billed). Experimental; off by default
+  --eval-pn <MODE>           Scale fresh children's starting proof
+                             numbers by the parent's hand evaluation
+                             (EF-PN): 'off' (default), 'both' node
+                             kinds, or 'or' (attacking branch only).
+                             Experimental; off by default
   --config <FILE>            Path to a TOML file overriding scorer
                              parameters; defaults to built-in values
 

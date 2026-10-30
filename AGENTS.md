@@ -23,11 +23,13 @@ A pure solver for atomic chess in Rust.
   pre-pass that issues the TT prefetches, so a live current-generation entry decides it without
   make/unmake; the load-bearing non-terminal *outcome-less* store invariant), pooled movegen slots
   (`children.rs`), and the per-run repetition-draw cache (`repetition_cache.rs`) are documented
-  in their own module docs. Three default-off experimental levers live in their own
+  in their own module docs. Four default-off experimental levers live in their own
   modules, each with its own approximation/soundness docs: `move_class.rs`
   (`--move-class-pn`, OR-node move-class starting proof numbers), `quiet_group.rs`
-  (`--quiet-grouping`, OR-node plain-move grouping) and `static_tactics.rs`
-  (`--static-tactics`, node-entry immediate-explosion closure). The repetition path is a two-field invariant: `path_stack` may be
+  (`--quiet-grouping`, OR-node plain-move grouping), `static_tactics.rs`
+  (`--static-tactics`, node-entry immediate-explosion closure) and `eval_guide.rs`
+  (`--eval-pn <off|both|or>`, hand-evaluation-scaled fresh-child starting numbers,
+  composing with `move_class` and the quiet-group child). The repetition path is a two-field invariant: `path_stack` may be
   mutated only through `path_push`/`path_pop`, which keep the O(1) repetition-cache context hash
   and the 256-slot `u16` path Bloom filter's counts in sync; `reset_search_state` is the only
   reset and seeds both from `prefix_path`.

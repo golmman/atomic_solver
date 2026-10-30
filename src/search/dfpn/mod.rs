@@ -15,6 +15,7 @@ mod cheap_probe;
 mod children;
 mod config;
 mod core;
+mod eval_guide;
 mod fraction;
 mod history;
 mod move_class;
@@ -26,6 +27,7 @@ mod run;
 mod selection;
 mod static_tactics;
 
+pub use eval_guide::EvalPnMode;
 use fraction::fraction_from_f64;
 pub use restart_schedule::{Growth, RestartSchedule};
 
@@ -256,6 +258,10 @@ pub struct Search {
     /// `false`; a sound static verdict, but an experimental and default-off
     /// speed lever.
     static_tactics: bool,
+    /// Which node kinds scale fresh children by the parent's hand evaluation
+    /// (EF-PN, `eval_guide`). Default [`EvalPnMode::Off`]; an experimental
+    /// search-shaping heuristic, not a correctness switch.
+    eval_pn: EvalPnMode,
     /// Report of the last run's pre-phase hook, `None` when the hook has not
     /// run in the current run.
     preflight_report: Option<PreflightReport>,
@@ -318,6 +324,7 @@ impl Search {
             move_class_pn: false,
             quiet_grouping: false,
             static_tactics: false,
+            eval_pn: EvalPnMode::Off,
             preflight_enabled: true,
             preflight_report: None,
         }

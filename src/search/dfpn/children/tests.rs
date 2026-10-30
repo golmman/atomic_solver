@@ -9,7 +9,7 @@ fn evaluate_child_terminal_win_for_parent() {
     let mut search = Search::new(1);
     let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
     let mv = Move::make_move(Square::E1, Square::E8);
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
 
     assert_eq!(
         info.outcome,
@@ -41,7 +41,7 @@ fn evaluate_child_repetition_is_draw() {
     pos.undo_move(mv);
     search.path_push(child_rep_key);
 
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
 
     assert_eq!(
         info.outcome,
@@ -69,7 +69,7 @@ fn evaluate_child_rule50_expired_repetition_is_not_repetition_seen() {
     pos.undo_move(mv);
     search.path_push(child_rep_key);
 
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
 
     assert_eq!(info.outcome, Some(Outcome::Draw), "rule50 draw");
     assert_eq!(info.depth, 0, "rule50 terminal is depth 0");
@@ -90,7 +90,7 @@ fn evaluate_child_rule50_checkmate_is_loss() {
     let mut search = Search::new(1);
     let mut pos = Position::from_fen("7K/8/8/8/8/1Q6/8/k7 w - - 99 1").unwrap();
     let mv = Move::make_move(Square::B3, Square::B2);
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(
         info.outcome,
         Some(Outcome::Loss),
@@ -125,7 +125,7 @@ fn evaluate_child_uses_solved_tt_entry() {
     );
 
     // Force the TT lookup without any legal-move generation at the child.
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(
         info.outcome,
         Some(Outcome::Loss),
@@ -145,7 +145,7 @@ fn evaluate_all_children_stops_at_winning_child() {
     // Sort so the winning capture e1e8 is tried first.
     search.sort_moves(&pos, &state, &mut moves, Move::NONE, true);
     let mut children = Vec::new();
-    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children);
+    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children, None);
 
     assert_eq!(children.len(), moves.len());
     assert!(
@@ -172,7 +172,7 @@ fn evaluate_child_checkmate_child_classifies_loss_without_movegen() {
     let mut search = Search::new(1);
     let mut pos = Position::from_fen("7K/8/8/8/8/1Q6/8/k7 w - - 0 1").unwrap();
     let mv = Move::make_move(Square::B3, Square::B2);
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(info.outcome, Some(Outcome::Loss), "checkmate is a Loss");
     assert_eq!(info.depth, 0);
     assert!(!info.repetition_seen);
@@ -185,7 +185,7 @@ fn evaluate_child_stalemate_child_classifies_draw_without_movegen() {
     let mut search = Search::new(1);
     let mut pos = Position::from_fen("7k/8/8/8/8/2q5/8/K7 b - - 0 1").unwrap();
     let mv = Move::make_move(Square::C3, Square::C2);
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(info.outcome, Some(Outcome::Draw), "stalemate is a Draw");
     assert_eq!(info.depth, 0);
     assert!(!info.repetition_seen);
@@ -202,7 +202,7 @@ fn evaluate_child_two_commoners_is_draw() {
     let mut search = Search::new(1);
     let mut pos = Position::from_fen("8/8/8/8/8/8/1k6/K7 w - - 0 1").unwrap();
     let mv = Move::make_move(Square::A1, Square::A2);
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(
         info.outcome,
         Some(Outcome::Draw),
@@ -228,7 +228,7 @@ fn evaluate_child_unsolved_tt_bounds_used_when_non_degenerate() {
         .tt
         .store(child_key, Move::NONE, u8::MAX, 1, None, 5, 5, 0, 10);
 
-    let info = search.evaluate_child(&mut pos, mv, 11, true);
+    let info = search.evaluate_child(&mut pos, mv, 11, true, None);
     assert_eq!(
         info.outcome, None,
         "unsolved bounds should not report an outcome"
@@ -252,7 +252,7 @@ fn evaluate_child_degenerate_tt_bounds_fall_back_to_neutral() {
         .tt
         .store(child_key, Move::NONE, u8::MAX, 1, None, 0, 5, 0, 10);
 
-    let info = search.evaluate_child(&mut pos, mv, 11, true);
+    let info = search.evaluate_child(&mut pos, mv, 11, true, None);
     assert_eq!(info.outcome, None);
     assert_eq!(info.pn, 1);
     assert_eq!(info.dn, 1);
@@ -386,7 +386,7 @@ fn preprobe_resolves_live_unsolved_entry_without_make() {
         .tt
         .store(child_key, Move::NONE, u8::MAX, 1, None, 5, 5, 0, 10);
 
-    let fast = search.evaluate_child(&mut pos, mv, 11, true);
+    let fast = search.evaluate_child(&mut pos, mv, 11, true, None);
     assert_eq!(
         search.preprobe_skips(),
         1,
@@ -400,7 +400,7 @@ fn preprobe_resolves_live_unsolved_entry_without_make() {
 
     let entry = *search.tt.probe(child_key).expect("entry stays live");
     let played =
-        search.evaluate_child_played(&mut pos, mv, 11, true, false, child_key, Some(&entry));
+        search.evaluate_child_played(&mut pos, mv, 11, true, false, child_key, Some(&entry), None);
     assert_same_child_info(&fast, &played, "live unsolved reuse");
     assert_eq!((played.pn, played.dn), (5, 5), "played path reuses too");
     assert_eq!(pos.fen(), fen_before);
@@ -441,7 +441,7 @@ fn preprobe_resolves_solved_entry_and_emits_the_same_proof_event() {
         let (tx, rx) = std::sync::mpsc::channel();
         search.set_proof_event_sender(Some(tx));
         let mut child_pos = Position::from_fen(PREPROBE_FEN).unwrap();
-        let info = search.evaluate_child(&mut child_pos, mv, u32::MAX, true);
+        let info = search.evaluate_child(&mut child_pos, mv, u32::MAX, true, None);
         assert_eq!(info.outcome, Some(Outcome::Loss));
         assert_eq!(info.depth, 1, "the entry's proven depth is preserved");
         skips.push(search.preprobe_skips());
@@ -487,7 +487,7 @@ fn preprobe_falls_back_on_path_repetition() {
     );
     search.path_push(child_rep_key);
 
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(
         info.outcome,
         Some(Outcome::Draw),
@@ -522,7 +522,7 @@ fn preprobe_falls_back_when_rule50_expired() {
     );
     search.path_push(child_rep_key);
 
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(info.outcome, Some(Outcome::Draw), "rule50 draw");
     assert_eq!(info.depth, 0);
     assert!(
@@ -552,7 +552,7 @@ fn preprobe_degenerate_bounds_fall_back_to_neutral() {
             remaining_depth,
         );
 
-        let fast = search.evaluate_child(&mut pos, mv, 11, true);
+        let fast = search.evaluate_child(&mut pos, mv, 11, true, None);
         assert_eq!(
             search.preprobe_skips(),
             1,
@@ -562,8 +562,16 @@ fn preprobe_degenerate_bounds_fall_back_to_neutral() {
         assert_eq!(fast.outcome, None);
 
         let entry = *search.tt.probe(child_key).expect("entry stays live");
-        let played =
-            search.evaluate_child_played(&mut pos, mv, 11, true, false, child_key, Some(&entry));
+        let played = search.evaluate_child_played(
+            &mut pos,
+            mv,
+            11,
+            true,
+            false,
+            child_key,
+            Some(&entry),
+            None,
+        );
         assert_same_child_info(&fast, &played, "degenerate entry");
     }
 }
@@ -607,7 +615,7 @@ fn preprobe_best_move_guard_matches_make_path() {
     let mut search = Search::new(1);
     seed(&mut search);
     search.path_push(grandchild_rep_key);
-    let guarded = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let guarded = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(guarded.outcome, None, "the guarded entry must not resolve");
     assert_eq!((guarded.pn, guarded.dn), (1, 1));
     assert_eq!(
@@ -616,15 +624,23 @@ fn preprobe_best_move_guard_matches_make_path() {
         "a hinted solved entry takes the played path"
     );
     let entry = *search.tt.probe(child_key).expect("entry stays live");
-    let played =
-        search.evaluate_child_played(&mut pos, mv, u32::MAX, true, false, child_key, Some(&entry));
+    let played = search.evaluate_child_played(
+        &mut pos,
+        mv,
+        u32::MAX,
+        true,
+        false,
+        child_key,
+        Some(&entry),
+        None,
+    );
     assert_same_child_info(&guarded, &played, "guarded entry");
 
     // The guard does not fire: the same entry resolves, still on the
     // played path (the pre-probe never takes a hinted entry).
     let mut search = Search::new(1);
     seed(&mut search);
-    let resolved = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let resolved = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(resolved.outcome, Some(Outcome::Loss));
     assert_eq!(resolved.depth, 1);
     assert_eq!(search.preprobe_skips(), 0);
@@ -640,7 +656,7 @@ fn preprobe_skip_counter_resets_per_run() {
     search
         .tt
         .store(child_key, Move::NONE, u8::MAX, 1, None, 5, 5, 0, 10);
-    let _ = search.evaluate_child(&mut pos, mv, 11, true);
+    let _ = search.evaluate_child(&mut pos, mv, 11, true, None);
     assert_eq!(search.preprobe_skips(), 1);
 
     search.begin_run();
@@ -659,7 +675,7 @@ fn move_class_default_off_keeps_neutral_bounds() {
     assert!(!search.move_class_pn, "the heuristic must default off");
     let mut pos = Position::from_fen(MOVE_CLASS_HANGING_FEN).unwrap();
     let mv = Move::make_move(Square::G1, Square::E2);
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(info.outcome, None);
     assert_eq!((info.pn, info.dn), (1, 1), "default off is inert");
 }
@@ -670,7 +686,7 @@ fn move_class_initializes_or_child_bounds() {
     search.set_move_class_pn(true);
     let mut pos = Position::from_fen(MOVE_CLASS_HANGING_FEN).unwrap();
     let mv = Move::make_move(Square::G1, Square::E2);
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(info.outcome, None);
     assert_eq!((info.pn, info.dn), (15, 1));
 }
@@ -682,7 +698,7 @@ fn move_class_leaves_and_children_neutral() {
     let mut pos = Position::from_fen(MOVE_CLASS_HANGING_FEN).unwrap();
     let mv = Move::make_move(Square::G1, Square::E2);
     // Parent is AND (`is_or_node = false`): the child is OR and keeps (1, 1).
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, false);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, false, None);
     assert_eq!(info.outcome, None);
     assert_eq!((info.pn, info.dn), (1, 1));
 }
@@ -699,7 +715,7 @@ fn move_class_does_not_overwrite_tt_bounds() {
     search
         .tt
         .store(child_key, Move::NONE, u8::MAX, 0, None, 5, 7, 0, 0);
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(info.outcome, None);
     assert_eq!((info.pn, info.dn), (5, 7), "learned bounds must win");
 }
@@ -710,7 +726,7 @@ fn move_class_does_not_touch_solved_children() {
     search.set_move_class_pn(true);
     let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
     let mv = Move::make_move(Square::E1, Square::E8);
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(info.outcome, Some(Outcome::Loss), "terminal capture");
     assert_eq!((info.pn, info.dn), (0, INF));
 }
@@ -721,7 +737,7 @@ fn move_class_check_child_uses_capped_evasions() {
     search.set_move_class_pn(true);
     let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4K2R w - - 0 1").unwrap();
     let mv = Move::make_move(Square::H1, Square::H8);
-    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true);
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
     assert_eq!(info.outcome, None);
     assert_eq!((info.pn, info.dn), (3, 1), "Kd7/Ke7/Kf7");
 }
@@ -739,7 +755,7 @@ fn move_class_table_bounds_stay_positive_and_finite() {
     pos.legal_moves_with_state(&mut moves, &mut state);
     search.sort_moves(&pos, &state, &mut moves, Move::NONE, true);
     let mut children = Vec::new();
-    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children);
+    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children, None);
     assert!(!children.is_empty());
     for child in &children {
         if child.outcome.is_none() {
@@ -779,8 +795,8 @@ fn move_class_off_table_matches_shipped() {
     assert_eq!(default_moves.len(), disabled_moves.len());
     let mut a = Vec::new();
     let mut b = Vec::new();
-    default_search.evaluate_all_children(&mut pos, &default_moves, u32::MAX, true, &mut a);
-    disabled_search.evaluate_all_children(&mut pos, &disabled_moves, u32::MAX, true, &mut b);
+    default_search.evaluate_all_children(&mut pos, &default_moves, u32::MAX, true, &mut a, None);
+    disabled_search.evaluate_all_children(&mut pos, &disabled_moves, u32::MAX, true, &mut b, None);
     assert_eq!(a.len(), b.len());
     for (x, y) in a.iter().zip(&b) {
         assert_eq!(x.mv, y.mv);
@@ -832,14 +848,21 @@ fn quiet_grouping_hides_plain_children_without_billing_them() {
     let mut pos = Position::from_fen(FEN).unwrap();
     let off_moves = sorted_moves_for(&mut off_search, &mut pos);
     let mut off_children = Vec::new();
-    off_search.evaluate_all_children(&mut pos, &off_moves, u32::MAX, true, &mut off_children);
+    off_search.evaluate_all_children(
+        &mut pos,
+        &off_moves,
+        u32::MAX,
+        true,
+        &mut off_children,
+        None,
+    );
 
     let mut on_search = Search::new(1);
     on_search.set_quiet_grouping(true);
     let mut pos = Position::from_fen(FEN).unwrap();
     let on_moves = sorted_moves_for(&mut on_search, &mut pos);
     let mut on_children = Vec::new();
-    on_search.evaluate_all_children(&mut pos, &on_moves, u32::MAX, true, &mut on_children);
+    on_search.evaluate_all_children(&mut pos, &on_moves, u32::MAX, true, &mut on_children, None);
 
     assert_eq!(off_moves.len(), on_moves.len());
     let plain: Vec<Move> = (0..on_moves.len())
@@ -899,7 +922,7 @@ fn quiet_grouping_sweep_suppresses_the_group_on_a_decisive_loss() {
     let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").unwrap();
     let moves = sorted_moves_for(&mut search, &mut pos);
     let mut children = Vec::new();
-    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children);
+    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children, None);
 
     assert_eq!(children[0].outcome, Some(Outcome::Loss));
     assert!(
@@ -919,14 +942,21 @@ fn open_quiet_group_replaces_the_group_with_each_hidden_member_once() {
     let mut off_pos = Position::from_fen(FEN).unwrap();
     let off_moves = sorted_moves_for(&mut off_search, &mut off_pos);
     let mut off_children = Vec::new();
-    off_search.evaluate_all_children(&mut off_pos, &off_moves, u32::MAX, true, &mut off_children);
+    off_search.evaluate_all_children(
+        &mut off_pos,
+        &off_moves,
+        u32::MAX,
+        true,
+        &mut off_children,
+        None,
+    );
 
     let mut search = Search::new(1);
     search.set_quiet_grouping(true);
     let mut pos = Position::from_fen(FEN).unwrap();
     let moves = sorted_moves_for(&mut search, &mut pos);
     let mut children = Vec::new();
-    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children);
+    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children, None);
     let group_idx = children.iter().position(|c| c.group).expect("group exists");
     let hidden: Vec<Move> = (0..moves.len())
         .filter(|&i| super::quiet_group::is_plain(&pos, moves[i]))
@@ -935,7 +965,15 @@ fn open_quiet_group_replaces_the_group_with_each_hidden_member_once() {
     let prefix_len = group_idx;
     let evals_before = search.child_evaluations();
 
-    search.open_quiet_group(&mut pos, &moves, u32::MAX, true, &mut children, group_idx);
+    search.open_quiet_group(
+        &mut pos,
+        &moves,
+        u32::MAX,
+        true,
+        &mut children,
+        group_idx,
+        None,
+    );
 
     assert!(children.iter().all(|c| !c.group), "group is removed");
     assert_eq!(
@@ -968,7 +1006,7 @@ fn open_quiet_group_stops_at_an_early_tt_loss() {
     let mut pos = Position::from_fen(FEN).unwrap();
     let moves = sorted_moves_for(&mut search, &mut pos);
     let mut children = Vec::new();
-    search.evaluate_all_children(&mut pos, &moves, MAX_DEPTH, true, &mut children);
+    search.evaluate_all_children(&mut pos, &moves, MAX_DEPTH, true, &mut children, None);
     let group_idx = children.iter().position(|c| c.group).expect("group exists");
     let prefix_len = group_idx;
     let hidden: Vec<Move> = (0..moves.len())
@@ -992,7 +1030,15 @@ fn open_quiet_group_stops_at_an_early_tt_loss() {
     );
     let evals_before = search.child_evaluations();
 
-    search.open_quiet_group(&mut pos, &moves, MAX_DEPTH, true, &mut children, group_idx);
+    search.open_quiet_group(
+        &mut pos,
+        &moves,
+        MAX_DEPTH,
+        true,
+        &mut children,
+        group_idx,
+        None,
+    );
 
     assert_eq!(
         search.child_evaluations(),
@@ -1001,4 +1047,211 @@ fn open_quiet_group_stops_at_an_early_tt_loss() {
     );
     assert_eq!(children.len(), prefix_len + 1);
     assert_eq!(children.last().unwrap().outcome, Some(Outcome::Loss));
+}
+
+// ---------- EF-PN child scaling (provari plan5) ----------
+
+use super::super::EvalPnMode;
+use super::super::eval_guide::ChildScale;
+
+/// A scale fixture whose children are all non-terminal and fresh: every
+/// unsolved child gets the parent's scale applied to the neutral `(1, 1)`.
+const EVAL_PN_FEN: &str = "3rk3/8/8/6N1/8/8/8/K7 w - - 0 1";
+
+#[test]
+fn eval_pn_off_keeps_the_fresh_children_neutral() {
+    let mut search = Search::new(1);
+    let mut pos = Position::from_fen(EVAL_PN_FEN).unwrap();
+    let moves = sorted_moves_for(&mut search, &mut pos);
+    let mut children = Vec::new();
+    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children, None);
+
+    assert!(children.iter().all(|c| c.outcome.is_none()));
+    for child in &children {
+        assert_eq!(
+            (child.pn, child.dn),
+            (1, 1),
+            "flag off leaves every fresh child neutral"
+        );
+    }
+}
+
+#[test]
+fn eval_pn_both_scales_fresh_children() {
+    let mut search = Search::new(1);
+    let mut pos = Position::from_fen(EVAL_PN_FEN).unwrap();
+    let moves = sorted_moves_for(&mut search, &mut pos);
+    // OR node, step 1: proof x6, disproof x11.
+    let scale = ChildScale::for_parent(true, 1, EvalPnMode::Both).expect("enabled");
+    let mut children = Vec::new();
+    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children, Some(scale));
+
+    assert!(!children.is_empty());
+    for child in &children {
+        assert!(child.outcome.is_none());
+        assert_eq!((child.pn, child.dn), (6, 11));
+    }
+}
+
+#[test]
+fn eval_pn_or_mode_keeps_and_children_neutral() {
+    let or_scale = ChildScale::for_parent(true, 1, EvalPnMode::Or).expect("OR parent");
+    assert!(
+        ChildScale::for_parent(false, 1, EvalPnMode::Or).is_none(),
+        "the `or` arm must not scale AND-parent children"
+    );
+
+    let mut or_search = Search::new(1);
+    let mut or_pos = Position::from_fen(EVAL_PN_FEN).unwrap();
+    let or_moves = sorted_moves_for(&mut or_search, &mut or_pos);
+    let mut or_children = Vec::new();
+    or_search.evaluate_all_children(
+        &mut or_pos,
+        &or_moves,
+        u32::MAX,
+        true,
+        &mut or_children,
+        Some(or_scale),
+    );
+
+    let mut and_search = Search::new(1);
+    let mut and_pos = Position::from_fen(EVAL_PN_FEN).unwrap();
+    let and_moves = sorted_moves_for(&mut and_search, &mut and_pos);
+    let mut and_children = Vec::new();
+    and_search.evaluate_all_children(
+        &mut and_pos,
+        &and_moves,
+        u32::MAX,
+        false,
+        &mut and_children,
+        None,
+    );
+
+    assert_eq!(or_children.len(), and_children.len());
+    for or_child in &or_children {
+        assert_eq!((or_child.pn, or_child.dn), (6, 11));
+    }
+    for and_child in &and_children {
+        assert_eq!((and_child.pn, and_child.dn), (1, 1));
+    }
+}
+
+/// EF-PN composes with plan2: on an OR parent the class number is the base and
+/// the evaluation multiplies it.
+#[test]
+fn eval_pn_scales_after_move_class() {
+    let mut search = Search::new(1);
+    search.set_move_class_pn(true);
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/K5N1 w - - 0 1").unwrap();
+    let mv = Move::make_move(Square::G1, Square::F3);
+
+    let class_only = search.evaluate_child(&mut pos, mv, u32::MAX, true, None);
+    assert_eq!((class_only.pn, class_only.dn), (9, 1), "quiet class");
+
+    // OR node, step 0: proof x11, disproof x1.
+    let scale = ChildScale::for_parent(true, 0, EvalPnMode::Both).expect("enabled");
+    let composed = search.evaluate_child(&mut pos, mv, u32::MAX, true, Some(scale));
+    assert_eq!((composed.pn, composed.dn), (99, 1));
+}
+
+/// An AND-parent child is neutral `(1, 1)` and takes the AND factor table.
+#[test]
+fn eval_pn_scales_an_and_parent_child() {
+    let mut search = Search::new(1);
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/K5N1 w - - 0 1").unwrap();
+    let mv = Move::make_move(Square::G1, Square::F3);
+
+    // AND node, step 1: proof +10, disproof x6.
+    let scale = ChildScale::for_parent(false, 1, EvalPnMode::Both).expect("enabled");
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, false, Some(scale));
+    assert_eq!((info.pn, info.dn), (11, 6));
+}
+
+#[test]
+fn eval_pn_never_rescales_a_solved_child() {
+    let mut search = Search::new(1);
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+    let mv = Move::make_move(Square::G1, Square::H1);
+    pos.do_move(mv);
+    let child_key = pos.hash();
+    pos.undo_move(mv);
+    search.tt.store(
+        child_key,
+        Move::NONE,
+        u8::MAX,
+        0,
+        Some(Outcome::Loss),
+        INF,
+        0,
+        1,
+        u32::MAX,
+    );
+
+    let scale = ChildScale::for_parent(true, 0, EvalPnMode::Both).expect("enabled");
+    let info = search.evaluate_child(&mut pos, mv, u32::MAX, true, Some(scale));
+    assert_eq!(info.outcome, Some(Outcome::Loss));
+    assert_eq!((info.pn, info.dn), Outcome::Loss.pn_dn_for(false));
+}
+
+#[test]
+fn eval_pn_never_rescales_tt_reused_bounds() {
+    let mut search = Search::new(1);
+    let mut pos = Position::from_fen("4k3/8/8/8/8/8/8/4KRR1 w - - 0 1").unwrap();
+    let mv = Move::make_move(Square::G1, Square::H1);
+    pos.do_move(mv);
+    let child_key = pos.hash();
+    pos.undo_move(mv);
+    // Non-degenerate unsolved bounds, usable at child_max_depth = 10.
+    search
+        .tt
+        .store(child_key, Move::NONE, u8::MAX, 1, None, 5, 5, 0, 10);
+
+    let scale = ChildScale::for_parent(true, 0, EvalPnMode::Both).expect("enabled");
+    let info = search.evaluate_child(&mut pos, mv, 11, true, Some(scale));
+    assert_eq!(info.outcome, None);
+    assert_eq!(
+        (info.pn, info.dn),
+        (5, 5),
+        "TT-reused bounds are not fresh, so they are not scaled"
+    );
+}
+
+#[test]
+fn eval_pn_scales_the_group_child_and_its_members() {
+    let mut search = Search::new(1);
+    search.set_quiet_grouping(true);
+    let mut pos = Position::from_fen(EVAL_PN_FEN).unwrap();
+    let moves = sorted_moves_for(&mut search, &mut pos);
+    let hidden: Vec<Move> = (0..moves.len())
+        .filter(|&i| super::quiet_group::is_plain(&pos, moves[i]))
+        .map(|i| moves[i])
+        .collect();
+    assert!(!hidden.is_empty(), "fixture needs hidden plain moves");
+
+    // OR node, step 1: proof x6, disproof x11.
+    let scale = ChildScale::for_parent(true, 1, EvalPnMode::Both).expect("enabled");
+    let mut children = Vec::new();
+    search.evaluate_all_children(&mut pos, &moves, u32::MAX, true, &mut children, Some(scale));
+    let group_idx = children.iter().position(|c| c.group).expect("group exists");
+    let group = &children[group_idx];
+    assert_eq!(group.pn, super::quiet_group::GROUP_PN * 6);
+    assert_eq!(group.dn, hidden.len() as u64 * 11);
+
+    search.open_quiet_group(
+        &mut pos,
+        &moves,
+        u32::MAX,
+        true,
+        &mut children,
+        group_idx,
+        Some(scale),
+    );
+    assert_eq!(children.len(), group_idx + hidden.len());
+    for child in &children[group_idx..] {
+        assert_eq!(
+            (child.pn, child.dn),
+            (6, 11),
+            "opened members keep the parent's scale"
+        );
+    }
 }

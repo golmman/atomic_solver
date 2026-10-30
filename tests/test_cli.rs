@@ -42,6 +42,10 @@ fn cli_help_lists_options_and_exits_cleanly() {
         stdout.contains("--static-tactics"),
         "help should mention --static-tactics"
     );
+    assert!(
+        stdout.contains("--eval-pn"),
+        "help should mention --eval-pn"
+    );
 }
 
 /// The rendered `--help` text is pinned byte-for-byte: it is the single

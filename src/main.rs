@@ -111,6 +111,11 @@ Options:
                              commoner as a static one-move win at node
                              entry (sound, no child evaluations
                              billed). Experimental; off by default
+  --eval-pn <MODE>           Scale fresh children's starting proof
+                             numbers by the parent's hand evaluation
+                             (EF-PN): 'off' (default), 'both' node
+                             kinds, or 'or' (attacking branch only).
+                             Experimental; off by default
   --config <FILE>            Path to a TOML file overriding scorer
                              parameters; defaults to built-in values
 
@@ -183,6 +188,7 @@ fn main() {
         move_class_pn,
         quiet_grouping,
         static_tactics,
+        eval_pn,
     } = opts;
 
     let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
@@ -213,6 +219,7 @@ fn main() {
     search.set_move_class_pn(move_class_pn);
     search.set_quiet_grouping(quiet_grouping);
     search.set_static_tactics(static_tactics);
+    search.set_eval_pn(eval_pn);
     search.set_salt(salt);
     if let Some(budget) = budget {
         search.set_child_eval_budget(budget);
