@@ -183,6 +183,16 @@ Shipped opt-in stack: `--move-class-pn --quiet-grouping --eval-pn or`.
   `network.nnue` sha256 `99dc67ea…a04a6` and `model.json` sha256
   `8822a85f…7f987` only matter for the stretch column. Toolchain/network
   blockers are recorded as `INCONCLUSIVE`, never substituted.
+- **Progress ledger:** [`bench.md`](bench.md) is the standing performance
+  document. It pins a three-cell bench set (every `core + sample20` cell the
+  pinned provari oracle wins with `--guide hand`), defines
+  `factor = our wall / provari hand wall` with provari as 1.000, and records
+  the canonical geometric mean plus coverage. **Every executed plan whose
+  result touches the win path appends one row** (per-cell factors, geomean,
+  coverage, host, stack, deterministic `child_evals`); housekeeping plans
+  append nothing. Goal: geometric mean `< 1.0` with coverage ≥ provari. Its
+  reference measurement is
+  [`measurements/bench/`](measurements/bench/) (driver + parsed results).
 - **Artifacts:** this initiative's drivers, corpus definitions, parsed results
   (`*.json`, `*.csv`) and provenance READMEs go under
   `measurements/planN/`; raw transcripts, provari sources/binaries, and
@@ -223,6 +233,15 @@ that re-draft.
 
 ## History
 
+- **2026-10-30** — performance ledger opened: [`bench.md`](bench.md) with the
+  `bench-v0` baseline (provari `--guide hand` rebuilt from the pinned commit,
+  three-cell set, canonical 10 s/192 MB protocol, driver in
+  `measurements/bench/`). Baseline: shipped default stack 51.47× on the one
+  canonical shared cell (coverage 1/3); shipped opt-in stack
+  (`--move-class-pn --quiet-grouping --eval-pn or`) 6.86× geometric mean on two
+  cells (coverage 2/3; the third cell is 9.70× only at a 120 s budget). Distance
+  to the goal (geomean < 1.0, coverage 3/3): ~7× plus one coverage-closing
+  mechanism. No product code changed.
 - **2026-10-30** — initiative opened by consolidating `provari`, `interop` and
   the crate-promotion thread of `workspace` (all three closed into this
   initiative). No product code changed. The comparison target was clarified:
