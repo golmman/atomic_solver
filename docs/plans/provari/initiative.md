@@ -18,9 +18,13 @@ default-off `--static-tactics` immediate exploding-capture closure) as a
 **negative/neutral** lever — 1.49× fewer evals on the shared win but 1.18–1.24×
 *more* work on the core FEN and +4–6 % on the censored `sample20` rows, with all
 8 unique decisive proofs validated and coverage unchanged — so the flag stays
-default-off and 4b (`exposed` defender, no-safe-evasion checks, parry-less
-double threats) is the next candidate, planned with a kill criterion.
-Cannot-win material remains a later candidate.
+default-off. Plan 5 ([`plan5.md`](plan5.md)) is drafted for item 5
+(**evaluation-scaled proof numbers, EF-PN**, hand guide only, default-off
+`--eval-pn <off|both|or>`): report 4's diagnosis (node-entry closures throw away
+DF-PN's ordering feedback) re-ranks the remaining levers, so EF-PN prices
+subtrees inside the search instead of short-circuiting frames, and 4b
+defender-side closures (`exposed`, no-safe-evasion checks, parry-less double
+threats) stay open but unranked. Cannot-win material remains a later candidate.
 
 This initiative owns the **search-performance** side of the external
 comparison with [`aiorla/provari`](https://github.com/aiorla/provari). The
@@ -155,8 +159,8 @@ says so.
 | 2 | Win-only front-end skeleton | Opt-in attacker-only DF-PN/win prover that proves a win and otherwise falls back; no new heuristics yet | Isolate provari's attacker-only proof semantics from our general outcome/PV machinery; provide the home for later levers | correctness (fallback identity), evals, wall | open (deferred; re-rank after plan2) |
 | 3a | Move-class starting numbers (OR nodes) | Checks by (legal) evasions capped at 8; double threat 1, threat 4, weak threat 8, quiet 9, hanging 15; default-off flag | Provari's largest non-eval lever; test class signal before adding quiet grouping | deterministic child evals, wall, first-win length | **complete — `report2.md`**: 8.74×/7.58× core, 3.41×/3.18× shared win; coverage unchanged; kept opt-in |
 | 3b | Quiet-move grouping | One delayed plain-move child, opened only if needed | Provari's second non-eval lever; measured 1.4× in provari ablation | deterministic child evals, wall | **complete — `report3.md`**: 2.60×/1.97× core, 2.27×/1.85× shared win; `both` 1.80×/1.47× over `mc` on core; coverage unchanged; kept opt-in |
-| 4 | Static atomic tactical closure | Immediate exploding capture, exposed king, no-safe-evasion check, double threat, mate-in-one, cannot-win material | Avoid whole expansions on forced tactics; the complement to #3 | evals, expansion census | **4a complete — `report4.md`**: default-off `--static-tactics`; sound (8/8 proofs valid, coverage unchanged) but 1.24×/1.20× *worse* on the core FEN (1.49×/1.50× better on the shared win), not additive with the best stack ⇒ kept opt-in, not adopted; 4b (`exposed`/no-safe-evasion/double-threat) next with a kill criterion |
-| 5 | Evaluation-scaled proof numbers (EF-PN) | Hand evaluation first; optional learned provability model only if licensing and evidence justify it | Provari's hand guide is 1.8×; the bundled model another ~1.5× and a shorter first line | evals, first-win length | open |
+| 4 | Static atomic tactical closure | Immediate exploding capture, exposed king, no-safe-evasion check, double threat, mate-in-one, cannot-win material | Avoid whole expansions on forced tactics; the complement to #3 | evals, expansion census | **4a complete — `report4.md`**: default-off `--static-tactics`; sound (8/8 proofs valid, coverage unchanged) but 1.24×/1.20× *worse* on the core FEN (1.49×/1.50× better on the shared win), not additive with the best stack ⇒ kept opt-in, not adopted; 4b (`exposed`/no-safe-evasion/double-threat) open but **unranked** (plan5 ranking note: closures are not additive with the stack, EF-PN prices subtrees instead) |
+| 5 | Evaluation-scaled proof numbers (EF-PN) | Hand evaluation first; optional learned provability model only if licensing and evidence justify it | Provari's hand guide is 1.8×; the bundled model another ~1.5× and a shorter first line | evals, first-win length | **`plan5.md` drafted (2026-10-30)** — hand guide only, two pre-registered arms (`both` = provari's formula at both node kinds, `or` = attacking branch only), per-case verdict floors and a tax probe; open |
 | 6 | Rule50-free key + proof length/limit | Key boards without the clock; store proof length and highest holding clock; replay/verify conservatively | Recover move-order transpositions without breaking rule50/repetition soundness | TT hit rate, evals | open (soundness-sensitive) |
 | 7 | Head-to-head convergence | Tune the adopted stack on the target corpus; require shared-win wall < provari and coverage ≥ provari | The initiative's success condition; no new mechanism, only measured tuning and final evidence | wall ratio, coverage | open |
 
@@ -264,3 +268,16 @@ conventions.
   4b (`exposed` two-ply closure) with a kill criterion, or a re-rank toward
   item 5 (EF-PN), which prices subtrees inside DF-PN instead of
   short-circuiting frames.
+- **2026-10-30** — `plan5.md` drafted for item 5 (EF-PN, hand guide only),
+  taking the re-rank report 4 pointed at: the static-tactics line is not
+  extended (4b stays open but unranked). The plan session rebuilt the pinned
+  provari oracle read-only in `/tmp` and ran a fresh guide ablation
+  (`--guide hand` vs `--guide none`, 10 s / 192 MB, 3 repeats): the hand guide
+  is **1.96× fewer nodes / 1.84× faster** on the core FEN and **2.27× more
+  nodes / 2.17× slower** on the shared `1eb80b92f92c` win (5.06 s vs 5.90 s on
+  `db6a741c723f`), and both guides censor `b9a7ed7eb368`/`dd3f89766a40`, which
+  plan1's bundled-network run won. The lever is therefore real but
+  case-dependent, which is why the plan pre-registers two arms (`both` =
+  provari's formula at both node kinds, `or` = attacking branch only), per-case
+  verdict floors, and a tax probe instead of assuming the core-FEN ablation
+  transfers. No repository code or corpus was changed by the plan session.
