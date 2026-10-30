@@ -10,7 +10,7 @@ move-class starting proof numbers behind the default-off `--move-class-pn`
 flag: on the core FEN it measured 8.74× fewer child evals and 7.58× less
 wall, and 3.41×/3.18× on the single plan1 shared win, with every decisive
 run proof-tree validated. It executes the first half of backlog item 3;
-quiet-move grouping is deferred to plan 3, which is the next step.
+quiet-move grouping is drafted as `plan3.md`, the next step.
 
 This initiative owns the **search-performance** side of the external
 comparison with [`aiorla/provari`](https://github.com/aiorla/provari). The
@@ -144,7 +144,7 @@ says so.
 | 1 | Head-to-head baseline and target corpus | Reproducible driver for provari (pinned commit, bundled model and hand control) vs `atomic_solver --first-outcome`; core FEN plus a fixed sample of `bench/high200.jsonl`; parsed results and provenance | Establish the target and stop ad hoc comparisons; identify the shared-win set | wall, nodes/child evals, coverage | **complete — `report1.md`** |
 | 2 | Win-only front-end skeleton | Opt-in attacker-only DF-PN/win prover that proves a win and otherwise falls back; no new heuristics yet | Isolate provari's attacker-only proof semantics from our general outcome/PV machinery; provide the home for later levers | correctness (fallback identity), evals, wall | open (deferred; re-rank after plan2) |
 | 3a | Move-class starting numbers (OR nodes) | Checks by (legal) evasions capped at 8; double threat 1, threat 4, weak threat 8, quiet 9, hanging 15; default-off flag | Provari's largest non-eval lever; test class signal before adding quiet grouping | deterministic child evals, wall, first-win length | **complete — `report2.md`**: 8.74×/7.58× core, 3.41×/3.18× shared win; coverage unchanged; kept opt-in |
-| 3b | Quiet-move grouping | One delayed plain-move child, opened only if needed | Provari's second non-eval lever; measured 1.4× in provari ablation | deterministic child evals, wall | open — next plan (`plan3`); unblocked by plan2, to be measured separately |
+| 3b | Quiet-move grouping | One delayed plain-move child, opened only if needed | Provari's second non-eval lever; measured 1.4× in provari ablation | deterministic child evals, wall | **planned — `plan3`**; unblocked by plan2, to be measured separately |
 | 4 | Static atomic tactical closure | Immediate exploding capture, exposed king, no-safe-evasion check, double threat, mate-in-one, cannot-win material | Avoid whole expansions on forced tactics; the complement to #3 | evals, expansion census | open |
 | 5 | Evaluation-scaled proof numbers (EF-PN) | Hand evaluation first; optional learned provability model only if licensing and evidence justify it | Provari's hand guide is 1.8×; the bundled model another ~1.5× and a shorter first line | evals, first-win length | open |
 | 6 | Rule50-free key + proof length/limit | Key boards without the clock; store proof length and highest holding clock; replay/verify conservatively | Recover move-order transpositions without breaking rule50/repetition soundness | TT hit rate, evals | open (soundness-sensitive) |
@@ -204,3 +204,11 @@ conventions.
   `make test-full`, the repetition gate, and the quick-suite drift check are
   green. Decision: keep the flag default-off; plan3 (quiet grouping) is the
   next step.
+- **2026-10-29** — `plan3.md` drafted for quiet-move grouping (backlog item
+  3b), default-off. A read-only plan-session ablation of the plan1 provari
+  binaries confirmed the target size: on the core FEN, grouping on vs off was
+  1.35× wall / 1.17× nodes; on the shared case 1.23× wall with flat nodes and a
+  one-move-shorter `nogroup` mate. The plan keeps grouping frame-local (no
+  synthetic TT key), uses a conservative parent-side plainness predicate, and
+  measures four configurations (`off`, `group`, `mc`, `both`). No product code
+  changed by the plan session.
