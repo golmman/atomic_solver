@@ -6,6 +6,40 @@ plan, so the performance leg of the initiative has a single, comparable
 history. It is not a plan and not a report: plans still live in `planN.md`
 and their evidence in `reportN.md` / `measurements/planN/`.
 
+## Names and ids (read this first)
+
+Three kinds of identifier appear here and in the measurement files; **only one
+of them is a git commit**.
+
+| Kind | Example | Meaning |
+| --- | --- | --- |
+| Cell short name | `core`, `easy-win`, `deep-win` | Use this in prose, plans, reports and ledger rows. Defined in [The bench set](#the-bench-set). |
+| Cell id | `1eb80b92f92c` | **Not a git hash** — provari's record id for a position in its corpus file (detail below). Used by tooling and by the corpus file. |
+| Commit pin | `provari-v0.1.0`, `solver@96edb83` | A real git commit: the oracle build, and the solver state a row was measured at. Written in full (40 hex) in the pins list below. |
+
+**Commit pins.**
+
+- `provari-v0.1.0` = `48686bc6c786d6ea70568f0b2ad4002cf0520206` — the pinned
+  provari oracle (`v0.1.0`), rebuilt from source for every row, never
+  committed. This is the 1.000 side of every factor.
+- `solver@96edb83` = `96edb8334527291225a9db3b4750f9aebcb88f96` — the
+  `atomic_solver` commit the `bench-v0` row was measured at. Later rows name
+  their own `solver@<sha>`.
+
+**Cell ids in detail.** A cell id (`1eb80b92f92c`, `db6a741c723f`, …) is
+provari's own record id in its corpus file `bench/high200.jsonl` at the pinned
+commit: the first 12 hex characters of `sha256(FEN)`, i.e. a fingerprint of the
+position, unique inside that file. The frozen `sample20`
+([`corpus.json`](../provari/measurements/plan1/corpus.json)) copies those
+`{id, fen}` pairs verbatim, and the bench driver keys cells by id because that
+is what the corpus file holds. `core` is the one hand-named cell (it is not in
+`high200.jsonl`); its fingerprint would be `8d0ff8bca7f0`, so a measurement
+file showing that hash means the same position.
+
+**Rule of thumb:** prose uses short names, tooling uses cell ids, rows record
+the commit pins. A cell id is stable forever; a short name is stable as long as
+the cell is in the set.
+
 ## The goal this ledger measures
 
 The initiative's success condition is a head-to-head win on a **shared-win
@@ -19,7 +53,7 @@ set** — provari `--guide hand` is the primary column:
 
 `bench.md` tracks the first two. It says nothing about correctness; a speed
 claim from this ledger is void unless the same run passed the initiative's
-gates (see [Working agreement](initiative.md)).
+[Working agreement](initiative.md).
 
 ## The metric
 
@@ -41,7 +75,7 @@ factor(cell) = median candidate wall [s] / median provari --guide hand wall [s]
 - **Censoring convention.** A cell where we do not win inside the budget is
   reported as `censored`, and where a bound is meaningful it is printed as
   `≥ budget / reference_wall` (a *lower* bound on the factor, never a factor).
-  A censored row is never dropped and never silently converted into a win.
+  A censored cell is never dropped and never silently converted into a win.
 - **Deterministic accompaniment.** Wall time is the product metric but noisy;
   every row also records `child_evals` (ours, deterministic per stack) and
   provari's `nodes` for the same cell. They are **not** comparable
@@ -58,11 +92,14 @@ factor(cell) = median candidate wall [s] / median provari --guide hand wall [s]
 | Repeats | 3 per cell per side (medians reported); one process at a time |
 | Ordering | all reference runs and candidate runs of a row are measured in the same session, on the same host |
 | Host | recorded per row; factors are same-session ratios, so a row is valid on its own host even when another row ran elsewhere |
+| Oracle | `provari-v0.1.0`, rebuilt from source per row, never committed |
+| Corpus | `corpus-v1` = [`../provari/measurements/plan1/corpus.json`](../provari/measurements/plan1/corpus.json), sha256 `9cd0169a30bb7d5b162b6a1ec119fe194b776c8a24a46cdf1582c07062847d0e` |
 | Tablebases | none |
 
 The driver is [`measurements/bench/run_bench.py`](measurements/bench/run_bench.py)
 (it writes [`measurements/bench/results.json`](measurements/bench/results.json)
-with the per-run rows and the derived ledger):
+with the per-run rows and the derived ledger). `--cases` takes **cell ids**;
+`--stack` names a configuration:
 
 ```sh
 python3 docs/plans/winprover/measurements/bench/run_bench.py \
@@ -75,39 +112,36 @@ python3 docs/plans/winprover/measurements/bench/run_bench.py \
   --solver-commit "$(git rev-parse HEAD)"
 ```
 
-The oracle is **rebuilt, never committed** (provari commit
-`48686bc6c786d6ea70568f0b2ad4002cf0520206`, tag `v0.1.0`); the hand-guide
-column needs only `cargo build --release` in a scratch clone, the model
-column additionally needs provari's `data/fetch.sh` artifacts.
+The oracle is **rebuilt, never committed** (`provari-v0.1.0`, tag `v0.1.0`);
+the hand-guide column needs only `cargo build --release` in a scratch clone,
+the model column additionally needs provari's `data/fetch.sh` artifacts.
 
 ## The bench set
 
-Three cells, drawn from the frozen corpus (`core` + the pinned `sample20` of
-[`../provari/measurements/plan1/corpus.json`](../provari/measurements/plan1/corpus.json),
-sha256 `9cd0169a30bb7d5b162b6a1ec119fe194b776c8a24a46cdf1582c07062847d0e`).
+Three cells, drawn from `corpus-v1` (`core` + the pinned `sample20`).
 
 **Selection rule (fixed):** the bench set is every cell of `core + sample20`
 where the pinned provari oracle proves a win **with the hand guide** inside
 the canonical budget. Cells where provari itself is censored cannot carry a
 factor and are therefore not bench cells, however interesting they are.
 
-| Cell | FEN | provari hand (1.000) | note |
-| --- | --- | --- | --- |
-| `core` | `r1b1kbnr/ppp3pp/n4q2/3pppN1/1P1PP3/8/P1P2PPP/RNBQKB1R w KQkq - 0 1` | 0.491 s · 342,289 nodes · mate 17 | the motivating FEN; provari's hand guide is ~2× *better* here than `--guide none` |
-| `1eb80b92f92c` | `rnbq1b1r/pp1p1kpp/2p1pp1n/8/3PP1P1/2N2N2/PPP2P1P/R1BQKB1R w KQ - 0 1` | 0.111 s · 72,523 nodes · mate 15 | the easy shared win; provari's hand guide is >2× *worse* here than `--guide none` (case-dependent lever) |
-| `db6a741c723f` | `rnb1kbnr/pppp2pp/5q2/4ppN1/3P4/8/PPP1PPPP/RNBQKB1R w KQkq - 0 1` | 6.200 s · 4,574,912 nodes · mate 22 | the coverage cell: provari wins inside the budget, we do not (at 10 s) |
+| Short name | Cell id | FEN | provari hand (1.000) | Why this cell |
+| --- | --- | --- | --- | --- |
+| `core` | `core` (hand-named; fingerprint `8d0ff8bca7f0`) | `r1b1kbnr/ppp3pp/n4q2/3pppN1/1P1PP3/8/P1P2PPP/RNBQKB1R w KQkq - 0 1` | 0.491 s · 342,289 nodes · mate 17 | the initiative's motivating FEN; provari's hand guide is ~2× *better* here than `--guide none` |
+| `easy-win` | `1eb80b92f92c` | `rnbq1b1r/pp1p1kpp/2p1pp1n/8/3PP1P1/2N2N2/PPP2P1P/R1BQKB1R w KQ - 0 1` | 0.111 s · 72,523 nodes · mate 15 | the one easy shared win; provari's hand guide is >2× *worse* here than `--guide none` (the lever is case-dependent) |
+| `deep-win` | `db6a741c723f` | `rnb1kbnr/pppp2pp/5q2/4ppN1/3P4/8/PPP1PPPP/RNBQKB1R w KQkq - 0 1` | 6.200 s · 4,574,912 nodes · mate 22 | the deepest hand-guide win in the corpus; the coverage cell (we do not solve it at 10 s) |
 
-Cells deliberately **out** of the set (recorded so the exclusion is not
-silently revisited):
+Cells measured and deliberately **out** of the set (recorded so the exclusion
+is not silently revisited):
 
-- `b9a7ed7eb368`, `dd3f89766a40` — provari **hand** is censored (10.1 M / 9.3 M
-  nodes); only the out-of-scope bundled model wins them (provari plan1: 4.46 s
-  and 1.86 s).
-- the remaining 16 `sample20` cells — provari's bundled model is censored on
-  all of them, so the hand guide is expected to be censored too; item 1
-  confirms the hand-guide coverage of the whole corpus. If it finds an
-  additional hand win, that cell joins the set by the rule above (and the
-  ledger gets a new reference row; old rows are not rewritten).
+| Cell id | Why not a bench cell |
+| --- | --- |
+| `b9a7ed7eb368`, `dd3f89766a40` | provari **hand** is censored (10.1 M / 9.3 M nodes); only the out-of-scope bundled model wins them (provari plan1: 4.46 s and 1.86 s) |
+| the remaining 16 `sample20` ids | provari's bundled model is censored on all of them, so the hand guide is expected to be censored too; item 1 confirms the hand-guide coverage of the whole corpus |
+
+If item 1 finds an additional hand-guide win, that cell joins the set by the
+rule above — it gets a short name, its reference values are measured, and the
+ledger gains a new reference row. Earlier rows are not rewritten.
 
 ## Ledger
 
@@ -124,14 +158,14 @@ item 6 decides the default flag set.
 
 ### `bench-v0` — 2026-10-30, pre-plan baseline (no initiative plan executed yet)
 
-Host `d7891fb11b96` (aarch64, 8 CPU, Linux 7.1.13); solver commit `96edb83`;
-provari `48686bc` (`v0.1.0`), `--guide hand`. Reference walls in this session:
-`core` 0.491 s, `1eb80b92f92c` 0.111 s, `db6a741c723f` 6.200 s.
+Host `d7891fb11b96` (aarch64, 8 CPU, Linux 7.1.13); `solver@96edb83`;
+`provari-v0.1.0`, `--guide hand`. Reference walls in this session:
+`core` 0.491 s, `easy-win` 0.111 s, `deep-win` 6.200 s.
 
-Cell syntax: `factor (our wall / our child_evals)`; the reference (provari hand)
-is **1.000** in every row and every cell.
+Cell syntax: `factor (our wall / our child_evals)`; the reference
+(`provari-v0.1.0` hand) is **1.000** in every row and every cell.
 
-| Plan | Stack | `core` | `1eb80b92f92c` | `db6a741c723f` | Geomean (canonical) | Coverage |
+| Plan | Stack | `core` | `easy-win` | `deep-win` | Geomean (canonical) | Coverage |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | `bench-v0` | **default** (shipped flags) | censored (≥ 20.4) 10.013 s / 72.9 M | **51.47** (5.713 s / 43.3 M) | censored (≥ 1.61) 10.008 s / 75.3 M | **51.47** (1 cell) | 1/3 |
 | `bench-v0` | **opt** (`--move-class-pn --quiet-grouping --eval-pn or`) | **7.67** (3.767 s / 17.2 M) | **6.13** (0.680 s / 3.23 M) | censored at 10 s (47.8 M); **9.70** at a 120 s budget (60.21 s / 326.9 M) | **6.86** (2 cells) | 2/3 |
@@ -140,17 +174,17 @@ Readings of the baseline:
 
 - **Distance to the goal: 6.86×.** The canonical geomean must fall below 1.0
   with coverage 3/3 — i.e. roughly a 7× improvement on the two shared cells
-  *plus* the `db6a741c723f` coverage gap closed.
-- The coverage gap is as large as the latency gap: `db6a741c723f` needs 60.2 s
+  *plus* the `deep-win` coverage gap closed.
+- The coverage gap is as large as the latency gap: `deep-win` needs 60.2 s
   where provari needs 6.2 s, and the shipped default stack does not solve
   `core` at all.
 - The two shipped win-path levers (measured-out table in `initiative.md`)
-  account for the difference between the two rows (`1eb80b92f92c` 51.5 → 6.13,
+  account for the difference between the two rows (`easy-win` 51.5 → 6.13,
   `core` censored → 7.67), and they are still opt-in.
 - Proof lengths differ by cell (ours 29 plies vs provari's 34 on `core`; 31 vs
-  30 on `1eb80b92f92c`; 49 vs 44 on `db6a741c723f`), so a factor is
-  "time to *a* proven win", not time to the shortest one — see the initiative's
-  item 5 (proof length) before treating length differences as noise.
+  30 on `easy-win`; 49 vs 44 on `deep-win`), so a factor is "time to *a*
+  proven win", not time to the shortest one — see the initiative's item 5
+  (proof length) before treating length differences as noise.
 
 ### Rows to come
 
@@ -175,8 +209,8 @@ recorded here as a dated note, with the earlier rows left intact.
    per-node cost effect, `performance`'s territory).
 3. **Censored is a result.** `≥ budget/reference` bounds and coverage counts
    are the honest form; a censored cell may never be replaced by the wall of
-   a longer run without stating the budget used (as done for
-   `db6a741c723f` above).
+   a longer run without stating the budget used (as done for `deep-win`
+   above).
 4. **Opt-in ≠ shipped.** The ledger's `Stack` column is part of the result.
    Only a default-flag decision (item 6) turns a stack row into a product
    row; until then both stack rows stay visible.
@@ -191,9 +225,15 @@ recorded here as a dated note, with the earlier rows left intact.
 ## History
 
 - **2026-10-30** — `bench.md` opened with the `bench-v0` baseline: three-cell
-  set (selection rule above), provari `--guide hand` reference column rebuilt
-  from the pinned commit on a new host, canonical protocol, and the driver
+  set (`core`, `easy-win`, `deep-win`; selection rule above), the
+  `provari-v0.1.0` `--guide hand` reference column rebuilt from source on a new
+  host, the canonical protocol, and the driver
   `measurements/bench/run_bench.py`. Baseline: default stack 51.47× on one
   shared cell (coverage 1/3); shipped opt-in stack 6.86× geomean on two
-  shared cells (coverage 2/3, third cell 9.70× at a 120 s budget). No product
-  code changed.
+  shared cells (coverage 2/3, the third cell 9.70× only at a 120 s budget). No
+  product code changed.
+- **2026-10-30 (same session)** — identifiers separated explicitly after a
+  read-through: cell short names (`core`, `easy-win`, `deep-win`) for prose,
+  cell ids (provari `high200` record ids = `sha256(FEN)[:12]`, **not** git
+  hashes) for tooling, and full commit pins (`provari-v0.1.0`, `solver@<sha>`)
+  for provenance. Numbers and verdicts unchanged.

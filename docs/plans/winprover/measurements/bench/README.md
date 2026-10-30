@@ -16,14 +16,20 @@ provenance record. Raw solver/provari transcripts are not committed.
 | Provari guide | `hand` (primary column); no model/network artifacts fetched |
 | `atomic_solver` | commit `96edb8334527291225a9db3b4750f9aebcb88f96`, `./target/release/atomic_solver` |
 | Corpus | [`../../../provari/measurements/plan1/corpus.json`](../../../provari/measurements/plan1/corpus.json), sha256 `9cd0169a30bb7d5b162b6a1ec119fe194b776c8a24a46cdf1582c07062847d0e` |
-| Bench cells | `core`, `1eb80b92f92c`, `db6a741c723f` (selection rule in `bench.md`) |
+| Bench cells | `core`, `easy-win` (`1eb80b92f92c`), `deep-win` (`db6a741c723f`) — selection rule and the id convention in `bench.md` |
 | Budget | 10 s and 192 MB label on both sides; 3 repeats per cell per side |
 | Tablebases | none |
 
 The host differs from the one used by `provari` plan1/plan5 (x86, 32 vCPU, AMD
-Ryzen 9 5950X): the reference walls shifted (`core` 0.518 s → 0.491 s, shared
-case 0.089 s → 0.111 s) and our per-eval throughput is ~1.4× lower. All factors
-in this directory are same-session ratios, which is what `bench.md` requires.
+Ryzen 9 5950X): the reference walls shifted (`core` 0.518 s → 0.491 s,
+`easy-win` 0.089 s → 0.111 s) and our per-eval throughput is ~1.4× lower. All
+factors in this directory are same-session ratios, which is what `bench.md`
+requires.
+
+Identifier note: the corpus file and `results.json` key cells by **cell id** —
+provari's `bench/high200.jsonl` record id, i.e. the first 12 hex characters of
+`sha256(FEN)`, **not** a git hash. `bench.md` maps ids to the short names used
+in prose and ledger rows (`core`, `easy-win`, `deep-win`).
 
 ## Files
 
@@ -52,9 +58,9 @@ Result (2026-10-30, ~2 m 21 s): `default` shared=1 geomean=`51.468`
 coverage=1/3; `opt` shared=2 geomean=`6.856` coverage=2/3.
 
 One supplementary probe is recorded in `bench.md` but not in `results.json`
-(it exceeds the canonical budget): `db6a741c723f` under the `opt` stack with
-`--timeout 120` wins in **60.21 s / 326,876,664 child evals**, i.e. factor
-9.70 against the 6.200 s reference.
+(it exceeds the canonical budget): `deep-win` (`db6a741c723f`) under the `opt`
+stack with `--timeout 120` wins in **60.21 s / 326,876,664 child evals**, i.e.
+factor 9.70 against the 6.200 s reference.
 
 ## Metric conventions
 
