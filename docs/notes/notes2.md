@@ -55,3 +55,9 @@ Pick some benchmark postions then document the baseline: provari as 1.0 and this
 
 each executed plan needs to document the new factor.
 the ulimate goal is to our factor lower than 1 at some point.
+
+---
+
+`atomic-movegen` was compared a different movegen library `shakmaty`: `docs/plans/movegen/shakmaty_analysis.md`.
+
+Please compile a "wishlist" of changes for `atomic-movegen` which would help in our project and store it as `docs/plans/movegen/feedback2.md`.
