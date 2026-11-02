@@ -324,6 +324,68 @@ Correctness first: any new board is differential-tested against
 `atomic_movegen` and shakmaty on random games, like provari's
 `matches_the_played_positions`.
 
+### 6.1 Repository and crate boundary (decided)
+
+**Decision: same repository. Start as `src/search/prover/` behind its own
+binary/flag; promote to a workspace crate only when a trigger fires. Do not
+start a new repository.**
+
+The rewrite is an engine rewrite, not a project rewrite. The evidence layer
+and the measurement discipline are the assets that make the comparison
+trustworthy, and they live here.
+
+**Why not a new repository**
+
+- The new prover needs `proof_event`, `proof_tree`, `validate`, `export`,
+  `reconstruct`, `notation`, `zobrist`, the rules layer, the bench harness,
+  the frozen corpus, the pinned provari oracle, and the proofdb pipeline. A
+  separate repo either duplicates them (drift, double maintenance) or depends
+  on `atomic_solver` across repos (versioning, two release profiles, awkward
+  fallback).
+- The current solver stays the product until the new one wins. Same repo lets
+  the new engine sit behind a flag/binary and be compared in one build,
+  against the same corpus and gates.
+- The process is here: `docs/plans`, the session protocol, `bench.md`, the
+  test tiers, the drift protocol, AGENTS.md. A new repo needs its own
+  conventions and (since there is no CI) its own enforcement — pure overhead
+  for a single-author project.
+- GPL discipline is about boundaries, not repo topology. A separate repo does
+  not reduce the risk of importing provari code; a clear module boundary plus
+  the "ideas only, no code/binary/model" rule does.
+
+**Why not a big-bang workspace split now**
+
+- `docs/plans/workspace/plan1.md` is stale: it moves modules removed by
+  `proofdb` plans 18/20 and misses current directories. Executing it now
+  would be a packaging project before the engine exists.
+- The repo already rejected splitting the solver lib into multiple crates
+  (workspace item 2) because there is no isolation gain at this size. A new
+  prover crate is a different case, but the same single-author overhead
+  applies until it has a real consumer/test surface.
+- `lto = true`, `codegen-units = 1` make module placement codegen-neutral, so
+  there is no performance reason to split early.
+
+**Promotion triggers** (then re-draft the stale workspace plan as its own
+packaging plan, not as part of the rewrite):
+
+- the new engine has its own test surface or a consumer that needs only it;
+- it becomes the product and the old solver becomes a legacy binary;
+- compile times or test tiers justify isolating it;
+- you want the compiler to enforce the boundary (a crate boundary is stronger
+  than a module boundary).
+
+**When a separate repository would make sense:** only if the rewrite becomes a
+separate product — different audience, different license, independent release
+cadence, or a library consumed by external projects where the evidence layer
+is irrelevant. None of those are true for "the fastest independently-checked
+atomic win prover"; the evidence layer is the differentiator, not a side
+artifact.
+
+**Boundary rule (enforce from day one):** the prover may import only
+`proof_event`, `proof_tree`, `notation`, `zobrist`, the rules/position layer,
+and the bench/validation tooling — **not** `dfpn` internals. If the module
+boundary is clean, promoting to a crate later is mechanical.
+
 ---
 
 ## 7. Milestones and gates
@@ -354,7 +416,8 @@ The first session is a **plan session**, not an execution session:
 1. Read this handoff, [`report5.md`](report5.md), [`bench.md`](bench.md), and
    the pinned provari source (`src/moves.rs`, `src/board.rs`, `src/dfpn.rs`,
    `src/table.rs`, `src/proofs.rs`, `src/eval.rs`).
-2. Decide the open questions in §9.
+2. Confirm the code-location decision (§6.1) and decide the remaining open
+   questions (§9).
 3. Open the successor initiative (`docs/plans/prover/initiative.md`) with the
    goal, non-goals, working agreement, and the M0–M5 backlog.
 4. Write `docs/plans/prover/plan1.md` for **M0** (skeleton + correctness +
@@ -371,9 +434,11 @@ Do not implement in the plan session. The execution session starts from
 
 ## 9. Open decisions for the plan session
 
+D1 is settled by §6.1; the rest are open.
+
 | # | Decision | Options | Recommendation |
 | --- | --- | --- | --- |
-| D1 | Code location | `src/search/prover/` vs workspace crate | Start as a module behind its own binary/flag; promote only if it grows a consumer or test surface |
+| D1 | Code location | **decided (§6.1):** `src/search/prover/` now, workspace crate when a trigger fires; not a new repository | Implement the module boundary from day one; re-draft the stale `workspace/plan1.md` only when promoting |
 | D2 | Board | `atomic_movegen` + `Mover` layer vs new bitboard board | Start with the layer; write a new board only if the hot path cannot avoid make/unmake |
 | D3 | Proof format | `.pvr` vs our proof-tree binary vs both | Our format internally (validation/DB), `.pvr`/JSONL as export for the independent checker |
 | D4 | Rule50/repetition | Provari board-only key + length/limit vs our clock key | Provari's, validated by our repetition soundness gate |
@@ -437,7 +502,8 @@ prefetch, filter), `src/proofs.rs` (12-byte proofs, length/limit),
 > `docs/plans/winprover/HANDOFF.md`, `docs/plans/winprover/report5.md`,
 > `docs/plans/winprover/bench.md`, and the pinned provari source at commit
 > `48686bc6c786d6ea70568f0b2ad4002cf0520206` (scratch clone; do not commit
-> it). This is a plan session: decide the open questions in HANDOFF §9, write
+> it). This is a plan session: the code-location decision is settled in
+> HANDOFF §6.1; decide the remaining open questions in §9, write
 > `docs/plans/prover/initiative.md` and `docs/plans/prover/plan1.md` for
 > milestone M0 (skeleton + correctness + bench harness, with a per-node cost
 > baseline), and update `docs/plans/README.md`. Do not implement yet.
