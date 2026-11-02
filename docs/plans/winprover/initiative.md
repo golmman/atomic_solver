@@ -10,10 +10,10 @@ promotion thread of [`workspace`](../workspace/initiative.md) (closed into
 this initiative as optional item 7). Their plan/report history and their
 measurement artifacts stay where they are; only the backlog moves.
 
-Plan numbering here is fresh (`plan1.md` is executed, see
-[`report1.md`](report1.md); `plan2.md` is next) and *independent* of the
-retired initiatives' numbering. The mapping is recorded in
-[Renumbering record](#renumbering-record).
+Plan numbering here is fresh (`plan1.md` and `plan2.md` are executed, see
+[`report1.md`](report1.md) and [`report2.md`](report2.md); `plan3.md` is next)
+and *independent* of the retired initiatives' numbering. The mapping is
+recorded in [Renumbering record](#renumbering-record).
 
 ## Goal
 
@@ -125,8 +125,8 @@ stable semantic identity across re-ranks.
 | # | Item | Mechanism | Why / target | Metric | Status |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Fair baseline: hand-guide column + corpus re-derivation | Re-run the pinned provari at `--guide hand` over the frozen `sample20` (and the core FEN); re-derive shared-win set, coverage and wall ratios; record both columns side by side | Every later verdict is priced against this; the retired baseline mixes an out-of-scope model into the target | wall, nodes/child evals, coverage per column | **done — plan1/report1**: hand wins exactly the 3 shipped bench cells (3/21 = 2/20 `sample20`); model 5/21 (4/20); our `default` 1/21, `opt` 2/21; shared factors `hand×default` 51.739 (1 cell), `hand×opt` 6.848 (2 cells). No bench-set change, no ledger row |
-| 2 | Differential proof checker oracle | Export an existing `proof_tree.bin` to provari's JSONL format; run `provari check`; classify every mismatch | Independent rules implementation catches correlated `atomic-movegen`/`Position` bugs; the exporter is reusable, and new proof shapes (item 3) need it in place *before* they are trusted | per-tree verdict class, defect count | **next — plan2** (open; re-cut from the drafted [`interop/plan1.md`](../interop/plan1.md) against the current binary format) |
-| 3 | Win-only front-end skeleton | Opt-in attacker-only win prover that proves a win and otherwise falls back; no new heuristics; includes the item-4 sibling-simulation **census** in its plan session | Isolates provari's attacker-only proof semantics from the general outcome/PV machinery; the architectural pivot, and the home for items 4–5 | correctness (fallback identity), evals, wall | open — **re-ranked ahead of item 4** (see note) |
+| 2 | Differential proof checker oracle | Export an existing `proof_tree.bin` to provari's JSONL format; run `provari check`; classify every mismatch | Independent rules implementation catches correlated `atomic-movegen`/`Position` bugs; the exporter is reusable, and new proof shapes (item 3) need it in place *before* they are trusted | per-tree verdict class, defect count | **done — plan2/report2**: `write_provari_jsonl` (validate+replay first, explicit DFS, root-`Win` only) + `provari_export` example; all 168 committed root-`Win` shards exported and **168/168 accepted** by the pinned oracle (`48686bc`, 60 s, no tablebases), 0 non-accepts; three corrupted-export controls all rejected (checker not vacuous); output byte-deterministic; 25 trees have benign duplicate attacker positions (no differing move); verdict **CLEAN**, no ledger row |
+| 3 | Win-only front-end skeleton | Opt-in attacker-only win prover that proves a win and otherwise falls back; no new heuristics; includes the item-4 sibling-simulation **census** in its plan session | Isolates provari's attacker-only proof semantics from the general outcome/PV machinery; the architectural pivot, and the home for items 4–5 | correctness (fallback identity), evals, wall | **next — plan3** (open; re-ranked ahead of item 4 — see note; its plan session folds in the read-only item-4 census) |
 | 4 | Sibling proof replay / simulation | Replay a proven defence or threat on sibling positions (provari's `SIMULATION = 16` replay) | The last unported provari search lever; the measured residual is node count (~222k expansions vs provari's 13.8k bundled / 72.5k hand on the shared win at 14.5 child evals per expansion) | evals, nodes, wall, replay soundness | open — census in item 3's plan session |
 | 5 | Rule50-free key + proof length/limit | Key boards without the clock; store proof length and highest holding clock; replay/verify conservatively | Recover move-order transpositions without breaking rule50/repetition soundness | TT hit rate, evals | open (soundness-sensitive) |
 | 6 | Head-to-head convergence | Tune the adopted stack on the target corpus; decide the default flag set; require shared-win wall < provari (primary column) and coverage ≥ provari | The initiative's success condition; no new mechanism | wall ratio, coverage | open (deferred until the search levers settle) |
@@ -234,6 +234,22 @@ that re-draft.
 
 ## History
 
+- **2026-11-02** — item 2 executed ([`plan2.md`](plan2.md),
+  [`report2.md`](report2.md), measurements in
+  [`measurements/plan2/`](measurements/plan2/README.md)): the differential
+  checker oracle is in place. New `src/proof_tree/export.rs` validates and
+  replays a finalized tree, then writes provari's JSON-lines proof format;
+  `examples/provari_export.rs` is the thin driver. All 168 committed
+  root-`Win` proof-tree shards (33,020 nodes, largest 4,762) were exported and
+  checked by the pinned oracle (`48686bc6…`, `--seconds 60`, no tablebases):
+  **168/168 accepted**, no `convention-repeat`/`unchecked`/`export-bug`/
+  `suspect`, so the verdict is **CLEAN** and no defect-fix plan is needed.
+  Three corrupted-export controls are all rejected by the checker, the export
+  is byte-deterministic across two full runs, and 25 trees' duplicate attacker
+  positions never disagree on the winning move. The 94 root-`Loss` shards are
+  plan scope (horizon item 8). No ledger row (the win path is untouched).
+  Item 3 (win-only front-end, with the item-4 census in its plan session) is
+  the recommended next plan.
 - **2026-11-02** — item 1 executed ([`plan1.md`](plan1.md),
   [`report1.md`](report1.md), measurements in
   [`measurements/plan1/`](measurements/plan1/README.md)): the pinned oracle was

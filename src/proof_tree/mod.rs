@@ -12,10 +12,12 @@
 //! worker/search decoupling intact.
 
 pub mod binary;
+pub mod export;
 mod node;
 mod validate;
 mod worker;
 
+pub use export::{ExportError, write_provari_jsonl};
 pub use node::{ProofNode, ProofTree};
 pub use validate::{DefectKind, TreeDefect, validate_proof_tree};
 pub use worker::{ProofStats, ProofTreeWorkerHandle};

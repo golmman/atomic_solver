@@ -53,7 +53,10 @@ A pure solver for atomic chess in Rust.
 - `src/proof_tree/` — `Move`/hash-based proof tree plus a background worker consuming
   `ProofEvent`s under a memory budget; `finalize()` copies canonical subtrees onto unexpanded
   transpositions, validates the tree (replay-based `validate.rs`), and serializes it to a
-  compact binary dump (`binary.rs`, importable into PostgreSQL). Construction is an offline
+  compact binary dump (`binary.rs`, importable into PostgreSQL). `export.rs` writes a
+  validated root-`Win` tree in provari's JSON-lines checker format (the independent
+  `shakmaty`-based second opinion; derived, never authoritative; root-`Loss` export is
+  out of scope). Construction is an offline
   step: search → TT snapshot (`--tt-dump-path`) → `src/reconstruct` /
   `examples/reconstruct_pt` (worker + finalize + validator) → dump; the search CLI never
   builds trees. `Search::set_memory_limited` / `ExitReason::MemoryLimit` are a
@@ -136,6 +139,7 @@ A pure solver for atomic chess in Rust.
   canonical dump; idempotent by tag skip (sha256 cross-checked), conflicts
   abort without writes. Shard-dir/DB default under `data/proofdb/`.
 - `reconstruct_pt` — rebuild a proof tree offline from a FEN + TT snapshot (`--snapshot`); reports `validate: ok|FAILED n`, exits non-zero on defects; `--oracle` cross-checks the rebuilt tree against a reference dump.
+- `provari_export` — export a `proof_tree.bin` (root-`Win` only) to provari's JSON-lines checker format (`[--out PATH] <proof_tree.bin>`); validates and replays the tree first, writes nothing on error, exits non-zero on any export error, and prints a one-line stderr summary (`positions`, `nodes`, `root`).
 - `replay` — replay a UCI line from a FEN, then solve the resulting position.
 - `solve_depth_limited` — fixed-`max_depth` search without the iterative-deepening bootstrap.
 - `static_move_scores` — sorted `StaticAtomicScorer` values (`--name <case>`).
