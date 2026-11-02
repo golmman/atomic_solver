@@ -10,10 +10,11 @@ promotion thread of [`workspace`](../workspace/initiative.md) (closed into
 this initiative as optional item 7). Their plan/report history and their
 measurement artifacts stay where they are; only the backlog moves.
 
-Plan numbering here is fresh (`plan1.md` and `plan2.md` are executed, see
-[`report1.md`](report1.md) and [`report2.md`](report2.md); `plan3.md` is next)
-and *independent* of the retired initiatives' numbering. The mapping is
-recorded in [Renumbering record](#renumbering-record).
+Plan numbering here is fresh (`plan1.md`, `plan2.md` and `plan3.md` are
+executed, see [`report1.md`](report1.md), [`report2.md`](report2.md) and
+[`report3.md`](report3.md); `plan4.md` is next) and *independent* of the
+retired initiatives' numbering. The mapping is recorded in
+[Renumbering record](#renumbering-record).
 
 ## Goal
 
@@ -126,8 +127,8 @@ stable semantic identity across re-ranks.
 | --- | --- | --- | --- | --- | --- |
 | 1 | Fair baseline: hand-guide column + corpus re-derivation | Re-run the pinned provari at `--guide hand` over the frozen `sample20` (and the core FEN); re-derive shared-win set, coverage and wall ratios; record both columns side by side | Every later verdict is priced against this; the retired baseline mixes an out-of-scope model into the target | wall, nodes/child evals, coverage per column | **done — plan1/report1**: hand wins exactly the 3 shipped bench cells (3/21 = 2/20 `sample20`); model 5/21 (4/20); our `default` 1/21, `opt` 2/21; shared factors `hand×default` 51.739 (1 cell), `hand×opt` 6.848 (2 cells). No bench-set change, no ledger row |
 | 2 | Differential proof checker oracle | Export an existing `proof_tree.bin` to provari's JSONL format; run `provari check`; classify every mismatch | Independent rules implementation catches correlated `atomic-movegen`/`Position` bugs; the exporter is reusable, and new proof shapes (item 3) need it in place *before* they are trusted | per-tree verdict class, defect count | **done — plan2/report2**: `write_provari_jsonl` (validate+replay first, explicit DFS, root-`Win` only) + `provari_export` example; all 168 committed root-`Win` shards exported and **168/168 accepted** by the pinned oracle (`48686bc`, 60 s, no tablebases), 0 non-accepts; three corrupted-export controls all rejected (checker not vacuous); output byte-deterministic; 25 trees have benign duplicate attacker positions (no differing move); verdict **CLEAN**, no ledger row |
-| 3 | Win-only front-end skeleton | Opt-in attacker-only win prover that proves a win and otherwise falls back; no new heuristics; includes the item-4 sibling-simulation **census** in its plan session | Isolates provari's attacker-only proof semantics from the general outcome/PV machinery; the architectural pivot, and the home for items 4–5 | correctness (fallback identity), evals, wall | **next — plan3** (open; re-ranked ahead of item 4 — see note; its plan session folds in the read-only item-4 census) |
-| 4 | Sibling proof replay / simulation | Replay a proven defence or threat on sibling positions (provari's `SIMULATION = 16` replay) | The last unported provari search lever; the measured residual is node count (~222k expansions vs provari's 13.8k bundled / 72.5k hand on the shared win at 14.5 child evals per expansion) | evals, nodes, wall, replay soundness | open — census in item 3's plan session |
+| 3 | Win-only front-end skeleton | Opt-in attacker-only win prover that proves a win and otherwise falls back; no new heuristics; includes the item-4 sibling-simulation **census** in its plan session | Isolates provari's attacker-only proof semantics from the general outcome/PV machinery; the architectural pivot, and the home for items 4–5 | correctness (fallback identity), evals, wall | **done — plan3/report3**: `src/search/winprover/` is a small win-only DF-PN+ sibling with a 32 MB scratch TT, `--win-front-end` (default off) + `--win-front-end-budget` (1 M evals), `PvStatus::WinFrontEnd`, proof events, and 11 unit + 3 integration tests; fallback is bit-identical (outcome/PV/nodes/evals/TT snapshot). Bench **neutral**: proves 0/3 cells, adds 1,000,0xx evals / ~0.35 s; geomean 6.81 → 8.75, coverage 2/3 unchanged. One ledger row; item-4 census recorded |
+| 4 | Sibling proof replay / simulation | Replay a proven defence or threat on sibling positions (provari's `SIMULATION = 16` replay) | The last unported provari search lever; the measured residual is node count (~222k expansions vs provari's 13.8k bundled / 72.5k hand on the shared win at 14.5 child evals per expansion) | evals, nodes, wall, replay soundness | **next — plan4**; the item-3 census (94–96 % of refuted defences have open siblings, ~15.7–16.2 each) sizes it, but its plan must re-measure on the front-end and gate on the front-end actually proving a cell (else pivot) |
 | 5 | Rule50-free key + proof length/limit | Key boards without the clock; store proof length and highest holding clock; replay/verify conservatively | Recover move-order transpositions without breaking rule50/repetition soundness | TT hit rate, evals | open (soundness-sensitive) |
 | 6 | Head-to-head convergence | Tune the adopted stack on the target corpus; decide the default flag set; require shared-win wall < provari (primary column) and coverage ≥ provari | The initiative's success condition; no new mechanism | wall ratio, coverage | open (deferred until the search levers settle) |
 | 7 | **Optional:** crate promotion / workspace split | Re-draft and execute the workspace split (root package + `apps/proofdb` + a `winprover` crate) *if* the front-end grows a test surface or consumer worth isolating | Clean boundaries for the new engine; never a precondition, and not needed for codegen (`lto`, `codegen-units = 1`) | packaging only (byte-identical solver output, gate green) | open, unranked — **requires a re-draft**: [`workspace/plan1.md`](../workspace/plan1.md) is stale (see Renumbering record) |
@@ -138,7 +139,11 @@ but that ranking assumed the current `dfpn` frames. Sibling replay's home is
 the attacker-only front-end, so implementing it in `dfpn` first risks writing
 it twice; the census is read-only and belongs in item 3's plan session, which
 prices both before either is implemented. If the front-end is rejected, item 4
-moves back to the top of the ranking.
+moves back to the top of the ranking. Plan3's outcome: the front-end is
+**kept** (correct, fallback-identical, opt-in) but proved none of the bench
+cells inside 1 M evals, so item 4 remains next **with a gate** — re-measure the
+census on the front-end and require it to prove `core`/`easy-win` at a stated
+cap, otherwise pivot to a candidate/verification role for the front-end.
 
 ### Measured-out levers (do not re-try without new evidence)
 
@@ -234,6 +239,19 @@ that re-draft.
 
 ## History
 
+- **2026-11-02** — item 3 executed ([`plan3.md`](plan3.md),
+  [`report3.md`](report3.md), measurements in
+  [`measurements/plan3/`](measurements/plan3/README.md)): the opt-in
+  attacker-only win front-end exists (`src/search/winprover/`, 32 MB scratch
+  TT, `--win-front-end` default off, `--win-front-end-budget` 1 M), returns a
+  replay-validated `Win` + `PvStatus::WinFrontEnd` or falls back to a
+  bit-identical general search, and emits proof events for every proven node.
+  The item-4 census is recorded in the plan/report. Bench: **neutral** — the
+  front-end proved 0/3 cells and added 1,000,0xx evals / ~0.35 s per cell;
+  geomean `opt` 6.81 → `opt+win` 8.75, coverage 2/3 unchanged. One ledger row;
+  no default-flag decision. Item 4 (sibling simulation) is next with a
+  front-end re-measurement gate; a pivot to a candidate/verification layer is
+  the fallback.
 - **2026-11-02** — item 2 executed ([`plan2.md`](plan2.md),
   [`report2.md`](report2.md), measurements in
   [`measurements/plan2/`](measurements/plan2/README.md)): the differential

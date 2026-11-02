@@ -2,7 +2,7 @@
 //! restart-schedule growth.
 
 /// Convert a positive f64 into an exact reduced `num/den` fraction.
-pub(super) fn fraction_from_f64(v: f64) -> (u64, u64) {
+pub(crate) fn fraction_from_f64(v: f64) -> (u64, u64) {
     let bits = v.to_bits();
     let exponent = ((bits >> 52) & 0x7ff) as i32;
     let mantissa = bits & 0x000f_ffff_ffff_ffff;

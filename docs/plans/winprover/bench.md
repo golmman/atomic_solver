@@ -204,6 +204,27 @@ Readings of the baseline:
   proven win", not time to the shortest one — see the initiative's item 5
   (proof length) before treating length differences as noise.
 
+### `plan3` — 2026-11-02, win-only front-end skeleton (item 3)
+
+Host `67db7a1089e2` (aarch64, 8 CPU, Linux 7.1.13); `solver@d623b21` + plan3
+working tree; `provari-v0.1.0`, `--guide hand`. Reference walls in this session:
+`core` 0.500 s, `easy-win` 0.111 s, `deep-win` 6.163 s.
+
+| Plan | Stack | `core` | `easy-win` | `deep-win` | Geomean (canonical) | Coverage |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `plan3` | **opt+win** (`--move-class-pn --quiet-grouping --eval-pn or --win-front-end`) | **8.31** (4.154 s / 18.2 M) | **9.21** (1.022 s / 4.23 M) | censored (≥ 1.62) 10.007 s / 47.3 M | **8.75** (2 cells) | 2/3 |
+
+Same-session control (not a separate row): `opt` without the front-end
+measured **6.81** (2 cells), `core` 7.57 (3.784 s / 17.2 M), `easy-win` 6.13
+(0.680 s / 3.23 M), `deep-win` censored at 10 s (47.8 M). The front-end proved
+none of the three cells and spent 1,000,014 / 1,000,027 / 1,000,007 child evals
+(29,338 / 30,387 / 32,322 frames) against its 1,000,000-eval cap — the added
+~0.34–0.37 s is the whole of the factor change. This is the plan's
+pre-registered neutral result, not a product win; the row is read with the
+`Stack` column (item 6 owns defaults). Details:
+[`measurements/plan3/`](measurements/plan3/README.md) and
+[`report3.md`](report3.md).
+
 ### Rows to come
 
 Empty. Item 1 (`plan1`) is a **reference-only** plan: it re-measures the
@@ -260,3 +281,8 @@ recorded here as a dated note, with the earlier rows left intact.
   canonical budget. Hand coverage is 3/21 (exactly the shipped bench set), so
   the selection rule is confirmed with no set change; the stretch model column
   is 5/21. No ledger row (plan1 does not touch the win path).
+- **2026-11-02** — plan3 ledger row: the opt-in win-only front-end
+  (`--win-front-end`, 1 M-eval cap) added to the shipped opt stack. It proved
+  none of the three cells; geomean moved 6.81 → 8.75 (2 shared cells) and
+  coverage stayed 2/3, so the row records overhead, not a lever. Same-session
+  control and front-end accounting in `measurements/plan3/`.

@@ -112,7 +112,10 @@ impl Search {
         // Pre-phase (plan13): the certificate bound is the fixed `max_depth`.
         // The cheap screening probe (performance plan1) is deliberately not
         // run here: `search_depth` is the certificate-bound entry point used
-        // by the offline tooling, whose behavior stays exactly as before.
+        // by the offline tooling, whose behavior stays exactly as before. The
+        // opt-in win front-end is deliberately not wired here either: it has
+        // no `max_depth` bound, so a claim would escape the certificate
+        // contract.
         if let Some((outcome, pv)) = self.preflight_phase(pos, Some(max_depth), 0) {
             self.pv_status = if outcome == Outcome::Draw {
                 PvStatus::None
@@ -188,13 +191,46 @@ impl Search {
     pub fn solve_with_progress<F>(
         &mut self,
         pos: &mut Position,
-        mut on_progress: F,
+        on_progress: F,
     ) -> (Outcome, Vec<Move>, u64)
     where
         F: FnMut(Outcome, &[Move]),
     {
         self.begin_run();
 
+        // 0. Opt-in attacker-only win front-end. A proven Win is the product
+        //    result; anything else (or a cap/deadline/stop cut) falls through
+        //    to an unchanged general search.
+        let front = self.try_win_front_end(pos);
+        self.win_front_end_evals = front.evals;
+        self.win_front_end_nodes = front.nodes;
+        if let Some(proof) = front.proof {
+            self.child_evals += front.evals;
+            self.nodes += front.nodes;
+            self.pv_status = PvStatus::WinFrontEnd;
+            return (Outcome::Win, proof.pv, self.nodes);
+        }
+
+        // Fallback identity: the general search below must behave exactly as
+        // in a flag-off run, so the front-end's work is folded into the run
+        // counters only after it returns, and its cost is charged against the
+        // global budget by shrinking the effective budget for this phase.
+        let original_budget = self.child_eval_budget;
+        self.child_eval_budget = original_budget.saturating_sub(front.evals);
+        let (outcome, pv) = self.solve_general(pos, on_progress);
+        self.child_eval_budget = original_budget;
+        self.child_evals += front.evals;
+        self.nodes += front.nodes;
+        (outcome, pv, self.nodes)
+    }
+
+    /// The general solve body, run after (and independently of) the win
+    /// front-end. Kept separate so the front-end wrapper can charge its work
+    /// without perturbing this phase's counters.
+    fn solve_general<F>(&mut self, pos: &mut Position, mut on_progress: F) -> (Outcome, Vec<Move>)
+    where
+        F: FnMut(Outcome, &[Move]),
+    {
         // 0a. Cheap screening probe (performance plan1): a throwaway bounded
         //     DF-PN search on a scratch TT. A decisive outcome within the cap
         //     means the pre-phase closure below would only re-derive what the
@@ -211,7 +247,7 @@ impl Search {
             } else {
                 PvStatus::PreflightProof
             };
-            return (outcome, pv, self.nodes);
+            return (outcome, pv);
         }
 
         // 1. First decisive outcome (work-chunked, unbounded depth).
@@ -302,7 +338,7 @@ impl Search {
         });
         self.pv_status = status;
 
-        (outcome, pv, self.nodes)
+        (outcome, pv)
     }
 
     pub(super) fn begin_run(&mut self) {
@@ -327,12 +363,48 @@ impl Search {
         }
         self.pv_status = PvStatus::None;
         self.last_round_cap_cut = false;
+        self.win_front_end_evals = 0;
+        self.win_front_end_nodes = 0;
         self.start = Instant::now();
         self.deadline = self.start + self.timeout;
         // Clock sampler: read once immediately, then every CLOCK_SAMPLE_INTERVAL.
         self.last_clock.set(self.start);
         self.clock_sample_at.set(0);
         self.preflight_report = None;
+    }
+
+    /// Run the opt-in win-only front-end (see
+    /// [`crate::search::winprover`]) and report its work.
+    ///
+    /// The front-end owns a scratch TT (never the production table) and its
+    /// own path/move stacks. Its deterministic cap is
+    /// `min(win_front_end_budget, remaining global child-eval budget)`; the
+    /// wall deadline and stop flag are safety nets. A terminal root is skipped
+    /// so the general solver keeps ownership of terminal results.
+    fn try_win_front_end(&self, pos: &Position) -> FrontEndRun {
+        if !self.win_front_end_enabled || pos.outcome().is_some() || self.time_exceeded() {
+            return FrontEndRun::SKIPPED;
+        }
+        let remaining = self.child_eval_budget.saturating_sub(self.child_evals);
+        let budget = self.win_front_end_budget.min(remaining);
+        if budget == 0 {
+            return FrontEndRun::SKIPPED;
+        }
+
+        let mut front = crate::search::winprover::WinProver::new(
+            self.scorer.clone(),
+            budget,
+            self.deadline,
+            self.stop_flag.clone(),
+        );
+        front.set_epsilon_fraction(self.epsilon_num, self.epsilon_den);
+        front.set_proof_event_sender(self.proof_event_sender.clone());
+        let proof = front.solve(pos);
+        FrontEndRun {
+            evals: front.child_evaluations(),
+            nodes: front.nodes(),
+            proof,
+        }
     }
 
     /// Run the detector-gated bounded pre-phase (plan13) before the DF-PN
@@ -399,4 +471,22 @@ impl Search {
         self.preflight_report = Some(report);
         claimed
     }
+}
+
+/// Result of one opt-in win front-end invocation.
+struct FrontEndRun {
+    /// Child evaluations spent (0 when skipped).
+    evals: u64,
+    /// Frames visited (0 when skipped).
+    nodes: u64,
+    /// A replay-validated proven win, if the front-end decided the root.
+    proof: Option<crate::search::winprover::WinProof>,
+}
+
+impl FrontEndRun {
+    const SKIPPED: Self = Self {
+        evals: 0,
+        nodes: 0,
+        proof: None,
+    };
 }

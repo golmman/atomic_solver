@@ -43,6 +43,19 @@ A pure solver for atomic chess in Rust.
   no wall clock, no `ProofEvent`s (the documented R2 gap), budget accounting, and the
   `REGION_BUDGET`-bounded closure memory (the one bounded exception to the search CLI's
   "RAM = TT only") — is normative in the module header.
+- `src/search/winprover/` — opt-in attacker-only win front-end (`--win-front-end`,
+  default off, winprover item 3): a deliberately small win-only DF-PN+ sibling of `dfpn`
+  (OR/AND proof numbers, the same `1+ε` thresholds, static move ordering only — no
+  move-class/quiet-group/EF-PN/static-tactics/history/killer/pre-phase/cheap-probe/
+  refinement/repetition-cache machinery). It owns a 32 MB **scratch** TT
+  (`WIN_FRONT_END_TT_MB`, dropped when it returns, never serialized), runs before the cheap
+  probe/pre-phase in `solve_with_progress`, and returns a replay-validated `Win` plus
+  `PvStatus::WinFrontEnd`; every other result falls back to a general search that is
+  bit-identical to a flag-off run (the front-end's evals/nodes are folded into the run
+  counters afterwards and its cap is charged against the global budget). Repetition and
+  rule50 are Draws, never wins; only path-independent Win/Loss results are TT-stored;
+  `ProofEvent`s are emitted for every proven node. `search_depth` /
+  `search_depth_with_prefix` are deliberately not wired to it.
 - `src/search/tt/` — transposition table with path-independent base entries;
   repetition-dependent results are not cached (first-player-loss GHI shortcut).
   Buckets are zero-initialized lazily (`alloc.rs`, `alloc_zeroed`), so the size
@@ -73,8 +86,10 @@ A pure solver for atomic chess in Rust.
 - `src/zobrist.rs` — deterministic Zobrist keys, including the halfmove clock;
   `src/notation.rs` — UCI move helpers, including `moves_to_uci_path`.
 - `src/main.rs` — the CLI (`--fen`, `--tt-size`, `--epsilon`, `--timeout`, `--first-outcome`,
-  `--refine-cap`, `--outcome-only`, `--tt-dump-path`, `--no-preflight`, `-h`; unknown options
-  exit with an error). Resource-bounded: RAM = TT only (the TT label is a reservation bound —
+  `--refine-cap`, `--outcome-only`, `--tt-dump-path`, `--no-preflight`, `--win-front-end`,
+  `--win-front-end-budget`, `-h`; unknown options
+  exit with an error). Resource-bounded: RAM = TT only, plus the opt-in win front-end's
+  32 MB scratch TT when `--win-front-end` is enabled (the TT label is a reservation bound —
   pages are populated on first use); it never builds proof trees and prints
   no proof-tree lines. The output (`pre_exit:` / `preflight:` / `pv_status:` lines) and
   offline-proof contracts are in the module header; the user-facing option text is
@@ -152,7 +167,7 @@ A pure solver for atomic chess in Rust.
 2. **Informational PV** from `Search::solve` — best-effort from the TT, not validated as a proof.
 3. **Proof tree dump** (`proof_tree.bin`) from offline reconstruction (`reconstruct_pt` over a TT snapshot; the search CLI never builds a tree), finalized onto transpositions; PPV extraction and validation are the proof-tree layer's job.
 
-`Search::solve` returns the first decisive line, then uses the remaining budget to shorten the PV (`Search::first_outcome_only` / `--first-outcome` skips this). `Search::pv_status()` qualifies the PV *length* (never its validity as a proof): `ProvenShortest` (last bounded refinement round exhausted naturally at `bound = pv_len - 2`, or the win is 1 move), `FirstOutcome`, `Unproven` (cap- or resource-cut round), `PreflightProof` (replay-verified pre-phase certificate, length = exact DTM), or `None`. The proof tree is never cleared automatically; the root FEN is fixed for the lifetime of the program.
+`Search::solve` returns the first decisive line, then uses the remaining budget to shorten the PV (`Search::first_outcome_only` / `--first-outcome` skips this). `Search::pv_status()` qualifies the PV *length* (never its validity as a proof): `ProvenShortest` (last bounded refinement round exhausted naturally at `bound = pv_len - 2`, or the win is 1 move), `FirstOutcome`, `Unproven` (cap- or resource-cut round), `PreflightProof` (replay-verified pre-phase certificate, length = exact DTM), `WinFrontEnd` (replay-validated proven win from the opt-in front-end; length is its proof length, not necessarily shortest), or `None`. The proof tree is never cleared automatically; the root FEN is fixed for the lifetime of the program.
 
 ## Testing tiers
 

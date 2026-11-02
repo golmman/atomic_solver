@@ -16,7 +16,7 @@ mod children;
 mod config;
 mod core;
 mod eval_guide;
-mod fraction;
+pub(crate) mod fraction;
 mod history;
 mod move_class;
 mod pv;
@@ -127,6 +127,12 @@ pub enum PvStatus {
     /// for a pre-phase Draw claim: draws keep `None` (no decisive outcome,
     /// no PV to qualify) and are reported via `Search::preflight_report()`.
     PreflightProof,
+    /// PV came from the opt-in win-only front-end (`--win-front-end`): it is
+    /// a replay-validated proven win, but its length is the front-end's proof
+    /// length, not necessarily shortest. Never `ProvenShortest` (the front-end
+    /// runs no refinement rounds) and never `FirstOutcome` (it is a different
+    /// phase).
+    WinFrontEnd,
 }
 
 /// Why `bounded_search` returned. Only meaningful when `outcome == Draw` for
@@ -265,6 +271,16 @@ pub struct Search {
     /// Report of the last run's pre-phase hook, `None` when the hook has not
     /// run in the current run.
     preflight_report: Option<PreflightReport>,
+    /// Whether the opt-in attacker-only win front-end runs before the general
+    /// search. Default `false`; `--win-front-end` maps here.
+    win_front_end_enabled: bool,
+    /// Deterministic child-eval cap for the win front-end.
+    win_front_end_budget: u64,
+    /// Child evaluations spent by the last run's win front-end (0 when it did
+    /// not run or was disabled). Included in [`Search::child_evaluations`].
+    win_front_end_evals: u64,
+    /// Frames visited by the last run's win front-end.
+    win_front_end_nodes: u64,
 }
 
 impl Search {
@@ -327,6 +343,10 @@ impl Search {
             eval_pn: EvalPnMode::Off,
             preflight_enabled: true,
             preflight_report: None,
+            win_front_end_enabled: false,
+            win_front_end_budget: crate::search::winprover::DEFAULT_WIN_FRONT_END_BUDGET,
+            win_front_end_evals: 0,
+            win_front_end_nodes: 0,
         }
     }
 

@@ -1,0 +1,144 @@
+{
+ "provenance": {
+  "date": "2026-11-02",
+  "host": "67db7a1089e2",
+  "platform": "Linux-7.1.13-402.asahi.fc44.aarch64+16k-aarch64-with-glibc2.43",
+  "cpu_count": 8,
+  "provari": {
+   "commit": "48686bc6c786d6ea70568f0b2ad4002cf0520206",
+   "guide": "hand",
+   "binary": "/tmp/winprover-oracle/target/release/provari"
+  },
+  "solver": {
+   "commit": "d623b21 working tree (winprover plan3)",
+   "binary": "./target/release/atomic_solver"
+  },
+  "stacks": {
+   "default": [],
+   "opt": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ],
+   "optwin": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end"
+   ]
+  },
+  "budgets": {
+   "seconds": 10.0,
+   "memory_mb": 192,
+   "repeats": 3
+  },
+  "corpus": "/workspace/atomic_solver/docs/plans/provari/measurements/plan1/corpus.json",
+  "bench_commit": "d623b2114308f9b3fb224c4f641fab9c0be731ba"
+ },
+ "front_end_cap": 1000000,
+ "cells": [
+  {
+   "cell": "core",
+   "id": "core",
+   "fen": "r1b1kbnr/ppp3pp/n4q2/3pppN1/1P1PP3/8/P1P2PPP/RNBQKB1R w KQkq - 0 1",
+   "budget": 1000000,
+   "front_end": {
+    "evals": 1000014,
+    "nodes": 29338,
+    "proved": false,
+    "depth": 0,
+    "wall_s": 0.398
+   },
+   "opt_evals": 17217064,
+   "optwin_evals": 18217078,
+   "opt_wall_s": 3.784,
+   "optwin_wall_s": 4.154,
+   "opt_factor": 7.568,
+   "optwin_factor": 8.308,
+   "optwin_censored": false
+  },
+  {
+   "cell": "easy-win",
+   "id": "1eb80b92f92c",
+   "fen": "rnbq1b1r/pp1p1kpp/2p1pp1n/8/3PP1P1/2N2N2/PPP2P1P/R1BQKB1R w KQ - 0 1",
+   "budget": 1000000,
+   "front_end": {
+    "evals": 1000027,
+    "nodes": 30387,
+    "proved": false,
+    "depth": 0,
+    "wall_s": 0.363
+   },
+   "opt_evals": 3231686,
+   "optwin_evals": 4231713,
+   "opt_wall_s": 0.68,
+   "optwin_wall_s": 1.022,
+   "opt_factor": 6.126,
+   "optwin_factor": 9.207,
+   "optwin_censored": false
+  },
+  {
+   "cell": "deep-win",
+   "id": "db6a741c723f",
+   "fen": "rnb1kbnr/pppp2pp/5q2/4ppN1/3P4/8/PPP1PPPP/RNBQKB1R w KQkq - 0 1",
+   "budget": 1000000,
+   "front_end": {
+    "evals": 1000007,
+    "nodes": 32322,
+    "proved": false,
+    "depth": 0,
+    "wall_s": 0.354
+   },
+   "opt_evals": 47761034,
+   "optwin_evals": 47300751,
+   "opt_wall_s": 10.01,
+   "optwin_wall_s": 10.007,
+   "opt_factor": null,
+   "optwin_factor": null,
+   "optwin_censored": true
+  }
+ ],
+ "ledger": {
+  "default": {
+   "shared_cells": [
+    "1eb80b92f92c"
+   ],
+   "shared_count": 1,
+   "geomean_factor": 51.432,
+   "coverage_reference": 3,
+   "coverage_candidate": 1,
+   "censored_cells": [
+    "core",
+    "db6a741c723f"
+   ]
+  },
+  "opt": {
+   "shared_cells": [
+    "core",
+    "1eb80b92f92c"
+   ],
+   "shared_count": 2,
+   "geomean_factor": 6.809,
+   "coverage_reference": 3,
+   "coverage_candidate": 2,
+   "censored_cells": [
+    "db6a741c723f"
+   ]
+  },
+  "optwin": {
+   "shared_cells": [
+    "core",
+    "1eb80b92f92c"
+   ],
+   "shared_count": 2,
+   "geomean_factor": 8.746,
+   "coverage_reference": 3,
+   "coverage_candidate": 2,
+   "censored_cells": [
+    "db6a741c723f"
+   ]
+  }
+ }
+}

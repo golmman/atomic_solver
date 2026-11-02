@@ -13,6 +13,42 @@ impl Search {
         self.preflight_enabled = enabled;
     }
 
+    /// Enable or disable the opt-in attacker-only win front-end. Disabled by
+    /// default; the `--win-front-end` CLI flag maps here. The front-end owns a
+    /// 32 MB scratch TT (a documented bounded exception to "RAM = TT only"),
+    /// runs before the cheap probe/pre-phase in
+    /// [`Search::solve_with_progress`], and a failed run falls back to a
+    /// bit-identical general search.
+    pub fn set_win_front_end(&mut self, enabled: bool) {
+        self.win_front_end_enabled = enabled;
+    }
+
+    /// Set the front-end's deterministic child-eval cap. Must be positive;
+    /// disable the front-end with [`Search::set_win_front_end`] instead of a
+    /// zero cap. The cap is further clamped to the remaining global child-eval
+    /// budget at run time.
+    pub fn set_win_front_end_budget(&mut self, budget: u64) {
+        assert!(
+            budget > 0,
+            "win front-end budget must be positive; disable it instead"
+        );
+        self.win_front_end_budget = budget;
+    }
+
+    /// Child evaluations spent by the last run's win front-end. Included in
+    /// [`Search::child_evaluations`]; `0` when disabled or not run.
+    #[must_use]
+    pub fn win_front_end_evaluations(&self) -> u64 {
+        self.win_front_end_evals
+    }
+
+    /// Frames visited by the last run's win front-end. Included in
+    /// [`Search::nodes`]; `0` when disabled or not run.
+    #[must_use]
+    pub fn win_front_end_nodes(&self) -> u64 {
+        self.win_front_end_nodes
+    }
+
     /// Report of the pre-phase hook of the last
     /// [`Search::solve`]/[`Search::solve_with_progress`]/[`Search::search_depth`]
     /// call: whether it decided the root (and as what) or deferred (and why).

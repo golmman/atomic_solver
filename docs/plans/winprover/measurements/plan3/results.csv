@@ -1,0 +1,7 @@
+cell,stack,wall_s,evals,factor,note
+core,opt,3.784,17217064,7.568,shared win
+core,optwin,4.154,18217078,8.308,shared win
+easy-win,opt,0.68,3231686,6.126,shared win
+easy-win,optwin,1.022,4231713,9.207,shared win
+deep-win,opt,10.01,47761034,,candidate censored
+deep-win,optwin,10.007,47300751,,candidate censored

@@ -58,6 +58,15 @@ Options:
                              (EF-PN): 'off' (default), 'both' node
                              kinds, or 'or' (attacking branch only).
                              Experimental; off by default
+  --win-front-end            Run an opt-in attacker-only win prover
+                             before the general search; a proven win is
+                             returned, anything else falls back
+                             unchanged. Uses a 32 MB scratch TT (RAM
+                             exception to TT-only). Off by default
+  --win-front-end-budget <EVALS>
+                             Deterministic child-eval cap for the win
+                             front-end (default: 1000000; must be
+                             positive)
   --config <FILE>            Path to a TOML file overriding scorer
                              parameters; defaults to built-in values
 

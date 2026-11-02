@@ -19,8 +19,10 @@
 //!   from the transposition table, and `pv_status: <label>` describing whether
 //!   the PV is proven shortest (`proven-shortest`), the unrefined first
 //!   outcome (`first-outcome`), cut by the refinement work cap (`cap-cut`),
-//!   cut by a global resource limit / not shorter (`cut-short`), or extracted
-//!   from a replay-verified pre-phase certificate (`preflight-proof`).
+//!   cut by a global resource limit / not shorter (`cut-short`), extracted
+//!   from a replay-verified pre-phase certificate (`preflight-proof`), or a
+//!   proven win from the opt-in win-only front-end (`win-front-end`; its
+//!   length is the front-end's proof length, not necessarily shortest).
 //!   `pv_status` qualifies the PV length, not its validity. Without
 //!   `--outcome-only` the pre-phase hook prints one
 //!   `preflight: decided|deferred ...` line before the outcome, and the
@@ -116,6 +118,15 @@ Options:
                              (EF-PN): 'off' (default), 'both' node
                              kinds, or 'or' (attacking branch only).
                              Experimental; off by default
+  --win-front-end            Run an opt-in attacker-only win prover
+                             before the general search; a proven win is
+                             returned, anything else falls back
+                             unchanged. Uses a 32 MB scratch TT (RAM
+                             exception to TT-only). Off by default
+  --win-front-end-budget <EVALS>
+                             Deterministic child-eval cap for the win
+                             front-end (default: 1000000; must be
+                             positive)
   --config <FILE>            Path to a TOML file overriding scorer
                              parameters; defaults to built-in values
 
@@ -189,6 +200,8 @@ fn main() {
         quiet_grouping,
         static_tactics,
         eval_pn,
+        win_front_end,
+        win_front_end_budget,
     } = opts;
 
     let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
@@ -220,6 +233,8 @@ fn main() {
     search.set_quiet_grouping(quiet_grouping);
     search.set_static_tactics(static_tactics);
     search.set_eval_pn(eval_pn);
+    search.set_win_front_end(win_front_end);
+    search.set_win_front_end_budget(win_front_end_budget);
     search.set_salt(salt);
     if let Some(budget) = budget {
         search.set_child_eval_budget(budget);
@@ -268,6 +283,7 @@ fn main() {
                 PvStatus::ProvenShortest => "proven-shortest",
                 PvStatus::FirstOutcome => "first-outcome",
                 PvStatus::PreflightProof => "preflight-proof",
+                PvStatus::WinFrontEnd => "win-front-end",
                 PvStatus::Unproven if search.last_refine_round_cap_cut() => "cap-cut",
                 PvStatus::Unproven => "cut-short",
                 // Unreachable for a decisive outcome; treat defensively as

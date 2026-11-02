@@ -70,6 +70,15 @@ pub struct CliOptions {
     /// parent's hand evaluation (EF-PN). Default [`EvalPnMode::Off`]; an
     /// experimental search-shaping heuristic, not a correctness switch.
     pub eval_pn: EvalPnMode,
+    /// Run the opt-in attacker-only win prover before the general search.
+    /// Default `false`. The front-end owns a 32 MB scratch TT (a documented
+    /// bounded exception to "RAM = TT only") and only ever returns a proven
+    /// win; any other result falls back to an unchanged general search.
+    pub win_front_end: bool,
+    /// Deterministic child-eval cap for the win front-end. Must be positive;
+    /// disable the front-end with `--win-front-end` off (the default) rather
+    /// than a zero cap.
+    pub win_front_end_budget: u64,
 }
 
 impl Default for CliOptions {
@@ -99,6 +108,8 @@ impl Default for CliOptions {
             quiet_grouping: false,
             static_tactics: false,
             eval_pn: EvalPnMode::Off,
+            win_front_end: false,
+            win_front_end_budget: 1_000_000,
         }
     }
 }
@@ -231,6 +242,19 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                     }
                 };
             }
+            "--win-front-end" => {
+                opts.win_front_end = true;
+                i += 1;
+            }
+            "--win-front-end-budget" => {
+                let v: u64 = number(args, &mut i, "--win-front-end-budget")?;
+                if v == 0 {
+                    return Err(format!(
+                        "error: --win-front-end-budget must be positive, got {v}"
+                    ));
+                }
+                opts.win_front_end_budget = v;
+            }
             arg => {
                 return Err(format!(
                     "error: unknown option '{arg}'\nRun with --help for usage."
@@ -290,6 +314,8 @@ mod tests {
         assert!(!o.quiet_grouping);
         assert!(!o.static_tactics);
         assert_eq!(o.eval_pn, EvalPnMode::Off);
+        assert!(!o.win_front_end);
+        assert_eq!(o.win_front_end_budget, 1_000_000);
     }
 
     #[test]
@@ -427,6 +453,26 @@ mod tests {
     }
 
     #[test]
+    fn win_front_end_is_parsed_and_default_off() {
+        assert!(!options(&[]).win_front_end);
+        assert!(options(&["--win-front-end"]).win_front_end);
+        assert_eq!(
+            options(&["--win-front-end-budget", "250000"]).win_front_end_budget,
+            250_000
+        );
+        assert_eq!(
+            options(&["--win-front-end", "--win-front-end-budget", "7"]).win_front_end_budget,
+            7
+        );
+    }
+
+    #[test]
+    fn win_front_end_budget_rejects_zero_and_non_numeric() {
+        assert!(parse_args(&args(&["atomic_solver", "--win-front-end-budget", "0"])).is_err());
+        assert!(parse_args(&args(&["atomic_solver", "--win-front-end-budget", "x"])).is_err());
+    }
+
+    #[test]
     fn missing_value_returns_err() {
         for opt in [
             "--fen",
@@ -439,6 +485,7 @@ mod tests {
             "--salt",
             "--budget",
             "--eval-pn",
+            "--win-front-end-budget",
         ] {
             assert!(parse_args(&args(&["atomic_solver", opt])).is_err(), "{opt}");
         }
