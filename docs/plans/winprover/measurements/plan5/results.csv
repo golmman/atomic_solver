@@ -1,0 +1,4 @@
+cell,reference_wall_s,reference_nodes,reference_win,default_wall_s,default_evals,default_factor,default_lower_bound,default_note,opt_wall_s,opt_evals,opt_factor,opt_lower_bound,opt_note
+core,0.499,342289,True,10.011,72189193,,20.04,candidate censored,3.8,17217064,7.615,,shared win
+easy-win,0.131,72523,True,5.772,43266033,44.061,,shared win,0.683,3231686,5.214,,shared win
+deep-win,6.297,4574912,True,10.012,74317419,,1.59,candidate censored,10.011,47552244,,1.59,candidate censored

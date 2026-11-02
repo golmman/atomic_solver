@@ -184,13 +184,23 @@ One row per measured stack; append, never rewrite an earlier row.
 | `bench-v0` | 2026-10-30 | `d7891fb11b96` · `solver@96edb83` | **opt** (`--move-class-pn --quiet-grouping --eval-pn or`) | **7.67** (3.767 s / 17.2 M) | **6.13** (0.680 s / 3.23 M) | censored at 10 s (47.8 M); **9.70** at a 120 s budget (60.21 s / 326.9 M) | **6.86** (2 cells) | 2/3 |
 | `plan3` | 2026-11-02 | `67db7a1089e2` · `solver@d623b21` | **opt+win** (+ `--win-front-end`) | **8.31** (4.154 s / 18.2 M) | **9.21** (1.022 s / 4.23 M) | censored (≥ 1.62) 10.007 s / 47.3 M | **8.75** (2 cells) | 2/3 |
 | `plan4` | 2026-11-02 | `67db7a1089e2` · `solver@e3d7b1f` | **opt+win+sim** (+ sibling simulation) | **8.34** (4.135 s / 18.2 M) | **8.65** (0.977 s / 4.23 M) | censored (≥ 1.61) 10.008 s / 47.3 M | **8.49** (2 cells) | 2/3 |
+| `plan5` | 2026-11-02 | `67db7a1089e2` · `solver@35f78bf` | **default** (shipped; opt not promoted) | censored (≥ 20.04) 10.011 s / 72.2 M | **44.06** (5.772 s / 43.3 M) | censored (≥ 1.59) 10.012 s / 74.3 M | **44.06** (1 cell) | 1/3 |
 
 Cell syntax: `factor (our wall / our child_evals)`; the reference
 (`provari-v0.1.0`, `--guide hand`) is **1.000** in every row and every cell.
 
 Session reference walls (`core` / `easy-win` / `deep-win`): `bench-v0` 0.491 /
 0.111 / 6.200 s; `plan3` 0.500 / 0.111 / 6.163 s; `plan4` 0.496 / 0.113 /
-6.198 s. Factors are valid only as same-session ratios (reading rule 1).
+6.198 s; `plan5` 0.499 / 0.131 / 6.297 s. Factors are valid only as
+same-session ratios (reading rule 1).
+
+The `plan5` row is the **chosen default** (the item-6 default-flag decision
+kept the shipped flags). The opt stack was measured in the same session as a
+control and is recorded in the per-plan summary below, not as a second row:
+`core` **7.615** (3.800 s / 17,217,064 evals), `easy-win` **5.214** (0.683 s /
+3,231,686 evals), `deep-win` censored (≥ 1.59) 10.011 s / 47,552,244 evals;
+geomean **6.301** (2 cells), coverage 2/3. It is not a product row because the
+quick-suite decision rule rejected promotion.
 
 ### Per-plan summaries
 
@@ -208,6 +218,21 @@ costs is the 6.81 → 8.75 factor change. An overhead control, not a lever.
 proved nothing at 1 M or 10 M evals; the replay cut frames ~20–24 % at the
 same cap but added no root proof, so the pre-registered gate failed (PIVOT).
 A mechanism signal, not a lever.
+
+**`plan5` (item 6, default decision + final head-to-head).** The
+pre-registered quick-suite rule kept the shipped defaults: the opt stack turns
+three `Loss` cases (`dec06`, `dec42`, `dec44`) into 3 s draws, so the product
+row is `default`. The opt stack remains the best measured opt-in
+configuration (6.301 on two shared cells, coverage 2/3) but is not promoted.
+Both stacks are censored on `deep-win`; provari hand is 3/3. The initiative's
+success condition (geomean `< 1.0`, coverage ≥ provari) is **not met**; the
+search thread is closed and the recommended next direction is a new
+from-scratch provari-parity prover initiative.
+
+**Do not read 44.06 vs the `bench-v0` default row's 51.47 as a speed win.**
+The product code is unchanged; our `easy-win` wall moved 5.713 → 5.772 s
+(+1 %) while the same-session reference wall moved 0.111 → 0.131 s, so the
+factor difference is reference drift (reading rule 1), not a lever effect.
 
 **No row.** `plan1` is a reference-only census (note in [The bench
 set](#the-bench-set)) and `plan2` is validation/evidence work; neither touches
@@ -273,3 +298,9 @@ the win path.
   signal (frames down, evals at the cap) and the PIVOT verdict, not a lever.
   Same-session `opt`/`opt+win` controls and the two-cap probe are in
   `measurements/plan4/`.
+- **2026-11-02** — plan5 ledger row: the final head-to-head with the chosen
+  default. The quick-suite rule rejected promoting the opt stack (three losses
+  become 3 s draws), so the row records the shipped default (44.061 on its one
+  shared cell, coverage 1/3); the same-session opt control is 6.301 on two
+  shared cells, coverage 2/3, and both are censored on `deep-win`. Goal not met;
+  search thread closed. Driver/results in `measurements/plan5/`.
