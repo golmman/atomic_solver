@@ -4,8 +4,10 @@
 Measures the two sides of the bench ledger on one host, sequentially, one
 process at a time:
 
-- **reference:** the pinned provari oracle with the hand guide
-  (`--guide hand`), the initiative's primary column;
+- **reference:** the pinned provari oracle under one guide (`--guide
+  hand|model|none`, default `hand`), the initiative's primary column;
+  `--guide model` records the stretch column and is never mixed into the
+  primary one, and the reference rows are labelled `provari-<guide>`;
 - **candidates:** `atomic_solver` under one or more named flag stacks
   (`--stack NAME=FLAGS`, repeatable).
 
@@ -68,6 +70,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--memory", type=int, default=192, metavar="MB")
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument(
+        "--guide",
+        choices=("hand", "model", "none"),
+        default="hand",
+        help="provari evaluation guide (default: hand, the primary column)",
+    )
+    parser.add_argument(
         "--cases",
         default="",
         help="comma-separated case ids (default: the whole corpus)",
@@ -96,8 +104,12 @@ def provari_command(args: argparse.Namespace, fen: str) -> list[str]:
         args.provari, "prove", fen,
         "--seconds", str(int(args.seconds)),
         "--memory", str(args.memory),
-        "--guide", "hand",
+        "--guide", args.guide,
     ]
+
+
+def reference_side(args: argparse.Namespace) -> str:
+    return f"provari-{args.guide}"
 
 
 def solver_command(args: argparse.Namespace, fen: str, flags: list[str]) -> list[str]:
@@ -168,7 +180,7 @@ def reference_row(args: argparse.Namespace, case: dict) -> list[dict]:
         payload = last_json(text) or {}
         rows.append({
             "case": case["id"],
-            "side": "provari-hand",
+            "side": reference_side(args),
             "run": index + 1,
             "wall_s": round(wall, 3),
             "returncode": code,
@@ -303,7 +315,7 @@ def main() -> int:
     if args.dry_run:
         return 0
 
-    ref = medians(rows, "provari-hand")
+    ref = medians(rows, reference_side(args))
     cands = {name: medians(rows, f"atomic_solver:{name}") for name, _ in stacks}
     result = {
         "provenance": {
@@ -313,7 +325,7 @@ def main() -> int:
             "cpu_count": os.cpu_count(),
             "provari": {
                 "commit": args.provari_commit,
-                "guide": "hand",
+                "guide": args.guide,
                 "binary": args.provari,
             },
             "solver": {"commit": args.solver_commit, "binary": args.solver},

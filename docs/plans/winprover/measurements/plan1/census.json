@@ -1,0 +1,1356 @@
+{
+ "provenance": {
+  "plan": "winprover/plan1",
+  "budget_s": 10.0,
+  "hand": {
+   "date": "2026-11-02",
+   "host": "67db7a1089e2",
+   "platform": "Linux-7.1.13-402.asahi.fc44.aarch64+16k-aarch64-with-glibc2.43",
+   "cpu_count": 8,
+   "provari": {
+    "commit": "48686bc6c786d6ea70568f0b2ad4002cf0520206",
+    "guide": "hand",
+    "binary": "/tmp/winprover-oracle/target/release/provari"
+   },
+   "solver": {
+    "commit": "1f949812415e252a9d665c9719a0bd1d3e65a8a2",
+    "binary": "./target/release/atomic_solver"
+   },
+   "stacks": {
+    "default": [],
+    "opt": [
+     "--move-class-pn",
+     "--quiet-grouping",
+     "--eval-pn",
+     "or"
+    ]
+   },
+   "budgets": {
+    "seconds": 10.0,
+    "memory_mb": 192,
+    "repeats": 1
+   },
+   "corpus": "/workspace/atomic_solver/docs/plans/provari/measurements/plan1/corpus.json",
+   "bench_commit": "1f949812415e252a9d665c9719a0bd1d3e65a8a2"
+  },
+  "model": {
+   "date": "2026-11-02",
+   "host": "67db7a1089e2",
+   "platform": "Linux-7.1.13-402.asahi.fc44.aarch64+16k-aarch64-with-glibc2.43",
+   "cpu_count": 8,
+   "provari": {
+    "commit": "48686bc6c786d6ea70568f0b2ad4002cf0520206",
+    "guide": "model",
+    "binary": "/tmp/winprover-oracle/target/release/provari"
+   },
+   "solver": {
+    "commit": "1f949812415e252a9d665c9719a0bd1d3e65a8a2",
+    "binary": "./target/release/atomic_solver"
+   },
+   "stacks": {
+    "default": [],
+    "opt": [
+     "--move-class-pn",
+     "--quiet-grouping",
+     "--eval-pn",
+     "or"
+    ]
+   },
+   "budgets": {
+    "seconds": 10.0,
+    "memory_mb": 192,
+    "repeats": 1
+   },
+   "corpus": "/workspace/atomic_solver/docs/plans/provari/measurements/plan1/corpus.json",
+   "bench_commit": "1f949812415e252a9d665c9719a0bd1d3e65a8a2"
+  },
+  "model_column_note": null,
+  "bench_cells": [
+   "1eb80b92f92c",
+   "core",
+   "db6a741c723f"
+  ]
+ },
+ "coverage": {
+  "provari_hand": {
+   "all": 3,
+   "all_total": 21,
+   "sample20": 2,
+   "sample20_total": 20,
+   "wins": [
+    "core",
+    "1eb80b92f92c",
+    "db6a741c723f"
+   ]
+  },
+  "default": {
+   "all": 1,
+   "all_total": 21,
+   "sample20": 1,
+   "sample20_total": 20,
+   "wins": [
+    "1eb80b92f92c"
+   ]
+  },
+  "opt": {
+   "all": 2,
+   "all_total": 21,
+   "sample20": 1,
+   "sample20_total": 20,
+   "wins": [
+    "core",
+    "1eb80b92f92c"
+   ]
+  },
+  "provari_model": {
+   "all": 5,
+   "all_total": 21,
+   "sample20": 4,
+   "sample20_total": 20,
+   "wins": [
+    "core",
+    "b9a7ed7eb368",
+    "1eb80b92f92c",
+    "dd3f89766a40",
+    "db6a741c723f"
+   ]
+  }
+ },
+ "cells": [
+  {
+   "case": "core",
+   "source": "bench-3-repeat",
+   "short_name": "core",
+   "sample20": false,
+   "provari_hand": {
+    "runs": 3,
+    "wall_s": 0.49,
+    "wall_min_s": 0.49,
+    "wall_max_s": 0.508,
+    "win": true,
+    "nodes": 342289,
+    "mate": 17,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 3,
+    "wall_s": 0.357,
+    "wall_min_s": 0.353,
+    "wall_max_s": 0.363,
+    "win": true,
+    "nodes": 169485,
+    "mate": 13,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 3,
+    "wall_s": 10.009,
+    "wall_min_s": 10.008,
+    "wall_max_s": 10.015,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 72547692,
+    "pv_length": null,
+    "exit": null,
+    "factor_lower_bound": 20.41
+   },
+   "opt": {
+    "runs": 3,
+    "wall_s": 3.801,
+    "wall_min_s": 3.794,
+    "wall_max_s": 3.806,
+    "win": true,
+    "nodes": null,
+    "mate": null,
+    "evals": 17217064,
+    "pv_length": 29,
+    "exit": null,
+    "factor": 7.757
+   }
+  },
+  {
+   "case": "2a0443d446ee",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.011,
+    "wall_min_s": 10.011,
+    "wall_max_s": 10.011,
+    "win": false,
+    "nodes": 8422400,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.024,
+    "wall_min_s": 10.024,
+    "wall_max_s": 10.024,
+    "win": false,
+    "nodes": 5389312,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.003,
+    "wall_min_s": 10.003,
+    "wall_max_s": 10.003,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 74493387,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.012,
+    "wall_min_s": 10.012,
+    "wall_max_s": 10.012,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 51112926,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "b9a7ed7eb368",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.017,
+    "wall_min_s": 10.017,
+    "wall_max_s": 10.017,
+    "win": false,
+    "nodes": 8366080,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 4.53,
+    "wall_min_s": 4.53,
+    "wall_max_s": 4.53,
+    "win": true,
+    "nodes": 2452328,
+    "mate": 29,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.004,
+    "wall_min_s": 10.004,
+    "wall_max_s": 10.004,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 67336289,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.014,
+    "wall_min_s": 10.014,
+    "wall_max_s": 10.014,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 48640664,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "2e8276dc4530",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.021,
+    "wall_min_s": 10.021,
+    "wall_max_s": 10.021,
+    "win": false,
+    "nodes": 7686144,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.026,
+    "wall_min_s": 10.026,
+    "wall_max_s": 10.026,
+    "win": false,
+    "nodes": 5483520,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.011,
+    "wall_min_s": 10.011,
+    "wall_max_s": 10.011,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 74958918,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.004,
+    "wall_min_s": 10.004,
+    "wall_max_s": 10.004,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 49493629,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "1eb80b92f92c",
+   "source": "bench-3-repeat",
+   "short_name": "easy-win",
+   "sample20": true,
+   "provari_hand": {
+    "runs": 3,
+    "wall_s": 0.111,
+    "wall_min_s": 0.11,
+    "wall_max_s": 0.113,
+    "win": true,
+    "nodes": 72523,
+    "mate": 15,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 3,
+    "wall_s": 0.071,
+    "wall_min_s": 0.06,
+    "wall_max_s": 0.072,
+    "win": true,
+    "nodes": 13779,
+    "mate": 20,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 3,
+    "wall_s": 5.743,
+    "wall_min_s": 5.731,
+    "wall_max_s": 5.753,
+    "win": true,
+    "nodes": null,
+    "mate": null,
+    "evals": 43266033,
+    "pv_length": 37,
+    "exit": null,
+    "factor": 51.739
+   },
+   "opt": {
+    "runs": 3,
+    "wall_s": 0.671,
+    "wall_min_s": 0.663,
+    "wall_max_s": 0.695,
+    "win": true,
+    "nodes": null,
+    "mate": null,
+    "evals": 3231686,
+    "pv_length": 31,
+    "exit": null,
+    "factor": 6.045
+   }
+  },
+  {
+   "case": "6559fbdddb47",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.013,
+    "wall_min_s": 10.013,
+    "wall_max_s": 10.013,
+    "win": false,
+    "nodes": 7991296,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.026,
+    "wall_min_s": 10.026,
+    "wall_max_s": 10.026,
+    "win": false,
+    "nodes": 5300224,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.011,
+    "wall_min_s": 10.011,
+    "wall_max_s": 10.011,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 77963948,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.008,
+    "wall_min_s": 10.008,
+    "wall_max_s": 10.008,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 47720737,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "3004d09cef79",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.011,
+    "wall_min_s": 10.011,
+    "wall_max_s": 10.011,
+    "win": false,
+    "nodes": 7723008,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.022,
+    "wall_min_s": 10.022,
+    "wall_max_s": 10.022,
+    "win": false,
+    "nodes": 5370880,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.008,
+    "wall_min_s": 10.008,
+    "wall_max_s": 10.008,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 76418868,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.003,
+    "wall_min_s": 10.003,
+    "wall_max_s": 10.003,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 47808883,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "5862b1958212",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.012,
+    "wall_min_s": 10.012,
+    "wall_max_s": 10.012,
+    "win": false,
+    "nodes": 7373824,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.024,
+    "wall_min_s": 10.024,
+    "wall_max_s": 10.024,
+    "win": false,
+    "nodes": 5211136,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.006,
+    "wall_min_s": 10.006,
+    "wall_max_s": 10.006,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 75509529,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.015,
+    "wall_min_s": 10.015,
+    "wall_max_s": 10.015,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 49471693,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "dd3f89766a40",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.012,
+    "wall_min_s": 10.012,
+    "wall_max_s": 10.012,
+    "win": false,
+    "nodes": 7854080,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 1.853,
+    "wall_min_s": 1.853,
+    "wall_max_s": 1.853,
+    "win": true,
+    "nodes": 911709,
+    "mate": 29,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.012,
+    "wall_min_s": 10.012,
+    "wall_max_s": 10.012,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 72712243,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.005,
+    "wall_min_s": 10.005,
+    "wall_max_s": 10.005,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 47585229,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "8271708709d4",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.012,
+    "wall_min_s": 10.012,
+    "wall_max_s": 10.012,
+    "win": false,
+    "nodes": 7630848,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.024,
+    "wall_min_s": 10.024,
+    "wall_max_s": 10.024,
+    "win": false,
+    "nodes": 5474304,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.013,
+    "wall_min_s": 10.013,
+    "wall_max_s": 10.013,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 76069455,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.007,
+    "wall_min_s": 10.007,
+    "wall_max_s": 10.007,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 47346394,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "60af5542800b",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.015,
+    "wall_min_s": 10.015,
+    "wall_max_s": 10.015,
+    "win": false,
+    "nodes": 7620608,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.023,
+    "wall_min_s": 10.023,
+    "wall_max_s": 10.023,
+    "win": false,
+    "nodes": 5200896,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.01,
+    "wall_min_s": 10.01,
+    "wall_max_s": 10.01,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 76534534,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.008,
+    "wall_min_s": 10.008,
+    "wall_max_s": 10.008,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 48531463,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "db6a741c723f",
+   "source": "bench-3-repeat",
+   "short_name": "deep-win",
+   "sample20": true,
+   "provari_hand": {
+    "runs": 3,
+    "wall_s": 6.24,
+    "wall_min_s": 6.238,
+    "wall_max_s": 6.258,
+    "win": true,
+    "nodes": 4574912,
+    "mate": 22,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 3,
+    "wall_s": 1.67,
+    "wall_min_s": 1.668,
+    "wall_max_s": 1.681,
+    "win": true,
+    "nodes": 810140,
+    "mate": 27,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 3,
+    "wall_s": 10.007,
+    "wall_min_s": 10.002,
+    "wall_max_s": 10.015,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 74552085,
+    "pv_length": null,
+    "exit": null,
+    "factor_lower_bound": 1.6
+   },
+   "opt": {
+    "runs": 3,
+    "wall_s": 10.015,
+    "wall_min_s": 10.014,
+    "wall_max_s": 10.016,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 47617880,
+    "pv_length": null,
+    "exit": null,
+    "factor_lower_bound": 1.6
+   }
+  },
+  {
+   "case": "531810cc7d4f",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.018,
+    "wall_min_s": 10.018,
+    "wall_max_s": 10.018,
+    "win": false,
+    "nodes": 7458816,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.025,
+    "wall_min_s": 10.025,
+    "wall_max_s": 10.025,
+    "win": false,
+    "nodes": 5365760,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.005,
+    "wall_min_s": 10.005,
+    "wall_max_s": 10.005,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 77379036,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.01,
+    "wall_min_s": 10.01,
+    "wall_max_s": 10.01,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 48673403,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "8862dbcb70d4",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.012,
+    "wall_min_s": 10.012,
+    "wall_max_s": 10.012,
+    "win": false,
+    "nodes": 7373824,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.022,
+    "wall_min_s": 10.022,
+    "wall_max_s": 10.022,
+    "win": false,
+    "nodes": 5306368,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.003,
+    "wall_min_s": 10.003,
+    "wall_max_s": 10.003,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 77865210,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.007,
+    "wall_min_s": 10.007,
+    "wall_max_s": 10.007,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 50399551,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "3a7f66e6b796",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.011,
+    "wall_min_s": 10.011,
+    "wall_max_s": 10.011,
+    "win": false,
+    "nodes": 7560192,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.027,
+    "wall_min_s": 10.027,
+    "wall_max_s": 10.027,
+    "win": false,
+    "nodes": 5497856,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.009,
+    "wall_min_s": 10.009,
+    "wall_max_s": 10.009,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 75499402,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.005,
+    "wall_min_s": 10.005,
+    "wall_max_s": 10.005,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 47765563,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "bcc5c3ebe435",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.013,
+    "wall_min_s": 10.013,
+    "wall_max_s": 10.013,
+    "win": false,
+    "nodes": 7855104,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.021,
+    "wall_min_s": 10.021,
+    "wall_max_s": 10.021,
+    "win": false,
+    "nodes": 5560320,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.007,
+    "wall_min_s": 10.007,
+    "wall_max_s": 10.007,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 74140510,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.009,
+    "wall_min_s": 10.009,
+    "wall_max_s": 10.009,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 49996526,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "e4cca32930e4",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.012,
+    "wall_min_s": 10.012,
+    "wall_max_s": 10.012,
+    "win": false,
+    "nodes": 7371776,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.026,
+    "wall_min_s": 10.026,
+    "wall_max_s": 10.026,
+    "win": false,
+    "nodes": 5074944,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.01,
+    "wall_min_s": 10.01,
+    "wall_max_s": 10.01,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 74811773,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.012,
+    "wall_min_s": 10.012,
+    "wall_max_s": 10.012,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 51346531,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "9da3ab788e86",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.012,
+    "wall_min_s": 10.012,
+    "wall_max_s": 10.012,
+    "win": false,
+    "nodes": 8020992,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.022,
+    "wall_min_s": 10.022,
+    "wall_max_s": 10.022,
+    "win": false,
+    "nodes": 5528576,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.014,
+    "wall_min_s": 10.014,
+    "wall_max_s": 10.014,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 74009706,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.014,
+    "wall_min_s": 10.014,
+    "wall_max_s": 10.014,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 47948022,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "5d89e584375f",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.012,
+    "wall_min_s": 10.012,
+    "wall_max_s": 10.012,
+    "win": false,
+    "nodes": 7840768,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.019,
+    "wall_min_s": 10.019,
+    "wall_max_s": 10.019,
+    "win": false,
+    "nodes": 5199872,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.017,
+    "wall_min_s": 10.017,
+    "wall_max_s": 10.017,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 66244973,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.008,
+    "wall_min_s": 10.008,
+    "wall_max_s": 10.008,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 50428149,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "eefc6b5c0aa5",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.012,
+    "wall_min_s": 10.012,
+    "wall_max_s": 10.012,
+    "win": false,
+    "nodes": 7916544,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.024,
+    "wall_min_s": 10.024,
+    "wall_max_s": 10.024,
+    "win": false,
+    "nodes": 5393408,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.007,
+    "wall_min_s": 10.007,
+    "wall_max_s": 10.007,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 73144477,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.002,
+    "wall_min_s": 10.002,
+    "wall_max_s": 10.002,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 49618222,
+    "pv_length": null,
+    "exit": null
+   }
+  },
+  {
+   "case": "43f66371de39",
+   "source": "census-1-repeat",
+   "short_name": null,
+   "sample20": true,
+   "provari_hand": {
+    "runs": 1,
+    "wall_s": 10.02,
+    "wall_min_s": 10.02,
+    "wall_max_s": 10.02,
+    "win": false,
+    "nodes": 7791616,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "provari_model": {
+    "runs": 1,
+    "wall_s": 10.025,
+    "wall_min_s": 10.025,
+    "wall_max_s": 10.025,
+    "win": false,
+    "nodes": 5356544,
+    "mate": null,
+    "evals": null,
+    "pv_length": null,
+    "exit": null
+   },
+   "default": {
+    "runs": 1,
+    "wall_s": 10.012,
+    "wall_min_s": 10.012,
+    "wall_max_s": 10.012,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 74890433,
+    "pv_length": null,
+    "exit": null
+   },
+   "opt": {
+    "runs": 1,
+    "wall_s": 10.01,
+    "wall_min_s": 10.01,
+    "wall_max_s": 10.01,
+    "win": false,
+    "nodes": null,
+    "mate": null,
+    "evals": 48172805,
+    "pv_length": null,
+    "exit": null
+   }
+  }
+ ],
+ "shared": {
+  "hand_x_default": {
+   "shared_cells": [
+    "1eb80b92f92c"
+   ],
+   "shared_count": 1,
+   "geomean_factor": 51.739,
+   "cells": [
+    {
+     "case": "1eb80b92f92c",
+     "reference_wall_s": 0.111,
+     "candidate_wall_s": 5.743,
+     "factor": 51.739
+    }
+   ]
+  },
+  "hand_x_opt": {
+   "shared_cells": [
+    "core",
+    "1eb80b92f92c"
+   ],
+   "shared_count": 2,
+   "geomean_factor": 6.848,
+   "cells": [
+    {
+     "case": "core",
+     "reference_wall_s": 0.49,
+     "candidate_wall_s": 3.801,
+     "factor": 7.757
+    },
+    {
+     "case": "1eb80b92f92c",
+     "reference_wall_s": 0.111,
+     "candidate_wall_s": 0.671,
+     "factor": 6.045
+    }
+   ]
+  },
+  "model_x_opt": {
+   "shared_cells": [
+    "core",
+    "1eb80b92f92c"
+   ],
+   "shared_count": 2,
+   "geomean_factor": 10.031,
+   "cells": [
+    {
+     "case": "core",
+     "reference_wall_s": 0.357,
+     "candidate_wall_s": 3.801,
+     "factor": 10.647
+    },
+    {
+     "case": "1eb80b92f92c",
+     "reference_wall_s": 0.071,
+     "candidate_wall_s": 0.671,
+     "factor": 9.451
+    }
+   ]
+  },
+  "model_x_default": {
+   "shared_cells": [
+    "1eb80b92f92c"
+   ],
+   "shared_count": 1,
+   "geomean_factor": 80.887,
+   "cells": [
+    {
+     "case": "1eb80b92f92c",
+     "reference_wall_s": 0.071,
+     "candidate_wall_s": 5.743,
+     "factor": 80.887
+    }
+   ]
+  }
+ },
+ "bench_set": {
+  "selection_rule": "provari --guide hand wins inside the canonical budget",
+  "cells": [
+   {
+    "case": "core",
+    "short_name": "core"
+   },
+   {
+    "case": "1eb80b92f92c",
+    "short_name": "easy-win"
+   },
+   {
+    "case": "db6a741c723f",
+    "short_name": "deep-win"
+   }
+  ],
+  "new_hand_wins": [],
+  "removed_but_still_expected": []
+ }
+}

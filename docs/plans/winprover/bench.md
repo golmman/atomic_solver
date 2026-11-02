@@ -143,6 +143,24 @@ If item 1 finds an additional hand-guide win, that cell joins the set by the
 rule above — it gets a short name, its reference values are measured, and the
 ledger gains a new reference row. Earlier rows are not rewritten.
 
+**2026-11-02 — item 1 hand census (re-derived, no set change).** The whole
+`core + sample20` corpus was re-measured with a freshly rebuilt
+`provari-v0.1.0` (`--features bundled`; the hand guide is byte-for-byte the
+same search) at the canonical 10 s / 192 MB budget, both guides side by side.
+Result: provari `--guide hand` wins **exactly the three cells above and no
+others** (`core` plus 2/20 `sample20`), so the selection rule confirms the
+set — no additions, no removals. Re-derived reference medians (3 repeats,
+host `67db7a1089e2`, aarch64 8 CPU): `core` 0.490 s · 342,289 nodes ·
+mate 17; `easy-win` 0.111 s · 72,523 nodes · mate 15; `deep-win` 6.240 s ·
+4,574,912 nodes · mate 22. Coverage: hand 3/21 (2/20 on `sample20`), the
+stretch `--guide model` column 5/21 (4/20 — it adds `b9a7ed7eb368` 4.530 s
+and `dd3f89766a40` 1.853 s, the model-only wins already listed above), our
+`default` 1/21, our `opt` stack 2/21. Shared-cell factors in the same
+session: `hand×default` 51.739 (1 cell), `hand×opt` 6.848 (2 cells). No
+ledger row is appended: plan1 does not touch the win path. Details in
+[`measurements/plan1/`](measurements/plan1/README.md) and
+[`report1.md`](report1.md).
+
 ## Ledger
 
 **Row protocol.** Every executed plan whose result touches the win path
@@ -237,3 +255,8 @@ recorded here as a dated note, with the earlier rows left intact.
   cell ids (provari `high200` record ids = `sha256(FEN)[:12]`, **not** git
   hashes) for tooling, and full commit pins (`provari-v0.1.0`, `solver@<sha>`)
   for provenance. Numbers and verdicts unchanged.
+- **2026-11-02** — plan1 census (reference-only): the whole `core + sample20`
+  corpus re-measured against a rebuilt `provari-v0.1.0`, both guides, at the
+  canonical budget. Hand coverage is 3/21 (exactly the shipped bench set), so
+  the selection rule is confirmed with no set change; the stretch model column
+  is 5/21. No ledger row (plan1 does not touch the win path).

@@ -1,0 +1,592 @@
+{
+ "provenance": {
+  "date": "2026-11-02",
+  "host": "67db7a1089e2",
+  "platform": "Linux-7.1.13-402.asahi.fc44.aarch64+16k-aarch64-with-glibc2.43",
+  "cpu_count": 8,
+  "provari": {
+   "commit": "48686bc6c786d6ea70568f0b2ad4002cf0520206",
+   "guide": "model",
+   "binary": "/tmp/winprover-oracle/target/release/provari"
+  },
+  "solver": {
+   "commit": "1f949812415e252a9d665c9719a0bd1d3e65a8a2",
+   "binary": "./target/release/atomic_solver"
+  },
+  "stacks": {
+   "default": [],
+   "opt": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  "budgets": {
+   "seconds": 10.0,
+   "memory_mb": 192,
+   "repeats": 3
+  },
+  "corpus": "/workspace/atomic_solver/docs/plans/provari/measurements/plan1/corpus.json",
+  "bench_commit": "1f949812415e252a9d665c9719a0bd1d3e65a8a2"
+ },
+ "runs": [
+  {
+   "case": "core",
+   "side": "provari-model",
+   "run": 1,
+   "wall_s": 0.357,
+   "returncode": 0,
+   "win": true,
+   "mate": 13,
+   "nodes": 169485,
+   "ms": 336
+  },
+  {
+   "case": "core",
+   "side": "provari-model",
+   "run": 2,
+   "wall_s": 0.353,
+   "returncode": 0,
+   "win": true,
+   "mate": 13,
+   "nodes": 169485,
+   "ms": 331
+  },
+  {
+   "case": "core",
+   "side": "provari-model",
+   "run": 3,
+   "wall_s": 0.363,
+   "returncode": 0,
+   "win": true,
+   "mate": 13,
+   "nodes": 169485,
+   "ms": 340
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:default",
+   "run": 1,
+   "wall_s": 10.017,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 72547692,
+   "exit": null,
+   "pv_status": null,
+   "flags": []
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:default",
+   "run": 2,
+   "wall_s": 10.002,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 72547692,
+   "exit": null,
+   "pv_status": null,
+   "flags": []
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:default",
+   "run": 3,
+   "wall_s": 10.016,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 72062438,
+   "exit": null,
+   "pv_status": null,
+   "flags": []
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:opt",
+   "run": 1,
+   "wall_s": 3.819,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 29,
+   "evals": 17217064,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:opt",
+   "run": 2,
+   "wall_s": 3.817,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 29,
+   "evals": 17217064,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:opt",
+   "run": 3,
+   "wall_s": 3.839,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 29,
+   "evals": 17217064,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "provari-model",
+   "run": 1,
+   "wall_s": 0.06,
+   "returncode": 0,
+   "win": true,
+   "mate": 20,
+   "nodes": 13779,
+   "ms": 36
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "provari-model",
+   "run": 2,
+   "wall_s": 0.071,
+   "returncode": 0,
+   "win": true,
+   "mate": 20,
+   "nodes": 13779,
+   "ms": 47
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "provari-model",
+   "run": 3,
+   "wall_s": 0.072,
+   "returncode": 0,
+   "win": true,
+   "mate": 20,
+   "nodes": 13779,
+   "ms": 48
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:default",
+   "run": 1,
+   "wall_s": 5.768,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 37,
+   "evals": 43266033,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": []
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:default",
+   "run": 2,
+   "wall_s": 5.773,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 37,
+   "evals": 43266033,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": []
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:default",
+   "run": 3,
+   "wall_s": 5.743,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 37,
+   "evals": 43266033,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": []
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:opt",
+   "run": 1,
+   "wall_s": 0.692,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 31,
+   "evals": 3231686,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:opt",
+   "run": 2,
+   "wall_s": 0.687,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 31,
+   "evals": 3231686,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:opt",
+   "run": 3,
+   "wall_s": 0.66,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 31,
+   "evals": 3231686,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "provari-model",
+   "run": 1,
+   "wall_s": 1.668,
+   "returncode": 0,
+   "win": true,
+   "mate": 27,
+   "nodes": 810140,
+   "ms": 1645
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "provari-model",
+   "run": 2,
+   "wall_s": 1.67,
+   "returncode": 0,
+   "win": true,
+   "mate": 27,
+   "nodes": 810140,
+   "ms": 1653
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "provari-model",
+   "run": 3,
+   "wall_s": 1.681,
+   "returncode": 0,
+   "win": true,
+   "mate": 27,
+   "nodes": 810140,
+   "ms": 1657
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:default",
+   "run": 1,
+   "wall_s": 10.01,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 74859835,
+   "exit": null,
+   "pv_status": null,
+   "flags": []
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:default",
+   "run": 2,
+   "wall_s": 10.018,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 74552085,
+   "exit": null,
+   "pv_status": null,
+   "flags": []
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:default",
+   "run": 3,
+   "wall_s": 10.007,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 75066931,
+   "exit": null,
+   "pv_status": null,
+   "flags": []
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:opt",
+   "run": 1,
+   "wall_s": 10.004,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 47351465,
+   "exit": null,
+   "pv_status": null,
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:opt",
+   "run": 2,
+   "wall_s": 10.006,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 47552244,
+   "exit": null,
+   "pv_status": null,
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:opt",
+   "run": 3,
+   "wall_s": 10.009,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 47841622,
+   "exit": null,
+   "pv_status": null,
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  }
+ ],
+ "ledger": {
+  "cells": {
+   "core": {
+    "reference": {
+     "runs": 3,
+     "wall_s": 0.357,
+     "win": true,
+     "nodes": 169485,
+     "mate": 13,
+     "evals": null,
+     "exit": null,
+     "returncodes": [
+      0
+     ]
+    },
+    "default": {
+     "runs": 3,
+     "wall_s": 10.016,
+     "win": false,
+     "nodes": null,
+     "mate": null,
+     "evals": 72547692,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": null,
+     "factor_lower_bound": 28.01,
+     "note": "candidate censored"
+    },
+    "opt": {
+     "runs": 3,
+     "wall_s": 3.819,
+     "win": true,
+     "nodes": null,
+     "mate": null,
+     "evals": 17217064,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": 10.697,
+     "note": "shared win"
+    }
+   },
+   "1eb80b92f92c": {
+    "reference": {
+     "runs": 3,
+     "wall_s": 0.071,
+     "win": true,
+     "nodes": 13779,
+     "mate": 20,
+     "evals": null,
+     "exit": null,
+     "returncodes": [
+      0
+     ]
+    },
+    "default": {
+     "runs": 3,
+     "wall_s": 5.768,
+     "win": true,
+     "nodes": null,
+     "mate": null,
+     "evals": 43266033,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": 81.239,
+     "note": "shared win"
+    },
+    "opt": {
+     "runs": 3,
+     "wall_s": 0.687,
+     "win": true,
+     "nodes": null,
+     "mate": null,
+     "evals": 3231686,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": 9.676,
+     "note": "shared win"
+    }
+   },
+   "db6a741c723f": {
+    "reference": {
+     "runs": 3,
+     "wall_s": 1.67,
+     "win": true,
+     "nodes": 810140,
+     "mate": 27,
+     "evals": null,
+     "exit": null,
+     "returncodes": [
+      0
+     ]
+    },
+    "default": {
+     "runs": 3,
+     "wall_s": 10.01,
+     "win": false,
+     "nodes": null,
+     "mate": null,
+     "evals": 74859835,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": null,
+     "factor_lower_bound": 5.99,
+     "note": "candidate censored"
+    },
+    "opt": {
+     "runs": 3,
+     "wall_s": 10.006,
+     "win": false,
+     "nodes": null,
+     "mate": null,
+     "evals": 47351465,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": null,
+     "factor_lower_bound": 5.99,
+     "note": "candidate censored"
+    }
+   }
+  },
+  "summary": {
+   "default": {
+    "shared_cells": [
+     "1eb80b92f92c"
+    ],
+    "shared_count": 1,
+    "geomean_factor": 81.239,
+    "coverage_reference": 3,
+    "coverage_candidate": 1,
+    "censored_cells": [
+     "core",
+     "db6a741c723f"
+    ]
+   },
+   "opt": {
+    "shared_cells": [
+     "core",
+     "1eb80b92f92c"
+    ],
+    "shared_count": 2,
+    "geomean_factor": 10.174,
+    "coverage_reference": 3,
+    "coverage_candidate": 2,
+    "censored_cells": [
+     "db6a741c723f"
+    ]
+   }
+  }
+ }
+}
