@@ -181,7 +181,9 @@ is the measured bottleneck), and provari-style `Mover`/effect precomputation.
 It is the only measured path to the initiative's `< 1.0` geometric-mean goal.
 Items 7 (optional packaging) and 8 (evidence horizon) are carried to that
 successor; anything else here would be a new mechanism without a measured
-substrate.
+substrate. The self-contained starting point for the successor session is
+[`HANDOFF.md`](HANDOFF.md) (goal, measured evidence, what to take from each
+side, milestones, open decisions, kickoff prompt).
 
 ## Corpus and measurement conventions
 

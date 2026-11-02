@@ -66,3 +66,22 @@ Please compile a "wishlist" of changes for `atomic-movegen` which would help in 
 
 In `docs/plans/winprover/bench.md` i want the "Ledger" to be restructured:
 I want a single table with all results and then a very short summary for each plan mentioned in the table. No need to go into details, we have the plans/reports for that.
+
+---
+
+Before the winprover initiative i asked you this:
+
+> My initial intention for this project was to get the fastest atomic chess win-prover. With `provari` (see initiative) we found our match.
+> 
+> I see two paths from here:
+> 1. Keep working on this project, adding ideas from provari
+> 2. Start from scratch, pick the best from both atomic_solver and provari
+> 
+> What would be your recommendation?
+
+You recommended working on this project instead of starting from scratch.
+After the last report `docs/plans/winprover/report5.md` your verdict was "goal not met, default not promoted, initiative closed" and a you gave this continuation option: "Open a new initiative for a from-scratch provari-parity attacker-only prover"
+
+Please explain in simple terms: what has changed or what did we learn so we now tend towards a from-scratch implementation?
+
+
