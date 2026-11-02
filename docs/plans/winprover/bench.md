@@ -174,88 +174,44 @@ re-measures an old state to check a host drift appends a row labelled
 speedup that only exists behind an opt-in flag is not a product win until
 item 6 decides the default flag set.
 
-### `bench-v0` — 2026-10-30, pre-plan baseline (no initiative plan executed yet)
+### Results
 
-Host `d7891fb11b96` (aarch64, 8 CPU, Linux 7.1.13); `solver@96edb83`;
-`provari-v0.1.0`, `--guide hand`. Reference walls in this session:
-`core` 0.491 s, `easy-win` 0.111 s, `deep-win` 6.200 s.
+One row per measured stack; append, never rewrite an earlier row.
+
+| Plan | Date | Host · solver pin | Stack | `core` | `easy-win` | `deep-win` | Geomean (canonical) | Coverage |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `bench-v0` | 2026-10-30 | `d7891fb11b96` · `solver@96edb83` | **default** (shipped flags) | censored (≥ 20.4) 10.013 s / 72.9 M | **51.47** (5.713 s / 43.3 M) | censored (≥ 1.61) 10.008 s / 75.3 M | **51.47** (1 cell) | 1/3 |
+| `bench-v0` | 2026-10-30 | `d7891fb11b96` · `solver@96edb83` | **opt** (`--move-class-pn --quiet-grouping --eval-pn or`) | **7.67** (3.767 s / 17.2 M) | **6.13** (0.680 s / 3.23 M) | censored at 10 s (47.8 M); **9.70** at a 120 s budget (60.21 s / 326.9 M) | **6.86** (2 cells) | 2/3 |
+| `plan3` | 2026-11-02 | `67db7a1089e2` · `solver@d623b21` | **opt+win** (+ `--win-front-end`) | **8.31** (4.154 s / 18.2 M) | **9.21** (1.022 s / 4.23 M) | censored (≥ 1.62) 10.007 s / 47.3 M | **8.75** (2 cells) | 2/3 |
+| `plan4` | 2026-11-02 | `67db7a1089e2` · `solver@e3d7b1f` | **opt+win+sim** (+ sibling simulation) | **8.34** (4.135 s / 18.2 M) | **8.65** (0.977 s / 4.23 M) | censored (≥ 1.61) 10.008 s / 47.3 M | **8.49** (2 cells) | 2/3 |
 
 Cell syntax: `factor (our wall / our child_evals)`; the reference
-(`provari-v0.1.0` hand) is **1.000** in every row and every cell.
+(`provari-v0.1.0`, `--guide hand`) is **1.000** in every row and every cell.
 
-| Plan | Stack | `core` | `easy-win` | `deep-win` | Geomean (canonical) | Coverage |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `bench-v0` | **default** (shipped flags) | censored (≥ 20.4) 10.013 s / 72.9 M | **51.47** (5.713 s / 43.3 M) | censored (≥ 1.61) 10.008 s / 75.3 M | **51.47** (1 cell) | 1/3 |
-| `bench-v0` | **opt** (`--move-class-pn --quiet-grouping --eval-pn or`) | **7.67** (3.767 s / 17.2 M) | **6.13** (0.680 s / 3.23 M) | censored at 10 s (47.8 M); **9.70** at a 120 s budget (60.21 s / 326.9 M) | **6.86** (2 cells) | 2/3 |
+Session reference walls (`core` / `easy-win` / `deep-win`): `bench-v0` 0.491 /
+0.111 / 6.200 s; `plan3` 0.500 / 0.111 / 6.163 s; `plan4` 0.496 / 0.113 /
+6.198 s. Factors are valid only as same-session ratios (reading rule 1).
 
-Readings of the baseline:
+### Per-plan summaries
 
-- **Distance to the goal: 6.86×.** The canonical geomean must fall below 1.0
-  with coverage 3/3 — i.e. roughly a 7× improvement on the two shared cells
-  *plus* the `deep-win` coverage gap closed.
-- The coverage gap is as large as the latency gap: `deep-win` needs 60.2 s
-  where provari needs 6.2 s, and the shipped default stack does not solve
-  `core` at all.
-- The two shipped win-path levers (measured-out table in `initiative.md`)
-  account for the difference between the two rows (`easy-win` 51.5 → 6.13,
-  `core` censored → 7.67), and they are still opt-in.
-- Proof lengths differ by cell (ours 29 plies vs provari's 34 on `core`; 31 vs
-  30 on `easy-win`; 49 vs 44 on `deep-win`), so a factor is "time to *a*
-  proven win", not time to the shortest one — see the initiative's item 5
-  (proof length) before treating length differences as noise.
+**`bench-v0` (2026-10-30, pre-plan baseline).** Opt stack: 6.86× geomean on
+two shared cells, coverage 2/3. `deep-win` needs 60.2 s where provari needs
+6.2 s, and the shipped default does not solve `core` at all. The two opt-in
+win-path levers explain the 51.47 → 6.86 move. Distance to the goal: close the
+`deep-win` coverage gap *and* gain ~7× on the shared cells.
 
-### `plan3` — 2026-11-02, win-only front-end skeleton (item 3)
+**`plan3` (item 3, win-only front-end skeleton).** The front-end proved none
+of the three cells and burned its whole 1 M-eval cap; the ~0.34–0.37 s it
+costs is the 6.81 → 8.75 factor change. An overhead control, not a lever.
 
-Host `67db7a1089e2` (aarch64, 8 CPU, Linux 7.1.13); `solver@d623b21` + plan3
-working tree; `provari-v0.1.0`, `--guide hand`. Reference walls in this session:
-`core` 0.500 s, `easy-win` 0.111 s, `deep-win` 6.163 s.
+**`plan4` (item 4, sibling simulation first form).** The front-end still
+proved nothing at 1 M or 10 M evals; the replay cut frames ~20–24 % at the
+same cap but added no root proof, so the pre-registered gate failed (PIVOT).
+A mechanism signal, not a lever.
 
-| Plan | Stack | `core` | `easy-win` | `deep-win` | Geomean (canonical) | Coverage |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `plan3` | **opt+win** (`--move-class-pn --quiet-grouping --eval-pn or --win-front-end`) | **8.31** (4.154 s / 18.2 M) | **9.21** (1.022 s / 4.23 M) | censored (≥ 1.62) 10.007 s / 47.3 M | **8.75** (2 cells) | 2/3 |
-
-Same-session control (not a separate row): `opt` without the front-end
-measured **6.81** (2 cells), `core` 7.57 (3.784 s / 17.2 M), `easy-win` 6.13
-(0.680 s / 3.23 M), `deep-win` censored at 10 s (47.8 M). The front-end proved
-none of the three cells and spent 1,000,014 / 1,000,027 / 1,000,007 child evals
-(29,338 / 30,387 / 32,322 frames) against its 1,000,000-eval cap — the added
-~0.34–0.37 s is the whole of the factor change. This is the plan's
-pre-registered neutral result, not a product win; the row is read with the
-`Stack` column (item 6 owns defaults). Details:
-[`measurements/plan3/`](measurements/plan3/README.md) and
-[`report3.md`](report3.md).
-
-### `plan4` — 2026-11-02, sibling simulation first form (item 4)
-
-Host `67db7a1089e2` (aarch64, 8 CPU, Linux 7.1.13); `solver@e3d7b1f` + plan4
-working tree; `provari-v0.1.0`, `--guide hand`. Reference walls in this session:
-`core` 0.496 s, `easy-win` 0.113 s, `deep-win` 6.198 s.
-
-| Plan | Stack | `core` | `easy-win` | `deep-win` | Geomean (canonical) | Coverage |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `plan4` | **opt+win+sim** (`--move-class-pn --quiet-grouping --eval-pn or --win-front-end`) | **8.34** (4.135 s / 18.2 M) | **8.65** (0.977 s / 4.23 M) | censored (≥ 1.61) 10.008 s / 47.3 M | **8.49** (2 cells) | 2/3 |
-
-Same-session controls (not separate rows): `opt` without the front-end
-measured **6.69** (2 cells), `core` 7.63 (3.786 s / 17.2 M), `easy-win` 5.86
-(0.662 s / 3.23 M), `deep-win` censored at 10 s (47.8 M); `opt+win` with
-simulation disabled measured **8.62** (2 cells), `core` 8.38 (4.158 s /
-18.2 M), `easy-win` 8.86 (1.001 s / 4.23 M), `deep-win` censored (47.2 M).
-The front-end proved **none** of the three cells at 1 M or 10 M evals with
-simulation on; at 10 M the replay cut front-end frames by ~20–24% (`core`
-294,360 → 224,470) at the same child-eval cap, but added no root proof. The
-**pre-registered gate failed**, so the verdict is PIVOT and no further
-sibling-simulation levers were stacked. This row therefore records a mechanism
-signal / overhead, not a lever; it is read with the `Stack` column. Details:
-[`measurements/plan4/`](measurements/plan4/README.md) and
-[`report4.md`](report4.md).
-
-### Rows to come
-
-Empty. Item 1 (`plan1`) is a **reference-only** plan: it re-measures the
-hand-guide column over the whole corpus with the committed driver and, by the
-selection rule above, may add cells to the bench set. It appends no ledger row
-(it does not touch the win path) — reference revisions and any set addition are
-recorded here as a dated note, with the earlier rows left intact.
+**No row.** `plan1` is a reference-only census (note in [The bench
+set](#the-bench-set)) and `plan2` is validation/evidence work; neither touches
+the win path.
 
 ## Reading rules (do not violate these when appending a row)
 

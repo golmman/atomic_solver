@@ -61,3 +61,8 @@ the ulimate goal is to our factor lower than 1 at some point.
 `atomic-movegen` was compared a different movegen library `shakmaty`: `docs/plans/movegen/shakmaty_analysis.md`.
 
 Please compile a "wishlist" of changes for `atomic-movegen` which would help in our project and store it as `docs/plans/movegen/feedback2.md`.
+
+---
+
+In `docs/plans/winprover/bench.md` i want the "Ledger" to be restructured:
+I want a single table with all results and then a very short summary for each plan mentioned in the table. No need to go into details, we have the plans/reports for that.

@@ -15,7 +15,7 @@ command only.
 
 The initiative's success condition is a head-to-head win against provari
 `--guide hand` on a shared-win set. The only committed baseline
-([`bench-v0`](bench.md#bench-v0--2026-10-30-pre-plan-baseline-no-initiative-plan-executed-yet))
+([`bench-v0`](bench.md#results))
 was measured on a three-cell set whose selection rule is "provari hand wins
 inside the canonical budget", but that rule was never verified over the whole
 frozen corpus:
@@ -233,8 +233,8 @@ of `core + sample20` where provari **hand** wins inside the canonical budget.
 - If a cell previously in the set is **not** a hand win (contradicting the
   selection rule), record the discrepancy explicitly and remove it from the
   set only with the measured evidence; do not silently keep it.
-- Append **no ledger row**. The ledger's "Rows to come" section already says
-  item 1 is reference-only; keep that true.
+- Append **no ledger row**. The ledger records item 1 as reference-only (the
+  "No row" note under its per-plan summaries); keep that true.
 
 ## Tasks
 
