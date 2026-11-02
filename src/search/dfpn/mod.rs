@@ -276,11 +276,21 @@ pub struct Search {
     win_front_end_enabled: bool,
     /// Deterministic child-eval cap for the win front-end.
     win_front_end_budget: u64,
+    /// Whether the win front-end replays a refuted defence's proof on its
+    /// open siblings. Default `true`; `--no-win-front-end-simulation` maps
+    /// here.
+    win_front_end_simulation: bool,
     /// Child evaluations spent by the last run's win front-end (0 when it did
     /// not run or was disabled). Included in [`Search::child_evaluations`].
     win_front_end_evals: u64,
     /// Frames visited by the last run's win front-end.
     win_front_end_nodes: u64,
+    /// Sibling replays attempted/succeeded and child evaluations spent inside
+    /// them during the last run's front-end (the last is included in
+    /// [`Search::win_front_end_evaluations`]).
+    win_front_end_simulation_attempts: u64,
+    win_front_end_simulation_successes: u64,
+    win_front_end_simulation_evals: u64,
 }
 
 impl Search {
@@ -345,8 +355,12 @@ impl Search {
             preflight_report: None,
             win_front_end_enabled: false,
             win_front_end_budget: crate::search::winprover::DEFAULT_WIN_FRONT_END_BUDGET,
+            win_front_end_simulation: true,
             win_front_end_evals: 0,
             win_front_end_nodes: 0,
+            win_front_end_simulation_attempts: 0,
+            win_front_end_simulation_successes: 0,
+            win_front_end_simulation_evals: 0,
         }
     }
 

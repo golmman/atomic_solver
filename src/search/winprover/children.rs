@@ -31,6 +31,9 @@ pub(super) struct ChildInfo {
     pub outcome: Option<Outcome>,
     /// Proven depth below this child (0 while unsolved).
     pub depth: u32,
+    /// Whether a sibling replay has already been attempted at this child.
+    /// Preserved across re-evaluations so a failed replay is not retried.
+    pub simulated: bool,
 }
 
 impl ChildInfo {
@@ -45,6 +48,7 @@ impl ChildInfo {
             dn,
             outcome: Some(outcome),
             depth,
+            simulated: false,
         }
     }
 
@@ -56,6 +60,7 @@ impl ChildInfo {
             dn,
             outcome: None,
             depth: 0,
+            simulated: false,
         }
     }
 }
@@ -93,6 +98,16 @@ impl WinProver {
         let child_is_or = !is_or_node;
         pos.do_move(mv);
         let child = self.classify_child(pos, mv, child_is_or);
+        // A terminal child is proven without being entered as a frame, so it
+        // needs its own event here; otherwise a Win/Loss parent event has no
+        // terminal leaf for the proof-tree worker to attach.
+        if let Some(outcome) = child.outcome
+            && outcome != Outcome::Draw
+        {
+            let mut path = self.move_stack.clone();
+            path.push(mv);
+            self.emit_proof_node_with_path(&path, pos, outcome, child.depth);
+        }
         pos.undo_move(mv);
         child
     }

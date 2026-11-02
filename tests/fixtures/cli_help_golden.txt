@@ -67,6 +67,11 @@ Options:
                              Deterministic child-eval cap for the win
                              front-end (default: 1000000; must be
                              positive)
+  --no-win-front-end-simulation
+                             Disable replaying a refuted defence's proof
+                             on its open sibling defences (the first form
+                             of provari's simulation). On by default with
+                             --win-front-end
   --config <FILE>            Path to a TOML file overriding scorer
                              parameters; defaults to built-in values
 

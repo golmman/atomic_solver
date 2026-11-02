@@ -1,0 +1,300 @@
+{
+ "provenance": {
+  "date": "2026-11-02",
+  "host": "67db7a1089e2",
+  "platform": "Linux-7.1.13-402.asahi.fc44.aarch64+16k-aarch64-with-glibc2.43",
+  "cpu_count": 8,
+  "provari": {
+   "commit": "48686bc6c786d6ea70568f0b2ad4002cf0520206",
+   "guide": "hand",
+   "binary": "/tmp/winprover-oracle/target/release/provari"
+  },
+  "solver": {
+   "commit": "plan4 working tree (winprover plan4)",
+   "binary": "./target/release/atomic_solver"
+  },
+  "stacks": {
+   "default": [],
+   "opt": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ],
+   "optwin": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end",
+    "--no-win-front-end-simulation"
+   ],
+   "optwinsim": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end"
+   ]
+  },
+  "budgets": {
+   "seconds": 10.0,
+   "memory_mb": 192,
+   "repeats": 3
+  },
+  "corpus": "/workspace/atomic_solver/docs/plans/provari/measurements/plan1/corpus.json",
+  "bench_commit": "e3d7b1fd2b56e844abcacc6d4b0ef2d43fe4ece8"
+ },
+ "front_end_caps": [
+  1000000,
+  10000000
+ ],
+ "cells": [
+  {
+   "cell": "core",
+   "id": "core",
+   "fen": "r1b1kbnr/ppp3pp/n4q2/3pppN1/1P1PP3/8/P1P2PPP/RNBQKB1R w KQkq - 0 1",
+   "front_end": [
+    {
+     "simulation": false,
+     "evals": 1000014,
+     "nodes": 29338,
+     "proved": false,
+     "depth": 0,
+     "attempts": 0,
+     "successes": 0,
+     "sim_evals": 0,
+     "wall_s": 0.375,
+     "budget": 1000000
+    },
+    {
+     "simulation": true,
+     "evals": 1000025,
+     "nodes": 21993,
+     "proved": false,
+     "depth": 0,
+     "attempts": 3889,
+     "successes": 461,
+     "sim_evals": 242465,
+     "wall_s": 0.374,
+     "budget": 1000000
+    },
+    {
+     "simulation": false,
+     "evals": 10000043,
+     "nodes": 294360,
+     "proved": false,
+     "depth": 0,
+     "attempts": 0,
+     "successes": 0,
+     "sim_evals": 0,
+     "wall_s": 3.861,
+     "budget": 10000000
+    },
+    {
+     "simulation": true,
+     "evals": 10000034,
+     "nodes": 224470,
+     "proved": false,
+     "depth": 0,
+     "attempts": 46194,
+     "successes": 4646,
+     "sim_evals": 2438170,
+     "wall_s": 3.595,
+     "budget": 10000000
+    }
+   ],
+   "opt_evals": 17217064,
+   "optwin_evals": 18217078,
+   "optwinsim_evals": 18217089,
+   "opt_wall_s": 3.786,
+   "optwin_wall_s": 4.158,
+   "optwinsim_wall_s": 4.135,
+   "opt_factor": 7.633,
+   "optwin_factor": 8.383,
+   "optwinsim_factor": 8.337
+  },
+  {
+   "cell": "easy-win",
+   "id": "1eb80b92f92c",
+   "fen": "rnbq1b1r/pp1p1kpp/2p1pp1n/8/3PP1P1/2N2N2/PPP2P1P/R1BQKB1R w KQ - 0 1",
+   "front_end": [
+    {
+     "simulation": false,
+     "evals": 1000027,
+     "nodes": 30387,
+     "proved": false,
+     "depth": 0,
+     "attempts": 0,
+     "successes": 0,
+     "sim_evals": 0,
+     "wall_s": 0.368,
+     "budget": 1000000
+    },
+    {
+     "simulation": true,
+     "evals": 1000017,
+     "nodes": 21587,
+     "proved": false,
+     "depth": 0,
+     "attempts": 4683,
+     "successes": 628,
+     "sim_evals": 277265,
+     "wall_s": 0.327,
+     "budget": 1000000
+    },
+    {
+     "simulation": false,
+     "evals": 10000023,
+     "nodes": 303251,
+     "proved": false,
+     "depth": 0,
+     "attempts": 0,
+     "successes": 0,
+     "sim_evals": 0,
+     "wall_s": 3.649,
+     "budget": 10000000
+    },
+    {
+     "simulation": true,
+     "evals": 10000032,
+     "nodes": 227110,
+     "proved": false,
+     "depth": 0,
+     "attempts": 63489,
+     "successes": 7553,
+     "sim_evals": 2579543,
+     "wall_s": 3.307,
+     "budget": 10000000
+    }
+   ],
+   "opt_evals": 3231686,
+   "optwin_evals": 4231713,
+   "optwinsim_evals": 4231703,
+   "opt_wall_s": 0.662,
+   "optwin_wall_s": 1.001,
+   "optwinsim_wall_s": 0.977,
+   "opt_factor": 5.858,
+   "optwin_factor": 8.858,
+   "optwinsim_factor": 8.646
+  },
+  {
+   "cell": "deep-win",
+   "id": "db6a741c723f",
+   "fen": "rnb1kbnr/pppp2pp/5q2/4ppN1/3P4/8/PPP1PPPP/RNBQKB1R w KQkq - 0 1",
+   "front_end": [
+    {
+     "simulation": false,
+     "evals": 1000007,
+     "nodes": 32322,
+     "proved": false,
+     "depth": 0,
+     "attempts": 0,
+     "successes": 0,
+     "sim_evals": 0,
+     "wall_s": 0.333,
+     "budget": 1000000
+    },
+    {
+     "simulation": true,
+     "evals": 1000274,
+     "nodes": 27958,
+     "proved": false,
+     "depth": 0,
+     "attempts": 7724,
+     "successes": 1185,
+     "sim_evals": 147291,
+     "wall_s": 0.321,
+     "budget": 1000000
+    },
+    {
+     "simulation": false,
+     "evals": 10000013,
+     "nodes": 316483,
+     "proved": false,
+     "depth": 0,
+     "attempts": 0,
+     "successes": 0,
+     "sim_evals": 0,
+     "wall_s": 3.453,
+     "budget": 10000000
+    },
+    {
+     "simulation": true,
+     "evals": 10000025,
+     "nodes": 260353,
+     "proved": false,
+     "depth": 0,
+     "attempts": 67003,
+     "successes": 18216,
+     "sim_evals": 1907735,
+     "wall_s": 3.279,
+     "budget": 10000000
+    }
+   ],
+   "opt_evals": 47761034,
+   "optwin_evals": 47244697,
+   "optwinsim_evals": 47301018,
+   "opt_wall_s": 10.009,
+   "optwin_wall_s": 10.004,
+   "optwinsim_wall_s": 10.008,
+   "opt_factor": null,
+   "optwin_factor": null,
+   "optwinsim_factor": null
+  }
+ ],
+ "ledger": {
+  "default": {
+   "shared_cells": [
+    "1eb80b92f92c"
+   ],
+   "shared_count": 1,
+   "geomean_factor": 50.575,
+   "coverage_reference": 3,
+   "coverage_candidate": 1,
+   "censored_cells": [
+    "core",
+    "db6a741c723f"
+   ]
+  },
+  "opt": {
+   "shared_cells": [
+    "core",
+    "1eb80b92f92c"
+   ],
+   "shared_count": 2,
+   "geomean_factor": 6.687,
+   "coverage_reference": 3,
+   "coverage_candidate": 2,
+   "censored_cells": [
+    "db6a741c723f"
+   ]
+  },
+  "optwin": {
+   "shared_cells": [
+    "core",
+    "1eb80b92f92c"
+   ],
+   "shared_count": 2,
+   "geomean_factor": 8.617,
+   "coverage_reference": 3,
+   "coverage_candidate": 2,
+   "censored_cells": [
+    "db6a741c723f"
+   ]
+  },
+  "optwinsim": {
+   "shared_cells": [
+    "core",
+    "1eb80b92f92c"
+   ],
+   "shared_count": 2,
+   "geomean_factor": 8.49,
+   "coverage_reference": 3,
+   "coverage_candidate": 2,
+   "censored_cells": [
+    "db6a741c723f"
+   ]
+  }
+ }
+}

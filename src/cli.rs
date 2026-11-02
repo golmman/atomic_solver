@@ -79,6 +79,10 @@ pub struct CliOptions {
     /// disable the front-end with `--win-front-end` off (the default) rather
     /// than a zero cap.
     pub win_front_end_budget: u64,
+    /// Replay a refuted defence's proof on the open sibling defences of the
+    /// win front-end. Default `true`; `--no-win-front-end-simulation` turns
+    /// it off. Only meaningful together with `--win-front-end`.
+    pub win_front_end_simulation: bool,
 }
 
 impl Default for CliOptions {
@@ -110,6 +114,7 @@ impl Default for CliOptions {
             eval_pn: EvalPnMode::Off,
             win_front_end: false,
             win_front_end_budget: 1_000_000,
+            win_front_end_simulation: true,
         }
     }
 }
@@ -255,6 +260,10 @@ pub fn parse_args(args: &[String]) -> Result<ParseResult, String> {
                 }
                 opts.win_front_end_budget = v;
             }
+            "--no-win-front-end-simulation" => {
+                opts.win_front_end_simulation = false;
+                i += 1;
+            }
             arg => {
                 return Err(format!(
                     "error: unknown option '{arg}'\nRun with --help for usage."
@@ -316,6 +325,7 @@ mod tests {
         assert_eq!(o.eval_pn, EvalPnMode::Off);
         assert!(!o.win_front_end);
         assert_eq!(o.win_front_end_budget, 1_000_000);
+        assert!(o.win_front_end_simulation);
     }
 
     #[test]
@@ -463,6 +473,17 @@ mod tests {
         assert_eq!(
             options(&["--win-front-end", "--win-front-end-budget", "7"]).win_front_end_budget,
             7
+        );
+    }
+
+    #[test]
+    fn win_front_end_simulation_is_on_by_default_and_can_be_disabled() {
+        assert!(options(&[]).win_front_end_simulation);
+        assert!(options(&["--win-front-end"]).win_front_end_simulation);
+        assert!(!options(&["--no-win-front-end-simulation"]).win_front_end_simulation);
+        assert!(
+            !options(&["--win-front-end", "--no-win-front-end-simulation"])
+                .win_front_end_simulation
         );
     }
 

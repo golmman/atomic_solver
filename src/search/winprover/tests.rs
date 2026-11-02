@@ -16,6 +16,12 @@ use super::WinProver;
 const MATE_IN_ONE: &str = "4k3/8/8/8/8/8/8/4R1K1 w - - 0 1";
 /// A busy non-terminal position (the start position) used for cap tests.
 const STARTPOS: &str = Position::STARTPOS_FEN;
+/// A small forcing line where one refuted defence's proof transfers to its
+/// open sibling. With simulation off the front-end needs 1,240 evals; with it
+/// on the root is proven in 1,195 (fixture and cap measured at implementation
+/// time; the cap 1,200 is the pre-registered transfer fixture).
+const SIMULATION_FIXTURE: &str = "6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 0 26";
+const SIMULATION_FIXTURE_CAP: u64 = 1_200;
 
 fn prover(budget: u64) -> WinProver {
     WinProver::new(
@@ -146,6 +152,16 @@ fn proof_events_replay_to_the_claimed_outcomes() {
         if let Some(terminal) = replay.outcome() {
             assert_eq!(terminal, node.outcome, "terminal event outcome drift");
         }
+        if node.depth == 0 {
+            assert_eq!(
+                replay.outcome(),
+                Some(node.outcome),
+                "depth-0 event must be terminal: path={:?} hash={} outcome={}",
+                node.path,
+                node.hash,
+                node.outcome
+            );
+        }
         if node.path.is_empty() {
             saw_root = true;
             assert_eq!(node.outcome, Outcome::Win);
@@ -212,4 +228,152 @@ fn stop_flag_cuts_the_run() {
     );
     let pos = position(MATE_IN_ONE);
     assert!(front.solve(&pos).is_none());
+}
+
+#[test]
+fn simulation_transfers_a_refuted_defence_proof_to_a_sibling() {
+    let pos = position(SIMULATION_FIXTURE);
+    let mut without = prover(SIMULATION_FIXTURE_CAP);
+    without.set_simulation(false);
+    assert!(without.solve(&pos).is_none());
+    assert_eq!(without.simulation_attempts(), 0);
+
+    let mut with = prover(SIMULATION_FIXTURE_CAP);
+    let proof = with
+        .solve(&pos)
+        .expect("simulation must close the fixture inside 1,200 evals");
+    assert!(with.simulation_attempts() > 0);
+    assert!(with.simulation_successes() > 0);
+    assert!(with.simulation_evaluations() > 0);
+    assert!(proof.depth > 0);
+    assert!(with.validate_win(&proof.pv, &pos));
+}
+
+#[test]
+fn simulation_reduces_the_work_on_the_transfer_fixture() {
+    let pos = position(SIMULATION_FIXTURE);
+    let run = |simulation: bool| {
+        let mut front = prover(10_000);
+        front.set_simulation(simulation);
+        let proof = front.solve(&pos);
+        (
+            proof.map(|p| p.depth),
+            front.child_evaluations(),
+            front.simulation_successes(),
+        )
+    };
+    let off = run(false);
+    let on = run(true);
+    assert_eq!(off.0.is_some(), on.0.is_some());
+    assert!(
+        on.1 < off.1,
+        "simulation on must save evals: {on:?} vs {off:?}"
+    );
+    assert_eq!(off.2, 0);
+    assert!(on.2 > 0);
+}
+
+#[test]
+fn repetition_on_the_search_path_refuses_a_replay() {
+    let pos = position(SIMULATION_FIXTURE);
+    let guide = position(MATE_IN_ONE);
+    let mut front = prover(10_000);
+    front.path_push(pos.repetition_key());
+    let mut budget = 16;
+    let mut line = Vec::new();
+    let mut path = Vec::new();
+    assert!(
+        front
+            .simulate_attacker(&pos, &guide, &mut budget, &mut line, &mut path)
+            .is_none()
+    );
+    assert_eq!(front.simulation_evaluations(), 0);
+}
+
+#[test]
+fn rule50_position_is_not_a_replay_win() {
+    let pos = position("6k1/3p4/3B2p1/2p3Pp/7P/p1N2P2/P1PP4/1R5K w - - 100 26");
+    assert_eq!(pos.outcome(), Some(Outcome::Draw));
+    let guide = position(MATE_IN_ONE);
+    let mut front = prover(10_000);
+    let mut budget = 16;
+    let mut line = Vec::new();
+    let mut path = Vec::new();
+    assert!(
+        front
+            .simulate_attacker(&pos, &guide, &mut budget, &mut line, &mut path)
+            .is_none()
+    );
+    assert_eq!(front.simulation_evaluations(), 0);
+}
+
+#[test]
+fn replay_budget_bounds_the_work() {
+    let pos = position(SIMULATION_FIXTURE);
+    let guide = position(MATE_IN_ONE);
+    let mut front = prover(10_000);
+    let mut budget = 1;
+    let mut line = Vec::new();
+    let mut path = Vec::new();
+    assert!(
+        front
+            .simulate_attacker(&pos, &guide, &mut budget, &mut line, &mut path)
+            .is_none()
+    );
+    assert_eq!(budget, 0);
+    assert_eq!(front.simulation_evaluations(), 1);
+    assert_eq!(front.child_evaluations(), 1);
+}
+
+#[test]
+fn simulation_runs_are_deterministic() {
+    let pos = position(SIMULATION_FIXTURE);
+    let run = || {
+        let mut front = prover(10_000);
+        let proof = front.solve(&pos);
+        (
+            proof,
+            front.child_evaluations(),
+            front.nodes(),
+            front.simulation_attempts(),
+            front.simulation_successes(),
+            front.simulation_evaluations(),
+        )
+    };
+    assert_eq!(run(), run());
+}
+
+#[test]
+fn simulated_proof_events_replay_with_correct_paths_and_hashes() {
+    let pos = position(SIMULATION_FIXTURE);
+    let mut front = prover(SIMULATION_FIXTURE_CAP);
+    let (tx, rx) = std::sync::mpsc::channel();
+    front.set_proof_event_sender(Some(tx));
+    let proof = front.solve(&pos).expect("proven with simulation");
+    assert!(front.simulation_successes() > 0);
+    drop(front);
+
+    let events: Vec<ProofEvent> = rx.try_iter().collect();
+    assert!(!events.is_empty());
+    let mut saw_root = false;
+    for event in events {
+        let ProofEvent::NodeProven(node) = event;
+        let mut replay = pos.clone();
+        for mv in &node.path {
+            let mut moves = atomic_movegen::types::MoveList::new();
+            replay.legal_moves(&mut moves);
+            assert!(moves.as_slice().contains(mv), "event path must be legal");
+            replay.do_move(*mv);
+        }
+        assert_eq!(replay.hash(), node.hash, "event hash must match replay");
+        if let Some(terminal) = replay.outcome() {
+            assert_eq!(terminal, node.outcome, "terminal event outcome drift");
+        }
+        if node.path.is_empty() {
+            saw_root = true;
+            assert_eq!(node.outcome, Outcome::Win);
+            assert_eq!(node.depth, proof.depth);
+        }
+    }
+    assert!(saw_root);
 }

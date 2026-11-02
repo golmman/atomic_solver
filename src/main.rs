@@ -127,6 +127,11 @@ Options:
                              Deterministic child-eval cap for the win
                              front-end (default: 1000000; must be
                              positive)
+  --no-win-front-end-simulation
+                             Disable replaying a refuted defence's proof
+                             on its open sibling defences (the first form
+                             of provari's simulation). On by default with
+                             --win-front-end
   --config <FILE>            Path to a TOML file overriding scorer
                              parameters; defaults to built-in values
 
@@ -202,6 +207,7 @@ fn main() {
         eval_pn,
         win_front_end,
         win_front_end_budget,
+        win_front_end_simulation,
     } = opts;
 
     let config_path = config_path.or_else(|| std::env::var("SCORER_CONFIG").ok());
@@ -235,6 +241,7 @@ fn main() {
     search.set_eval_pn(eval_pn);
     search.set_win_front_end(win_front_end);
     search.set_win_front_end_budget(win_front_end_budget);
+    search.set_win_front_end_simulation(win_front_end_simulation);
     search.set_salt(salt);
     if let Some(budget) = budget {
         search.set_child_eval_budget(budget);

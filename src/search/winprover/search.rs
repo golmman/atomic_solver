@@ -161,7 +161,15 @@ impl WinProver {
             self.move_stack.pop();
             pos.undo_move(mv);
 
+            let simulated = children[idx].simulated;
             children[idx] = self.evaluate_child(pos, mv, is_or_node);
+            children[idx].simulated = simulated;
+
+            // A defence just proven may prove its open siblings too: replay
+            // its proof on each defence still open (provari's simulation).
+            if !is_or_node && children[idx].outcome == Some(Outcome::Win) {
+                self.run_simulation(pos, &mut children, mv, is_or_node);
+            }
         }
 
         let work = self.child_evals - evals_start;

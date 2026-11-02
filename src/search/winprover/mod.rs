@@ -31,6 +31,7 @@
 
 mod children;
 mod search;
+mod simulation;
 
 #[cfg(test)]
 mod tests;
@@ -82,8 +83,17 @@ pub struct WinProver {
     pub(super) path_stack: Vec<u64>,
     /// Moves on the current path, for `ProofEvent` paths.
     pub(super) move_stack: Vec<Move>,
+    /// Whether a refuted defence's proof is replayed on its open siblings.
+    /// Default `true`; `--no-win-front-end-simulation` maps here.
+    pub(super) simulation_enabled: bool,
     pub(super) nodes: u64,
     pub(super) child_evals: u64,
+    /// Replays attempted (one per sibling position), successful replays, and
+    /// child evaluations spent inside the replay. All are subsets of
+    /// [`WinProver::child_evaluations`].
+    pub(super) simulation_attempts: u64,
+    pub(super) simulation_successes: u64,
+    pub(super) simulation_evaluations: u64,
     budget: u64,
     deadline: Instant,
     stop_flag: Option<Arc<AtomicBool>>,
@@ -111,8 +121,12 @@ impl WinProver {
             tt: TranspositionTable::with_mb(WIN_FRONT_END_TT_MB),
             path_stack: Vec::new(),
             move_stack: Vec::new(),
+            simulation_enabled: true,
             nodes: 0,
             child_evals: 0,
+            simulation_attempts: 0,
+            simulation_successes: 0,
+            simulation_evaluations: 0,
             budget,
             deadline,
             stop_flag,
@@ -148,6 +162,11 @@ impl WinProver {
         self.proof_event_sender = sender;
     }
 
+    /// Enable or disable sibling proof replay (the first form, default on).
+    pub fn set_simulation(&mut self, enabled: bool) {
+        self.simulation_enabled = enabled;
+    }
+
     /// Child evaluations spent by the front-end.
     #[must_use]
     pub fn child_evaluations(&self) -> u64 {
@@ -158,6 +177,25 @@ impl WinProver {
     #[must_use]
     pub fn nodes(&self) -> u64 {
         self.nodes
+    }
+
+    /// Sibling replays attempted by the last run.
+    #[must_use]
+    pub fn simulation_attempts(&self) -> u64 {
+        self.simulation_attempts
+    }
+
+    /// Sibling replays that proved the sibling.
+    #[must_use]
+    pub fn simulation_successes(&self) -> u64 {
+        self.simulation_successes
+    }
+
+    /// Child evaluations spent inside sibling replays (included in
+    /// [`WinProver::child_evaluations`]).
+    #[must_use]
+    pub fn simulation_evaluations(&self) -> u64 {
+        self.simulation_evaluations
     }
 
     /// Try to prove a root `Win` for the side to move.
@@ -178,6 +216,9 @@ impl WinProver {
         self.move_stack.clear();
         self.nodes = 0;
         self.child_evals = 0;
+        self.simulation_attempts = 0;
+        self.simulation_successes = 0;
+        self.simulation_evaluations = 0;
         self.last_clock = Instant::now();
         self.clock_sample_at = 0;
 
@@ -226,12 +267,24 @@ impl WinProver {
     }
 
     pub(super) fn emit_proof_node(&self, pos: &Position, outcome: Outcome, depth: u32) {
+        self.emit_proof_node_with_path(&self.move_stack, pos, outcome, depth);
+    }
+
+    /// Emit a proven node on an explicit path. The simulation uses this
+    /// helper because its replay path is not the search's `move_stack`.
+    pub(super) fn emit_proof_node_with_path(
+        &self,
+        path: &[Move],
+        pos: &Position,
+        outcome: Outcome,
+        depth: u32,
+    ) {
         if outcome == Outcome::Draw {
             return;
         }
         if let Some(sender) = &self.proof_event_sender {
             let _ = sender.send(ProofEvent::NodeProven(NodeProven::new(
-                self.move_stack.clone(),
+                path.to_vec(),
                 pos.hash(),
                 outcome,
                 depth,

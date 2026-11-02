@@ -54,8 +54,15 @@ A pure solver for atomic chess in Rust.
   bit-identical to a flag-off run (the front-end's evals/nodes are folded into the run
   counters afterwards and its cap is charged against the global budget). Repetition and
   rule50 are Draws, never wins; only path-independent Win/Loss results are TT-stored;
-  `ProofEvent`s are emitted for every proven node. `search_depth` /
-  `search_depth_with_prefix` are deliberately not wired to it.
+  `ProofEvent`s are emitted for every proven node. A first-form sibling replay
+  (`simulation.rs`, Kawano's simulation, on by default with the front-end,
+  `--no-win-front-end-simulation`) replays a just-refuted defence's proof on the
+  open siblings at an AND node: every sibling position and every legal move tried by
+  its simulation-local immediate-win helper is charged to the front-end cap; a
+  successful replay stores the sibling root in the scratch TT and emits proof events
+  for the replay nodes, a failed one only flags the sibling `simulated` so it is not
+  retried (no proof-number change; the "parried threat" form is out of scope).
+  `search_depth` / `search_depth_with_prefix` are deliberately not wired to it.
 - `src/search/tt/` — transposition table with path-independent base entries;
   repetition-dependent results are not cached (first-player-loss GHI shortcut).
   Buckets are zero-initialized lazily (`alloc.rs`, `alloc_zeroed`), so the size
@@ -87,7 +94,7 @@ A pure solver for atomic chess in Rust.
   `src/notation.rs` — UCI move helpers, including `moves_to_uci_path`.
 - `src/main.rs` — the CLI (`--fen`, `--tt-size`, `--epsilon`, `--timeout`, `--first-outcome`,
   `--refine-cap`, `--outcome-only`, `--tt-dump-path`, `--no-preflight`, `--win-front-end`,
-  `--win-front-end-budget`, `-h`; unknown options
+  `--win-front-end-budget`, `--no-win-front-end-simulation`, `-h`; unknown options
   exit with an error). Resource-bounded: RAM = TT only, plus the opt-in win front-end's
   32 MB scratch TT when `--win-front-end` is enabled (the TT label is a reservation bound —
   pages are populated on first use); it never builds proof trees and prints
@@ -345,6 +352,8 @@ If these commands start failing (`EPERM`/`EACCES` on event open), the host-side 
 - `src/search/dfpn/selection.rs` — OR/AND selection and best/second-unsolved search over the `ChildInfo` table; tests are split out (`selection/tests.rs`).
 - `src/search/dfpn/{mod,config,run}.rs` — the `Search` state definition and exit/PV types (`mod.rs`), the configuration surface (`config.rs`), and the run driver plus solve entry points (`run.rs`); split by change reason, not for performance (`lto = true`, `codegen-units = 1` make module placement codegen-neutral).
 - `src/search/dfpn/tests.rs` — one fixture set and one `Search`-construction idiom serve the schedule/budget/ordering/repetition unit tests; splitting it would duplicate the harness.
+- `src/search/winprover/simulation.rs` — the trigger, guide handling, attacker/defender recursion, immediate-win helper, replay budget, TT store, and proof-event paths share one recursion; splitting would separate the repetition/rule50 checks from the recursion they guard.
+- `src/search/winprover/tests.rs` — one fixture set and one front-end construction idiom serve the 18 unit tests (including the sibling-replay transfer, budget, determinism, and event-replay cases); splitting would duplicate the harness.
 - `src/main.rs` — self-contained CLI: argument parsing, help text, search setup, and result printing in one place.
 
 ## Tuning workflow

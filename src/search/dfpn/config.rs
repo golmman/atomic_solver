@@ -35,6 +35,14 @@ impl Search {
         self.win_front_end_budget = budget;
     }
 
+    /// Enable or disable the win front-end's sibling proof replay (the first
+    /// form of provari's simulation). Enabled by default; the
+    /// `--no-win-front-end-simulation` CLI flag maps here. The flag is only
+    /// meaningful when [`Search::set_win_front_end`] is enabled.
+    pub fn set_win_front_end_simulation(&mut self, enabled: bool) {
+        self.win_front_end_simulation = enabled;
+    }
+
     /// Child evaluations spent by the last run's win front-end. Included in
     /// [`Search::child_evaluations`]; `0` when disabled or not run.
     #[must_use]
@@ -47,6 +55,26 @@ impl Search {
     #[must_use]
     pub fn win_front_end_nodes(&self) -> u64 {
         self.win_front_end_nodes
+    }
+
+    /// Sibling replays attempted by the last run's win front-end. `0` when
+    /// the front-end did not run or simulation is disabled.
+    #[must_use]
+    pub fn win_front_end_simulation_attempts(&self) -> u64 {
+        self.win_front_end_simulation_attempts
+    }
+
+    /// Sibling replays that proved the sibling during the last run.
+    #[must_use]
+    pub fn win_front_end_simulation_successes(&self) -> u64 {
+        self.win_front_end_simulation_successes
+    }
+
+    /// Child evaluations spent inside sibling replays during the last run
+    /// (included in [`Search::win_front_end_evaluations`]).
+    #[must_use]
+    pub fn win_front_end_simulation_evaluations(&self) -> u64 {
+        self.win_front_end_simulation_evals
     }
 
     /// Report of the pre-phase hook of the last

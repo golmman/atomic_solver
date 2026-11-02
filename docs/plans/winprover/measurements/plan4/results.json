@@ -1,0 +1,1088 @@
+{
+ "provenance": {
+  "date": "2026-11-02",
+  "host": "67db7a1089e2",
+  "platform": "Linux-7.1.13-402.asahi.fc44.aarch64+16k-aarch64-with-glibc2.43",
+  "cpu_count": 8,
+  "provari": {
+   "commit": "48686bc6c786d6ea70568f0b2ad4002cf0520206",
+   "guide": "hand",
+   "binary": "/tmp/winprover-oracle/target/release/provari"
+  },
+  "solver": {
+   "commit": "plan4 working tree (winprover plan4)",
+   "binary": "./target/release/atomic_solver"
+  },
+  "stacks": {
+   "default": [],
+   "opt": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ],
+   "optwin": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end",
+    "--no-win-front-end-simulation"
+   ],
+   "optwinsim": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end"
+   ]
+  },
+  "budgets": {
+   "seconds": 10.0,
+   "memory_mb": 192,
+   "repeats": 3
+  },
+  "corpus": "/workspace/atomic_solver/docs/plans/provari/measurements/plan1/corpus.json",
+  "bench_commit": "e3d7b1fd2b56e844abcacc6d4b0ef2d43fe4ece8"
+ },
+ "runs": [
+  {
+   "case": "core",
+   "side": "provari-hand",
+   "run": 1,
+   "wall_s": 0.487,
+   "returncode": 0,
+   "win": true,
+   "mate": 17,
+   "nodes": 342289,
+   "ms": 475
+  },
+  {
+   "case": "core",
+   "side": "provari-hand",
+   "run": 2,
+   "wall_s": 0.496,
+   "returncode": 0,
+   "win": true,
+   "mate": 17,
+   "nodes": 342289,
+   "ms": 484
+  },
+  {
+   "case": "core",
+   "side": "provari-hand",
+   "run": 3,
+   "wall_s": 0.497,
+   "returncode": 0,
+   "win": true,
+   "mate": 17,
+   "nodes": 342289,
+   "ms": 486
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:default",
+   "run": 1,
+   "wall_s": 10.002,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 73132606,
+   "exit": null,
+   "pv_status": null,
+   "flags": []
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:default",
+   "run": 2,
+   "wall_s": 10.01,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 72189193,
+   "exit": null,
+   "pv_status": null,
+   "flags": []
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:default",
+   "run": 3,
+   "wall_s": 10.012,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 73247838,
+   "exit": null,
+   "pv_status": null,
+   "flags": []
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:opt",
+   "run": 1,
+   "wall_s": 3.794,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 29,
+   "evals": 17217064,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:opt",
+   "run": 2,
+   "wall_s": 3.784,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 29,
+   "evals": 17217064,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:opt",
+   "run": 3,
+   "wall_s": 3.786,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 29,
+   "evals": 17217064,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:optwin",
+   "run": 1,
+   "wall_s": 4.156,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 29,
+   "evals": 18217078,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end",
+    "--no-win-front-end-simulation"
+   ]
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:optwin",
+   "run": 2,
+   "wall_s": 4.158,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 29,
+   "evals": 18217078,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end",
+    "--no-win-front-end-simulation"
+   ]
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:optwin",
+   "run": 3,
+   "wall_s": 4.174,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 29,
+   "evals": 18217078,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end",
+    "--no-win-front-end-simulation"
+   ]
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:optwinsim",
+   "run": 1,
+   "wall_s": 4.108,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 29,
+   "evals": 18217089,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end"
+   ]
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:optwinsim",
+   "run": 2,
+   "wall_s": 4.135,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 29,
+   "evals": 18217089,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end"
+   ]
+  },
+  {
+   "case": "core",
+   "side": "atomic_solver:optwinsim",
+   "run": 3,
+   "wall_s": 4.135,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 29,
+   "evals": 18217089,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end"
+   ]
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "provari-hand",
+   "run": 1,
+   "wall_s": 0.113,
+   "returncode": 0,
+   "win": true,
+   "mate": 15,
+   "nodes": 72523,
+   "ms": 101
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "provari-hand",
+   "run": 2,
+   "wall_s": 0.113,
+   "returncode": 0,
+   "win": true,
+   "mate": 15,
+   "nodes": 72523,
+   "ms": 101
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "provari-hand",
+   "run": 3,
+   "wall_s": 0.113,
+   "returncode": 0,
+   "win": true,
+   "mate": 15,
+   "nodes": 72523,
+   "ms": 102
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:default",
+   "run": 1,
+   "wall_s": 5.715,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 37,
+   "evals": 43266033,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": []
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:default",
+   "run": 2,
+   "wall_s": 5.733,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 37,
+   "evals": 43266033,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": []
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:default",
+   "run": 3,
+   "wall_s": 5.708,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 37,
+   "evals": 43266033,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": []
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:opt",
+   "run": 1,
+   "wall_s": 0.662,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 31,
+   "evals": 3231686,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:opt",
+   "run": 2,
+   "wall_s": 0.662,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 31,
+   "evals": 3231686,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:opt",
+   "run": 3,
+   "wall_s": 0.684,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 31,
+   "evals": 3231686,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:optwin",
+   "run": 1,
+   "wall_s": 1.001,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 31,
+   "evals": 4231713,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end",
+    "--no-win-front-end-simulation"
+   ]
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:optwin",
+   "run": 2,
+   "wall_s": 1.02,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 31,
+   "evals": 4231713,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end",
+    "--no-win-front-end-simulation"
+   ]
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:optwin",
+   "run": 3,
+   "wall_s": 0.998,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 31,
+   "evals": 4231713,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end",
+    "--no-win-front-end-simulation"
+   ]
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:optwinsim",
+   "run": 1,
+   "wall_s": 0.977,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 31,
+   "evals": 4231703,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end"
+   ]
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:optwinsim",
+   "run": 2,
+   "wall_s": 0.984,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 31,
+   "evals": 4231703,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end"
+   ]
+  },
+  {
+   "case": "1eb80b92f92c",
+   "side": "atomic_solver:optwinsim",
+   "run": 3,
+   "wall_s": 0.976,
+   "returncode": 0,
+   "win": true,
+   "outcome": "win",
+   "pv_length": 31,
+   "evals": 4231703,
+   "exit": null,
+   "pv_status": "first-outcome",
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end"
+   ]
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "provari-hand",
+   "run": 1,
+   "wall_s": 6.191,
+   "returncode": 0,
+   "win": true,
+   "mate": 22,
+   "nodes": 4574912,
+   "ms": 6179
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "provari-hand",
+   "run": 2,
+   "wall_s": 6.198,
+   "returncode": 0,
+   "win": true,
+   "mate": 22,
+   "nodes": 4574912,
+   "ms": 6186
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "provari-hand",
+   "run": 3,
+   "wall_s": 6.203,
+   "returncode": 0,
+   "win": true,
+   "mate": 22,
+   "nodes": 4574912,
+   "ms": 6182
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:default",
+   "run": 1,
+   "wall_s": 10.005,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 75513076,
+   "exit": null,
+   "pv_status": null,
+   "flags": []
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:default",
+   "run": 2,
+   "wall_s": 10.016,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 74434663,
+   "exit": null,
+   "pv_status": null,
+   "flags": []
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:default",
+   "run": 3,
+   "wall_s": 10.009,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 74434663,
+   "exit": null,
+   "pv_status": null,
+   "flags": []
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:opt",
+   "run": 1,
+   "wall_s": 10.009,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 47761034,
+   "exit": null,
+   "pv_status": null,
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:opt",
+   "run": 2,
+   "wall_s": 10.011,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 47841622,
+   "exit": null,
+   "pv_status": null,
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:opt",
+   "run": 3,
+   "wall_s": 10.008,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 47552244,
+   "exit": null,
+   "pv_status": null,
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or"
+   ]
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:optwin",
+   "run": 1,
+   "wall_s": 10.012,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 47244697,
+   "exit": null,
+   "pv_status": null,
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end",
+    "--no-win-front-end-simulation"
+   ]
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:optwin",
+   "run": 2,
+   "wall_s": 10.004,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 47244697,
+   "exit": null,
+   "pv_status": null,
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end",
+    "--no-win-front-end-simulation"
+   ]
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:optwin",
+   "run": 3,
+   "wall_s": 10.004,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 47186997,
+   "exit": null,
+   "pv_status": null,
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end",
+    "--no-win-front-end-simulation"
+   ]
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:optwinsim",
+   "run": 1,
+   "wall_s": 10.011,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 47301018,
+   "exit": null,
+   "pv_status": null,
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end"
+   ]
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:optwinsim",
+   "run": 2,
+   "wall_s": 10.006,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 47301018,
+   "exit": null,
+   "pv_status": null,
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end"
+   ]
+  },
+  {
+   "case": "db6a741c723f",
+   "side": "atomic_solver:optwinsim",
+   "run": 3,
+   "wall_s": 10.008,
+   "returncode": 0,
+   "win": false,
+   "outcome": "draw",
+   "pv_length": 0,
+   "evals": 47053278,
+   "exit": null,
+   "pv_status": null,
+   "flags": [
+    "--move-class-pn",
+    "--quiet-grouping",
+    "--eval-pn",
+    "or",
+    "--win-front-end"
+   ]
+  }
+ ],
+ "ledger": {
+  "cells": {
+   "core": {
+    "reference": {
+     "runs": 3,
+     "wall_s": 0.496,
+     "win": true,
+     "nodes": 342289,
+     "mate": 17,
+     "evals": null,
+     "exit": null,
+     "returncodes": [
+      0
+     ]
+    },
+    "default": {
+     "runs": 3,
+     "wall_s": 10.01,
+     "win": false,
+     "nodes": null,
+     "mate": null,
+     "evals": 73132606,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": null,
+     "factor_lower_bound": 20.16,
+     "note": "candidate censored"
+    },
+    "opt": {
+     "runs": 3,
+     "wall_s": 3.786,
+     "win": true,
+     "nodes": null,
+     "mate": null,
+     "evals": 17217064,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": 7.633,
+     "note": "shared win"
+    },
+    "optwin": {
+     "runs": 3,
+     "wall_s": 4.158,
+     "win": true,
+     "nodes": null,
+     "mate": null,
+     "evals": 18217078,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": 8.383,
+     "note": "shared win"
+    },
+    "optwinsim": {
+     "runs": 3,
+     "wall_s": 4.135,
+     "win": true,
+     "nodes": null,
+     "mate": null,
+     "evals": 18217089,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": 8.337,
+     "note": "shared win"
+    }
+   },
+   "1eb80b92f92c": {
+    "reference": {
+     "runs": 3,
+     "wall_s": 0.113,
+     "win": true,
+     "nodes": 72523,
+     "mate": 15,
+     "evals": null,
+     "exit": null,
+     "returncodes": [
+      0
+     ]
+    },
+    "default": {
+     "runs": 3,
+     "wall_s": 5.715,
+     "win": true,
+     "nodes": null,
+     "mate": null,
+     "evals": 43266033,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": 50.575,
+     "note": "shared win"
+    },
+    "opt": {
+     "runs": 3,
+     "wall_s": 0.662,
+     "win": true,
+     "nodes": null,
+     "mate": null,
+     "evals": 3231686,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": 5.858,
+     "note": "shared win"
+    },
+    "optwin": {
+     "runs": 3,
+     "wall_s": 1.001,
+     "win": true,
+     "nodes": null,
+     "mate": null,
+     "evals": 4231713,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": 8.858,
+     "note": "shared win"
+    },
+    "optwinsim": {
+     "runs": 3,
+     "wall_s": 0.977,
+     "win": true,
+     "nodes": null,
+     "mate": null,
+     "evals": 4231703,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": 8.646,
+     "note": "shared win"
+    }
+   },
+   "db6a741c723f": {
+    "reference": {
+     "runs": 3,
+     "wall_s": 6.198,
+     "win": true,
+     "nodes": 4574912,
+     "mate": 22,
+     "evals": null,
+     "exit": null,
+     "returncodes": [
+      0
+     ]
+    },
+    "default": {
+     "runs": 3,
+     "wall_s": 10.009,
+     "win": false,
+     "nodes": null,
+     "mate": null,
+     "evals": 75513076,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": null,
+     "factor_lower_bound": 1.61,
+     "note": "candidate censored"
+    },
+    "opt": {
+     "runs": 3,
+     "wall_s": 10.009,
+     "win": false,
+     "nodes": null,
+     "mate": null,
+     "evals": 47761034,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": null,
+     "factor_lower_bound": 1.61,
+     "note": "candidate censored"
+    },
+    "optwin": {
+     "runs": 3,
+     "wall_s": 10.004,
+     "win": false,
+     "nodes": null,
+     "mate": null,
+     "evals": 47244697,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": null,
+     "factor_lower_bound": 1.61,
+     "note": "candidate censored"
+    },
+    "optwinsim": {
+     "runs": 3,
+     "wall_s": 10.008,
+     "win": false,
+     "nodes": null,
+     "mate": null,
+     "evals": 47301018,
+     "exit": null,
+     "returncodes": [
+      0
+     ],
+     "factor": null,
+     "factor_lower_bound": 1.61,
+     "note": "candidate censored"
+    }
+   }
+  },
+  "summary": {
+   "default": {
+    "shared_cells": [
+     "1eb80b92f92c"
+    ],
+    "shared_count": 1,
+    "geomean_factor": 50.575,
+    "coverage_reference": 3,
+    "coverage_candidate": 1,
+    "censored_cells": [
+     "core",
+     "db6a741c723f"
+    ]
+   },
+   "opt": {
+    "shared_cells": [
+     "core",
+     "1eb80b92f92c"
+    ],
+    "shared_count": 2,
+    "geomean_factor": 6.687,
+    "coverage_reference": 3,
+    "coverage_candidate": 2,
+    "censored_cells": [
+     "db6a741c723f"
+    ]
+   },
+   "optwin": {
+    "shared_cells": [
+     "core",
+     "1eb80b92f92c"
+    ],
+    "shared_count": 2,
+    "geomean_factor": 8.617,
+    "coverage_reference": 3,
+    "coverage_candidate": 2,
+    "censored_cells": [
+     "db6a741c723f"
+    ]
+   },
+   "optwinsim": {
+    "shared_cells": [
+     "core",
+     "1eb80b92f92c"
+    ],
+    "shared_count": 2,
+    "geomean_factor": 8.49,
+    "coverage_reference": 3,
+    "coverage_candidate": 2,
+    "censored_cells": [
+     "db6a741c723f"
+    ]
+   }
+  }
+ }
+}

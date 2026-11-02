@@ -204,6 +204,9 @@ impl Search {
         let front = self.try_win_front_end(pos);
         self.win_front_end_evals = front.evals;
         self.win_front_end_nodes = front.nodes;
+        self.win_front_end_simulation_attempts = front.simulation_attempts;
+        self.win_front_end_simulation_successes = front.simulation_successes;
+        self.win_front_end_simulation_evals = front.simulation_evals;
         if let Some(proof) = front.proof {
             self.child_evals += front.evals;
             self.nodes += front.nodes;
@@ -365,6 +368,9 @@ impl Search {
         self.last_round_cap_cut = false;
         self.win_front_end_evals = 0;
         self.win_front_end_nodes = 0;
+        self.win_front_end_simulation_attempts = 0;
+        self.win_front_end_simulation_successes = 0;
+        self.win_front_end_simulation_evals = 0;
         self.start = Instant::now();
         self.deadline = self.start + self.timeout;
         // Clock sampler: read once immediately, then every CLOCK_SAMPLE_INTERVAL.
@@ -398,11 +404,15 @@ impl Search {
             self.stop_flag.clone(),
         );
         front.set_epsilon_fraction(self.epsilon_num, self.epsilon_den);
+        front.set_simulation(self.win_front_end_simulation);
         front.set_proof_event_sender(self.proof_event_sender.clone());
         let proof = front.solve(pos);
         FrontEndRun {
             evals: front.child_evaluations(),
             nodes: front.nodes(),
+            simulation_attempts: front.simulation_attempts(),
+            simulation_successes: front.simulation_successes(),
+            simulation_evals: front.simulation_evaluations(),
             proof,
         }
     }
@@ -479,6 +489,10 @@ struct FrontEndRun {
     evals: u64,
     /// Frames visited (0 when skipped).
     nodes: u64,
+    /// Sibling replays attempted/succeeded and their child evaluations.
+    simulation_attempts: u64,
+    simulation_successes: u64,
+    simulation_evals: u64,
     /// A replay-validated proven win, if the front-end decided the root.
     proof: Option<crate::search::winprover::WinProof>,
 }
@@ -487,6 +501,9 @@ impl FrontEndRun {
     const SKIPPED: Self = Self {
         evals: 0,
         nodes: 0,
+        simulation_attempts: 0,
+        simulation_successes: 0,
+        simulation_evals: 0,
         proof: None,
     };
 }

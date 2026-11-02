@@ -225,6 +225,30 @@ pre-registered neutral result, not a product win; the row is read with the
 [`measurements/plan3/`](measurements/plan3/README.md) and
 [`report3.md`](report3.md).
 
+### `plan4` — 2026-11-02, sibling simulation first form (item 4)
+
+Host `67db7a1089e2` (aarch64, 8 CPU, Linux 7.1.13); `solver@e3d7b1f` + plan4
+working tree; `provari-v0.1.0`, `--guide hand`. Reference walls in this session:
+`core` 0.496 s, `easy-win` 0.113 s, `deep-win` 6.198 s.
+
+| Plan | Stack | `core` | `easy-win` | `deep-win` | Geomean (canonical) | Coverage |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `plan4` | **opt+win+sim** (`--move-class-pn --quiet-grouping --eval-pn or --win-front-end`) | **8.34** (4.135 s / 18.2 M) | **8.65** (0.977 s / 4.23 M) | censored (≥ 1.61) 10.008 s / 47.3 M | **8.49** (2 cells) | 2/3 |
+
+Same-session controls (not separate rows): `opt` without the front-end
+measured **6.69** (2 cells), `core` 7.63 (3.786 s / 17.2 M), `easy-win` 5.86
+(0.662 s / 3.23 M), `deep-win` censored at 10 s (47.8 M); `opt+win` with
+simulation disabled measured **8.62** (2 cells), `core` 8.38 (4.158 s /
+18.2 M), `easy-win` 8.86 (1.001 s / 4.23 M), `deep-win` censored (47.2 M).
+The front-end proved **none** of the three cells at 1 M or 10 M evals with
+simulation on; at 10 M the replay cut front-end frames by ~20–24% (`core`
+294,360 → 224,470) at the same child-eval cap, but added no root proof. The
+**pre-registered gate failed**, so the verdict is PIVOT and no further
+sibling-simulation levers were stacked. This row therefore records a mechanism
+signal / overhead, not a lever; it is read with the `Stack` column. Details:
+[`measurements/plan4/`](measurements/plan4/README.md) and
+[`report4.md`](report4.md).
+
 ### Rows to come
 
 Empty. Item 1 (`plan1`) is a **reference-only** plan: it re-measures the
@@ -286,3 +310,10 @@ recorded here as a dated note, with the earlier rows left intact.
   none of the three cells; geomean moved 6.81 → 8.75 (2 shared cells) and
   coverage stayed 2/3, so the row records overhead, not a lever. Same-session
   control and front-end accounting in `measurements/plan3/`.
+- **2026-11-02** — plan4 ledger row: the first-form sibling replay on the
+  opt-in front-end (`--win-front-end`, simulation on) added to the shipped opt
+  stack. The front-end still proved none of the three cells at 1 M or 10 M
+  evals, so the pre-registered gate failed; the row records a mechanism
+  signal (frames down, evals at the cap) and the PIVOT verdict, not a lever.
+  Same-session `opt`/`opt+win` controls and the two-cap probe are in
+  `measurements/plan4/`.
