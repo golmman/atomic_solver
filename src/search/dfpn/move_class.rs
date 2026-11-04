@@ -166,13 +166,14 @@ fn threat_targets(board: &Board, us: Color) -> u32 {
     let candidates =
         candidates & board.pieces_color(them) & !board.pieces_pt(PieceType::Commoner) & !forbidden;
 
-    let our_attackers = board.pieces_color(us) & !board.pieces_pt(PieceType::Commoner);
     let occupied = board.occupied();
     let mut count = 0;
     let mut rest = candidates;
     while !rest.is_empty() {
         let sq = rest.pop_lsb();
-        if (board.attackers_to(sq, occupied) & our_attackers) != Bitboard::EMPTY {
+        if (board.attackers_to_color(sq, us, occupied) & !board.pieces_pt(PieceType::Commoner))
+            != Bitboard::EMPTY
+        {
             count += 1;
         }
     }
@@ -199,7 +200,10 @@ fn immediately_lost(board: &Board, us: Color) -> bool {
         let mut zone = attacks::king_attacks(commoner) | Bitboard::square_bb(commoner);
         while !zone.is_empty() {
             let sq = zone.pop_lsb();
-            if (board.attackers_to(sq, occupied) & defenders) != Bitboard::EMPTY {
+            if (board.attackers_to_color(sq, them, occupied)
+                & !board.pieces_pt(PieceType::Commoner))
+                != Bitboard::EMPTY
+            {
                 return true;
             }
         }
@@ -227,14 +231,13 @@ fn cheaply_blastable(board: &Board, mv: Move, us: Color) -> bool {
 
     let occupied = board.occupied();
     let them = us.flip();
-    let attackers = board.attackers_to(to, occupied)
-        & board.pieces_color(them)
-        & !board.pieces_pt(PieceType::Commoner);
+    let attackers =
+        board.attackers_to_color(to, them, occupied) & !board.pieces_pt(PieceType::Commoner);
     if attackers.is_empty() {
         return false;
     }
 
-    let defended = (board.attackers_to(to, occupied) & board.pieces_color(us)) != Bitboard::EMPTY;
+    let defended = !board.attackers_to_color(to, us, occupied).is_empty();
     if !defended {
         return true;
     }

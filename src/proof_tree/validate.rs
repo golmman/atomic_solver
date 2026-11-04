@@ -50,7 +50,7 @@
 
 use std::collections::HashSet;
 
-use atomic_movegen::board::StateInfo;
+use atomic_movegen::board::{FenPolicy, StateInfo};
 use atomic_movegen::types::{Move, MoveList};
 
 use crate::notation::{move_to_uci, moves_to_uci_path};
@@ -129,13 +129,13 @@ impl DefectKind {
 ///
 /// Returns `Ok(())` for a clean proof tree, otherwise every defect found.
 pub fn validate_proof_tree(tree: &ProofTree) -> Result<(), Vec<TreeDefect>> {
-    let mut pos = match Position::from_fen(&tree.root_fen) {
+    let mut pos = match Position::from_fen_with_policy(&tree.root_fen, FenPolicy::AllowTerminal) {
         Ok(pos) => pos,
         Err(e) => {
             return Err(vec![TreeDefect {
                 path: Vec::new(),
                 kind: DefectKind::NotDecisive,
-                detail: format!("root FEN failed to parse: {e}"),
+                detail: format!("root FEN failed to parse or validate: {e}"),
             }]);
         }
     };

@@ -28,12 +28,25 @@ directory; do not treat it as a solver initiative backlog.
   probes, and node-hoisted trivial-legality classification. Public API and
   move order unchanged; adopted after a green fast gate, targeted move-order
   / trajectory goldens, and bit-identical solved-case benchmark results.
+- **report_update_2.4.0.md** (2026-11-03) — adoption of the round-2 feedback
+  (`feedback2.md`): touching-commoner checkers immunity, mate-before-clock,
+  terminal-board movegen, one upstream terminal taxonomy
+  (`Board::outcome*`/`is_material_draw`), stable `Move` wire codec and
+  `Board::move_from_uci`, single-move legality, combined child keys,
+  `attacks_from`/`attackers_to_color`, and opt-in validated-FEN ingestion.
+  The dec10 portfolio anchor was re-pinned (3,901,847 → 2,717,601 evals)
+  after `reconstruct_pt` replay-validated the new proof. EP-key normalization
+  and the blast-helper refactor are deliberately deferred with rationale.
 
 ## Consumer-side impact
 
 - `lean` plan3 integrated the query (`Position::has_legal_move`) into
   the child-eval loop: the ~95% of evaluated children that are never
   searched no longer pay full movegen (−46% wall on m22 first-outcome).
+- The 2.4.0 move-wire adoption keeps the proof-tree/TT-snapshot format
+  stable while making the bit layout upstream-owned; `uci_to_move` is now a
+  board-aware single lookup (5.7–23× faster than the removed fallback in a
+  local probe).
 - Future upstream asks (e.g. incremental child hashes for TT-bound
-  sort, `Hash`/`Ord` `Move`) should follow the same pattern: a
-  standalone plan here, honoring the movegen repo's own conventions.
+  sort) should follow the same pattern: a standalone plan here, honoring the
+  movegen repo's own conventions.

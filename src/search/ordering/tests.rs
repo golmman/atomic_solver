@@ -1,7 +1,7 @@
 use super::*;
 use atomic_movegen::board::{Board, StateInfo};
 use atomic_movegen::movegen::generate_legal;
-use atomic_movegen::types::MoveList;
+use atomic_movegen::types::{Color, MoveList};
 
 fn legal_moves_and_state(fen: &str) -> (Board, StateInfo, MoveList) {
     let board = Board::from_fen(fen).unwrap();

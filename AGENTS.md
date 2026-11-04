@@ -7,7 +7,7 @@ A pure solver for atomic chess in Rust.
 ## Architecture
 
 - `src/lib.rs` re-exports `notation`, `position`, `proof_event`, `proof_tree`, `search`, `reconstruct`, `tt_snapshot`, and `zobrist`.
-- `src/position.rs` wraps `atomic_movegen::board::Board` and tracks the `Outcome` (Win/Loss/Draw from the side-to-move perspective), undo state, and Zobrist hashing.
+- `src/position.rs` wraps `atomic_movegen::board::Board` and tracks the `Outcome` (Win/Loss/Draw from the side-to-move perspective), undo state, and Zobrist hashing. Terminal classification delegates to atomic-movegen 2.4.0 `Board::outcome` / `outcome_with` (one rules precedence, including touching-commoner immunity and mate-before-clock); `from_fen_with_policy` is the opt-in validated-FEN constructor for persisted/untrusted input, while `from_fen` stays permissive for artificial fixtures.
 - `src/proof_event.rs` defines the neutral `ProofEvent` protocol (one variant,
   `NodeProven`) that decouples the solver from the proof-tree implementation.
 - `src/search/dfpn/` — sequential DF-PN+ solver: iterative bounded refinement, history/killer
@@ -23,7 +23,10 @@ A pure solver for atomic chess in Rust.
   pre-pass that issues the TT prefetches, so a live current-generation entry decides it without
   make/unmake; the load-bearing non-terminal *outcome-less* store invariant), pooled movegen slots
   (`children.rs`), and the per-run repetition-draw cache (`repetition_cache.rs`) are documented
-  in their own module docs. Four default-off experimental levers live in their own
+  in their own module docs. The child ladder delegates the terminal precedence itself to
+  atomic-movegen 2.4.0 `Board::outcome_with` and derives the non-mutating child key pair from one
+  `hash_and_rule50_after` classification; only the extinction/rule50 fast-path ordering around it
+  is solver-owned. Four default-off experimental levers live in their own
   modules, each with its own approximation/soundness docs: `move_class.rs`
   (`--move-class-pn`, OR-node move-class starting proof numbers), `quiet_group.rs`
   (`--quiet-grouping`, OR-node plain-move grouping), `static_tactics.rs`
@@ -91,7 +94,10 @@ A pure solver for atomic chess in Rust.
   the whole DB from the DB alone; operator manual at
   `docs/proofdb_pipeline.md`, external DB contract in `docs/spec/global_proof_store.md`.
 - `src/zobrist.rs` — deterministic Zobrist keys, including the halfmove clock;
-  `src/notation.rs` — UCI move helpers, including `moves_to_uci_path`.
+  `src/notation.rs` — UCI move helpers and the stable 16-bit wire codec (thin
+  wrappers over atomic-movegen 2.4.0 `Move::to_bits`/`from_bits`, with
+  `Board::move_from_uci` resolving castling/en-passant and legality), including
+  `moves_to_uci_path`.
 - `src/main.rs` — the CLI (`--fen`, `--tt-size`, `--epsilon`, `--timeout`, `--first-outcome`,
   `--refine-cap`, `--outcome-only`, `--tt-dump-path`, `--no-preflight`, `--win-front-end`,
   `--win-front-end-budget`, `--no-win-front-end-simulation`, `-h`; unknown options

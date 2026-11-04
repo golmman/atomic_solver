@@ -84,4 +84,21 @@ After the last report `docs/plans/winprover/report5.md` your verdict was "goal n
 
 Please explain in simple terms: what has changed or what did we learn so we now tend towards a from-scratch implementation?
 
+---
+
+I am not convinced that we should stay in this repository for the from-scratch implementation described in `docs/plans/winprover/HANDOFF.md`. Instead we could
+start in a new repository.
+
+I see major risks for maintenance, extensibility, consistency:
+* unnecessary coupling with legacy code.
+* coupling leads to difficulties for deprecation
+* consistency drift to legacy code
+
+And i don't see other qualities impacted when we do it in a new repo:
+* performance: no negative impact
+* testability: we copy the test cases over, minor impact
+* correctness: needs checks either way
+* efficient memory usage: no impact
+
+Please help me with the decision.
 

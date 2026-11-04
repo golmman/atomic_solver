@@ -690,22 +690,18 @@ impl Search {
             ChildInfo::solved(mv, Outcome::Win, 0, false, child_is_or)
         } else if rule50_expired {
             // rule50 has expired: the child is terminal unless it is also
-            // checkmate/stalemate (the moves-empty branch outranks rule50, so
-            // the existence query decides). The early-exit existence query
-            // replaces the full generation: any legal move ⇒ the rule50 draw
-            // (which outranks the occupied == 2 branch of
-            // `outcome_from_state`); no legal move ⇒ checkmate (Loss) vs
-            // stalemate (Draw) via the checkers bit. Always `Some` here,
-            // matching the old code where `outcome()` concluded the child
-            // before repetition and TT were consulted.
+            // checkmate/stalemate. The existence query supplies the one fact
+            // the upstream precedence needs; the classification itself is
+            // `Board::outcome_with`, so extinction, mate-vs-stalemate, the
+            // clock, and the material draw all come from one rules model.
             let mut state = StateInfo::new();
             pos.populate_state(&mut state);
-            let outcome = if pos.has_legal_move(&state) || state.checkers.is_empty() {
-                Outcome::Draw
-            } else {
-                Outcome::Loss
-            };
-            ChildInfo::solved(mv, outcome, 0, false, child_is_or)
+            let moves_exist = pos.has_legal_move(&state);
+            let outcome = pos
+                .board()
+                .outcome_with(&state, moves_exist)
+                .expect("rule50-expired child must be terminal");
+            ChildInfo::solved(mv, outcome.into(), 0, false, child_is_or)
         } else {
             let child_max_depth = max_depth.saturating_sub(1);
             // The shipped solved-result reuse, guard included: the one-ply
@@ -740,31 +736,19 @@ impl Search {
                 let terminal_outcome = if entry.is_some_and(|e| e.outcome.is_none()) {
                     None
                 } else {
-                    // Still undecided: the terminal check is now an early-exit
+                    // Still undecided: the terminal check is an early-exit
                     // existence query (upstream `has_legal_move_with_state`)
                     // fed by a caller-populated `StateInfo` — no move list is
-                    // generated here. Classification mirrors
-                    // `outcome_from_state` precedence: moves-empty
-                    // (checkmate/stalemate via the checkers bit) first, then
-                    // the board-static occupied == 2 draw; the extinction and
-                    // rule50 branches already returned.
+                    // generated here. `Board::outcome_with` then applies the
+                    // single upstream precedence (moves-empty mate/stalemate,
+                    // 50-move clock, commoner-only draw); it returns `None`
+                    // exactly when the child is non-terminal.
                     let mut state = StateInfo::new();
                     pos.populate_state(&mut state);
-                    if !pos.has_legal_move(&state) {
-                        // No legal move: checkmate (Loss) vs stalemate (Draw).
-                        Some(if state.checkers.is_empty() {
-                            Outcome::Draw
-                        } else {
-                            Outcome::Loss
-                        })
-                    } else if pos.board().occupied().count() == 2 {
-                        // `occupied == 2` follows the moves-empty branch in
-                        // `outcome_from_state`, so a K-vs-K child with legal
-                        // moves is a draw without any move list.
-                        Some(Outcome::Draw)
-                    } else {
-                        None
-                    }
+                    let moves_exist = pos.has_legal_move(&state);
+                    pos.board()
+                        .outcome_with(&state, moves_exist)
+                        .map(Into::into)
                 };
                 if let Some(outcome) = terminal_outcome {
                     ChildInfo::solved(mv, outcome, 0, false, child_is_or)

@@ -205,7 +205,7 @@ pub(super) fn classify_terminal(board: &Board) -> Option<Outcome> {
             Outcome::Loss
         });
     }
-    if board.occupied().count() == 2 {
+    if board.is_material_draw() {
         return Some(Outcome::Draw);
     }
     None

@@ -384,7 +384,7 @@ impl Walker<'_> {
                 moves_to_uci_path(&self.path)
             ));
         }
-        if !self.pos.legal_moves_vec().contains(&best_move) {
+        if !self.pos.board().is_legal(best_move) {
             self.stats.anomalies += 1;
             return Err(format!(
                 "anomaly: Win best_move {} is not legal at {}",

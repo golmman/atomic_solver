@@ -28,6 +28,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::path::Path;
 
+use atomic_movegen::board::FenPolicy;
 use atomic_movegen::types::Move;
 
 use atomic_solver::notation::{move_to_bits, move_to_uci, uci_to_move};
@@ -227,10 +228,10 @@ pub fn load_shard(meta: &ShardMeta, shard_dir: &Path) -> Res<(ProofTree, String,
         pos.do_move(mv);
         moves.push(mv);
     }
-    let meta_pos = Position::from_fen(&meta.fen)
-        .map_err(|e| format!("shard {}: bad metadata fen: {e}", meta.tag))?;
-    let tree_pos = Position::from_fen(&tree.root_fen)
-        .map_err(|e| format!("shard {}: bad tree root fen: {e}", meta.tag))?;
+    let meta_pos = Position::from_fen_with_policy(&meta.fen, FenPolicy::AllowTerminal)
+        .map_err(|e| format!("shard {}: invalid metadata fen: {e}", meta.tag))?;
+    let tree_pos = Position::from_fen_with_policy(&tree.root_fen, FenPolicy::AllowTerminal)
+        .map_err(|e| format!("shard {}: invalid tree root fen: {e}", meta.tag))?;
     let rh = pos.hash();
     if meta_pos.hash() != rh || tree_pos.hash() != rh {
         return Err(format!(

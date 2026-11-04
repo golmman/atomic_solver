@@ -1,64 +1,28 @@
 //! UCI notation and binary move encodings.
 
-use atomic_movegen::types::{Move, MoveList, MoveType, PROMOTION_PIECES, Square};
+use atomic_movegen::types::Move;
 
 use crate::position::Position;
 
-/// Encode an `atomic_movegen` `Move` into a 16-bit code using only the public
-/// API.
+/// Encode an `atomic_movegen` `Move` into its stable 16-bit wire code.
 ///
-/// The bit layout matches `Move`'s documented encoding:
-/// - bits 0-5: `to_sq`
-/// - bits 6-11: `from_sq`
-/// - bits 12-13: move type
-/// - bits 14-15: promotion piece index
-///
-/// This is the encoding used by the proof-tree binary dump and the TT
-/// snapshot (`tt_snapshot`); it never produces `0xFFFF`, which those formats
-/// reserve as the `Move::NONE` sentinel.
+/// The layout is upstream's semver-stable encoding
+/// (`to:6 | from:6 | type:2 | promotion_type:2`, with `Move::NONE == 0`) and
+/// is shared by the proof-tree binary dump and the TT snapshot. Keeping the
+/// solver-side wrapper preserves the long-lived artifact API while delegating
+/// the bit layout to the crate that owns it.
 #[must_use]
 pub fn move_to_bits(mv: Move) -> u16 {
-    let to = (mv.to_sq() as u16) & 0x3f;
-    let from = ((mv.from_sq() as u16) & 0x3f) << 6;
-    let type_bits = match mv.move_type() {
-        MoveType::Normal => 0u16,
-        MoveType::Promotion => 1u16 << 12,
-        MoveType::EnPassant => 2u16 << 12,
-        MoveType::Castling => 3u16 << 12,
-        _ => unreachable!(),
-    };
-    let promotion_bits = if mv.move_type() == MoveType::Promotion {
-        let idx = PROMOTION_PIECES
-            .iter()
-            .position(|&pt| pt == mv.promotion_type())
-            .unwrap_or(0) as u16;
-        idx << 14
-    } else {
-        0u16
-    };
-    from | to | type_bits | promotion_bits
+    mv.to_bits()
 }
 
-/// Decode a 16-bit move code back into a `Move` using only the public API.
+/// Decode a 16-bit move code produced by [`move_to_bits`].
 ///
-/// Returns `None` for codes whose promotion index is out of range.
+/// Upstream validates structure only (`0` decodes to `Move::NONE`, equal origin
+/// and destination is rejected); board legality is not implied.
 #[must_use]
 pub fn bits_to_move(code: u16) -> Option<Move> {
-    let to = Square::from_u8((code & 0x3f) as u8);
-    let from = Square::from_u8(((code >> 6) & 0x3f) as u8);
-    let move_type_bits = (code >> 12) & 0x3;
-    let promotion_idx = ((code >> 14) & 0x3) as usize;
-
-    match move_type_bits {
-        0 => Some(Move::make_move(from, to)),
-        1 => {
-            let pt = *PROMOTION_PIECES.get(promotion_idx)?;
-            Some(Move::make_promotion(from, to, pt))
-        }
-        2 => Some(Move::make_enpassant(from, to)),
-        3 => Some(Move::make_castling(from, to)),
-        _ => unreachable!(),
-    }
+    Move::from_bits(code)
 }
 
 #[must_use]
@@ -80,26 +44,24 @@ pub fn moves_to_uci_path(moves: &[Move]) -> String {
     }
 }
 
-/// Convert a UCI move string into a legal `Move` for the given position.
+/// Convert a UCI move string into a fully legal `Move` for the given position.
+///
+/// This is the board-aware upstream lookup: it resolves castling (`e1g1` to the
+/// internal king-takes-rook encoding) and en-passant targets, validates the
+/// promotion piece, and returns only a legal move. It does not build or scan a
+/// move list.
 ///
 /// Promotion piece is expected as the optional fifth character of the UCI
 /// string (e.g. `c7c8q`).
 #[must_use]
 pub fn uci_to_move(uci: &str, pos: &Position) -> Option<Move> {
-    let mut moves = MoveList::new();
-    pos.legal_moves(&mut moves);
-    for i in 0..moves.len() {
-        let mv = moves[i];
-        if move_to_uci(mv) == uci {
-            return Some(mv);
-        }
-    }
-    None
+    pos.board().move_from_uci(uci)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use atomic_movegen::types::MoveList;
 
     #[test]
     fn normal_move_round_trips() {

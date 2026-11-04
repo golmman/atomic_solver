@@ -8,7 +8,7 @@
 
 use atomic_movegen::attacks;
 use atomic_movegen::board::{Board, StateInfo};
-use atomic_movegen::types::{Color, Move, NO_PIECE, PieceType, Square};
+use atomic_movegen::types::{Move, NO_PIECE, PieceType, Square};
 
 mod context;
 mod params;
@@ -107,23 +107,6 @@ fn capture_net_value(scorer: &StaticAtomicScorer, board: &Board, m: Move) -> i32
 fn file_rank_of(sq: Square) -> (i8, i8) {
     use atomic_movegen::types::{file_of, rank_of};
     (file_of(sq) as u8 as i8, rank_of(sq) as u8 as i8)
-}
-
-fn attacks_from(
-    pt: PieceType,
-    color: Color,
-    sq: Square,
-    occupied: atomic_movegen::types::Bitboard,
-) -> atomic_movegen::types::Bitboard {
-    match pt {
-        PieceType::Pawn => attacks::pawn_attacks(color, sq),
-        PieceType::Knight => attacks::knight_attacks(sq),
-        PieceType::Bishop => attacks::bishop_attacks(sq, occupied),
-        PieceType::Rook => attacks::rook_attacks(sq, occupied),
-        PieceType::Queen => attacks::queen_attacks(sq, occupied),
-        PieceType::Commoner => attacks::king_attacks(sq),
-        _ => atomic_movegen::types::Bitboard::EMPTY,
-    }
 }
 
 impl StaticAtomicScorer {
@@ -265,7 +248,7 @@ impl StaticAtomicScorer {
                         let from_bb = atomic_movegen::types::Bitboard::square_bb(from);
                         let to_bb = atomic_movegen::types::Bitboard::square_bb(to);
                         let new_occupied = (board.occupied() & !from_bb) | to_bb;
-                        attacks_from(from_pt, us, to, new_occupied)
+                        attacks::attacks_from(from_pt, us, to, new_occupied)
                     }
                 }
             };
@@ -280,8 +263,7 @@ impl StaticAtomicScorer {
                 let from_bb = atomic_movegen::types::Bitboard::square_bb(from);
                 let to_bb = atomic_movegen::types::Bitboard::square_bb(to);
                 let new_occupied = (board.occupied() & !from_bb) | to_bb;
-                let enemy_attackers =
-                    board.attackers_to(to, new_occupied) & board.pieces_color(them);
+                let enemy_attackers = board.attackers_to_color(to, them, new_occupied);
                 let bonus = if enemy_attackers.is_empty() {
                     base
                 } else {

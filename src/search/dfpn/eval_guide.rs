@@ -39,7 +39,7 @@
 
 use atomic_movegen::attacks;
 use atomic_movegen::board::Board;
-use atomic_movegen::types::{Bitboard, Color, PieceType, Square};
+use atomic_movegen::types::{Bitboard, Color, PieceType};
 
 use crate::zobrist::INF;
 
@@ -187,7 +187,7 @@ fn terms(board: &Board, us: Color) -> Terms {
         let Some(pt) = board.piece_on(sq).type_of() else {
             continue;
         };
-        let reach = attacks_from(pt, us, sq, occupied);
+        let reach = attacks::attacks_from(pt, us, sq, occupied);
         attacked = attacked | reach;
         pressure += (reach & ring).count();
         // Squares from which this piece would attack one of their commoners.
@@ -237,22 +237,9 @@ fn checking_squares(
     let mut rest = commoners;
     while !rest.is_empty() {
         let sq = rest.pop_lsb();
-        checks = checks | attacks_from(pt, reverse, sq, occupied);
+        checks = checks | attacks::attacks_from(pt, reverse, sq, occupied);
     }
     checks
-}
-
-/// Attack set of `pt` from `sq` under an explicit occupancy.
-fn attacks_from(pt: PieceType, color: Color, sq: Square, occupied: Bitboard) -> Bitboard {
-    match pt {
-        PieceType::Pawn => attacks::pawn_attacks(color, sq),
-        PieceType::Knight => attacks::knight_attacks(sq),
-        PieceType::Bishop => attacks::bishop_attacks(sq, occupied),
-        PieceType::Rook => attacks::rook_attacks(sq, occupied),
-        PieceType::Queen => attacks::queen_attacks(sq, occupied),
-        PieceType::Commoner => attacks::king_attacks(sq),
-        _ => Bitboard::EMPTY,
-    }
 }
 
 /// How a parent node scales its fresh children's starting numbers.

@@ -5,14 +5,15 @@
 //! must reproduce *exactly* — this is a fidelity gate, not a tolerance
 //! check.
 //!
-//! **Anchor re-baselined by lean plan 14** (TT bucket width 2 → 4 at
-//! unchanged entry count, arm A of backlog #21): the plan8 anchor
-//! (salt 2, 2,918,636 evals) belonged to the two-slot layout. Under the
-//! four-slot bucket all four salts settle at exactly 3,901,847 evals with
-//! an identical 36-ply PV, so the race is salt-insensitive and the winner
-//! salt is *which* decisive line the watcher observes first — a
-//! scheduling artifact, not a trajectory property. The anchor pins
-//! outcome, evals, and PV but not the winner salt.
+//! **Anchor re-baselined by the atomic-movegen 2.4.0 adoption** (rules
+//! correctness: touching commoners are no longer reported as checkers, so
+//! one deep dec10 child classifies as a draw instead of a loss and the
+//! trajectory changes). The 2.4.0 anchor is 2,717,601 evals with a 53-ply
+//! first-outcome PV; the proof was rebuilt from a fresh TT snapshot and
+//! replay-validated (`reconstruct_pt`, `validate: ok`). The earlier
+//! plan14 anchor (3,901,847 evals, 36-ply PV) belonged to atomic-movegen
+//! 2.3.1 and the four-slot bucket layout. The winner salt is still not
+//! pinned (a scheduling artifact, not a trajectory property).
 //!
 //! Resource note: the 4-racer race runs racers at the shipped CLI default
 //! (label 256 MB since lean plan15 → 224 MiB each, so 896 MiB peak RAM,
@@ -24,8 +25,9 @@ use std::process::Command;
 
 /// The plan12/plan8 campaign dec10 case, verbatim.
 const DEC10_FEN: &str = "3r3k/2rB3P/p7/P4p2/1p3Pp1/1P4P1/2p1p3/2R1R2K b - - 5 41";
-/// The lean-plan14 dec10 anchor: every salt settles at exactly this count.
-const DEC10_WINNER_EVALS: u64 = 3_901_847;
+/// The atomic-movegen-2.4.0 dec10 anchor: every finishing salt settles at
+/// exactly this count.
+const DEC10_WINNER_EVALS: u64 = 2_717_601;
 
 fn portfolio_bin() -> PathBuf {
     // Integration tests run from target/<profile>/deps/; examples live in
@@ -94,8 +96,8 @@ fn budget_censored_race_reports_none_and_censored_racers() {
 }
 
 /// The driver's fidelity gate: the 4-racer dec10 race must reproduce the
-/// plan14 anchor exactly (3,901,847 evals, win, identical PV); the winner
-/// salt is not pinned (salt-insensitive race, see module docs).
+/// atomic-movegen-2.4.0 anchor exactly (2,717,601 evals, win); the winner
+/// salt is not pinned (a scheduling artifact, see module docs).
 #[test]
 fn dec10_race_reproduces_plan8_winner_anchor_exactly() {
     let (lines, code) = run_portfolio(&[]);

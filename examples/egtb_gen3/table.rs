@@ -173,7 +173,7 @@ pub fn classify_terminal(board: &Board) -> Option<(u8, bool, bool)> {
         }
         return Some((U_LOSS, true, false));
     }
-    if board.occupied().count() == 2 {
+    if board.is_material_draw() {
         return Some((U_DRAW, false, false));
     }
     None
@@ -461,7 +461,7 @@ fn resolve_child(parent: &Board, m: Move, class: usize, strong: usize, deps: &[&
     let mut child = parent.clone();
     let mut state = StateInfo::new();
     child.do_move(m, &mut state);
-    if child.occupied().count() == 2 {
+    if child.is_material_draw() {
         return TAG_CONST | u32::from(U_DRAW);
     }
     let cus = child.side_to_move();

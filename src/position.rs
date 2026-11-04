@@ -5,10 +5,11 @@
 //! tightly coupled; exposing them through small helpers would add boilerplate
 //! without improving readability.
 
-use atomic_movegen::board::{Board, StateInfo};
+use atomic_movegen::board::{Board, FenPolicy, StateInfo};
 use atomic_movegen::movegen::{
     generate_legal, generate_legal_with_state, has_legal_move_with_state,
 };
+use atomic_movegen::types::Outcome as MovegenOutcome;
 use atomic_movegen::types::{Bitboard, Color, Move, MoveList};
 
 use crate::zobrist;
@@ -40,6 +41,20 @@ impl std::str::FromStr for Outcome {
             Ok(Outcome::Draw)
         } else {
             Err(format!("unknown outcome: {s}"))
+        }
+    }
+}
+
+impl From<MovegenOutcome> for Outcome {
+    fn from(outcome: MovegenOutcome) -> Self {
+        match outcome {
+            MovegenOutcome::Win => Outcome::Win,
+            MovegenOutcome::Loss => Outcome::Loss,
+            MovegenOutcome::Draw => Outcome::Draw,
+            // `MovegenOutcome` is `#[non_exhaustive]`; all current variants are
+            // mapped above. A new upstream variant must be classified here
+            // rather than silently treated as a draw.
+            _ => unreachable!("unhandled atomic_movegen Outcome variant"),
         }
     }
 }
@@ -101,6 +116,29 @@ impl Position {
 
     pub fn from_fen(fen: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let board = Board::from_fen(fen)?;
+        Self::from_board(board)
+    }
+
+    /// Parse a FEN with an explicit upstream validation policy.
+    ///
+    /// The default [`Position::from_fen`] stays permissive (the solver's
+    /// artificial fixtures and terminal boards rely on that). Ingestion points
+    /// for untrusted or persisted FENs should use this constructor: the
+    /// upstream `Board::from_fen_with` distinguishes syntax errors from
+    /// semantic `ValidationErrors` (commoner counts, back-rank pawns, castling
+    /// and en-passant geometry, material bounds, opposite check).
+    ///
+    /// `FenPolicy::AllowTerminal` is the usual choice for proof artifacts,
+    /// whose roots may be terminal (one side has no commoner).
+    pub fn from_fen_with_policy(
+        fen: &str,
+        policy: FenPolicy,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let board = Board::from_fen_with(fen, policy)?;
+        Self::from_board(board)
+    }
+
+    fn from_board(board: Board) -> Result<Self, Box<dyn std::error::Error>> {
         let zobrist = zobrist::hash(&board, board.rule50());
         Ok(Self {
             board,
@@ -179,15 +217,11 @@ impl Position {
     /// calling `do_move` could panic.
     #[cfg(test)]
     pub(crate) fn try_do_move(&mut self, m: Move) -> bool {
-        let mut moves = MoveList::new();
-        self.legal_moves(&mut moves);
-        for i in 0..moves.len() {
-            if moves[i] == m {
-                self.do_move(m);
-                return true;
-            }
+        if !self.board.is_legal(m) {
+            return false;
         }
-        false
+        self.do_move(m);
+        true
     }
 
     pub fn legal_moves(&self, moves: &mut MoveList) {
@@ -234,40 +268,30 @@ impl Position {
         self.board.commoners(c)
     }
 
+    /// Terminal classification, delegating to the upstream rules model.
+    ///
+    /// `atomic_movegen::Board::outcome` owns the full precedence: commoner
+    /// extinction, no legal moves (mate versus stalemate), the 50-move clock
+    /// (with mate outranking it), and the commoner-only material draw. The
+    /// solver intentionally keeps no second copy of that taxonomy.
     #[must_use]
     pub fn outcome(&self) -> Option<Outcome> {
-        let mut moves = MoveList::new();
-        let mut state = StateInfo::new();
-        self.legal_moves_with_state(&mut moves, &mut state);
-        self.outcome_from_state(&state, &moves)
+        self.board.outcome().map(Outcome::from)
     }
 
     /// Terminal detector for callers that already have a move list and the
     /// corresponding `StateInfo`. Returns `None` if the position is not
     /// terminal, otherwise the `Outcome` from the side-to-move perspective.
+    ///
+    /// `moves` only supplies the legal-move-existence bit; the classification
+    /// itself is the upstream `Board::outcome_with` precedence. The two must
+    /// describe the same position (`state` populated, `moves` generated for
+    /// it).
     #[must_use]
     pub fn outcome_from_state(&self, state: &StateInfo, moves: &MoveList) -> Option<Outcome> {
-        let us = self.side_to_move();
-        let them = us.flip();
-        if self.commoners(us).is_empty() {
-            return Some(Outcome::Loss);
-        }
-        if self.commoners(them).is_empty() {
-            return Some(Outcome::Win);
-        }
-        if moves.is_empty() {
-            if state.checkers.is_empty() {
-                return Some(Outcome::Draw);
-            }
-            return Some(Outcome::Loss);
-        }
-        if self.board.rule50() >= 100 {
-            return Some(Outcome::Draw);
-        }
-        if self.board.occupied().count() == 2 {
-            return Some(Outcome::Draw);
-        }
-        None
+        self.board
+            .outcome_with(state, !moves.is_empty())
+            .map(Outcome::from)
     }
 
     #[must_use]
@@ -286,16 +310,6 @@ impl Position {
         self.board.hash_after(m) ^ zobrist::rule50_key(self.board.rule50_after(m))
     }
 
-    /// Repetition key ([`Position::repetition_key`]) of the position after `m`,
-    /// without playing it.
-    ///
-    /// Equal to `{ do_move(m); repetition_key() }`: upstream `Board::hash_after`
-    /// is the board-only hash after `m`, i.e. exactly the repetition key.
-    #[must_use]
-    pub(crate) fn repetition_key_after(&self, m: Move) -> u64 {
-        self.board.hash_after(m)
-    }
-
     /// `(tt_key, repetition_key, rule50)` of the position after `m`, without
     /// playing it. Equal to `{ do_move(m); (hash(), repetition_key(),
     /// board().rule50()) }`.
@@ -306,8 +320,9 @@ impl Position {
     /// clamped key and the raw value travel together.
     #[must_use]
     pub(crate) fn keys_after(&self, m: Move) -> (u64, u64, u16) {
-        let board_only = self.repetition_key_after(m);
-        let rule50 = self.board.rule50_after(m);
+        // One move classification supplies both components (atomic-movegen
+        // 2.4.0 `hash_and_rule50_after`).
+        let (board_only, rule50) = self.board.hash_and_rule50_after(m);
         (board_only ^ zobrist::rule50_key(rule50), board_only, rule50)
     }
 
@@ -339,6 +354,26 @@ impl Clone for Position {
 mod tests {
     use super::*;
     use atomic_movegen::types::Square;
+
+    #[test]
+    fn validated_fen_policy_is_opt_in() {
+        use atomic_movegen::board::FenPolicy;
+
+        // The permissive parser keeps accepting artificial boards; the
+        // opt-in policy rejects an impossible atomic position.
+        let multi_commoner = "k6k/8/8/8/8/8/8/K6K w - - 0 1";
+        assert!(Position::from_fen(multi_commoner).is_ok());
+        assert!(
+            Position::from_fen_with_policy(multi_commoner, FenPolicy::AllowTerminal).is_err(),
+            "more than one commoner per side is not an atomic position"
+        );
+
+        // Proof artifacts may have a terminal root (one side extinct), so
+        // strict validation is not the right ingestion policy for them.
+        let terminal = "8/8/8/8/8/8/8/K7 w - - 0 1";
+        assert!(Position::from_fen_with_policy(terminal, FenPolicy::AllowTerminal).is_ok());
+        assert!(Position::from_fen_with_policy(terminal, FenPolicy::Strict).is_err());
+    }
 
     #[test]
     fn outcome_prefers_own_commoner_extinction_over_rule50() {
@@ -518,9 +553,9 @@ mod tests {
                     "keys_after mismatch: {fen}, move {mv:?}"
                 );
                 assert_eq!(
-                    pos.repetition_key_after(mv),
+                    pos.board().hash_after(mv),
                     expected.1,
-                    "repetition_key_after mismatch: {fen}, move {mv:?}"
+                    "repetition-key component mismatch: {fen}, move {mv:?}"
                 );
                 // The position itself is untouched: the loop reuses `pos`.
                 assert_eq!(pos.fen(), fen);

@@ -40,7 +40,7 @@ fn classify(b: &Board) -> Option<u8> {
             P_LOSS
         });
     }
-    if b.occupied().count() == 2 {
+    if b.is_material_draw() {
         return Some(P_DRAW);
     }
     None
