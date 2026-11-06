@@ -104,6 +104,8 @@ Please help me with the decision.
 
 ---
 
-* docs/plans/winprover/HANDOFF.md
+Please revise the handoff `docs/plans/winprover/HANDOFF.md`.
+What would be the next steps?
+
 * new initiative
 * docs/plans/winprover/bench.md 
