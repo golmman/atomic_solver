@@ -102,3 +102,8 @@ And i don't see other qualities impacted when we do it in a new repo:
 
 Please help me with the decision.
 
+---
+
+* docs/plans/winprover/HANDOFF.md
+* new initiative
+* docs/plans/winprover/bench.md 
