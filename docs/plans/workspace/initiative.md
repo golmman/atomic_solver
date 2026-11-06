@@ -14,6 +14,11 @@ the current tree if item 7 is ever claimed; the D1–D3 decision record below
 stays the reference. Item 2 (further carve-outs) stays rejected. The text below
 is the closing record; do not open new plans here.
 
+**2026-11-06:** `winprover`'s successor is a new repository
+([`../winprover/HANDOFF.md`](../winprover/HANDOFF.md) §6.1), so a `winprover`
+crate in this workspace is no longer planned. Item 7 survives only as an
+optional proofdb packaging thread, with the same re-draft requirement.
+
 **Historical status: Active** — opened 2026-10-09 (owner proposal: monorepo / workspace split).
 
 ## Goal

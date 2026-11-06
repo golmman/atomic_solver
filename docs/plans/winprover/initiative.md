@@ -185,6 +185,18 @@ substrate. The self-contained starting point for the successor session is
 [`HANDOFF.md`](HANDOFF.md) (goal, measured evidence, what to take from each
 side, milestones, open decisions, kickoff prompt).
 
+**Revision 2026-11-06 (handoff §0):** the successor lives in a **new
+repository** (working name `prover`). It has no crate dependency on
+`atomic_solver`: it reuses this repo's evidence/measurement layer as specs,
+fixtures and own-licence code copied with provenance, and uses the legacy
+binary only as an external control. Its evidence is its own minimal
+attacker-only replay validator plus the `provari check` veto. This reverses the
+handoff's first-version "same repository" decision. Consequences: item 7
+(workspace split) is **moot** for the successor and stays unranked/stale here;
+item 8 is carried as the successor's horizon list; [`bench.md`](bench.md) is
+**frozen** and the successor opens its own ledger with a re-measured
+post-`atomic-movegen`-2.4.0 baseline.
+
 ## Corpus and measurement conventions
 
 - **Primary metric:** `child_evals` to the first decisive outcome
@@ -260,6 +272,13 @@ that re-draft.
 
 ## History
 
+- **2026-11-06** — successor handoff revised ([`HANDOFF.md`](HANDOFF.md) §0):
+  the successor is a new repository (D1), its evidence is an own validator plus
+  the `provari check` veto (D9), and [`bench.md`](bench.md) is frozen in favour
+  of a successor ledger (D10). The revision also folds the `atomic-movegen`
+  2.4.0 upgrade (2026-11-04) into the handoff, records item 8 as the
+  successor's horizon, and notes that item 7 is moot. No product change, no
+  ledger row.
 - **2026-11-02** — item 6 executed and the initiative **closed**
   ([`plan5.md`](plan5.md), [`report5.md`](report5.md), measurements in
   [`measurements/plan5/`](measurements/plan5/README.md)). This was a

@@ -1,5 +1,13 @@
 # Bench — performance ledger vs. provari
 
+> **Frozen 2026-11-06.** This ledger is the closed `winprover` initiative's
+> record: no new rows, and no earlier row is rewritten. The successor
+> (a from-scratch attacker-only prover in a new repository, see
+> [`HANDOFF.md`](HANDOFF.md) §2/D10) opens its own `bench.md`. That ledger reuses
+> this protocol, these cells, the corpus, the oracle pin and the reading rules,
+> and starts with a re-measured post-`atomic-movegen`-2.4.0 baseline. The rows
+> below predate 2.4.0 (rules fixes moved search trajectories).
+
 Status: **standing document of the [`winprover`](initiative.md) initiative.**
 It fixes the benchmark set, the metric, and one *appended* row per executed
 plan, so the performance leg of the initiative has a single, comparable
@@ -304,3 +312,10 @@ the win path.
   shared cell, coverage 1/3); the same-session opt control is 6.301 on two
   shared cells, coverage 2/3, and both are censored on `deep-win`. Goal not met;
   search thread closed. Driver/results in `measurements/plan5/`.
+- **2026-11-06** — ledger **frozen** (no row). The successor is a new
+  repository (handoff revision 2026-11-06, D1/D10). Its own `bench.md` copies
+  the protocol, cells, corpus (sha256-pinned), oracle pin and reading rules,
+  and opens with a re-measured baseline: provari hand plus the legacy
+  `default`/`opt` stacks as same-session controls. All rows here were
+  measured with `atomic-movegen` 2.3.1; the 2.4.0 upgrade (2026-11-04) changed
+  rules behaviour and search trajectories, so they are not that baseline.

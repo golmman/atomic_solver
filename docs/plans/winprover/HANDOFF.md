@@ -10,6 +10,7 @@ project and writes its first plan.
 | Date | 2026-11-02 (UTC), **revised 2026-11-06** (see [§0](#0-revision-2026-11-06)) |
 | From | the `winprover` close-out ([`report5.md`](report5.md)) |
 | Pinned oracle | `aiorla/provari` commit `48686bc6c786d6ea70568f0b2ad4002cf0520206` (`v0.1.0`) |
+| Legacy repository | <https://github.com/golmman/atomic_solver> (`git@github.com:golmman/atomic_solver.git`); this file is `docs/plans/winprover/HANDOFF.md` on `main` |
 | Legacy product | `atomic_solver` at `5f85133ea9d751368a682e53e354bd3fc0016d00` (product code as of `c7c9bca`, `atomic-movegen` 2.4.0); **unchanged** by this file |
 | Rules crate | `atomic-movegen` 2.4.0 (crates.io, MIT) |
 | Successor | a **new repository** (working name `prover`; the owner picks the final name), not a `winprover` plan and not a module of this repo |
@@ -552,16 +553,17 @@ cap, the from-scratch path is not viable at this scope; record and close.
 
 ### 8.1 In this repository (close-out housekeeping, no product change)
 
-1. Commit this revised handoff.
-2. Freeze [`bench.md`](bench.md): add a short "frozen 2026-11-06; superseded
-   by the successor repo's `bench.md`" note at the top and a History entry. No
-   row changes.
-3. Update [`initiative.md`](initiative.md) §Next direction: the successor is
-   a new repository (link to this handoff), item 7 is moot for it, and item 8
-   is carried.
-4. Update the `winprover` row in [`../README.md`](../README.md) (Closed):
-   "successor: new repository (`prover`), see `winprover/HANDOFF.md`". The
-   `workspace` row's "item 7" pointer is moot now.
+Steps 1–4 are **done** (2026-11-06).
+
+1. ~~Commit this revised handoff.~~ Done (`606604a`).
+2. ~~Freeze [`bench.md`](bench.md).~~ Done: frozen note at the top plus a
+   History entry; no row changed.
+3. ~~Update [`initiative.md`](initiative.md) §Next direction.~~ Done: revision
+   paragraph (new repository, item 7 moot for the successor, item 8 carried)
+   plus a History entry.
+4. ~~Update [`../README.md`](../README.md).~~ Done: the `winprover` and
+   `workspace` rows (Closed), plus a matching note in
+   [`../workspace/initiative.md`](../workspace/initiative.md).
 5. Optional, separate: triage the two red dec02 slow tests
    ([`../movegen/report_update_2.4.0.md`](../movegen/report_update_2.4.0.md)
    §Next steps 1) so the legacy reference gate is green again.
@@ -571,7 +573,9 @@ cap, the from-scratch path is not viable at this scope; record and close.
 The owner creates the empty repository. The first session there is a **plan
 session**, not an execution session:
 
-1. Read this handoff (from `atomic_solver@<commit of this file>`),
+1. Clone <https://github.com/golmman/atomic_solver> as a **read-only
+   reference** into a sibling/scratch directory, never as a submodule or
+   dependency. Read this handoff from `main` (legacy code pin `5f85133`),
    [`report5.md`](report5.md), [`bench.md`](bench.md),
    [`../movegen/report_update_2.4.0.md`](../movegen/report_update_2.4.0.md),
    and the pinned provari source (`src/moves.rs`, `src/board.rs`,
@@ -656,7 +660,8 @@ prefetch, filter), `src/proofs.rs` (12-byte proofs, length/limit),
 `move_from_uci`, `validate`, `do_move`), `src/movegen.rs`
 (`generate_legal*`, `has_legal_move*`), crate `CHANGELOG.md` §2.4.0.
 
-**`atomic_solver` (legacy, `5f85133`) — specs to read:**
+**`atomic_solver` (legacy, <https://github.com/golmman/atomic_solver> at
+`5f85133`; paths relative to the repo root) — specs to read:**
 `src/proof_event.rs`, `src/proof_tree/` (`worker.rs`, `validate.rs`,
 `export.rs` module docs), `src/search/winprover/` (the prototype and its
 measured limits), `src/search/dfpn/` (restart schedule, budget semantics),
@@ -682,11 +687,13 @@ front-end per-node comparison), `examples/provari_export`,
 ## 12. Kickoff prompt (copy-pasteable, for the new repository)
 
 > Bootstrap the successor to `atomic_solver`'s closed `winprover` initiative
-> in this new repository (working name `prover`). Read
-> `atomic_solver/docs/plans/winprover/HANDOFF.md` (revision 2026-11-06),
-> `report5.md` and `bench.md` next to it,
-> `atomic_solver/docs/plans/movegen/report_update_2.4.0.md`, and the pinned
-> provari source at commit `48686bc6c786d6ea70568f0b2ad4002cf0520206`
+> in this new repository (working name `prover`). Clone the legacy repo
+> <https://github.com/golmman/atomic_solver> into a sibling directory as a
+> read-only reference (never a submodule or dependency; legacy code pin
+> `5f85133ea9d751368a682e53e354bd3fc0016d00`, handoff from `main`). Read its
+> `docs/plans/winprover/HANDOFF.md` (revision 2026-11-06), `report5.md` and
+> `bench.md` next to it, `docs/plans/movegen/report_update_2.4.0.md`, and the
+> pinned provari source at commit `48686bc6c786d6ea70568f0b2ad4002cf0520206`
 > (scratch clone; never commit it; ideas only). This is a plan session. Repo
 > location (D1), evidence strategy (D9) and bench ledger (D10) are settled in
 > the handoff; decide the remaining open questions in §9. Write the
